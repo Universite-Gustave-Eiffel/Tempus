@@ -45,6 +45,15 @@ namespace Tempus
     typedef int Time;
 
     ///
+    /// Date type : dd/mm/yyyy
+    struct Date
+    {
+	unsigned char day;
+	unsigned char month;
+	unsigned short year;
+    };
+
+    ///
     /// Road type enumeration
     enum RoadType
     {

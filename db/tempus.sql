@@ -9,7 +9,8 @@
 -- * changed the 'pk' prefix to 'abscissa' (curvilinear abscissa)
 -- * removed the field 'transport_type' from the 'road_section' table
 -- * fixed some typos
-
+-- * fixed the name of some IDs
+-- * added a fare_id external key to the fare_rules table
 
 --
 -- DROP and clean if needed
@@ -199,9 +200,9 @@ CREATE TABLE tempus.pt_section
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar
 (
-	service_id integer PRIMARY KEY,
+	id integer PRIMARY KEY,
 	monday bool NOT NULL,
-	thusday bool NOT NULL,
+	tuesday bool NOT NULL,
 	wednesday bool NOT NULL,
 	thursday bool NOT NULL,
 	friday bool NOT NULL,
@@ -215,7 +216,7 @@ CREATE TABLE tempus.pt_calendar
 -- GTFS Trip
 CREATE TABLE tempus.pt_trip
 (
-	trip_id bigint PRIMARY KEY, 
+	id bigint PRIMARY KEY, 
 	route_id integer REFERENCES tempus.pt_route NOT NULL,
 	service_id integer REFERENCES tempus.pt_calendar NOT NULL,
 	short_name varchar(12)
@@ -237,6 +238,7 @@ CREATE TABLE tempus.pt_calendar_date
 -- GTFS Stop Time
 CREATE TABLE tempus.pt_stop_time
 (
+	id integer PRIMARY KEY,
 	trip_id bigint REFERENCES tempus.pt_trip,
 	arrival_time TIME WITHOUT TIME ZONE NOT NULL,
 	departure_time TIME WITHOUT TIME ZONE NOT NULL,
@@ -273,6 +275,7 @@ CREATE TABLE tempus.pt_fare_attribute
 -- GTFS Frequency
 CREATE TABLE tempus.pt_frequency
 (
+	id integer PRIMARY KEY,
 	trip_id bigint REFERENCES tempus.pt_trip,
 	start_time TIME WITHOUT TIME ZONE NOT NULL,
 	end_time TIME WITHOUT TIME ZONE NOT NULL,
@@ -283,6 +286,7 @@ CREATE TABLE tempus.pt_frequency
 CREATE TABLE tempus.pt_fare_rule
 (
 	id bigint PRIMARY KEY,
+	fare_id bigint REFERENCES tempus.pt_fare_attribute NOT NULL,
 	route_id bigint REFERENCES tempus.pt_route NOT NULL,
 	origin_id integer NOT NULL, -- tempus.pt_stop (zone_id)
 	destination_id integer NOT NULL,  -- tempus.pt_stop (zone_id)

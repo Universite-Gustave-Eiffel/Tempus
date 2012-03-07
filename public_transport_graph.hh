@@ -71,6 +71,8 @@ namespace Tempus
 	    Road::Section* road_section;
 	    double abscissa_road_section;
 	    
+	    ///
+	    /// Fare zone ID of this stop
 	    int zone_id;
 
 	    bool check_consistency()
@@ -93,21 +95,54 @@ namespace Tempus
 	    Network* network;
 	};
 	
+	///
+	/// Refers to the 'pt_calendar' table
+	struct Calendar : public Base
+	{
+	    bool monday;
+	    bool tuesday;
+	    bool wednesday;
+	    bool thursday;
+	    bool friday;
+	    bool saturday;
+	    bool sunday;
 
-	/// Trip, Route and StopTime classes
+	    Date start_date, end_date;
+
+	    ///
+	    /// Refers to the 'pt_calendar_date' table.
+	    /// It represents exceptions to the regular service
+	    struct Exception : public Base
+	    {
+		Date calendar_date;
+		
+		enum ExceptionType
+		{
+		    ServiceAdded = 1,
+		    ServiceRemoved
+		};
+		ExceptionType exception_type;
+	    };
+
+	    std::vector<Exception> service_exceptions;
+	};
+	
+	/// Trip, Route, StopTime and Frequencies classes
 	///
 	/// The mapping is here a bit different from the one used in the database.
 	/// Basically a "Route" contains "Trips".
 	/// Each "Trip" can be statically described by a sequence of "Stops".
 	/// It can also be "instanciated" by attaching one or more StopTime to it
 	/// (which is described by some timing and transfer properties on each stop)
+	/// Alternatively time tables can be described by means of frequencies
+
 	struct Trip : public Base
 	{
 	    std::string short_name;
 
 	    ///
 	    /// partially refers to the 'pt_stop_time' table
-	    struct StopTime
+	    struct StopTime : public Base
 	    {
 		Time arrival_time;
 		Time departure_time;
@@ -117,24 +152,42 @@ namespace Tempus
 		int drop_off_type;
 		double shape_dist_traveled;
 	    };
+
+	    ///
+	    /// Refers to the 'pt_frequency' table
+	    struct Frequency : public Base
+	    {
+		Time start_time, end_time;
+		int headways_secs;
+	    };
 	    
 	    typedef std::vector<Stop*> StopSequence;
 	    typedef std::list< std::vector< StopTime > > StopTimes;
+	    typedef std::list<Frequency> Frequencies;
 
 	    ///
-	    /// sequence of stops that describe the trip
+	    /// Sequence of stops that describe the trip
 	    StopSequence stop_sequence;
-	    /// list of all possible stop times
+	    ///
+	    /// List of all stop times. Can be a subset of those stored in the database
 	    StopTimes stop_times;
+	    ///
+	    /// List of frequencies for this trip
+	    Frequencies frequencies;
 	    
+	    ///
+	    /// Link to the dates when service is available.
+	    /// Must not be null.
+	    Calendar* service;
+
 	    bool check_consistency()
 	    {
 		// check that the number of stops in a StopTime matches the number of stops of the trip
 		for ( StopTimes::const_iterator it = stop_times.begin(); it != stop_times.end(); it++ )
 		{
-		    if ( it->size() != stop_sequence.size() )
-			return false;
+		    EXPECT ( it->size() == stop_sequence.size() );
 		}
+		EXPECT( service != 0 );
 		return true;
 	    }
 	};
@@ -172,6 +225,53 @@ namespace Tempus
 	    }
 	};
 
+	///
+	/// Refers to the 'pt_fare_rule' table
+	struct FareRule : public Base
+	{
+	    Route* route;
+
+	    typedef std::vector<int> ZoneIdList;
+	    ZoneIdList origins;
+	    ZoneIdList destinations;
+	    ZoneIdList contains;
+	};
+	
+	struct FareAttribute : public Base
+	{
+	    char currency_type[4]; ///< ISO 4217 codes
+	    double price;
+
+	    enum TransferType
+	    {
+		NoTransferAllowed = 0,
+		OneTransferAllowed,
+		TwoTransfersAllowed,
+		UnlimitedTransfers = -1
+	    };
+	    int transfers;
+
+	    int transfers_duration; ///< in seconds
+
+	    typedef std::vector<FareRule> FareRulesList;
+	    FareRulesList fare_rules;
+
+	    bool check_consistency()
+	    {
+		EXPECT( ((transfers >= NoTransferAllowed) && (transfers <= TwoTransfersAllowed)) || (transfers == -1) );
+		return true;
+	    }
+
+	    FareAttribute()
+	    {
+		strncpy( currency_type, "EUR", 3 ); ///< default value
+	    };
+	};
+
+	///
+	/// Global object of fare attributes
+	std::vector<FareAttribute> fare_attributes;
+
 	struct Transfer : public Base
 	{
 	    ///
@@ -199,6 +299,7 @@ namespace Tempus
 		return true;
 	    }
 	};
+
     }; // PublicTransport namespace
 }; // Tempus namespace
 
