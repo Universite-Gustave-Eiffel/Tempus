@@ -20,13 +20,8 @@ namespace Tempus
     ///
     typedef long int db_id_t;
 
-    struct Base
+    struct ConsistentClass
     {
-	///
-	/// Persistant ID relative to the storage database.
-	/// Common to many classes.
-	db_id_t db_id;
-
 	///
 	/// Consistency checking.
 	/// When on debug mode, declare a virtual function that could be overloaded
@@ -39,6 +34,14 @@ namespace Tempus
 #endif
     };
 #define EXPECT( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Assertion " #expr " failed" << std::endl; return false; }}
+
+    struct Base : public ConsistentClass
+    {
+	///
+	/// Persistant ID relative to the storage database.
+	/// Common to many classes.
+	db_id_t db_id;
+    };
 
     ///
     /// Time is the number of seconds since 00:00
@@ -100,29 +103,29 @@ namespace Tempus
 	TransportRoller = (1 << 9)
     };
 
-    // forward declaration
-    std::map<db_id_t, TransportType> init_transport_types_();
-
     ///
     /// Transport types constants.
     /// This is made through a static function used to initialize a static map.
-    const std::map<db_id_t, TransportType> transport_types = init_transport_types_();
+    extern const std::map<db_id_t, TransportType> transport_types;
 
-    std::map<db_id_t, TransportType> init_transport_types_()
+    ///
+    /// Type used to model costs. Either in a Step or as an optimizing criterion.
+    /// This is a map to a double value and thus is user extensible.
+    typedef std::map<int, double> Costs;
+
+    ///
+    /// Default common cost identifiers
+    struct CostId
     {
-	std::map<db_id_t, TransportType> t;
-	t[ TransportCar ] = TransportType( TransportCar, 0, "Car", true, false, false ); 
-	t[ TransportPedestrial ] = TransportType( TransportPedestrial, 0, "Pedestrial", false, false, false ); 
-	t[ TransportCycle ] = TransportType( TransportCycle, 0, "Cycle", true, false, false ); 
-	t[ TransportBus ] = TransportType( TransportBus, 0, "Bus", false, false, false ); 
-	t[ TransportTramway ] = TransportType( TransportTramway, 0, "Tramway", false, false, false ); 
-	t[ TransportMetro ] = TransportType( TransportMetro, 0, "Metro", false, false, false ); 
-	t[ TransportTrain ] = TransportType( TransportTrain, 0, "Train", false, false, false ); 
-	t[ TransportSharedCycle ] = TransportType( TransportSharedCycle, TransportCycle, "Shared cycle", true, true, false ); 
-	t[ TransportSharedCar ] = TransportType( TransportSharedCar, TransportCar, "Shared car", true, true, false ); 
-	t[ TransportRoller ] = TransportType( TransportRoller, TransportPedestrial | TransportCycle, "Roller", false, false, false ); 
-	return t;
-    }
+	static const int Distance = 1;
+	static const int Duration = 2;
+	static const int Price = 3;
+	static const int Carbon = 4;
+	static const int Calories = 5;
+
+	static const int NumberOfChanges = 6;
+    };
+
 }; // Tempus namespace
 
 #endif

@@ -1,5 +1,44 @@
+#include <boost/graph/depth_first_search.hpp>
+#include <iostream>
+
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
+#include "plugin.hh"
+#include "gtfs_importer.hh"
+
+using namespace std;
+
+namespace PT = Tempus::PublicTransport;
+
+struct MyVisitor
+{
+    void initialize_vertex( PT::Vertex s, PT::Graph g )
+    {
+    }
+    void start_vertex( PT::Vertex s, PT::Graph g )
+    {
+    }
+    void discover_vertex( PT::Vertex s, PT::Graph g )
+    {
+	cout << "Discovering " << g[s].name << endl;
+    };
+    void finish_vertex( PT::Vertex s, PT::Graph g )
+    {
+    };
+    
+    void examine_edge( PT::Edge e, PT::Graph )
+    {
+    }
+    void tree_edge( PT::Edge e, PT::Graph )
+    {
+    }
+    void back_edge( PT::Edge e, PT::Graph )
+    {
+    }
+    void forward_or_cross_edge( PT::Edge e, PT::Graph )
+    {
+    }
+};
 
 int main()
 {
@@ -16,8 +55,6 @@ int main()
     road_graph[e].graph = &road_graph;
     road_graph[e].edge = e;
 
-    namespace PT = Tempus::PublicTransport;
-
     PT::Network tan;
     tan.name = "TAN";
 
@@ -30,10 +67,12 @@ int main()
 
     BOOST_ASSERT( stop.check_consistency() );
 
-    PT::Vertex m2 = boost::add_vertex( pt_graph );
-    pt_graph[m2].name = "Wattignies";
-    pt_graph[m2].road_section = &road_graph[e];
-    pt_graph[m2].abscissa_road_section = 0.5;
+    PT::Stop stop2;
+    stop2.name = "Wattignies";
+    stop2.road_section = &road_graph[e];
+    stop2.abscissa_road_section = 0.5;
+    // explicit use of an additional parameter to model vertex properties
+    PT::Vertex m2 = boost::add_vertex( stop2, pt_graph );
 
     PT::Vertex m3 = boost::add_vertex( pt_graph );
     pt_graph[m3].name = "Mangin";
@@ -43,9 +82,13 @@ int main()
 
     PT::Trip trip;
     trip.short_name = "Vers Mangin";
-    trip.stop_sequence.push_back( &pt_graph[m1] );
-    trip.stop_sequence.push_back( &pt_graph[m2] );
-    trip.stop_sequence.push_back( &pt_graph[m3] );
+
+    PT::Edge e1, e2;
+    tie( e1, is_added) = boost::add_edge( m1, m2, pt_graph );
+    tie( e2, is_added) = boost::add_edge( m2, m3, pt_graph );
+
+    PT::Calendar cal;
+    trip.service = &cal;
 
     BOOST_ASSERT( trip.check_consistency() );
 
@@ -57,6 +100,32 @@ int main()
     route.trips.push_back( trip );
 
     BOOST_ASSERT( route.check_consistency() );
+
+    //
+    // Exterior properties (a.k.a. dynamic valuations)
+    //
+    MyVisitor visitor;    
+
+    // Associative array (i.e. std::map)
+    typedef std::map< PT::Vertex, boost::default_color_type > AssociativePTColorMap;
+    AssociativePTColorMap colors;
+    boost::associative_property_map<AssociativePTColorMap> colors_property_map( colors );
+    boost::depth_first_search( pt_graph, visitor, colors_property_map );
+
+    ///
+    /// Plugins
+
+    void* h = Tempus::Plugin::load( "dummy_plugin" );
+
+    for (std::list<Tempus::Plugin*>::iterator it = Tempus::Plugin::plugins.begin(); it != Tempus::Plugin::plugins.end(); it++ )
+    {
+	std::cout << "plugin " << (*it)->get_name() << std::endl;
+    }
+
+    if ( h )
+    {
+	Tempus::Plugin::unload( h );
+    }
 
     return 0;
 }

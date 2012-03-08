@@ -8,7 +8,7 @@
    Tables with 1<->N arity are represented by STL containers (vectors or lists)
    External keys are represented by pointers to other classes.
    
-   Road::Node and Road::Section classes are used to build a BGL road graph.
+   Road::Node and Road::Section classes are used to build a BGL road graph as "bundled" edge and vertex properties
  */
 
 #ifndef TEMPUS_ROAD_GRAPH_HH

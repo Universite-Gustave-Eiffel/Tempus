@@ -16,7 +16,7 @@
 #define TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 
 #include "common.hh"
-#include <boost/graph/adjacency_list.hpp>
+#include "road_graph.hh"
 
 namespace Tempus
 {
@@ -26,9 +26,6 @@ namespace Tempus
 	{
 	    std::string name;
 	};
-	///
-	/// list of available public transport networks
-	std::vector< Network > networks;
 
 	///
 	/// storage types used to make a road graph
@@ -127,23 +124,22 @@ namespace Tempus
 	    std::vector<Exception> service_exceptions;
 	};
 	
+	///
 	/// Trip, Route, StopTime and Frequencies classes
 	///
-	/// The mapping is here a bit different from the one used in the database.
-	/// Basically a "Route" contains "Trips".
-	/// Each "Trip" can be statically described by a sequence of "Stops".
-	/// It can also be "instanciated" by attaching one or more StopTime to it
-	/// (which is described by some timing and transfer properties on each stop)
-	/// Alternatively time tables can be described by means of frequencies
-
 	struct Trip : public Base
 	{
 	    std::string short_name;
 
 	    ///
-	    /// partially refers to the 'pt_stop_time' table
+	    /// Refers to the 'pt_stop_time' table
 	    struct StopTime : public Base
 	    {
+		///
+		/// Link to the Stop. Must not be null.
+		/// Represents the link part of the "stop_sequence" field
+		Stop* stop;
+
 		Time arrival_time;
 		Time departure_time;
 		std::string stop_headsign;
@@ -161,15 +157,17 @@ namespace Tempus
 		int headways_secs;
 	    };
 	    
-	    typedef std::vector<Stop*> StopSequence;
+	    /// This is the definition of a list of stop times for a trip.
+	    /// The list of stop times has to be ordered to represent the sequence of stops
+	    /// (based on the "stop_sequence" field of the corresponding "stop_times" table
+	    ///
+	    /// This type can also be used as a roadmap for answers to planning requests
 	    typedef std::list< std::vector< StopTime > > StopTimes;
+
 	    typedef std::list<Frequency> Frequencies;
 
 	    ///
-	    /// Sequence of stops that describe the trip
-	    StopSequence stop_sequence;
-	    ///
-	    /// List of all stop times. Can be a subset of those stored in the database
+	    /// List of all stop times. Can be a subset of those stored in the database.
 	    StopTimes stop_times;
 	    ///
 	    /// List of frequencies for this trip
@@ -182,11 +180,6 @@ namespace Tempus
 
 	    bool check_consistency()
 	    {
-		// check that the number of stops in a StopTime matches the number of stops of the trip
-		for ( StopTimes::const_iterator it = stop_times.begin(); it != stop_times.end(); it++ )
-		{
-		    EXPECT ( it->size() == stop_sequence.size() );
-		}
 		EXPECT( service != 0 );
 		return true;
 	    }
@@ -267,10 +260,6 @@ namespace Tempus
 		strncpy( currency_type, "EUR", 3 ); ///< default value
 	    };
 	};
-
-	///
-	/// Global object of fare attributes
-	std::vector<FareAttribute> fare_attributes;
 
 	struct Transfer : public Base
 	{
