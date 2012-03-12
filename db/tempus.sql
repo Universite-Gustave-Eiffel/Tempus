@@ -300,7 +300,7 @@ CREATE TABLE tempus.pt_transfer
 (
 	from_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL,
 	to_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL,
-	transfer_type integer NOT NULL CHECK(transfert_type >=0 AND transfert_type <=3),
+	transfer_type integer NOT NULL CHECK(transfer_type >=0 AND transfer_type <=3),
 	--    0 or (empty) - This is a recommended transfer point between two routes.
 	--    1 - This is a timed transfer point between two routes. The departing vehicle is expected to wait for the arriving one, with sufficient time for a passenger to transfer between routes.
 	--    2 - This transfer requires a minimum amount of time between arrival and departure to ensure a connection. The time required to transfer is specified by min_transfer_time.
