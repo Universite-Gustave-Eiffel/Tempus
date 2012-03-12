@@ -66,7 +66,8 @@ namespace Tempus
 	    Edge edge;
 
 	    RoadType      road_type;
-	    int           transport_type; ///< bitfield of TransportTypeId
+	    int           transport_type_ft; ///< bitfield of TransportTypeId
+	    int           transport_type_tf; ///< bitfield of TransportTypeId
 	    double        length;
 	    double        car_speed_limit;
 	    double        car_average_speed;
