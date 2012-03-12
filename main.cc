@@ -4,7 +4,7 @@
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
 #include "plugin.hh"
-#include "gtfs_importer.hh"
+#include "pgsql_importer.hh"
 
 using namespace std;
 
@@ -38,6 +38,31 @@ struct MyVisitor
     void forward_or_cross_edge( PT::Edge e, PT::Graph )
     {
     }
+};
+
+struct TextProgression : public Tempus::ProgressionCallback
+{
+public:
+    TextProgression( int N = 50 ) : N_(N)
+    {
+    }
+    virtual void operator()( float percent, bool finished )
+    {
+	std::cout << "\r";
+	int n = percent * N_;
+	std::cout << "[";
+	for (int i = 0; i < n; i++)
+	    std::cout << ".";
+	for (int i = n; i < N_; i++)
+	    std::cout << " ";
+	std::cout << "] ";
+	std::cout << int(percent * 100 ) << "%";
+	if ( finished )
+	    std::cout << std::endl;
+	std::cout.flush();
+    }
+protected:
+    int N_;
 };
 
 int main()
@@ -126,6 +151,13 @@ int main()
     {
 	Tempus::Plugin::unload( h );
     }
+
+    Tempus::PQImporter importer( "dbname = tempus" );
+    
+    Tempus::MultimodalGraph graph;
+    TextProgression progression(50);
+    std::cout << "Loading graph from database: " << std::endl;
+    importer.import_graph( graph, progression );
 
     return 0;
 }
