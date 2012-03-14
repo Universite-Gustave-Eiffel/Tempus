@@ -7,6 +7,7 @@
 #include "pgsql_importer.hh"
 
 using namespace std;
+using namespace Tempus;
 
 namespace PT = Tempus::PublicTransport;
 
@@ -145,6 +146,31 @@ int main()
     for (std::list<Tempus::Plugin*>::iterator it = Tempus::Plugin::plugins.begin(); it != Tempus::Plugin::plugins.end(); it++ )
     {
 	std::cout << "plugin " << (*it)->get_name() << std::endl;
+
+	(*it)->pre_build();
+	(*it)->build();
+	(*it)->post_build();
+
+	//
+	// Build the user request
+	MultimodalGraph* graph = (*it)->get_graph();
+	Road::Graph& road_graph = graph->road;
+
+	Road::VertexIterator vb, ve;
+	boost::tie( vb, ve) = boost::vertices( road_graph );
+	ve--;
+
+	// go from the first road node, to the last one
+	Request req;
+	req.steps.push_back( &road_graph[*vb] );
+	req.steps.push_back( &road_graph[*ve] );
+
+	// the only optimizing criterion
+	req.optimizing_criteria.push_back( CostDuration );
+
+	(*it)->pre_process();
+	(*it)->process( req );
+	(*it)->post_process();
     }
 
     if ( h )

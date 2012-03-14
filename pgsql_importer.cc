@@ -1,7 +1,10 @@
+#include <postgresql/libpq-fe.h>
+
 #include <iostream>
 #include <pqxx/pqxx>
 
 #include <boost/mpl/vector.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "pgsql_importer.hh"
 
@@ -19,23 +22,23 @@ namespace Tempus
     /// Function used to import a graph from a PostgreSQL database.
     void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
     {
-	pqxx::work w( connection_ );
-	
 	Road::Graph& road_graph = graph.road;
 	PublicTransport::Graph pt_graph_;
 	graph.public_transports.push_back( pt_graph_ );
 	PublicTransport::Graph& pt_graph = graph.public_transports.back();
 
-	// maps db ID to Node*
-	// temporary
+	// locally maps db ID to Node or Section
 	std::map<Tempus::db_id_t, Road::Node*> road_nodes_map;
 	std::map<Tempus::db_id_t, Road::Section*> road_sections_map;
 	std::map<Tempus::db_id_t, PublicTransport::Stop*> pt_nodes_map;
 	std::map<Tempus::db_id_t, PublicTransport::Section*> pt_sections_map;
 
-	try
+	//	try
 	{
+	pqxx::work w( connection_ );
+	
 	    pqxx::result res = w.exec( "SELECT id, junction, bifurcation FROM tempus.road_node" );
+	    std::cout << res.size() << std::endl;
 	
 	    for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
 	    {
@@ -53,30 +56,33 @@ namespace Tempus
 
 		progression( (float)((i + 0.) / res.size() / 4.0) );
 	    }
-	}
-	catch (const std::exception &e)
-	{
-	    throw std::runtime_error( std::string("During extraction of road nodes: ") + e.what() );
-	}
 
-	try
+	}
+	// catch (const std::exception &e)
+	// {
+	//     throw std::runtime_error( std::string("During extraction of road nodes: ") + e.what() );
+	// }
+
+	//	try
 	{
-	    pqxx::result res = w.exec( "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, "
-				       "car_speed_limit, car_average_speed, bus_average_speed, road_name, address_left_side, address_right_side, "
-				       "lane, roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section" );
+	    pqxx::work w( connection_ );
 	
+	    std::string query = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, car_average_speed, bus_average_speed, road_name, address_left_side, address_right_side, lane, roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section";
+	    
+	    pqxx::result res = w.exec( query );
+	    
+	    std::cout << res.size() << std::endl;
 	    for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
 	    {
 		Road::Section section;
 
 		res[i][0] >> section.db_id;
-		//	    section.db_id = res[i][0].as<int>();
 		if ( !res[i][1].is_null() )
 		    section.road_type = static_cast<RoadType>(res[i][1].as<int>());
-
+		
 		int node_from_id = res[i][2].as<int>();
 		int node_to_id = res[i][3].as<int>();
-
+		
 		int j = 4;
 		res[i][j++] >> section.transport_type_ft;
 		res[i][j++] >> section.transport_type_tf;
@@ -95,10 +101,11 @@ namespace Tempus
 		res[i][j++] >> section.is_tollway;	    
 
 		Road::Vertex v_from = road_nodes_map[ node_from_id ]->vertex;
-		Road::Vertex v_to = road_nodes_map[ node_from_id ]->vertex;
+		Road::Vertex v_to = road_nodes_map[ node_to_id ]->vertex;
 
 		Road::Edge e;
 		bool is_added;
+		std::cout << "v_from = " << v_from << " v_to = " << v_to << std::endl;
 		boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
 		road_graph[e].edge = e;
 		road_graph[e].graph = &road_graph;
@@ -107,13 +114,15 @@ namespace Tempus
 		progression( (float)((i + 0.) / res.size() / 4.0) + 0.25 );
 	    }
 	}
-	catch (const std::exception &e)
-	{
-	    throw std::runtime_error( std::string("During extraction of road sections: ") + e.what() );
-	}
+	// catch (const std::exception &e)
+	// {
+	//     throw std::runtime_error( std::string("During extraction of road sections: ") + e.what() );
+	// }
 
 	try
 	{
+	pqxx::work w( connection_ );
+	
 	    pqxx::result res = w.exec( "SELECT id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
 	
 	    for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
@@ -153,6 +162,8 @@ namespace Tempus
 
 	try
 	{
+	pqxx::work w( connection_ );
+	
 	    pqxx::result res = w.exec( "SELECT stop_from, stop_to FROM tempus.pt_section" );
 	
 	    for ( pqxx::result::size_type i = 0; i < res.size(); i++ )

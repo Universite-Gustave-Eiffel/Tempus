@@ -27,5 +27,59 @@ namespace Tempus
 	    dlclose( handle );
 	}
     }
+
+    void Plugin::pre_build()
+    {
+	std::cout << "[" << name_ << "]: " << "pre_build" << std::endl;
+    }
+
+    void Plugin::build( /* database request */)
+    {
+	std::cout << "[" << name_ << "]: " << "build" << std::endl;
+    }
+
+    void Plugin::post_build()
+    {
+	std::cout << "[" << name_ << "]: " << "post_build" << std::endl;
+    }
+
+    void Plugin::validate()
+    {
+	std::cout << "[" << name_ << "]: " << "validate" << std::endl;
+    }
+
+    ///
+    /// ???
+    void Plugin::accessor()
+    {
+	std::cout << "[" << name_ << "]: " << "accessor" << std::endl;
+    }
+
+    void Plugin::pre_process()
+    {
+	std::cout << "[" << name_ << "]: " << "pre_process" << std::endl;
+    }
+
+    ///
+    /// Process the user request.
+    /// Must populates the 'result_' object.
+    void Plugin::process(Request& request)
+    {
+	request_ = request;
+	std::cout << "[" << name_ << "]: " << "process" << std::endl;
+    }
+
+    void Plugin::post_process()
+    {
+	std::cout << "[" << name_ << "]: " << "post_process" << std::endl;
+    }
+
+    ///
+    /// ??? text formatting ?
+    void Plugin::result()
+    {
+	std::cout << "[" << name_ << "]: " << "result" << std::endl;
+    }
+
 };
 
