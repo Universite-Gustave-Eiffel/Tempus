@@ -45,7 +45,10 @@ namespace Tempus
 
     ///
     /// Time is the number of seconds since 00:00
-    typedef int Time;
+    struct Time
+    {
+	long n_secs;
+    };
 
     ///
     /// Date type : dd/mm/yyyy

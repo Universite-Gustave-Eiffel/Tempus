@@ -5,6 +5,7 @@
 
 #include <boost/mpl/vector.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 
 #include "pgsql_importer.hh"
 
@@ -19,7 +20,7 @@ namespace Tempus
     }
     
     ///
-    /// Function used to import a graph from a PostgreSQL database.
+    /// Function used to import the road and public transport graphs from a PostgreSQL database.
     void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
     {
 	Road::Graph& road_graph = graph.road;
