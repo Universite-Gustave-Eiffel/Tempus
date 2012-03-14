@@ -92,6 +92,9 @@ namespace Tempus
 	    Network* network;
 	};
 	
+	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
+	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
+
 	///
 	/// Refers to the 'pt_calendar' table
 	struct Calendar : public Base

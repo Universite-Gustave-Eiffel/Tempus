@@ -82,6 +82,9 @@ namespace Tempus
 	    bool          is_ramp;
 	    bool          is_tollway;
 	};
+
+	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
+	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
     };
 
     ///

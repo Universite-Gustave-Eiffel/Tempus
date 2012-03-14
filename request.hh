@@ -21,7 +21,7 @@ namespace Tempus
     public:
 	///
 	/// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may includes intermediary points.
-	std::list<Road::Section*> steps;
+	std::vector<Road::Node*> steps;
 
 	///
 	/// Allowed transport types. Because transport types are all powers of 2. It can be expressed by means of an integer.
@@ -29,11 +29,12 @@ namespace Tempus
 
 	///
 	/// Criteria to optimize. The list is ordered by criterion priority
-	std::list<CostId> optimizing_criteria;
+	std::vector<int> optimizing_criteria;
 
 	bool check_consistency()
 	{
 	    EXPECT( steps.size() >= 2 );
+	    EXPECT( optimizing_criteria.size() >= 1 );
 	    return true;
 	}
     };

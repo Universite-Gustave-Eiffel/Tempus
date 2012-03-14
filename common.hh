@@ -115,15 +115,14 @@ namespace Tempus
 
     ///
     /// Default common cost identifiers
-    struct CostId
+    enum CostId
     {
-	static const int Distance = 1;
-	static const int Duration = 2;
-	static const int Price = 3;
-	static const int Carbon = 4;
-	static const int Calories = 5;
-
-	static const int NumberOfChanges = 6;
+	CostDistance = 1,
+	CostDuration,
+	CostPrice,
+	CostCarbon,
+	CostCalories,
+	CostNumberOfChanges
     };
 
 }; // Tempus namespace

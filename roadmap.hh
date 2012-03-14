@@ -71,7 +71,7 @@ namespace Tempus
 
 	///
 	/// A Roadmap is a list of Step augmented with some total costs.
-	typedef std::list<Step*> StepList;
+	typedef std::vector<Step*> StepList;
 	StepList steps;
 	Costs total_costs;
     };
