@@ -31,12 +31,13 @@ namespace Tempus
 		throw std::runtime_error( "Unsupported optimizing criterion" );
 	    }
 	    PublicTransport::Graph pt_graph = graph_.public_transports.front();
+	    Road::Graph& road_graph = graph_.road;
 
 	    // for each step in the request, find the corresponding public transport node
 	    
 	    for ( size_t i = 0; i < request.steps.size(); i++ )
 	    {
-		Road::Node* node = request.steps[i];
+		Road::Vertex node = request.steps[i];
 		
 		bool found = false;
 		PublicTransport::Vertex found_vertex;
@@ -45,12 +46,11 @@ namespace Tempus
 		for ( boost::tie(vb, ve) = boost::vertices( pt_graph ); vb != ve; vb++ )
 		{
 		    PublicTransport::Stop& stop = pt_graph[*vb];
-		    Road::Section* section = stop.road_section;
+		    Road::Edge section = stop.road_section;
 		    Road::Vertex s, t;
-		    Road::Graph& g = *section->graph;
-		    s = boost::source( section->edge, g );
-		    t = boost::target( section->edge, g );
-		    if ( (node == &g[s]) || (node == &g[t]) )
+		    s = boost::source( section, road_graph );
+		    t = boost::target( section, road_graph );
+		    if ( (node == s) || (node == t) )
 		    {
 			found_vertex = *vb;
 			found = true;
@@ -60,7 +60,7 @@ namespace Tempus
 		
 		if (found)
 		{
-		    std::cout << "Found" << std::endl;
+		    std::cout << "Road node #" << node << " <-> Public transport node '" << pt_graph[found_vertex].name << "'" << std::endl;
 		}
 	    }
 	    // minimize duration

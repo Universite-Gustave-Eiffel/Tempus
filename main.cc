@@ -78,7 +78,6 @@ int main()
     tie( e, is_added ) = boost::add_edge( a, b, road_graph );
     road_graph[e].road_name = "Boulevard des martyrs Nantais de la Résistance";
 
-    road_graph[e].graph = &road_graph;
     road_graph[e].edge = e;
 
     PT::Network tan;
@@ -88,21 +87,21 @@ int main()
     PT::Vertex m1 = boost::add_vertex( pt_graph );
     PT::Stop& stop = pt_graph[m1];
     stop.name = "Vincent Gâche";
-    stop.road_section = &road_graph[e];
+    stop.road_section = e;
     stop.abscissa_road_section = 0.1;
 
     BOOST_ASSERT( stop.check_consistency() );
 
     PT::Stop stop2;
     stop2.name = "Wattignies";
-    stop2.road_section = &road_graph[e];
+    stop2.road_section = e;
     stop2.abscissa_road_section = 0.5;
     // explicit use of an additional parameter to model vertex properties
     PT::Vertex m2 = boost::add_vertex( stop2, pt_graph );
 
     PT::Vertex m3 = boost::add_vertex( pt_graph );
     pt_graph[m3].name = "Mangin";
-    pt_graph[m3].road_section = &road_graph[e];
+    pt_graph[m3].road_section = e;
     pt_graph[m3].abscissa_road_section = 0.8;
 
 
@@ -162,8 +161,8 @@ int main()
 
 	// go from the first road node, to the last one
 	Request req;
-	req.steps.push_back( &road_graph[*vb] );
-	req.steps.push_back( &road_graph[*ve] );
+	req.steps.push_back( *vb );
+	req.steps.push_back( *ve );
 
 	// the only optimizing criterion
 	req.optimizing_criteria.push_back( CostDuration );

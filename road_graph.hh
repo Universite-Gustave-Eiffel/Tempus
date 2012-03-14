@@ -47,7 +47,6 @@ namespace Tempus
 	    /// This is a shortcut to the vertex index in the corresponding graph, if any.
 	    /// Needed to speedup access to a graph's vertex from a Node.
 	    /// Can be null
-	    Graph* graph;
 	    Vertex vertex;
 
 	    bool is_junction;
@@ -62,7 +61,6 @@ namespace Tempus
 	    /// This is a shortcut to the edge index in the corresponding graph, if any.
 	    /// Needed to speedup access to a graph's edge from a Section.
 	    /// Can be null
-	    Graph* graph;
 	    Edge edge;
 
 	    RoadType      road_type;
@@ -107,12 +105,12 @@ namespace Tempus
 	///
 	/// Link to a road section.
 	/// Must not be null.
-	Road::Section* road_section;
+	Road::Edge road_section;
 	double abscissa_road_section;
 
 	bool check_consistency()
 	{
-	    EXPECT( road_section != 0 );
+	    //	    EXPECT( road_section != 0 );
 	    return true;
 	}
     }; // Road namespace

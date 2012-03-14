@@ -21,7 +21,7 @@ namespace Tempus
     public:
 	///
 	/// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may includes intermediary points.
-	std::vector<Road::Node*> steps;
+	std::vector<Road::Vertex> steps;
 
 	///
 	/// Allowed transport types. Because transport types are all powers of 2. It can be expressed by means of an integer.
