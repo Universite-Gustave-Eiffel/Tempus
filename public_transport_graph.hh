@@ -53,7 +53,6 @@ namespace Tempus
 	    /// This is a shortcut to the vertex index in the corresponding graph, if any.
 	    /// Needed to speedup access to a graph's vertex from a Node.
 	    /// Can be null
-	    Graph* graph;
 	    Vertex vertex;
 
 	    std::string name;
@@ -61,11 +60,12 @@ namespace Tempus
 	   
 	    /// 
 	    /// link to a possible parent station, or null
-	    Stop* parent_station;
+	    Vertex parent_station;
+	    bool has_parent;
 	    
 	    /// link to a road section
 	    /// must not be null
-	    Road::Section* road_section;
+	    Road::Edge road_section;
 	    double abscissa_road_section;
 	    
 	    ///
@@ -74,7 +74,7 @@ namespace Tempus
 
 	    bool check_consistency()
 	    {
-		EXPECT( road_section != 0 );
+		//		EXPECT( road_section != 0 );
 		return true;
 	    }
 	};
@@ -86,12 +86,14 @@ namespace Tempus
 	    /// This is a shortcut to the edge index in the corresponding graph, if any.
 	    /// Needed to speedup access to a graph's edge from a Section
 	    /// Can be null
-	    Graph* graph;
 	    Edge edge;
 	    /// must not be null
 	    Network* network;
 	};
 	
+	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
+	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
+
 	///
 	/// Refers to the 'pt_calendar' table
 	struct Calendar : public Base
@@ -138,7 +140,7 @@ namespace Tempus
 		///
 		/// Link to the Stop. Must not be null.
 		/// Represents the link part of the "stop_sequence" field
-		Stop* stop;
+		PublicTransport::Vertex stop;
 
 		Time arrival_time;
 		Time departure_time;
@@ -266,7 +268,7 @@ namespace Tempus
 	    ///
 	    /// Link between two stops.
 	    /// Must not be null
-	    Stop *from_stop, *to_stop;
+	    Vertex from_stop, to_stop;
 
 	    enum TranferType
 	    {

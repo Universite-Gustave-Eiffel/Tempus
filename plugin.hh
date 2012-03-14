@@ -36,7 +36,6 @@ namespace Tempus
 	/// Called when the plugin is loaded into memory (install)
 	Plugin(std::string name) : name_(name)
 	{
-	    std::cout << name_ << " constructor" << std::endl;
 	    // TODO : look for existing plugin of the same name
 	    plugins.push_back( this );
 	}
@@ -48,59 +47,32 @@ namespace Tempus
 	    std::list<Plugin*>::iterator it;
 	    it = std::find( plugins.begin(), plugins.end(), this );
 	    plugins.erase( it );
-	    std::cout << name_ << " destructor" << std::endl;
 	}
 
-	virtual void pre_build()
-	{
-	    std::cout << "[" << name_ << "]: " << "pre_build" << std::endl;
-	}
-	virtual void build( /* databse request */)
-	{
-	    std::cout << "[" << name_ << "]: " << "build" << std::endl;
-	}
-	virtual void post_build()
-	{
-	    std::cout << "[" << name_ << "]: " << "post_build" << std::endl;
-	}
+	virtual void pre_build();
+	virtual void build();
+	virtual void post_build();
 
-	virtual void validate()
-	{
-	    std::cout << "[" << name_ << "]: " << "validate" << std::endl;
-	}
-
+	virtual void validate();
 	///
 	/// ???
-	virtual void accessor()
-	{
-	    std::cout << "[" << name_ << "]: " << "accessor" << std::endl;
-	}
+	virtual void accessor();
 
-	virtual void pre_process()
-	{
-	    std::cout << "[" << name_ << "]: " << "pre_process" << std::endl;
-	}
+	virtual void pre_process();
 
 	///
 	/// Process the user request.
 	/// Must populates the 'result_' object.
-	virtual void process(Request& request)
-	{
-	    request_ = request;
-	    std::cout << "[" << name_ << "]: " << "process" << std::endl;
-	}
+	virtual void process( /* IN */ Request& request);
 
-	virtual void post_process()
-	{
-	    std::cout << "[" << name_ << "]: " << "post_process" << std::endl;
-	}
+	virtual void post_process();
 
 	///
 	/// ??? text formatting ?
-	virtual void result()
-	{
-	    std::cout << "[" << name_ << "]: " << "result" << std::endl;
-	}
+	virtual void result();
+
+	MultimodalGraph* get_graph() { return &graph_; }
+	Result* get_result() { return &result_; }
 
     protected:
 	///
@@ -121,7 +93,7 @@ namespace Tempus
 
 ///
 /// Macro used inside plugins.
-/// This way, constructor will be called on library loading and destructor on library unloadings
+/// This way, the constructor will be called on library loading and the destructor on library unloading
 #define DECLARE_TEMPUS_PLUGIN( type ) static Tempus::type plugin_instance_
 
 #endif
