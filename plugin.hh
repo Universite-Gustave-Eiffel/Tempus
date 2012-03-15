@@ -54,8 +54,9 @@ namespace Tempus
 	virtual void post_build();
 
 	virtual void validate();
+
 	///
-	/// ???
+	/// TODO: find a way to use a visitor
 	virtual void accessor();
 
 	virtual void pre_process();
@@ -68,7 +69,7 @@ namespace Tempus
 	virtual void post_process();
 
 	///
-	/// ??? text formatting ?
+	/// Result formatting
 	virtual void result();
 
 	MultimodalGraph* get_graph() { return &graph_; }
