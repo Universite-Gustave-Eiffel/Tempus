@@ -78,6 +78,7 @@ COPY pt_route (id, network_id, short_name, long_name, route_type, geom) FROM std
 COPY pt_trip (id, route_id, service_id, short_name) FROM stdin;
 1	1	1	TAN2AM
 2	1	1	TAN2AM2
+3	1	1	TANAM3
 \.
 
 
@@ -86,9 +87,6 @@ COPY pt_trip (id, route_id, service_id, short_name) FROM stdin;
 --
 
 COPY pt_stop_time (id, trip_id, arrival_time, departure_time, stop_id, stop_sequence, stop_headsign, pickup_type, drop_off_type, shape_dist_traveled) FROM stdin;
-1	1	10:00:00	10:00:00	1	1	2A Direction Mangin	0	0	0
-2	1	10:02:00	10:02:00	2	2	2A Direction Mangin	0	0	0
-3	1	10:04:00	10:04:00	3	3	2A Direction Mangin	0	0	0
 4	1	10:06:00	10:06:00	4	4	2A Direction Mangin	0	0	0
 5	1	10:08:00	10:08:00	5	5	2A Direction Mangin	0	0	0
 10	2	10:10:00	10:10:00	1	1	2A Direction Mangin	0	0	0
@@ -96,5 +94,9 @@ COPY pt_stop_time (id, trip_id, arrival_time, departure_time, stop_id, stop_sequ
 12	2	10:14:00	10:14:00	3	3	2A Direction Mangin	0	0	0
 13	2	10:16:00	10:16:00	4	4	2A Direction Mangin	0	0	0
 14	2	10:18:00	10:18:00	5	5	2A Direction Mangin	0	0	0
+1	3	10:00:00	10:00:00	1	1	3 Direction Rezé	0	0	0
+2	3	10:02:00	10:02:00	2	2	3 Direction Rezé	0	0	0
+3	3	10:04:00	10:04:00	3	3	3 Direction Rezé	0	0	0
+15	1	10:05:00	10:05:00	3	3	2A Direction Mangin	0	0	0
 \.
 

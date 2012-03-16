@@ -30,34 +30,34 @@ namespace Tempus
 
     void Plugin::pre_build()
     {
-	std::cout << "[" << name_ << "]: " << "pre_build" << std::endl;
+	std::cout << "[plugin_base]: pre_build" << std::endl;
     }
 
     void Plugin::build( /* database request */)
     {
-	std::cout << "[" << name_ << "]: " << "build" << std::endl;
+	std::cout << "[plugin_base]: build" << std::endl;
     }
 
     void Plugin::post_build()
     {
-	std::cout << "[" << name_ << "]: " << "post_build" << std::endl;
+	std::cout << "[plugin_base]: post_build" << std::endl;
     }
 
     void Plugin::validate()
     {
-	std::cout << "[" << name_ << "]: " << "validate" << std::endl;
+	std::cout << "[plugin_base]: validate" << std::endl;
     }
 
     ///
     /// ???
     void Plugin::accessor()
     {
-	std::cout << "[" << name_ << "]: " << "accessor" << std::endl;
+	std::cout << "[plugin_base]: accessor" << std::endl;
     }
 
     void Plugin::pre_process()
     {
-	std::cout << "[" << name_ << "]: " << "pre_process" << std::endl;
+	std::cout << "[plugin_base]: pre_process" << std::endl;
     }
 
     ///
@@ -66,19 +66,19 @@ namespace Tempus
     void Plugin::process(Request& request)
     {
 	request_ = request;
-	std::cout << "[" << name_ << "]: " << "process" << std::endl;
+	std::cout << "[plugin_base]: process" << std::endl;
     }
 
     void Plugin::post_process()
     {
-	std::cout << "[" << name_ << "]: " << "post_process" << std::endl;
+	std::cout << "[plugin_base]: post_process" << std::endl;
     }
 
     ///
     /// ??? text formatting ?
     void Plugin::result()
     {
-	std::cout << "[" << name_ << "]: " << "result" << std::endl;
+	std::cout << "[plugin_base]: result" << std::endl;
     }
 
 };

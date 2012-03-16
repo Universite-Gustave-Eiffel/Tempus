@@ -9,38 +9,6 @@
 using namespace std;
 using namespace Tempus;
 
-namespace PT = Tempus::PublicTransport;
-
-struct MyVisitor
-{
-    void initialize_vertex( PT::Vertex s, PT::Graph g )
-    {
-    }
-    void start_vertex( PT::Vertex s, PT::Graph g )
-    {
-    }
-    void discover_vertex( PT::Vertex s, PT::Graph g )
-    {
-	cout << "Discovering " << g[s].name << endl;
-    };
-    void finish_vertex( PT::Vertex s, PT::Graph g )
-    {
-    };
-    
-    void examine_edge( PT::Edge e, PT::Graph )
-    {
-    }
-    void tree_edge( PT::Edge e, PT::Graph )
-    {
-    }
-    void back_edge( PT::Edge e, PT::Graph )
-    {
-    }
-    void forward_or_cross_edge( PT::Edge e, PT::Graph )
-    {
-    }
-};
-
 int main()
 {
     ///
@@ -48,12 +16,15 @@ int main()
 
     void* h = Tempus::Plugin::load( "dummy_plugin" );
 
-    for (std::list<Tempus::Plugin*>::iterator it = Tempus::Plugin::plugins.begin(); it != Tempus::Plugin::plugins.end(); it++ )
+    for (list<Tempus::Plugin*>::iterator it = Tempus::Plugin::plugins.begin(); it != Tempus::Plugin::plugins.end(); it++ )
     {
-	std::cout << "plugin " << (*it)->get_name() << std::endl;
+	cout << "[plugin " << (*it)->get_name() << "]" << endl;
 
+	cout << endl << ">> pre_build" << endl;
 	(*it)->pre_build();
+	cout << endl << ">> build" << endl;
 	(*it)->build();
+	cout << endl << ">> post_build" << endl;
 	(*it)->post_build();
 
 	//
@@ -75,11 +46,15 @@ int main()
 	// the only optimizing criterion
 	req.optimizing_criteria.push_back( CostDuration );
 
+	cout << endl << ">> pre_process" << endl;
 	(*it)->pre_process();
+	cout << endl << ">> process" << endl;
 	(*it)->process( req );
+	cout << endl << ">> post_process" << endl;
 	(*it)->post_process();
 
-	// TODO: result processing
+	cout << endl << ">> result" << endl;
+	(*it)->result();
     }
 
     if ( h )

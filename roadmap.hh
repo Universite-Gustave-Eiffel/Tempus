@@ -20,24 +20,15 @@ namespace Tempus
     {
     public:
 	///
-	/// A Step is a part of a route, where the transport type is constant
-	/// This a genereic class
-	struct Step
-	{
-	    TransportType transport_type;
-	    Costs costs;
-	};
-
-	///
 	/// A Step that occurs on the road, either by a pedestrian or a private vehicle
-	struct RoadStep : public Step
+	struct RoadStep
 	{
 	    ///
 	    /// The road section where to start from
-	    Road::Section* road_section;
+	    Road::Edge road_section;
 	    ///
 	    /// The road section where to go in the direction of
-	    Road::Section* road_direction;
+	    Road::Edge road_direction;
 	    ///
 	    /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
 	    ///
@@ -62,16 +53,31 @@ namespace Tempus
 
 	///
 	/// A Step made with a public transport
-	struct PublicTransportStep : public Step
+	struct PublicTransportStep
 	{
-	    PublicTransport::Stop* departure_stop;
-	    PublicTransport::Stop* arrival_stop;
-	    PublicTransport::Route* route; ///< will indicate the direction ?
+	    PublicTransport::Vertex departure_stop;
+	    PublicTransport::Vertex arrival_stop;
+	    db_id_t trip_id; ///< used to indicate the direction
+	};
+
+	///
+	/// A Step is a part of a route, where the transport type is constant
+	/// This a generic class
+	struct Step
+	{
+	    TransportTypeId transport_type;
+	    Costs costs;
+
+	    ///
+	    /// It is either a step made of road steps or public transport steps.
+	    /// TODO: if it is too memory-demanding, consider using derived classes (Step <= RoadStep and Step <= PublicTransportStep)
+	    RoadStep road;
+	    PublicTransportStep pt;
 	};
 
 	///
 	/// A Roadmap is a list of Step augmented with some total costs.
-	typedef std::vector<Step*> StepList;
+	typedef std::vector<Step> StepList;
 	StepList steps;
 	Costs total_costs;
     };
