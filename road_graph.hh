@@ -29,12 +29,12 @@ namespace Tempus
 	///
 	/// To make a long line short: VertexDescriptor is either typedef'd to size_t or to a pointer,
 	/// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
-	typedef typename boost::mpl::if_<typename boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
+	typedef boost::mpl::if_<typename boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 	/// see adjacency_list.hpp
-	typedef typename boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
+	typedef boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
 
-	class Node;
-	class Section;
+	struct Node;
+	struct Section;
 	///
 	/// The final road graph type
 	typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;

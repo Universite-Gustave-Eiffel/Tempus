@@ -9,14 +9,15 @@
 #ifndef TEMPUS_REQUEST_HH
 #define TEMPUS_REQUEST_HH
 
-#include <list>
-
 #include "common.hh"
 #include "road_graph.hh"
 
+#include <list>
+#include <boost/any.hpp>
+
 namespace Tempus
 {
-    class Request : public ConsistentClass
+	class Request : public ConsistentClass
     {
     public:
 	
@@ -43,7 +44,7 @@ namespace Tempus
 	    TimeConstraint departure_constraint;
 	    TimeConstraint arrival_constraint;
 	};
-	
+
 	typedef std::vector<Step> StepList;
 	///
 	/// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may includes intermediary points.
@@ -65,6 +66,7 @@ namespace Tempus
 	/// When private transports are used, the request must specify where the private vehicules are parked.
 	/// A std::map is used here where a Tempus::TransportType is associated to a Road::Vertex.
 	/// The map must contains an entry for each selected transport types where a parking is needed (see Tempus::TransportType::need_parking)
+	/// TODO: replace by a more generic "option" associated to each transport type ?? (based on a map<int, boost::any> ?)
 	std::map<unsigned, Road::Vertex> parking_location;
 
 	///

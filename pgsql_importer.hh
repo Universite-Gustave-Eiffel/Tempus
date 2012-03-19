@@ -20,7 +20,7 @@ namespace Tempus
     class ProgressionCallback
     {
     public:
-	virtual void operator()( float percent, bool finished = false )
+	virtual void operator()( float, bool = false )
 	{
 	    // Default : do nothing
 	}

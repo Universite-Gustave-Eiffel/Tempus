@@ -1,30 +1,66 @@
-#include <dlfcn.h>
 #include <string>
 #include <iostream>
 
 #include "plugin.hh"
 
+typedef Tempus::Plugin* (*PluginCreationFct)();
+typedef void (*PluginDeletionFct)(Tempus::Plugin*);
+
 namespace Tempus
 {
-    std::list<Plugin*> Plugin::plugins;
-
-    void* Plugin::load( const char* dll_name )
+    Plugin* Plugin::load( const char* dll_name )
     {
-	std::string complete_dll_name = "./lib" + std::string( dll_name ) + ".so";
+	std::string complete_dll_name = DLL_PREFIX + std::string( dll_name ) + DLL_SUFFIX;
 	std::cout << "Loading " << complete_dll_name << std::endl;
+#ifdef _WIN32
+	HMODULE h = LoadLibrary( complete_dll_name.c_str() );
+	if ( h == NULL )
+	{
+	    std::cerr << "DLL loading problem: " << GetLastError() << std::endl;
+	    return 0;
+	}
+	PluginCreationFct createFct = (PluginCreationFct) GetProcAddress( h, "createPlugin" );
+	if ( createFct == NULL )
+	{
+	    std::cerr << "DLL loading problem: " << GetLastError() << std::endl;
+	    FreeLibrary( h );
+	    return 0;
+	}
+#else
 	void *h = dlopen( complete_dll_name.c_str(), RTLD_NOW );
 	if ( !h )
 	{
 	    std::cerr << dlerror() << std::endl;
+	    return 0;
 	}
-	return h;
+	PluginCreationFct createFct = (PluginCreationFct)dlsym( h, "createPlugin" );
+	if ( createFct == 0 )
+	{
+	    std::cerr << dlerror() << std::endl;
+	    dlclose( h );
+	    return 0;
+	}
+#endif
+	Tempus::Plugin* plugin = createFct();
+	std::cout << "plugin = " << plugin << std::endl;
+	plugin->module_ = h;
+	return plugin;
     }
 
-    void Plugin::unload( void* handle )
+    void Plugin::unload( Plugin* handle )
     {
 	if ( handle )
 	{
-	    dlclose( handle );
+	    ///
+	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
+#ifdef _WIN32
+	    PluginDeletionFct deleteFct = (PluginDeletionFct) GetProcAddress( (HMODULE)handle->module_, "deletePlugin" );
+	    FreeLibrary( (HMODULE)handle->module_ );
+#else
+	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
+	    dlclose( handle->module_ );
+#endif
+	    deleteFct(handle);
 	}
     }
 
