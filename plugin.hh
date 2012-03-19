@@ -16,6 +16,19 @@
 #include "request.hh"
 #include "roadmap.hh"
 
+#ifdef _WIN32
+  #define NOMINMAX
+  #include <windows.h>
+  #define EXPORT __declspec(dllexport)
+  #define DLL_SUFFIX ".dll"
+  #define DLL_PREFIX ""
+#else
+  #include <dlfcn.h>
+  #define EXPORT
+  #define DLL_SUFFIX ".so"
+  #define DLL_PREFIX "./lib"
+#endif
+
 namespace Tempus
 {
     ///
@@ -24,37 +37,31 @@ namespace Tempus
     class Plugin
     {
     public:
-	static std::list<Plugin*> plugins;
-
-	static void* load( const char* dll_name );
-	static void unload( void* handle );
-
+	
+	static Plugin* load( const char* dll_name );
+	static void unload( Plugin* handle );
+	
 	std::string get_name() const { return name_; }
-
+	
     public:
 	///
 	/// Called when the plugin is loaded into memory (install)
 	Plugin(std::string name) : name_(name)
 	{
-	    // TODO : look for existing plugin of the same name
-	    plugins.push_back( this );
 	}
-
+	
 	///
 	/// Called when the plugin is unloaded from memory (uninstall)
 	virtual ~Plugin()
 	{
-	    std::list<Plugin*>::iterator it;
-	    it = std::find( plugins.begin(), plugins.end(), this );
-	    plugins.erase( it );
 	}
-
+	
 	virtual void pre_build();
 	virtual void build();
 	virtual void post_build();
-
+	
 	virtual void validate();
-
+	
 	///
 	/// TODO: find a way to use a visitor
 	virtual void accessor();
@@ -88,13 +95,19 @@ namespace Tempus
 
 	/// Name of this plugin
 	std::string name_;
+	
+	void* module_;
     };
 }; // Tempus namespace
+
+
 
 
 ///
 /// Macro used inside plugins.
 /// This way, the constructor will be called on library loading and the destructor on library unloading
-#define DECLARE_TEMPUS_PLUGIN( type ) static Tempus::type plugin_instance_
+#define DECLARE_TEMPUS_PLUGIN( type ) \
+    extern "C" EXPORT Tempus::Plugin* createPlugin() { return new type(); } \
+    extern "C" EXPORT void deletePlugin(Tempus::Plugin* p_) { delete p_; }
 
 #endif

@@ -1,4 +1,4 @@
-#include <postgresql/libpq-fe.h>
+#include <libpq-fe.h>
 
 #include <iostream>
 #include <pqxx/pqxx>
@@ -50,7 +50,7 @@ namespace Tempus
 	    road_nodes_map[ node.db_id ] = v;
 	    road_graph[v].vertex = v;
 	    
-	    progression( (float)((i + 0.) / res.size() / 4.0) );
+	    progression( static_cast<float>((i + 0.) / res.size() / 4.0) );
 	}
 	
 	std::string query = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
@@ -95,7 +95,7 @@ namespace Tempus
 	    road_graph[e].edge = e;
 	    road_sections_map[ section.db_id ] = e;
 
-	    progression( (float)((i + 0.) / res.size() / 4.0) + 0.25 );
+	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.25) );
 	}
 
 	res = w.exec( "SELECT id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
@@ -129,7 +129,7 @@ namespace Tempus
 	    pt_nodes_map[ stop.db_id ] = v;
 	    pt_graph[v].vertex = v;
 
-	    progression( (float)((i + 0.) / res.size() / 4.0) + 0.5 );
+	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.5) );
 	}
 
 	res = w.exec( "SELECT stop_from, stop_to FROM tempus.pt_section" );
@@ -149,7 +149,7 @@ namespace Tempus
 	    boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );
 	    pt_graph[e].edge = e;
 
-	    progression( (float)((i + 0.) / res.size() / 4.0) + 0.75 );
+	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.75) );
 	}
 
 	progression( 1.0, /* finished = */ true );

@@ -13,23 +13,22 @@ int main()
 {
     ///
     /// Plugins
-
-    void* h = Tempus::Plugin::load( "dummy_plugin" );
-
-    for (list<Tempus::Plugin*>::iterator it = Tempus::Plugin::plugins.begin(); it != Tempus::Plugin::plugins.end(); it++ )
+    try
     {
-	cout << "[plugin " << (*it)->get_name() << "]" << endl;
-
+	Plugin* plugin = Tempus::Plugin::load( "dummy_plugin" );
+	
+	cout << "[plugin " << plugin->get_name() << "]" << endl;
+	
 	cout << endl << ">> pre_build" << endl;
-	(*it)->pre_build();
+	plugin->pre_build();
 	cout << endl << ">> build" << endl;
-	(*it)->build();
+	plugin->build();
 	cout << endl << ">> post_build" << endl;
-	(*it)->post_build();
+	plugin->post_build();
 
 	//
 	// Build the user request
-	MultimodalGraph* graph = (*it)->get_graph();
+	MultimodalGraph* graph = plugin->get_graph();
 	Road::Graph& road_graph = graph->road;
 
 	Road::VertexIterator vb, ve;
@@ -47,20 +46,21 @@ int main()
 	req.optimizing_criteria.push_back( CostDuration );
 
 	cout << endl << ">> pre_process" << endl;
-	(*it)->pre_process();
+	plugin->pre_process();
 	cout << endl << ">> process" << endl;
-	(*it)->process( req );
+	plugin->process( req );
 	cout << endl << ">> post_process" << endl;
-	(*it)->post_process();
+	plugin->post_process();
 
 	cout << endl << ">> result" << endl;
-	(*it)->result();
+	plugin->result();
+	
+	Tempus::Plugin::unload( plugin );
     }
-
-    if ( h )
+    catch (std::exception& e)
     {
-	Tempus::Plugin::unload( h );
+	cerr << "Exception: " << e.what() << endl;
     }
-
+    
     return 0;
 }

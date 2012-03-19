@@ -5,6 +5,10 @@
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
+//
+// FIXME : to be replaced by a config file
+#define DB_CONNECTION_OPTIONS "dbname=tempus user=postgres"
+
 namespace Tempus
 {
     class MyPlugin : public Plugin
@@ -20,7 +24,7 @@ namespace Tempus
 	    virtual void operator()( float percent, bool finished )
 	    {
 		std::cout << "\r";
-		int n = percent * N_;
+		int n = int(percent * N_);
 		std::cout << "[";
 		for (int i = 0; i < n; i++)
 		    std::cout << ".";
@@ -47,7 +51,7 @@ namespace Tempus
 	virtual void build()
 	{
 	    // request the database
-	    PQImporter importer( "dbname = tempus" );
+		PQImporter importer( DB_CONNECTION_OPTIONS );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
 	    importer.import_graph( graph_, progression );
@@ -106,7 +110,7 @@ namespace Tempus
 
 	    // minimize duration
 	    // FIXME include db access in PQImporter
-	    PQImporter importer( "dbname=tempus" );
+	    PQImporter importer( DB_CONNECTION_OPTIONS );
 	    pqxx::work w( importer.get_connection() );
 	    
 	    // map used by dijkstra
@@ -239,7 +243,9 @@ namespace Tempus
 	}
 
     };
+
+    DECLARE_TEMPUS_PLUGIN( MyPlugin );
 };
 
-DECLARE_TEMPUS_PLUGIN( MyPlugin );
+
 
