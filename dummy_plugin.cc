@@ -7,7 +7,7 @@
 
 //
 // FIXME : to be replaced by a config file
-#define DB_CONNECTION_OPTIONS "dbname=tempus user=postgres"
+#define DB_CONNECTION_OPTIONS "dbname=tempus"
 
 namespace Tempus
 {

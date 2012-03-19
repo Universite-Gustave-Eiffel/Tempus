@@ -22,7 +22,7 @@ namespace Tempus
 	PluginCreationFct createFct = (PluginCreationFct) GetProcAddress( h, "createPlugin" );
 	if ( createFct == NULL )
 	{
-	    std::cerr << "DLL loading problem: " << GetLastError() << std::endl;
+	    std::cerr << "GetProcAddress problem: " << GetLastError() << std::endl;
 	    FreeLibrary( h );
 	    return 0;
 	}
@@ -55,12 +55,13 @@ namespace Tempus
 	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
 #ifdef _WIN32
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) GetProcAddress( (HMODULE)handle->module_, "deletePlugin" );
+	    deleteFct(handle);
 	    FreeLibrary( (HMODULE)handle->module_ );
 #else
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
+	    deleteFct(handle);
 	    dlclose( handle->module_ );
 #endif
-	    deleteFct(handle);
 	}
     }
 
