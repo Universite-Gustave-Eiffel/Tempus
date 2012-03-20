@@ -41,50 +41,51 @@ class ShpLoader:
     def shp2pgsql(self):
         """Generate a SQL file with shapefile content given specific options."""
         # check if shapefile exists
-        # TODO
+        if not os.path.isFile(self.shapefile):
+            res = -1
+        else:
+            # setup shp2pgsql command line
+            command = [SHP2PGSQL]
+            if self.options.has_key('s'):
+                command.append("-s %s" % self.options['s'])
+            if self.options.has_key("mode"):
+                command.append("-%s" % self.options['mode'])
+            if self.options.has_key("g"):
+                command.append("-g %s" % self.options['g'])
+            if self.options.has_key("D") and self.options['D'] is True:
+                command.append("-D")
+            if self.options.has_key("G") and self.options['G'] is True:
+                command.append("-G")
+            if self.options.has_key("k") and self.options['k'] is True:
+                command.append("-k")
+            if self.options.has_key("i") and self.options['i'] is True:
+                command.append("-i")
+            if self.options.has_key("I") and self.options['I'] is True:
+                command.append("-I")
+            if self.options.has_key("S") and self.options['S'] is True:
+                command.append("-S")
+            if self.options.has_key("w") and self.options['w'] is True:
+                command.append("-w")
+            if self.options.has_key("n") and self.options['n'] is True:
+                command.append("-n")
+            if self.options.has_key("W"):
+                command.append("-W %s" % self.options['W'])
+            if self.options.has_key("N"):
+                command.append("-N %s" % self.options['N'])
+            command.append("%s" % self.shapefile)
+            target = ""
+            if self.schema:
+                target = "%s." % self.schema
+            target += self.table
+            command.append(target)
 
-        # setup shp2pgsql command line
-        command = [SHP2PGSQL]
-        if self.options.has_key('s'):
-            command.append("-s %s" % self.options['s'])
-        if self.options.has_key("mode"):
-            command.append("-%s" % self.options['mode'])
-        if self.options.has_key("g"):
-            command.append("-g %s" % self.options['g'])
-        if self.options.has_key("D") and self.options['D'] is True:
-            command.append("-D")
-        if self.options.has_key("G") and self.options['G'] is True:
-            command.append("-G")
-        if self.options.has_key("k") and self.options['k'] is True:
-            command.append("-k")
-        if self.options.has_key("i") and self.options['i'] is True:
-            command.append("-i")
-        if self.options.has_key("I") and self.options['I'] is True:
-            command.append("-I")
-        if self.options.has_key("S") and self.options['S'] is True:
-            command.append("-S")
-        if self.options.has_key("w") and self.options['w'] is True:
-            command.append("-w")
-        if self.options.has_key("n") and self.options['n'] is True:
-            command.append("-n")
-        if self.options.has_key("W"):
-            command.append("-W %s" % self.options['W'])
-        if self.options.has_key("N"):
-            command.append("-N %s" % self.options['N'])
-        command.append("%s" % self.shapefile)
-        target = ""
-        if self.schema:
-            target = "%s." % self.schema
-        target += self.table
-        command.append(target)
+            # create temp file for SQL output
+            fd, self.sqlfile = tempfile.mkstemp()
+            tmpfile = os.fdopen(fd, "w")
 
-        # create temp file for SQL output
-        fd, self.sqlfile = tempfile.mkstemp()
-        tmpfile = os.fdopen(fd, "w")
-
-        # call shp2pgsql
-        res = subprocess.call(command, stdout = tmpfile, stderr = sys.stderr) 
-        tmpfile.close()
+            # call shp2pgsql
+            res = subprocess.call(command, stdout = tmpfile, stderr = sys.stderr) 
+            tmpfile.close()
         return res
 
     def toDb(self):
