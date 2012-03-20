@@ -7,7 +7,7 @@
 
 //
 // FIXME : to be replaced by a config file
-#define DB_CONNECTION_OPTIONS "dbname=tempus user=postgres"
+#define DB_CONNECTION_OPTIONS "dbname=tempus"
 
 namespace Tempus
 {
@@ -59,9 +59,10 @@ namespace Tempus
 
 	virtual void process( Request& request )
 	{
+	    REQUIRE( request.check_consistency() );
+	    REQUIRE( request.steps.size() == 1 );
+
 	    request_ = request;
-	    BOOST_ASSERT( request.check_consistency() );
-	    BOOST_ASSERT( request.steps.size() == 1 );
 	    if ( request.optimizing_criteria[0] != CostDuration )
 	    {
 		throw std::runtime_error( "Unsupported optimizing criterion" );
@@ -216,7 +217,7 @@ namespace Tempus
 			double duration = duration_map[ *edge_it_b ];
 			step->costs[ CostDuration ] += duration;
 			// simplification
-			step->transport_type = TransportTramway;
+			//step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
 			step->pt.arrival_stop = v;
 			roadmap.total_costs[ CostDuration ] += duration;
 

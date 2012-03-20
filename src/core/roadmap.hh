@@ -65,7 +65,7 @@ namespace Tempus
 	/// This a generic class
 	struct Step
 	{
-	    TransportTypeId transport_type;
+	    db_id_t /* TransportType */ transport_type;
 	    Costs costs;
 
 	    ///

@@ -64,7 +64,7 @@ namespace Tempus
 	    
 	    res[i][0] >> section.db_id;
 	    if ( !res[i][1].is_null() )
-		section.road_type = static_cast<RoadType>(res[i][1].as<int>());
+		section.road_type = res[i][1].as<db_id_t>();
 	    
 	    int node_from_id = res[i][2].as<int>();
 	    int node_to_id = res[i][3].as<int>();

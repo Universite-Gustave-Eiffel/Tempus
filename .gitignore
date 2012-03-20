@@ -1,0 +1,7 @@
+# swap files
+*.swp
+# temp working files
+*~
+# compiled python files
+*.pyc
+
