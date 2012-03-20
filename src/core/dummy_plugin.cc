@@ -54,6 +54,7 @@ namespace Tempus
 		PQImporter importer( DB_CONNECTION_OPTIONS );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
+	    importer.import_constants();
 	    importer.import_graph( graph_, progression );
 	}
 
@@ -217,7 +218,7 @@ namespace Tempus
 			double duration = duration_map[ *edge_it_b ];
 			step->costs[ CostDuration ] += duration;
 			// simplification
-			//step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
+			step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
 			step->pt.arrival_stop = v;
 			roadmap.total_costs[ CostDuration ] += duration;
 

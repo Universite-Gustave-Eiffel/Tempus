@@ -37,6 +37,7 @@ int main()
 
 	// go from the first road node, to the last one
 	Request req;
+	req.allowed_transport_types = Tempus::transport_type_from_name[ "Tramway" ];
 	req.origin = *vb;
 	Request::Step step;
 	step.destination = *ve;

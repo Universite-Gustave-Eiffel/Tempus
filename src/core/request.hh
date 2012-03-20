@@ -17,7 +17,7 @@
 
 namespace Tempus
 {
-	class Request : public ConsistentClass
+    class Request : public ConsistentClass
     {
     public:
 	
@@ -73,6 +73,10 @@ namespace Tempus
 	/// Criteria to optimize. The list is ordered by criterion priority
 	std::vector<int> optimizing_criteria;
 
+	///
+	/// Default constructor
+	Request() : allowed_transport_types( 0xffff ) {}
+
     protected:
 	bool check_consistency_()
 	{
@@ -86,6 +90,7 @@ namespace Tempus
 		// ... if the request contains it ...
 		if ( allowed_transport_types & it->first )
 		{
+		    std::cout << it->first << " included in " << allowed_transport_types << " " << it->second.name << std::endl;
 		    // ... and if this type needs a parking ...
 		    if ( it->second.need_parking )
 		    {
