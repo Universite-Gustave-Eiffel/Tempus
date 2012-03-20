@@ -83,6 +83,19 @@ namespace Tempus
 
 	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
+
+	///
+	/// refers to the 'road_road' DB's table
+	struct Road : public Base
+	{
+	    ///
+	    /// Array of road sections
+	    std::vector<Edge> road_section;
+	    
+	    ///
+	    /// -1 means infinite cost
+	    double cost;
+	};
     };  // Road namespace
 
     ///
