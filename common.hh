@@ -11,7 +11,7 @@
 #include <map>
 #include <string>
 
-#define DEBUG
+#define _DEBUG
 
 namespace Tempus
 {
@@ -24,16 +24,35 @@ namespace Tempus
     {
 	///
 	/// Consistency checking.
-	/// When on debug mode, declare a virtual function that could be overloaded
-	/// in derived classes.
-	/// When the debug mode is disabled, no vtable is created.
-#ifdef DEBUG
-	virtual bool check_consistency() { return true; }
-#else
-	bool check_consistency() { return true; }
+	/// When on debug mode, calls the virtual check() method.
+	/// When the debug mode is disabled, it does nothing.
+	bool check_consistency()
+	{
+#ifdef _DEBUG
+	    return check_consistency_();
 #endif
+	}
+    protected:
+	///
+	/// Private method to override in derived classes. Does nothing by default.
+	virtual bool check_consistency_() { return true; }
     };
-#define EXPECT( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Assertion " #expr " failed" << std::endl; return false; }}
+
+#ifdef _DEBUG
+    ///
+    /// EXPECT is used in check_concistency_() methods
+    #define EXPECT( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Assertion " #expr " failed" << std::endl; return false; }}
+    ///
+    /// Pre conditions, will abort if the condition is false
+    #define REQUIRE( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Precondition " #expr " is false" << std::endl; std::abort(); }}
+    ///
+    /// Post conditions, will abort if the condition is false
+    #define ENSURE( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Postcondition " #expr " is false" << std::endl; std::abort(); }}
+#else
+#define EXPECT( expr ) ((void)0)
+#define REQUIRE( expr ) ((void)0)
+#define ENSURE( expr ) ((void)0)
+#endif
 
     struct Base : public ConsistentClass
     {

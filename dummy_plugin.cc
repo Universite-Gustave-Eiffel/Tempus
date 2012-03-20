@@ -59,9 +59,10 @@ namespace Tempus
 
 	virtual void process( Request& request )
 	{
+	    REQUIRE( request.check_consistency() );
+	    REQUIRE( request.steps.size() == 1 );
+
 	    request_ = request;
-	    BOOST_ASSERT( request.check_consistency() );
-	    BOOST_ASSERT( request.steps.size() == 1 );
 	    if ( request.optimizing_criteria[0] != CostDuration )
 	    {
 		throw std::runtime_error( "Unsupported optimizing criterion" );

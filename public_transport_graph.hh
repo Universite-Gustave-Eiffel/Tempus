@@ -71,12 +71,6 @@ namespace Tempus
 	    ///
 	    /// Fare zone ID of this stop
 	    int zone_id;
-
-	    bool check_consistency()
-	    {
-		//		EXPECT( road_section != 0 );
-		return true;
-	    }
 	};
 
 	///
@@ -180,7 +174,8 @@ namespace Tempus
 	    /// Must not be null.
 	    Calendar* service;
 
-	    bool check_consistency()
+	protected:
+	    bool check_consistency_()
 	    {
 		EXPECT( service != 0 );
 		return true;
@@ -213,7 +208,8 @@ namespace Tempus
 
 	    std::vector<Trip> trips;
 
-	    bool check_consistency()
+	protected:
+	    bool check_consistency_()
 	    {
 		EXPECT( (route_type >= TypeTram) && (route_type <= TypeFunicular) );
 		return true;
@@ -251,7 +247,8 @@ namespace Tempus
 	    typedef std::vector<FareRule> FareRulesList;
 	    FareRulesList fare_rules;
 
-	    bool check_consistency()
+	protected:
+	    bool check_consistency_()
 	    {
 		EXPECT( ((transfers >= NoTransferAllowed) && (transfers <= TwoTransfersAllowed)) || (transfers == -1) );
 		return true;
@@ -283,7 +280,8 @@ namespace Tempus
 	    /// Expressed in seconds
 	    int min_transfer_time;
 
-	    bool check_consistency()
+	protected:
+	    bool check_consistency_()
 	    {
 		EXPECT( (transfer_type >= NormalTransfer) && (transfer_type <= ImpossibleTransfer) );
 		EXPECT( min_transfer_time > 0 );

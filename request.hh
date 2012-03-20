@@ -73,7 +73,8 @@ namespace Tempus
 	/// Criteria to optimize. The list is ordered by criterion priority
 	std::vector<int> optimizing_criteria;
 
-	bool check_consistency()
+    protected:
+	bool check_consistency_()
 	{
 	    EXPECT( steps.size() >= 1 );
 	    EXPECT( optimizing_criteria.size() >= 1 );

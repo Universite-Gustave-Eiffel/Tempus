@@ -83,7 +83,7 @@ namespace Tempus
 
 	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
-    };
+    };  // Road namespace
 
     ///
     /// refers to the 'poi' DB's table
@@ -107,13 +107,7 @@ namespace Tempus
 	/// Must not be null.
 	Road::Edge road_section;
 	double abscissa_road_section;
-
-	bool check_consistency()
-	{
-	    //	    EXPECT( road_section != 0 );
-	    return true;
-	}
-    }; // Road namespace
+    };
 }; // Tempus namespace
 
 #endif
