@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Tempus data loader
+# (c) 2012 Oslandia
+# MIT Licence
+
 SHP2PGSQL="/usr/bin/shp2pgsql"
 PSQL="/usr/bin/psql"
 
@@ -5,6 +12,7 @@ import os
 import sys
 import subprocess
 import tempfile
+from dbtools import PsqlLoader
 
 class ShpLoader:
     """A static class to import shapefiles to PostgreSQL/PostGIS
@@ -22,9 +30,9 @@ class ShpLoader:
             shp2pgsql options (without the "-"), except for the "mode" key.
             "mode" has one value out of 'a', 'p', 'c', 'd'
         """
+        self.ploader = PsqlLoader(dbstring)
         self.shapefile = shapefile
         # extract dbstring components
-        self.dbparams = self.extractDbParams(dbstring)
         self.table = table
         self.schema = schema
         self.options = options
@@ -80,40 +88,20 @@ class ShpLoader:
         return res
 
     def toDb(self):
-        """Load previously generated SQL file into the DB."""
-        if self.sqlfile and self.dbparams \
-            and self.sqlfile and os.path.isfile(self.sqlfile):
-            # call psql with sqlfile
-            command = [PSQL]
-            if self.dbparams.has_key('host'):
-                command.append("--host=%s" % self.dbparams['host'])
-            if self.dbparams.has_key('user'):
-                command.append("--username=%s" % self.dbparams['user'])
-            if self.dbparams.has_key('port'):
-                command.append("--port=%s" % self.dbparams['port'])
-            command.append("--file=%s" % self.sqlfile)
-            if self.dbparams.has_key('dbname'):
-                command.append("--dbname=%s" % self.dbparams['dbname'])
-            res = subprocess.call(command)
-            return res
+        if self.ploader and os.path.isFile(self.sqlfile):
+            self.ploader.setSqlFile(self.sqlfile)
+            self.ploader.load()
 
     def clean(self):
         """Delete previously generated SQL file."""
         if os.path.isfile(self.sqlfile):
             os.remove(self.sqlfile)
 
-    def extractDbParams(self, dbstring):
-        """Get a dictionnary out of a classic dbstring."""
-        ret = None
-        if dbstring:
-            ret = dict([(i, j.strip("' ")) for i, j in [i.split('=') for i in dbstring.split(' ')]])
-        return ret
-
-    # setters
     def setDbParams(self, dbstring):
         """Set database parameters."""
-        self.dbparams = self.extractDbParams(dbstring)
+        self.ploader.setDbParams(dbstring)
 
+    # setters
     def setShapefile(self, filename):
         """Set shapefile name."""
         self.shapefile = filename
