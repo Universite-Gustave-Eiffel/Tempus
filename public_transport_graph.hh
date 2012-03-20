@@ -7,9 +7,9 @@
 
    It generally maps to the database's schema: one class exists for each table.
    Tables with 1<->N arity are represented by STL containers (vectors or lists)
-   External keys are represented by pointers to other classes.
+   External keys are represented by pointers to other classes or by vertex/edge descriptors.
    
-   Road::Node and Road::Section classes are used to build a BGL public transport graph.
+   PublicTransport::Stop and PublicTransport::Section classes are used to build a BGL public transport graph.
  */
 
 #ifndef TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
