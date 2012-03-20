@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Tempus data loader
+# (c) 2012 Oslandia
+# MIT Licence
+
+import argparse
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Tempus data loader')
+    parser.add_argument('-s', '--source', required=True,
+                   help='The source to load data from')
+    args = parser.parse_args()
+    print args
