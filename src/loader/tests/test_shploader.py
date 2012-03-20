@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Tempus data loader
+# (c) 2012 Oslandia
+# MIT Licence
+
 import unittest
 import tempus
 import os
