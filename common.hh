@@ -10,13 +10,15 @@
 
 #include <map>
 #include <string>
+#include <iostream>
 
 #define _DEBUG
 
 namespace Tempus
 {
     ///
-    /// Type used inside the DB to store IDs
+    /// Type used inside the DB to store IDs.
+    /// O means NULL.
     ///
     typedef long int db_id_t;
 
@@ -79,23 +81,21 @@ namespace Tempus
     };
 
     ///
-    /// Road type enumeration
-    enum RoadType
+    /// Refers to tempus.road_type table
+    struct RoadType : public Base
     {
-	RoadMotorway = 1,
-	RoadPrimary,
-	RoadSecondary,
-	RoadStreet,
-	RoadOther,
-	RoadCycleWay,
-	RoadPedestrial
+	std::string name;
     };
 
     ///
-    /// Transport type enumeration
-    struct TransportType
+    /// Road types constants.
+    typedef std::map<db_id_t, RoadType> RoadTypes;
+
+    ///
+    /// Refers to tempus.transport_type table
+    struct TransportType : public Base
     {
-	db_id_t id; ///< must be a power of 2
+	// inherits from Base, the ID must be a power of 2.
 	db_id_t parent_id;
 
 	std::string name;
@@ -103,37 +103,38 @@ namespace Tempus
 	bool need_parking;
 	bool need_station;
 	bool need_return;
-
-	TransportType() {}
-	TransportType( db_id_t id, db_id_t parent_id, std::string name, bool need_parking, bool need_station, bool need_return ) :
-	    id(id), parent_id(parent_id), name(name), need_parking(need_parking), need_station(need_station), need_return(need_return) {}
-    };
-
-    ///
-    /// IDs of transport types, powers of 2
-    enum TransportTypeId
-    {
-	TransportCar = (1 << 0),
-	TransportPedestrial = (1 << 1),
-	TransportCycle = (1 << 2),
-	TransportBus = (1 << 3),
-	TransportTramway = (1 << 4),
-	TransportMetro = (1 << 5),
-	TransportTrain = (1 << 6),
-	TransportSharedCycle = (1 << 7),
-	TransportSharedCar = (1 << 8),
-	TransportRoller = (1 << 9)
+	
+    protected:
+	bool check_consistency_()
+	{
+	    ///
+	    /// x is a power of two if (x & (x - 1)) is 0
+	    EXPECT( (db_id != 0) && !(db_id & (db_id - 1)) );
+	    EXPECT( (parent_id != 0) && !(parent_id & (parent_id - 1)) );
+	    return true;
+	}
     };
 
     ///
     /// Transport types constants.
-    /// This is made through a static function used to initialize a static map.
-    extern const std::map<db_id_t, TransportType> transport_types;
+    typedef std::map<db_id_t, TransportType> TransportTypes;
+
+    typedef std::map<std::string, db_id_t> NameToId;
 
     ///
     /// Type used to model costs. Either in a Step or as an optimizing criterion.
     /// This is a map to a double value and thus is user extensible.
     typedef std::map<int, double> Costs;
+
+    ///
+    /// Global variables used to store constants. Will be filled by plugins.
+    /// For the sake of readability, always use them with their prefixing namespace
+    extern RoadTypes road_types;
+    extern TransportTypes transport_types;
+    ///
+    /// Maps of type names to type id
+    extern NameToId road_type_from_name;
+    extern NameToId transport_type_from_name;
 
     ///
     /// Default common cost identifiers

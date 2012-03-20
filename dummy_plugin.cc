@@ -217,7 +217,7 @@ namespace Tempus
 			double duration = duration_map[ *edge_it_b ];
 			step->costs[ CostDuration ] += duration;
 			// simplification
-			step->transport_type = TransportTramway;
+			//step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
 			step->pt.arrival_stop = v;
 			roadmap.total_costs[ CostDuration ] += duration;
 

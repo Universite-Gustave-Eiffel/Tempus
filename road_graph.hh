@@ -63,7 +63,7 @@ namespace Tempus
 	    /// Can be null
 	    Edge edge;
 
-	    RoadType      road_type;
+	    db_id_t       road_type;
 	    int           transport_type_ft; ///< bitfield of TransportTypeId
 	    int           transport_type_tf; ///< bitfield of TransportTypeId
 	    double        length;
