@@ -7,8 +7,7 @@
 
 import os
 import subprocess
-
-PSQL="/usr/bin/psql"
+from config import *
 
 class PsqlLoader:
     def __init__(self, dbstring = "", sqlfile = "", replacements = {}):

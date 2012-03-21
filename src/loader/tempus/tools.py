@@ -5,14 +5,13 @@
 # (c) 2012 Oslandia
 # MIT Licence
 
-SHP2PGSQL="/usr/bin/shp2pgsql"
-PSQL="/usr/bin/psql"
 
 import os
 import sys
 import subprocess
 import tempfile
 from dbtools import PsqlLoader
+from config import *
 
 class ShpLoader:
     """A static class to import shapefiles to PostgreSQL/PostGIS
