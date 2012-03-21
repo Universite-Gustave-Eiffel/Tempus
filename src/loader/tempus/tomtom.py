@@ -16,7 +16,7 @@ class MultinetLoader:
     # Shapefile names to load, without the extension and prefix. It will be the table name.
     SHAPEFILES = ['nw', 'jc', 'mn', 'cf', '2r', 'rn', 'mp', 'is', 'ig', 'cf', 'rs', 'td', 'sr'] 
     # SQL files to execute before loading shapefiles
-    PRELOADSQL = []
+    PRELOADSQL = ["reset_schema.sql"]
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
@@ -50,11 +50,13 @@ class MultinetLoader:
         return self.load_sqlfiles(MultinetLoader.POSTLOADSQL)
 
     def load_sqlfiles(self, files):
-        ploader = PsqlLoader(dbstring = self.dbstring)
+        ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
         ret = True
         for sqlfile in files:
-            if ret and os.path.isfile(os.path.join(os.path.realpath(__file__), 'sql', sqlfile)):
-                ploader.set_sqlfile(sqlfile)
+            filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sql', sqlfile)
+            # Stop if one SQL execution was wrong
+            if ret and os.path.isfile(filename):
+                ploader.set_sqlfile(filename)
                 ret = ploader.load()
         return ret
 
@@ -72,6 +74,7 @@ class MultinetLoader:
 
 
     def set_dbparams(self, dbstring = ""):
+        self.dbstring = dbstring
         self.sloader.set_dbparams(dbstring)
 
     def get_shapefiles(self):
