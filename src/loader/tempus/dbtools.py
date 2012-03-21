@@ -5,6 +5,8 @@
 # (c) 2012 Oslandia
 # MIT Licence
 
+import os
+
 PSQL="/usr/bin/psql"
 
 class PsqlLoader:
