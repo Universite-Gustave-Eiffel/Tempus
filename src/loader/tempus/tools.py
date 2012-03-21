@@ -38,6 +38,13 @@ class ShpLoader:
         self.options = options
         self.sqlfile = ""
 
+    def load(self):
+        """Generates SQL and load to database."""
+        if self.shp2pgsql():
+            if self.to_db():
+                self.clean()
+        # TODO : add error reporting
+
     def shp2pgsql(self):
         """Generate a SQL file with shapefile content given specific options."""
         # check if shapefile exists
@@ -89,9 +96,11 @@ class ShpLoader:
         return res
 
     def to_db(self):
+        res = False
         if self.ploader and os.path.isfile(self.sqlfile):
             self.ploader.set_sqlfile(self.sqlfile)
-            self.ploader.load()
+            res = self.ploader.load()
+        return res
 
     def clean(self):
         """Delete previously generated SQL file."""
