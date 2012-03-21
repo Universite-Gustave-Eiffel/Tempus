@@ -6,6 +6,7 @@
 # MIT Licence
 
 import os
+import subprocess
 
 PSQL="/usr/bin/psql"
 
@@ -51,6 +52,7 @@ class PsqlLoader:
 
     def load(self):
         """Load SQL file into the DB."""
+        res = False
         if self.dbparams and os.path.isfile(self.sqlfile):
             # call psql with sqlfile
             command = [PSQL]
@@ -63,5 +65,6 @@ class PsqlLoader:
             command.append("--file=%s" % self.sqlfile)
             if self.dbparams.has_key('dbname'):
                 command.append("--dbname=%s" % self.dbparams['dbname'])
-            res = subprocess.call(command)
-            return res
+            retcode = subprocess.call(command)
+            if retcode == 0: res = True
+        return res
