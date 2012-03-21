@@ -40,16 +40,24 @@ class ShpLoader:
 
     def load(self):
         """Generates SQL and load to database."""
+        ret = False
         if self.shp2pgsql():
             if self.to_db():
                 self.clean()
-        # TODO : add error reporting
+                ret = True
+            else:
+                sys.stderr.write("Database loading failed")
+        else:
+            sys.stderr.write("SQL generation failed")
+        return ret
+        # TODO : add better error reporting
 
     def shp2pgsql(self):
         """Generate a SQL file with shapefile content given specific options."""
+        res = False
         # check if shapefile exists
         if not os.path.isfile(self.shapefile):
-            res = -1
+            res = False
         else:
             # setup shp2pgsql command line
             command = [SHP2PGSQL]
@@ -91,13 +99,14 @@ class ShpLoader:
             tmpfile = os.fdopen(fd, "w")
 
             # call shp2pgsql
-            res = subprocess.call(command, stdout = tmpfile, stderr = sys.stderr) 
+            rescode = subprocess.call(command, stdout = tmpfile, stderr = sys.stderr) 
+            if rescode == 0: res = True
             tmpfile.close()
         return res
 
     def to_db(self):
         res = False
-        if self.ploader and os.path.isfile(self.sqlfile):
+        if self.ploader and self.ploader.dbparams and os.path.isfile(self.sqlfile):
             self.ploader.set_sqlfile(self.sqlfile)
             res = self.ploader.load()
         return res
