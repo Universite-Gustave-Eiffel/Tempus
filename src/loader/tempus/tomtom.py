@@ -20,14 +20,15 @@ class MultinetLoader:
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
-    def __init__(self, source_dir = "", prefix = "", schema_out = "", dbstring = ""):
+    def __init__(self, source_dir = "", prefix = "", schema_out = "", dbstring = "", logfile = None):
         self.shapefiles = []
         self.source_dir = source_dir
         self.prefix = prefix
         self.get_shapefiles()
         self.dbstring = dbstring
+        self.logfile = logfile
         self.sloader = ShpLoader(dbstring = dbstring, schema = schema_out,
-                options = {'I':True})
+                logfile = self.logfile, options = {'I':True})
 
     def check_input(self):
         return len(MultinetLoader.SHAPEFILES) == len(self.shapefiles)

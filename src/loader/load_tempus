@@ -11,7 +11,7 @@ import sys
 
 def load_tomtom(args):
     """Load Tomtom (Multinet) data into a PostGIS database."""
-    mnl = tempus.MultinetLoader(args.source, args.prefix, args.outschema, args.dbstring)
+    mnl = tempus.MultinetLoader(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
     mnl.load()
 
 if __name__ == "__main__":
@@ -26,6 +26,8 @@ if __name__ == "__main__":
                    help='The database connexion string')
     parser.add_argument('-p', '--prefix', required=False,
                    help='Prefix for shapefile names')
+    parser.add_argument('-l', '--logfile', required=False,
+                   help='Log file for loading and SQL output')
     args = parser.parse_args()
     if args.type == 'tomtom':
         load_tomtom(args)

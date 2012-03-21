@@ -6,11 +6,12 @@
 # MIT Licence
 
 import os
+import sys
 import subprocess
 from config import *
 
 class PsqlLoader:
-    def __init__(self, dbstring = "", sqlfile = "", replacements = {}):
+    def __init__(self, dbstring = "", sqlfile = "", replacements = {}, logfile = None):
         """Psql Loader constructor
 
         dbstring is a connexion string to a PostGIS database
@@ -25,6 +26,7 @@ class PsqlLoader:
         self.dbparams = self.extract_dbparams(dbstring) 
         self.sqlfile = sqlfile
         self.replatements = replacements
+        self.logfile = logfile
 
     def fill_template(self, template, values):
         """Takes a template text file and replace every occurence of
@@ -64,6 +66,14 @@ class PsqlLoader:
             command.append("--file=%s" % self.sqlfile)
             if self.dbparams.has_key('dbname'):
                 command.append("--dbname=%s" % self.dbparams['dbname'])
-            retcode = subprocess.call(command)
+            if self.logfile:
+                out = open(self.logfile, "a")
+                err = out
+            else:
+                out = sys.stdout
+                err = sys.stderr
+            retcode = subprocess.call(command, stdout = out, stderr = err)
+            if self.logfile:
+                out.close()
             if retcode == 0: res = True
         return res
