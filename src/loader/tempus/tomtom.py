@@ -14,7 +14,7 @@ import dbtools
 class MultinetLoader:
     """This class enables to load TomTom Multinet data into a PostGIS database."""
     # Shapefile names to load, without the extension. It will be the table name
-    SHAPEFILES = ['nw']
+    SHAPEFILES = ['nw', 'nl', 'jc', 'rn', 'nm', 'mp', '2r', 'is', 'ig', 'cf', 'rs', 'td', 'sr']
     # SQL files to execute before loading shapefiles
     PRELOADSQL = []
     # SQL files to execute after loading shapefiles 
@@ -69,7 +69,7 @@ class MultinetLoader:
                 self.sloader.set_shapefile(shp)
                 # the table name is the shapefile name without extension
                 self.sloader.set_table(SHAPEFILE[i])
-                ret = self.sloader.load():
+                ret = self.sloader.load()
         return ret
 
 
