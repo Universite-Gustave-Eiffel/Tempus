@@ -14,7 +14,7 @@ from dbtools import PsqlLoader
 class MultinetLoader:
     """This class enables to load TomTom Multinet data into a PostGIS database."""
     # Shapefile names to load, without the extension and prefix. It will be the table name.
-    SHAPEFILES = ['nw', 'jc', 'mn', 'cf']
+    SHAPEFILES = ['nw', 'jc', 'mn', 'cf', '2r']
     # SQL files to execute before loading shapefiles
     PRELOADSQL = []
     # SQL files to execute after loading shapefiles 
@@ -30,13 +30,7 @@ class MultinetLoader:
                 options = {'I':True})
 
     def check_input(self):
-        missing_file = False
-        missing_filenames = []
-        for shp in self.shapefiles:
-            if not os.path.isfile(shp):
-                missing_file = True
-                missing_filenames.append(shp)
-        return (not missing_file, missing_filenames)
+        return len(MultinetLoader.SHAPEFILES) == len(self.shapefiles)
 
     def load(self):
         ret = True
@@ -80,9 +74,17 @@ class MultinetLoader:
         self.sloader.set_dbparams(dbstring)
 
     def get_shapefiles(self):
-        self.shapefiles = [os.path.join(os.path.realpath(self.source_dir),
-            self.prefix + shp + ".shp") for shp in MultinetLoader.SHAPEFILES]
-
-
-
+        self.shapefiles = []
+        notfound = []
+        for shp in MultinetLoader.SHAPEFILES:
+            filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".shp")
+            if os.path.isfile(filename):
+                self.shapefiles.append(filename)
+            else:
+                filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".dbf")
+                if os.path.isfile(filename):
+                    self.shapefiles.append(filename)
+                else:
+                    notfound.append(shp)
+        return notfound
 

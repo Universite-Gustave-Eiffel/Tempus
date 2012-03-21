@@ -17,15 +17,15 @@ class TestMultinetLoader(unittest.TestCase):
 
     def test_check_input(self):
         # test input checker 
-        res, files = self.ml.check_input()
+        res = self.ml.check_input()
         self.assertEqual(res, True)
-        self.assertEqual(files, [])
 
     def test_get_shapefiles(self):
         res = ['/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______nw.shp',
  '/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______jc.shp',
  '/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______mn.shp',
- '/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______cf.shp']
+ '/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______cf.shp',
+ '/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______2r.dbf']
         self.ml.get_shapefiles()
         self.assertEqual(self.ml.shapefiles, res)
 
