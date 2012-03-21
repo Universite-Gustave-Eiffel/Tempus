@@ -19,6 +19,48 @@ namespace Tempus
     {
     }
     
+    void PQImporter::import_constants( ProgressionCallback& progression )
+    {
+	pqxx::work w( connection_ );
+	
+	pqxx::result res = w.exec( "SELECT id, parent_id, name, need_parking, need_station, need_return FROM tempus.transport_type" );
+	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	{
+	    db_id_t db_id;
+	    res[i][0] >> db_id;
+	    // populate the global variable
+	    TransportType& t = Tempus::transport_types[ db_id ];
+	    t.db_id = db_id;
+	    // default parent_id == null
+	    t.parent_id = 0;
+	    res[i][1] >> t.parent_id; // <- if the field is null, t.parent_id if kept untouched
+	    res[i][2] >> t.name;
+	    res[i][3] >> t.need_parking;
+	    res[i][4] >> t.need_station;
+	    res[i][5] >> t.need_return;
+
+	    // assign the name <-> id map
+	    Tempus::transport_type_from_name[ t.name ] = t.db_id;
+	    
+	    progression( static_cast<float>((i + 0.) / res.size() / 2.0) );
+	}
+
+	res = w.exec( "SELECT id, name FROM tempus.road_type" );
+	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	{
+	    db_id_t db_id;
+	    res[i][0] >> db_id;
+	    // populate the global variable
+	    RoadType& t = Tempus::road_types[ db_id ];
+	    t.db_id = db_id;
+	    res[i][1] >> t.name;
+	    // assign the name <-> id map
+	    Tempus::road_type_from_name[ t.name ] = t.db_id;
+	    
+	    progression( static_cast<float>(((i + 0.) / res.size() / 2.0) + 0.5));
+	}
+    }
+
     ///
     /// Function used to import the road and public transport graphs from a PostgreSQL database.
     void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
@@ -41,7 +83,7 @@ namespace Tempus
 	{
 	    Road::Node node;
 	    
-	    node.db_id = res[i][0].as<int>();
+	    node.db_id = res[i][0].as<db_id_t>();
 	    node.is_junction = res[i][1].as<bool>();
 	    node.is_bifurcation = res[i][2].as<bool>();
 	    

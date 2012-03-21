@@ -17,6 +17,8 @@
 
 namespace Tempus
 {
+    ///
+    /// Base class in charge of progression callback.
     class ProgressionCallback
     {
     public:
@@ -34,8 +36,16 @@ namespace Tempus
 	PQImporter( const std::string& pg_options );
 	virtual ~PQImporter() {}
 
+	///
+	/// Import constants (road, transports types) into global variables.
+	void import_constants( ProgressionCallback& callback = null_progression_callback );
+
+	///
+	/// Import the multimodal graph
 	void import_graph( MultimodalGraph& graph, ProgressionCallback& callback = null_progression_callback ); 
 
+	///
+	/// Access to underlying connection object
 	pqxx::connection& get_connection() { return connection_; }
 
     protected:
