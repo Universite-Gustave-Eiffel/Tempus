@@ -7,8 +7,8 @@
 
 import os
 
-import tools
-import dbtools
+from tools import ShpLoader
+from dbtools import PsqlLoader
 
 # Module to load TomTom road data (Multinet)
 class MultinetLoader:
@@ -25,7 +25,8 @@ class MultinetLoader:
         self.source_dir = source_dir
         self.prefix = prefix
         self.get_shapefiles()
-        self.sloader = tools.ShpLoader(dbstring = dbstring, schema = schema_out,
+        self.dbstring = dbstring
+        self.sloader = ShpLoader(dbstring = dbstring, schema = schema_out,
                 options = {'I':True})
 
     def check_input(self):
@@ -70,7 +71,7 @@ class MultinetLoader:
             if ret:
                 self.sloader.set_shapefile(shp)
                 # the table name is the shapefile name without extension
-                self.sloader.set_table(MultinetLoader.SHAPEFILE[i])
+                self.sloader.set_table(MultinetLoader.SHAPEFILES[i])
                 ret = self.sloader.load()
         return ret
 
