@@ -30,11 +30,11 @@ if __name__ == "__main__":
     if args.type == 'tomtom':
         load_tomtom(args)
     elif args.type == 'osm':
-        sys.stderr.write("Not implemented yet")
+        sys.stderr.write("Not implemented yet\n")
     elif args.type == 'navteq':
-        sys.stderr.write("Not implemented yet")
+        sys.stderr.write("Not implemented yet\n")
     elif args.type == 'gtfs':
-        sys.stderr.write("Not implemented yet")
+        sys.stderr.write("Not implemented yet\n")
     elif args.type == 'poi':
-        sys.stderr.write("Not implemented yet")
+        sys.stderr.write("Not implemented yet\n")
 
