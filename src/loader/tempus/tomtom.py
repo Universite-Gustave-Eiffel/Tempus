@@ -16,7 +16,7 @@ class MultinetLoader:
     # Shapefile names to load, without the extension and prefix. It will be the table name.
     SHAPEFILES = ['nw', 'jc', 'mn', 'cf', '2r', 'rn', 'mp', 'is', 'ig', 'cf', 'rs', 'td', 'sr'] 
     # SQL files to execute before loading shapefiles
-    PRELOADSQL = ["reset_schema.sql"]
+    PRELOADSQL = ["reset_import_schema.sql"]
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
