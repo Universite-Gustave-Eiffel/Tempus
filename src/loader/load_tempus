@@ -6,10 +6,35 @@
 # MIT Licence
 
 import argparse
+import tempus
+import sys
+
+def load_tomtom(args):
+    """Load Tomtom (Multinet) data into a PostGIS database."""
+    mnl = tempus.MultinetLoader(args.source, args.prefix, args.outschema, args.dbstring)
+    mnl.load()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tempus data loader')
     parser.add_argument('-s', '--source', required=True,
-                   help='The source to load data from')
+                   help='The source directory/file to load data from')
+    parser.add_argument('-t', '--type', required=True,
+                   help='The data type (tomtom, navteq, osm, gtfs, poi)')
+    parser.add_argument('-o', '--outschema', required=False,
+                   help='The output schema in the db')
+    parser.add_argument('-d', '--dbstring', required=True,
+                   help='The database connexion string')
+    parser.add_argument('-p', '--prefix', required=False,
+                   help='Prefix for shapefile names')
     args = parser.parse_args()
-    print args
+    if args.type == 'tomtom':
+        load_tomtom(args)
+    elif args.type == 'osm':
+        sys.stderr.write("Not implemented yet")
+    elif args.type == 'navteq':
+        sys.stderr.write("Not implemented yet")
+    elif args.type == 'gtfs':
+        sys.stderr.write("Not implemented yet")
+    elif args.type == 'poi':
+        sys.stderr.write("Not implemented yet")
+
