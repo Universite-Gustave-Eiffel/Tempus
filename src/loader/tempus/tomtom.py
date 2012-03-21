@@ -27,7 +27,7 @@ class MultinetLoader:
         self.get_shapefiles()
         self.dbstring = dbstring
         self.logfile = logfile
-        self.sloader = ShpLoader(dbstring = dbstring, schema = schema_out,
+        self.sloader = ShpLoader(dbstring = dbstring, schema = "_tempus_import",
                 logfile = self.logfile, options = {'I':True})
 
     def check_input(self):
