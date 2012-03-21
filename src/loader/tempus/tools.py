@@ -59,6 +59,12 @@ class ShpLoader:
         if not os.path.isfile(self.shapefile):
             res = False
         else:
+            # if shapefile is only a DBF
+            # then deactivate index and add "n" option
+            if os.path.splitext(self.shapefile)[1] == ".dbf":
+                self.options['n'] = True
+                self.options['I'] = False
+
             # setup shp2pgsql command line
             command = [SHP2PGSQL]
             if self.options.has_key('s'):
