@@ -41,7 +41,7 @@ class ShpLoader:
     def shp2pgsql(self):
         """Generate a SQL file with shapefile content given specific options."""
         # check if shapefile exists
-        if not os.path.isFile(self.shapefile):
+        if not os.path.isfile(self.shapefile):
             res = -1
         else:
             # setup shp2pgsql command line
@@ -88,9 +88,9 @@ class ShpLoader:
             tmpfile.close()
         return res
 
-    def toDb(self):
-        if self.ploader and os.path.isFile(self.sqlfile):
-            self.ploader.setSqlFile(self.sqlfile)
+    def to_db(self):
+        if self.ploader and os.path.isfile(self.sqlfile):
+            self.ploader.set_sqlfile(self.sqlfile)
             self.ploader.load()
 
     def clean(self):
@@ -98,21 +98,21 @@ class ShpLoader:
         if os.path.isfile(self.sqlfile):
             os.remove(self.sqlfile)
 
-    def setDbParams(self, dbstring):
+    def set_dbparams(self, dbstring):
         """Set database parameters."""
-        self.ploader.setDbParams(dbstring)
+        self.ploader.set_dbparams(dbstring)
 
     # setters
-    def setShapefile(self, filename):
+    def set_shapefile(self, filename):
         """Set shapefile name."""
         self.shapefile = filename
 
-    def setTable(self, tablename):
+    def set_table(self, tablename):
         self.table = tablename
 
-    def setSchema(self, schema):
+    def set_schema(self, schema):
         self.schema = schema
 
-    def setOptions(self, options = {}):
+    def set_options(self, options = {}):
         self.options = options
 

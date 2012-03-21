@@ -20,27 +20,27 @@ class PsqlLoader:
             be replaced. Every occurence of "%key%" in the file will be replaced
             by the corresponding value in the dictionnary.
         """
-        self.dbparams = self.extractDbParams(dbstring) 
+        self.dbparams = self.extract_dbparams(dbstring) 
         self.sqlfile = sqlfile
         self.replatements = replacements
 
-    def fillTemplate(self, template, values):
+    def fill_template(self, template, values):
         """Takes a template text file and replace every occurence of
         "%key%" with the corresponding value in the given dictionnary."""
         raise NotImplementedError
 
-    def setSqlFile(self, sqlfile):
+    def set_sqlfile(self, sqlfile):
         self.sqlfile = sqlfile
 
-    def setSqlFromTemplate(self, template, values):
+    def set_from_template(self, template, values):
         """Set the SQL file by filling a template with values."""
-        self.sqlfile = self.fillTemplate(template, values)
+        self.sqlfile = self.fill_template(template, values)
 
-    def setDbParams(self, dbstring):
+    def set_dbparams(self, dbstring):
         """Set database parameters."""
-        self.dbparams = self.extractDbParams(dbstring)
+        self.dbparams = self.extract_dbparams(dbstring)
 
-    def extractDbParams(self, dbstring):
+    def extract_dbparams(self, dbstring):
         """Get a dictionnary out of a classic dbstring."""
         ret = None
         if dbstring:

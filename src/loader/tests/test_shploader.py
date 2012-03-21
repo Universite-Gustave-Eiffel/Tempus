@@ -14,12 +14,12 @@ class TestShpLoader(unittest.TestCase):
     def setUp(self):
         self.shp = "%s/../../../data/point.shp" % os.path.dirname(os.path.realpath(__file__))
         self.sloader = tempus.ShpLoader()
-        self.sloader.setShapefile(self.shp)
-        self.sloader.setTable("pointtest")
-        self.sloader.setSchema("public")
-        self.sloader.setOptions({'I':True})
+        self.sloader.set_shapefile(self.shp)
+        self.sloader.set_table("pointtest")
+        self.sloader.set_schema("public")
+        self.sloader.set_options({'I':True})
         dbstring = "host=localhost dbname=tempus user=postgres port=5432"
-        self.sloader.setDbParams(dbstring)
+        self.sloader.set_dbparams(dbstring)
 
     def test_shp2pgsql(self):
         # test shp2pgsql output
