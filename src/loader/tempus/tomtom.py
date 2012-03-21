@@ -13,8 +13,8 @@ import dbtools
 # Module to load TomTom road data (Multinet)
 class MultinetLoader:
     """This class enables to load TomTom Multinet data into a PostGIS database."""
-    # Shapefile names to load, without the extension. It will be the table name
-    SHAPEFILES = ['nw', 'nl', 'jc', 'rn', 'nm', 'mp', '2r', 'is', 'ig', 'cf', 'rs', 'td', 'sr']
+    # Shapefile names to load, without the extension and prefix. It will be the table name.
+    SHAPEFILES = ['nw', 'jc', 'mn', 'cf']
     # SQL files to execute before loading shapefiles
     PRELOADSQL = []
     # SQL files to execute after loading shapefiles 
@@ -24,7 +24,7 @@ class MultinetLoader:
         self.shapefiles = []
         self.source_dir = source_dir
         self.prefix = prefix
-        self.shapefiles = self.get_shapefiles()
+        self.get_shapefiles()
         self.sloader = tools.ShpLoader(dbstring = dbstring, schema = schema_out,
                 options = {'I':True})
 
@@ -48,10 +48,10 @@ class MultinetLoader:
         return ret
 
     def preload_sql(self):
-        return self.load_sqlfiles(PRELOADSQL)
+        return self.load_sqlfiles(MultinetLoader.PRELOADSQL)
 
     def postload_sql(self):
-        return self.load_sqlfiles(POSTLOADSQL)
+        return self.load_sqlfiles(MultinetLoader.POSTLOADSQL)
 
     def load_sqlfiles(self, files):
         ploader = PsqlLoader(dbstring = self.dbstring)
@@ -70,7 +70,7 @@ class MultinetLoader:
             if ret:
                 self.sloader.set_shapefile(shp)
                 # the table name is the shapefile name without extension
-                self.sloader.set_table(SHAPEFILE[i])
+                self.sloader.set_table(MultinetLoader.SHAPEFILE[i])
                 ret = self.sloader.load()
         return ret
 
@@ -80,7 +80,7 @@ class MultinetLoader:
 
     def get_shapefiles(self):
         self.shapefiles = [os.path.join(os.path.realpath(self.source_dir),
-            self.prefix + shp + ".shp") for shp in SHAPEFILES]
+            self.prefix + shp + ".shp") for shp in MultinetLoader.SHAPEFILES]
 
 
 
