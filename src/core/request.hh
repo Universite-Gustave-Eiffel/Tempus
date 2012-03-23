@@ -17,7 +17,7 @@
 
 namespace Tempus
 {
-	class Request : public ConsistentClass
+    class Request : public ConsistentClass
     {
     public:
 	
@@ -31,8 +31,7 @@ namespace Tempus
 	    };
 	    int type; ///< TimeConstraintType
 
-	    Date date;
-	    Time time;
+	    DateTime date_time;
 	};
 
 	///
@@ -41,15 +40,33 @@ namespace Tempus
 	{
 	    Road::Vertex destination;
 
-	    TimeConstraint departure_constraint;
-	    TimeConstraint arrival_constraint;
+	    TimeConstraint constraint;
+
+	    ///
+	    /// Whether the private vehicule must reach the destination
+	    bool private_vehicule_at_destination;
 	};
 
 	typedef std::vector<Step> StepList;
 	///
-	/// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may includes intermediary points.
+	/// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may include intermediary points.
 	StepList steps;
 
+	///
+	/// Allowed transport types. It can be stored in an integer, since transport_type ID are powers of two.
+	unsigned allowed_transport_types;
+	
+	///
+	/// Private vehicule option: parking location
+	Road::Vertex parking_location;
+
+	///
+	/// Public transport options: list of allowed networks
+	std::vector<db_id_t> allowed_networks;
+	
+	///
+	/// Timeing constraint on the departure
+	TimeConstraint departure_constraint;
 	///
 	/// Vertex origin of the request
 	Road::Vertex origin;
@@ -59,42 +76,23 @@ namespace Tempus
 	Road::Vertex get_destination() { return steps.back().destination; }
 	
 	///
-	/// Allowed transport types. Because transport types are all powers of 2. It can be expressed by means of an integer.
-	unsigned allowed_transport_types;
-
-	///
-	/// When private transports are used, the request must specify where the private vehicules are parked.
-	/// A std::map is used here where a Tempus::TransportType is associated to a Road::Vertex.
-	/// The map must contains an entry for each selected transport types where a parking is needed (see Tempus::TransportType::need_parking)
-	/// TODO: replace by a more generic "option" associated to each transport type ?? (based on a map<int, boost::any> ?)
-	std::map<unsigned, Road::Vertex> parking_location;
-
-	///
-	/// Criteria to optimize. The list is ordered by criterion priority
+	/// Criteria to optimize. The list is ordered by criterion priority.
+	/// Refers to a CostId (see common.hh)
 	std::vector<int> optimizing_criteria;
 
-	bool check_consistency()
+    protected:
+	bool check_consistency_()
 	{
 	    EXPECT( steps.size() >= 1 );
 	    EXPECT( optimizing_criteria.size() >= 1 );
-	    
-	    std::map<db_id_t, TransportType>::const_iterator it;
-	    // For each defined transport type of the global transport_types map ...
-	    for ( it = transport_types.begin(); it != transport_types.end(); it++ )
-	    {
-		// ... if the request contains it ...
-		if ( allowed_transport_types & it->first )
-		{
-		    // ... and if this type needs a parking ...
-		    if ( it->second.need_parking )
-		    {
-			// ... we expect the parking location to be specified.
-			EXPECT( parking_location.find( it->first ) != parking_location.end() );
-		    }
-		}
-	    }
 
-	    // TODO : check consistency of step constraints ? 
+	    //
+	    // For each step, check correct timing causalities on constraints
+	    TimeConstraint last = departure_constraint;
+	    for ( StepList::const_iterator it = steps.begin(); it != steps.end(); it++ )
+	    {
+		EXPECT( it->constraint.date_time >= last.date_time );
+	    }
 	    return true;
 	}
     };

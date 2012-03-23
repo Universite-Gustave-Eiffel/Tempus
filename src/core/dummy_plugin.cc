@@ -54,14 +54,16 @@ namespace Tempus
 		PQImporter importer( DB_CONNECTION_OPTIONS );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
+	    importer.import_constants();
 	    importer.import_graph( graph_, progression );
 	}
 
 	virtual void process( Request& request )
 	{
+	    REQUIRE( request.check_consistency() );
+	    REQUIRE( request.steps.size() == 1 );
+
 	    request_ = request;
-	    BOOST_ASSERT( request.check_consistency() );
-	    BOOST_ASSERT( request.steps.size() == 1 );
 	    if ( request.optimizing_criteria[0] != CostDuration )
 	    {
 		throw std::runtime_error( "Unsupported optimizing criterion" );
@@ -216,7 +218,7 @@ namespace Tempus
 			double duration = duration_map[ *edge_it_b ];
 			step->costs[ CostDuration ] += duration;
 			// simplification
-			step->transport_type = TransportTramway;
+			step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
 			step->pt.arrival_stop = v;
 			roadmap.total_costs[ CostDuration ] += duration;
 

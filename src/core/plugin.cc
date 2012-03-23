@@ -42,7 +42,6 @@ namespace Tempus
 	}
 #endif
 	Tempus::Plugin* plugin = createFct();
-	std::cout << "plugin = " << plugin << std::endl;
 	plugin->module_ = h;
 	return plugin;
     }
@@ -60,7 +59,10 @@ namespace Tempus
 #else
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
 	    deleteFct(handle);
-	    dlclose( handle->module_ );
+	    if ( !dlclose( handle->module_ ) )
+	    {
+		std::cerr << "Error on dlclose " << dlerror() << std::endl;
+	    }
 #endif
 	}
     }

@@ -6,7 +6,7 @@
 
    It generally maps to the database's schema: one class exists for each table.
    Tables with 1<->N arity are represented by STL containers (vectors or lists)
-   External keys are represented by pointers to other classes.
+   External keys are represented by pointer to other classes or by vertex/edge descriptors
    
    Road::Node and Road::Section classes are used to build a BGL road graph as "bundled" edge and vertex properties
  */
@@ -31,13 +31,13 @@ namespace Tempus
 	/// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
 	typedef boost::mpl::if_<typename boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 	/// see adjacency_list.hpp
-	typedef boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
+	typedef boost::detail::edge_desc_impl<boost::undirected_tag, Vertex> Edge;
 
 	struct Node;
 	struct Section;
 	///
 	/// The final road graph type
-	typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;
+	typedef boost::adjacency_list<VertexListType, EdgeListType, boost::undirectedS, Node, Section > Graph;
 
 	///
 	/// Used as Vertex.
@@ -63,7 +63,7 @@ namespace Tempus
 	    /// Can be null
 	    Edge edge;
 
-	    RoadType      road_type;
+	    db_id_t       road_type;
 	    int           transport_type_ft; ///< bitfield of TransportTypeId
 	    int           transport_type_tf; ///< bitfield of TransportTypeId
 	    double        length;
@@ -83,7 +83,20 @@ namespace Tempus
 
 	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
-    };
+
+	///
+	/// refers to the 'road_road' DB's table
+	struct Road : public Base
+	{
+	    ///
+	    /// Array of road sections
+	    std::vector<Edge> road_section;
+	    
+	    ///
+	    /// -1 means infinite cost
+	    double cost;
+	};
+    };  // Road namespace
 
     ///
     /// refers to the 'poi' DB's table
@@ -107,13 +120,7 @@ namespace Tempus
 	/// Must not be null.
 	Road::Edge road_section;
 	double abscissa_road_section;
-
-	bool check_consistency()
-	{
-	    //	    EXPECT( road_section != 0 );
-	    return true;
-	}
-    }; // Road namespace
+    };
 }; // Tempus namespace
 
 #endif
