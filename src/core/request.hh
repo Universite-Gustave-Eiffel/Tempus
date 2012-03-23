@@ -31,22 +31,7 @@ namespace Tempus
 	    };
 	    int type; ///< TimeConstraintType
 
-	    Date date;
-	    Time time;
-	};
-
-	struct TransportSelection
-	{
-	    db_id_t type;
-
-	    ///
-	    /// private vehicule options
-	    Road::Vertex parking_location;
-	    bool must_reach_destination;
-
-	    ///
-	    /// public transport options : lis tof allowed networks
-	    std::vector<db_id_t> allowed_networks;
+	    DateTime date_time;
 	};
 
 	///
@@ -55,12 +40,11 @@ namespace Tempus
 	{
 	    Road::Vertex destination;
 
-	    TimeConstraint departure_constraint;
-	    TimeConstraint arrival_constraint;
+	    TimeConstraint constraint;
 
 	    ///
-	    /// Allowed transport types.
-	    std::list<TransportSelection> allowed_transport_types;
+	    /// Whether the private vehicule must reach the destination
+	    bool private_vehicule_at_destination;
 	};
 
 	typedef std::vector<Step> StepList;
@@ -68,6 +52,21 @@ namespace Tempus
 	/// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may include intermediary points.
 	StepList steps;
 
+	///
+	/// Allowed transport types. It can be stored in an integer, since transport_type ID are powers of two.
+	unsigned allowed_transport_types;
+	
+	///
+	/// Private vehicule option: parking location
+	Road::Vertex parking_location;
+
+	///
+	/// Public transport options: list of allowed networks
+	std::vector<db_id_t> allowed_networks;
+	
+	///
+	/// Timeing constraint on the departure
+	TimeConstraint departure_constraint;
 	///
 	/// Vertex origin of the request
 	Road::Vertex origin;
@@ -77,7 +76,8 @@ namespace Tempus
 	Road::Vertex get_destination() { return steps.back().destination; }
 	
 	///
-	/// Criteria to optimize. The list is ordered by criterion priority
+	/// Criteria to optimize. The list is ordered by criterion priority.
+	/// Refers to a CostId (see common.hh)
 	std::vector<int> optimizing_criteria;
 
     protected:
@@ -86,7 +86,13 @@ namespace Tempus
 	    EXPECT( steps.size() >= 1 );
 	    EXPECT( optimizing_criteria.size() >= 1 );
 
-	    // TODO : check consistency of step constraints ? 
+	    //
+	    // For each step, check correct timing causalities on constraints
+	    TimeConstraint last = departure_constraint;
+	    for ( StepList::const_iterator it = steps.begin(); it != steps.end(); it++ )
+	    {
+		EXPECT( it->constraint.date_time >= last.date_time );
+	    }
 	    return true;
 	}
     };
