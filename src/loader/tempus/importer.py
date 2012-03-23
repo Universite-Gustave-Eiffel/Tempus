@@ -31,7 +31,7 @@ class DataImporter(object):
         """Check if data input is ok."""
         raise True
 
-    def import(self):
+    def load(self):
         ret = True
         if self.check_input():
             ret = self.preload_sql()

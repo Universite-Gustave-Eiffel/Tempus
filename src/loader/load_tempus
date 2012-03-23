@@ -12,12 +12,12 @@ import sys
 def import_tomtom(args):
     """Load Tomtom (Multinet) data into a PostGIS database."""
     mni = tempus.MultinetImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
-    mni.import()
+    mni.load()
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
     gtfsi = tempus.GTFSImporter(args.source, args.outschema, args.dbstring, args.logfile)
-    gtfsi.import()
+    gtfsi.load()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tempus data loader')
