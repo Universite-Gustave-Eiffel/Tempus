@@ -9,11 +9,11 @@ import unittest
 import tempus
 import os
 
-class TestMultinetLoader(unittest.TestCase):
+class TestMultinetImporter(unittest.TestCase):
 
     def setUp(self):
         self.multinet = "%s/../../../data/multinet" % os.path.dirname(os.path.realpath(__file__))
-        self.ml = tempus.MultinetLoader(self.multinet, "usaxxxxx______", "testmnet")
+        self.ml = tempus.MultinetImporter(self.multinet, "usaxxxxx______", "testmnet")
 
     def test_check_input(self):
         # test input checker 

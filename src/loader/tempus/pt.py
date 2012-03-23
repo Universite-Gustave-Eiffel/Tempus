@@ -12,7 +12,7 @@ import csv
 from tools import is_numeric
 
 
-class GTFSLoader:
+class GTFSImporter:
     """Public transportation GTFS data loader class."""
     GTFSFILES = [('agency', False),
             ('calendar', True),
@@ -51,7 +51,7 @@ class GTFSLoader:
             res = True
             with zipfile.ZipFile(self.source) as zipf:
                 filelist = zipf.namelist()
-                for f, mandatory in GTFSLoader.GTFSFILES:
+                for f, mandatory in GTFSImporter.GTFSFILES:
                     if res and "%s.txt" % f not in filelist:
                         if mandatory:
                             res = False
@@ -81,7 +81,7 @@ class GTFSLoader:
 
             # open zip file
             with zipfile.ZipFile(self.source) as zipf:
-                for f, mandatory in GTFSLoader.GTFSFILES:
+                for f, mandatory in GTFSImporter.GTFSFILES:
                     # try to read the current GTFS txt file with CSV
                     try:
                         reader = csv.reader(zipf.open("%s.txt" % f),

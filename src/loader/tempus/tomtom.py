@@ -11,7 +11,7 @@ from tools import ShpLoader
 from dbtools import PsqlLoader
 
 # Module to load TomTom road data (Multinet)
-class MultinetLoader:
+class MultinetImporter:
     """This class enables to load TomTom Multinet data into a PostGIS database."""
     # Shapefile names to load, without the extension and prefix. It will be the table name.
     SHAPEFILES = ['nw', 'jc', 'mn', 'cf', '2r', 'rn', 'mp', 'is', 'ig', 'cf', 'rs', 'td', 'sr'] 
@@ -31,7 +31,7 @@ class MultinetLoader:
                 logfile = self.logfile, options = {'I':True})
 
     def check_input(self):
-        return len(MultinetLoader.SHAPEFILES) == len(self.shapefiles)
+        return len(MultinetImporter.SHAPEFILES) == len(self.shapefiles)
 
     def load(self):
         ret = True
@@ -44,10 +44,10 @@ class MultinetLoader:
         return ret
 
     def preload_sql(self):
-        return self.load_sqlfiles(MultinetLoader.PRELOADSQL)
+        return self.load_sqlfiles(MultinetImporter.PRELOADSQL)
 
     def postload_sql(self):
-        return self.load_sqlfiles(MultinetLoader.POSTLOADSQL)
+        return self.load_sqlfiles(MultinetImporter.POSTLOADSQL)
 
     def load_sqlfiles(self, files):
         ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
@@ -68,7 +68,7 @@ class MultinetLoader:
             if ret:
                 self.sloader.set_shapefile(shp)
                 # the table name is the shapefile name without extension
-                self.sloader.set_table(MultinetLoader.SHAPEFILES[i])
+                self.sloader.set_table(MultinetImporter.SHAPEFILES[i])
                 ret = self.sloader.load()
         return ret
 
@@ -80,7 +80,7 @@ class MultinetLoader:
     def get_shapefiles(self):
         self.shapefiles = []
         notfound = []
-        for shp in MultinetLoader.SHAPEFILES:
+        for shp in MultinetImporter.SHAPEFILES:
             filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".shp")
             if os.path.isfile(filename):
                 self.shapefiles.append(filename)
