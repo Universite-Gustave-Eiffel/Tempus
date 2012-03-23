@@ -1,2 +1,17 @@
+h1. Tempus Loader
+
 This directory contains the data loader for use with the Tempus framework.
 
+h2. Usage
+
+Some usage examples :
+
+./load_tempus -s ../../data/multinet -t tomtom -o import -d "host=localhost dbname=tempus user=postgres port=5433" -p usaxxxxx______ -l /tmp/tempus.log
+
+./load_tempus -s ../../data/rennes_gtfs.zip -t gtfs -o import -d "host=localhost dbname=tempus user=postgres port=5433" -l /tmp/tempus.log
+
+./load_tempus -s ../../data/navstreet/ -t navteq -o import -d "host=localhost dbname=tempus user=postgres port=5433"  -l /tmp/tempus.log
+
+./load_tempus -s ../../data/point.shp -t poi -o import -d "host=localhost dbname=tempus user=postgres port=5433"  -l /tmp/tempus.log
+
+./load_tempus -s ../../data/multinet -t osm -o import -d "host=localhost dbname=tempus user=postgres port=5433" -l /tmp/tempus.load
