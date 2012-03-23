@@ -24,8 +24,7 @@ class DataImporter(object):
         self.source_dir = source_dir
         self.dbstring = dbstring
         self.logfile = logfile
-        self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
-                logfile = self.logfile, options = {'I':True})
+        self.ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
 
     def check_input(self):
         """Check if data input is ok."""
@@ -50,14 +49,13 @@ class DataImporter(object):
     def load_sqlfiles(self, files):
         """Load some SQL files to the defined database.
         Stop if one was wrong."""
-        ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
         ret = True
         for sqlfile in files:
             filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sql', sqlfile)
             # Stop if one SQL execution was wrong
             if ret and os.path.isfile(filename):
-                ploader.set_sqlfile(filename)
-                ret = ploader.load()
+                self.ploader.set_sqlfile(filename)
+                ret = self.ploader.load()
         return ret
 
     def load_data(self):
@@ -67,7 +65,7 @@ class DataImporter(object):
 
     def set_dbparams(self, dbstring = ""):
         self.dbstring = dbstring
-        self.sloader.set_dbparams(dbstring)
+        self.ploader.set_dbparams(dbstring)
 
 
 # Base class to import data from shape files
@@ -85,21 +83,12 @@ class ShpImporter(DataImporter):
         self.shapefiles = []
         self.prefix = prefix
         self.get_shapefiles()
+        self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
+                logfile = self.logfile, options = {'I':True})
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""
         return len(self.SHAPEFILES) == len(self.shapefiles)
-
-    def load_sqlfiles(self, files):
-        ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
-        ret = True
-        for sqlfile in files:
-            filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sql', sqlfile)
-            # Stop if one SQL execution was wrong
-            if ret and os.path.isfile(filename):
-                ploader.set_sqlfile(filename)
-                ret = ploader.load()
-        return ret
 
     def load_data(self):
         """Load all given shapefiles into the database."""
@@ -113,6 +102,9 @@ class ShpImporter(DataImporter):
                 ret = self.sloader.load()
         return ret
 
+    def set_dbparams(self, dbstring = ""):
+        super(ShpImporter, self).set_dbparams(dbstring)
+        self.sloader.set_dbparams(dbstring)
 
     def get_shapefiles(self):
         self.shapefiles = []
