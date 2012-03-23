@@ -1,3 +1,2 @@
-from tools import ShpLoader
-from dbtools import PsqlLoader
 from tomtom import MultinetImporter
+from pt import GTFSImporter
