@@ -13,6 +13,17 @@ import tempfile
 from dbtools import PsqlLoader
 from config import *
 
+def is_numeric(s):
+    """Test if a value is of numeric type."""
+    try:
+      i = float(s)
+    except ValueError:
+        # not numeric
+        return False
+    else:
+        # numeric
+        return True
+
 class ShpLoader:
     """A static class to import shapefiles to PostgreSQL/PostGIS
     
