@@ -19,6 +19,11 @@ def import_pt(args):
     gtfsi = tempus.GTFSImporter(args.source, args.outschema, args.dbstring, args.logfile)
     gtfsi.load()
 
+def import_navteq(args):
+    """Load Navteq (Navstreets) data into a PostGIS database."""
+    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
+    ntqi.load()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tempus data loader')
     parser.add_argument('-s', '--source', required=True,
@@ -30,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dbstring', required=True,
                    help='The database connexion string')
     parser.add_argument('-p', '--prefix', required=False,
-                   help='Prefix for shapefile names')
+                   help='Prefix for shapefile names', default="")
     parser.add_argument('-l', '--logfile', required=False,
                    help='Log file for loading and SQL output')
     args = parser.parse_args()
@@ -39,7 +44,7 @@ if __name__ == "__main__":
     elif args.type == 'osm':
         sys.stderr.write("Not implemented yet\n")
     elif args.type == 'navteq':
-        sys.stderr.write("Not implemented yet\n")
+        import_navteq(args)
     elif args.type == 'gtfs':
         import_pt(args)
     elif args.type == 'poi':
