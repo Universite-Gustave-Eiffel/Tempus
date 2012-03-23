@@ -53,7 +53,7 @@ class GTFSImporter(DataImporter):
                             res = False
         return res
 
-    def load_data():
+    def load_data(self):
         """Generate SQL file and load GTFS data to database."""
         self.sqlfile = self.generate_sql()
         self.load_gtfs()
