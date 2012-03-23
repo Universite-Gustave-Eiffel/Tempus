@@ -11,6 +11,7 @@ import tempfile
 import csv
 from tools import is_numeric
 from importer import DataImporter
+from config import *
 
 class GTFSImporter(DataImporter):
     """Public transportation GTFS data loader class."""
@@ -26,7 +27,7 @@ class GTFSImporter(DataImporter):
             ('stops', True),
             ('trips', True)]
     # SQL files to execute before loading GTFS data
-    PRELOADSQL = ["create_gtfs_import_tables.sql"]
+    PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql"]
     # SQL files to execute after loading GTFS data 
     POSTLOADSQL = []
 
@@ -84,7 +85,7 @@ class GTFSImporter(DataImporter):
                         else:
                             continue
                     # Write SQL for each beginning of table
-                    tmpfile.write("-- Inserting values for table %\n\n" % f)
+                    tmpfile.write("-- Inserting values for table %s\n\n" % f)
                     # first row is field names
                     fieldnames = reader.next()
                     # read the rows values
@@ -95,21 +96,23 @@ class GTFSImporter(DataImporter):
                             if value == '':
                               insert_row.append('NULL')
                             elif not is_numeric(value):
-                              insert_row.append("'%s'" % value)
+                              insert_row.append("'%s'" % value.replace("'", "''"))
                             else:
                               insert_row.append(value)                           
                         # write SQL statement
-                        tmpfile.write("INSERT INTO %s (%s) VALUES (%s);\n" %\
-                                (f, ",".join(fieldnames), ','.join(insert_row)))
+                        tmpfile.write("INSERT INTO %s.%s (%s) VALUES (%s);\n" %\
+                                (IMPORTSCHEMA, f, ",".join(fieldnames), ','.join(insert_row)))
                     # Write SQL at end of processed table
                     tmpfile.write("-- Processed table %s.\n\n" % f)
 
+            tmpfile.write("COMMIT;\n")
+            tmpfile.write("-- Processed all data \n\n")
             tmpfile.close()
         return sqlfile
 
     def load_gtfs(self):
         """Load generated SQL file with GTFS data into the database."""
-        return self.load_sqlfiles(self.sqlfile)
+        return self.load_sqlfiles([self.sqlfile])
 
     def clean(self):
         """Remove previously generated SQL file."""
