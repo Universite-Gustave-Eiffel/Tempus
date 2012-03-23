@@ -24,6 +24,11 @@ def import_navteq(args):
     ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
     ntqi.load()
 
+def import_osm(args):
+    """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
+    osmi = tempus.OSMImporter(args.source, args,prefix, args.outschema, args.dbstring, args.logfile)
+    osmi.load()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tempus data loader')
     parser.add_argument('-s', '--source', required=True,
@@ -42,7 +47,7 @@ if __name__ == "__main__":
     if args.type == 'tomtom':
         import_tomtom(args)
     elif args.type == 'osm':
-        sys.stderr.write("Not implemented yet\n")
+        import_osm(args)
     elif args.type == 'navteq':
         import_navteq(args)
     elif args.type == 'gtfs':
