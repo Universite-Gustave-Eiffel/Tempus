@@ -69,3 +69,63 @@ class DataImporter(object):
         self.dbstring = dbstring
         self.sloader.set_dbparams(dbstring)
 
+
+# Base class to import data from shape files
+class ShpImporter(DataImporter):
+    """This class enables to load shapefile data into a PostGIS database."""
+    # Shapefile names to load, without the extension and prefix. It will be the table name.
+    SHAPEFILES = [] 
+    # SQL files to execute before loading shapefiles
+    PRELOADSQL = []
+    # SQL files to execute after loading shapefiles 
+    POSTLOADSQL = []
+
+    def __init__(self, source_dir = "", prefix = "", schema_out = "", dbstring = "", logfile = None):
+        super(ShpImporter, self).__init__(source_dir, schema_out, dbstring, logfile)
+        self.shapefiles = []
+        self.prefix = prefix
+        self.get_shapefiles()
+
+    def check_input(self):
+        """Check if data input is ok : we have the required number of shapefiles."""
+        return len(self.SHAPEFILES) == len(self.shapefiles)
+
+    def load_sqlfiles(self, files):
+        ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
+        ret = True
+        for sqlfile in files:
+            filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sql', sqlfile)
+            # Stop if one SQL execution was wrong
+            if ret and os.path.isfile(filename):
+                ploader.set_sqlfile(filename)
+                ret = ploader.load()
+        return ret
+
+    def load_data(self):
+        """Load all given shapefiles into the database."""
+        ret = True
+        for i, shp in enumerate(self.shapefiles):
+            # if one shapefile failed, stop there
+            if ret:
+                self.sloader.set_shapefile(shp)
+                # the table name is the shapefile name without extension
+                self.sloader.set_table(self.SHAPEFILES[i])
+                ret = self.sloader.load()
+        return ret
+
+
+    def get_shapefiles(self):
+        self.shapefiles = []
+        notfound = []
+        for shp in self.SHAPEFILES:
+            filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".shp")
+            if os.path.isfile(filename):
+                self.shapefiles.append(filename)
+            else:
+                filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".dbf")
+                if os.path.isfile(filename):
+                    self.shapefiles.append(filename)
+                else:
+                    notfound.append(shp)
+        return notfound
+
