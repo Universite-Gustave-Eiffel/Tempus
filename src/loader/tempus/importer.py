@@ -24,6 +24,7 @@ class DataImporter(object):
         self.source = source
         self.dbstring = dbstring
         self.logfile = logfile
+        self.schema_out = schema_out
         self.ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
 
     def check_input(self):
