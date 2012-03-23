@@ -20,8 +20,8 @@ class DataImporter(object):
     # SQL files to execute after loading data
     POSTLOADSQL = []
 
-    def __init__(self, source_dir = "", schema_out = "", dbstring = "", logfile = None):
-        self.source_dir = source_dir
+    def __init__(self, source = "", schema_out = "", dbstring = "", logfile = None):
+        self.source = source
         self.dbstring = dbstring
         self.logfile = logfile
         self.ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
@@ -78,8 +78,8 @@ class ShpImporter(DataImporter):
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
-    def __init__(self, source_dir = "", prefix = "", schema_out = "", dbstring = "", logfile = None):
-        super(ShpImporter, self).__init__(source_dir, schema_out, dbstring, logfile)
+    def __init__(self, source = "", prefix = "", schema_out = "", dbstring = "", logfile = None):
+        super(ShpImporter, self).__init__(source, schema_out, dbstring, logfile)
         self.shapefiles = []
         self.prefix = prefix
         self.get_shapefiles()
@@ -110,11 +110,11 @@ class ShpImporter(DataImporter):
         self.shapefiles = []
         notfound = []
         for shp in self.SHAPEFILES:
-            filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".shp")
+            filename = os.path.join(os.path.realpath(self.source), self.prefix + shp + ".shp")
             if os.path.isfile(filename):
                 self.shapefiles.append(filename)
             else:
-                filename = os.path.join(os.path.realpath(self.source_dir), self.prefix + shp + ".dbf")
+                filename = os.path.join(os.path.realpath(self.source), self.prefix + shp + ".dbf")
                 if os.path.isfile(filename):
                     self.shapefiles.append(filename)
                 else:
