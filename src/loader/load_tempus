@@ -9,10 +9,15 @@ import argparse
 import tempus
 import sys
 
-def load_tomtom(args):
+def import_tomtom(args):
     """Load Tomtom (Multinet) data into a PostGIS database."""
-    mnl = tempus.MultinetLoader(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
-    mnl.load()
+    mni = tempus.MultinetImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
+    mni.import()
+
+def import_pt(args):
+    """Load Public Transportation (GTFS) data into a PostGIS database."""
+    gtfsi = tempus.GTFSImporter(args.source, args.outschema, args.dbstring, args.logfile)
+    gtfsi.import()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tempus data loader')
@@ -30,13 +35,13 @@ if __name__ == "__main__":
                    help='Log file for loading and SQL output')
     args = parser.parse_args()
     if args.type == 'tomtom':
-        load_tomtom(args)
+        import_tomtom(args)
     elif args.type == 'osm':
         sys.stderr.write("Not implemented yet\n")
     elif args.type == 'navteq':
         sys.stderr.write("Not implemented yet\n")
     elif args.type == 'gtfs':
-        sys.stderr.write("Not implemented yet\n")
+        import_pt(args)
     elif args.type == 'poi':
         sys.stderr.write("Not implemented yet\n")
 
