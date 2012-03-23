@@ -10,9 +10,9 @@ import zipfile
 import tempfile
 import csv
 from tools import is_numeric
+from importer import DataImporter
 
-
-class GTFSImporter:
+class GTFSImporter(DataImporter):
     """Public transportation GTFS data loader class."""
     GTFSFILES = [('agency', False),
             ('calendar', True),
@@ -37,12 +37,8 @@ class GTFSImporter:
         dbstring : the database connection string
         logfile : where to log SQL execution results (stdout by default)
         """
-        self.source = source
-        self.schema_out = schema_out
-        self.dbstring = dbstring
-        self.logfile = logfile
+        super(GTFSImporter, self).__init__(source, schema_out, dbstring, logfile)
         self.sqlfile = ""
-        pass
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""
@@ -57,16 +53,10 @@ class GTFSImporter:
                             res = False
         return res
 
-    def load(self):
-        ret = True
-        if self.check_input():
-            ret = self.preload_sql()
-            if ret:
-                self.sqlfile = self.generate_sql()
-                ret = self.load_gtfs()
-            if ret:
-                ret = self.postload_sql()
-        return ret
+    def load_data():
+        """Generate SQL file and load GTFS data to database."""
+        self.sqlfile = self.generate_sql()
+        self.load_gtfs()
 
     def generate_sql(self):
         """Generate a SQL file from GTFS feed."""
