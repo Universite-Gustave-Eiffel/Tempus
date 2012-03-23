@@ -1,24 +1,24 @@
 /* Create GTFS tables in the tempus import schema for raw import of GTFS data */
 
 /* Create reference tables */
-DROP TABLE IF EXISTS _tempus_import._tempus_import.route_types; 
-CREATE TABLE route_types (
+DROP TABLE IF EXISTS _tempus_import.route_types; 
+CREATE TABLE _tempus_import.route_types (
     route_type integer,
     description text
 );
 
-INSERT INTO route_types VALUES (0,'streetcar/light rail');
-INSERT INTO route_types VALUES (1,'subway/metro');
-INSERT INTO route_types VALUES (2,'rail');
-INSERT INTO route_types VALUES (3,'bus');
-INSERT INTO route_types VALUES (4,'ferry');
-INSERT INTO route_types VALUES (5,'cable car');
-INSERT INTO route_types VALUES (6,'gondola');
-INSERT INTO route_types VALUES (7,'funicular');
+INSERT INTO _tempus_import.route_types VALUES (0,'streetcar/light rail');
+INSERT INTO _tempus_import.route_types VALUES (1,'subway/metro');
+INSERT INTO _tempus_import.route_types VALUES (2,'rail');
+INSERT INTO _tempus_import.route_types VALUES (3,'bus');
+INSERT INTO _tempus_import.route_types VALUES (4,'ferry');
+INSERT INTO _tempus_import.route_types VALUES (5,'cable car');
+INSERT INTO _tempus_import.route_types VALUES (6,'gondola');
+INSERT INTO _tempus_import.route_types VALUES (7,'funicular');
 
 /* GTFS data tables */
 DROP TABLE IF EXISTS _tempus_import.agency;
-CREATE TABLE agency (
+CREATE TABLE _tempus_import.agency (
     agency_id character varying,
     agency_name character varying NOT NULL,
     agency_url character varying NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE agency (
 );
 
 DROP TABLE IF EXISTS _tempus_import.calendar;
-CREATE TABLE calendar (
+CREATE TABLE _tempus_import.calendar (
     service_id character varying NOT NULL,
     monday integer NOT NULL,
     tuesday integer NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE calendar (
 );
 
 DROP TABLE IF EXISTS _tempus_import.calendar_dates;
-CREATE TABLE calendar_dates (
+CREATE TABLE _tempus_import.calendar_dates (
     service_id character varying NOT NULL,
     "date" character varying NOT NULL,
     exception_type character varying NOT NULL
@@ -51,7 +51,7 @@ CREATE TABLE calendar_dates (
 
 
 DROP TABLE IF EXISTS _tempus_import.fare_attributes; 
-CREATE TABLE fare_attributes (
+CREATE TABLE _tempus_import.fare_attributes (
     fare_id character varying NOT NULL,
     price character varying NOT NULL,
     currency_type character varying NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE fare_attributes (
 );
 
 DROP TABLE IF EXISTS _tempus_import.fare_rules;
-CREATE TABLE fare_rules (
+CREATE TABLE _tempus_import.fare_rules (
     fare_id character varying NOT NULL,
     route_id character varying,
     origin_id character varying,
@@ -70,7 +70,7 @@ CREATE TABLE fare_rules (
 );
 
 DROP TABLE IF EXISTS _tempus_import.frequencies;
-CREATE TABLE frequencies (
+CREATE TABLE _tempus_import.frequencies (
     trip_id character varying NOT NULL,
     start_time character varying NOT NULL,
     end_time character varying NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE frequencies (
 
 
 DROP TABLE IF EXISTS _tempus_import.routes; 
-CREATE TABLE routes (
+CREATE TABLE _tempus_import.routes (
     agency_id character varying,
     route_id character varying NOT NULL,
     route_short_name character varying,
@@ -92,7 +92,7 @@ CREATE TABLE routes (
 );
 
 DROP TABLE IF EXISTS _tempus_import.shapes;
-CREATE TABLE shapes (
+CREATE TABLE _tempus_import.shapes (
     shape_id character varying NOT NULL,
     shape_pt_lat double precision NOT NULL,
     shape_pt_lon double precision NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE shapes (
 );
 
 DROP TABLE IF EXISTS _tempus_import.stop_times;
-CREATE TABLE stop_times (
+CREATE TABLE _tempus_import.stop_times (
     trip_id character varying NOT NULL,
     arrival_time character varying NOT NULL,
     departure_time character varying NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE stop_times (
 );
 
 DROP TABLE IF EXISTS _tempus_import.stops;
-CREATE TABLE stops (
+CREATE TABLE _tempus_import.stops (
     stop_id character varying NOT NULL,
     stop_code character varying,
     stop_name character varying NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE stops (
 
 
 DROP TABLE IF EXISTS _tempus_import.trips;
-CREATE TABLE trips (
+CREATE TABLE _tempus_import.trips (
     route_id character varying NOT NULL,
     service_id character varying NOT NULL,
     trip_id character varying NOT NULL,
