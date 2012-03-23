@@ -7,8 +7,6 @@
 
 import os
 
-from tools import ShpLoader
-from dbtools import PsqlLoader
 from importer import ShpImporter
 
 # Module to load TomTom road data (Multinet)
