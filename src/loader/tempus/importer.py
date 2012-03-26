@@ -6,6 +6,7 @@
 # MIT Licence
 
 import os
+import sys
 
 from tools import ShpLoader
 from dbtools import PsqlLoader
@@ -38,6 +39,8 @@ class DataImporter(object):
                 ret = self.load_data()
             if ret:
                 ret = self.postload_sql()
+        else:
+            sys.stderr.write("Error in source data.\n")
         return ret
 
     def preload_sql(self):
@@ -88,7 +91,10 @@ class ShpImporter(DataImporter):
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""
-        return len(self.SHAPEFILES) == len(self.shapefiles)
+        res = len(self.SHAPEFILES) == len(self.shapefiles)
+        if not res:
+            sys.stderr.write("Some input files missing. Check data source.\n")
+        return res
 
     def load_data(self):
         """Load all given shapefiles into the database."""
@@ -119,5 +125,7 @@ class ShpImporter(DataImporter):
                     self.shapefiles.append(filename)
                 else:
                     notfound.append(shp)
+                    sys.stderr.write("Warning : file for table %s not found.\n"\
+                            "%s/shp not found\n" % (shp, filename) )
         return notfound
 
