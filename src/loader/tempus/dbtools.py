@@ -25,7 +25,7 @@ class PsqlLoader:
         """
         self.dbparams = self.extract_dbparams(dbstring) 
         self.sqlfile = sqlfile
-        self.replatements = replacements
+        self.replacements = replacements
         self.logfile = logfile
 
     def fill_template(self, template, values):
