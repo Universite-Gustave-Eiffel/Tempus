@@ -11,27 +11,27 @@ import sys
 
 def import_tomtom(args):
     """Load Tomtom (Multinet) data into a PostGIS database."""
-    mni = tempus.MultinetImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
+    mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile)
     mni.load()
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.outschema, args.dbstring, args.logfile)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile)
     gtfsi.load()
 
 def import_navteq(args):
     """Load Navteq (Navstreets) data into a PostGIS database."""
-    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
+    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile)
     ntqi.load()
 
 def import_osm(args):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
-    osmi = tempus.OSMImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
+    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile)
     osmi.load()
 
 def import_poi(args):
     """Load a point shapefile into a PostGIS database."""
-    poii = tempus.POIImporter(args.source, args.prefix, args.outschema, args.dbstring, args.logfile)
+    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile)
     poii.load()
 
 if __name__ == "__main__":
@@ -40,8 +40,6 @@ if __name__ == "__main__":
                    help='The source directory/file to load data from')
     parser.add_argument('-t', '--type', required=True,
                    help='The data type (tomtom, navteq, osm, gtfs, poi)')
-    parser.add_argument('-o', '--outschema', required=False,
-                   help='The output schema in the db')
     parser.add_argument('-d', '--dbstring', required=True,
                    help='The database connexion string')
     parser.add_argument('-p', '--prefix', required=False,

@@ -31,14 +31,14 @@ class GTFSImporter(DataImporter):
     # SQL files to execute after loading GTFS data 
     POSTLOADSQL = []
 
-    def __init__(self, source = "", schema_out = "", dbstring = "", logfile = None):
+    def __init__(self, source = "", dbstring = "", logfile = None):
         """Create a new GTFS data loader. Arguments are :
         source : a Zip file containing GTFS data
         schema_out : the destination schema in the database
         dbstring : the database connection string
         logfile : where to log SQL execution results (stdout by default)
         """
-        super(GTFSImporter, self).__init__(source, schema_out, dbstring, logfile)
+        super(GTFSImporter, self).__init__(source, dbstring, logfile)
         self.sqlfile = ""
 
     def check_input(self):
