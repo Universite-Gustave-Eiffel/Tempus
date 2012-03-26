@@ -40,7 +40,7 @@ if __name__ == "__main__":
                    help='The source directory/file to load data from')
     parser.add_argument('-t', '--type', required=True,
                    help='The data type (tomtom, navteq, osm, gtfs, poi)')
-    parser.add_argument('-d', '--dbstring', required=True,
+    parser.add_argument('-d', '--dbstring', required=False,
                    help='The database connexion string')
     parser.add_argument('-p', '--prefix', required=False,
                    help='Prefix for shapefile names', default="")
