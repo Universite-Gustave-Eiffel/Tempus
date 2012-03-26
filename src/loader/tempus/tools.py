@@ -129,7 +129,7 @@ class ShpLoader:
 
     def to_db(self):
         res = False
-        if self.ploader and self.ploader.dbparams and os.path.isfile(self.sqlfile):
+        if self.ploader and os.path.isfile(self.sqlfile):
             self.ploader.set_sqlfile(self.sqlfile)
             res = self.ploader.load()
         return res
