@@ -31,7 +31,7 @@ class GTFSImporter(DataImporter):
     # SQL files to execute after loading GTFS data 
     POSTLOADSQL = []
 
-    def __init__(self, source = "", dbstring = "", logfile = None):
+    def __init__(self, source = "", dbstring = "", logfile = None, copymode = True):
         """Create a new GTFS data loader. Arguments are :
         source : a Zip file containing GTFS data
         schema_out : the destination schema in the database
@@ -40,6 +40,7 @@ class GTFSImporter(DataImporter):
         """
         super(GTFSImporter, self).__init__(source, dbstring, logfile)
         self.sqlfile = ""
+        self.copymode = copymode
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""
@@ -67,6 +68,8 @@ class GTFSImporter(DataImporter):
             fd, sqlfile = tempfile.mkstemp()
             tmpfile = os.fdopen(fd, "w")
             # begin a transaction in SQL file
+            tmpfile.write("SET CLIENT_ENCODING TO UTF8;\n")
+            tmpfile.write("SET STANDARD_CONFORMING_STRINGS TO ON;\n")
             tmpfile.write("BEGIN;\n")
 
 
@@ -88,22 +91,32 @@ class GTFSImporter(DataImporter):
                     tmpfile.write("-- Inserting values for table %s\n\n" % f)
                     # first row is field names
                     fieldnames = reader.next()
+                    if self.copymode:
+                        tmpfile.write('COPY "%s"."%s" (%s) FROM stdin;\n' % (IMPORTSCHEMA, f, ",".join(fieldnames)))
                     # read the rows values
                     # deduce value type by testing
                     for row in reader:
                         insert_row = []
                         for value in row:
                             if value == '':
-                              insert_row.append('NULL')
-                            elif not is_numeric(value):
-                              insert_row.append("'%s'" % value.replace("'", "''"))
+                                if self.copymode:
+                                    insert_row.append('\N')
+                                else:
+                                    insert_row.append('NULL')
+                            elif not self.copymode and not is_numeric(value):
+                                insert_row.append("'%s'" % value.replace("'", "''"))
                             else:
-                              insert_row.append(value)                           
+                                insert_row.append(value)
                         # write SQL statement
-                        tmpfile.write("INSERT INTO %s.%s (%s) VALUES (%s);\n" %\
-                                (IMPORTSCHEMA, f, ",".join(fieldnames), ','.join(insert_row)))
+                        if self.copymode:
+                            tmpfile.write("%s\n" % '\t'.join(insert_row))
+                        else:
+                            tmpfile.write("INSERT INTO %s.%s (%s) VALUES (%s);\n" %\
+                                    (IMPORTSCHEMA, f, ",".join(fieldnames), ','.join(insert_row)))
                     # Write SQL at end of processed table
-                    tmpfile.write("-- Processed table %s.\n\n" % f)
+                    if self.copymode:
+                        tmpfile.write("\.\n")
+                    tmpfile.write("\n-- Processed table %s.\n\n" % f)
 
             tmpfile.write("COMMIT;\n")
             tmpfile.write("-- Processed all data \n\n")

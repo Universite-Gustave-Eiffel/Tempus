@@ -16,7 +16,7 @@ def import_tomtom(args):
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode)
     gtfsi.load()
 
 def import_navteq(args):
@@ -46,6 +46,9 @@ if __name__ == "__main__":
                    help='Prefix for shapefile names', default="")
     parser.add_argument('-l', '--logfile', required=False,
                    help='Log file for loading and SQL output')
+    parser.add_argument('-i', '--insert', required=False,
+                   help='Use insert for SQL mode (default to COPY)',
+                   action='store_false', dest='copymode', default=False)
     args = parser.parse_args()
     if args.type == 'tomtom':
         import_tomtom(args)
