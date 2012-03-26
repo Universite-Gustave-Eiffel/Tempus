@@ -87,7 +87,7 @@ class ShpImporter(DataImporter):
         self.prefix = prefix
         self.get_shapefiles()
         self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
-                logfile = self.logfile, options = {'I':True})
+                logfile = self.logfile, options = {'I':True, 'S':True})
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""
