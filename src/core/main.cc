@@ -46,7 +46,7 @@ int main()
 	req.steps.push_back( step );
 
 	// the only optimizing criterion
-	req.optimizing_criteria.push_back( CostDuration );
+	req.optimizing_criteria.push_back( CostDistance );
 
 	cout << endl << ">> pre_process" << endl;
 	plugin->pre_process();

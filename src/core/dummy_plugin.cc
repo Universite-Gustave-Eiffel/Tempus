@@ -64,7 +64,7 @@ namespace Tempus
 	    REQUIRE( request.steps.size() == 1 );
 
 	    request_ = request;
-	    if ( request.optimizing_criteria[0] != CostDuration )
+	    if ( (request.optimizing_criteria[0] != CostDuration) && (request.optimizing_criteria[0] != CostDistance) )
 	    {
 		throw std::runtime_error( "Unsupported optimizing criterion" );
 	    }
@@ -118,6 +118,7 @@ namespace Tempus
 	    // map used by dijkstra
 	    typedef std::map< PublicTransport::Edge, double > DistanceMap;
 	    DistanceMap duration_map;
+	    DistanceMap length_map;
 	    std::map<PublicTransport::Edge, db_id_t> trip_id_map;
 	    
 	    PublicTransport::EdgeIterator eb, ee;
@@ -126,6 +127,13 @@ namespace Tempus
 	    {
 		PublicTransport::Vertex s = boost::source( *eb, pt_graph );
 		PublicTransport::Vertex t = boost::target( *eb, pt_graph );
+
+		// Distance computation
+		length_map[ *eb ] = (1 - pt_graph[s].abscissa_road_section) * road_graph[ pt_graph[s].road_section ].length +
+		    pt_graph[t].abscissa_road_section * road_graph[ pt_graph[t].road_section ].length;
+		std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " length = " << length_map[ *eb ] << std::endl;
+
+		// Duration computation
 		int s_id = pt_graph[s].db_id;
 		int t_id = pt_graph[t].db_id;
 		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
@@ -146,16 +154,24 @@ namespace Tempus
 	
 	    // Dijkstra
 
-	    boost::associative_property_map<DistanceMap> duration_property_map( duration_map );
-
 	    std::vector<PublicTransport::Vertex> pred_map( boost::num_vertices(pt_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(pt_graph) );
+	    
+	    boost::associative_property_map<DistanceMap> cost_property_map;
+	    if ( request.optimizing_criteria[0] == CostDuration )
+	    {
+		cost_property_map = duration_map;
+	    }
+	    if ( request.optimizing_criteria[0] == CostDistance )
+	    {
+		cost_property_map = length_map;
+	    }
 	    
 	    boost::dijkstra_shortest_paths( pt_graph,
 					    departure,
 					    &pred_map[0],
 					    &distance_map[0],
-					    duration_property_map,
+					    cost_property_map,
 					    boost::get( boost::vertex_index, pt_graph ),
 					    std::less<double>(),
 					    boost::closed_plus<double>(),
@@ -183,6 +199,7 @@ namespace Tempus
 	    Roadmap& roadmap = result_.back();
 	    Roadmap::Step* step = 0;
 	    roadmap.total_costs[ CostDuration ] = 0.0;
+	    roadmap.total_costs[ CostDistance ] = 0.0;
 
 	    //
 	    // for each step in the graph, find the common trip and add each step to the roadmap
@@ -216,11 +233,14 @@ namespace Tempus
 			    step->pt.trip_id = current_trip;
 			}
 			double duration = duration_map[ *edge_it_b ];
+			double length = length_map[ *edge_it_b ];
 			step->costs[ CostDuration ] += duration;
+			step->costs[ CostDistance ] += length;
 			// simplification
 			step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
 			step->pt.arrival_stop = v;
 			roadmap.total_costs[ CostDuration ] += duration;
+			roadmap.total_costs[ CostDistance ] += length;
 
 			break;
 		    }
@@ -235,12 +255,15 @@ namespace Tempus
 	    PublicTransport::Graph& pt_graph = graph_.public_transports.back();
 
 	    std::cout << "Total duration: " << roadmap.total_costs[CostDuration] << std::endl;
+	    std::cout << "Total distance: " << roadmap.total_costs[CostDistance] << std::endl;
 	    std::cout << "Number of changes: " << (roadmap.steps.size() - 1) << std::endl;
 	    int k = 1;
 	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++, k++ )
 	    {
 		std::cout << k << " - Take the trip #" << it->pt.trip_id << " from '" << pt_graph[it->pt.departure_stop].name << "' to '" << pt_graph[it->pt.arrival_stop].name << "'" << std::endl;
-		std::cout << "Duration: " << it->costs[CostDuration] << std::endl << std::endl;
+		std::cout << "Duration: " << it->costs[CostDuration] << "s" << std::endl;
+		std::cout << "Distance: " << it->costs[CostDistance] << "km" << std::endl;
+		std::cout << std::endl;
 	    }
 	}
 
