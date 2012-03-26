@@ -46,10 +46,18 @@ int main()
 	req.steps.push_back( step );
 
 	// the only optimizing criterion
-	req.optimizing_criteria.push_back( CostDuration );
+	req.optimizing_criteria.push_back( CostDistance );
 
 	cout << endl << ">> pre_process" << endl;
-	plugin->pre_process();
+	try
+	{
+	    plugin->pre_process( req );
+	}
+	catch ( std::invalid_argument& e )
+	{
+	    std::cerr << "Can't process request : " << e.what() << std::endl;
+	    return 1;
+	}
 	cout << endl << ">> process" << endl;
 	plugin->process( req );
 	cout << endl << ">> post_process" << endl;
@@ -57,6 +65,9 @@ int main()
 
 	cout << endl << ">> result" << endl;
 	plugin->result();
+
+	cout << endl << ">> cleanup" << endl;
+	plugin->cleanup();
 	
 	Tempus::Plugin::unload( plugin );
     }

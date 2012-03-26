@@ -11,6 +11,7 @@
 
 #include <string>
 #include <iostream>
+#include <stdexcept>
 
 #include "multimodal_graph.hh"
 #include "request.hh"
@@ -56,28 +57,52 @@ namespace Tempus
 	{
 	}
 	
-	virtual void pre_build();
+	///
+	/// Pre-build graphs in memory
+	/// \param[in] options Options used to connect to the database.
+	virtual void pre_build( const std::string& options = "" );
+	///
+	/// Build graphs in memory
 	virtual void build();
+	///
+	/// Called after graphs have been built in memory.
 	virtual void post_build();
 	
+	///
+	/// Called in order to validate the in-memory structure.
 	virtual void validate();
 	
 	///
 	/// TODO: find a way to use a visitor
 	virtual void accessor();
 
-	virtual void pre_process();
+	///
+	/// Cycle
+	virtual void cycle();
+
+	///
+	/// Pre-process the user request.
+	/// \param[in] request The request to preprocess.
+	/// \throw std::invalid_argument Throws an instance of std::invalid_argument if the request cannot be processed by the current plugin.
+	virtual void pre_process( Request& request ) throw (std::invalid_argument);
 
 	///
 	/// Process the user request.
+	/// \param[in] request The request to process.
 	/// Must populates the 'result_' object.
-	virtual void process( /* IN */ Request& request);
+	virtual void process( Request& request );
 
+	///
+	/// Post-process the user request.
 	virtual void post_process();
 
 	///
 	/// Result formatting
 	virtual void result();
+
+	///
+	/// Cleanup method.
+	virtual void cleanup();
 
 	MultimodalGraph* get_graph() { return &graph_; }
 	Result* get_result() { return &result_; }

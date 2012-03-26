@@ -37,6 +37,10 @@ namespace Tempus
 	virtual ~PQImporter() {}
 
 	///
+	/// Query the database
+	pqxx::result query( const std::string& query_str );
+
+	///
 	/// Import constants (road, transports types) into global variables.
 	void import_constants( ProgressionCallback& callback = null_progression_callback );
 

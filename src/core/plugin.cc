@@ -42,7 +42,6 @@ namespace Tempus
 	}
 #endif
 	Tempus::Plugin* plugin = createFct();
-	std::cout << "plugin = " << plugin << std::endl;
 	plugin->module_ = h;
 	return plugin;
     }
@@ -55,17 +54,22 @@ namespace Tempus
 	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
 #ifdef _WIN32
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) GetProcAddress( (HMODULE)handle->module_, "deletePlugin" );
+	    HMODULE module = handle->module_;
 	    deleteFct(handle);
-	    FreeLibrary( (HMODULE)handle->module_ );
+	    FreeLibrary( (HMODULE)module );
 #else
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
+	    void* module = handle->module_;
 	    deleteFct(handle);
-	    dlclose( handle->module_ );
+	    if ( dlclose( module ) )
+	    {
+		std::cerr << "Error on dlclose " << dlerror() << std::endl;
+	    }
 #endif
 	}
     }
 
-    void Plugin::pre_build()
+    void Plugin::pre_build( const std::string& options )
     {
 	std::cout << "[plugin_base]: pre_build" << std::endl;
     }
@@ -92,7 +96,12 @@ namespace Tempus
 	std::cout << "[plugin_base]: accessor" << std::endl;
     }
 
-    void Plugin::pre_process()
+    void Plugin::cycle()
+    {
+	std::cout << "[plugin_base]: cycle" << std::endl;
+    }
+
+    void Plugin::pre_process( Request& request ) throw (std::invalid_argument)
     {
 	std::cout << "[plugin_base]: pre_process" << std::endl;
     }
@@ -100,7 +109,7 @@ namespace Tempus
     ///
     /// Process the user request.
     /// Must populates the 'result_' object.
-    void Plugin::process(Request& request)
+    void Plugin::process( Request& request )
     {
 	request_ = request;
 	std::cout << "[plugin_base]: process" << std::endl;
@@ -118,5 +127,9 @@ namespace Tempus
 	std::cout << "[plugin_base]: result" << std::endl;
     }
 
+    void Plugin::cleanup()
+    {
+	std::cout << "[plugin_base]: cleanup" << std::endl;
+    }
 };
 

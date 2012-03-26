@@ -103,7 +103,7 @@ INSERT INTO pt_trip (id, route_id, service_id, short_name) VALUES (3, 1, 1, 'TAN
 -- Data for Name: pt_stop; Type: TABLE DATA; Schema: tempus; Owner: hme
 --
 
-INSERT INTO pt_stop (id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section) VALUES (1, 'Commerce', true, 1, 1, 0, NULL);
+INSERT INTO pt_stop (id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section) VALUES (1, 'Commerce', true, 1, 1, 0, 0.0);
 INSERT INTO pt_stop (id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section) VALUES (2, 'Hôtel Dieu', true, 2, 2, 1, 0.200000000000000011);
 INSERT INTO pt_stop (id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section) VALUES (3, 'Aimé Delrue', true, 3, 3, 1, 0.299999999999999989);
 INSERT INTO pt_stop (id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section) VALUES (4, 'Wattignies', true, 4, 4, 1, 0.299999999999999989);
