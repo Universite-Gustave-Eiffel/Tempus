@@ -46,7 +46,7 @@ class PsqlLoader:
 
     def extract_dbparams(self, dbstring):
         """Get a dictionnary out of a classic dbstring."""
-        ret = None
+        ret = {}
         if dbstring:
             ret = dict([(i, j.strip("' ")) for i, j in [i.split('=') for i in dbstring.split(' ')]])
         return ret
@@ -54,7 +54,7 @@ class PsqlLoader:
     def load(self):
         """Load SQL file into the DB."""
         res = False
-        if self.dbparams and os.path.isfile(self.sqlfile):
+        if os.path.isfile(self.sqlfile):
             # call psql with sqlfile
             command = [PSQL]
             if self.dbparams.has_key('host'):
