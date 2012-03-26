@@ -69,6 +69,7 @@ class ShpLoader:
         # check if shapefile exists
         if not os.path.isfile(self.shapefile):
             res = False
+            sys.stderr.write("Could not find shapefile : %s.\n" % self.shapefile)
         else:
             # if shapefile is only a DBF
             # then deactivate index and add "n" option
@@ -108,8 +109,11 @@ class ShpLoader:
             target = ""
             if self.schema:
                 target = "%s." % self.schema
-            target += self.table
-            command.append(target)
+            if self.table:
+                target += self.table
+                command.append(target)
+            else:
+                raise ValueError("Table name missing.")
 
             # create temp file for SQL output
             fd, self.sqlfile = tempfile.mkstemp()
@@ -120,7 +124,10 @@ class ShpLoader:
                 outerr = open(self.logfile, "a")
             else:
                 outerr = sys.stderr
-            rescode = subprocess.call(command, stdout = tmpfile, stderr = outerr) 
+            try:
+                rescode = subprocess.call(command, stdout = tmpfile, stderr = outerr) 
+            except OSError as (errno, strerror):
+                sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
             if rescode == 0: res = True
             tmpfile.close()
             if self.logfile:
@@ -129,9 +136,12 @@ class ShpLoader:
 
     def to_db(self):
         res = False
-        if self.ploader and os.path.isfile(self.sqlfile):
-            self.ploader.set_sqlfile(self.sqlfile)
-            res = self.ploader.load()
+        if self.ploader:
+            if os.path.isfile(self.sqlfile):
+                self.ploader.set_sqlfile(self.sqlfile)
+                res = self.ploader.load()
+            else:
+                sys.stderr.write("Unable to load SQL. Could not find %s.\n" % self.sqlfile)
         return res
 
     def clean(self):
