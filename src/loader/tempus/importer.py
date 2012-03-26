@@ -84,7 +84,7 @@ class ShpImporter(DataImporter):
     def __init__(self, source = "", prefix = "", dbstring = "", logfile = None):
         super(ShpImporter, self).__init__(source, dbstring, logfile)
         self.shapefiles = []
-        self.prefix = prefix
+        self.prefix = self.get_prefix(prefix)
         self.get_shapefiles()
         self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
                 logfile = self.logfile, options = {'I':True, 'S':True})
@@ -111,6 +111,30 @@ class ShpImporter(DataImporter):
     def set_dbparams(self, dbstring = ""):
         super(ShpImporter, self).set_dbparams(dbstring)
         self.sloader.set_dbparams(dbstring)
+
+    def get_prefix(self, prefix = ""):
+        """Get prefix for shapefiles. If given prefix is empty, try to find it browsing the directory."""
+        myprefix = ""
+        if prefix:
+            myprefix = prefix
+        else:
+            # prefix has not been given, try to deduce it from files
+            if self.source:
+                prefixes = []
+                for filename in os.listdir(self.source):
+                    for shp in self.SHAPEFILES:
+                        # if we find the table name at the end of the file name (w/o ext), add prefix to the list
+                        basename = os.path.splitext(os.path.basename(filename))[0]
+                        if basename[-len(shp):] == shp:
+                            curprefix = basename[:-len(shp)]
+                            if curprefix not in prefixes:
+                                prefixes.append(curprefix)
+                # if only one prefix found, use it !
+                if len(prefixes) > 1:
+                    sys.stderr.write("Cannot determine prefix, multiple found : %s \n" % ",".join(prefixes))
+                else:
+                    myprefix = prefixes[0]
+        return myprefix
 
     def get_shapefiles(self):
         self.shapefiles = []
