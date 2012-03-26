@@ -137,7 +137,10 @@ class ShpLoader:
     def clean(self):
         """Delete previously generated SQL file."""
         if os.path.isfile(self.sqlfile):
-            os.remove(self.sqlfile)
+            try:
+                os.remove(self.sqlfile)
+            except OSError as (errno, strerror):
+                sys.sterr.write("Could not remove sql file %s.\n" % self.sqlfile)
 
     def set_dbparams(self, dbstring):
         """Set database parameters."""
