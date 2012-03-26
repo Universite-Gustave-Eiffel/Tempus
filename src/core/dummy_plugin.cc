@@ -9,12 +9,17 @@
 // FIXME : to be replaced by a config file
 #define DB_CONNECTION_OPTIONS "dbname=tempus"
 
+using std::cout;
+using std::endl;
+
 namespace Tempus
 {
     class MyPlugin : public Plugin
     {
     public:
 
+	///
+	/// Simple progession processing: text based progression bar.
 	struct TextProgression : public Tempus::ProgressionCallback
 	{
 	public:
@@ -48,27 +53,85 @@ namespace Tempus
 	{
 	}
 
+    protected:
+	///
+	/// A CostMap maps publict transport edges to a double
+	typedef std::map< PublicTransport::Edge, double > CostMap;
+
+	// static cost map: length
+	CostMap length_map_;
+	CostMap duration_map_;
+	// edge -> trip map
+	std::map<PublicTransport::Edge, db_id_t> trip_id_map_;
+
+    public:
 	virtual void build()
 	{
 	    // request the database
-		PQImporter importer( DB_CONNECTION_OPTIONS );
+	    PQImporter importer( DB_CONNECTION_OPTIONS );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
 	    importer.import_constants();
 	    importer.import_graph( graph_, progression );
+
+	    // Browse edges and compute their duration and length
+	    // FIXME : not optimal. Would have to find a unique query for all the edges
+	    // FIXME : duration is a dynamic value !
+	    length_map_.clear();
+	    duration_map_.clear();
+	    trip_id_map_.clear();
+
+	    PublicTransport::Graph& pt_graph = graph_.public_transports.front();
+	    Road::Graph& road_graph = graph_.road;
+	    PublicTransport::EdgeIterator eb, ee;
+	    for ( tie( eb, ee ) = boost::edges( pt_graph ); eb != ee; eb++ )
+	    {
+		PublicTransport::Vertex s = boost::source( *eb, pt_graph );
+		PublicTransport::Vertex t = boost::target( *eb, pt_graph );
+
+		// Distance computation
+		length_map_[ *eb ] = (1 - pt_graph[s].abscissa_road_section) * road_graph[ pt_graph[s].road_section ].length +
+		    pt_graph[t].abscissa_road_section * road_graph[ pt_graph[t].road_section ].length;
+		std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " length = " << length_map_[ *eb ] << std::endl;
+
+		// Duration computation
+		int s_id = pt_graph[s].db_id;
+		int t_id = pt_graph[t].db_id;
+		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
+						    "where t1.trip_id = t2.trip_id and t1.stop_id=%1% and t2.stop_id=%2% and t1.stop_sequence < t2.stop_sequence order by t1.departure_time" ) % s_id % t_id).str();
+		pqxx::result res = importer.query( query );
+
+		// FIXME : over simplification here: we always take the first row
+		if ( res.size() >= 1 )
+		{
+		    Time duration = res[0][1].as<Time>();
+		    int trip_id = res[0][2].as<int>();
+
+		    BOOST_ASSERT( trip_id > 0 );
+		    
+		    std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " duration = " << duration.n_secs << std::endl;
+		    duration_map_[ *eb ] = duration.n_secs + .0;
+		    trip_id_map_[ *eb ] = trip_id;
+		}
+	    }
 	}
 
-	virtual void process( Request& request )
+	virtual void pre_process( Request& request ) throw (std::invalid_argument)
 	{
 	    REQUIRE( request.check_consistency() );
 	    REQUIRE( request.steps.size() == 1 );
 
-	    request_ = request;
 	    if ( (request.optimizing_criteria[0] != CostDuration) && (request.optimizing_criteria[0] != CostDistance) )
 	    {
-		throw std::runtime_error( "Unsupported optimizing criterion" );
+		throw std::invalid_argument( "Unsupported optimizing criterion" );
 	    }
-	    PublicTransport::Graph pt_graph = graph_.public_transports.front();
+	}
+
+	virtual void process( Request& request )
+	{
+	    request_ = request;
+
+	    PublicTransport::Graph& pt_graph = graph_.public_transports.front();
 	    Road::Graph& road_graph = graph_.road;
 
 	    PublicTransport::Vertex departure, arrival;
@@ -109,64 +172,24 @@ namespace Tempus
 		    std::cout << "Road node #" << node << " <-> Public transport node '" << pt_graph[found_vertex].name << "'" << std::endl;
 		}
 	    }
-
-	    // minimize duration
-	    // FIXME include db access in PQImporter
-	    PQImporter importer( DB_CONNECTION_OPTIONS );
-	    pqxx::work w( importer.get_connection() );
 	    
-	    // map used by dijkstra
-	    typedef std::map< PublicTransport::Edge, double > DistanceMap;
-	    DistanceMap duration_map;
-	    DistanceMap length_map;
-	    std::map<PublicTransport::Edge, db_id_t> trip_id_map;
-	    
-	    PublicTransport::EdgeIterator eb, ee;
-	    // FIXME : not optimal. Would have to find a unique query for all the edges
-	    for ( tie( eb, ee ) = boost::edges( pt_graph ); eb != ee; eb++ )
-	    {
-		PublicTransport::Vertex s = boost::source( *eb, pt_graph );
-		PublicTransport::Vertex t = boost::target( *eb, pt_graph );
-
-		// Distance computation
-		length_map[ *eb ] = (1 - pt_graph[s].abscissa_road_section) * road_graph[ pt_graph[s].road_section ].length +
-		    pt_graph[t].abscissa_road_section * road_graph[ pt_graph[t].road_section ].length;
-		std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " length = " << length_map[ *eb ] << std::endl;
-
-		// Duration computation
-		int s_id = pt_graph[s].db_id;
-		int t_id = pt_graph[t].db_id;
-		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
-						    "where t1.trip_id = t2.trip_id and t1.stop_id=%1% and t2.stop_id=%2% and t1.stop_sequence < t2.stop_sequence order by t1.departure_time" ) % s_id % t_id).str();
-		pqxx::result res = w.exec( query );
-
-		// over simplification here: we always take the first row
-		if ( res.size() >= 1 )
-		{
-		    Time duration = res[0][1].as<Time>();
-		    int trip_id = res[0][2].as<int>();
-		    
-		    std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " duration = " << duration.n_secs << std::endl;
-		    duration_map[ *eb ] = duration.n_secs + .0;
-		    trip_id_map[ *eb ] = trip_id;
-		}
-	    }
-	
-	    // Dijkstra
+	    //
+	    // Call to Dijkstra
+	    //
 
 	    std::vector<PublicTransport::Vertex> pred_map( boost::num_vertices(pt_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(pt_graph) );
 	    
-	    boost::associative_property_map<DistanceMap> cost_property_map;
+	    boost::associative_property_map<CostMap> cost_property_map;
 	    if ( request.optimizing_criteria[0] == CostDuration )
 	    {
-		cost_property_map = duration_map;
+		cost_property_map = duration_map_;
 	    }
 	    if ( request.optimizing_criteria[0] == CostDistance )
 	    {
-		cost_property_map = length_map;
+		cost_property_map = length_map_;
 	    }
-	    
+
 	    boost::dijkstra_shortest_paths( pt_graph,
 					    departure,
 					    &pred_map[0],
@@ -203,6 +226,8 @@ namespace Tempus
 
 	    //
 	    // for each step in the graph, find the common trip and add each step to the roadmap
+
+	    // The current trip is set to 0, which means 'null'. This holds because every db's id are 1-based
 	    db_id_t current_trip = 0;
 	    PublicTransport::Vertex previous;
 	    bool first_loop = true;
@@ -216,35 +241,37 @@ namespace Tempus
 		    continue;
 		}
 
-		// we look for the corresponding edge, based on a source and destination vertex
-		// FIXME: there may be other way !
-		boost::graph_traits<PublicTransport::Graph>::out_edge_iterator edge_it_b, edge_it_e;
-		for ( boost::tie(edge_it_b, edge_it_e) = boost::out_edges( previous, pt_graph ); edge_it_b != edge_it_e; edge_it_b++ )
-		{
-		    if ( boost::target(*edge_it_b, pt_graph) == v )
-		    {
-			// if the trip_id changes, we create another step
-			if ( current_trip != trip_id_map[ *edge_it_b ] )
-			{
-			    current_trip = trip_id_map[ *edge_it_b ];
-			    roadmap.steps.push_back( Roadmap::Step() );
-			    step = &roadmap.steps.back();
-			    step->pt.departure_stop = previous;
-			    step->pt.trip_id = current_trip;
-			}
-			double duration = duration_map[ *edge_it_b ];
-			double length = length_map[ *edge_it_b ];
-			step->costs[ CostDuration ] += duration;
-			step->costs[ CostDistance ] += length;
-			// simplification
-			step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
-			step->pt.arrival_stop = v;
-			roadmap.total_costs[ CostDuration ] += duration;
-			roadmap.total_costs[ CostDistance ] += length;
+		// Find an edge, based on a source and destination vertex (boost::edge)
+		PublicTransport::Edge e;
+		bool found = false;
+		boost::tie( e, found ) = boost::edge( previous, v, pt_graph );
+		BOOST_ASSERT( found );
 
-			break;
-		    }
+		// if the trip_id changes, we create another step
+		BOOST_ASSERT( trip_id_map_[ e ] != 0 );
+		if ( current_trip != trip_id_map_[ e ] )
+		{
+		    current_trip = trip_id_map_[ e ];
+		    roadmap.steps.push_back( Roadmap::Step() );
+		    step = &roadmap.steps.back();
+		    step->pt.departure_stop = previous;
+		    step->pt.trip_id = current_trip;
 		}
+		double duration = duration_map_[ e ];
+		double length = length_map_[ e ];
+
+		if ( step->costs.find( CostDuration ) == step->costs.end() )
+		    step->costs[ CostDuration ] = 0.0;
+		step->costs[ CostDuration ] += duration;
+		if ( step->costs.find( CostDistance ) == step->costs.end() )
+		    step->costs[ CostDistance ] = 0.0;
+		step->costs[ CostDistance ] += length;
+		// simplification
+		step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
+		step->pt.arrival_stop = v;
+		roadmap.total_costs[ CostDuration ] += duration;
+		roadmap.total_costs[ CostDistance ] += length;
+		
 		previous = v;
 	    }
 	}
@@ -265,6 +292,11 @@ namespace Tempus
 		std::cout << "Distance: " << it->costs[CostDistance] << "km" << std::endl;
 		std::cout << std::endl;
 	    }
+	}
+
+	void cleanup()
+	{
+	    // nothing special to clean up
 	}
 
     };
