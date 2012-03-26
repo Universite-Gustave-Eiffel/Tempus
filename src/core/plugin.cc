@@ -42,7 +42,6 @@ namespace Tempus
 	}
 #endif
 	Tempus::Plugin* plugin = createFct();
-	std::cout << "plugin = " << plugin << std::endl;
 	plugin->module_ = h;
 	return plugin;
     }
@@ -55,12 +54,17 @@ namespace Tempus
 	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
 #ifdef _WIN32
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) GetProcAddress( (HMODULE)handle->module_, "deletePlugin" );
+	    HMODULE module = handle->module_;
 	    deleteFct(handle);
-	    FreeLibrary( (HMODULE)handle->module_ );
+	    FreeLibrary( (HMODULE)module );
 #else
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
+	    void* module = handle->module_;
 	    deleteFct(handle);
-	    dlclose( handle->module_ );
+	    if ( dlclose( module ) )
+	    {
+		std::cerr << "Error on dlclose " << dlerror() << std::endl;
+	    }
 #endif
 	}
     }
