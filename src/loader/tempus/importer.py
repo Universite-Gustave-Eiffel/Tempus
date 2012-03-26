@@ -78,13 +78,13 @@ class ShpImporter(DataImporter):
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
-    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None):
+    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None, options = {'D':True, 'I':True, 'S':True}):
         super(ShpImporter, self).__init__(source, dbstring, logfile)
         self.shapefiles = []
         self.prefix = prefix
         self.get_shapefiles()
         self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
-                logfile = self.logfile, options = {'I':True, 'S':True})
+                logfile = self.logfile, options = options)
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""

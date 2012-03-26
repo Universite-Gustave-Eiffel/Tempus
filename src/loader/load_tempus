@@ -9,9 +9,9 @@ import argparse
 import tempus
 import sys
 
-def import_tomtom(args):
+def import_tomtom(args, shape_options):
     """Load Tomtom (Multinet) data into a PostGIS database."""
-    mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile)
+    mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     mni.load()
 
 def import_pt(args):
@@ -19,45 +19,60 @@ def import_pt(args):
     gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode)
     gtfsi.load()
 
-def import_navteq(args):
+def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
-    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile)
+    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     ntqi.load()
 
-def import_osm(args):
+def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
-    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile)
+    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     osmi.load()
 
-def import_poi(args):
+def import_poi(args, shape_options):
     """Load a point shapefile into a PostGIS database."""
-    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile)
+    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     poii.load()
 
 if __name__ == "__main__":
+    shape_options = {}
     parser = argparse.ArgumentParser(description='Tempus data loader')
     parser.add_argument('-s', '--source', required=True,
-                   help='The source directory/file to load data from')
-    parser.add_argument('-t', '--type', required=True,
-                   help='The data type (tomtom, navteq, osm, gtfs, poi)')
+            help='The source directory/file to load data from')
+    parser.add_argument('-S', '--srid', required=True,
+            help="Set the SRID for geometries. Defaults to 4326 (lat/lon).")
+    parser.add_argument('-t', '--type', required=False,
+            help='The data type (tomtom, navteq, osm, gtfs, poi)')
     parser.add_argument('-d', '--dbstring', required=False,
-                   help='The database connexion string')
+            help='The database connexion string')
     parser.add_argument('-p', '--prefix', required=False,
-                   help='Prefix for shapefile names', default="")
+            help='Prefix for shapefile names', default="")
     parser.add_argument('-l', '--logfile', required=False,
-                   help='Log file for loading and SQL output')
+            help='Log file for loading and SQL output')
     parser.add_argument('-i', '--insert', required=False,
-                   help='Use insert for SQL mode (default to COPY)',
-                   action='store_false', dest='copymode', default=False)
+            help='Use insert for SQL mode (default to COPY)',
+            action='store_false', dest='copymode', default=True)
+    parser.add_argument('-W', '--encoding', required=False,
+            help="Specify the character encoding of Shape's attribute column.")
     args = parser.parse_args()
+    if args.type in ['tomtom', 'navteq', 'poi', 'osm']:
+        if not args.srid:
+            sys.stderr.write("SRID needed for %s data type. Assuming EPSG:4326.\n" % args.type)
+            shape_options['s'] = 4326
+        else:
+            shape_options['s'] = args.srid
+    if args.copymode:
+        shape_options['D'] = True
+    if args.encoding:
+        shape_options['W'] = args.encoding
     if args.type == 'tomtom':
-        import_tomtom(args)
+        import_tomtom(args, shape_options)
     elif args.type == 'osm':
-        import_osm(args)
+        import_osm(args, shape_options)
     elif args.type == 'navteq':
-        import_navteq(args)
+        import_navteq(args, shape_options)
     elif args.type == 'gtfs':
         import_pt(args)
     elif args.type == 'poi':
-        import_poi(args)
+        import_poi(args, shape_options)
 
