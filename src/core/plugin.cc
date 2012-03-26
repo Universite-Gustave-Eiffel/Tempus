@@ -69,7 +69,7 @@ namespace Tempus
 	}
     }
 
-    void Plugin::pre_build()
+    void Plugin::pre_build( const std::string& options )
     {
 	std::cout << "[plugin_base]: pre_build" << std::endl;
     }
@@ -96,7 +96,12 @@ namespace Tempus
 	std::cout << "[plugin_base]: accessor" << std::endl;
     }
 
-    void Plugin::pre_process()
+    void Plugin::cycle()
+    {
+	std::cout << "[plugin_base]: cycle" << std::endl;
+    }
+
+    void Plugin::pre_process( Request& request ) throw (std::invalid_argument)
     {
 	std::cout << "[plugin_base]: pre_process" << std::endl;
     }
@@ -104,7 +109,7 @@ namespace Tempus
     ///
     /// Process the user request.
     /// Must populates the 'result_' object.
-    void Plugin::process(Request& request)
+    void Plugin::process( Request& request )
     {
 	request_ = request;
 	std::cout << "[plugin_base]: process" << std::endl;
@@ -122,5 +127,9 @@ namespace Tempus
 	std::cout << "[plugin_base]: result" << std::endl;
     }
 
+    void Plugin::cleanup()
+    {
+	std::cout << "[plugin_base]: cleanup" << std::endl;
+    }
 };
 
