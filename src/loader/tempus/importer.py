@@ -44,6 +44,8 @@ class DataImporter(object):
                 ret = self.load_data()
             if ret:
                 ret = self.postload_sql()
+            if ret:
+                self.clean()
         else:
             sys.stderr.write("Error in source data.\n")
         return ret
@@ -88,12 +90,12 @@ class ShpImporter(DataImporter):
 
     def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
             options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True):
-        super(ShpImporter, self).__init__(source, dbstring, logfile)
+        super(ShpImporter, self).__init__(source, dbstring, logfile, doclean)
         self.shapefiles = []
         self.prefix = self.get_prefix(prefix)
         self.get_shapefiles()
         self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
-                logfile = self.logfile, options = options)
+                logfile = self.logfile, options = options, doclean = doclean)
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""

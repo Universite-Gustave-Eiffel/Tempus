@@ -18,8 +18,6 @@ def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
     gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode, not args.noclean)
     gtfsi.load()
-    if not args.noclean:
-        gtfsi.clean()
 
 def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
