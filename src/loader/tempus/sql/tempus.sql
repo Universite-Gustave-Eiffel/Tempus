@@ -79,9 +79,9 @@ CREATE TABLE tempus.road_section
 	node_to bigint REFERENCES tempus.road_node NOT NULL,
 	transport_type_ft integer NOT NULL, -- Reference to tempus.transport_type(id) => bitfield value
 	transport_type_tf integer NOT NULL, -- Reference to tempus.transport_type(id) => bitfield value
-	length float(48) NOT NULL, -- in meters
-	car_speed_limit float(48), -- in km/h
-	car_average_speed float(48), -- in km/h
+	length double precision NOT NULL, -- in meters
+	car_speed_limit double precision, -- in km/h
+	car_average_speed double precision, -- in km/h
 	road_name varchar,
 	lane  integer,
 	roundabout boolean NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE tempus.road_road
 (
 	id bigint PRIMARY KEY,
 	road_section bigint[] NOT NULL,
-	cost float(48) NOT NULL -- -1 mean infinite cost (i.e forbidden)
+	cost double precision NOT NULL -- -1 mean infinite cost (i.e forbidden)
 );
 
 
@@ -126,7 +126,7 @@ CREATE TABLE tempus.poi
 	pname varchar,
 	parking_transport_type integer REFERENCES tempus.transport_type,
 	road_section_id bigint REFERENCES tempus.road_section NOT NULL,
-        abscissa_road_section float(48) NOT NULL
+        abscissa_road_section double precision NOT NULL
 	-- NOTA: geometry column added NOT NULL
 );
 
@@ -154,7 +154,7 @@ CREATE TABLE tempus.pt_stop
 	parent_station integer REFERENCES tempus.pt_stop (id),
 	road_section_id bigint REFERENCES tempus.road_section,
         zone_id integer, -- relative to fare zone
-        abscissa_road_section float(48)
+        abscissa_road_section double precision -- curve length from start of road_section to the stop point
 	-- NOTA: geometry column added NOT NULL
 );
 
@@ -242,7 +242,7 @@ CREATE TABLE tempus.pt_stop_time
 			-- 3 Must coordinate with the driver 
 
 	drop_off_type  integer DEFAULT 0,	-- Same as pickup_type 	
-	shape_dist_traveled float(48)
+	shape_dist_traveled double precision
 );
 
 
@@ -250,7 +250,7 @@ CREATE TABLE tempus.pt_stop_time
 CREATE TABLE tempus.pt_fare_attribute
 (
 	id integer PRIMARY KEY,
-	price float(48) NOT NULL,
+	price double precision NOT NULL,
 	currency_type char(3) DEFAULT 'EUR' NOT NULL, -- ISO 4217 codes
 	transfers integer NOT NULL CHECK(transfers >= -1 AND transfers <= 2), 	
 			--  0: No transfer permitted
