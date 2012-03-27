@@ -13,26 +13,36 @@ def import_tomtom(args, shape_options):
     """Load Tomtom (Multinet) data into a PostGIS database."""
     mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     mni.load()
+    if not args.noclean:
+        mni.clean()
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
     gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode)
     gtfsi.load()
+    if not args.noclean:
+        gtfsi.clean()
 
 def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
     ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     ntqi.load()
+    if not args.noclean:
+        ntqi.clean()
 
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
     osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     osmi.load()
+    if not args.noclean:
+        osmi.clean()
 
 def import_poi(args, shape_options):
     """Load a point shapefile into a PostGIS database."""
     poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
     poii.load()
+    if not args.noclean:
+        poii.clean()
 
 if __name__ == "__main__":
     shape_options = {}
@@ -54,6 +64,8 @@ if __name__ == "__main__":
             action='store_false', dest='copymode', default=True)
     parser.add_argument('-W', '--encoding', required=False,
             help="Specify the character encoding of Shape's attribute column.")
+    parser.add_argument('-n', '--noclean', required=False,
+            help="Do not clean temporary SQL file after loading.")
     args = parser.parse_args()
     if args.type in ['tomtom', 'navteq', 'poi', 'osm']:
         if not args.srid:
