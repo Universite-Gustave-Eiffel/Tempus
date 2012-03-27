@@ -57,6 +57,7 @@ if __name__ == "__main__":
     parser.add_argument('-W', '--encoding', required=False,
             help="Specify the character encoding of Shape's attribute column.")
     parser.add_argument('-n', '--noclean', required=False,
+            action='store_true', default = False,
             help="Do not clean temporary SQL file after loading.")
     args = parser.parse_args()
     if args.type in ['tomtom', 'navteq', 'poi', 'osm']:
