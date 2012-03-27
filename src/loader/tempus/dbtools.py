@@ -25,7 +25,7 @@ class PsqlLoader:
         """
         self.dbparams = self.extract_dbparams(dbstring) 
         self.sqlfile = sqlfile
-        self.replatements = replacements
+        self.replacements = replacements
         self.logfile = logfile
 
     def fill_template(self, template, values):
@@ -67,13 +67,22 @@ class PsqlLoader:
             if self.dbparams.has_key('dbname'):
                 command.append("--dbname=%s" % self.dbparams['dbname'])
             if self.logfile:
-                out = open(self.logfile, "a")
-                err = out
+                try:
+                    out = open(self.logfile, "a")
+                    err = out
+                except IOError as (errno, strerror):
+                    sys.stderr.write("%s : I/O error(%s): %s\n" % (self.logfile, errno, strerror))
             else:
                 out = sys.stdout
                 err = sys.stderr
-            retcode = subprocess.call(command, stdout = out, stderr = err)
+            retcode = 0
+            try:
+                retcode = subprocess.call(command, stdout = out, stderr = err)
+            except OSError as (errno, strerror):
+                sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
             if self.logfile:
                 out.close()
             if retcode == 0: res = True
+        else:
+            sys.stderr.write("Cannot find SQL file %s.\n" % self.sqlfile)
         return res
