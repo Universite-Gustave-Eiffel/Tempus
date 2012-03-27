@@ -86,7 +86,8 @@ class ShpImporter(DataImporter):
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
-    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None, options = {'D':True, 'I':True, 'S':True}, doclean = True):
+    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
+            options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True):
         super(ShpImporter, self).__init__(source, dbstring, logfile)
         self.shapefiles = []
         self.prefix = self.get_prefix(prefix)
