@@ -70,6 +70,10 @@ if __name__ == "__main__":
         shape_options['D'] = True
     if args.encoding:
         shape_options['W'] = args.encoding
+    # default shp2pgsql options
+    shape_options['I'] = True
+    shape_options['g'] = 'geom'
+    shape_options['S'] = True
     if args.type == 'tomtom':
         import_tomtom(args, shape_options)
     elif args.type == 'osm':
