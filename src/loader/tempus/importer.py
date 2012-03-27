@@ -129,8 +129,9 @@ class ShpImporter(DataImporter):
                 for filename in os.listdir(self.source):
                     for shp in self.SHAPEFILES:
                         # if we find the table name at the end of the file name (w/o ext), add prefix to the list
-                        basename = os.path.splitext(os.path.basename(filename))[0]
-                        if basename[-len(shp):] == shp:
+                        # only check dbf and shp
+                        basename, ext = os.path.splitext(os.path.basename(filename))
+                        if ext.lower() in ['.dbf', '.shp'] and basename[-len(shp):] == shp:
                             curprefix = basename[:-len(shp)]
                             if curprefix not in prefixes:
                                 prefixes.append(curprefix)
