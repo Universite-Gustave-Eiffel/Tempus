@@ -1,4 +1,4 @@
--- Tempus Database schema: version 1.0
+﻿-- Tempus Database schema: version 1.0
 --
 -- Copyright <Olivier Courtin - 2012>
 -- Licence MIT.
@@ -6,7 +6,7 @@
 --
 -- DROP and clean if needed
 --
-DROP SCHEMA tempus CASCADE;
+DROP SCHEMA IF EXISTS tempus CASCADE;
 DELETE FROM public.geometry_columns WHERE f_table_schema='tempus';
 
 
@@ -68,7 +68,7 @@ CREATE TABLE tempus.road_node
 	bifurcation boolean NOT NULL
 	-- NOTA: geometry column added NOT NULL
 );
-ALTER TABLE tempus.road_node ADD CONSTRAINT road_node_type CHECK(NOT(junction && bifurcation)); 
+ALTER TABLE tempus.road_node ADD CONSTRAINT road_node_type CHECK(NOT(junction and bifurcation));
 
 
 CREATE TABLE tempus.road_section
