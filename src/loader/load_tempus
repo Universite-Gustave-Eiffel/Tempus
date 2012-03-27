@@ -11,38 +11,30 @@ import sys
 
 def import_tomtom(args, shape_options):
     """Load Tomtom (Multinet) data into a PostGIS database."""
-    mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
+    mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     mni.load()
-    if not args.noclean:
-        mni.clean()
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode, not args.noclean)
     gtfsi.load()
     if not args.noclean:
         gtfsi.clean()
 
 def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
-    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
+    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     ntqi.load()
-    if not args.noclean:
-        ntqi.clean()
 
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
-    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
+    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     osmi.load()
-    if not args.noclean:
-        osmi.clean()
 
 def import_poi(args, shape_options):
     """Load a point shapefile into a PostGIS database."""
-    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options)
+    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     poii.load()
-    if not args.noclean:
-        poii.clean()
 
 if __name__ == "__main__":
     shape_options = {}

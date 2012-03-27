@@ -28,7 +28,7 @@ class ShpLoader:
     """A static class to import shapefiles to PostgreSQL/PostGIS
     
     This is mainly a wrapper around the shp2pgsql tool"""
-    def __init__(self, shapefile = "", dbstring = "", table = "", schema = "public", logfile = None, options = {}):
+    def __init__(self, shapefile = "", dbstring = "", table = "", schema = "public", logfile = None, options = {}, doclean = True):
         """Loader initialization
         
         shapefile is the name of the file to load
@@ -48,13 +48,15 @@ class ShpLoader:
         self.options = options
         self.sqlfile = ""
         self.logfile = logfile
+        self.doclean = doclean
 
     def load(self):
         """Generates SQL and load to database."""
         ret = False
         if self.shp2pgsql():
             if self.to_db():
-                self.clean()
+                if self.doclean:
+                    self.clean()
                 ret = True
             else:
                 sys.stderr.write("Database loading failed")

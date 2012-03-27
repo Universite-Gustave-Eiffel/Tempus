@@ -20,15 +20,20 @@ class DataImporter(object):
     # SQL files to execute after loading data
     POSTLOADSQL = []
 
-    def __init__(self, source = "", dbstring = "", logfile = None):
+    def __init__(self, source = "", dbstring = "", logfile = None, doclean = True):
         self.source = source
         self.dbstring = dbstring
         self.logfile = logfile
         self.ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
+        self.doclean = doclean
 
     def check_input(self):
         """Check if data input is ok."""
         raise True
+
+    def clean(self):
+        """Clean temporary files."""
+        return True
 
     def load(self):
         ret = True
@@ -78,7 +83,7 @@ class ShpImporter(DataImporter):
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
-    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None, options = {'D':True, 'I':True, 'S':True}):
+    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None, options = {'D':True, 'I':True, 'S':True}, doclean = True):
         super(ShpImporter, self).__init__(source, dbstring, logfile)
         self.shapefiles = []
         self.prefix = prefix
