@@ -59,9 +59,9 @@ class ShpLoader:
                     self.clean()
                 ret = True
             else:
-                sys.stderr.write("Database loading failed")
+                sys.stderr.write("Database loading failed. See log for more info.\n")
         else:
-            sys.stderr.write("SQL generation failed")
+            sys.stderr.write("SQL generation failed. See log for more info.\n")
         return ret
         # TODO : add better error reporting
 
@@ -115,6 +115,7 @@ class ShpLoader:
                 target += self.table
                 command.append(target)
             else:
+                sys.stderr.write("Table name missing : \n" % target)
                 raise ValueError("Table name missing.")
 
             # create temp file for SQL output
