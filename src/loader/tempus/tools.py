@@ -86,7 +86,7 @@ class ShpLoader:
             if self.options.has_key("mode"):
                 command.append("-%s" % self.options['mode'])
             if self.options.has_key("g"):
-                command.append("-g %s" % self.options['g'])
+                command.append("-g%s" % self.options['g'])
             if self.options.has_key("D") and self.options['D'] is True:
                 command.append("-D")
             if self.options.has_key("G") and self.options['G'] is True:
