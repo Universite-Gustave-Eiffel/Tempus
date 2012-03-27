@@ -19,7 +19,7 @@ CREATE TABLE tempus.transport_type
 (
 	id  integer PRIMARY KEY,
 	parent_id integer, -- Reference to tempus.transport_type(id) => bitfield value 
-	name varchar(72),
+	ttname varchar,
 	need_parking boolean NOT NULL,  -- If vehicule need to be parked
 	need_station boolean NOT NULL,  -- If vehicule is shared and use a/some stations
 	need_return boolean NOT NULL    -- If vehicule is shared and must be returned 
@@ -50,7 +50,7 @@ INSERT INTO tempus.transport_type VALUES (512, 6, 'Roller', 'f', 'f', 'f');
 CREATE TABLE tempus.road_type
 (
 	id  integer PRIMARY KEY,
-	name varchar(72)
+	rtname varchar
 );
 INSERT INTO tempus.road_type VALUES (1, 'Motorway and assimilated'); -- including peripheric 
 INSERT INTO tempus.road_type VALUES (2, 'Primary roads');
@@ -82,7 +82,7 @@ CREATE TABLE tempus.road_section
 	length float(48) NOT NULL, -- in meters
 	car_speed_limit float(48), -- in km/h
 	car_average_speed float(48), -- in km/h
-	road_name varchar(72),
+	road_name varchar,
 	lane  integer,
 	roundabout boolean NOT NULL,
 	bridge boolean NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE tempus.road_road
 CREATE TABLE tempus.poi_type
 (
 	id integer PRIMARY KEY,
-	name varchar(96)
+	ptname varchar
 );
 
 -- Some default values
@@ -123,7 +123,7 @@ CREATE TABLE tempus.poi
 (
 	id integer PRIMARY KEY,
 	poi_type integer REFERENCES tempus.poi_type NOT NULL,
-	name varchar(96),
+	pname varchar,
 	parking_transport_type integer REFERENCES tempus.transport_type,
 	road_section_id bigint REFERENCES tempus.road_section NOT NULL,
         abscissa_road_section float(48) NOT NULL
@@ -142,15 +142,15 @@ CREATE TABLE tempus.poi
 CREATE TABLE tempus.pt_network
 (
 	id integer PRIMARY KEY,
-	name varchar (72) NOT NULL
+	pnname varchar NOT NULL
 );
 
 -- GTFS Stops
 CREATE TABLE tempus.pt_stop
 (
 	id integer PRIMARY KEY,
-	name varchar (72) NOT NULL,
-	location_type bool, -- As in GTFS: 0 mean stop, 1 mean station
+	psname varchar NOT NULL,
+	location_type boolean, -- As in GTFS: 0 mean stop, 1 mean station
 	parent_station integer REFERENCES tempus.pt_stop (id),
 	road_section_id bigint REFERENCES tempus.road_section,
         zone_id integer, -- relative to fare zone
@@ -164,8 +164,8 @@ CREATE TABLE tempus.pt_route
 (
 	id integer PRIMARY KEY,
 	network_id integer REFERENCES tempus.pt_network,
-	short_name varchar(12) NOT NULL,
-	long_name varchar(72) NOT NULL,
+	short_name varchar NOT NULL,
+	long_name varchar NOT NULL,
 	route_type  integer CHECK (route_type >= 0 AND route_type <= 7)
  	-- As in GTFS: 
 	-- 	0 Tram, 1 Subway/Metro, 2 Rail, 3 Bus, 4 Ferry,
@@ -190,13 +190,13 @@ CREATE TABLE tempus.pt_section
 CREATE TABLE tempus.pt_calendar
 (
 	id integer PRIMARY KEY,
-	monday bool NOT NULL,
-	tuesday bool NOT NULL,
-	wednesday bool NOT NULL,
-	thursday bool NOT NULL,
-	friday bool NOT NULL,
-	saturday bool NOT NULL,
-	sunday bool NOT NULL,
+	monday boolean NOT NULL,
+	tuesday boolean NOT NULL,
+	wednesday boolean NOT NULL,
+	thursday boolean NOT NULL,
+	friday boolean NOT NULL,
+	saturday boolean NOT NULL,
+	sunday boolean NOT NULL,
 	start_date date NOT NULL,
 	end_date date NOT NULL
 );
@@ -208,7 +208,7 @@ CREATE TABLE tempus.pt_trip
 	id bigint PRIMARY KEY, 
 	route_id integer REFERENCES tempus.pt_route NOT NULL,
 	service_id integer REFERENCES tempus.pt_calendar NOT NULL,
-	short_name varchar(12)
+	short_name varchar
 	-- NOTA: shape_dist_traveled (if present) is stored as M dimension into geom
 );
 
@@ -233,7 +233,7 @@ CREATE TABLE tempus.pt_stop_time
 	departure_time TIME WITHOUT TIME ZONE NOT NULL,
 	stop_id integer REFERENCES tempus.pt_stop NOT NULL,
 	stop_sequence  integer NOT NULL,
-	stop_headsign varchar(72),
+	stop_headsign varchar,
 	pickup_type  integer DEFAULT 0 CHECK(pickup_type >= 0 AND pickup_type <= 3), 	
 		-- As in GTFS:
 			-- 0 Regularly scheduled pickup
