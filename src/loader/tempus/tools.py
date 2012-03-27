@@ -123,10 +123,13 @@ class ShpLoader:
             tmpfile = os.fdopen(fd, "w")
 
             # call shp2pgsql
+
             if self.logfile:
                 outerr = open(self.logfile, "a")
             else:
                 outerr = sys.stderr
+
+            rescode = -1
             try:
                 rescode = subprocess.call(command, stdout = tmpfile, stderr = outerr) 
             except OSError as (errno, strerror):
