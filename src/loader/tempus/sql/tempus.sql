@@ -1,4 +1,4 @@
-   -- Tempus Database schema: version 1.0
+-- Tempus Database schema: version 1.0
 --
 -- Copyright <Olivier Courtin - 2012>
 -- Licence MIT.
