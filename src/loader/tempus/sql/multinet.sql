@@ -1,4 +1,4 @@
--- Tempus - Multinet SQL import Wrapper
+﻿-- Tempus - Multinet SQL import Wrapper
 -- Licence MIT
 -- Copyright Oslandia 2012
 
@@ -33,7 +33,6 @@ SELECT DISTINCT
 	jc.id,
 	jc.jncttyp = 0 AS junction,
 	jc.jncttyp = 2 AS bifurcation,
-	(jc.jncttyp != 0 AND jc.jncttyp != 2) AS other,
 	ST_Force_3DZ(ST_SetSRID(geom, 2154)) AS geom
 	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 FROM _tempus_import.jc AS jc
