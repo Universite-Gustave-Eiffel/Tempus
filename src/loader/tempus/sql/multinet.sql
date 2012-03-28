@@ -1,4 +1,4 @@
-﻿-- Tempus - Multinet SQL import Wrapper
+   -- Tempus - Multinet SQL import Wrapper
 -- Licence MIT
 -- Copyright Oslandia 2012
 
