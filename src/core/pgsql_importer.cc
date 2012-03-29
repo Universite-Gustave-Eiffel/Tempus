@@ -19,6 +19,12 @@ namespace Tempus
     {
     }
     
+    pqxx::result PQImporter::query( const std::string& query_str )
+    {
+	pqxx::work w( connection_ );
+	return w.exec( query_str );
+    }
+
     void PQImporter::import_constants( ProgressionCallback& progression )
     {
 	pqxx::work w( connection_ );
@@ -28,12 +34,13 @@ namespace Tempus
 	{
 	    db_id_t db_id;
 	    res[i][0] >> db_id;
+	    BOOST_ASSERT( db_id > 0 );
 	    // populate the global variable
 	    TransportType& t = Tempus::transport_types[ db_id ];
 	    t.db_id = db_id;
 	    // default parent_id == null
 	    t.parent_id = 0;
-	    res[i][1] >> t.parent_id; // <- if the field is null, t.parent_id if kept untouched
+	    res[i][1] >> t.parent_id; // <- if the field is null, t.parent_id is kept untouched
 	    res[i][2] >> t.name;
 	    res[i][3] >> t.need_parking;
 	    res[i][4] >> t.need_station;
@@ -50,6 +57,7 @@ namespace Tempus
 	{
 	    db_id_t db_id;
 	    res[i][0] >> db_id;
+	    BOOST_ASSERT( db_id > 0 );
 	    // populate the global variable
 	    RoadType& t = Tempus::road_types[ db_id ];
 	    t.db_id = db_id;
@@ -84,6 +92,7 @@ namespace Tempus
 	    Road::Node node;
 	    
 	    node.db_id = res[i][0].as<db_id_t>();
+	    BOOST_ASSERT( node.db_id > 0 );
 	    node.is_junction = res[i][1].as<bool>();
 	    node.is_bifurcation = res[i][2].as<bool>();
 	    
@@ -105,6 +114,7 @@ namespace Tempus
 	    Road::Section section;
 	    
 	    res[i][0] >> section.db_id;
+	    BOOST_ASSERT( section.db_id > 0 );
 	    if ( !res[i][1].is_null() )
 		section.road_type = res[i][1].as<db_id_t>();
 	    
@@ -148,6 +158,7 @@ namespace Tempus
 
 	    int j = 0;
 	    res[i][j++] >> stop.db_id;
+	    BOOST_ASSERT( stop.db_id > 0 );
 	    res[i][j++] >> stop.name;
 	    res[i][j++] >> stop.is_station;
 
@@ -183,6 +194,8 @@ namespace Tempus
 	    int stop_from_id, stop_to_id;
 	    res[i][0] >> stop_from_id;
 	    res[i][1] >> stop_to_id;
+	    BOOST_ASSERT( stop_from_id > 0 );
+	    BOOST_ASSERT( stop_to_id > 0 );
 
 	    PublicTransport::Vertex stop_from = pt_nodes_map[ stop_from_id ];
 	    PublicTransport::Vertex stop_to = pt_nodes_map[ stop_to_id ];

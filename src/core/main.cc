@@ -37,21 +37,27 @@ int main()
 
 	// go from the first road node, to the last one
 	Request req;
-	Request::TransportSelection tsel;
-	tsel.type = Tempus::transport_type_from_name[ "Tramway" ];
+	req.allowed_transport_types = Tempus::transport_type_from_name[ "Tramway" ];
 	// allow only one transport network
-	tsel.allowed_networks.push_back( 1 );
+	req.allowed_networks.push_back( 1 );
 	req.origin = *vb;
 	Request::Step step;
 	step.destination = *ve;
-	step.allowed_transport_types.push_back( tsel );
 	req.steps.push_back( step );
 
 	// the only optimizing criterion
-	req.optimizing_criteria.push_back( CostDuration );
+	req.optimizing_criteria.push_back( CostDistance );
 
 	cout << endl << ">> pre_process" << endl;
-	plugin->pre_process();
+	try
+	{
+	    plugin->pre_process( req );
+	}
+	catch ( std::invalid_argument& e )
+	{
+	    std::cerr << "Can't process request : " << e.what() << std::endl;
+	    return 1;
+	}
 	cout << endl << ">> process" << endl;
 	plugin->process( req );
 	cout << endl << ">> post_process" << endl;
@@ -59,6 +65,9 @@ int main()
 
 	cout << endl << ">> result" << endl;
 	plugin->result();
+
+	cout << endl << ">> cleanup" << endl;
+	plugin->cleanup();
 	
 	Tempus::Plugin::unload( plugin );
     }

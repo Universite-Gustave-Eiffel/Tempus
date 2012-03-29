@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include <boost/date_time.hpp>
 
 #define _DEBUG
 
@@ -65,7 +66,7 @@ namespace Tempus
     };
 
     ///
-    /// Time is the number of seconds since 00:00
+    /// Time is the number of seconds since 00:00.
     struct Time
     {
 	long n_secs;
@@ -73,12 +74,11 @@ namespace Tempus
 
     ///
     /// Date type : dd/mm/yyyy
-    struct Date
-    {
-	unsigned char day;
-	unsigned char month;
-	unsigned short year;
-    };
+    typedef boost::gregorian::date Date;
+
+    ///
+    /// DateTime stores a date and a time
+    typedef boost::posix_time::ptime DateTime;
 
     ///
     /// Refers to tempus.road_type table
