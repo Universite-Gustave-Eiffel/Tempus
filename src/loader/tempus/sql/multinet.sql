@@ -150,17 +150,21 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 
 -- TABLE road_road
 INSERT INTO tempus.road_road
-	SELECT	 id, 
+        SELECT  t.id,
+                t.road_section,
+                (SELECT SUM(ST_Length(geom)) FROM _tempus_import.nw AS nw WHERE nw.id = ANY (t.road_section)) AS cost
 
-      		 array(SELECT trpelid FROM _tempus_import.mp AS a
-		       WHERE mp.id=a.id AND trpeltyp=4110 ORDER BY seqnr) as road_section,
+        FROM (
+        	SELECT   id,
+                 array(
+			SELECT trpelid FROM _tempus_import.mp AS a
+                      	WHERE mp.id=a.id AND trpeltyp=4110 ORDER BY seqnr
+                        ) as road_section
 
-		 (SELECT sum(meters) FROM _tempus_import.nw 
-                  WHERE id IN (
-                               SELECT trpelid FROM _tempus_import.mp AS a
-                               WHERE  mp.id=a.id AND trpeltyp=4110 ORDER BY seqnr)) AS cost
-	FROM _tempus_import.mp AS mp GROUP BY id;
-       
+        FROM _tempus_import.mp AS mp
+        WHERE mp.trpelid IN (SELECT nw.id FROM _tempus_import.nw AS nw) AND seqnr > 1
+        GROUP BY id ) AS t;
+
 
 -- Remove import function (direction type)
 DROP FUNCTION _tempus_import.multinet_transport_direction(integer, text, boolean);
