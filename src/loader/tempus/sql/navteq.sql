@@ -27,15 +27,10 @@ $$ LANGUAGE plpgsql;
 
 
 -- TABLE road_node 
--- FIXME to be done !
--- INSERT INTO tempus.road_node
-----  SELECT DISTINCT 
--- 	jc.id,
--- 	jc.jncttyp = 0 AS junction,
--- 	jc.jncttyp = 2 AS bifurcation,
--- 	(jc.jncttyp != 0 AND jc.jncttyp != 2) AS other
--- FROM _tempus_import.jc AS jc;
-
+INSERT INTO tempus.road_node
+	SELECT DISTINCT id FROM 
+		(SELECT ref_in_id AS id  FROM _tempus_import.street)  AS a
+		 UNION (SELECT ref_in_id AS id FROM _tempus_import.street);
 
 
 -- TABLE road_section 
@@ -110,11 +105,10 @@ FROM _tempus_import.street AS st;
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 	PRIMARY KEY (id);
 
--- FIXME handle Navteq node 
---ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
---	FOREIGN KEY (node_from) REFERENCES tempus.road_node;
---ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
---	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id);
+ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
+	FOREIGN KEY (node_from) REFERENCES tempus.road_node;
+ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
+	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id);
 
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_road_type_fkey
 	FOREIGN KEY (road_type) REFERENCES tempus.road_type(id);
@@ -124,20 +118,28 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 
 
+
 -- TABLE road_road
 INSERT INTO tempus.road_road
-	SELECT	 link_id::integer AS id, 
 
-      		 array(SELECT link_id::integer FROM _tempus_import.rdms AS a
-		       WHERE rd.link_id=a.link_id ORDER BY seq_number) as road_section,
-		 10 AS cost -- FIXME handle meaningfull cost
+        SELECT  t.id,
+                t.road_section,
+                (SELECT SUM(ST_Length(geom)) FROM _tempus_import.street AS s WHERE s.link_id = ANY (t.road_section)) AS cost
+  
+        FROM (
+        SELECT   cond_id::integer AS id,
+                 array(
+                        SELECT r.man_linkid::integer
+                        FROM _tempus_import.rdms AS r
+                        WHERE rd.cond_id::integer=r.cond_id::integer
+                        ORDER BY r.seq_number
+                        ) as road_section
 
---		 (SELECT sum(ST_Length(geom)) FROM _tempus_import.street
---                 WHERE link_id::integer IN (
---                             SELECT link_id::integer FROM _tempus_import.rdms AS a
---                              WHERE  rd.link_id=a.link_id ORDER BY seq_number)) AS cost
+        FROM _tempus_import.rdms AS rd
+        WHERE rd.man_linkid IN (SELECT s.link_id FROM _tempus_import.street AS s) AND seq_number > 1
+        GROUP BY cond_id ) AS t;
 
-	FROM _tempus_import.rdms AS rd GROUP BY link_id;
+
        
 
 -- Remove import function (direction type)
