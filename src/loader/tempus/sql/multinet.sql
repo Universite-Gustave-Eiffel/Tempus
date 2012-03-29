@@ -2,30 +2,6 @@
 -- Licence MIT
 -- Copyright Oslandia 2012
 
-
--- Handle direction type
-CREATE OR REPLACE FUNCTION _tempus_import.multinet_transport_direction(integer, text, boolean)
-RETURNS integer AS $$
-
-DECLARE 
-	tt integer;
-BEGIN
-
-	IF $1 <= 2	 THEN tt := 1; 			-- Only cars for motorway and primary road
-	ELSE		      tt := 1 + 2 + 4 + 512;
-	END IF; 
-
-	IF     $2 IS NULL 					THEN RETURN tt;
-	ELSIF  $2 = 'N'						THEN RETURN 2 + 512;
-	ELSIF ($2 = 'FT' AND $3) OR ($2 = 'TF' AND NOT $3) 	THEN RETURN tt;
-	ELSIF ($2 = 'TF' AND $3) OR ($2 = 'FT' AND NOT $3)	THEN RETURN 2;
-	END IF;
-
-	RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-
 -- TABLE road_node 
 INSERT INTO tempus.road_node
 
@@ -50,9 +26,14 @@ ALTER TABLE tempus.poi DROP CONSTRAINT poi_road_section_id_fkey;
 ALTER TABLE tempus.pt_stop DROP CONSTRAINT pt_stop_road_section_id_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey;
 
--- Proceed to INSERT
-INSERT INTO tempus.road_section 
+-- create index to speed up next query
+analyze _tempus_import.sr;
+analyze _tempus_import.nw;
+create index idx_tempus_import_sr_id on _tempus_import.sr (id);
+create index idx_tempus_import_nw_id on _tempus_import.nw (id);
 
+-- Proceed to INSERT
+insert into tempus.road_section
 SELECT 
 	nw.id,
 
@@ -72,13 +53,26 @@ SELECT
 	f_jnctid AS node_from,
 	t_jnctid AS node_to,
 
-	_tempus_import.multinet_transport_direction(frc, oneway, 't') AS transport_type_ft,
-	_tempus_import.multinet_transport_direction(frc, oneway, 'f') AS transport_type_tf,
+	case
+		when oneway is null and frc <= 2 then 1
+		when oneway is null then 512 + 4 + 2 + 1 -- [and frc > 2]
+		when oneway = 'N' then 512 + 2
+		when oneway = 'TF' then 2 -- [and test is true]
+		when frc <= 2 then 1 -- [and oneway = 'FT' and test is true]
+		else 512 + 4 + 2 + 1 -- [and oneway = 'FT' and test is true and frc > 2]
+	end as transport_type_ft
+	, case
+		when oneway is null and frc <= 2 then 1
+		when oneway is null then 512 + 4 + 2 + 1 -- [and frc > 2]
+		when oneway = 'N' then 512 + 2
+		when oneway = 'FT' then 2 -- [and test is false]
+		when frc <= 2 then 1 -- [and oneway = 'TF' and test is false]
+		else 512 + 4 + 2 + 1 -- [and oneway = 'TF' and test is false and frc > 2]
+	end as transport_type_tf
 
-	meters AS length,
-	(SELECT min(speed) FROM _tempus_import.sr WHERE nw.id=sr.id) AS car_speed_limit,
-
-	CASE speedcat
+	, meters AS length
+	, speed.car_speed_limit
+	, CASE speedcat
 		WHEN 1 THEN 130 
 		WHEN 2 THEN 115
 		WHEN 3 THEN 95
@@ -89,8 +83,8 @@ SELECT
 		WHEN 8 THEN 8
 		ELSE NULL 
 	END AS car_average_speed,
-
-	name AS road_name,
+	
+	"name" AS road_name,
 
 	CASE lanes
 		WHEN 0 THEN NULL
@@ -130,8 +124,21 @@ SELECT
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
 	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 
-FROM _tempus_import.nw AS nw
-WHERE nw.feattyp = 4110;
+FROM 
+	_tempus_import.nw AS nw
+left join (
+	select 
+		sr.id
+		, min(speed) as car_speed_limit 
+	FROM 
+		_tempus_import.sr 
+	group by 
+		sr.id
+) as speed 
+on 
+	nw.id=speed.id
+WHERE 
+	nw.feattyp = 4110;
 
 -- Restore constraints and index
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
@@ -164,7 +171,3 @@ INSERT INTO tempus.road_road
         FROM _tempus_import.mp AS mp
         WHERE mp.trpelid IN (SELECT nw.id FROM _tempus_import.nw AS nw) AND seqnr > 1
         GROUP BY id ) AS t;
-
-
--- Remove import function (direction type)
-DROP FUNCTION _tempus_import.multinet_transport_direction(integer, text, boolean);
