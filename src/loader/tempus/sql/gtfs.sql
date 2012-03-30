@@ -111,12 +111,53 @@ from
 -- drop constraints
 -- TODO
 
-insert into
-	tempus.pt_section
+insert into tempus.pt_section (stop_from, stop_to, network_id, geom)
+with trips as (
+	select
+		trip_id
+		-- gtfs stop sequences can have holes
+		-- use the dense rank to have then continuous
+		, dense_rank() over win as stopseq
+		, stop_sequence
+		, stop_id
+	from
+		_tempus_import.stop_times
+	window win as (
+		partition by trip_id order by stop_sequence
+	)
+)
 select
-	*
-from
-	foo;
+	stop_from
+	, stop_to
+	, (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
+	-- Geometry is a line between stops
+	-- FIXME : if we have a shape.txt, could be a full shape
+	, st_force_3DZ(st_setsrid(st_makeline(g1.geom, g2.geom), 2154)) as geom
+from (
+	select 
+		t1.stop_id::integer as stop_from
+		, t2.stop_id::integer as stop_to 
+	from 
+		trips as t1
+	join 
+		trips as t2
+	on 
+		t1.trip_id = t2.trip_id 
+		and t1.stopseq = t2.stopseq - 1 
+	group by 
+		t1.stop_id, t2.stop_id
+) as foo
+join
+	-- get the from stop geometry
+	tempus.pt_stop as g1
+on
+	stop_from = g1.id
+join
+	-- get the to stop geometry
+	tempus.pt_stop as g2
+on
+	stop_to = g2.id;
+
 -- TODO
 -- restore constraints
 
