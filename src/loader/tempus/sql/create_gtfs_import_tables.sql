@@ -98,7 +98,7 @@ CREATE TABLE _tempus_import.shapes (
     shape_pt_lon double precision NOT NULL,
     shape_pt_sequence integer NOT NULL,
     shape_dist_traveled double precision,
-    the_geom geometry
+    geom geometry
 );
 
 DROP TABLE IF EXISTS _tempus_import.stop_times;
@@ -125,8 +125,8 @@ CREATE TABLE _tempus_import.stops (
     zone_id character varying,
     stop_url character varying,
     location_type integer,
-    parent_station character varying,
-    the_geom geometry
+    parent_station character varying
+--    ,geom geometry
 );
 
 
@@ -141,5 +141,14 @@ CREATE TABLE _tempus_import.trips (
     block_id character varying,
     shape_id character varying,
     direction varchar
+);
+
+
+DROP TABLE IF EXISTS _tempus_import.transfers;
+CREATE TABLE _tempus_import.transfers (
+    from_stop_id character varying NOT NULL,
+    to_stop_id character varying NOT NULL,
+    transfer_type character varying NOT NULL,
+    min_transfer_time character varying
 );
 
