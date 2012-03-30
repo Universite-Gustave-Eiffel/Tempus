@@ -141,7 +141,7 @@ CREATE TABLE tempus.poi
 -- Sub Network organisation
 CREATE TABLE tempus.pt_network
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
 	pnname varchar NOT NULL
 );
 
