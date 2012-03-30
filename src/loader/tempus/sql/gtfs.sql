@@ -1,10 +1,8 @@
 /* ==== PT network ==== */
 insert into
-	tempus.pt_network
+	tempus.pt_network (pnname)
 select
-	-- FIXME : use serial instead ?
-	, agency_id as id
-	, agency_name as pnname
+	agency_name as pnname
 from
 	_tempus_import.agency;
 	
@@ -68,4 +66,140 @@ alter table tempus.pt_stop add CONSTRAINT enforce_srid_geom CHECK (st_srid(geom)
 
 /* ==== /stops ==== */
 
+/* ==== GTFS routes ==== */
+-- drop constraints 
+-- TODO
 
+insert into
+	tempus.pt_route
+select
+	route_id::integer as id
+	, agency_id::integer as network_id
+	, route_short_name as short_name
+	, route_long_name as long_name
+	, route_type::integer as route_type
+from
+	_tempus_import.routes;
+
+-- restore constraints
+
+/* ==== sections ==== */
+-- drop constraints
+-- TODO
+
+insert into
+	tempus.pt_section
+select
+	*
+from
+	foo;
+-- TODO
+-- restore constraints
+
+/* ==== GTFS calendar ==== */
+insert into
+	tempus.pt_calendar
+select
+	service_id::integer as id
+	, monday::boolean as monday
+	, tuesday::boolean as tuesday
+	, wednesday::boolean as wednesday
+	, thursday::boolean as thursday
+	, friday::boolean as friday
+	, saturday::boolean as saturday
+	, sunday::boolean as sunday
+	, start_date::date as start_date
+	, end_date::date as end_date
+from
+	_tempus_import.calendar;
+
+insert into 
+	tempus.pt_trip
+select
+	trip_id::bigint as id
+	, route_id::integer as route_id
+	, service_id::integer as service_id
+	, trip_short_name
+from
+	_tempus_import.trips;
+
+-- restore constraints
+
+insert into
+	tempus.pt_calendar_date
+select
+	service_id::bigint as service_id
+	, "date"::date as calendar_date
+	, exception_type::integer as exception_type
+from
+	_tempus_import.calendar_dates;
+
+-- restore constraints
+
+insert into
+	tempus.pt_stop_time
+select
+	-- id ??
+	-- serial ?
+	nextval('seq_pt_stop_time_id') as id
+	, trip_id::bigint as trip_id
+	, arrival_time::time without time zone as arrival_time
+	, departure_time::time without time zone as departure_time
+	, stop_id::integer as stop_id
+	, stop_sequence::integer as stop_sequence
+	, stop_headsign
+	, pickup_type::integer as pickup_type
+	, drop_off_type::integer as drop_off_type
+	, shape_dist_traveled::double precision as shape_dist_traveled
+from
+	_tempus_import.stop_times;
+
+-- restore constraints
+
+insert into
+	tempus.pt_fare_attribute
+select
+	fare_id::integer as id
+	, price::double precision as price
+	, currency_type::char(3) as currency_type
+	-- FIXME : same in tempus than GTFS ?
+	, transfers::integer as transfers
+	, transfer_duration::integer as transfer_duration
+from
+	_tempus_import.fare_attributes;
+
+insert into
+	tempus.pt_frequency
+select
+	-- id : serial ?
+	nextval('seq_pt_frequency_id') as id
+	, trip_id::bigint as trip_id
+	, start_time::time without time zone as start_time
+	, end_time::time without time zone as end_time
+	, headways_secs::integer as headways_secs
+from
+	_tempus_import.frequencies;
+
+
+insert into
+	tempus.pt_fare_rule
+select
+	nextval('seq_pt_fare_rule_id')::bigint as id
+	, fare_id::bigint as fare_id
+	, route_id::bigint as route_id
+	, origin_id::integer as origin_id
+	, destination_id::integer as destination_id
+	, contains_id::integer as contains_id
+from
+	_tempus_import.fare_rules;
+
+-- TODO : add transfer table into import
+insert into
+	tempus.pt_transfer
+select
+	from_stop_id::integer as from_stop_id
+	, to_stop_id::integer as to_stop_id
+	, transfer_type::integer as transfer_type
+	, min_transfer_time::integer as min_transfer_time
+from
+	_tempus_import.transfers;

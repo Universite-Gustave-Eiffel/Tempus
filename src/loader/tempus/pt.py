@@ -29,7 +29,7 @@ class GTFSImporter(DataImporter):
     # SQL files to execute before loading GTFS data
     PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql"]
     # SQL files to execute after loading GTFS data 
-    POSTLOADSQL = []
+    POSTLOADSQL = ["gtfs.sql"]
 
     def __init__(self, source = "", dbstring = "", logfile = None, copymode = True, doclean = True):
         """Create a new GTFS data loader. Arguments are :
