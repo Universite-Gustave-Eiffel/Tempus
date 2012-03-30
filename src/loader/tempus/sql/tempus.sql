@@ -143,6 +143,7 @@ CREATE TABLE tempus.pt_network
 (
 	id serial PRIMARY KEY,
 	pnname varchar NOT NULL
+	, import_date timestamp not null default current timestamp
 );
 
 -- GTFS Stops
@@ -273,6 +274,7 @@ CREATE TABLE tempus.pt_frequency
 );
 
 -- GTFS Fare Rule
+-- DROP TABLE tempus.pt_fare_rule;
 CREATE TABLE tempus.pt_fare_rule
 (
 	id serial PRIMARY KEY,

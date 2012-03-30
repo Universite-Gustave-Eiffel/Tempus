@@ -94,12 +94,11 @@ alter table tempus.pt_stop add CONSTRAINT enforce_srid_geom CHECK (st_srid(geom)
 /* ==== GTFS routes ==== */
 -- drop constraints 
 -- TODO
-
 insert into
 	tempus.pt_route
 select
 	route_id::integer as id
-	, agency_id::integer as network_id
+	, (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
 	, route_short_name as short_name
 	, route_long_name as long_name
 	, route_type::integer as route_type
