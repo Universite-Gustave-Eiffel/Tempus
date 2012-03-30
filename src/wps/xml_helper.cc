@@ -1,0 +1,109 @@
+#include <stdexcept>
+
+#include "xml_helper.hh"
+
+using namespace std;
+
+int XML::init()
+{
+    xmlSetGenericErrorFunc( NULL, XML::accumulate_error );
+}
+
+// Force a call to XML::init() on startup
+int XML::init_n_ = XML::init();
+
+std::string XML::xml_error_;
+
+bool XML::clear_errors_ = false;
+
+void XML::accumulate_error( void* ctx, const char* msg, ...)
+{
+    if ( clear_errors_ )
+    {
+	xml_error_.clear();
+	clear_errors_ = false;
+    }
+#define TMP_BUF_SIZE 1024
+    char buffer[TMP_BUF_SIZE];
+    va_list arg_ptr;
+    
+    va_start(arg_ptr, msg);
+    vsnprintf(buffer, TMP_BUF_SIZE, msg, arg_ptr);
+    va_end(arg_ptr);
+    
+    xml_error_ += buffer;
+#undef TMP_BUF_SIZE
+}
+
+std::string XML::escape_text( const std::string& message )
+{
+    // escape the given error message
+    xmlBuffer* buf = xmlBufferCreate();
+    xmlNode * msg_node = xmlNewText( (const xmlChar*)message.c_str() );
+    xmlNodeDump( buf, NULL, msg_node, 0, 0 );
+    string escaped_msg = (const char*)xmlBufferContent( buf );
+    xmlFreeNode( msg_node);
+    xmlBufferFree( buf );
+    return escaped_msg;
+}
+
+void XML::ensure_validity( xmlNode* node, const std::string& schema_str )
+{
+    std::string local_schema = "<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
+	+ schema_str +
+	"</xs:schema>\n";
+    xmlDocPtr schema_doc = xmlReadMemory(local_schema.c_str(), local_schema.size(), "schema.xml", NULL, 0);
+    if (schema_doc == NULL) {
+	clear_errors_ = true;
+	throw std::invalid_argument( xml_error_ );
+    }
+    xmlSchemaParserCtxtPtr parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
+    if (parser_ctxt == NULL) {
+	/* unable to create a parser context for the schema */
+	xmlFreeDoc( schema_doc );
+	clear_errors_ = true;
+	throw std::invalid_argument( xml_error_ );
+    }
+    xmlSchemaPtr schema = xmlSchemaParse(parser_ctxt);
+    if (schema == NULL) {
+	/* the schema itself is not valid */
+	xmlSchemaFreeParserCtxt( parser_ctxt );
+	xmlFreeDoc( schema_doc );
+	clear_errors_ = true;
+	throw std::invalid_argument( xml_error_ );
+    }
+    xmlSchemaValidCtxtPtr valid_ctxt = xmlSchemaNewValidCtxt(schema);
+    if (valid_ctxt == NULL) {
+	/* unable to create a validation context for the schema */
+	xmlSchemaFree( schema );
+	xmlSchemaFreeParserCtxt( parser_ctxt );
+	xmlFreeDoc( schema_doc );
+	clear_errors_ = true;
+	throw std::invalid_argument( xml_error_ );
+    }
+    
+    // create a new Doc from the subtree node
+    xmlDoc* subtree_doc = xmlNewDoc((const xmlChar*)"1.0");
+    xmlDocSetRootElement( subtree_doc, node );
+    
+    int is_valid = (xmlSchemaValidateDoc( valid_ctxt, subtree_doc ) == 0);
+    if ( !is_valid )
+    {
+	clear_errors_ = true;
+	throw std::invalid_argument( xml_error_ );
+    }
+    xmlSchemaFreeValidCtxt( valid_ctxt );
+    xmlSchemaFree( schema );
+    xmlSchemaFreeParserCtxt( parser_ctxt );
+    xmlFreeDoc( schema_doc );
+    // remove the root node from the subtree document to prevent double free()
+    subtree_doc->children = NULL;
+    xmlFreeDoc( subtree_doc );
+}
+
+xmlNode* XML::get_next_nontext( xmlNode* node )
+{
+    while ( node && xmlNodeIsText(node) )
+	node = node->next;
+    return node;
+}
