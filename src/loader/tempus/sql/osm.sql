@@ -136,3 +136,8 @@ ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
+
+-- INDEXES
+create index idx_road_section_geom on tempus.road_section using gist(geom);
+create index idx_road_node on tempus.road_node using gist(geom);
+-- FIXME : other indexes needed ?
