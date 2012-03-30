@@ -12,14 +12,34 @@ from
 -- geometries should have been created in stops table 
 -- during importation with 2154 srid from x, y latlon fields
 -- st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), 2154)
-create or replace index _tempus_import.idx_stops_geom on _tempus_import.stops using gist(geom);
+create table 
+	_tempus_import.stops_geom as 
+select
+	stop_id
+	, st_force_3DZ(st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), 2154)) as geom
+from
+	_tempus_import.stops;
 
--- remove constraint on tempus stops
-alter table tempus.pt_stop drop CONSTRAINT pt_stop_pkey;
+drop index if exists _tempus_import.idx_stops_geom;
+create index idx_stops_geom on _tempus_import.stops_geom using gist(geom);
+drop index if exists _tempus_import.idx_stops_stop_id;
+create index idx_stops_stop_id on _tempus_import.stops (stop_id);
+drop index if exists _tempus_import.idx_stops_geom_stop_id;
+create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
+
+-- remove constraint on tempus stops and dependencies
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey;
+alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
 alter table tempus.pt_stop drop CONSTRAINT enforce_dims_geom;
 alter table tempus.pt_stop drop CONSTRAINT enforce_geotype_geom;
 alter table tempus.pt_stop drop CONSTRAINT enforce_srid_geom;
+alter table tempus.pt_section drop constraint pt_section_stop_from_fkey;
+alter table tempus.pt_section drop constraint pt_section_stop_to_fkey;
+alter table tempus.pt_transfer drop constraint pt_transfer_from_stop_id_fkey;
+alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
+alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
+alter table tempus.pt_stop drop CONSTRAINT pt_stop_pkey;
+
 
 -- insert data
 insert into
@@ -37,20 +57,25 @@ select
  from (
 	select
 		stops.*
-		, first_value(rs.gid) over nearest as road_section_id
+		, stops_geom.geom as geom
+		, first_value(rs.id) over nearest as road_section_id
 		, first_value(rs.geom) over nearest as geom_road
 		, row_number() over nearest as nth
 	from
 		_tempus_import.stops
 	join
-		_tempus_import.road_section as rs
+		_tempus_import.stops_geom
+	on
+		stops.stop_id = stops_geom.stop_id
+	join
+		tempus.road_section as rs
 	on
 		-- only consider road sections within xx meters
 		-- stops further than this distance will not be included
-		st_dwithin(stops.geom, rs.geom, 30)
+		st_dwithin(stops_geom.geom, rs.geom, 30)
 	window
 		-- select the nearest road geometry for each stop
-		nearest as (partition by stops.id order by st_distance(stops.geom, rs.geom))
+		nearest as (partition by stops.stop_id order by st_distance(stops_geom.geom, rs.geom))
 ) as stops_ratt
 where 
 	-- only take one rattachement
@@ -60,7 +85,7 @@ where
 alter table tempus.pt_stop add CONSTRAINT pt_stop_pkey PRIMARY KEY (id);
 alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
 	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-alter table tempus.pt_stop add CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+alter table tempus.pt_stop add CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 3);
 alter table tempus.pt_stop add CONSTRAINT enforce_geotype_geom CHECK (geometrytype(geom) = 'POINT'::text OR geom IS NULL);
 alter table tempus.pt_stop add CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 2154);
 
@@ -137,12 +162,10 @@ from
 -- restore constraints
 
 insert into
-	tempus.pt_stop_time
+	tempus.pt_stop_time (trip_id, arrival_time, departure_time, stop_id, stop_sequence, stop_headsign
+	, pickup_type, drop_off_type, shape_dist_traveled)
 select
-	-- id ??
-	-- serial ?
-	nextval('seq_pt_stop_time_id') as id
-	, trip_id::bigint as trip_id
+	trip_id::bigint as trip_id
 	, arrival_time::time without time zone as arrival_time
 	, departure_time::time without time zone as departure_time
 	, stop_id::integer as stop_id
@@ -169,23 +192,20 @@ from
 	_tempus_import.fare_attributes;
 
 insert into
-	tempus.pt_frequency
+	tempus.pt_frequency (trip_id, start_time, end_time, headway_secs)
 select
-	-- id : serial ?
-	nextval('seq_pt_frequency_id') as id
-	, trip_id::bigint as trip_id
+	trip_id::bigint as trip_id
 	, start_time::time without time zone as start_time
 	, end_time::time without time zone as end_time
-	, headways_secs::integer as headways_secs
+	, headway_secs::integer as headway_secs
 from
 	_tempus_import.frequencies;
 
 
 insert into
-	tempus.pt_fare_rule
+	tempus.pt_fare_rule (fare_id, route_id, origin_id, destination_id, contains_id)
 select
-	nextval('seq_pt_fare_rule_id')::bigint as id
-	, fare_id::bigint as fare_id
+	fare_id::bigint as fare_id
 	, route_id::bigint as route_id
 	, origin_id::integer as origin_id
 	, destination_id::integer as destination_id
@@ -193,7 +213,6 @@ select
 from
 	_tempus_import.fare_rules;
 
--- TODO : add transfer table into import
 insert into
 	tempus.pt_transfer
 select
