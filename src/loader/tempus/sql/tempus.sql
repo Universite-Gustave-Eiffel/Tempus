@@ -227,7 +227,7 @@ CREATE TABLE tempus.pt_calendar_date
 -- GTFS Stop Time
 CREATE TABLE tempus.pt_stop_time
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
 	trip_id bigint REFERENCES tempus.pt_trip,
 	arrival_time TIME WITHOUT TIME ZONE NOT NULL,
 	departure_time TIME WITHOUT TIME ZONE NOT NULL,
@@ -262,19 +262,20 @@ CREATE TABLE tempus.pt_fare_attribute
 
 
 -- GTFS Frequency
+-- DROP TABLE tempus.pt_frequency; 
 CREATE TABLE tempus.pt_frequency
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
 	trip_id bigint REFERENCES tempus.pt_trip,
 	start_time TIME WITHOUT TIME ZONE NOT NULL,
 	end_time TIME WITHOUT TIME ZONE NOT NULL,
-	headways_secs integer NOT NULL
+	headway_secs integer NOT NULL
 );
 
 -- GTFS Fare Rule
 CREATE TABLE tempus.pt_fare_rule
 (
-	id bigint PRIMARY KEY,
+	id serial PRIMARY KEY,
 	fare_id bigint REFERENCES tempus.pt_fare_attribute NOT NULL,
 	route_id bigint REFERENCES tempus.pt_route NOT NULL,
 	origin_id integer NOT NULL, -- tempus.pt_stop (zone_id)
