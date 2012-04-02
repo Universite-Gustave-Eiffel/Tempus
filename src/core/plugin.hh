@@ -87,10 +87,9 @@ namespace Tempus
 	virtual void pre_process( Request& request ) throw (std::invalid_argument);
 
 	///
-	/// Process the user request.
-	/// \param[in] request The request to process.
+	/// Process the last preprocessed user request.
 	/// Must populates the 'result_' object.
-	virtual void process( Request& request );
+	virtual void process();
 
 	///
 	/// Post-process the user request.

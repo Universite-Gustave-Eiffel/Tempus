@@ -9,11 +9,10 @@
 
 #include "pgsql_importer.hh"
 
+using namespace std;
+
 namespace Tempus
 {
-
-    ProgressionCallback null_progression_callback;
-
     PQImporter::PQImporter( const std::string& pg_options ) :
 	connection_( pg_options )
     {
@@ -29,7 +28,7 @@ namespace Tempus
     {
 	pqxx::work w( connection_ );
 	
-	pqxx::result res = w.exec( "SELECT id, parent_id, name, need_parking, need_station, need_return FROM tempus.transport_type" );
+	pqxx::result res = w.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
 	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
 	{
 	    db_id_t db_id;
@@ -52,7 +51,7 @@ namespace Tempus
 	    progression( static_cast<float>((i + 0.) / res.size() / 2.0) );
 	}
 
-	res = w.exec( "SELECT id, name FROM tempus.road_type" );
+	res = w.exec( "SELECT id, rtname FROM tempus.road_type" );
 	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
 	{
 	    db_id_t db_id;
@@ -92,9 +91,12 @@ namespace Tempus
 	    Road::Node node;
 	    
 	    node.db_id = res[i][0].as<db_id_t>();
+	    node.is_junction = false;
+	    node.is_bifurcation = false;
 	    BOOST_ASSERT( node.db_id > 0 );
-	    node.is_junction = res[i][1].as<bool>();
-	    node.is_bifurcation = res[i][2].as<bool>();
+	    // only overwritten if not null
+	    res[i][1] >> node.is_junction;
+	    res[i][2] >> node.is_bifurcation;
 	    
 	    Road::Vertex v = boost::add_vertex( node, road_graph );
 	    
@@ -105,7 +107,7 @@ namespace Tempus
 	}
 	
 	std::string query = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
-	    "car_average_speed, bus_average_speed, road_name, address_left_side, address_right_side, lane, "
+	    "car_average_speed, road_name, lane, "
 	    "roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section";
 	res = w.exec( query );
 	
@@ -118,8 +120,8 @@ namespace Tempus
 	    if ( !res[i][1].is_null() )
 		section.road_type = res[i][1].as<db_id_t>();
 	    
-	    int node_from_id = res[i][2].as<int>();
-	    int node_to_id = res[i][3].as<int>();
+	    db_id_t node_from_id = res[i][2].as<db_id_t>();
+	    db_id_t node_to_id = res[i][3].as<db_id_t>();
 	    
 	    int j = 4;
 	    res[i][j++] >> section.transport_type_ft;
@@ -127,10 +129,7 @@ namespace Tempus
 	    res[i][j++] >> section.length;
 	    res[i][j++] >> section.car_speed_limit;
 	    res[i][j++] >> section.car_average_speed;
-	    res[i][j++] >> section.bus_average_speed;
 	    res[i][j++] >> section.road_name;
-	    res[i][j++] >> section.address_left_side;
-	    res[i][j++] >> section.address_right_side;
 	    res[i][j++] >> section.lane;
 	    res[i][j++] >> section.is_roundabout;
 	    res[i][j++] >> section.is_bridge;
@@ -138,6 +137,11 @@ namespace Tempus
 	    res[i][j++] >> section.is_ramp;
 	    res[i][j++] >> section.is_tollway;	    
 
+	    // Assert that corresponding nodes exist
+	    BOOST_ASSERT_MSG( road_nodes_map.find( node_from_id ) != road_nodes_map.end(),
+			      (boost::format("Non existing node_from %1% on road_section %2%") % node_from_id % section.db_id).str().c_str());
+	    BOOST_ASSERT_MSG( road_nodes_map.find( node_to_id ) != road_nodes_map.end(),
+			      (boost::format("Non existing node_to %1% on road_section %2%") % node_to_id % section.db_id).str().c_str());
 	    Road::Vertex v_from = road_nodes_map[ node_from_id ];
 	    Road::Vertex v_to = road_nodes_map[ node_to_id ];
 
@@ -150,7 +154,7 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.25) );
 	}
 
-	res = w.exec( "SELECT id, name, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
+	res = w.exec( "SELECT id, psname, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
 	
 	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
 	{
@@ -186,7 +190,7 @@ namespace Tempus
 	}
 
 	res = w.exec( "SELECT stop_from, stop_to FROM tempus.pt_section" );
-	
+     
 	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
 	{
 	    PublicTransport::Section section;

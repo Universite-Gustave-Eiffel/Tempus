@@ -17,19 +17,6 @@
 
 namespace Tempus
 {
-    ///
-    /// Base class in charge of progression callback.
-    class ProgressionCallback
-    {
-    public:
-	virtual void operator()( float, bool = false )
-	{
-	    // Default : do nothing
-	}
-    };
-
-    extern ProgressionCallback null_progression_callback;
-
     class PQImporter
     {
     public:

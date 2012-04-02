@@ -1,13 +1,13 @@
-#include "plugin.hh"
-
-#include "pgsql_importer.hh"
 #include <pqxx/pqxx>
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
+#include "plugin.hh"
+#include "pgsql_importer.hh"
+
 //
 // FIXME : to be replaced by a config file
-#define DB_CONNECTION_OPTIONS "dbname=tempus"
+#define DB_CONNECTION_OPTIONS "dbname=tempus_tmp"
 
 using std::cout;
 using std::endl;
@@ -17,33 +17,6 @@ namespace Tempus
     class MyPlugin : public Plugin
     {
     public:
-
-	///
-	/// Simple progession processing: text based progression bar.
-	struct TextProgression : public Tempus::ProgressionCallback
-	{
-	public:
-	    TextProgression( int N = 50 ) : N_(N)
-	    {
-	    }
-	    virtual void operator()( float percent, bool finished )
-	    {
-		std::cout << "\r";
-		int n = int(percent * N_);
-		std::cout << "[";
-		for (int i = 0; i < n; i++)
-		    std::cout << ".";
-		for (int i = n; i < N_; i++)
-		    std::cout << " ";
-		std::cout << "] ";
-		std::cout << int(percent * 100 ) << "%";
-		if ( finished )
-		    std::cout << std::endl;
-		std::cout.flush();
-	    }
-	protected:
-	    int N_;
-	};
 
 	MyPlugin() : Plugin("myplugin")
 	{
@@ -71,7 +44,9 @@ namespace Tempus
 	    PQImporter importer( DB_CONNECTION_OPTIONS );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
+	    cout << "Importing constants ... " << endl;
 	    importer.import_constants();
+	    cout << "Importing graph ... " << endl;
 	    importer.import_graph( graph_, progression );
 
 	    // Browse edges and compute their duration and length
@@ -125,12 +100,12 @@ namespace Tempus
 	    {
 		throw std::invalid_argument( "Unsupported optimizing criterion" );
 	    }
-	}
-
-	virtual void process( Request& request )
-	{
+	    
 	    request_ = request;
+ 	}
 
+	virtual void process()
+	{
 	    PublicTransport::Graph& pt_graph = graph_.public_transports.front();
 	    Road::Graph& road_graph = graph_.road;
 
@@ -140,9 +115,9 @@ namespace Tempus
 	    {
 		Road::Vertex node;
 		if ( i == 0 )
-		    node = request.origin;
+		    node = request_.origin;
 		else
-		    node = request.get_destination();
+		    node = request_.get_destination();
 		
 		bool found = false;
 		PublicTransport::Vertex found_vertex;
@@ -181,11 +156,11 @@ namespace Tempus
 	    std::vector<double> distance_map( boost::num_vertices(pt_graph) );
 	    
 	    boost::associative_property_map<CostMap> cost_property_map;
-	    if ( request.optimizing_criteria[0] == CostDuration )
+	    if ( request_.optimizing_criteria[0] == CostDuration )
 	    {
 		cost_property_map = duration_map_;
 	    }
-	    if ( request.optimizing_criteria[0] == CostDistance )
+	    if ( request_.optimizing_criteria[0] == CostDistance )
 	    {
 		cost_property_map = length_map_;
 	    }

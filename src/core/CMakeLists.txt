@@ -25,7 +25,7 @@ else (WIN32)
 	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
 	set( PQXX_INCLUDE_DIR "/usr/include/pqxx" CACHE PATH "libpqxx include directory" )
 	set( PQXX_LIBS_DIR "/usr/lib" CACHE PATH "libpqxx lib directory" )
-	set( PQ_LIBS pq pqxx dl )
+	set( PQ_LIBS pq pqxx dl boost_program_options )
 	set( SOURCE_FILES common.cc plugin.cc pgsql_importer.cc plugin.cc )
 	# With G++/Linux, .so must not be compiled with sources of the core. Otherwise global symbols get allocated
 	# many times, and we get a double-free corruption on exit.
@@ -40,3 +40,6 @@ target_link_libraries( test ${PQ_LIBS} )
 
 add_library( dummy_plugin MODULE dummy_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( dummy_plugin ${PQ_LIBS} )
+
+add_library( sample_road_plugin MODULE sample_road_plugin.cc ${DLL_SOURCES} )
+target_link_libraries( sample_road_plugin ${PQ_LIBS} )

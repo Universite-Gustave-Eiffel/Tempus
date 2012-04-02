@@ -21,7 +21,7 @@ namespace Tempus
     /// Type used inside the DB to store IDs.
     /// O means NULL.
     ///
-    typedef long int db_id_t;
+    typedef long long int db_id_t;
 
     struct ConsistentClass
     {
@@ -146,6 +146,34 @@ namespace Tempus
 	CostCarbon,
 	CostCalories,
 	CostNumberOfChanges
+    };
+
+    ///
+    /// Base class in charge of progression callback.
+    class ProgressionCallback
+    {
+    public:
+	virtual void operator()( float, bool = false )
+	{
+	    // Default : do nothing
+	}
+    };
+
+    extern ProgressionCallback null_progression_callback;
+
+
+    ///
+    /// Simple progession processing: text based progression bar.
+    struct TextProgression : public Tempus::ProgressionCallback
+    {
+    public:
+	TextProgression( int N = 50 ) : N_(N), old_N_(-1)
+	{
+	}
+	virtual void operator()( float percent, bool finished );
+    protected:
+	int N_;
+	int old_N_;
     };
 
 }; // Tempus namespace

@@ -104,14 +104,14 @@ namespace Tempus
     void Plugin::pre_process( Request& request ) throw (std::invalid_argument)
     {
 	std::cout << "[plugin_base]: pre_process" << std::endl;
+	request_ = request;
     }
 
     ///
     /// Process the user request.
     /// Must populates the 'result_' object.
-    void Plugin::process( Request& request )
+    void Plugin::process()
     {
-	request_ = request;
 	std::cout << "[plugin_base]: process" << std::endl;
     }
 
