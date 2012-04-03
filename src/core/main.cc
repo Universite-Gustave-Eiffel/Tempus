@@ -85,7 +85,6 @@ int main( int argc, char* argv[])
 	boost::tie( vb, ve) = boost::vertices( road_graph );
 	ve--;
 
-	// go from the first road node, to the last one
 	Request req;
 	Request::Step step;
 	Road::VertexIterator vi, vi_end;

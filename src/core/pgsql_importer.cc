@@ -1,7 +1,6 @@
 #include <libpq-fe.h>
 
 #include <iostream>
-#include <pqxx/pqxx>
 
 #include <boost/mpl/vector.hpp>
 #include <boost/lexical_cast.hpp>
@@ -18,18 +17,15 @@ namespace Tempus
     {
     }
     
-    pqxx::result PQImporter::query( const std::string& query_str )
+    Db::Result PQImporter::query( const std::string& query_str )
     {
-	pqxx::work w( connection_ );
-	return w.exec( query_str );
+	return connection_.exec( query_str );
     }
 
     void PQImporter::import_constants( ProgressionCallback& progression )
     {
-	pqxx::work w( connection_ );
-	
-	pqxx::result res = w.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
-	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
+	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    db_id_t db_id;
 	    res[i][0] >> db_id;
@@ -51,8 +47,8 @@ namespace Tempus
 	    progression( static_cast<float>((i + 0.) / res.size() / 2.0) );
 	}
 
-	res = w.exec( "SELECT id, rtname FROM tempus.road_type" );
-	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	res = connection_.exec( "SELECT id, rtname FROM tempus.road_type" );
+	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    db_id_t db_id;
 	    res[i][0] >> db_id;
@@ -82,11 +78,9 @@ namespace Tempus
 	std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
 	std::map<Tempus::db_id_t, PublicTransport::Vertex> pt_nodes_map;
 
-	pqxx::work w( connection_ );
+	Db::Result res = connection_.exec( "SELECT id, junction, bifurcation FROM tempus.road_node" );
 	
-	pqxx::result res = w.exec( "SELECT id, junction, bifurcation FROM tempus.road_node" );
-	
-	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    Road::Node node;
 	    
@@ -109,9 +103,9 @@ namespace Tempus
 	std::string query = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
 	    "car_average_speed, road_name, lane, "
 	    "roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section";
-	res = w.exec( query );
+	res = connection_.exec( query );
 	
-	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    Road::Section section;
 	    
@@ -154,9 +148,9 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.25) );
 	}
 
-	res = w.exec( "SELECT id, psname, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
+	res = connection_.exec( "SELECT id, psname, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
 	
-	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    PublicTransport::Stop stop;
 
@@ -189,9 +183,9 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.5) );
 	}
 
-	res = w.exec( "SELECT stop_from, stop_to FROM tempus.pt_section" );
+	res = connection_.exec( "SELECT stop_from, stop_to FROM tempus.pt_section" );
      
-	for ( pqxx::result::size_type i = 0; i < res.size(); i++ )
+	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    PublicTransport::Section section;
 
