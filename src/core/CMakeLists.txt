@@ -36,8 +36,13 @@ link_directories( ${PQ_LIBS_DIR} )
 add_executable( test main.cc ${SOURCE_FILES} )
 target_link_libraries( test ${PQ_LIBS} )
 
+add_library( tempus STATIC ${SOURCE_FILES} )
+target_link_libraries( tempus ${PQ_LIBS} )
+
 add_library( dummy_plugin MODULE dummy_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( dummy_plugin ${PQ_LIBS} )
 
 add_library( sample_road_plugin MODULE sample_road_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( sample_road_plugin ${PQ_LIBS} )
+
+add_subdirectory( tests )
