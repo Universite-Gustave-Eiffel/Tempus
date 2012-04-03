@@ -1,13 +1,9 @@
-#include <pqxx/pqxx>
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "plugin.hh"
 #include "pgsql_importer.hh"
-
-//
-// FIXME : to be replaced by a config file
-#define DB_CONNECTION_OPTIONS "dbname=tempus_tmp"
+#include "db.hh"
 
 using std::cout;
 using std::endl;
@@ -37,11 +33,16 @@ namespace Tempus
 	// edge -> trip map
 	std::map<PublicTransport::Edge, db_id_t> trip_id_map_;
 
+	std::string db_options_;
     public:
+	virtual void pre_build( const std::string& options )
+	{
+	    db_options_ = options;
+	}
 	virtual void build()
 	{
 	    // request the database
-	    PQImporter importer( DB_CONNECTION_OPTIONS );
+	    PQImporter importer( db_options_ );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
 	    cout << "Importing constants ... " << endl;
@@ -74,7 +75,7 @@ namespace Tempus
 		int t_id = pt_graph[t].db_id;
 		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
 						    "where t1.trip_id = t2.trip_id and t1.stop_id=%1% and t2.stop_id=%2% and t1.stop_sequence < t2.stop_sequence order by t1.departure_time" ) % s_id % t_id).str();
-		pqxx::result res = importer.query( query );
+		Db::Result res = importer.query( query );
 
 		// FIXME : over simplification here: we always take the first row
 		if ( res.size() >= 1 )
