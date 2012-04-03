@@ -54,9 +54,9 @@ namespace Tempus
 	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
 #ifdef _WIN32
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) GetProcAddress( (HMODULE)handle->module_, "deletePlugin" );
-	    HMODULE module = handle->module_;
+	    HMODULE module = (HMODULE)handle->module_;
 	    deleteFct(handle);
-	    FreeLibrary( (HMODULE)module );
+	    FreeLibrary( module );
 #else
 	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
 	    void* module = handle->module_;
@@ -104,14 +104,14 @@ namespace Tempus
     void Plugin::pre_process( Request& request ) throw (std::invalid_argument)
     {
 	std::cout << "[plugin_base]: pre_process" << std::endl;
+	request_ = request;
     }
 
     ///
     /// Process the user request.
     /// Must populates the 'result_' object.
-    void Plugin::process( Request& request )
+    void Plugin::process()
     {
-	request_ = request;
 	std::cout << "[plugin_base]: process" << std::endl;
     }
 

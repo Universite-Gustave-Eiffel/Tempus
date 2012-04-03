@@ -1,13 +1,9 @@
-#include "plugin.hh"
-
-#include "pgsql_importer.hh"
-#include <pqxx/pqxx>
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-//
-// FIXME : to be replaced by a config file
-#define DB_CONNECTION_OPTIONS "dbname=tempus"
+#include "plugin.hh"
+#include "pgsql_importer.hh"
+#include "db.hh"
 
 using std::cout;
 using std::endl;
@@ -17,33 +13,6 @@ namespace Tempus
     class MyPlugin : public Plugin
     {
     public:
-
-	///
-	/// Simple progession processing: text based progression bar.
-	struct TextProgression : public Tempus::ProgressionCallback
-	{
-	public:
-	    TextProgression( int N = 50 ) : N_(N)
-	    {
-	    }
-	    virtual void operator()( float percent, bool finished )
-	    {
-		std::cout << "\r";
-		int n = int(percent * N_);
-		std::cout << "[";
-		for (int i = 0; i < n; i++)
-		    std::cout << ".";
-		for (int i = n; i < N_; i++)
-		    std::cout << " ";
-		std::cout << "] ";
-		std::cout << int(percent * 100 ) << "%";
-		if ( finished )
-		    std::cout << std::endl;
-		std::cout.flush();
-	    }
-	protected:
-	    int N_;
-	};
 
 	MyPlugin() : Plugin("myplugin")
 	{
@@ -64,14 +33,21 @@ namespace Tempus
 	// edge -> trip map
 	std::map<PublicTransport::Edge, db_id_t> trip_id_map_;
 
+	std::string db_options_;
     public:
+	virtual void pre_build( const std::string& options )
+	{
+	    db_options_ = options;
+	}
 	virtual void build()
 	{
 	    // request the database
-	    PQImporter importer( DB_CONNECTION_OPTIONS );
+	    PQImporter importer( db_options_ );
 	    TextProgression progression(50);
 	    std::cout << "Loading graph from database: " << std::endl;
+	    cout << "Importing constants ... " << endl;
 	    importer.import_constants();
+	    cout << "Importing graph ... " << endl;
 	    importer.import_graph( graph_, progression );
 
 	    // Browse edges and compute their duration and length
@@ -95,11 +71,11 @@ namespace Tempus
 		std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " length = " << length_map_[ *eb ] << std::endl;
 
 		// Duration computation
-		int s_id = pt_graph[s].db_id;
-		int t_id = pt_graph[t].db_id;
+		db_id_t s_id = pt_graph[s].db_id;
+		db_id_t t_id = pt_graph[t].db_id;
 		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
 						    "where t1.trip_id = t2.trip_id and t1.stop_id=%1% and t2.stop_id=%2% and t1.stop_sequence < t2.stop_sequence order by t1.departure_time" ) % s_id % t_id).str();
-		pqxx::result res = importer.query( query );
+		Db::Result res = importer.query( query );
 
 		// FIXME : over simplification here: we always take the first row
 		if ( res.size() >= 1 )
@@ -125,12 +101,12 @@ namespace Tempus
 	    {
 		throw std::invalid_argument( "Unsupported optimizing criterion" );
 	    }
-	}
-
-	virtual void process( Request& request )
-	{
+	    
 	    request_ = request;
+ 	}
 
+	virtual void process()
+	{
 	    PublicTransport::Graph& pt_graph = graph_.public_transports.front();
 	    Road::Graph& road_graph = graph_.road;
 
@@ -140,9 +116,9 @@ namespace Tempus
 	    {
 		Road::Vertex node;
 		if ( i == 0 )
-		    node = request.origin;
+		    node = request_.origin;
 		else
-		    node = request.get_destination();
+		    node = request_.get_destination();
 		
 		bool found = false;
 		PublicTransport::Vertex found_vertex;
@@ -181,11 +157,11 @@ namespace Tempus
 	    std::vector<double> distance_map( boost::num_vertices(pt_graph) );
 	    
 	    boost::associative_property_map<CostMap> cost_property_map;
-	    if ( request.optimizing_criteria[0] == CostDuration )
+	    if ( request_.optimizing_criteria[0] == CostDuration )
 	    {
 		cost_property_map = duration_map_;
 	    }
-	    if ( request.optimizing_criteria[0] == CostDistance )
+	    if ( request_.optimizing_criteria[0] == CostDistance )
 	    {
 		cost_property_map = length_map_;
 	    }

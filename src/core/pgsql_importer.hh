@@ -9,27 +9,13 @@
 #ifndef TEMPUS_PGSQL_IMPORTER_HH
 #define TEMPUS_PGSQL_IMPORTER_HH
 
-#include <pqxx/connection>
-
 #include <string>
 
 #include "multimodal_graph.hh"
+#include "db.hh"
 
 namespace Tempus
 {
-    ///
-    /// Base class in charge of progression callback.
-    class ProgressionCallback
-    {
-    public:
-	virtual void operator()( float, bool = false )
-	{
-	    // Default : do nothing
-	}
-    };
-
-    extern ProgressionCallback null_progression_callback;
-
     class PQImporter
     {
     public:
@@ -38,7 +24,7 @@ namespace Tempus
 
 	///
 	/// Query the database
-	pqxx::result query( const std::string& query_str );
+	Db::Result query( const std::string& query_str );
 
 	///
 	/// Import constants (road, transports types) into global variables.
@@ -50,38 +36,11 @@ namespace Tempus
 
 	///
 	/// Access to underlying connection object
-	pqxx::connection& get_connection() { return connection_; }
+	Db::Connection& get_connection() { return connection_; }
 
     protected:
-	pqxx::connection connection_;
+	Db::Connection connection_;
     };
 }; // Tempus namespace
-
-namespace pqxx
-{
-    ///
-    /// Specialization of the from_string<> template used inside pqxx (in result[i].as<>() for instance)
-    template<>
-    inline void from_string<Tempus::Time>(const char str[],
-					  Tempus::Time &time)
-    {
-	int h, m, s;
-	sscanf( str, "%d:%d:%d", &h, &m, &s );
-	time.n_secs = s + m * 60 + h * 3600;
-    }
-
-    template<>
-    struct string_traits<Tempus::Time>
-    {
-	static const char *name() { return "Time"; }
-	static bool has_null() { return true; }
-	static bool is_null(const Tempus::Time& t) { return t.n_secs == -1; }
-	static Tempus::Time null()
-	{ Tempus::Time t; t.n_secs = -1; return t;}
-	//	static void from_string(const char Str[], Tempus::Time& Obj) { }
-	//	static Tempus::Time to_string(const Tempus::Time& Obj) { }
-    };
-
-};
 
 #endif
