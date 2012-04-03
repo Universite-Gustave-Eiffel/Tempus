@@ -71,8 +71,8 @@ namespace Tempus
 		std::cout << pt_graph[s].name << " to " << pt_graph[t].name << " length = " << length_map_[ *eb ] << std::endl;
 
 		// Duration computation
-		int s_id = pt_graph[s].db_id;
-		int t_id = pt_graph[t].db_id;
+		db_id_t s_id = pt_graph[s].db_id;
+		db_id_t t_id = pt_graph[t].db_id;
 		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
 						    "where t1.trip_id = t2.trip_id and t1.stop_id=%1% and t2.stop_id=%2% and t1.stop_sequence < t2.stop_sequence order by t1.departure_time" ) % s_id % t_id).str();
 		Db::Result res = importer.query( query );

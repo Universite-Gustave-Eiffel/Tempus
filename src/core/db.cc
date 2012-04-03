@@ -7,7 +7,7 @@ namespace Db
     template <>
     bool Value::as<bool>()
     {
-	return as<int>();
+		return as<int>() != 0 ? true : false;
     }
 
     template <>

@@ -100,7 +100,7 @@ namespace Db
 	    BOOST_ASSERT( fn < PQnfields( res_ ) );
 	    return Value( PQgetvalue( res_, nrow_, fn ),
 			  PQgetlength( res_, nrow_, fn ),
-			  PQgetisnull( res_, nrow_, fn )
+			  PQgetisnull( res_, nrow_, fn ) != 0 ? true : false
 			  );
 	}
     protected:

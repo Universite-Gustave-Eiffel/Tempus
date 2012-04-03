@@ -10,7 +10,6 @@
    The plugin finds a route between an origin and a destination via Dijkstra.
  */
 
-#include <pqxx/pqxx>
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
