@@ -183,7 +183,7 @@ namespace Db
 	Connection( const std::string& db_options ) : conn_(0)
 	{
 	    conn_ = PQconnectdb( db_options.c_str() );
-	    if (conn_ == NULL)
+	    if (conn_ == NULL || PQstatus(conn_) != CONNECTION_OK )
 	    {
 		std::string msg = "Database connection problem: ";
 		msg += PQerrorMessage( conn_ );
