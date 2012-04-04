@@ -7,7 +7,8 @@ using namespace std;
 
 namespace WPS
 {
-    std::map<std::string, Service*> Service::services_;
+    std::map<std::string, Service*>* Service::services_ = 0;
+    Tempus::Plugin* Service::plugin_ = 0;
     
     void Service::check_parameters( InputParameterMap& input_parameter_map )
     {
@@ -30,7 +31,7 @@ namespace WPS
 
     std::ostream& Service::get_xml_description( std::ostream& out )
     {
-	out << "<wps:ProcessDescriptions mlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\">\n";
+	out << "<wps:ProcessDescriptions xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\">\n";
 	out << "<ProcessDescription wps:processVersion=\"1.0\" storeSupported=\"false\" statusSupported=\"false\">\n";
 	out << "<ows:Identifier>" << name_ << "</ows:Identifier>\n";
 	out << "<ows:Title>" << name_ << "</ows:Title>\n";
@@ -71,7 +72,7 @@ namespace WPS
     Service* Service::get_service( const std::string& name )
     {
 	if ( exists(name) )
-	    return services_[name];
+	    return (*services_)[name];
 	return 0;
     }
 
@@ -80,7 +81,7 @@ namespace WPS
 	string script_name = getenv( "SCRIPT_NAME" );
 	
 	out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	out << "<wps:Capabilities service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-CA\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsGetCapabilities_response.xsd\" updateSequence=\"1\">\n";
+	out << "<wps:Capabilities service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsGetCapabilities_response.xsd\" updateSequence=\"1\">\n";
 	out << "  <ows:ServiceIdentification>\n";
 	out << "    <ows:Title>IFSTTAR Tempus WPS server</ows:Title>\n";
 	out << "    <ows:ServiceType>WPS</ows:ServiceType>\n";
@@ -115,7 +116,7 @@ namespace WPS
 	out << "\n";
 	out << "  <wps:ProcessOfferings>\n";
 	std::map<std::string, Service*>::iterator it;
-	for ( it = services_.begin(); it != services_.end(); it++ )
+	for ( it = services_->begin(); it != services_->end(); it++ )
 	{
 	    out << "    <wps:Process wps:processVersion=\"1.0\">\n";
 	    out << "      <ows:Identifier>" << it->first << "</ows:Identifier>\n";

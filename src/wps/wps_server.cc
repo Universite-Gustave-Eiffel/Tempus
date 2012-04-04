@@ -17,49 +17,43 @@ using namespace std;
 
 //
 // TODO :
-// * Make request and xml processing inside a class
-// * Use XML validation when possible
 // * Use xmlNode in memory, not string
-// * Handle sessions ??
 
-void return_error_status( int status, const std::string& msg )
+int print_error_status( int status, const std::string& msg )
 {
     cout << "Status: " + boost::lexical_cast<string>(status) + " " + msg << endl;
     cout << "Content-type: text/html" << endl;
     cout << endl;
     cout << "<h2>" + msg + "</h2>" << endl;
-    exit( status );
+    return status;
 }
 
-void return_exception( const std::string& type, const std::string& message )
+int print_exception( const std::string& type, const std::string& message )
 {
     string escaped_msg = XML::escape_text( message );
 
     cout << "Content-type: text/xml" << endl;
     cout << endl;
-    cout << "<ows:ExceptionReport xsi:schemaLocation=\"http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd\" version=\"1.0.0\" xml:lang=\"en-US\">";
-    cout << "<ows:Exception exceptionCode=\"" + type + "\"><ows:ExceptionText>" + escaped_msg + "</ows:ExceptionText></ows:Exception>";
+    cout << "<ows:ExceptionReport xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd\" version=\"1.0.0\" xml:lang=\"en-US\">" << endl;
+    cout << "<ows:Exception exceptionCode=\"" + type + "\"><ows:ExceptionText>" + escaped_msg + "</ows:ExceptionText></ows:Exception>" << endl;
     cout << "</ows:ExceptionReport>" << endl;
-    exit( 1 );
+    return -1;
 }
 
 #define WPS_INVALID_PARAMETER_VALUE "InvalidParameterValue"
 #define WPS_OPERATION_NOT_SUPPORTED "OperationNotSupported"
 
-int main()
+int process_request()
 {
-    WPS::Service build_service( "build" );
-    WPS::ServiceWithRequest preprocess_service( "pre_process");
-
     if ( getenv("REQUEST_METHOD") == 0 )
     {
 	cerr << "This program is intended to be called from a web server, as a CGI" << endl;
 	return 1;
     }
     string request_method = getenv( "REQUEST_METHOD" );
-
+    
     // libxml inits
-    xmlDoc* xml_doc;
+    scoped_xmlDoc xml_doc;
 
     // Local map that stores request parameters :
     // Service
@@ -93,7 +87,7 @@ int main()
 	// Data should be in text/xml
 	if ( string(getenv( "CONTENT_TYPE" )) != "text/xml" )
 	{
-	    return_error_status( 406, "Wrong content-type. Must be text/xml" );
+	    return print_error_status( 406, "Wrong content-type. Must be text/xml" );
 	}
 
 	// The root XML element must be the name of the operation	
@@ -101,18 +95,19 @@ int main()
 	string doc = "";
 	while ( !cin.eof() )
 	{
-	    getline( cin, line );
-	    doc += line;
-	    cerr << line << endl;
+	    char c;
+	    cin.get(c);
+	    doc.push_back(c);
 	}
+	cerr << doc << endl;
 	
 	xml_doc = xmlReadMemory( doc.c_str(), doc.size(), "query.xml", NULL, 0 );
-	if ( xml_doc == NULL )
+	if ( xml_doc.get() == NULL )
 	{
-	    return_exception( WPS_INVALID_PARAMETER_VALUE, "Malformed XML request" );
+	    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Malformed XML request" );
 	}
 
-	xmlNodePtr root = xmlDocGetRootElement( xml_doc );
+	xmlNodePtr root = xmlDocGetRootElement( xml_doc.get() );
 	query["request"] = (const char*)root->name;
 
 	xmlChar* service = xmlGetProp( root, (const xmlChar*)"service" );
@@ -131,11 +126,11 @@ int main()
 
     if ( boost::to_lower_copy(query["service"]) != "wps" )
     {
-	return_error_status( 400, "Only 'wps' service is supported." );
+	return print_error_status( 400, "Only 'wps' service is supported." );
     }
     if ( query["version"] != "1.0.0" )
     {
-	return_error_status( 400, "Only '1.0.0' version is supported" );
+	return print_error_status( 400, "Only '1.0.0' version is supported" );
     }
 
     string wps_request = query["request"];
@@ -143,7 +138,7 @@ int main()
     {
 	if ( request_method != "GET" )
 	{
-	    return_error_status( 405, "Method not allowed" );
+	    return print_error_status( 405, "Method not allowed" );
 	}
 
 	cout << "Content-type: text/xml" << endl;
@@ -156,7 +151,7 @@ int main()
     {
 	if ( request_method != "GET" )
 	{
-	    return_error_status( 405, "Method not allowed" );
+	    return print_error_status( 405, "Method not allowed" );
 	}
 
 	cout << "Content-type: text/xml" << endl;
@@ -165,7 +160,7 @@ int main()
 	WPS::Service* service = WPS::Service::get_service( query["identifier"] );
 	if ( !service )
 	{
-	    return_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier" );
+	    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier" );
 	}
 	service->get_xml_description( cout );
 
@@ -176,10 +171,10 @@ int main()
     {
 	if ( request_method != "POST" )
 	{
-	    return_error_status( 405, "Method not allowed" );
+	    return print_error_status( 405, "Method not allowed" );
 	}
 
-	xmlNode* root = xmlDocGetRootElement( xml_doc );
+	xmlNode* root = xmlDocGetRootElement( xml_doc.get() );
 	xmlNode* child = XML::get_next_nontext( root->children );
 
 	string identifier;
@@ -190,7 +185,7 @@ int main()
 	}
 	if ( identifier == "" )
 	{
-	    return_exception( WPS_INVALID_PARAMETER_VALUE, "Identifier undefined" );
+	    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Identifier undefined" );
 	}
 
 	child = XML::get_next_nontext( child->next );
@@ -203,7 +198,7 @@ int main()
 	    {
 		if ( xmlStrcmp(node->name, (const xmlChar*)"Input") )
 		{
-		    return_exception( WPS_INVALID_PARAMETER_VALUE, "Only Input elements are allowed inside DataInputs" );
+		    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Only Input elements are allowed inside DataInputs" );
 		}
 		xmlNode* nnode = XML::get_next_nontext( node->children );
 		string identifier;
@@ -226,17 +221,17 @@ int main()
 
 		if ( identifier == "" )
 		{
-		    return_exception( WPS_INVALID_PARAMETER_VALUE, "Input identifier undefined" );
+		    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Input identifier undefined" );
 		}
 		if ( data == 0 )
 		{
-		    return_exception( WPS_INVALID_PARAMETER_VALUE, "Undefined data" );
+		    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Undefined data" );
 		}
 
 		xmlNode * n = XML::get_next_nontext( data->children );
 		if ( xmlStrcmp(n->name, (const xmlChar*)"LiteralData") && xmlStrcmp(n->name, (const xmlChar*)"ComplexData") )
 		{
-		    return_exception( WPS_INVALID_PARAMETER_VALUE, "Data must be either LiteralData or ComplexData" );
+		    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Data must be either LiteralData or ComplexData" );
 		}
 		xmlNode *actual_data = XML::get_next_nontext( n->children );
 		// associate xml data to identifier
@@ -248,22 +243,25 @@ int main()
 
 	    if ( !WPS::Service::exists(identifier) )
 	    {
-		return_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier " + identifier );
+		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier " + identifier );
 	    }
 	    // all inputs are now defined, parse them
 	    WPS::Service* service = WPS::Service::get_service( identifier );
 	    try
 	    {
 		service->parse_xml_parameters( input_parameter_map );
+	cout << "Content-type: text/xml" << endl;
+	cout << endl;
+		service->execute();
 	    }
 	    catch (std::invalid_argument& e)
 	    {
-		return_exception( WPS_INVALID_PARAMETER_VALUE, e.what() );
+		return print_exception( WPS_INVALID_PARAMETER_VALUE, e.what() );
 	    }
 	}
 	else
 	{
-	    return_exception( WPS_INVALID_PARAMETER_VALUE, "DataInputs undefined" );
+	    return print_exception( WPS_INVALID_PARAMETER_VALUE, "DataInputs undefined" );
 	}
 
 	child = XML::get_next_nontext( child->next );
@@ -272,13 +270,13 @@ int main()
 	    child = XML::get_next_nontext( child->children );
 	    if ( child && xmlStrcmp( child->name, (const xmlChar*)"RawDataOutput") )
 	    {
-		return_exception( WPS_INVALID_PARAMETER_VALUE, "Only raw data output are supported" );
+		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Only raw data output are supported" );
 	    }
 	    // TODO
 	}
 	else
 	{
-	    return_exception( WPS_INVALID_PARAMETER_VALUE, "Responseform undefined" );
+	    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Responseform undefined" );
 	}
 
 	cout << "Content-type: text/xml" << endl;
@@ -289,8 +287,8 @@ int main()
     }
     else
     {
-	return_exception( WPS_OPERATION_NOT_SUPPORTED, "Request is for an operation that is not supported by this server" );
+	return print_exception( WPS_OPERATION_NOT_SUPPORTED, "Request is for an operation that is not supported by this server" );
     }
-
+    
     return 0;
 }

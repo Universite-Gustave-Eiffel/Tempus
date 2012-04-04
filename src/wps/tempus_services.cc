@@ -6,7 +6,38 @@ using namespace std;
 
 namespace WPS
 {    
-    ServiceWithRequest::ServiceWithRequest( const std::string& name ) : Service(name), Tempus::Request()
+    PreBuildService::PreBuildService() : Service("pre_build")
+    {
+	// define the XML schema of input parameters
+	add_input_parameter( "db_options",
+			     "<xs:element name=\"db_options\" type=\"xs:string\"/>" );
+    }
+    void PreBuildService::parse_xml_parameters( InputParameterMap& input_parameter_map )
+    {
+	// Ensure XML is OK
+	Service::check_parameters( input_parameter_map );
+	
+	// now extract actual data
+	xmlNode* request_node = input_parameter_map["db_options"];
+	db_options_ = (const char*)request_node->children->content;
+    }
+
+    void PreBuildService::execute()
+    {
+	cerr << "pre_build" << endl;
+	plugin_->pre_build( db_options_ );
+    }
+
+    BuildService::BuildService() : Service("build")
+    {
+    }
+    void BuildService::execute()
+    {
+	cerr << "build" << endl;
+	plugin_->build();
+    }
+
+    PreProcessService::PreProcessService() : Service("pre_process"), Tempus::Request()
     {
 	// define the XML schema of input parameters
 	add_input_parameter( "request",
@@ -36,7 +67,7 @@ namespace WPS
 			     );
     }
     
-    void ServiceWithRequest::parse_xml_parameters( InputParameterMap& input_parameter_map )
+    void PreProcessService::parse_xml_parameters( InputParameterMap& input_parameter_map )
     {
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map );
@@ -106,4 +137,15 @@ namespace WPS
 	    field = XML::get_next_nontext( field->next ); 
 	}
     }
+
+    void PreProcessService::execute()
+    {
+	plugin_->pre_process( *this );
+    }
+
+
+    static PreBuildService pre_build_service_;
+    static BuildService build_service_;
+    static PreProcessService pre_process_service_;
+
 }; // WPS namespace

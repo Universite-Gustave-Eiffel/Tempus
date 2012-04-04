@@ -84,7 +84,7 @@ class HttpCgiConnection:
         elif method == "POST":
             headers = {'Content-type' : 'text/xml' }
         else:
-            raise "Unknow method " + method
+            raise "Unknown method " + method
 
         self.conn.request( method, url, content, headers )
         r1 = self.conn.getresponse()
@@ -147,6 +147,8 @@ class WPSClient:
                    [ 'Data', data ]
                    ]
 
+        if r == []:
+            r = ""
         body = [ 'wps:Execute', {'xmlns:wps':"http://www.opengis.net/wps/1.0.0", 'xmlns:ows':"http://www.opengis.net/ows/1.1", 'service':'WPS', 'version':'1.0.0'},
                  [ 'ows:Identifier', identifier ],
                  [ 'DataInputs', r ],
@@ -154,10 +156,12 @@ class WPSClient:
                    [ 'RawDataOutput' ]
                    ]
                  ]
-        return self.conn.request( 'POST', to_xml(body) )
+        x = to_xml( body )
+        print x
+        return self.conn.request( 'POST', x )
 
-#client = HttpCgiConnection( "127.0.0.1", "/cgi-bin/wps" )
-client = SimulatedCgiConnection( "./wps", "/cgi-bin.wps" )
+client = HttpCgiConnection( "127.0.0.1", "" )
+#client = SimulatedCgiConnection( "./wps", "/cgi-bin.wps" )
 
 wps = WPSClient(client)
 
@@ -180,6 +184,12 @@ args = { 'request' : [ True, ['request',
                                ]
                               ]
                        ] }
-[status, msg] = wps.execute( "pre_process", args )
+#[status, msg] = wps.execute( "pre_process", args )
+#print status, msg
+
+[status, msg] = wps.execute( "pre_build", { 'db_options' : [ True, ['db_options', 'dbname=tempus_tmp2' ]] } )
+print status, msg
+
+[status, msg] = wps.execute( "build", {} )
 print status, msg
 

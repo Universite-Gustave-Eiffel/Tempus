@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 
+#include "plugin.hh"
 #include "xml_helper.hh"
 
 namespace WPS
@@ -24,8 +25,11 @@ namespace WPS
 
 	Service( const std::string& name ) : name_(name)
 	{
+	    // It is never freed. It is ok since it is a static object
+	    if ( !services_ )
+		services_ = new std::map<std::string, Service*>();
 	    // Add this service to the global map of services
-	    services_[name] = this;
+	    (*services_)[name] = this;
 	}
 	
 	///
@@ -38,6 +42,8 @@ namespace WPS
 	{
 	    check_parameters( input_parameter_map );
 	}
+
+	virtual void execute() = 0;
 
 	// FIXME : return in raw XML
 	///
@@ -52,7 +58,12 @@ namespace WPS
 	/// Global service map interface: tests if a service exists
 	static bool exists( const std::string& name )
 	{
-	    return services_.find( name ) != services_.end();
+	    return services_->find( name ) != services_->end();
+	}
+
+	static void set_plugin( Tempus::Plugin* plugin )
+	{
+	    plugin_ = plugin;
 	}
 
 	///
@@ -62,7 +73,11 @@ namespace WPS
     protected:
 	///
 	/// A global map of services
-	static std::map<std::string, Service*> services_;
+	static std::map<std::string, Service*> *services_;
+	///
+	/// The current Tempus plugin accessed
+	static Tempus::Plugin* plugin_;
+	
 	struct ParameterSchema
 	{
 	    std::string schema;
@@ -71,7 +86,7 @@ namespace WPS
 	};
 	std::map<std::string, ParameterSchema> input_parameter_schema_;
 	std::string name_;
-	
+
 	///
 	/// Adds an input parameter definition. To be called by derived classes in their constructor
 	void add_input_parameter( const std::string& name, const std::string& schema, bool is_complex = true )

@@ -52,53 +52,42 @@ void XML::ensure_validity( xmlNode* node, const std::string& schema_str )
     std::string local_schema = "<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
 	+ schema_str +
 	"</xs:schema>\n";
-    xmlDocPtr schema_doc = xmlReadMemory(local_schema.c_str(), local_schema.size(), "schema.xml", NULL, 0);
-    if (schema_doc == NULL) {
+    scoped_xmlDoc schema_doc = xmlReadMemory(local_schema.c_str(), local_schema.size(), "schema.xml", NULL, 0);
+    if (schema_doc.get() == NULL) {
 	clear_errors_ = true;
 	throw std::invalid_argument( xml_error_ );
     }
-    xmlSchemaParserCtxtPtr parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
-    if (parser_ctxt == NULL) {
-	/* unable to create a parser context for the schema */
-	xmlFreeDoc( schema_doc );
+    scoped_ptr<xmlSchemaParserCtxt, xmlSchemaFreeParserCtxt> parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc.get());
+    if (parser_ctxt.get() == NULL) {
+	// unable to create a parser context for the schema
 	clear_errors_ = true;
 	throw std::invalid_argument( xml_error_ );
     }
-    xmlSchemaPtr schema = xmlSchemaParse(parser_ctxt);
-    if (schema == NULL) {
-	/* the schema itself is not valid */
-	xmlSchemaFreeParserCtxt( parser_ctxt );
-	xmlFreeDoc( schema_doc );
+    scoped_ptr<xmlSchema, xmlSchemaFree> schema = xmlSchemaParse(parser_ctxt.get());
+    if (schema.get() == NULL) {
+	// the schema itself is not valid
 	clear_errors_ = true;
 	throw std::invalid_argument( xml_error_ );
     }
-    xmlSchemaValidCtxtPtr valid_ctxt = xmlSchemaNewValidCtxt(schema);
-    if (valid_ctxt == NULL) {
-	/* unable to create a validation context for the schema */
-	xmlSchemaFree( schema );
-	xmlSchemaFreeParserCtxt( parser_ctxt );
-	xmlFreeDoc( schema_doc );
+    scoped_ptr<xmlSchemaValidCtxt, xmlSchemaFreeValidCtxt> valid_ctxt = xmlSchemaNewValidCtxt(schema.get());
+    if (valid_ctxt.get() == NULL) {
+	// unable to create a validation context for the schema
 	clear_errors_ = true;
 	throw std::invalid_argument( xml_error_ );
     }
     
     // create a new Doc from the subtree node
-    xmlDoc* subtree_doc = xmlNewDoc((const xmlChar*)"1.0");
-    xmlDocSetRootElement( subtree_doc, node );
+    scoped_xmlDoc subtree_doc = xmlNewDoc((const xmlChar*)"1.0");
+    xmlDocSetRootElement( subtree_doc.get(), node );
     
-    int is_valid = (xmlSchemaValidateDoc( valid_ctxt, subtree_doc ) == 0);
+    int is_valid = (xmlSchemaValidateDoc( valid_ctxt.get(), subtree_doc.get() ) == 0);
     if ( !is_valid )
     {
 	clear_errors_ = true;
 	throw std::invalid_argument( xml_error_ );
     }
-    xmlSchemaFreeValidCtxt( valid_ctxt );
-    xmlSchemaFree( schema );
-    xmlSchemaFreeParserCtxt( parser_ctxt );
-    xmlFreeDoc( schema_doc );
     // remove the root node from the subtree document to prevent double free()
-    subtree_doc->children = NULL;
-    xmlFreeDoc( subtree_doc );
+    subtree_doc.get()->children = NULL;
 }
 
 xmlNode* XML::get_next_nontext( xmlNode* node )

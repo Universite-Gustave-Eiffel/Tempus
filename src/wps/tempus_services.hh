@@ -8,20 +8,41 @@
 #ifndef TEMPUS_WPS_SERVICES_HH
 #define TEMPUS_WPS_SERVICES_HH
 
-#include "../core/request.hh"
+#include <string>
+
+#include "request.hh"
 #include "wps_service.hh"
 
 namespace WPS
 {
+    class PreBuildService : public Service
+    {
+    public:
+	PreBuildService();
 
-    class ServiceWithRequest : public Service, public Tempus::Request
+	virtual void parse_xml_parameters( InputParameterMap& input_parameter_map );
+	virtual void execute();
+    protected:
+	std::string db_options_;
+    };
+
+    class BuildService : public Service
+    {
+    public:
+	BuildService();
+
+	virtual void execute();
+    };
+
+    class PreProcessService : public Service, public Tempus::Request
     {
     public:
 	///
 	/// Constructor
-	ServiceWithRequest( const std::string& name );
+	PreProcessService();
 
 	virtual void parse_xml_parameters( InputParameterMap& input_parameter_map );
+	virtual void execute();
     };
 
 }; // WPS namespace
