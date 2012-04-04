@@ -10,7 +10,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
 
-#include "../db.hh"
+#include "db.hh"
 
 class DbTest : public CppUnit::TestFixture  {
 
