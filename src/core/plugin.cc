@@ -122,9 +122,10 @@ namespace Tempus
 
     ///
     /// ??? text formatting ?
-    void Plugin::result()
+    Result& Plugin::result()
     {
 	std::cout << "[plugin_base]: result" << std::endl;
+	return result_;
     }
 
     void Plugin::cleanup()

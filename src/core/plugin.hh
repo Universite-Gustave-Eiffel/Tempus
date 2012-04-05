@@ -97,14 +97,13 @@ namespace Tempus
 
 	///
 	/// Result formatting
-	virtual void result();
+	virtual Result& result();
 
 	///
 	/// Cleanup method.
 	virtual void cleanup();
 
-	MultimodalGraph* get_graph() { return &graph_; }
-	Result* get_result() { return &result_; }
+	MultimodalGraph& get_graph() { return graph_; }
 
     protected:
 	///

@@ -151,7 +151,7 @@ namespace Tempus
 	    }
 	}
 
-	void result()
+	Result& result()
 	{
 	    Roadmap& roadmap = result_.back();
 	    Road::Graph& road_graph = graph_.road;
@@ -175,6 +175,8 @@ namespace Tempus
 		    road_name = l_road_name;
 		distance += step->costs[CostDistance];
 	    }
+
+	    return result_;
 	}
 
 	void cleanup()
