@@ -196,7 +196,7 @@ namespace Tempus
 	    // we result in only one roadmap
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
-	    Roadmap::Step* step = 0;
+	    Roadmap::PublicTransportStep* step = 0;
 	    roadmap.total_costs[ CostDuration ] = 0.0;
 	    roadmap.total_costs[ CostDistance ] = 0.0;
 
@@ -228,10 +228,10 @@ namespace Tempus
 		if ( current_trip != trip_id_map_[ e ] )
 		{
 		    current_trip = trip_id_map_[ e ];
-		    roadmap.steps.push_back( Roadmap::Step() );
-		    step = &roadmap.steps.back();
-		    step->pt.departure_stop = previous;
-		    step->pt.trip_id = current_trip;
+		    step = new Roadmap::PublicTransportStep();
+		    roadmap.steps.push_back( step );
+		    step->departure_stop = previous;
+		    step->trip_id = current_trip;
 		}
 		double duration = duration_map_[ e ];
 		double length = length_map_[ e ];
@@ -243,8 +243,7 @@ namespace Tempus
 		    step->costs[ CostDistance ] = 0.0;
 		step->costs[ CostDistance ] += length;
 		// simplification
-		step->transport_type = Tempus::transport_type_from_name[ "Tramway" ];
-		step->pt.arrival_stop = v;
+		step->arrival_stop = v;
 		roadmap.total_costs[ CostDuration ] += duration;
 		roadmap.total_costs[ CostDistance ] += length;
 		
@@ -263,9 +262,10 @@ namespace Tempus
 	    int k = 1;
 	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++, k++ )
 	    {
-		std::cout << k << " - Take the trip #" << it->pt.trip_id << " from '" << pt_graph[it->pt.departure_stop].name << "' to '" << pt_graph[it->pt.arrival_stop].name << "'" << std::endl;
-		std::cout << "Duration: " << it->costs[CostDuration] << "s" << std::endl;
-		std::cout << "Distance: " << it->costs[CostDistance] << "km" << std::endl;
+		Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *it );
+		std::cout << k << " - Take the trip #" << step->trip_id << " from '" << pt_graph[step->departure_stop].name << "' to '" << pt_graph[step->arrival_stop].name << "'" << std::endl;
+		std::cout << "Duration: " << step->costs[CostDuration] << "s" << std::endl;
+		std::cout << "Distance: " << step->costs[CostDistance] << "km" << std::endl;
 		std::cout << std::endl;
 	    }
 	}
