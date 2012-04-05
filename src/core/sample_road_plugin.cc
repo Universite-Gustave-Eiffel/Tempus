@@ -70,6 +70,31 @@ namespace Tempus
 	    REQUIRE( request.check_consistency() );
 	    REQUIRE( request.steps.size() == 1 );
 
+	    Road::Vertex origin = request.origin;
+	    Road::Vertex destination = request.get_destination();
+	    Road::Graph& road_graph = graph_.road;
+	    Road::VertexIterator vi, vi_end;
+	    bool origin_exists = false;
+	    bool destination_exists = false;
+	    for ( boost::tie(vi, vi_end) = boost::vertices( road_graph); vi != vi_end; vi++ )
+	    {
+		if ( *vi == origin )
+		{
+		    origin_exists = true;
+		    break;
+		}
+	    }
+	    for ( boost::tie(vi, vi_end) = boost::vertices( road_graph); vi != vi_end; vi++ )
+	    {
+		if ( *vi == destination )
+		{
+		    destination_exists = true;
+		    break;
+		}
+	    }
+	    REQUIRE( origin_exists );
+	    REQUIRE( destination_exists );
+
 	    if ( (request.optimizing_criteria[0] != CostDistance) )
 	    {
 		throw std::invalid_argument( "Unsupported optimizing criterion" );
@@ -103,26 +128,36 @@ namespace Tempus
 					    );
 
 	    // reorder the path, could have been better included ...
-	    std::vector<Road::Vertex> path;
+	    std::list<Road::Vertex> path;
 	    Road::Vertex current = destination;
 	    while ( current != origin )
 	    {
-		path.push_back( current );
+		path.push_front( current );
 		current = pred_map[ current ];
 	    }
-	    path.push_back( destination );
+	    path.push_front( origin );
 
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
 	    Roadmap::RoadStep* step = 0;
+	    // FIXME: we add here another simple roadmap, made of RoadStep. Not very clean.
+	    result_.push_back( Roadmap() );
+	    Roadmap& simple_roadmap = result_.back();
 
 	    Road::Edge current_road;
 	    double distance = 0.0;
 	    Road::Vertex previous;
 	    bool first_loop = true;
-	    for ( size_t i = 0; i < path.size(); i++ )
+
+	    for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
-		Road::Vertex v = path[i];
+		Road::Vertex v = *it;
+		// Simple roadmap
+		Roadmap::VertexStep* road_step = new Roadmap::VertexStep();
+		road_step->vertex = v;
+		simple_roadmap.steps.push_back( road_step );
+		
+		// User-oriented roadmap
 		if ( first_loop )
 		{
 		    previous = v;
@@ -153,7 +188,7 @@ namespace Tempus
 
 	Result& result()
 	{
-	    Roadmap& roadmap = result_.back();
+	    Roadmap& roadmap = result_.front();
 	    Road::Graph& road_graph = graph_.road;
 	    
 	    std::cout << "Total distance: " << roadmap.total_costs[CostDistance] << std::endl;
