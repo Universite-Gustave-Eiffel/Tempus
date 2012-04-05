@@ -114,7 +114,7 @@ namespace Tempus
 
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
-	    Roadmap::Step* step = 0;
+	    Roadmap::RoadStep* step = 0;
 
 	    Road::Edge current_road;
 	    double distance = 0.0;
@@ -139,9 +139,9 @@ namespace Tempus
 
 		if ( step == 0 || e != current_road )
 		{
-		    roadmap.steps.push_back( Roadmap::Step() );
-		    step = &roadmap.steps.back();
-		    step->road.road_section = e;
+		    step = new Roadmap::RoadStep();
+		    roadmap.steps.push_back( step );
+		    step->road_section = e;
 		    current_road = e;
 		}
 		step->costs[CostDistance] += road_graph[e].length;
@@ -162,7 +162,8 @@ namespace Tempus
 	    double distance = 0.0;
 	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++ )
 	    {
-		string l_road_name = road_graph[it->road.road_section].road_name;
+		Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *it );
+		string l_road_name = road_graph[step->road_section].road_name;
 		if ( road_name != "" && l_road_name != road_name )
 		{
 		    cout << k << " - Walk on " << road_name << " for " << distance << "m" << endl;
@@ -172,7 +173,7 @@ namespace Tempus
 		}
 		if ( road_name == "" )
 		    road_name = l_road_name;
-		distance += it->costs[CostDistance];
+		distance += step->costs[CostDistance];
 	    }
 	}
 
