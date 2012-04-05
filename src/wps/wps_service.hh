@@ -21,7 +21,7 @@ namespace WPS
     class Service
     {
     public:
-	typedef std::map<std::string, xmlNode*> InputParameterMap;
+	typedef std::map<std::string, xmlNode*> ParameterMap;
 
 	Service( const std::string& name ) : name_(name)
 	{
@@ -34,16 +34,20 @@ namespace WPS
 	
 	///
 	/// Check input parameters against their XML schemas
-	virtual void check_parameters( InputParameterMap& input_parameter_map );
+	virtual void check_input_parameters( ParameterMap& input_parameter_map );
 
 	///
 	/// Extract input parameters
-	virtual void parse_xml_parameters( InputParameterMap& input_parameter_map )
+	virtual void parse_xml_parameters( ParameterMap& input_parameter_map )
 	{
-	    check_parameters( input_parameter_map );
+	    check_input_parameters( input_parameter_map );
 	}
 
-	virtual void execute() = 0;
+	virtual ParameterMap& execute()
+	{
+	    // No output by default
+	    return output_parameters_;
+	}
 
 	// FIXME : return in raw XML
 	///
@@ -85,6 +89,7 @@ namespace WPS
 	    bool is_complex;
 	};
 	std::map<std::string, ParameterSchema> input_parameter_schema_;
+	std::map<std::string, ParameterSchema> output_parameter_schema_;
 	std::string name_;
 
 	///
@@ -94,6 +99,18 @@ namespace WPS
 	    input_parameter_schema_[name].schema = schema;
 	    input_parameter_schema_[name].is_complex = is_complex;
 	}
+
+	///
+	/// Adds an output parameter definition. To be called by derived classes in their constructor
+	void add_output_parameter( const std::string& name, const std::string& schema, bool is_complex = true )
+	{
+	    output_parameter_schema_[name].schema = schema;
+	    output_parameter_schema_[name].is_complex = is_complex;
+	}
+
+	///
+	/// Output parameters
+	ParameterMap output_parameters_;
     };
 
 }; // WPS namespace

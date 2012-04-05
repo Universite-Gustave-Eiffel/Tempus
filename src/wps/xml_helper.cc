@@ -38,13 +38,18 @@ void XML::accumulate_error( void* ctx, const char* msg, ...)
 std::string XML::escape_text( const std::string& message )
 {
     // escape the given error message
-    xmlBuffer* buf = xmlBufferCreate();
-    xmlNode * msg_node = xmlNewText( (const xmlChar*)message.c_str() );
-    xmlNodeDump( buf, NULL, msg_node, 0, 0 );
-    string escaped_msg = (const char*)xmlBufferContent( buf );
-    xmlFreeNode( msg_node);
-    xmlBufferFree( buf );
-    return escaped_msg;
+    scoped_ptr<xmlBuffer, xmlBufferFree> buf = xmlBufferCreate();
+    scoped_xmlNode msg_node = xmlNewText( (const xmlChar*)message.c_str() );
+    xmlNodeDump( buf.get(), NULL, msg_node.get(), 0, 0 );
+    return (const char*)xmlBufferContent( buf.get() );
+}
+
+std::string XML::to_string( xmlNode* node )
+{
+    scoped_ptr<xmlBuffer, xmlBufferFree> buf = xmlBufferCreate();
+    xmlNodeDump( buf.get(), NULL, node, 0, 1 );
+    // avoid a string copy, thanks to scoped_ptr
+    return (const char*)xmlBufferContent( buf.get() );
 }
 
 void XML::ensure_validity( xmlNode* node, const std::string& schema_str )
@@ -81,13 +86,13 @@ void XML::ensure_validity( xmlNode* node, const std::string& schema_str )
     xmlDocSetRootElement( subtree_doc.get(), node );
     
     int is_valid = (xmlSchemaValidateDoc( valid_ctxt.get(), subtree_doc.get() ) == 0);
+    // remove the root node from the subtree document to prevent double free()
+    subtree_doc.get()->children = NULL;
     if ( !is_valid )
     {
 	clear_errors_ = true;
 	throw std::invalid_argument( xml_error_ );
     }
-    // remove the root node from the subtree document to prevent double free()
-    subtree_doc.get()->children = NULL;
 }
 
 xmlNode* XML::get_next_nontext( xmlNode* node )

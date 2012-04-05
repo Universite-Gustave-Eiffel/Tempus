@@ -72,6 +72,10 @@ public:
     static std::string escape_text( const std::string& message );
 
     ///
+    /// Outputs a node to a string, recursively
+    static std::string to_string( xmlNode* node );
+
+    ///
     /// Throws a std::invalid_argument if the given node is not validated against the schema
     static void ensure_validity( xmlNode* node, const std::string& schema_str );
 

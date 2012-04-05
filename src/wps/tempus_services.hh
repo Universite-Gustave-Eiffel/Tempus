@@ -20,8 +20,8 @@ namespace WPS
     public:
 	PreBuildService();
 
-	virtual void parse_xml_parameters( InputParameterMap& input_parameter_map );
-	virtual void execute();
+	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
+	virtual ParameterMap& execute();
     protected:
 	std::string db_options_;
     };
@@ -31,7 +31,7 @@ namespace WPS
     public:
 	BuildService();
 
-	virtual void execute();
+	virtual ParameterMap& execute();
     };
 
     class PreProcessService : public Service, public Tempus::Request
@@ -41,8 +41,28 @@ namespace WPS
 	/// Constructor
 	PreProcessService();
 
-	virtual void parse_xml_parameters( InputParameterMap& input_parameter_map );
-	virtual void execute();
+	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
+	virtual ParameterMap& execute();
+    };
+
+    class ProcessService : public Service
+    {
+    public:
+	///
+	/// Constructor
+	ProcessService();
+
+	virtual ParameterMap& execute();
+    };
+
+    class ResultService : public Service
+    {
+    public:
+	///
+	/// Constructor
+	ResultService();
+
+	virtual ParameterMap& execute();
     };
 
 }; // WPS namespace

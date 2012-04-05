@@ -157,10 +157,10 @@ class WPSClient:
                    ]
                  ]
         x = to_xml( body )
-        print x
+#        print x
         return self.conn.request( 'POST', x )
 
-client = HttpCgiConnection( "127.0.0.1", "" )
+client = HttpCgiConnection( "127.0.0.1", "/cgi-bin/wps.fcgi" )
 #client = SimulatedCgiConnection( "./wps", "/cgi-bin.wps" )
 
 wps = WPSClient(client)
@@ -172,24 +172,29 @@ wps = WPSClient(client)
 #print status, msg
 
 
-args = { 'request' : [ True, ['request', 
-                              ['origin_id', 1 ],
-                              ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                              ['optimizing_criterion', 0 ],
-                              ['allowed_transport_types', 11 ],
-                              ['step',
-                               [ 'destination_id', 5 ],
-                               [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                               [ 'private_vehicule_at_destination', 'true' ]
-                               ]
-                              ]
-                       ] }
-#[status, msg] = wps.execute( "pre_process", args )
-#print status, msg
-
 [status, msg] = wps.execute( "pre_build", { 'db_options' : [ True, ['db_options', 'dbname=tempus_tmp2' ]] } )
 print status, msg
 
 [status, msg] = wps.execute( "build", {} )
 print status, msg
 
+args = { 'request' : [ True, ['request', 
+                              ['origin_id', 114842 ],
+                              ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
+                              ['optimizing_criterion', 1 ], # CostDistance
+                              ['allowed_transport_types', 11 ],
+                              ['step',
+                               [ 'destination_id', 88036 ],
+                               [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                               [ 'private_vehicule_at_destination', 'true' ]
+                               ]
+                              ]
+                       ] }
+[status, msg] = wps.execute( "pre_process", args )
+print status, msg
+
+[status, msg] = wps.execute( "process", {} )
+print status, msg
+
+[status, msg] = wps.execute( "result", {} )
+print status, msg

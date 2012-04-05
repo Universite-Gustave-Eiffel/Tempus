@@ -10,14 +10,14 @@ namespace WPS
     std::map<std::string, Service*>* Service::services_ = 0;
     Tempus::Plugin* Service::plugin_ = 0;
     
-    void Service::check_parameters( InputParameterMap& input_parameter_map )
+    void Service::check_input_parameters( ParameterMap& input_parameter_map )
     {
 	cout << "mapsize = " << input_parameter_map.size() << " schemasize = " << input_parameter_schema_.size() << endl;
 	if ( input_parameter_map.size() != input_parameter_schema_.size() )
 	{
 	    throw std::invalid_argument( "Wrong number of inputs" );
 	}
-	InputParameterMap::iterator it;
+	ParameterMap::iterator it;
 	for ( it = input_parameter_map.begin(); it != input_parameter_map.end(); it++ )
 	{
 	    if ( input_parameter_schema_.find( it->first ) == input_parameter_schema_.end() )
@@ -62,6 +62,26 @@ namespace WPS
 	out << "</DataInputs>" << endl;
 	
 	out << "<ProcessOutputs>" << endl;
+	for ( it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); it++ )
+	{
+	    out << "<Output><ows:Identifier>" << it->first << "</ows:Identifier>";
+	    out << "<ows:Title>" << it->first << "</ows:Title>";
+	    if (it->second.is_complex)
+	    {
+		out << "<ComplexData>";
+		out << "<Default><Format><MimeType>text/xml</MimeType><Encoding>UTF-8</Encoding><Schema>" + it->second.schema;
+		out << "</Schema></Format></Default>";
+		out << "<Supported><Format><MimeType>text/xml</MimeType><Encoding>UTF-8</Encoding><Schema>" + it->second.schema;
+		out << "</Schema></Format></Supported>";
+		out << "</ComplexData>" << endl;
+	    }
+	    else
+	    {
+		// FIXME !
+		out << "<LiteralData>" + it->second.schema << "</LiteralData>" << endl;
+	    }
+	    out << "</Output>" << endl;
+	}
 	out << "</ProcessOutputs>" << endl;
 	out << "</ProcessDescription>" << endl;
 	out << "</wps:ProcessDescriptions>" << endl;

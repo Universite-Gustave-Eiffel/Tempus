@@ -2,12 +2,10 @@
 #include <fcgio.h>
 
 #include "wps_service.hh"
+#include "wps_request.hh"
 #include "plugin.hh"
 
 using namespace std;
-
-// defined in wps_server.cc
-int process_request();
 
 int main()
 {
@@ -25,12 +23,10 @@ int main()
 	fcgi_streambuf cin_fcgi_streambuf( request.in );
 	fcgi_streambuf cout_fcgi_streambuf( request.out );
 
-	cin.rdbuf( &cin_fcgi_streambuf );
-	cout.rdbuf( &cout_fcgi_streambuf );
-
 	environ = request.envp;
 
-	process_request();
+	WPS::Request wps_request( &cin_fcgi_streambuf, &cout_fcgi_streambuf );
+	wps_request.process();
     }
 
     return 0;
