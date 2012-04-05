@@ -78,8 +78,8 @@ int main( int argc, char* argv[])
 
 	//
 	// Build the user request
-	MultimodalGraph* graph = plugin->get_graph();
-	Road::Graph& road_graph = graph->road;
+	MultimodalGraph& graph = plugin->get_graph();
+	Road::Graph& road_graph = graph.road;
 
 	Road::VertexIterator vb, ve;
 	boost::tie( vb, ve) = boost::vertices( road_graph );

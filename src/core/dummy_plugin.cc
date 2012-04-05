@@ -251,7 +251,7 @@ namespace Tempus
 	    }
 	}
 
-	void result()
+	Result& result()
 	{
 	    Roadmap& roadmap = result_.back();
 	    PublicTransport::Graph& pt_graph = graph_.public_transports.back();
@@ -268,6 +268,7 @@ namespace Tempus
 		std::cout << "Distance: " << step->costs[CostDistance] << "km" << std::endl;
 		std::cout << std::endl;
 	    }
+	    return result_;
 	}
 
 	void cleanup()
