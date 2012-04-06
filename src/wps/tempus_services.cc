@@ -18,7 +18,7 @@ namespace WPS
     void PreBuildService::parse_xml_parameters( Service::ParameterMap& input_parameter_map )
     {
 	// Ensure XML is OK
-	Service::check_input_parameters( input_parameter_map );
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
 	
 	// now extract actual data
 	xmlNode* request_node = input_parameter_map["db_options"];
@@ -28,7 +28,7 @@ namespace WPS
     Service::ParameterMap& PreBuildService::execute()
     {
 	plugin_->pre_build( db_options_ );
-
+	output_parameters_.clear();
 	return output_parameters_;
     }
 
@@ -38,7 +38,7 @@ namespace WPS
     Service::ParameterMap& BuildService::execute()
     {
 	plugin_->build();
-
+	output_parameters_.clear();
 	return output_parameters_;
     }
 
@@ -52,19 +52,19 @@ namespace WPS
 			     "  </xs:complexType>\n"
 			     "  <xs:complexType name=\"Step\">\n"
 			     "    <xs:sequence>\n"
-			     "      <xs:element name=\"destination_id\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			     "      <xs:element name=\"destination_id\" type=\"xs:long\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"private_vehicule_at_destination\" type=\"xs:boolean\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "    </xs:sequence>\n"
 			     "  </xs:complexType>\n"
 			     "  <xs:complexType name=\"Request\">\n"
 			     "    <xs:sequence>\n"
-			     "      <xs:element name=\"origin_id\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			     "      <xs:element name=\"origin_id\" type=\"xs:long\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"departure_constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-			     "      <xs:element name=\"parking_location_id\" type=\"xs:int\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
+			     "      <xs:element name=\"parking_location_id\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"allowed_transport_types\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-			     "      <xs:element name=\"allowed_network\" type=\"xs:int\" minOccurs=\"0\"/>\n"
+			     "      <xs:element name=\"allowed_network\" type=\"xs:long\" minOccurs=\"0\"/>\n"
 			     "      <xs:element name=\"step\" type=\"Step\" minOccurs=\"1\"/>\n"
 			     "    </xs:sequence>\n"
 			     "  </xs:complexType>\n"
@@ -75,16 +75,17 @@ namespace WPS
     void PreProcessService::parse_xml_parameters( ParameterMap& input_parameter_map )
     {
 	// Ensure XML is OK
-	Service::check_input_parameters( input_parameter_map );
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
 	
 	// now extract actual data
 	xmlNode* request_node = input_parameter_map["request"];
 	cout << "request_node " << request_node->name << endl;
 	xmlNode* field = XML::get_next_nontext( request_node->children );
 	
+	Tempus::Road::Graph& road_graph = plugin_->get_graph().road;
 	string origin_str = (const char*)field->children->content;
-	cout << "origin_str = " << origin_str << endl;
-	this->origin = boost::lexical_cast<int>( origin_str );
+	Tempus::db_id_t origin_id = boost::lexical_cast<Tempus::db_id_t>( origin_str );
+	this->origin = vertex_from_id( origin_id, road_graph );
 	cout << "origin " << origin << endl;
 	
 	// departure_constraint
@@ -95,7 +96,8 @@ namespace WPS
 	xmlNode *n = XML::get_next_nontext( field->next );
 	if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location_id" ) )
 	{
-	    this->parking_location = boost::lexical_cast<int>( n->children->content );
+	    Tempus::db_id_t parking_loc_id = boost::lexical_cast<Tempus::db_id_t>( n->children->content );
+	    this->parking_location = vertex_from_id( parking_loc_id, road_graph );
 	    field = n;
 	    cout << "parking_location " << parking_location << endl;
 	}
@@ -113,7 +115,8 @@ namespace WPS
 	field = XML::get_next_nontext( field->next );
 	while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
 	{
-	    this->allowed_networks.push_back( boost::lexical_cast<int>(field->children->content) );
+	    Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
+	    this->allowed_networks.push_back( vertex_from_id(network_id, road_graph) );
 	    field = XML::get_next_nontext( field->next );
 	    cout << "allowed network " << allowed_networks.size() << endl;
 	}
@@ -128,7 +131,8 @@ namespace WPS
 	    xmlNode *subfield;
 	    // destination id
 	    subfield = XML::get_next_nontext( field->children );
-	    this->steps.back().destination = boost::lexical_cast<int>(subfield->children->content);
+	    Tempus::db_id_t destination_id = boost::lexical_cast<Tempus::db_id_t>(subfield->children->content);
+	    this->steps.back().destination = vertex_from_id( destination_id, road_graph );
 	    cout << "destination " << steps.back().destination << endl;
 	    
 	    // constraint
@@ -149,6 +153,7 @@ namespace WPS
     Service::ParameterMap& PreProcessService::execute()
     {
 	plugin_->pre_process( *this );
+	output_parameters_.clear();
 	return output_parameters_;
     }
 
@@ -158,6 +163,7 @@ namespace WPS
     Service::ParameterMap& ProcessService::execute()
     {
 	plugin_->process();
+	output_parameters_.clear();
 	return output_parameters_;
     }
 
@@ -177,6 +183,7 @@ namespace WPS
 
     Service::ParameterMap& ResultService::execute()
     {
+	output_parameters_.clear();
 	Tempus::Result& result = plugin_->result();
 
 	Tempus::Roadmap& simple_roadmap = result.back();

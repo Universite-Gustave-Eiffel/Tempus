@@ -73,27 +73,8 @@ namespace Tempus
 	    Road::Vertex origin = request.origin;
 	    Road::Vertex destination = request.get_destination();
 	    Road::Graph& road_graph = graph_.road;
-	    Road::VertexIterator vi, vi_end;
-	    bool origin_exists = false;
-	    bool destination_exists = false;
-	    for ( boost::tie(vi, vi_end) = boost::vertices( road_graph); vi != vi_end; vi++ )
-	    {
-		if ( *vi == origin )
-		{
-		    origin_exists = true;
-		    break;
-		}
-	    }
-	    for ( boost::tie(vi, vi_end) = boost::vertices( road_graph); vi != vi_end; vi++ )
-	    {
-		if ( *vi == destination )
-		{
-		    destination_exists = true;
-		    break;
-		}
-	    }
-	    REQUIRE( origin_exists );
-	    REQUIRE( destination_exists );
+	    REQUIRE( vertex_exists( origin, road_graph ) );
+	    REQUIRE( vertex_exists( destination, road_graph ) );
 
 	    if ( (request.optimizing_criteria[0] != CostDistance) )
 	    {

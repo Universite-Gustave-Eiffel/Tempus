@@ -2,6 +2,8 @@
 import httplib
 import urllib
 import subprocess
+import sys
+import re
 
 # Compact representation of XML by means of Python expressions
 #
@@ -160,7 +162,15 @@ class WPSClient:
 #        print x
         return self.conn.request( 'POST', x )
 
-client = HttpCgiConnection( "127.0.0.1", "/cgi-bin/wps.fcgi" )
+if len(sys.argv) < 2:
+    print "Arguments: fcgi_url"
+    sys.exit(1)
+
+g = re.search( 'http://([^/]+)(.*)', sys.argv[1] )
+host = g.group(1)
+path = g.group(2)
+
+client = HttpCgiConnection( host, path )
 #client = SimulatedCgiConnection( "./wps", "/cgi-bin.wps" )
 
 wps = WPSClient(client)
@@ -179,12 +189,12 @@ print status, msg
 print status, msg
 
 args = { 'request' : [ True, ['request', 
-                              ['origin_id', 114842 ],
+                              ['origin_id', 152500201346546 ],
                               ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
                               ['optimizing_criterion', 1 ], # CostDistance
                               ['allowed_transport_types', 11 ],
                               ['step',
-                               [ 'destination_id', 88036 ],
+                               [ 'destination_id', 152500201183882 ],
                                [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
                                [ 'private_vehicule_at_destination', 'true' ]
                                ]

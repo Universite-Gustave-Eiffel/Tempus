@@ -33,19 +33,13 @@ namespace WPS
 	}
 	
 	///
-	/// Check input parameters against their XML schemas
-	virtual void check_input_parameters( ParameterMap& input_parameter_map );
-
-	///
 	/// Extract input parameters
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map )
-	{
-	    check_input_parameters( input_parameter_map );
-	}
+	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
 
 	virtual ParameterMap& execute()
 	{
 	    // No output by default
+	    output_parameters_.clear();
 	    return output_parameters_;
 	}
 
@@ -53,6 +47,10 @@ namespace WPS
 	///
 	/// Returns an XML string that conforms to a DescribeProcess operation
 	std::ostream& get_xml_description( std::ostream& out );
+
+	///
+	/// Returns an XML string that represents results of an Execute operation
+	std::ostream& get_xml_execute_response( std::ostream& out );
 
 	///
 	/// Global service map interface: returns a Service* based on a service name
@@ -88,9 +86,14 @@ namespace WPS
 	    // complexType or not ?
 	    bool is_complex;
 	};
-	std::map<std::string, ParameterSchema> input_parameter_schema_;
-	std::map<std::string, ParameterSchema> output_parameter_schema_;
+	typedef std::map<std::string, ParameterSchema> SchemaMap;
+	SchemaMap input_parameter_schema_;
+	SchemaMap output_parameter_schema_;
 	std::string name_;
+
+	///
+	/// Check parameters against their XML schemas
+	virtual void check_parameters( ParameterMap& parameter_map, SchemaMap& schema_map );
 
 	///
 	/// Adds an input parameter definition. To be called by derived classes in their constructor

@@ -44,10 +44,10 @@ std::string XML::escape_text( const std::string& message )
     return (const char*)xmlBufferContent( buf.get() );
 }
 
-std::string XML::to_string( xmlNode* node )
+std::string XML::to_string( xmlNode* node, int indent_level )
 {
     scoped_ptr<xmlBuffer, xmlBufferFree> buf = xmlBufferCreate();
-    xmlNodeDump( buf.get(), NULL, node, 0, 1 );
+    xmlNodeDump( buf.get(), NULL, node, indent_level, 1 );
     // avoid a string copy, thanks to scoped_ptr
     return (const char*)xmlBufferContent( buf.get() );
 }

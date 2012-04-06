@@ -24,6 +24,56 @@ namespace Tempus
 	typedef std::list<PublicTransport::Graph> PublicTransportGraphList;
 	PublicTransportGraphList public_transports;
     };
+
+    template <class G>
+    typename boost::graph_traits<G>::vertex_descriptor vertex_from_id( Tempus::db_id_t db_id, G& graph)
+    {
+    	typename boost::graph_traits<G>::vertex_iterator vi, vi_end;
+    	for ( boost::tie( vi, vi_end ) = boost::vertices( graph ); vi != vi_end; vi++ )
+    	{
+    	    if ( graph[*vi].db_id == db_id )
+    		return *vi;
+    	}
+    	// null element
+    	return typename boost::graph_traits<G>::vertex_descriptor();
+    }
+
+    template <class G>
+    typename boost::graph_traits<G>::edge_descriptor edge_from_id( Tempus::db_id_t db_id, G& graph)
+    {
+    	typename boost::graph_traits<G>::edge_iterator vi, vi_end;
+    	for ( boost::tie( vi, vi_end ) = boost::edges( graph ); vi != vi_end; vi++ )
+    	{
+    	    if ( graph[*vi].db_id == db_id )
+    		return *vi;
+    	}
+    	// null element
+    	return typename boost::graph_traits<G>::edge_descriptor();
+    }
+
+    template <class G>
+    bool vertex_exists( typename boost::graph_traits<G>::vertex_descriptor v, G& graph )
+    {
+	typename boost::graph_traits<G>::vertex_iterator vi, vi_end;
+	for ( boost::tie( vi, vi_end ) = boost::vertices( graph ); vi != vi_end; vi++ )
+	{
+	    if ( *vi == v )
+		return true;
+	}
+	return false;
+    }
+
+    template <class G>
+    bool edge_exists( typename boost::graph_traits<G>::edge_descriptor v, G& graph )
+    {
+	typename boost::graph_traits<G>::edge_iterator vi, vi_end;
+	for ( boost::tie( vi, vi_end ) = boost::edges( graph ); vi != vi_end; vi++ )
+	{
+	    if ( *vi == v )
+		return true;
+	}
+	return false;
+    }
 }; // Tempus namespace
 
 #endif
