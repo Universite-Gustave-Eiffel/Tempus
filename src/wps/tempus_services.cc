@@ -170,12 +170,46 @@ namespace WPS
     ResultService::ResultService() : Service( "result" )
     {
 	add_output_parameter( "result",
-			      "<xs:complexType name=\"Vertex\">\n"
-			      "  <xs:attribute name=\"id\" type=\"xs:int\"/>\n"
+			      "<xs:complexType name=\"DbId\">\n"
+			      "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n" // db_id
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"Cost\">\n"
+			      "  <xs:attribute name=\"type\" type=\"xs:string\"/>\n"
+			      "  <xs:attribute name=\"value\" type=\"xs:float\"/>\n"
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"RoadStep\">\n"
+			      "  <xs:sequence>\n"
+			      "    <xs:element name=\"road_section\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"road_direction\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"distance_km\" type=\"xs:double\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"end_movement\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+			      "  </xs:sequence>\n"
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"PublicTransportStep\">\n"
+			      "  <xs:sequence>\n"
+			      "    <xs:element name=\"departure_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"arrival_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"trip\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+			      "  </xs:sequence>\n"
 			      "</xs:complexType>\n"
 			      "<xs:element name=\"result\">\n"
 			      "  <xs:complexType>\n"
-			      "    <xs:element name=\"vertex\" type=\"Vertex\"/>\n"
+			      "    <xs:sequence>\n"
+			      "      <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
+			      "        <xs:element name=\"road_step\" type=\"RoadStep\"/>\n"
+			      "        <xs:element name=\"public_transport_step\" type=\"PublicTransportStep\"/>\n"
+			      "      </xs:choice>\n"
+			      "      <xs:element name=\"cost\" type=\"Cost\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+			      "      <xs:element name=\"overview_path\" minOccurs=\"0\" maxOccurs=\"1\">\n" // 0..1
+			      "        <xs:complexType>\n"
+			      "          <xs:sequence>\n"
+			      "            <xs:element name=\"node\" type=\"DbId\" maxOccurs=\"unbounded\"/>\n"
+			      "          </xs:sequence>\n"
+			      "        </xs:complexType>\n"
+			      "      </xs:element>\n"
+			      "    </xs:sequence>\n"
 			      "  </xs:complexType>\n"
 			      "</xs:element>\n"
 			      );
@@ -186,20 +220,75 @@ namespace WPS
 	output_parameters_.clear();
 	Tempus::Result& result = plugin_->result();
 
-	Tempus::Roadmap& simple_roadmap = result.back();
-	xmlNode* result_node = xmlNewNode( /* ns = */ NULL,
-					   (const xmlChar*)"result" );
-	Roadmap::StepList::iterator it;
-	for ( it = simple_roadmap.steps.begin(); it != simple_roadmap.steps.end(); it++ )
+	Tempus::Road::Graph& road_graph = plugin_->get_graph().road;
+
+	Tempus::Roadmap& roadmap = result.back();
+	xmlNode* root_node = xmlNewNode( /*ns=*/ NULL, (const xmlChar*)"result" );
+	xmlNode* overview_path_node = xmlNewNode( /* ns = */ NULL,
+					   (const xmlChar*)"overview_path" );
+	Roadmap::VertexList::iterator it;
+	for ( it = roadmap.overview_path.begin(); it != roadmap.overview_path.end(); it++ )
 	{
-	    Roadmap::VertexStep* step = static_cast<Roadmap::VertexStep*>( *it );
-	    xmlNode *node = xmlNewNode( /* ns = */ NULL, (const xmlChar*)"vertex" );
+	    xmlNode *node = xmlNewNode( /* ns = */ NULL, (const xmlChar*)"node" );
 	    xmlAttr *attr = xmlNewProp( node,
 					(const xmlChar*)"id", 
-					(const xmlChar*)(boost::lexical_cast<string>(step->vertex)).c_str() );
-	    xmlAddChild( result_node, node );
+					(const xmlChar*)(boost::lexical_cast<string>( road_graph[*it].db_id )).c_str() );
+	    xmlAddChild( overview_path_node, node );
 	}
-	output_parameters_[ "result" ] = result_node;
+
+	Roadmap::StepList::iterator sit;
+	for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
+	{
+	    if ( (*sit)->step_type == Roadmap::Step::RoadStep )
+	    {
+		Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
+		xmlNode* road_step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
+		xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road_section" );
+		Tempus::db_id_t rs_id;
+		if ( edge_exists(step->road_section, road_graph) )
+		    rs_id = road_graph[ step->road_section].db_id;
+		else
+		    rs_id = 0;
+		xmlNewProp( rs_node,
+			    (const xmlChar*)"id",
+			    (const xmlChar*)(boost::lexical_cast<string>( rs_id )).c_str() );
+
+		Tempus::db_id_t rd_id;
+		if ( edge_exists(step->road_direction, road_graph) )
+		    rd_id = road_graph[ step->road_direction].db_id;
+		else
+		    rd_id = 0;
+		xmlNode* rd_node = xmlNewNode( NULL, (const xmlChar*)"road_direction" );
+		xmlNewProp( rd_node,
+			    (const xmlChar*)"id",
+			    (const xmlChar*)(boost::lexical_cast<string>( rd_id )).c_str() );
+		xmlNode* distance_node = xmlNewNode( NULL, (const xmlChar*)"distance_km" );
+		xmlAddChild( distance_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->distance_km )).c_str()) );
+		xmlNode* end_movement_node = xmlNewNode( NULL, (const xmlChar*)"end_movement" );
+		xmlAddChild( end_movement_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->end_movement )).c_str()) );
+		
+		xmlAddChild( road_step_node, rs_node );
+		xmlAddChild( road_step_node, rd_node );
+		xmlAddChild( road_step_node, distance_node );
+		xmlAddChild( road_step_node, end_movement_node );
+		for ( Tempus::Costs::iterator cit = step->costs.begin(); cit != step->costs.end(); cit++ )
+		{
+		    xmlNode* cost_node = xmlNewNode( NULL, (const xmlChar*)"cost" );
+		    xmlNewProp( cost_node,
+				(const xmlChar*)"type",
+				(const xmlChar*)(boost::lexical_cast<string>( cit->first )).c_str() );
+		    xmlNewProp( cost_node,
+				(const xmlChar*)"value",
+				(const xmlChar*)(boost::lexical_cast<string>( cit->second )).c_str() );
+		    xmlAddChild( road_step_node, cost_node );
+		}
+		xmlAddChild( root_node, road_step_node );
+	    }
+	    // TODO: add PT steps
+	}
+	xmlAddChild( root_node, overview_path_node );
+
+	output_parameters_[ "result" ] = root_node;
 	return output_parameters_;
     }
 

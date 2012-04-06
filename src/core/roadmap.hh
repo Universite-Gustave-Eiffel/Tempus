@@ -83,20 +83,16 @@ namespace Tempus
 	};
 
 	///
-	/// A vertex step type. Very simple step that lists Road::Vertex
-	struct VertexStep : public Step
-	{
-	    VertexStep() : Step( Step::VertexStep ) {}
-
-	    Road::Vertex vertex;
-	};
-
-	///
 	/// A Roadmap is a list of Step augmented with some total costs.
 	/// Ownership : pointers are allocated by the caller but freed on Roadmap destruction
 	typedef std::vector<Step*> StepList;
 	StepList steps;
 	Costs total_costs;
+
+	///
+	/// Optional overview path, which is designed for display purposes, and may be simplified
+	typedef std::vector<Road::Vertex> VertexList;
+	VertexList overview_path;
 
 	virtual ~Roadmap()
 	{

@@ -83,8 +83,8 @@ void XML::ensure_validity( xmlNode* node, const std::string& schema_str )
     
     // create a new Doc from the subtree node
     scoped_xmlDoc subtree_doc = xmlNewDoc((const xmlChar*)"1.0");
-    xmlDocSetRootElement( subtree_doc.get(), node );
-    
+    // ! xmlDocSetRootElement update every nodes, use simple pointer affectation instead
+    subtree_doc.get()->children = node;
     int is_valid = (xmlSchemaValidateDoc( valid_ctxt.get(), subtree_doc.get() ) == 0);
     // remove the root node from the subtree document to prevent double free()
     subtree_doc.get()->children = NULL;

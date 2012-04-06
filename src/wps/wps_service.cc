@@ -119,6 +119,8 @@ namespace WPS
 
     std::ostream& Service::get_xml_execute_response( std::ostream& out )
     {
+	check_parameters( output_parameters_, output_parameter_schema_ );
+
 	string service_instance = getenv( "REQUEST_URI" );
 	out << "<wps:ExecuteResponse xsi:schemaLocation=\"http://www.opengis.net/wps/1.0.0 ../wpsExecute_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" serviceInstance=\"" << service_instance << "\">" << endl;
 	out << "  <wps:Process wps:processVersion=\"1\">" << endl;
