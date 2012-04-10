@@ -9,7 +9,6 @@ namespace Tempus
     NameToId road_type_from_name;
     NameToId transport_type_from_name;
 
-
     ProgressionCallback null_progression_callback;
 
     void TextProgression::operator()( float percent, bool finished )

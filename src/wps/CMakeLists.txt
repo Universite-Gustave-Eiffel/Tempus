@@ -1,0 +1,21 @@
+set( XML_INCLUDE_DIR "" CACHE PATH "libxml2 includes directory")
+set( XML_LIBRARY_DIRS "" CACHE PATH "libxml2 libraries directory")
+if (WIN32)
+  set( XML_LIBS libxml2 )
+else (WIN32)
+  set( XML_LIBS xml2 )
+endif (WIN32)
+
+set( FCGI_INCLUDE_DIR "" CACHE PATH "fastcgi includes directory")
+set( FCGI_LIBRARY_DIRS "" CACHE PATH "fastcgi libraries directory")
+if (WIN32)
+  set( FCGI_LIBS libfcgi libfcgi++ )
+else (WIN32)
+  set( FCGI_LIBS fcgi fcgi++ )
+endif (WIN32)
+
+add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
+
+include_directories( ${XML_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../core )
+link_directories( ${XML_LIBRARY_DIRS} ${FCGI_LIBRARY_DIRS} ${CMAKE_CURRENt_BUILD_DIR} )
+target_link_libraries( wps ${XML_LIBS} ${FCGI_LIBS} tempus )
