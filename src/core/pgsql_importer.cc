@@ -69,14 +69,12 @@ namespace Tempus
     void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
     {
 	Road::Graph& road_graph = graph.road;
-	PublicTransport::Graph pt_graph_;
-	graph.public_transports.push_back( pt_graph_ );
-	PublicTransport::Graph& pt_graph = graph.public_transports.back();
 
 	// locally maps db ID to Node or Section
 	std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
 	std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
-	std::map<Tempus::db_id_t, PublicTransport::Vertex> pt_nodes_map;
+	// network_id -> pt_node_id -> vertex
+	std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
 
 	Db::Result res = connection_.exec( "SELECT id, junction, bifurcation FROM tempus.road_node" );
 	
@@ -148,13 +146,33 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.25) );
 	}
 
-	res = connection_.exec( "SELECT id, psname, location_type, parent_station, road_section_id, zone_id, abscissa_road_section FROM tempus.pt_stop" );
+	res = connection_.exec( "SELECT id, pnname FROM tempus.pt_network" );
+	for ( size_t i = 0; i < res.size(); i++ )
+	{
+	    PublicTransport::Network network;
+	    
+	    res[i][0] >> network.db_id;
+	    BOOST_ASSERT( network.db_id > 0 );
+	    res[i][1] >> network.name;
+
+	    graph.network_map[network.db_id] = network;
+	    graph.public_transports[network.db_id] = PublicTransport::Graph();
+	}
+
+	res = connection_.exec( "SELECT DISTINCT s.network_id, n.id, n.psname, n.location_type, n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section FROM tempus.pt_stop as n JOIN tempus.pt_section as s ON s.stop_from = n.id OR s.stop_to = n.id" );
 	
 	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    PublicTransport::Stop stop;
 
 	    int j = 0;
+	    Tempus::db_id_t network_id;
+	    res[i][j++] >> network_id;
+	    BOOST_ASSERT( network_id > 0 );
+	    BOOST_ASSERT( graph.network_map.find( network_id ) != graph.network_map.end() );
+	    BOOST_ASSERT( graph.public_transports.find( network_id ) != graph.public_transports.end() );
+	    PublicTransport::Graph& pt_graph = graph.public_transports[network_id];
+
 	    res[i][j++] >> stop.db_id;
 	    BOOST_ASSERT( stop.db_id > 0 );
 	    res[i][j++] >> stop.name;
@@ -163,9 +181,9 @@ namespace Tempus
 	    stop.has_parent = false;
 	    int parent_station;
 	    res[i][j++] >> parent_station;
-	    if ( pt_nodes_map.find( parent_station ) != pt_nodes_map.end() )
+	    if ( pt_nodes_map[network_id].find( parent_station ) != pt_nodes_map[network_id].end() )
 	    {
-		stop.parent_station = pt_nodes_map[ parent_station ];
+		stop.parent_station = pt_nodes_map[network_id][ parent_station ];
 		stop.has_parent = true;
 	    }
 
@@ -177,26 +195,32 @@ namespace Tempus
 	    res[i][j++] >> stop.abscissa_road_section;
 
 	    PublicTransport::Vertex v = boost::add_vertex( stop, pt_graph );
-	    pt_nodes_map[ stop.db_id ] = v;
+	    pt_nodes_map[network_id][ stop.db_id ] = v;
 	    pt_graph[v].vertex = v;
 
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.5) );
 	}
 
-	res = connection_.exec( "SELECT stop_from, stop_to FROM tempus.pt_section" );
+	res = connection_.exec( "SELECT network_id, stop_from, stop_to FROM tempus.pt_section" );
      
 	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    PublicTransport::Section section;
+	    
+	    Tempus::db_id_t network_id;
+	    res[i][0] >> network_id;
+	    BOOST_ASSERT( network_id > 0 );
+	    BOOST_ASSERT( graph.public_transports.find( network_id ) != graph.public_transports.end() );
+	    PublicTransport::Graph& pt_graph = graph.public_transports[ network_id ];
 
-	    int stop_from_id, stop_to_id;
-	    res[i][0] >> stop_from_id;
-	    res[i][1] >> stop_to_id;
+	    Tempus::db_id_t stop_from_id, stop_to_id;
+	    res[i][1] >> stop_from_id;
+	    res[i][2] >> stop_to_id;
 	    BOOST_ASSERT( stop_from_id > 0 );
 	    BOOST_ASSERT( stop_to_id > 0 );
 
-	    PublicTransport::Vertex stop_from = pt_nodes_map[ stop_from_id ];
-	    PublicTransport::Vertex stop_to = pt_nodes_map[ stop_to_id ];
+	    PublicTransport::Vertex stop_from = pt_nodes_map[network_id][ stop_from_id ];
+	    PublicTransport::Vertex stop_to = pt_nodes_map[network_id][ stop_to_id ];
 	    PublicTransport::Edge e;
 	    bool is_added;
 	    boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );

@@ -21,7 +21,11 @@ namespace Tempus
     {
 	Road::Graph road;
 	
-	typedef std::list<PublicTransport::Graph> PublicTransportGraphList;
+	typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
+	NetworkMap network_map;
+
+	// network_id -> PublicTransport::Graph
+	typedef std::map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
 	PublicTransportGraphList public_transports;
     };
 
