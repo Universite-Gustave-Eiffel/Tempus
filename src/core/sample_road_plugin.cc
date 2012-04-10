@@ -70,6 +70,12 @@ namespace Tempus
 	    REQUIRE( request.check_consistency() );
 	    REQUIRE( request.steps.size() == 1 );
 
+	    Road::Vertex origin = request.origin;
+	    Road::Vertex destination = request.get_destination();
+	    Road::Graph& road_graph = graph_.road;
+	    REQUIRE( vertex_exists( origin, road_graph ) );
+	    REQUIRE( vertex_exists( destination, road_graph ) );
+
 	    if ( (request.optimizing_criteria[0] != CostDistance) )
 	    {
 		throw std::invalid_argument( "Unsupported optimizing criterion" );
@@ -103,14 +109,14 @@ namespace Tempus
 					    );
 
 	    // reorder the path, could have been better included ...
-	    std::vector<Road::Vertex> path;
+	    std::list<Road::Vertex> path;
 	    Road::Vertex current = destination;
 	    while ( current != origin )
 	    {
-		path.push_back( current );
+		path.push_front( current );
 		current = pred_map[ current ];
 	    }
-	    path.push_back( destination );
+	    path.push_front( origin );
 
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
@@ -120,9 +126,14 @@ namespace Tempus
 	    double distance = 0.0;
 	    Road::Vertex previous;
 	    bool first_loop = true;
-	    for ( size_t i = 0; i < path.size(); i++ )
+
+	    for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
-		Road::Vertex v = path[i];
+		Road::Vertex v = *it;
+		// Overview path
+		roadmap.overview_path.push_back( v );
+		
+		// User-oriented roadmap
 		if ( first_loop )
 		{
 		    previous = v;
