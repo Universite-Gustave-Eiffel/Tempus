@@ -57,7 +57,7 @@ namespace Tempus
 	    duration_map_.clear();
 	    trip_id_map_.clear();
 
-	    PublicTransport::Graph& pt_graph = graph_.public_transports.front();
+	    PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
 	    Road::Graph& road_graph = graph_.road;
 	    PublicTransport::EdgeIterator eb, ee;
 	    for ( tie( eb, ee ) = boost::edges( pt_graph ); eb != ee; eb++ )
@@ -94,6 +94,7 @@ namespace Tempus
 
 	virtual void pre_process( Request& request ) throw (std::invalid_argument)
 	{
+	    REQUIRE( graph_.public_transports.size() >= 1 );
 	    REQUIRE( request.check_consistency() );
 	    REQUIRE( request.steps.size() == 1 );
 
@@ -107,7 +108,7 @@ namespace Tempus
 
 	virtual void process()
 	{
-	    PublicTransport::Graph& pt_graph = graph_.public_transports.front();
+	    PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
 	    Road::Graph& road_graph = graph_.road;
 
 	    PublicTransport::Vertex departure, arrival;
@@ -254,7 +255,7 @@ namespace Tempus
 	Result& result()
 	{
 	    Roadmap& roadmap = result_.back();
-	    PublicTransport::Graph& pt_graph = graph_.public_transports.back();
+	    PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
 
 	    std::cout << "Total duration: " << roadmap.total_costs[CostDuration] << std::endl;
 	    std::cout << "Total distance: " << roadmap.total_costs[CostDistance] << std::endl;
