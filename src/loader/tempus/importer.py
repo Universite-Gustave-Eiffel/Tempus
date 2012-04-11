@@ -42,10 +42,16 @@ class DataImporter(object):
             ret = self.preload_sql()
             if ret:
                 ret = self.load_data()
+            else:
+                sys.stderr.write("Error during preload_sql().\n")
             if ret:
                 ret = self.postload_sql()
+            else:
+                sys.stderr.write("Error during load_data().\n")
             if ret:
                 self.clean()
+            else:
+                sys.stderr.write("Error during postload_sql().\n")
         else:
             sys.stderr.write("Error in source data.\n")
         return ret

@@ -143,7 +143,7 @@ CREATE TABLE tempus.pt_network
 (
 	id serial PRIMARY KEY,
 	pnname varchar NOT NULL
-	, import_date timestamp not null default current timestamp
+	, import_date timestamp not null default current_timestamp
 );
 
 -- GTFS Stops
