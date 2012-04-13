@@ -24,7 +24,7 @@ namespace Tempus
     {
     public:
 
-	RoadPlugin() : Plugin("road_plugin")
+	RoadPlugin( Db::Connection& db ) : Plugin( "road_plugin", db )
 	{
 	}
 
@@ -32,8 +32,6 @@ namespace Tempus
 	{
 	}
     protected:
-	std::string db_options_;
-
 	///
 	/// A CostMap maps publict transport edges to a double
 	typedef std::map< Road::Edge, double > CostMap;
@@ -41,22 +39,9 @@ namespace Tempus
 	// static cost map: length
 	CostMap length_map_;
     public:
-	virtual void pre_build( const std::string& options )
+	virtual void post_build()
 	{
-	    db_options_ = options;
-	}
-
-	virtual void build()
-	{
-	    // request the database
-	    PQImporter importer( db_options_ );
-	    TextProgression progression(50);
-	    std::cout << "Loading graph from database: " << std::endl;
-	    cout << "Importing constants ... " << endl;
-	    importer.import_constants();
-	    cout << "Importing graph ... " << endl;
-	    importer.import_graph( graph_, progression );
-
+	    graph_ = Application::instance()->get_graph();
 	    Road::EdgeIterator eb, ee;
 	    Road::Graph& road_graph = graph_.road;
 	    for ( boost::tie(eb, ee) = boost::edges( road_graph ); eb != ee; eb++ )
@@ -90,6 +75,8 @@ namespace Tempus
 	    Road::Vertex destination = request_.get_destination();
 
 	    Road::Graph& road_graph = graph_.road;
+
+	    cout << "num vertices = " << boost::num_vertices( road_graph ) << std::endl;
 
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );

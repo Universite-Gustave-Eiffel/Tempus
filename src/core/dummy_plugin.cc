@@ -14,7 +14,7 @@ namespace Tempus
     {
     public:
 
-	MyPlugin() : Plugin("myplugin")
+	MyPlugin( Db::Connection& db ) : Plugin( "myplugin", db )
 	{
 	}
 
@@ -35,20 +35,9 @@ namespace Tempus
 
 	std::string db_options_;
     public:
-	virtual void pre_build( const std::string& options )
+	virtual void post_build()
 	{
-	    db_options_ = options;
-	}
-	virtual void build()
-	{
-	    // request the database
-	    PQImporter importer( db_options_ );
-	    TextProgression progression(50);
-	    std::cout << "Loading graph from database: " << std::endl;
-	    cout << "Importing constants ... " << endl;
-	    importer.import_constants();
-	    cout << "Importing graph ... " << endl;
-	    importer.import_graph( graph_, progression );
+	    graph_ = Application::instance()->get_graph();
 
 	    // Browse edges and compute their duration and length
 	    // FIXME : not optimal. Would have to find a unique query for all the edges
@@ -75,7 +64,7 @@ namespace Tempus
 		db_id_t t_id = pt_graph[t].db_id;
 		std::string query = (boost::format( "select t1.departure_time, t2.departure_time - t1.arrival_time, t1.trip_id from tempus.pt_stop_time as t1, tempus.pt_stop_time as t2 "
 						    "where t1.trip_id = t2.trip_id and t1.stop_id=%1% and t2.stop_id=%2% and t1.stop_sequence < t2.stop_sequence order by t1.departure_time" ) % s_id % t_id).str();
-		Db::Result res = importer.query( query );
+		Db::Result res = db_.exec( query );
 
 		// FIXME : over simplification here: we always take the first row
 		if ( res.size() >= 1 )
