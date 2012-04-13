@@ -23,7 +23,7 @@ PLUGIN_UPLOAD = $(CURDIR)/plugin_upload.py
 # Makefile for a PyQGIS plugin 
 
 # translation
-SOURCES = ifsttarrouting.py ui_ifsttarrouting.py __init__.py ifsttarroutingdialog.py
+SOURCES = ifsttarrouting.py ui_ifsttarrouting.py __init__.py ifsttarroutingdock.py
 #TRANSLATIONS = i18n/ifsttarrouting_en.ts
 TRANSLATIONS = 
 
@@ -31,7 +31,7 @@ TRANSLATIONS =
 
 PLUGINNAME = ifsttarrouting
 
-PY_FILES = ifsttarrouting.py ifsttarroutingdialog.py __init__.py
+PY_FILES = ifsttarrouting.py ifsttarroutingdock.py __init__.py
 
 EXTRAS = icon.png 
 

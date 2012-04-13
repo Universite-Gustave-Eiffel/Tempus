@@ -22,8 +22,8 @@ namespace WPS
 
 	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
 	virtual ParameterMap& execute();
-    protected:
-	std::string db_options_;
+
+	static std::string db_options;
     };
 
     class BuildService : public Service

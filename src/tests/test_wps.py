@@ -159,7 +159,7 @@ class WPSClient:
                    ]
                  ]
         x = to_xml( body )
-#        print x
+        print x
         return self.conn.request( 'POST', x )
 
 if len(sys.argv) < 2:
@@ -182,19 +182,19 @@ wps = WPSClient(client)
 #print status, msg
 
 
-[status, msg] = wps.execute( "pre_build", { 'db_options' : [ True, ['db_options', 'dbname=tempus_tmp2' ]] } )
+[status, msg] = wps.execute( "pre_build", { 'db_options' : [ True, ['db_options', 'dbname=tempus_nantes' ]] } )
 print status, msg
 
 [status, msg] = wps.execute( "build", {} )
 print status, msg
 
 args = { 'request' : [ True, ['request', 
-                              ['origin_id', 152500201346546 ],
+                              ['origin', ['x',355799.708197],['y',6687678.159290] ],
                               ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
                               ['optimizing_criterion', 1 ], # CostDistance
                               ['allowed_transport_types', 11 ],
                               ['step',
-                               [ 'destination_id', 152500201183882 ],
+                               [ 'destination', ['x',355925.874573],['y',6687897.019330] ],
                                [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
                                [ 'private_vehicule_at_destination', 'true' ]
                                ]

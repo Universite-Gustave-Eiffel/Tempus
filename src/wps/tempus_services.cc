@@ -1,7 +1,9 @@
 #include <iostream>
+#include <boost/format.hpp>
 
 #include "tempus_services.hh"
 #include "roadmap.hh"
+#include "db.hh"
 
 using namespace std;
 
@@ -9,6 +11,8 @@ using Tempus::Roadmap;
 
 namespace WPS
 {    
+    std::string PreBuildService::db_options;
+
     PreBuildService::PreBuildService() : Service("pre_build")
     {
 	// define the XML schema of input parameters
@@ -22,12 +26,12 @@ namespace WPS
 	
 	// now extract actual data
 	xmlNode* request_node = input_parameter_map["db_options"];
-	db_options_ = (const char*)request_node->children->content;
+	db_options = (const char*)request_node->children->content;
     }
 
     Service::ParameterMap& PreBuildService::execute()
     {
-	plugin_->pre_build( db_options_ );
+	plugin_->pre_build( db_options );
 	output_parameters_.clear();
 	return output_parameters_;
     }
@@ -50,16 +54,22 @@ namespace WPS
 			     "    <xs:attribute name=\"type\" type=\"xs:int\"/>\n"
 			     "    <xs:attribute name=\"date_time\" type=\"xs:dateTime\"/>\n"
 			     "  </xs:complexType>\n"
+			     "  <xs:complexType name=\"Point\">\n"
+			     "    <xs:sequence>\n"
+			     "      <xs:element name=\"x\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			     "      <xs:element name=\"y\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			     "    </xs:sequence>\n"
+			     "  </xs:complexType>\n"
 			     "  <xs:complexType name=\"Step\">\n"
 			     "    <xs:sequence>\n"
-			     "      <xs:element name=\"destination_id\" type=\"xs:long\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			     "      <xs:element name=\"destination\" type=\"Point\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"private_vehicule_at_destination\" type=\"xs:boolean\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "    </xs:sequence>\n"
 			     "  </xs:complexType>\n"
 			     "  <xs:complexType name=\"Request\">\n"
 			     "    <xs:sequence>\n"
-			     "      <xs:element name=\"origin_id\" type=\"xs:long\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			     "      <xs:element name=\"origin\" type=\"Point\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"departure_constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"parking_location_id\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
 			     "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\"/>\n"
@@ -72,10 +82,44 @@ namespace WPS
 			     );
     }
     
+    void get_xml_point( xmlNode* node, double& x, double& y )
+    {
+	xmlNode* x_node = XML::get_next_nontext( node->children );
+	xmlNode* y_node = XML::get_next_nontext( x_node->next );
+
+	string x_str = (const char*)x_node->children->content;
+	string y_str = (const char*)y_node->children->content;
+
+	x = boost::lexical_cast<double>( x_str );
+	y = boost::lexical_cast<double>( y_str );
+    }
+
+    Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
+    {
+	string q = (boost::format( "SELECT id FROM tempus.road_node WHERE ST_DWithin( geom, "
+				   "ST_SetSRID(ST_Point(%1%, %2%), 2154), 30)" ) % x % y).str();
+	Db::Result res = db.exec( q );
+	if ( res.size() == 0 )
+	    return 0;
+	return res[0][0].as<Tempus::db_id_t>();
+    }
+
+    void coordinates_from_road_vertex_id( Db::Connection& db, Tempus::db_id_t id, double& x, double& y )
+    {
+	string q = (boost::format( "SELECT x(geom), y(geom) FROM tempus.road_node WHERE id=%1%" ) % id).str();
+	cout << q << endl;
+	Db::Result res = db.exec( q );
+	BOOST_ASSERT( res.size() > 0 );
+	x = res[0][0].as<Tempus::db_id_t>();
+	y = res[0][1].as<Tempus::db_id_t>();
+    }
+
     void PreProcessService::parse_xml_parameters( ParameterMap& input_parameter_map )
     {
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	double x,y;
+	Db::Connection db( PreBuildService::db_options );
 	
 	// now extract actual data
 	xmlNode* request_node = input_parameter_map["request"];
@@ -83,10 +127,13 @@ namespace WPS
 	xmlNode* field = XML::get_next_nontext( request_node->children );
 	
 	Tempus::Road::Graph& road_graph = plugin_->get_graph().road;
-	string origin_str = (const char*)field->children->content;
-	Tempus::db_id_t origin_id = boost::lexical_cast<Tempus::db_id_t>( origin_str );
+	get_xml_point( field, x, y);
+	Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );	
+	if ( origin_id == 0 )
+	{
+	    throw std::invalid_argument( "Cannot find origin_id" );
+	}
 	this->origin = vertex_from_id( origin_id, road_graph );
-	cout << "origin " << origin << endl;
 	
 	// departure_constraint
 	// TODO
@@ -116,7 +163,7 @@ namespace WPS
 	while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
 	{
 	    Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
-	    this->allowed_networks.push_back( vertex_from_id(network_id, road_graph) );
+	    this->allowed_networks.push_back( network_id );
 	    field = XML::get_next_nontext( field->next );
 	    cout << "allowed network " << allowed_networks.size() << endl;
 	}
@@ -131,10 +178,15 @@ namespace WPS
 	    xmlNode *subfield;
 	    // destination id
 	    subfield = XML::get_next_nontext( field->children );
-	    Tempus::db_id_t destination_id = boost::lexical_cast<Tempus::db_id_t>(subfield->children->content);
+	    get_xml_point( subfield, x, y);
+	    cout << "destination x = " << x << ", y = " << y << endl;
+	    Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );	
+	    if ( destination_id == 0 )
+	    {
+		throw std::invalid_argument( "Cannot find origin_id" );
+	    }
 	    this->steps.back().destination = vertex_from_id( destination_id, road_graph );
-	    cout << "destination " << steps.back().destination << endl;
-	    
+
 	    // constraint
 	    // TODO
 	    subfield = XML::get_next_nontext( subfield->next );
@@ -173,6 +225,12 @@ namespace WPS
 			      "<xs:complexType name=\"DbId\">\n"
 			      "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n" // db_id
 			      "</xs:complexType>\n"
+			      "  <xs:complexType name=\"Point\">\n"
+			      "    <xs:sequence>\n"
+			      "      <xs:element name=\"x\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "      <xs:element name=\"y\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+			      "    </xs:sequence>\n"
+			      "  </xs:complexType>\n"
 			      "<xs:complexType name=\"Cost\">\n"
 			      "  <xs:attribute name=\"type\" type=\"xs:string\"/>\n"
 			      "  <xs:attribute name=\"value\" type=\"xs:float\"/>\n"
@@ -205,7 +263,7 @@ namespace WPS
 			      "      <xs:element name=\"overview_path\" minOccurs=\"0\" maxOccurs=\"1\">\n" // 0..1
 			      "        <xs:complexType>\n"
 			      "          <xs:sequence>\n"
-			      "            <xs:element name=\"node\" type=\"DbId\" maxOccurs=\"unbounded\"/>\n"
+			      "            <xs:element name=\"node\" type=\"Point\" maxOccurs=\"unbounded\"/>\n"
 			      "          </xs:sequence>\n"
 			      "        </xs:complexType>\n"
 			      "      </xs:element>\n"
@@ -221,6 +279,7 @@ namespace WPS
 	Tempus::Result& result = plugin_->result();
 
 	Tempus::Road::Graph& road_graph = plugin_->get_graph().road;
+	Db::Connection db( PreBuildService::db_options );
 
 	Tempus::Roadmap& roadmap = result.back();
 	xmlNode* root_node = xmlNewNode( /*ns=*/ NULL, (const xmlChar*)"result" );
@@ -229,10 +288,15 @@ namespace WPS
 	Roadmap::VertexList::iterator it;
 	for ( it = roadmap.overview_path.begin(); it != roadmap.overview_path.end(); it++ )
 	{
+	    double x, y;
+	    coordinates_from_road_vertex_id( db, road_graph[*it].db_id, x, y );
 	    xmlNode *node = xmlNewNode( /* ns = */ NULL, (const xmlChar*)"node" );
-	    xmlAttr *attr = xmlNewProp( node,
-					(const xmlChar*)"id", 
-					(const xmlChar*)(boost::lexical_cast<string>( road_graph[*it].db_id )).c_str() );
+	    xmlNode *x_node = xmlNewNode( NULL, (const xmlChar*)"x" );
+	    xmlNode *y_node = xmlNewNode( NULL, (const xmlChar*)"y" );
+	    xmlAddChild( x_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(x)).c_str()) ) );
+	    xmlAddChild( y_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(y)).c_str()) ) );
+	    xmlAddChild( node, x_node );
+	    xmlAddChild( node, y_node );
 	    xmlAddChild( overview_path_node, node );
 	}
 
