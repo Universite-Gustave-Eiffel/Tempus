@@ -73,27 +73,8 @@ namespace Tempus
 	    Road::Vertex origin = request.origin;
 	    Road::Vertex destination = request.get_destination();
 	    Road::Graph& road_graph = graph_.road;
-	    Road::VertexIterator vi, vi_end;
-	    bool origin_exists = false;
-	    bool destination_exists = false;
-	    for ( boost::tie(vi, vi_end) = boost::vertices( road_graph); vi != vi_end; vi++ )
-	    {
-		if ( *vi == origin )
-		{
-		    origin_exists = true;
-		    break;
-		}
-	    }
-	    for ( boost::tie(vi, vi_end) = boost::vertices( road_graph); vi != vi_end; vi++ )
-	    {
-		if ( *vi == destination )
-		{
-		    destination_exists = true;
-		    break;
-		}
-	    }
-	    REQUIRE( origin_exists );
-	    REQUIRE( destination_exists );
+	    REQUIRE( vertex_exists( origin, road_graph ) );
+	    REQUIRE( vertex_exists( destination, road_graph ) );
 
 	    if ( (request.optimizing_criteria[0] != CostDistance) )
 	    {
@@ -140,9 +121,6 @@ namespace Tempus
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
 	    Roadmap::RoadStep* step = 0;
-	    // FIXME: we add here another simple roadmap, made of RoadStep. Not very clean.
-	    result_.push_back( Roadmap() );
-	    Roadmap& simple_roadmap = result_.back();
 
 	    Road::Edge current_road;
 	    double distance = 0.0;
@@ -152,10 +130,8 @@ namespace Tempus
 	    for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
 		Road::Vertex v = *it;
-		// Simple roadmap
-		Roadmap::VertexStep* road_step = new Roadmap::VertexStep();
-		road_step->vertex = v;
-		simple_roadmap.steps.push_back( road_step );
+		// Overview path
+		roadmap.overview_path.push_back( v );
 		
 		// User-oriented roadmap
 		if ( first_loop )
@@ -188,7 +164,7 @@ namespace Tempus
 
 	Result& result()
 	{
-	    Roadmap& roadmap = result_.front();
+	    Roadmap& roadmap = result_.back();
 	    Road::Graph& road_graph = graph_.road;
 	    
 	    std::cout << "Total distance: " << roadmap.total_costs[CostDistance] << std::endl;

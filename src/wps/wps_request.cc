@@ -240,30 +240,6 @@ namespace WPS {
 		    // next input
 		    node = XML::get_next_nontext( node->next );
 		}
-
-		if ( !WPS::Service::exists(identifier) )
-		{
-		    return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier " + identifier );
-		}
-		// all inputs are now defined, parse them
-		WPS::Service* service = WPS::Service::get_service( identifier );
-		try
-		{
-		    service->parse_xml_parameters( input_parameter_map );
-		    WPS::Service::ParameterMap& output_parameters = service->execute();
-
-		    outs_ << "Content-type: text/xml" << endl;
-		    outs_ << endl;
-		    for ( WPS::Service::ParameterMap::iterator it = output_parameters.begin(); it != output_parameters.end(); it++ )
-		    {
-			cout << it->first << endl;
-			outs_ << it->first << " " << XML::to_string(it->second) << endl;
-		    }
-		}
-		catch (std::invalid_argument& e)
-		{
-		    return print_exception( WPS_INVALID_PARAMETER_VALUE, e.what() );
-		}
 	    }
 	    else
 	    {
@@ -285,6 +261,25 @@ namespace WPS {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Responseform undefined" );
 	    }
 
+	    if ( !WPS::Service::exists(identifier) )
+	    {
+		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown service identifier " + identifier );
+	    }
+	    // all inputs are now defined, parse them
+	    WPS::Service* service = WPS::Service::get_service( identifier );
+	    try
+	    {
+		service->parse_xml_parameters( input_parameter_map );
+		WPS::Service::ParameterMap& output_parameters = service->execute();
+		
+		outs_ << "Content-type: text/xml" << endl;
+		outs_ << endl;
+		service->get_xml_execute_response( outs_ );
+	    }
+	    catch (std::invalid_argument& e)
+	    {
+		return print_exception( WPS_INVALID_PARAMETER_VALUE, e.what() );
+	    }
 	    cerr << "Execute OK" << endl;
 	    // TODO
 	}

@@ -82,7 +82,7 @@ namespace Tempus
 	    /// Can be null
 	    Edge edge;
 	    /// must not be null
-	    Network* network;
+	    db_id_t network_id;
 	};
 	
 	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
@@ -156,8 +156,6 @@ namespace Tempus
 	    /// This is the definition of a list of stop times for a trip.
 	    /// The list of stop times has to be ordered to represent the sequence of stops
 	    /// (based on the "stop_sequence" field of the corresponding "stop_times" table
-	    ///
-	    /// This type can also be used as a roadmap for answers to planning requests
 	    typedef std::list< std::vector< StopTime > > StopTimes;
 
 	    typedef std::list<Frequency> Frequencies;
@@ -188,7 +186,7 @@ namespace Tempus
 	{
 	    ///
 	    /// public transport network
-	    Network* network;
+	    db_id_t network_id;
 	    
 	    std::string short_name;
 	    std::string long_name;

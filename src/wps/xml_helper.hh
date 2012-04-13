@@ -73,7 +73,7 @@ public:
 
     ///
     /// Outputs a node to a string, recursively
-    static std::string to_string( xmlNode* node );
+    static std::string to_string( xmlNode* node, int indent_level = 0 );
 
     ///
     /// Throws a std::invalid_argument if the given node is not validated against the schema
