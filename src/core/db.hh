@@ -124,6 +124,7 @@ namespace Db
 	{
 	    r.inc_refs();
 	    dec_refs();
+	    nrefs_ = r.nrefs_;
 	    res_ = r.res_;
 	}
 	///
@@ -132,6 +133,7 @@ namespace Db
 	{
 	    r.inc_refs();
 	    dec_refs();
+	    nrefs_ = r.nrefs_;
 	    res_ = r.res_;
 	    return *this;
 	}
@@ -180,8 +182,19 @@ namespace Db
     class Connection
     {
     public:
+	Connection() : conn_(0)
+	{
+	    nrefs_ = 0;
+	}
+
 	Connection( const std::string& db_options ) : conn_(0)
 	{
+	    connect( db_options );
+	}
+
+	void connect( const std::string& db_options )
+	{
+	    dec_refs();
 	    conn_ = PQconnectdb( db_options.c_str() );
 	    if (conn_ == NULL || PQstatus(conn_) != CONNECTION_OK )
 	    {
@@ -190,7 +203,7 @@ namespace Db
 		throw std::runtime_error( msg.c_str() );
 	    }
 	    nrefs_ = 1;
-	}
+	}	
 
 	virtual ~Connection()
 	{
@@ -201,12 +214,14 @@ namespace Db
 	{
 	    r.inc_refs();
 	    dec_refs();
+	    nrefs_ = r.nrefs_;
 	    conn_ = r.conn_;
 	}
 	Connection& operator = ( const Connection& r )
 	{
 	    r.inc_refs();
 	    dec_refs();
+	    nrefs_ = r.nrefs_;
 	    conn_ = r.conn_;
 	    return *this;
 	}
@@ -232,6 +247,8 @@ namespace Db
 
 	void dec_refs() const
 	{
+	    if ( nrefs_ == 0 )
+		return;
 	    if ( --nrefs_ == 0 )
 		PQfinish( conn_ );
 	}

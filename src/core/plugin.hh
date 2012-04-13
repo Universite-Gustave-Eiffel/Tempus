@@ -16,6 +16,8 @@
 #include "multimodal_graph.hh"
 #include "request.hh"
 #include "roadmap.hh"
+#include "db.hh"
+#include "application.hh"
 
 #ifdef _WIN32
   #define NOMINMAX
@@ -38,18 +40,14 @@ namespace Tempus
     class Plugin
     {
     public:
-	
-	static Plugin* load( const char* dll_name );
-	static void unload( Plugin* handle );
-	
+	static Plugin* load( const std::string& dll_name );
+	static void unload( Plugin* plugin );
 	std::string get_name() const { return name_; }
 	
     public:
 	///
 	/// Called when the plugin is loaded into memory (install)
-	Plugin(std::string name) : name_(name)
-	{
-	}
+	Plugin( const std::string& name, Db::Connection& db );
 	
 	///
 	/// Called when the plugin is unloaded from memory (uninstall)
@@ -58,14 +56,8 @@ namespace Tempus
 	}
 	
 	///
-	/// Pre-build graphs in memory
-	/// \param[in] options Options used to connect to the database.
-	virtual void pre_build( const std::string& options = "" );
-	///
-	/// Build graphs in memory
-	virtual void build();
-	///
 	/// Called after graphs have been built in memory.
+	/// A Db::Connection is passed to the plugin
 	virtual void post_build();
 	
 	///
@@ -103,12 +95,10 @@ namespace Tempus
 	/// Cleanup method.
 	virtual void cleanup();
 
-	MultimodalGraph& get_graph() { return graph_; }
-
     protected:
 	///
 	/// Graph extracted from the database
-	MultimodalGraph graph_;
+	MultimodalGraph& graph_;
 	///
 	/// User request
 	Request request_;
@@ -118,6 +108,9 @@ namespace Tempus
 
 	/// Name of this plugin
 	std::string name_;
+
+	/// Db connection
+	Db::Connection& db_;
 	
 	void* module_;
     };
@@ -130,7 +123,7 @@ namespace Tempus
 /// Macro used inside plugins.
 /// This way, the constructor will be called on library loading and the destructor on library unloading
 #define DECLARE_TEMPUS_PLUGIN( type ) \
-    extern "C" EXPORT Tempus::Plugin* createPlugin() { return new type(); } \
+    extern "C" EXPORT Tempus::Plugin* createPlugin( Db::Connection& db ) { return new type( db ); } \
     extern "C" EXPORT void deletePlugin(Tempus::Plugin* p_) { delete p_; }
 
 #endif

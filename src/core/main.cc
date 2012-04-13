@@ -61,24 +61,26 @@ int main( int argc, char* argv[])
 	destination_id = vm["destination"].as<Tempus::db_id_t>();
     }
 
+    Tempus::Application* app = Tempus::Application::instance();
+    app->connect( db_options );
     ///
     /// Plugins
     try
     {
-	Plugin* plugin = Tempus::Plugin::load( plugin_name.c_str() );
+	Plugin* plugin = app->load_plugin( plugin_name );
 	
 	cout << "[plugin " << plugin->get_name() << "]" << endl;
 	
 	cout << endl << ">> pre_build" << endl;
-	plugin->pre_build( db_options );
+	app->pre_build_graph();
 	cout << endl << ">> build" << endl;
-	plugin->build();
+	app->build_graph();
 	cout << endl << ">> post_build" << endl;
 	plugin->post_build();
 
 	//
 	// Build the user request
-	MultimodalGraph& graph = plugin->get_graph();
+	MultimodalGraph& graph = app->get_graph();
 	Road::Graph& road_graph = graph.road;
 
 	Road::VertexIterator vb, ve;

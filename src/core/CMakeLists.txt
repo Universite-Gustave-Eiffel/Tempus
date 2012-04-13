@@ -1,5 +1,5 @@
 # Core source files
-set( SOURCE_FILES common.cc plugin.cc pgsql_importer.cc plugin.cc db.cc )
+set( SOURCE_FILES common.cc application.cc plugin.cc pgsql_importer.cc plugin.cc db.cc )
 
 if (WIN32)
 	set( PQ_INCLUDE_DIR "C:/Program Files/PostgreSQL/9.1/include" CACHE PATH "libpq include directory" )
