@@ -34,10 +34,11 @@ namespace WPS
 	
 	///
 	/// Extract input parameters
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
+	void parse_xml_parameters( ParameterMap& input_parameter_map );
 
-	virtual ParameterMap& execute()
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
+	    parse_xml_parameters( input_parameter_map );
 	    // No output by default
 	    output_parameters_.clear();
 	    return output_parameters_;

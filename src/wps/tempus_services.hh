@@ -15,23 +15,39 @@
 
 namespace WPS
 {
+    class ConnectService : public Service
+    {
+    public:
+	ConnectService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
     class PreBuildService : public Service
     {
     public:
 	PreBuildService();
-
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
-	virtual ParameterMap& execute();
-
-	static std::string db_options;
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
     class BuildService : public Service
     {
     public:
 	BuildService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
 
-	virtual ParameterMap& execute();
+    class LoadPluginService : public Service
+    {
+    public:
+	LoadPluginService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class UnloadPluginService : public Service
+    {
+    public:
+	UnloadPluginService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
     class PreProcessService : public Service, public Tempus::Request
@@ -40,9 +56,7 @@ namespace WPS
 	///
 	/// Constructor
 	PreProcessService();
-
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
     class ProcessService : public Service
@@ -51,8 +65,7 @@ namespace WPS
 	///
 	/// Constructor
 	ProcessService();
-
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
     class ResultService : public Service
@@ -61,8 +74,7 @@ namespace WPS
 	///
 	/// Constructor
 	ResultService();
-
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
 }; // WPS namespace

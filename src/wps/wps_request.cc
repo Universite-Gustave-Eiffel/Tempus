@@ -269,8 +269,7 @@ namespace WPS {
 	    WPS::Service* service = WPS::Service::get_service( identifier );
 	    try
 	    {
-		service->parse_xml_parameters( input_parameter_map );
-		WPS::Service::ParameterMap& output_parameters = service->execute();
+		WPS::Service::ParameterMap& output_parameters = service->execute( input_parameter_map );
 		
 		outs_ << "Content-type: text/xml" << endl;
 		outs_ << endl;

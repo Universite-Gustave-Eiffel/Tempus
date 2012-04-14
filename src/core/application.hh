@@ -14,6 +14,7 @@ namespace Tempus
     class Application
     {
     protected:
+	// private constructor
 	Application() {}
 
 	Db::Connection db_;

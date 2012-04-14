@@ -8,30 +8,39 @@
 using namespace std;
 
 using Tempus::Roadmap;
+using Tempus::Application;
 
 namespace WPS
-{    
-    std::string PreBuildService::db_options;
-
-    PreBuildService::PreBuildService() : Service("pre_build")
+{
+    ConnectService::ConnectService() : Service("connect")
     {
-	// define the XML schema of input parameters
 	add_input_parameter( "db_options",
 			     "<xs:element name=\"db_options\" type=\"xs:string\"/>" );
     }
-    void PreBuildService::parse_xml_parameters( Service::ParameterMap& input_parameter_map )
+
+    Service::ParameterMap& ConnectService::execute( Service::ParameterMap& input_parameter_map )
     {
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
 	
 	// now extract actual data
 	xmlNode* request_node = input_parameter_map["db_options"];
-	db_options = (const char*)request_node->children->content;
+	std::string db_options = (const char*)request_node->children->content;
+
+	Application::instance()->connect( db_options );
+	output_parameters_.clear();
+	return output_parameters_;	
     }
 
-    Service::ParameterMap& PreBuildService::execute()
+    PreBuildService::PreBuildService() : Service("pre_build")
     {
-	plugin_->pre_build( db_options );
+    }
+    Service::ParameterMap& PreBuildService::execute( Service::ParameterMap& input_parameter_map )
+    {
+	// Ensure XML is OK
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+
+	Application::instance()->pre_build_graph();
 	output_parameters_.clear();
 	return output_parameters_;
     }
@@ -39,13 +48,61 @@ namespace WPS
     BuildService::BuildService() : Service("build")
     {
     }
-    Service::ParameterMap& BuildService::execute()
+    Service::ParameterMap& BuildService::execute( Service::ParameterMap& input_parameter_map )
     {
-	plugin_->build();
+	// Ensure XML is OK
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+
+	Application::instance()->build_graph();
 	output_parameters_.clear();
 	return output_parameters_;
     }
 
+    LoadPluginService::LoadPluginService() : Service("load_plugin")
+    {
+	// define the XML schema of input parameters
+	add_input_parameter( "plugin_name",
+			     "<xs:element name=\"plugin_name\" type=\"xs:string\"/>" );
+	add_output_parameter( "handle",
+			      "<xs:element name=\"handle\" type=\"xs:long\"/>" );
+    }
+    Service::ParameterMap& LoadPluginService::execute( Service::ParameterMap& input_parameter_map )
+    {
+	// Ensure XML is OK
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	
+	// now extract actual data
+	xmlNode* request_node = input_parameter_map["plugin_name"];
+	std::string name = (const char*)request_node->children->content;
+	Tempus::Plugin* plugin = Application::instance()->load_plugin( name );
+
+	output_parameters_.clear();
+	xmlNode* result_node = xmlNewNode( NULL, (const xmlChar*)"handle" );
+	xmlAddChild( result_node, xmlNewText((const xmlChar*)((boost::lexical_cast<std::string>(long(plugin))).c_str())) );
+	output_parameters_["handle"] = result_node;
+	return output_parameters_;
+    }
+
+    UnloadPluginService::UnloadPluginService() : Service("unload_plugin")
+    {
+	// define the XML schema of input parameters
+	add_input_parameter( "handle",
+			     "<xs:element name=\"handle\" type=\"xs:long\"/>" );
+    }
+    Service::ParameterMap& UnloadPluginService::execute( Service::ParameterMap& input_parameter_map )
+    {
+	// Ensure XML is OK
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	
+	// now extract actual data
+	xmlNode* request_node = input_parameter_map["handle"];
+	long ptr = boost::lexical_cast<long>( (const char*)(request_node->children->content) );
+
+	Application::instance()->unload_plugin( (Tempus::Plugin*)ptr );
+
+	output_parameters_.clear();
+	return output_parameters_;
+    }
     PreProcessService::PreProcessService() : Service("pre_process"), Tempus::Request()
     {
 	// define the XML schema of input parameters
@@ -114,21 +171,22 @@ namespace WPS
 	y = res[0][1].as<Tempus::db_id_t>();
     }
 
-    void PreProcessService::parse_xml_parameters( ParameterMap& input_parameter_map )
+    Service::ParameterMap& PreProcessService::execute( ParameterMap& input_parameter_map )
     {
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
 	double x,y;
-	Db::Connection db( PreBuildService::db_options );
+	Db::Connection& db = Application::instance()->db_connection();
 	
 	// now extract actual data
 	xmlNode* request_node = input_parameter_map["request"];
 	cout << "request_node " << request_node->name << endl;
 	xmlNode* field = XML::get_next_nontext( request_node->children );
 	
-	Tempus::Road::Graph& road_graph = plugin_->get_graph().road;
+	Tempus::Road::Graph& road_graph = Application::instance()->get_graph().road;
 	get_xml_point( field, x, y);
-	Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );	
+	Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
+	cout << "origin_id = " << origin_id << endl;
 	if ( origin_id == 0 )
 	{
 	    throw std::invalid_argument( "Cannot find origin_id" );
@@ -179,8 +237,8 @@ namespace WPS
 	    // destination id
 	    subfield = XML::get_next_nontext( field->children );
 	    get_xml_point( subfield, x, y);
-	    cout << "destination x = " << x << ", y = " << y << endl;
-	    Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );	
+	    Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );
+	    cout << "destination id = " << destination_id << endl;
 	    if ( destination_id == 0 )
 	    {
 		throw std::invalid_argument( "Cannot find origin_id" );
@@ -200,10 +258,7 @@ namespace WPS
 	    // next step
 	    field = XML::get_next_nontext( field->next ); 
 	}
-    }
 
-    Service::ParameterMap& PreProcessService::execute()
-    {
 	plugin_->pre_process( *this );
 	output_parameters_.clear();
 	return output_parameters_;
@@ -212,7 +267,7 @@ namespace WPS
     ProcessService::ProcessService() : Service("process")
     {
     }
-    Service::ParameterMap& ProcessService::execute()
+    Service::ParameterMap& ProcessService::execute( ParameterMap& input_parameter_map )
     {
 	plugin_->process();
 	output_parameters_.clear();
@@ -273,13 +328,13 @@ namespace WPS
 			      );
     }
 
-    Service::ParameterMap& ResultService::execute()
+    Service::ParameterMap& ResultService::execute( ParameterMap& input_parameter_map )
     {
 	output_parameters_.clear();
 	Tempus::Result& result = plugin_->result();
 
-	Tempus::Road::Graph& road_graph = plugin_->get_graph().road;
-	Db::Connection db( PreBuildService::db_options );
+	Tempus::Road::Graph& road_graph = Application::instance()->get_graph().road;
+	Db::Connection& db = Application::instance()->db_connection();
 
 	Tempus::Roadmap& roadmap = result.back();
 	xmlNode* root_node = xmlNewNode( /*ns=*/ NULL, (const xmlChar*)"result" );
@@ -356,6 +411,9 @@ namespace WPS
 	return output_parameters_;
     }
 
+    static ConnectService connect_service_;
+    static LoadPluginService load_plugin_service;
+    static UnloadPluginService unload_plugin_service;
     static PreBuildService pre_build_service_;
     static BuildService build_service_;
     static PreProcessService pre_process_service_;
