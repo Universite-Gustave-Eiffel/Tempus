@@ -29,6 +29,7 @@ import resources_rc
 # Import the code for the dialog
 from ifsttarroutingdock import IfsttarRoutingDock
 
+import re
 import httplib
 import urllib
 from xml.etree import ElementTree as ET
@@ -160,6 +161,20 @@ class WPSClient:
         x = to_xml( body )
         return self.conn.request( 'POST', x )
 
+    # argument : [status, msg]
+    def check_execute_response( self, arg ):
+        [status, msg] = arg
+        if status != 200:
+            raise RuntimeError(self, msg)
+
+def connectProcessingButton( btn, fct ):
+    QObject.connect( btn, SIGNAL("clicked()"), lambda : onProcessingButton(btn, fct) )
+
+# Generic processing button: first disable the button, do the processing, then enable back the button
+def onProcessingButton( btn, fct ):
+    btn.setEnabled(False)
+    fct()
+    btn.setEnabled(True)
 
 class IfsttarRouting:
 
@@ -197,6 +212,8 @@ class IfsttarRouting:
         QObject.connect(self.dlg.ui.originSelectBtn, SIGNAL("clicked()"), self.onOriginSelect)
         QObject.connect(self.dlg.ui.destinationSelectBtn, SIGNAL("clicked()"), self.onDestinationSelect)
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
+        connectProcessingButton( self.dlg.ui.buildBtn, self.onBuildGraphs )
+
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
 
@@ -205,6 +222,24 @@ class IfsttarRouting:
         self.iface.addPluginToMenu(u"&Compute route", self.action)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
 
+    # when the 'build' button get clicked
+    def onBuildGraphs(self):
+        # get the wps url
+        g = re.search( 'http://([^/]+)(.*)', str(self.dlg.ui.wpsUrlText.text()) )
+        host = g.group(1)
+        path = g.group(2)
+        connection = HttpCgiConnection( host, path )
+        # get the db options
+        db_options = str(self.dlg.ui.dbOptionsText.text())
+
+        self.wps = WPSClient(connection)
+        [status, msg] = self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ]] } )
+        self.wps.check_execute_response( [status, msg] )
+        [status, msg] = self.wps.execute( 'pre_build', {} )
+        self.wps.check_execute_response( [status, msg] )
+        [status, msg] = self.wps.execute( 'build', {} )
+        self.wps.check_execute_response( [status, msg] )
+        
     def onSelectionChanged(self, point, button):
         geom = QgsGeometry.fromPoint(point)
         p = geom.asPoint()
@@ -244,14 +279,6 @@ class IfsttarRouting:
             stdtxt = "%s" % it.text()
             criteria.append(self.dlg.criterion_id(stdtxt))
 
-        connection = HttpCgiConnection( '127.0.0.1', '/wps' )
-        wps_client = WPSClient(connection)
-        
-        [status, msg] = wps_client.execute( 'pre_build', { 'db_options' : [True, ['db_options', 'dbname=tempus_tmp2' ]] } )
-        print status, msg
-        [status, msg] = wps_client.execute( 'build', {} )
-        print status, msg
-
         fmt_criteria = []
         for criterion in criteria:
             fmt_criteria.append(['optimizing_criterion', criterion])
@@ -268,19 +295,21 @@ class IfsttarRouting:
                                        ]
                                       ]
                                ] }
-        [status, msg] = wps_client.execute( 'pre_process', args )
-        print status, msg
+        [status, msg] = self.wps.execute( 'pre_process', args )
+        self.wps.check_execute_response( [status, msg] )
 
-        [status, msg] = wps_client.execute( 'process', {} )
-        print status, msg
+        [status, msg] = self.wps.execute( 'process', {} )
+        self.wps.check_execute_response( [status, msg] )
 
-        [status, msg] = wps_client.execute( 'result', {} )
-        print status, msg
+        [status, msg] = self.wps.execute( 'result', {} )
+        self.wps.check_execute_response( [status, msg] )
 
         xml_root = ET.XML( msg )
         overview_path =  xml_root[2][0][2][0][0][-1]
 # create layer
-        vl = QgsVectorLayer("LineString", "Itinerary", "memory")
+        vl = QgsVectorLayer("LineString?crs=epsg:2154", "Itinerary", "memory")
+        s = QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'})
+        vl.rendererV2().setSymbol(s)
         pr = vl.dataProvider()
 
 # add a feature

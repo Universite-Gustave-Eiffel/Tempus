@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>464</width>
-    <height>428</height>
+    <height>444</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -63,7 +63,7 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLineEdit" name="lineEdit">
+          <widget class="QLineEdit" name="wpsUrlText">
            <property name="text">
             <string>http://127.0.0.1/wps</string>
            </property>
@@ -77,16 +77,23 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="lineEdit_2">
+          <widget class="QLineEdit" name="dbOptionsText">
            <property name="text">
             <string>dbname=tempus_tmp2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QPushButton" name="buildBtn">
+           <property name="text">
+            <string>Build graphs</string>
            </property>
           </widget>
          </item>
         </layout>
        </widget>
       </widget>
-      <widget class="QWidget" name="verticalTabWidgetPage1" native="true">
+      <widget class="QWidget" name="verticalTabWidgetPage1">
        <attribute name="title">
         <string>Request</string>
        </attribute>
