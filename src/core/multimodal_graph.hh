@@ -78,6 +78,32 @@ namespace Tempus
 	}
 	return false;
     }
-}; // Tempus namespace
+
+    // TODO : toe be generalized a bit more
+    template <class T, T Tempus::Road::Section::*mptr>
+    struct EdgeFieldPropertyAccessor
+    {
+	EdgeFieldPropertyAccessor( Road::Graph& graph ) : graph_(graph) {}
+	Road::Graph& graph_;
+    };
+};
+
+namespace boost
+{
+    template <class T, T Tempus::Road::Section::*mptr>
+    double get( Tempus::EdgeFieldPropertyAccessor<T, mptr> pmap, Tempus::Road::Edge e )
+    {
+	return pmap.graph_[e].*mptr;
+    }
+
+    template <class T, T Tempus::Road::Section::*mptr>
+    struct property_traits<Tempus::EdgeFieldPropertyAccessor<T, mptr> >
+    {
+	typedef T value_type;
+	typedef T& reference;
+	typedef Tempus::Road::Edge key_type;
+	typedef boost::edge_property_tag category;
+    };
+};
 
 #endif
