@@ -80,7 +80,7 @@ namespace Tempus
 
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
-	    boost::associative_property_map<CostMap> cost_property_map( length_map_ );
+	    boost::const_associative_property_map<CostMap> cost_property_map( length_map_ );
 
 	    boost::dijkstra_shortest_paths( road_graph,
 					    origin,
