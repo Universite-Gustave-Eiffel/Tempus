@@ -3,14 +3,21 @@
 
 #include "plugin.hh"
 
-typedef Tempus::Plugin* (*PluginCreationFct)();
+typedef Tempus::Plugin* (*PluginCreationFct)( Db::Connection& );
 typedef void (*PluginDeletionFct)(Tempus::Plugin*);
 
 namespace Tempus
 {
-    Plugin* Plugin::load( const char* dll_name )
+    Plugin::Plugin( const std::string& name, Db::Connection& db ) :
+	name_(name),
+	db_(db),
+	graph_(Application::instance()->get_graph())
     {
-	std::string complete_dll_name = DLL_PREFIX + std::string( dll_name ) + DLL_SUFFIX;
+    }
+
+    Plugin* Plugin::load( const std::string& dll_name )
+    {
+	std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
 	std::cout << "Loading " << complete_dll_name << std::endl;
 #ifdef _WIN32
 	HMODULE h = LoadLibrary( complete_dll_name.c_str() );
@@ -41,7 +48,7 @@ namespace Tempus
 	    return 0;
 	}
 #endif
-	Tempus::Plugin* plugin = createFct();
+	Tempus::Plugin* plugin = createFct( Application::instance()->db_connection() );
 	plugin->module_ = h;
 	return plugin;
     }
@@ -67,16 +74,6 @@ namespace Tempus
 	    }
 #endif
 	}
-    }
-
-    void Plugin::pre_build( const std::string& options )
-    {
-	std::cout << "[plugin_base]: pre_build" << std::endl;
-    }
-
-    void Plugin::build( /* database request */)
-    {
-	std::cout << "[plugin_base]: build" << std::endl;
     }
 
     void Plugin::post_build()
