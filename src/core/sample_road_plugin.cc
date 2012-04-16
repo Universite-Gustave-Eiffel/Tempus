@@ -41,7 +41,7 @@ namespace Tempus
     public:
 	virtual void post_build()
 	{
-	    graph_ = Application::instance()->get_graph();
+	    graph_ = Application::instance()->graph();
 	    Road::EdgeIterator eb, ee;
 	    Road::Graph& road_graph = graph_.road;
 	    for ( boost::tie(eb, ee) = boost::edges( road_graph ); eb != ee; eb++ )
@@ -56,7 +56,7 @@ namespace Tempus
 	    REQUIRE( request.steps.size() == 1 );
 
 	    Road::Vertex origin = request.origin;
-	    Road::Vertex destination = request.get_destination();
+	    Road::Vertex destination = request.destination();
 	    Road::Graph& road_graph = graph_.road;
 	    REQUIRE( vertex_exists( origin, road_graph ) );
 	    REQUIRE( vertex_exists( destination, road_graph ) );
@@ -72,7 +72,7 @@ namespace Tempus
 	virtual void process()
 	{
 	    Road::Vertex origin = request_.origin;
-	    Road::Vertex destination = request_.get_destination();
+	    Road::Vertex destination = request_.destination();
 
 	    Road::Graph& road_graph = graph_.road;
 

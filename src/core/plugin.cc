@@ -8,10 +8,12 @@ typedef void (*PluginDeletionFct)(Tempus::Plugin*);
 
 namespace Tempus
 {
+    Plugin::PluginList Plugin::plugin_list;
+
     Plugin::Plugin( const std::string& name, Db::Connection& db ) :
 	name_(name),
 	db_(db),
-	graph_(Application::instance()->get_graph())
+	graph_(Application::instance()->graph())
     {
     }
 
@@ -50,6 +52,7 @@ namespace Tempus
 #endif
 	Tempus::Plugin* plugin = createFct( Application::instance()->db_connection() );
 	plugin->module_ = h;
+	plugin_list[dll_name] = plugin;
 	return plugin;
     }
 
@@ -57,6 +60,16 @@ namespace Tempus
     {
 	if ( handle )
 	{
+	    PluginList::iterator it;
+	    for ( it = plugin_list.begin(); it != plugin_list.end(); it++ )
+	    {
+		if ( it->second == handle )
+		{
+		    plugin_list.erase( it );
+		    break;
+		}
+	    }
+
 	    ///
 	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
 #ifdef _WIN32

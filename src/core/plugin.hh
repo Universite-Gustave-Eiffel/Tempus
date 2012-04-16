@@ -42,7 +42,9 @@ namespace Tempus
     public:
 	static Plugin* load( const std::string& dll_name );
 	static void unload( Plugin* plugin );
-	std::string get_name() const { return name_; }
+	typedef std::map<std::string, Plugin*> PluginList;
+	static PluginList plugin_list;
+	std::string name() const { return name_; }
 	
     public:
 	///
