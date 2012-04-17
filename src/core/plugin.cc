@@ -8,7 +8,7 @@ typedef void (*PluginDeletionFct)(Tempus::Plugin*);
 
 namespace Tempus
 {
-    Plugin::PluginList Plugin::plugin_list;
+    Plugin::PluginList Plugin::plugin_list_;
 
     Plugin::Plugin( const std::string& name, Db::Connection& db ) :
 	name_(name),
@@ -17,6 +17,12 @@ namespace Tempus
     {
     }
 
+    void Plugin::declare_option( const std::string& name, OptionType type, const std::string& description )
+    {
+	options_descriptions_[name].type = type;
+	options_descriptions_[name].description = description;
+    }
+    
     Plugin* Plugin::load( const std::string& dll_name )
     {
 	std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
@@ -52,7 +58,7 @@ namespace Tempus
 #endif
 	Tempus::Plugin* plugin = createFct( Application::instance()->db_connection() );
 	plugin->module_ = h;
-	plugin_list[dll_name] = plugin;
+	plugin_list_[dll_name] = plugin;
 	return plugin;
     }
 
@@ -61,11 +67,11 @@ namespace Tempus
 	if ( handle )
 	{
 	    PluginList::iterator it;
-	    for ( it = plugin_list.begin(); it != plugin_list.end(); it++ )
+	    for ( it = plugin_list_.begin(); it != plugin_list_.end(); it++ )
 	    {
 		if ( it->second == handle )
 		{
-		    plugin_list.erase( it );
+		    plugin_list_.erase( it );
 		    break;
 		}
 	    }

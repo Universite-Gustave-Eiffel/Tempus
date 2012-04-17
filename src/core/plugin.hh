@@ -3,7 +3,10 @@
 // MIT License
 
 /**
-   Tempus plugin architecture
+   A Tempus plugin is made of :
+   - some user-defined options
+   - some callback functions called when user requests are processed
+   - some performance metrics
  */
 
 #ifndef TEMPUS_PLUGIN_CORE_HH
@@ -40,12 +43,89 @@ namespace Tempus
     class Plugin
     {
     public:
+	///
+	/// Static function used to load a plugin from disk
 	static Plugin* load( const std::string& dll_name );
-	static void unload( Plugin* plugin );
+	///
+	/// Static funtion used to unload a plugin
+	static void unload( Plugin* plugin );			     
+
+	///
+	/// Access to global plugin list
 	typedef std::map<std::string, Plugin*> PluginList;
-	static PluginList plugin_list;
-	std::string name() const { return name_; }
+	static PluginList plugin_list() { return plugin_list_; }
+
+	///
+	/// Plugin option type
+	enum OptionType
+	{
+	    BoolOption,
+	    IntOption,
+	    FloatOption,
+	    StringOption
+	};
+	///
+	/// Plugin option description
+	struct OptionDescription
+	{
+	    OptionType type;
+	    std::string description;
+	};
+	typedef std::map<std::string, OptionDescription> OptionDescriptionList;
+
+	///
+	/// Method used by a plugin to declare an option
+	void declare_option( const std::string& name, OptionType type, const std::string& description );
+
+	///
+	/// Option descriptions accessor
+	OptionDescriptionList option_descriptions()
+	{
+	    return options_descriptions_;
+	}
 	
+	///
+	/// Method used to set an option value
+	template <class T>
+	void set_option( const std::string& name, const T& value )
+	{
+	    options_[name] = value;
+	}
+	///
+	/// Method used to get an option value
+	template <class T>
+	void get_option( const std::string& name, T& value)
+	{
+	    if ( options_.find( name ) == options_.end() )
+	    {
+		throw std::runtime_error( "get_option(): cannot find option " + name );
+	    }
+	    value = boost::any_cast<T>(options_[name]);
+	}
+	///
+	/// Method used to get an option value, alternative signature.
+	template <class T>
+	T get_option( const std::string& name )
+	{
+	    T v;
+	    get_option( name, v );
+	    return v;
+	}
+
+	///
+	/// A metric is also a boost::any
+	typedef boost::any MetricValue;
+	///
+	/// Metric name -> value
+	typedef std::map<std::string, MetricValue> MetricValueList;
+	
+	///
+	/// Access to metric list
+	MetricValueList metric_list() { return metric_list_; }
+	
+	///
+	/// Name accessor
+	std::string name() const { return name_; }
     public:
 	///
 	/// Called when the plugin is loaded into memory (install)
@@ -59,7 +139,6 @@ namespace Tempus
 	
 	///
 	/// Called after graphs have been built in memory.
-	/// A Db::Connection is passed to the plugin
 	virtual void post_build();
 	
 	///
@@ -67,7 +146,7 @@ namespace Tempus
 	virtual void validate();
 	
 	///
-	/// TODO: find a way to use a visitor
+	/// TODO: find a way to use a visitor, use overriding with visitor filter event tag
 	virtual void accessor();
 
 	///
@@ -114,7 +193,17 @@ namespace Tempus
 	/// Db connection
 	Db::Connection& db_;
 	
+	static PluginList plugin_list_;
+	/// The concrete plugin handler (HMODULE or void*)
 	void* module_;
+
+	/// Plugin option management
+	typedef boost::any OptionValue;
+
+	OptionDescriptionList options_descriptions_;
+	std::map<std::string, OptionValue> options_;
+
+	MetricValueList metric_list_;
     };
 }; // Tempus namespace
 

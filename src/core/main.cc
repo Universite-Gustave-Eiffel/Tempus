@@ -68,6 +68,7 @@ int main( int argc, char* argv[])
     try
     {
 	Plugin* plugin = app->load_plugin( plugin_name );
+	cout << "option = " << o << endl;
 	
 	cout << "[plugin " << plugin->name() << "]" << endl;
 	
