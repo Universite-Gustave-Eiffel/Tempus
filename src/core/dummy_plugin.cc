@@ -16,6 +16,10 @@ namespace Tempus
 
 	MyPlugin( Db::Connection& db ) : Plugin( "myplugin", db )
 	{
+	    declare_option( "dummy_option", IntOption, "Dummy option" );
+	    declare_option( "bool_option", BoolOption, "Bool option" );
+	    declare_option( "float_option", FloatOption, "Bool option" );
+	    declare_option( "str_option", StringOption, "String option" );
 	}
 
 	virtual ~MyPlugin()

@@ -15,14 +15,101 @@ namespace Tempus
 	db_(db),
 	graph_(Application::instance()->graph())
     {
+	// default metrics
+	metrics_[ "time_s" ] = 0.0;
+	metrics_[ "iterations" ] = 0;
     }
 
     void Plugin::declare_option( const std::string& name, OptionType type, const std::string& description )
     {
 	options_descriptions_[name].type = type;
 	options_descriptions_[name].description = description;
+	options_[name] = boost::any();
     }
     
+    void Plugin::set_option_from_string( const std::string& name, const std::string& value)
+    {
+	if ( options_descriptions_.find( name ) == options_descriptions_.end() )
+	    return;
+	OptionType t = options_descriptions_[name].type;
+	switch (t)
+	{
+	case BoolOption:
+	    options_[name] = boost::lexical_cast<int>( value ) == 0 ? false : true;
+	    break;
+	case IntOption:
+	    options_[name] = boost::lexical_cast<int>( value );
+	    break;
+	case FloatOption:
+	    options_[name] = boost::lexical_cast<float>( value );
+	    break;
+	case StringOption:
+	    options_[name] = value;
+	    break;
+	default:
+	    throw std::runtime_error( "Unknown type" );
+	}
+    }
+
+    std::string Plugin::option_to_string( const std::string& name )
+    {
+	if ( options_descriptions_.find( name ) == options_descriptions_.end() )
+	{
+	    throw std::invalid_argument( "Cannot find option " + name );
+	}
+	OptionType t = options_descriptions_[name].type;
+	boost::any value = options_[name];
+	if ( value.empty() )
+	    return "";
+
+	switch (t)
+	{
+	case BoolOption:
+	    return boost::lexical_cast<std::string>( boost::any_cast<bool>(value) ? 1 : 0 );
+	case IntOption:
+	    return boost::lexical_cast<std::string>( boost::any_cast<int>(value) );
+	case FloatOption:
+	    return boost::lexical_cast<std::string>( boost::any_cast<float>(value) );
+	case StringOption:
+	    return boost::any_cast<std::string>(value);
+	default:
+	    throw std::runtime_error( "Unknown type" );
+	}
+	// never happens
+	return "";
+    }
+
+    std::string Plugin::metric_to_string( const std::string& name )
+    {
+	if ( metrics_.find( name ) == metrics_.end() )
+	{
+	    throw std::invalid_argument( "Cannot find metric " + name );
+	}
+	boost::any v = metrics_[name];
+	if ( v.empty() )
+	    return "";
+
+	if ( v.type() == typeid( bool ) )
+	{
+	    return boost::lexical_cast<std::string>( boost::any_cast<bool>( v ) ? 1 : 0 );
+	}
+	else if ( v.type() == typeid( int ) )
+	{
+	    return boost::lexical_cast<std::string>( boost::any_cast<int>( v ) );
+	}
+	else if ( v.type() == typeid( float ) )
+	{
+	    return boost::lexical_cast<std::string>( boost::any_cast<float>( v ) );
+	}
+	else if ( v.type() == typeid( std::string ) )
+	{
+	    return boost::any_cast<std::string>( v );
+	}
+	throw std::invalid_argument( "No known conversion for metric " + name );
+	// never happens
+	return "";
+    }
+
     Plugin* Plugin::load( const std::string& dll_name )
     {
 	std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;

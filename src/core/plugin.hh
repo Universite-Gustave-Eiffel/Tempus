@@ -53,7 +53,7 @@ namespace Tempus
 	///
 	/// Access to global plugin list
 	typedef std::map<std::string, Plugin*> PluginList;
-	static PluginList plugin_list() { return plugin_list_; }
+	static PluginList& plugin_list() { return plugin_list_; }
 
 	///
 	/// Plugin option type
@@ -70,8 +70,11 @@ namespace Tempus
 	{
 	    OptionType type;
 	    std::string description;
+	    bool mandatory;
 	};
 	typedef std::map<std::string, OptionDescription> OptionDescriptionList;
+	typedef boost::any OptionValue;
+	typedef std::map<std::string, OptionValue> OptionValueList;
 
 	///
 	/// Method used by a plugin to declare an option
@@ -79,10 +82,11 @@ namespace Tempus
 
 	///
 	/// Option descriptions accessor
-	OptionDescriptionList option_descriptions()
+	OptionDescriptionList& option_descriptions()
 	{
 	    return options_descriptions_;
 	}
+	OptionValueList& options() { return options_; }
 	
 	///
 	/// Method used to set an option value
@@ -91,6 +95,13 @@ namespace Tempus
 	{
 	    options_[name] = value;
 	}
+	///
+	/// Method used to set an option value from a string. Conversions are made, based on the option description
+	void set_option_from_string( const std::string& name, const std::string& value);
+	///
+	/// Method used to get a string from an option value
+	std::string option_to_string( const std::string& name );
+
 	///
 	/// Method used to get an option value
 	template <class T>
@@ -121,7 +132,10 @@ namespace Tempus
 	
 	///
 	/// Access to metric list
-	MetricValueList metric_list() { return metric_list_; }
+	MetricValueList& metrics() { return metrics_; }
+	///
+	/// Converts a metric value to a string
+	std::string metric_to_string( const std::string& name );
 	
 	///
 	/// Name accessor
@@ -198,12 +212,10 @@ namespace Tempus
 	void* module_;
 
 	/// Plugin option management
-	typedef boost::any OptionValue;
-
 	OptionDescriptionList options_descriptions_;
-	std::map<std::string, OptionValue> options_;
+	OptionValueList options_;
 
-	MetricValueList metric_list_;
+	MetricValueList metrics_;
     };
 }; // Tempus namespace
 
