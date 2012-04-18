@@ -78,6 +78,9 @@ namespace Tempus
 
 	    cout << "num vertices = " << boost::num_vertices( road_graph ) << std::endl;
 
+	    timeval tv_start, tv_stop;
+	    gettimeofday( &tv_start, NULL );
+
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
 	    boost::const_associative_property_map<CostMap> cost_property_map( length_map_ );
@@ -94,6 +97,12 @@ namespace Tempus
 					    0.0,
 					    boost::default_dijkstra_visitor()
 					    );
+
+	    gettimeofday( &tv_stop, NULL );
+	    long long sstart = tv_start.tv_sec * 1000000LL + tv_start.tv_usec;
+	    long long sstop = tv_stop.tv_sec * 1000000LL + tv_stop.tv_usec;
+	    float time_s = (sstop - sstart) / 1000000.0;
+	    metrics_[ "time_s" ] = time_s;
 
 	    // reorder the path, could have been better included ...
 	    std::list<Road::Vertex> path;

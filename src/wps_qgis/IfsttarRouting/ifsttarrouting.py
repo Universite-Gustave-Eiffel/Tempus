@@ -165,11 +165,12 @@ class WPSClient:
     def check_execute_response( self, arg ):
         [status, msg] = arg
         if status != 200:
-            raise RuntimeError(self, "Execute response: " + msg)
+            QMessageBox.warning( None, "Error", msg )
+            raise RuntimeError(self, "Execute response error" )
         print "Received: " + msg
 
 def connectProcessingButton( btn, fct ):
-    QObject.connect( btn, SIGNAL("clicked()"), lambda : onProcessingButton(btn, fct) )
+    QObject.connect( btn, SIGNAL("clicked()"), lambda fct=fct : onProcessingButton(btn, fct) )
 
 # Generic processing button: first disable the button, do the processing, then enable back the button
 def onProcessingButton( btn, fct ):
@@ -226,16 +227,10 @@ class IfsttarRouting:
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
 
-    # when the 'connect' button get clicked
-    def onConnect( self ):
-        # get the wps url
-        g = re.search( 'http://([^/]+)(.*)', str(self.dlg.ui.wpsUrlText.text()) )
-        host = g.group(1)
-        path = g.group(2)
-        connection = HttpCgiConnection( host, path )
-        self.wps = WPSClient(connection)
-
+    # Get current WPS server state
+    def updateState( self ):
         [status, msg] = self.wps.execute( 'state', {} )
         self.wps.check_execute_response( [status, msg] )
         xml = ET.XML( msg )
@@ -249,6 +244,22 @@ class IfsttarRouting:
             elif content.tag == 'state':
                 self.state = int( content.text )
                 self.dlg.ui.stateText.setText( content.text )
+        # enable query tab only if the database if loaded
+        if self.state >= 3:
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
+        else:
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
+
+    # when the 'connect' button get clicked
+    def onConnect( self ):
+        # get the wps url
+        g = re.search( 'http://([^/]+)(.*)', str(self.dlg.ui.wpsUrlText.text()) )
+        host = g.group(1)
+        path = g.group(2)
+        connection = HttpCgiConnection( host, path )
+        self.wps = WPSClient(connection)
+
+        self.updateState()
 
         # get plugin list
         [status, msg] = self.wps.execute( 'plugin_list', {} )
@@ -268,12 +279,6 @@ class IfsttarRouting:
         self.dlg.ui.stateLbl.setEnabled( True )
         self.dlg.ui.buildBtn.setEnabled( True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
-
-        # enable query tab only if the database if loaded
-        if self.state >= 3:
-            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
-        else:
-            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
 
     def onTabChanged( self, tab ):
         # options tab
@@ -374,6 +379,8 @@ class IfsttarRouting:
         self.wps.check_execute_response( [status, msg] )
         [status, msg] = self.wps.execute( 'build', {} )
         self.wps.check_execute_response( [status, msg] )
+
+        self.updateState()
         
     def onSelectionChanged(self, point, button):
         geom = QgsGeometry.fromPoint(point)
@@ -466,6 +473,20 @@ class IfsttarRouting:
         vl.updateExtents()
 
         QgsMapLayerRegistry.instance().addMapLayer(vl)
+
+        plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
+        [status, msg] = self.wps.execute( 'get_metrics', plugin_arg )
+        self.wps.check_execute_response( [status, msg] )
+        
+        xml = ET.XML( msg )
+        metrics = xml[2][0][2][0][0]
+        txt = ''
+        for metric in metrics:
+            line = "%s = %s\n" % ( metric.attrib['name'], metric.attrib['value'] )
+            txt += line
+
+        self.dlg.ui.resultText.setText( txt )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
 
     def unload(self):
         # Remove the plugin menu item and icon

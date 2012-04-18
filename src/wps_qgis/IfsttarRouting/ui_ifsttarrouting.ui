@@ -38,7 +38,7 @@
       <x>9</x>
       <y>9</y>
       <width>372</width>
-      <height>241</height>
+      <height>276</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -48,7 +48,7 @@
      </sizepolicy>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -309,6 +309,16 @@
          <string>Compute</string>
         </property>
        </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tab_3">
+     <attribute name="title">
+      <string>Result</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QTextBrowser" name="resultText"/>
       </item>
      </layout>
     </widget>
