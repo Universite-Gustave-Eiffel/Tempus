@@ -8,7 +8,6 @@ using namespace std;
 namespace WPS
 {
     std::map<std::string, Service*>* Service::services_ = 0;
-    Tempus::Plugin* Service::plugin_ = 0;
     
     void Service::parse_xml_parameters( ParameterMap& input_parameter_map )
     {

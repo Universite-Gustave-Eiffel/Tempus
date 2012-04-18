@@ -9,9 +9,44 @@ using namespace std;
 
 using Tempus::Roadmap;
 using Tempus::Application;
+using Tempus::Plugin;
 
 namespace WPS
 {
+    StateService::StateService() : Service("state")
+    {
+	add_output_parameter( "state",
+			      "<xs:element name=\"state\" type=\"xs:int\"/>\n" );
+	add_output_parameter( "db_options",
+			      "<xs:element name=\"db_options\" type=\"xs:string\"/>\n" );
+    }
+    Service::ParameterMap& StateService::execute( Service::ParameterMap& input_parameter_map )
+    {
+	output_parameters_.clear();
+	
+	int state = Application::instance()->state();
+
+	xmlNode* root_node = xmlNewNode( NULL, (const xmlChar*)"state" );
+	xmlAddChild( root_node, xmlNewText( (const xmlChar*)( boost::lexical_cast<std::string>( state ).c_str() ) ) );
+	output_parameters_["state"] = root_node;
+
+	xmlNode* options_node = xmlNewNode( NULL, (const xmlChar*)"db_options" );
+	xmlAddChild( options_node, xmlNewText( (const xmlChar*)Application::instance()->db_options().c_str() ) );
+	output_parameters_["db_options"] = options_node;
+
+	return output_parameters_;
+    }
+
+    void ensure_minimum_state( int state )
+    {
+	int a_state = Application::instance()->state();
+	if ( a_state < state )
+	{
+	    std::string state_str = boost::lexical_cast<std::string>(a_state);
+	    throw std::invalid_argument( "Invalid application state: " + state_str );
+	}
+    }
+
     ConnectService::ConnectService() : Service("connect")
     {
 	add_input_parameter( "db_options",
@@ -29,7 +64,8 @@ namespace WPS
 
 	Application::instance()->connect( db_options );
 	output_parameters_.clear();
-	return output_parameters_;	
+	Application::instance()->state( Application::Connected );
+	return output_parameters_;
     }
 
     PreBuildService::PreBuildService() : Service("pre_build")
@@ -40,8 +76,10 @@ namespace WPS
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
 
+	ensure_minimum_state( Application::Connected );
 	Application::instance()->pre_build_graph();
 	output_parameters_.clear();
+	Application::instance()->state( Application::GraphPreBuilt );
 	return output_parameters_;
     }
 
@@ -53,57 +91,223 @@ namespace WPS
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
 
+	ensure_minimum_state( Application::GraphPreBuilt );
 	Application::instance()->build_graph();
 	output_parameters_.clear();
+	Application::instance()->state( Application::GraphBuilt );
 	return output_parameters_;
     }
 
-    LoadPluginService::LoadPluginService() : Service("load_plugin")
+    PluginListService::PluginListService() : Service("plugin_list")
     {
-	// define the XML schema of input parameters
-	add_input_parameter( "plugin_name",
-			     "<xs:element name=\"plugin_name\" type=\"xs:string\"/>" );
-	add_output_parameter( "handle",
-			      "<xs:element name=\"handle\" type=\"xs:long\"/>" );
+	add_output_parameter( "plugins",
+			      "<xs:complexType name=\"Plugin\">\n"
+			      "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+			      "</xs:complexType>\n"
+			      "<xs:element name=\"plugins\">\n"
+			      "  <xs:complexType>\n"
+			      "    <xs:sequence>\n"
+			      "      <xs:element name=\"plugin\" type=\"Plugin\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+			      "    </xs:sequence>\n"
+			      "  </xs:complexType>\n"
+			      "</xs:element>\n"
+			      );
+    };
+    Service::ParameterMap& PluginListService::execute( ParameterMap& input_parameter_map )
+    {
+	output_parameters_.clear();
+
+	xmlNode* root_node = xmlNewNode( NULL, (const xmlChar*)"plugins" );
+	Plugin::PluginList::iterator it;
+	for ( it = Plugin::plugin_list().begin(); it != Plugin::plugin_list().end(); it++ )
+	{
+	    xmlNode* node = xmlNewNode( NULL, (const xmlChar*)"plugin" );
+	    xmlNewProp( node,
+			(const xmlChar*)"name",
+			(const xmlChar*)(it->first.c_str()) );
+	    xmlAddChild( root_node, node );
+	}
+	output_parameters_[ "plugins" ] = root_node;
+	return output_parameters_;
+    };
+
+    PluginService::PluginService( const std::string& name ) : Service( name )
+    {
+	add_input_parameter( "plugin",
+			     "<xs:complexType name=\"Plugin\">\n"
+			     "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+			     "</xs:complexType>\n"
+			     "<xs:element name=\"plugin\" type=\"Plugin\"/>\n" );
     }
-    Service::ParameterMap& LoadPluginService::execute( Service::ParameterMap& input_parameter_map )
+    Plugin* PluginService::get_plugin( ParameterMap& input_parameters )
     {
-	// Ensure XML is OK
+	xmlNode* plugin_node = input_parameters["plugin"];
+	std::string plugin_str = (const char*)( xmlGetProp( plugin_node, (const xmlChar*)"name" ) );
+	Plugin::PluginList::iterator it = Plugin::plugin_list().find( plugin_str );
+	if ( it == Plugin::plugin_list().end() )
+	    throw std::invalid_argument( "Plugin " + plugin_str + " is not loaded" );
+	return it->second;
+    }
+
+    GetOptionsDescService::GetOptionsDescService() : PluginService("get_option_descriptions")
+    {
+	add_output_parameter( "options",
+			      "<xs:complexType name=\"Option\">\n"
+			      "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+			      "  <xs:attribute name=\"type\" type=\"xs:int\"/>\n"
+			      "  <xs:attribute name=\"description\" type=\"xs:string\"/>\n"
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"Options\">\n"
+			      "  <xs:sequence>\n"
+			      "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+			      "  </xs:sequence>\n"
+			      "</xs:complexType>\n"
+			      "<xs:element name=\"options\" type=\"Options\"/>\n" );
+    }
+    Service::ParameterMap& GetOptionsDescService::execute( ParameterMap& input_parameter_map )
+    {
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	Plugin* plugin = get_plugin( input_parameter_map );
 	
-	// now extract actual data
-	xmlNode* request_node = input_parameter_map["plugin_name"];
-	std::string name = (const char*)request_node->children->content;
-	Tempus::Plugin* plugin = Application::instance()->load_plugin( name );
+	xmlNode * options_node = xmlNewNode( NULL, (const xmlChar*)"options" );
+	Plugin::OptionDescriptionList options = plugin->option_descriptions();
+	Plugin::OptionDescriptionList::iterator it;
+	for ( it = options.begin(); it != options.end(); it++ )
+	{
+	    xmlNode* option_node = xmlNewNode( NULL, (const xmlChar*)"option" );
+	    xmlNewProp( option_node,
+			(const xmlChar*)"name",
+			(const xmlChar*)( it->first.c_str() ) );
+	    xmlNewProp( option_node,
+			(const xmlChar*)"type",
+			(const xmlChar*)( boost::lexical_cast<std::string>( it->second.type ).c_str() ) );
+	    xmlNewProp( option_node,
+			(const xmlChar*)"description",
+			(const xmlChar*)( it->second.description.c_str() ) );
+	    xmlAddChild( options_node, option_node );
+	}
 
 	output_parameters_.clear();
-	xmlNode* result_node = xmlNewNode( NULL, (const xmlChar*)"handle" );
-	xmlAddChild( result_node, xmlNewText((const xmlChar*)((boost::lexical_cast<std::string>(long(plugin))).c_str())) );
-	output_parameters_["handle"] = result_node;
+	output_parameters_[ "options" ] = options_node;
 	return output_parameters_;
     }
 
-    UnloadPluginService::UnloadPluginService() : Service("unload_plugin")
+    GetMetricsService::GetMetricsService() : PluginService("get_metrics")
     {
-	// define the XML schema of input parameters
-	add_input_parameter( "handle",
-			     "<xs:element name=\"handle\" type=\"xs:long\"/>" );
+	add_output_parameter( "metrics",
+			      "<xs:complexType name=\"Metric\">\n"
+			      "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+			      "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"Metrics\">\n"
+			      "  <xs:sequence>\n"
+			      "    <xs:element name=\"metric\" type=\"Metric\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+			      "  </xs:sequence>\n"
+			      "</xs:complexType>\n"
+			      "<xs:element name=\"metrics\" type=\"Metrics\"/>\n" );
     }
-    Service::ParameterMap& UnloadPluginService::execute( Service::ParameterMap& input_parameter_map )
+    Service::ParameterMap& GetMetricsService::execute( ParameterMap& input_parameter_map )
     {
-	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	Plugin* plugin = get_plugin( input_parameter_map );
 	
-	// now extract actual data
-	xmlNode* request_node = input_parameter_map["handle"];
-	long ptr = boost::lexical_cast<long>( (const char*)(request_node->children->content) );
+	xmlNode * metrics_node = xmlNewNode( NULL, (const xmlChar*)"metrics" );
+	Plugin::MetricValueList metrics = plugin->metrics();
+	Plugin::MetricValueList::iterator it;
+	for ( it = metrics.begin(); it != metrics.end(); it++ )
+	{
+	    xmlNode* metric_node = xmlNewNode( NULL, (const xmlChar*)"metric" );
+	    xmlNewProp( metric_node,
+			(const xmlChar*)"name",
+			(const xmlChar*)( it->first.c_str() ) );
+	    xmlNewProp( metric_node,
+			(const xmlChar*)"value",
+			(const xmlChar*)( plugin->metric_to_string( it->first ).c_str() ) );
 
-	Application::instance()->unload_plugin( (Tempus::Plugin*)ptr );
+	    xmlAddChild( metrics_node, metric_node );
+	}
+
+	output_parameters_.clear();
+	output_parameters_[ "metrics" ] = metrics_node;
+	return output_parameters_;
+    }
+
+    GetOptionsService::GetOptionsService() : PluginService("get_options")
+    {
+	add_output_parameter( "options",
+			      "<xs:complexType name=\"Option\">\n"
+			      "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+			      "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"Options\">\n"
+			      "  <xs:sequence>\n"
+			      "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+			      "  </xs:sequence>\n"
+			      "</xs:complexType>\n"
+			      "<xs:element name=\"options\" type=\"Options\"/>\n" );
+    }
+    Service::ParameterMap& GetOptionsService::execute( ParameterMap& input_parameter_map )
+    {
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	Plugin* plugin = get_plugin( input_parameter_map );
+	
+	xmlNode * options_node = xmlNewNode( NULL, (const xmlChar*)"options" );
+	Plugin::OptionValueList options = plugin->options();
+	Plugin::OptionValueList::iterator it;
+	for ( it = options.begin(); it != options.end(); it++ )
+	{
+	    xmlNode* option_node = xmlNewNode( NULL, (const xmlChar*)"option" );
+	    xmlNewProp( option_node,
+			(const xmlChar*)"name",
+			(const xmlChar*)( it->first.c_str() ) );
+	    xmlNewProp( option_node,
+			(const xmlChar*)"value",
+			(const xmlChar*)( plugin->option_to_string( it->first ).c_str() ) );
+
+	    xmlAddChild( options_node, option_node );
+	}
+
+	output_parameters_.clear();
+	output_parameters_[ "options" ] = options_node;
+	return output_parameters_;
+    }
+
+    SetOptionsService::SetOptionsService() : PluginService("set_options")
+    {
+	add_input_parameter( "options",
+			      "<xs:complexType name=\"Option\">\n"
+			      "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+			      "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
+			      "</xs:complexType>\n"
+			      "<xs:complexType name=\"Options\">\n"
+			      "  <xs:sequence>\n"
+			      "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+			      "  </xs:sequence>\n"
+			      "</xs:complexType>\n"
+			     "<xs:element name=\"options\" type=\"Options\"/>\n" );
+    }
+
+    Service::ParameterMap& SetOptionsService::execute( ParameterMap& input_parameter_map )
+    {
+	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	Plugin* plugin = get_plugin( input_parameter_map );
+	
+	xmlNode *options_node = input_parameter_map[ "options" ];
+	xmlNode *option_node = options_node->children;
+
+	while ( option_node = XML::get_next_nontext( option_node ) )
+	{
+	    string name = (const char*)xmlGetProp( option_node, (const xmlChar*)"name" );
+	    string value = (const char*)xmlGetProp( option_node, (const xmlChar*)"value" );
+	    plugin->set_option_from_string( name, value );
+	    option_node = option_node->next;
+	}
 
 	output_parameters_.clear();
 	return output_parameters_;
     }
-    PreProcessService::PreProcessService() : Service("pre_process"), Tempus::Request()
+    
+    PreProcessService::PreProcessService() : PluginService("pre_process"), Tempus::Request()
     {
 	// define the XML schema of input parameters
 	add_input_parameter( "request",
@@ -138,7 +342,7 @@ namespace WPS
 			     "<xs:element name=\"request\" type=\"Request\"/>\n"
 			     );
     }
-    
+
     void get_xml_point( xmlNode* node, double& x, double& y )
     {
 	xmlNode* x_node = XML::get_next_nontext( node->children );
@@ -175,6 +379,9 @@ namespace WPS
     {
 	// Ensure XML is OK
 	Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	ensure_minimum_state( Application::GraphBuilt );
+
+	Plugin* plugin = get_plugin( input_parameter_map );
 	double x,y;
 	Db::Connection& db = Application::instance()->db_connection();
 	
@@ -183,7 +390,7 @@ namespace WPS
 	cout << "request_node " << request_node->name << endl;
 	xmlNode* field = XML::get_next_nontext( request_node->children );
 	
-	Tempus::Road::Graph& road_graph = Application::instance()->get_graph().road;
+	Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 	get_xml_point( field, x, y);
 	Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
 	cout << "origin_id = " << origin_id << endl;
@@ -259,22 +466,24 @@ namespace WPS
 	    field = XML::get_next_nontext( field->next ); 
 	}
 
-	plugin_->pre_process( *this );
+	plugin->pre_process( *this );
 	output_parameters_.clear();
 	return output_parameters_;
     }
 
-    ProcessService::ProcessService() : Service("process")
+    ProcessService::ProcessService() : PluginService("process")
     {
     }
     Service::ParameterMap& ProcessService::execute( ParameterMap& input_parameter_map )
     {
-	plugin_->process();
+	ensure_minimum_state( Application::GraphBuilt );
+	Plugin* plugin = get_plugin( input_parameter_map );
+	plugin->process();
 	output_parameters_.clear();
 	return output_parameters_;
     }
 
-    ResultService::ResultService() : Service( "result" )
+    ResultService::ResultService() : PluginService( "result" )
     {
 	add_output_parameter( "result",
 			      "<xs:complexType name=\"DbId\">\n"
@@ -330,10 +539,12 @@ namespace WPS
 
     Service::ParameterMap& ResultService::execute( ParameterMap& input_parameter_map )
     {
+	ensure_minimum_state( Application::GraphBuilt );
 	output_parameters_.clear();
-	Tempus::Result& result = plugin_->result();
+	Plugin* plugin = get_plugin( input_parameter_map );
+	Tempus::Result& result = plugin->result();
 
-	Tempus::Road::Graph& road_graph = Application::instance()->get_graph().road;
+	Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 	Db::Connection& db = Application::instance()->db_connection();
 
 	Tempus::Roadmap& roadmap = result.back();
@@ -411,9 +622,13 @@ namespace WPS
 	return output_parameters_;
     }
 
+    static StateService state_service_;
+    static GetMetricsService get_metrics_service;
+    static GetOptionsService get_options_service;
+    static GetOptionsDescService get_option_desc_service;
+    static SetOptionsService set_option_service;
     static ConnectService connect_service_;
-    static LoadPluginService load_plugin_service;
-    static UnloadPluginService unload_plugin_service;
+    static PluginListService plugin_list_service;
     static PreBuildService pre_build_service_;
     static BuildService build_service_;
     static PreProcessService pre_process_service_;

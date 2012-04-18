@@ -3,15 +3,15 @@
 
 #include "wps_service.hh"
 #include "wps_request.hh"
-#include "plugin.hh"
+#include "application.hh"
 
 using namespace std;
 
 int main()
 {
-    Tempus::Plugin* plugin = Tempus::Plugin::load( "sample_road_plugin" );
-    //    Tempus::Plugin* plugin = Tempus::Plugin::load( "dummy_plugin" );
-    WPS::Service::set_plugin( plugin );
+    Tempus::Application* app = Tempus::Application::instance();
+    app->load_plugin( "sample_road_plugin" );
+    app->load_plugin( "dummy_plugin" );
 
     FCGX_Request request;
 

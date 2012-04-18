@@ -41,7 +41,7 @@ namespace WPS {
 	outs_ << "<ows:ExceptionReport xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd\" version=\"1.0.0\" xml:lang=\"en-US\">" << endl;
 	outs_ << "<ows:Exception exceptionCode=\"" + type + "\"><ows:ExceptionText>" + escaped_msg + "</ows:ExceptionText></ows:Exception>" << endl;
 	outs_ << "</ows:ExceptionReport>" << endl;
-	return -1;
+	return 400;
     }
 
     int Request::process()

@@ -15,6 +15,13 @@
 
 namespace WPS
 {
+    class StateService : public Service
+    {
+    public:
+	StateService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
     class ConnectService : public Service
     {
     public:
@@ -36,21 +43,60 @@ namespace WPS
 	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class LoadPluginService : public Service
+    class PluginListService : public Service
     {
     public:
-	LoadPluginService();
+	PluginListService();
 	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class UnloadPluginService : public Service
+    ///
+    /// Base class used for services of a plugin.
+    /// Input parameter: a plugin identifier
+    class PluginService : public Service
     {
     public:
-	UnloadPluginService();
+	PluginService( const std::string& name );
+	Tempus::Plugin* get_plugin( ParameterMap& input_parameters );
+    };
+
+    class GetOptionsDescService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	GetOptionsDescService();
 	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class PreProcessService : public Service, public Tempus::Request
+    class GetOptionsService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	GetOptionsService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class SetOptionsService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	SetOptionsService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class GetMetricsService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	GetMetricsService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class PreProcessService : public PluginService, public Tempus::Request
     {
     public:
 	///
@@ -59,7 +105,7 @@ namespace WPS
 	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class ProcessService : public Service
+    class ProcessService : public PluginService
     {
     public:
 	///
@@ -68,7 +114,7 @@ namespace WPS
 	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class ResultService : public Service
+    class ResultService : public PluginService
     {
     public:
 	///
