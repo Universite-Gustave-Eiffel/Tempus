@@ -24,150 +24,14 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
+import re
+from wps_client import *
+
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
 from ifsttarroutingdock import IfsttarRoutingDock
 
-import re
-import httplib
-import urllib
-from xml.etree import ElementTree as ET
-
-# Compact representation of XML by means of Python expressions
-#
-# A Node is either
-# * a string representing a text node
-# * or a list representing a node with :
-#   * its name as first arg
-#   * a dictionary of attributes as optional second arg
-#   * children Nodes as following arguments (possibly empty)
-#
-# Example :
-# [ 'a' { 'href' : "http://www.example.org" } [ 'ul' [ 'li', "item0" ], ['li', 'item1'] ] ]
-# is equivalent to :
-# <a href="http://www.example.org>
-#   <ul>
-#     <li>item0</li>
-#     <li>item1</li>
-#   </ul>
-# </a>
-
-# to_xml_indent : function that is called recursively to print out a python 'Tree'
-# indent_size : recursive argument
-# returns a [ string, boolean ] where the boolean indicates whether the string is a text node or not
-def to_xml_indent( expr, indent_size ):
-    if isinstance( expr, list ):
-        name = expr[0]
-        
-        # attributes
-        if len(expr) == 1:
-            attrs = {}
-            children = []
-        elif isinstance( expr[1], dict ):
-            attrs = expr[1]
-            children = expr[2:]
-        else:
-            attrs = {}
-            children = expr[1:]
-
-        o_str = name
-        for k,v in attrs.items():
-            # FIXME : must escape here
-            o_str += " %s=\"%s\"" % (k,v)
-
-        if children == []:
-            return [' ' * indent_size + '<' + o_str + "/>\n", False]
-
-        children_str = ''
-        is_text = False
-        if len(children) == 1:
-            [children_str, is_text] = to_xml_indent( children[0], indent_size + 2)
-        else:
-            for child in children:
-                [child_str, ignored] = to_xml_indent( child, indent_size + 2 )
-                children_str += child_str
-        if is_text:
-            return [' ' * indent_size + "<" + o_str +">" + children_str + "</" + name + ">\n", False]
-        return [' ' * indent_size + "<" + o_str +">\n" + children_str + ' ' * indent_size + "</" + name + ">\n", False]
-    else:
-        # FIXME : must escape
-        return [str(expr), True]
-
-def to_xml( expr ):
-    return to_xml_indent( expr, 0)[0]
-    
-
-
-class HttpCgiConnection:
-    def __init__( self, host, url ):
-        self.conn = httplib.HTTPConnection( host )
-        self.host = host
-        self.url = url
-
-    def request( self, method, content ):
-        headers = {"Content-type" : "text/xml" }
-
-        headers = {}
-        url = self.url
-        if method == "GET":
-            url = self.url + "?" + content
-        elif method == "POST":
-            headers = {'Content-type' : 'text/xml' }
-        else:
-            raise "Unknown method " + method
-
-        self.conn.request( method, url, content, headers )
-        r1 = self.conn.getresponse()
-        return [r1.status, r1.read()]
-        
-class WPSClient:
-
-    def __init__ ( self, connection ):
-        self.conn = connection
-
-    def get_capabilities( self ):
-        return self.conn.request( 'GET', 'service=wps&version=1.0.0&request=GetCapabilities' )
-
-    def describe_process( self, identifier ):
-        return self.conn.request( 'GET', 'service=wps&version=1.0.0&request=DescribeProcess&identifier=' + identifier )
-
-    #
-    # inputs : dictionary of argument_name -> [ is_complex ?, xml value ]
-    def execute( self, identifier, inputs ):
-        r = []
-        for arg, v in inputs.items():
-            is_complex = v[0]
-            xml_value = v[1]
-            if is_complex:
-                data = [ 'ComplexData', {'mimeType' : 'text/xml', 'encoding' : 'UTF-8'}, xml_value ]
-            else:
-                data = [ 'LiteralData', xml_value ]
-
-            r.append( [ 'Input',
-                        [ 'Identifier', arg ],
-                        [ 'Data', data ]] )
-
-#        if r == []:
-#            r = ""
-        print r
-        body = [ 'wps:Execute', {'xmlns:wps':"http://www.opengis.net/wps/1.0.0", 'xmlns:ows':"http://www.opengis.net/ows/1.1", 'service':'WPS', 'version':'1.0.0'},
-                 [ 'ows:Identifier', identifier ],
-                 [ 'DataInputs' ] + r,
-                 [ 'ResponseForm', 
-                   [ 'RawDataOutput' ]]]
-
-        x = to_xml( body )
-        print "Sent to WPS: ", x
-        return self.conn.request( 'POST', x )
-
-    # argument : [status, msg]
-    def check_execute_response( self, arg ):
-        [status, msg] = arg
-        if status != 200:
-            QMessageBox.warning( None, "Error", msg )
-            raise RuntimeError(self, "Execute response error" )
-        print "Received: " + msg
 
 def connectProcessingButton( btn, fct ):
     QObject.connect( btn, SIGNAL("clicked()"), lambda fct=fct : onProcessingButton(btn, fct) )
@@ -231,17 +95,18 @@ class IfsttarRouting:
 
     # Get current WPS server state
     def updateState( self ):
-        [status, msg] = self.wps.execute( 'state', {} )
-        self.wps.check_execute_response( [status, msg] )
-        xml = ET.XML( msg )
-        outputs = xml[2]
         self.state = 0
-        for output in outputs:
-            content = output[2][0][0]            
-            if content.tag == 'db_options':
+        try:
+            outputs = self.wps.execute( 'state', {} )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            return
+
+        for name, content in outputs.items():
+            if name == 'db_options':
                 if content.text is not None:
                     self.dlg.ui.dbOptionsText.setText( content.text )
-            elif content.tag == 'state':
+            elif name == 'state':
                 self.state = int( content.text )
                 self.dlg.ui.stateText.setText( content.text )
         # enable query tab only if the database if loaded
@@ -262,12 +127,14 @@ class IfsttarRouting:
         self.updateState()
 
         # get plugin list
-        [status, msg] = self.wps.execute( 'plugin_list', {} )
-        self.wps.check_execute_response( [status, msg] )
-        print msg
-        xml = ET.XML( msg )
-        plugins = xml[2][0][2][0][0]
+        try:
+            outputs = self.wps.execute( 'plugin_list', {} )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            return
+
         self.dlg.ui.pluginCombo.clear()
+        plugins = outputs['plugins']
         for plugin in plugins:
             self.dlg.ui.pluginCombo.insertItem(0, plugin.attrib['name'] )
             
@@ -285,15 +152,20 @@ class IfsttarRouting:
         if tab == 1:
             plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
 
-            [status, msg] = self.wps.execute( 'get_option_descriptions', plugin_arg )
-            self.wps.check_execute_response( [status, msg] )
-            xml = ET.XML( msg )
-            options = xml[2][0][2][0][0]
+            try:
+                outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
+            except RuntimeError as e:
+                QMessageBox.warning( self.dlg, "Error", e.args[1] )
+                return
+            options = outputs['options']
 
-            [status, msg] = self.wps.execute( 'get_options', plugin_arg )
-            self.wps.check_execute_response( [status, msg] )
-            xml2 = ET.XML( msg )
-            options_value = xml2[2][0][2][0][0]
+            try:
+                outputs = self.wps.execute( 'get_options', plugin_arg )
+            except RuntimeError as e:
+                QMessageBox.warning( None, "Error", e.args[1] )
+                return
+            options_value = outputs['options']
+
             option_value = {}
             for option_val in options_value:
                 option_value[ option_val.attrib['name'] ] = option_val.attrib['value']
@@ -365,20 +237,23 @@ class IfsttarRouting:
         args = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ],
                  'options': [ True, ['options', ['option', {'name' : option_name, 'value' : str(val) } ] ] ] }
 
-        [status, msg] = self.wps.execute( 'set_options', args )
-        self.wps.check_execute_response( [status, msg] )
+        try:
+            outputs = self.wps.execute( 'set_options', args )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
 
     # when the 'build' button get clicked
     def onBuildGraphs(self):
         # get the db options
         db_options = str(self.dlg.ui.dbOptionsText.text())
 
-        [status, msg] = self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ]] } )
-        self.wps.check_execute_response( [status, msg] )
-        [status, msg] = self.wps.execute( 'pre_build', {} )
-        self.wps.check_execute_response( [status, msg] )
-        [status, msg] = self.wps.execute( 'build', {} )
-        self.wps.check_execute_response( [status, msg] )
+        try:
+            self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ]] } )
+            self.wps.execute( 'pre_build', {} )
+            self.wps.execute( 'build', {} )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            return
 
         self.updateState()
         
@@ -441,24 +316,22 @@ class IfsttarRouting:
                                     ]
                                    ]
                             ]
-        [status, msg] = self.wps.execute( 'pre_process', args )
-        self.wps.check_execute_response( [status, msg] )
+        try:
+            self.wps.execute( 'pre_process', args )
+            self.wps.execute( 'process', plugin_arg )
+            outputs = self.wps.execute( 'result', plugin_arg )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            return
 
-        [status, msg] = self.wps.execute( 'process', plugin_arg )
-        self.wps.check_execute_response( [status, msg] )
-
-        [status, msg] = self.wps.execute( 'result', plugin_arg )
-        self.wps.check_execute_response( [status, msg] )
-
-        xml_root = ET.XML( msg )
-        overview_path =  xml_root[2][0][2][0][0][-1]
-# create layer
+        overview_path = outputs['result'][-1]
+        # create layer
         vl = QgsVectorLayer("LineString?crs=epsg:2154", "Itinerary", "memory")
         s = QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'})
         vl.rendererV2().setSymbol(s)
         pr = vl.dataProvider()
 
-# add a feature
+        # add a feature
         points = []
         for node in overview_path:
             x = float(node[0].text)
@@ -474,12 +347,15 @@ class IfsttarRouting:
 
         QgsMapLayerRegistry.instance().addMapLayer(vl)
 
+        # get metrics
         plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
-        [status, msg] = self.wps.execute( 'get_metrics', plugin_arg )
-        self.wps.check_execute_response( [status, msg] )
-        
-        xml = ET.XML( msg )
-        metrics = xml[2][0][2][0][0]
+        try:
+            outputs = self.wps.execute( 'get_metrics', plugin_arg )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            return
+        metrics = outputs['metrics']
+
         txt = ''
         for metric in metrics:
             line = "%s = %s\n" % ( metric.attrib['name'], metric.attrib['value'] )

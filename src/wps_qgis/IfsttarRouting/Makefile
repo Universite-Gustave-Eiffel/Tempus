@@ -31,7 +31,7 @@ TRANSLATIONS =
 
 PLUGINNAME = ifsttarrouting
 
-PY_FILES = ifsttarrouting.py ifsttarroutingdock.py __init__.py
+PY_FILES = ifsttarrouting.py ifsttarroutingdock.py __init__.py ../../wps/client/wps_client.py
 
 EXTRAS = icon.png 
 
