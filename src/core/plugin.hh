@@ -159,9 +159,31 @@ namespace Tempus
 	/// Called in order to validate the in-memory structure.
 	virtual void validate();
 	
+	enum AccessType
+	{
+	    InitAccess,
+	    DiscoverAccess,
+	    ExamineAccess,
+	    EdgeRelaxedAccess,
+	    EdgeNotRelaxedAccess,
+	    EdgeMinimizedAccess,
+	    EdgeNotMinimizedAccess,
+	    TreeEdgeAccess,
+	    NonTreeEdgeAccess,
+	    BackEdgeAccess,
+	    ForwardOrCrossEdgeAccess,
+	    StartAccess,
+	    FinishAccess,
+	    GrayTargetAccess,
+	    BlackTargetAccess
+	};
 	///
-	/// TODO: find a way to use a visitor, use overriding with visitor filter event tag
-	virtual void accessor();
+	/// Acessors methods. They can be called on graph traversals.
+	/// A Plugin is made compatible with a boost::visitor by means of a PluginGraphVisitor
+	virtual void road_vertex_accessor( Road::Vertex v, int access_type ) {}
+	virtual void road_edge_accessor( Road::Edge e, int access_type ) {}
+	virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type ) {}
+	virtual void pt_edge_accessor( PublicTransport::Edge e, int access_type ) {}
 
 	///
 	/// Cycle
@@ -217,6 +239,94 @@ namespace Tempus
 
 	MetricValueList metrics_;
     };
+
+    ///
+    /// Class used as a boost::visitor.
+    /// This is a proxy to Plugin::xxx_accessor methods. It may be used as implementation of any kind of boost::graph visitors
+    /// (BFS, DFS, Dijkstra, A*, Bellman-Ford)
+    template <class Graph,
+	      void (Plugin::*VertexAccessorFunction)(typename boost::graph_traits<Graph>::vertex_descriptor, int),
+	      void (Plugin::*EdgeAccessorFunction)(typename boost::graph_traits<Graph>::edge_descriptor, int)
+	      >	      
+    class PluginGraphVisitor
+    {
+    public:
+	PluginGraphVisitor( Plugin* plugin ) : plugin_(plugin) {}
+	typedef typename boost::graph_traits<Graph>::vertex_descriptor VDescriptor;
+	typedef typename boost::graph_traits<Graph>::edge_descriptor EDescriptor;
+	
+	void initialize_vertex( VDescriptor v, const Graph& graph )
+	{
+	    (plugin_->*VertexAccessorFunction)( v, Plugin::InitAccess );
+	}
+	void examine_vertex( VDescriptor v, const Graph& graph )
+	{
+	    (plugin_->*VertexAccessorFunction)( v, Plugin::ExamineAccess );
+	}
+	void discover_vertex( VDescriptor v, const Graph& graph )
+	{
+	    (plugin_->*VertexAccessorFunction)( v, Plugin::DiscoverAccess );
+	}
+	void start_vertex( VDescriptor v, const Graph& graph )
+	{
+	    (plugin_->*VertexAccessorFunction)( v, Plugin::StartAccess );
+	}
+	void finish_vertex( VDescriptor v, const Graph& graph )
+	{
+	    (plugin_->*VertexAccessorFunction)( v, Plugin::FinishAccess );
+	}
+
+	void examine_edge( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::ExamineAccess );
+	}
+	void tree_edge( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::TreeEdgeAccess );
+	}
+	void non_tree_edge( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::NonTreeEdgeAccess );
+	}
+	void back_edge( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::BackEdgeAccess );
+	}
+	void gray_target( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::GrayTargetAccess );
+	}
+	void black_target( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::BlackTargetAccess );
+	}
+	void forward_or_cross_edge( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::ForwardOrCrossEdgeAccess );
+	}
+	void edge_relaxed( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeRelaxedAccess );
+	}
+	void edge_not_relaxed( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeNotRelaxedAccess );
+	}
+	void edge_minimized( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeMinimizedAccess );
+	}
+	void edge_not_minimized( EDescriptor e, const Graph& graph )
+	{
+	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeNotMinimizedAccess );
+	}
+
+    protected:
+	Plugin *plugin_;
+    };
+
+    typedef PluginGraphVisitor< Road::Graph, &Plugin::road_vertex_accessor, &Plugin::road_edge_accessor > PluginRoadGraphVisitor;
+    typedef PluginGraphVisitor< PublicTransport::Graph, &Plugin::pt_vertex_accessor, &Plugin::pt_edge_accessor > PluginPtGraphVisitor;
 }; // Tempus namespace
 
 

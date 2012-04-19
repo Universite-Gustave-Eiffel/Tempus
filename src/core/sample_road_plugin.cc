@@ -69,6 +69,15 @@ namespace Tempus
 	    request_ = request;
 	}
 
+	virtual void road_vertex_accessor( Road::Vertex v, int access_type )
+	{
+	    if ( access_type == Plugin::ExamineAccess )
+	    {
+		// very slow
+		// cout << "Examining vertex " << v << endl;
+	    }
+	}
+
 	virtual void process()
 	{
 	    Road::Vertex origin = request_.origin;
@@ -85,6 +94,7 @@ namespace Tempus
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
 	    boost::const_associative_property_map<CostMap> cost_property_map( length_map_ );
 
+	    Tempus::PluginRoadGraphVisitor vis( this );
 	    boost::dijkstra_shortest_paths( road_graph,
 					    origin,
 					    &pred_map[0],
@@ -95,7 +105,7 @@ namespace Tempus
 					    boost::closed_plus<double>(),
 					    std::numeric_limits<double>::max(),
 					    0.0,
-					    boost::default_dijkstra_visitor()
+					    vis
 					    );
 
 	    gettimeofday( &tv_stop, NULL );

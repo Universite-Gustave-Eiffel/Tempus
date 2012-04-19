@@ -192,13 +192,6 @@ namespace Tempus
 	std::cout << "[plugin_base]: validate" << std::endl;
     }
 
-    ///
-    /// ???
-    void Plugin::accessor()
-    {
-	std::cout << "[plugin_base]: accessor" << std::endl;
-    }
-
     void Plugin::cycle()
     {
 	std::cout << "[plugin_base]: cycle" << std::endl;
