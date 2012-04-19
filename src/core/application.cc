@@ -32,6 +32,14 @@ namespace Tempus
 	importer.import_constants();
 	std::cout << "Importing graph ... " << std::endl;
 	importer.import_graph( graph_, progression );
+
+	// call post_build() and validate() on each registered plugin
+	Plugin::PluginList::iterator it;
+	for ( it = Plugin::plugin_list().begin(); it != Plugin::plugin_list().end(); it++ )
+	{
+	    it->second->post_build();
+	    it->second->validate();
+	}
     }
 
 

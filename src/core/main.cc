@@ -75,8 +75,6 @@ int main( int argc, char* argv[])
 	app->pre_build_graph();
 	cout << endl << ">> build" << endl;
 	app->build_graph();
-	cout << endl << ">> post_build" << endl;
-	plugin->post_build();
 
 	//
 	// Build the user request

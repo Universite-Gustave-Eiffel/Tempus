@@ -11,8 +11,8 @@
 #include <boost/algorithm/string.hpp>
 
 #include "wps_request.hh"
+#include "wps_service.hh"
 #include "xml_helper.hh"
-#include "tempus_services.hh"
 
 using namespace std;
 
