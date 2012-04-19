@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+"""
+WPS client classes.
+Shared by the command line tests and by the QGis plugin
+"""
 import httplib
 import urllib
-import subprocess
-import sys
-import re
+from xml.etree import ElementTree as ET
 
 # Compact representation of XML by means of Python expressions
 #
@@ -67,8 +68,6 @@ def to_xml_indent( expr, indent_size ):
 
 def to_xml( expr ):
     return to_xml_indent( expr, 0)[0]
-    
-
 
 class HttpCgiConnection:
     def __init__( self, host, url ):
@@ -92,35 +91,6 @@ class HttpCgiConnection:
         r1 = self.conn.getresponse()
         return [r1.status, r1.read()]
         
-class SimulatedCgiConnection:
-    def __init__( self, exec_name, simulated_script ):
-        self.exec_name = exec_name
-        self.simulated_script = simulated_script
-        
-    def request( self, method, content ):
-        env = { 'REQUEST_METHOD' : method,
-                'SCRIPT_NAME' : self.simulated_script }
-
-        ret = ''
-        if method == 'POST':
-            env['QUERY_STRING'] = ''
-            env['CONTENT_TYPE'] = 'text/xml'
-            p = subprocess.Popen([self.exec_name], env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            [retout, reterr] = p.communicate( content )
-        elif method == 'GET':
-            env['QUERY_STRING'] = content
-            p = subprocess.Popen([self.exec_name], env=env, stdout=subprocess.PIPE)
-            [retout, reterr] = p.communicate()
-        exitstatus = p.wait()
-        if exitstatus < 0:
-            print "**** Terminated with signal " + str(-exitstatus) + " ****"
-        elif exitstatus == 0:
-            print "Terminated OK"
-        else:
-            print "* Terminated with status " + str(exitstatus) + " *"
-        return [exitstatus, retout]
-        
-
 class WPSClient:
 
     def __init__ ( self, connection ):
@@ -144,67 +114,28 @@ class WPSClient:
             else:
                 data = [ 'LiteralData', xml_value ]
 
-            r += [ 'Input',
-                   [ 'Identifier', arg ],
-                   [ 'Data', data ]
-                   ]
+            r.append( [ 'Input',
+                        [ 'Identifier', arg ],
+                        [ 'Data', data ]] )
 
-        if r == []:
-            r = ""
         body = [ 'wps:Execute', {'xmlns:wps':"http://www.opengis.net/wps/1.0.0", 'xmlns:ows':"http://www.opengis.net/ows/1.1", 'service':'WPS', 'version':'1.0.0'},
                  [ 'ows:Identifier', identifier ],
-                 [ 'DataInputs', r ],
+                 [ 'DataInputs' ] + r,
                  [ 'ResponseForm', 
-                   [ 'RawDataOutput' ]
-                   ]
-                 ]
+                   [ 'RawDataOutput' ]]]
+
         x = to_xml( body )
-        print x
-        return self.conn.request( 'POST', x )
+        #print "Sent to WPS: ", x
+        [status, msg] = self.conn.request( 'POST', x )
+        if status != 200:
+            raise RuntimeError( self, "During execution of '" + identifier + "': " + msg )
 
-if len(sys.argv) < 2:
-    print "Arguments: fcgi_url"
-    sys.exit(1)
-
-g = re.search( 'http://([^/]+)(.*)', sys.argv[1] )
-host = g.group(1)
-path = g.group(2)
-
-client = HttpCgiConnection( host, path )
-#client = SimulatedCgiConnection( "./wps", "/cgi-bin.wps" )
-
-wps = WPSClient(client)
-
-#[status, msg] =  wps.get_capabilities()
-#print r, msg
-
-#[status, msg] = wps.describe_process( "pre_process" )
-#print status, msg
-
-
-[status, msg] = wps.execute( "pre_build", { 'db_options' : [ True, ['db_options', 'dbname=tempus_nantes' ]] } )
-print status, msg
-
-[status, msg] = wps.execute( "build", {} )
-print status, msg
-
-args = { 'request' : [ True, ['request', 
-                              ['origin', ['x',355799.708197],['y',6687678.159290] ],
-                              ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                              ['optimizing_criterion', 1 ], # CostDistance
-                              ['allowed_transport_types', 11 ],
-                              ['step',
-                               [ 'destination', ['x',355925.874573],['y',6687897.019330] ],
-                               [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                               [ 'private_vehicule_at_destination', 'true' ]
-                               ]
-                              ]
-                       ] }
-[status, msg] = wps.execute( "pre_process", args )
-print status, msg
-
-[status, msg] = wps.execute( "process", {} )
-print status, msg
-
-[status, msg] = wps.execute( "result", {} )
-print status, msg
+        xml = ET.XML( msg )
+        outputs = xml[2] # ProcessOutputs
+        outs = {}
+        for output in outputs:
+            identifier = output[0].text
+            data = output[2][0][0]
+            outs[identifier] = data
+        print outs
+        return outs

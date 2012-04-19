@@ -15,54 +15,112 @@
 
 namespace WPS
 {
+    class StateService : public Service
+    {
+    public:
+	StateService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class ConnectService : public Service
+    {
+    public:
+	ConnectService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
     class PreBuildService : public Service
     {
     public:
 	PreBuildService();
-
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
-	virtual ParameterMap& execute();
-    protected:
-	std::string db_options_;
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
     class BuildService : public Service
     {
     public:
 	BuildService();
-
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class PreProcessService : public Service, public Tempus::Request
+    class PluginListService : public Service
+    {
+    public:
+	PluginListService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    ///
+    /// Base class used for services of a plugin.
+    /// Input parameter: a plugin identifier
+    class PluginService : public Service
+    {
+    public:
+	PluginService( const std::string& name );
+	Tempus::Plugin* get_plugin( ParameterMap& input_parameters );
+    };
+
+    class GetOptionsDescService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	GetOptionsDescService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class GetOptionsService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	GetOptionsService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class SetOptionsService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	SetOptionsService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class GetMetricsService : public PluginService
+    {
+    public:
+	///
+	/// Constructor
+	GetMetricsService();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
+    };
+
+    class PreProcessService : public PluginService, public Tempus::Request
     {
     public:
 	///
 	/// Constructor
 	PreProcessService();
-
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class ProcessService : public Service
+    class ProcessService : public PluginService
     {
     public:
 	///
 	/// Constructor
 	ProcessService();
-
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
-    class ResultService : public Service
+    class ResultService : public PluginService
     {
     public:
 	///
 	/// Constructor
 	ResultService();
-
-	virtual ParameterMap& execute();
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map );
     };
 
 }; // WPS namespace

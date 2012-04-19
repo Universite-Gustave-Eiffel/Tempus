@@ -138,8 +138,15 @@ namespace Tempus
 	    Road::Vertex v_to = road_nodes_map[ node_to_id ];
 
 	    Road::Edge e;
-	    bool is_added;
+	    bool is_added, found;
+	    boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+	    if ( found )
+	    {
+		cout << "Edge " << e << " already exists" << endl;
+		continue;
+	    }
 	    boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
+	    BOOST_ASSERT( is_added );
 	    road_graph[e].edge = e;
 	    road_sections_map[ section.db_id ] = e;
 
@@ -224,6 +231,7 @@ namespace Tempus
 	    PublicTransport::Edge e;
 	    bool is_added;
 	    boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );
+	    BOOST_ASSERT( is_added );
 	    pt_graph[e].edge = e;
 
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.75) );

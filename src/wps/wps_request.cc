@@ -41,7 +41,7 @@ namespace WPS {
 	outs_ << "<ows:ExceptionReport xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd\" version=\"1.0.0\" xml:lang=\"en-US\">" << endl;
 	outs_ << "<ows:Exception exceptionCode=\"" + type + "\"><ows:ExceptionText>" + escaped_msg + "</ows:ExceptionText></ows:Exception>" << endl;
 	outs_ << "</ows:ExceptionReport>" << endl;
-	return -1;
+	return 400;
     }
 
     int Request::process()
@@ -269,8 +269,7 @@ namespace WPS {
 	    WPS::Service* service = WPS::Service::get_service( identifier );
 	    try
 	    {
-		service->parse_xml_parameters( input_parameter_map );
-		WPS::Service::ParameterMap& output_parameters = service->execute();
+		WPS::Service::ParameterMap& output_parameters = service->execute( input_parameter_map );
 		
 		outs_ << "Content-type: text/xml" << endl;
 		outs_ << endl;

@@ -16,6 +16,6 @@ endif (WIN32)
 
 add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
 
-include_directories( ${XML_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../core )
-link_directories( ${XML_LIBRARY_DIRS} ${FCGI_LIBRARY_DIRS} ${CMAKE_CURRENt_BUILD_DIR} )
-target_link_libraries( wps ${XML_LIBS} ${FCGI_LIBS} tempus )
+include_directories( ${XML_INCLUDE_DIR} ${PQ_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../core )
+link_directories( ${XML_LIBRARY_DIRS} ${PQ_LIBS_DIR} ${FCGI_LIBRARY_DIRS} ${CMAKE_CURRENt_BUILD_DIR} )
+target_link_libraries( wps ${XML_LIBS} ${PQ_LIBS} ${FCGI_LIBS} tempus )

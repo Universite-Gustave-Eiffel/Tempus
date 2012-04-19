@@ -41,7 +41,7 @@ namespace Tempus
     public:
 	virtual void post_build()
 	{
-	    graph_ = Application::instance()->get_graph();
+	    graph_ = Application::instance()->graph();
 	    Road::EdgeIterator eb, ee;
 	    Road::Graph& road_graph = graph_.road;
 	    for ( boost::tie(eb, ee) = boost::edges( road_graph ); eb != ee; eb++ )
@@ -56,7 +56,7 @@ namespace Tempus
 	    REQUIRE( request.steps.size() == 1 );
 
 	    Road::Vertex origin = request.origin;
-	    Road::Vertex destination = request.get_destination();
+	    Road::Vertex destination = request.destination();
 	    Road::Graph& road_graph = graph_.road;
 	    REQUIRE( vertex_exists( origin, road_graph ) );
 	    REQUIRE( vertex_exists( destination, road_graph ) );
@@ -72,11 +72,14 @@ namespace Tempus
 	virtual void process()
 	{
 	    Road::Vertex origin = request_.origin;
-	    Road::Vertex destination = request_.get_destination();
+	    Road::Vertex destination = request_.destination();
 
 	    Road::Graph& road_graph = graph_.road;
 
 	    cout << "num vertices = " << boost::num_vertices( road_graph ) << std::endl;
+
+	    timeval tv_start, tv_stop;
+	    gettimeofday( &tv_start, NULL );
 
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
@@ -94,6 +97,12 @@ namespace Tempus
 					    0.0,
 					    boost::default_dijkstra_visitor()
 					    );
+
+	    gettimeofday( &tv_stop, NULL );
+	    long long sstart = tv_start.tv_sec * 1000000LL + tv_start.tv_usec;
+	    long long sstop = tv_stop.tv_sec * 1000000LL + tv_stop.tv_usec;
+	    float time_s = (sstop - sstart) / 1000000.0;
+	    metrics_[ "time_s" ] = time_s;
 
 	    // reorder the path, could have been better included ...
 	    std::list<Road::Vertex> path;

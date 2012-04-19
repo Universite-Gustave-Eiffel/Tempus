@@ -34,10 +34,11 @@ namespace WPS
 	
 	///
 	/// Extract input parameters
-	virtual void parse_xml_parameters( ParameterMap& input_parameter_map );
+	void parse_xml_parameters( ParameterMap& input_parameter_map );
 
-	virtual ParameterMap& execute()
+	virtual ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
+	    parse_xml_parameters( input_parameter_map );
 	    // No output by default
 	    output_parameters_.clear();
 	    return output_parameters_;
@@ -63,11 +64,6 @@ namespace WPS
 	    return services_->find( name ) != services_->end();
 	}
 
-	static void set_plugin( Tempus::Plugin* plugin )
-	{
-	    plugin_ = plugin;
-	}
-
 	///
 	/// Global service map interface: returns an XML string that conforms to a 'GetCapabilities' operation
 	static std::ostream& get_xml_capabilities( std::ostream& out );
@@ -76,9 +72,6 @@ namespace WPS
 	///
 	/// A global map of services
 	static std::map<std::string, Service*> *services_;
-	///
-	/// The current Tempus plugin accessed
-	static Tempus::Plugin* plugin_;
 	
 	struct ParameterSchema
 	{

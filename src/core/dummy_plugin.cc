@@ -16,6 +16,10 @@ namespace Tempus
 
 	MyPlugin( Db::Connection& db ) : Plugin( "myplugin", db )
 	{
+	    declare_option( "dummy_option", IntOption, "Dummy option" );
+	    declare_option( "bool_option", BoolOption, "Bool option" );
+	    declare_option( "float_option", FloatOption, "Bool option" );
+	    declare_option( "str_option", StringOption, "String option" );
 	}
 
 	virtual ~MyPlugin()
@@ -37,7 +41,7 @@ namespace Tempus
     public:
 	virtual void post_build()
 	{
-	    graph_ = Application::instance()->get_graph();
+	    graph_ = Application::instance()->graph();
 
 	    // Browse edges and compute their duration and length
 	    // FIXME : not optimal. Would have to find a unique query for all the edges
@@ -108,7 +112,7 @@ namespace Tempus
 		if ( i == 0 )
 		    node = request_.origin;
 		else
-		    node = request_.get_destination();
+		    node = request_.destination();
 		
 		bool found = false;
 		PublicTransport::Vertex found_vertex;

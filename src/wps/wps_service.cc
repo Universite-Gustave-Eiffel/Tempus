@@ -8,7 +8,6 @@ using namespace std;
 namespace WPS
 {
     std::map<std::string, Service*>* Service::services_ = 0;
-    Tempus::Plugin* Service::plugin_ = 0;
     
     void Service::parse_xml_parameters( ParameterMap& input_parameter_map )
     {
@@ -122,7 +121,7 @@ namespace WPS
 	check_parameters( output_parameters_, output_parameter_schema_ );
 
 	string service_instance = getenv( "REQUEST_URI" );
-	out << "<wps:ExecuteResponse xsi:schemaLocation=\"http://www.opengis.net/wps/1.0.0 ../wpsExecute_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" serviceInstance=\"" << service_instance << "\">" << endl;
+	out << "<wps:ExecuteResponse xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" serviceInstance=\"" << service_instance << "\">" << endl;
 	out << "  <wps:Process wps:processVersion=\"1\">" << endl;
 	out << "    <ows:Identifier>" << name_ << "</ows:Identifier>" << endl;
 	out << "    <ows:Title>" << name_ << "</ows:Title>" << endl;

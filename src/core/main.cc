@@ -69,7 +69,7 @@ int main( int argc, char* argv[])
     {
 	Plugin* plugin = app->load_plugin( plugin_name );
 	
-	cout << "[plugin " << plugin->get_name() << "]" << endl;
+	cout << "[plugin " << plugin->name() << "]" << endl;
 	
 	cout << endl << ">> pre_build" << endl;
 	app->pre_build_graph();
@@ -80,7 +80,7 @@ int main( int argc, char* argv[])
 
 	//
 	// Build the user request
-	MultimodalGraph& graph = app->get_graph();
+	MultimodalGraph& graph = app->graph();
 	Road::Graph& road_graph = graph.road;
 
 	Road::VertexIterator vb, ve;
