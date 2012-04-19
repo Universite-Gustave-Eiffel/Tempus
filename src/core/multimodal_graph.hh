@@ -79,30 +79,52 @@ namespace Tempus
 	return false;
     }
 
-    // TODO : toe be generalized a bit more
-    template <class T, T Tempus::Road::Section::*mptr>
-    struct EdgeFieldPropertyAccessor
+    template <class G, class Tag>
+    struct vertex_or_edge
     {
-	EdgeFieldPropertyAccessor( Road::Graph& graph ) : graph_(graph) {}
-	Road::Graph& graph_;
+	typedef void property_type;
+	typedef void descriptor;
+    };
+    template <class G>
+    struct vertex_or_edge<G, boost::vertex_property_tag>
+    {
+	typedef typename boost::vertex_bundle_type<G>::type property_type;
+	typedef typename boost::graph_traits<G>::vertex_descriptor descriptor;
+    };
+    template <class G>
+    struct vertex_or_edge<G, boost::edge_property_tag>
+    {
+	typedef typename boost::edge_bundle_type<G>::type property_type;
+	typedef typename boost::graph_traits<G>::edge_descriptor descriptor;
+    };
+
+    ///
+    /// A FieldPropertyAccessor implementes a Readable Property Map concept and gives read access
+    /// to the member of a vertex or edge
+    /// For instance, FieldPropertyAccessor< Road::Edge, 
+    template <class Graph, class Tag, class T, T vertex_or_edge<Graph, Tag>::property_type::*mptr>
+    struct FieldPropertyAccessor
+    {
+	FieldPropertyAccessor( Graph& graph ) : graph_(graph) {}
+	Graph& graph_;
     };
 };
 
 namespace boost
 {
-    template <class T, T Tempus::Road::Section::*mptr>
-    double get( Tempus::EdgeFieldPropertyAccessor<T, mptr> pmap, Tempus::Road::Edge e )
+    template <class Graph, class Tag, class T, T Tempus::vertex_or_edge<Graph, Tag>::property_type::*mptr>
+    T get( Tempus::FieldPropertyAccessor<Graph, Tag, T, mptr> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
     {
 	return pmap.graph_[e].*mptr;
     }
 
-    template <class T, T Tempus::Road::Section::*mptr>
-    struct property_traits<Tempus::EdgeFieldPropertyAccessor<T, mptr> >
+    template <class Graph, class Tag, class T, T Tempus::vertex_or_edge<Graph, Tag>::property_type::*mptr>
+    struct property_traits<Tempus::FieldPropertyAccessor<Graph, Tag, T, mptr> >
     {
 	typedef T value_type;
 	typedef T& reference;
-	typedef Tempus::Road::Edge key_type;
-	typedef boost::edge_property_tag category;
+	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
+	typedef Tag category;
     };
 };
 

@@ -31,23 +31,12 @@ namespace Tempus
 	virtual ~RoadPlugin()
 	{
 	}
-    protected:
-	///
-	/// A CostMap maps publict transport edges to a double
-	typedef std::map< Road::Edge, double > CostMap;
-
-	// static cost map: length
-	CostMap length_map_;
     public:
 	virtual void post_build()
 	{
 	    graph_ = Application::instance()->graph();
 	    Road::EdgeIterator eb, ee;
 	    Road::Graph& road_graph = graph_.road;
-	    for ( boost::tie(eb, ee) = boost::edges( road_graph ); eb != ee; eb++ )
-	    {
-		length_map_[*eb] = road_graph[*eb].length;
-	    }
 	}
 
 	virtual void pre_process( Request& request ) throw (std::invalid_argument)
@@ -85,21 +74,25 @@ namespace Tempus
 
 	    Road::Graph& road_graph = graph_.road;
 
-	    cout << "num vertices = " << boost::num_vertices( road_graph ) << std::endl;
-
 	    timeval tv_start, tv_stop;
 	    gettimeofday( &tv_start, NULL );
 
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
-	    boost::const_associative_property_map<CostMap> cost_property_map( length_map_ );
+	    ///
+	    /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
+	    /// which is the edge property of a Road::Graph
+	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, &Road::Section::length> length_map( road_graph );
 
+	    ///
+	    /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
 	    Tempus::PluginRoadGraphVisitor vis( this );
+
 	    boost::dijkstra_shortest_paths( road_graph,
 					    origin,
 					    &pred_map[0],
 					    &distance_map[0],
-					    cost_property_map,
+					    length_map,
 					    boost::get( boost::vertex_index, road_graph ),
 					    std::less<double>(),
 					    boost::closed_plus<double>(),
@@ -117,10 +110,21 @@ namespace Tempus
 	    // reorder the path, could have been better included ...
 	    std::list<Road::Vertex> path;
 	    Road::Vertex current = destination;
+	    bool found = true;
 	    while ( current != origin )
 	    {
 		path.push_front( current );
+		if ( pred_map[current] == current )
+		{
+		    found = false;
+		    break;
+		}
 		current = pred_map[ current ];
+	    }
+	    if ( !found )
+	    {
+		cerr << "No path found !" << endl;
+		return;
 	    }
 	    path.push_front( origin );
 
