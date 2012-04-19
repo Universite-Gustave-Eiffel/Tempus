@@ -69,6 +69,20 @@ def to_xml_indent( expr, indent_size ):
 def to_xml( expr ):
     return to_xml_indent( expr, 0)[0]
 
+# returns [ bool, exception_code ]
+def get_wps_exception( str ):
+    try:
+        xml = ET.XML( str )
+    except:
+        return [False, '']
+
+    try :
+        exception = xml[0]
+        code = exception.attrib['exceptionCode']
+    except:
+        return [False, '']
+    return [True, code]
+
 class HttpCgiConnection:
     def __init__( self, host, url ):
         self.conn = httplib.HTTPConnection( host )
@@ -85,7 +99,7 @@ class HttpCgiConnection:
         elif method == "POST":
             headers = {'Content-type' : 'text/xml' }
         else:
-            raise "Unknown method " + method
+            raise RuntimeError("Unknown method " + method)
 
         self.conn.request( method, url, content, headers )
         r1 = self.conn.getresponse()
@@ -128,7 +142,7 @@ class WPSClient:
         #print "Sent to WPS: ", x
         [status, msg] = self.conn.request( 'POST', x )
         if status != 200:
-            raise RuntimeError( self, "During execution of '" + identifier + "': " + msg )
+            raise RuntimeError( self, msg )
 
         xml = ET.XML( msg )
         outputs = xml[2] # ProcessOutputs

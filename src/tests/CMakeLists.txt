@@ -9,5 +9,5 @@ endif (WIN32)
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../core ${PQ_INCLUDE_DIR} )
 link_directories( ${CMAKE_CURRENT_BUILD_DIR} )
 
-add_executable( tests tests.cc main.cc )
-target_link_libraries( tests ${CPPUNIT_LIBS} ${PQ_LIBS} tempus )
+add_executable( test_core tests.cc main.cc )
+target_link_libraries( test_core ${CPPUNIT_LIBS} ${PQ_LIBS} tempus )

@@ -98,6 +98,8 @@ namespace WPS {
 	    {
 		char c;
 		ins_.get(c);
+		if (ins_.eof())
+		    break;
 		doc.push_back(c);
 	    }
 	    cerr << doc << endl;
@@ -105,7 +107,7 @@ namespace WPS {
 	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), "query.xml", NULL, 0 );
 	    if ( xml_doc.get() == NULL )
 	    {
-		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Malformed XML request" );
+		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Malformed XML request: " + string(xmlGetLastError()->message) );
 	    }
 
 	    xmlNodePtr root = xmlDocGetRootElement( xml_doc.get() );
