@@ -11,6 +11,8 @@
 #include <cppunit/TestFixture.h>
 
 #include "db.hh"
+#include "pgsql_importer.hh"
+#include "multimodal_graph.hh"
 
 class DbTest : public CppUnit::TestFixture  {
 
@@ -31,7 +33,6 @@ class PgImporterTest : public CppUnit::TestFixture  {
 
     CPPUNIT_TEST_SUITE( PgImporterTest );
     CPPUNIT_TEST( testConsistency );
-    CPPUNIT_TEST( testRobustness );
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -39,7 +40,8 @@ public:
     void tearDown();
 
     void testConsistency();
-    void testRobustness();
 protected:
-    Db::Connection* connection_;
+    Tempus::PQImporter *  importer_;
+
+    Tempus::MultimodalGraph graph_;
 };

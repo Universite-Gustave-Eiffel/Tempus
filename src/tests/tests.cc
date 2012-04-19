@@ -4,9 +4,10 @@
 #include "tests.hh"
 
 using namespace std;
+using namespace Tempus;
 
 #define DB_COMMON_OPTIONS ""
-#define DB_TEST_NAME "test_db"
+#define DB_TEST_NAME "tempus_test_db"
 
 void DbTest::testConnection()
 {
@@ -84,17 +85,52 @@ void DbTest::testQueries()
 
 void PgImporterTest::setUp()
 {
+    string db_options = DB_COMMON_OPTIONS;
+    importer_ = new PQImporter( db_options + " dbname = " DB_TEST_NAME );
 }
 
 void PgImporterTest::tearDown() 
 {
+    delete importer_;
 }
 
 void PgImporterTest::testConsistency()
 {
+    importer_->import_constants();
+    importer_->import_graph( graph_ );
+
+    // get the number of vertices in the graph
+    Db::Result res = importer_->query( "SELECT COUNT(*) FROM tempus.road_node" );
+    CPPUNIT_ASSERT( res.size() == 1 );
+    long n_road_vertices = res[0][0].as<long>();
+    res = importer_->query( "SELECT COUNT(*) FROM tempus.road_section" );
+    CPPUNIT_ASSERT( res.size() == 1 );
+    long n_road_edges = res[0][0].as<long>();
+    CPPUNIT_ASSERT( n_road_vertices = boost::num_vertices( graph_.road ) );
+    CPPUNIT_ASSERT( n_road_edges = boost::num_edges( graph_.road ) );
+    
+    // number of PT networks
+    res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_network" );
+    long n_networks = res[0][0].as<long>();
+    CPPUNIT_ASSERT( n_networks == graph_.public_transports.size() );
+    CPPUNIT_ASSERT( n_networks == graph_.network_map.size() );
+
+    MultimodalGraph::PublicTransportGraphList::iterator it;
+    for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )
+    {
+	db_id_t id = it->first;
+	PublicTransport::Graph& pt_graph = it->second;
+	cout << "Network ID " << id << endl;
+
+	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_stop" );
+	CPPUNIT_ASSERT( res.size() == 1 );
+	long n_pt_vertices = res[0][0].as<long>();
+	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_section" );
+	CPPUNIT_ASSERT( res.size() == 1 );
+	long n_pt_edges = res[0][0].as<long>();
+	CPPUNIT_ASSERT( n_pt_vertices = boost::num_vertices( pt_graph ) );
+	CPPUNIT_ASSERT( n_pt_edges = boost::num_edges( pt_graph ) );
+    }
 }
 
-void PgImporterTest::testRobustness()
-{
-}
 
