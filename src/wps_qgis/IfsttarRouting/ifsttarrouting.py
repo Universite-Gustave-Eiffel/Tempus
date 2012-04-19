@@ -32,16 +32,6 @@ import resources_rc
 # Import the code for the dialog
 from ifsttarroutingdock import IfsttarRoutingDock
 
-
-def connectProcessingButton( btn, fct ):
-    QObject.connect( btn, SIGNAL("clicked()"), lambda fct=fct : onProcessingButton(btn, fct) )
-
-# Generic processing button: first disable the button, do the processing, then enable back the button
-def onProcessingButton( btn, fct ):
-    btn.setEnabled(False)
-    fct()
-    btn.setEnabled(True)
-
 class IfsttarRouting:
 
     def __init__(self, iface):
@@ -80,7 +70,7 @@ class IfsttarRouting:
         QObject.connect(self.dlg.ui.destinationSelectBtn, SIGNAL("clicked()"), self.onDestinationSelect)
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
-        connectProcessingButton( self.dlg.ui.buildBtn, self.onBuildGraphs )
+        QObject.connect(self.dlg.ui.buildBtn, SIGNAL("clicked()"), self.onBuildGraphs)
 
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
@@ -244,6 +234,7 @@ class IfsttarRouting:
 
     # when the 'build' button get clicked
     def onBuildGraphs(self):
+        self.dlg.ui.buildBtn.setEnabled( False )
         # get the db options
         db_options = str(self.dlg.ui.dbOptionsText.text())
 
@@ -256,6 +247,7 @@ class IfsttarRouting:
             return
 
         self.updateState()
+        self.dlg.ui.buildBtn.setEnabled( True )
         
     def onSelectionChanged(self, point, button):
         geom = QgsGeometry.fromPoint(point)
