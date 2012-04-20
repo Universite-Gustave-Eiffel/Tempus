@@ -151,5 +151,4 @@ class WPSClient:
             identifier = output[0].text
             data = output[2][0][0]
             outs[identifier] = data
-        print outs
         return outs

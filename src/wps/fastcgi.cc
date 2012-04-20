@@ -11,7 +11,7 @@ int main()
 {
     Tempus::Application* app = Tempus::Application::instance();
     app->load_plugin( "sample_road_plugin" );
-    app->load_plugin( "dummy_plugin" );
+    app->load_plugin( "sample_pt_plugin" );
 
     FCGX_Request request;
 

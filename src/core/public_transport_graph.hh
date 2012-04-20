@@ -75,12 +75,17 @@ namespace Tempus
 
 	///
 	/// used as an Edge in a PublicTransportGraph
-	struct Section : public Base
+	struct Section
 	{
 	    /// This is a shortcut to the edge index in the corresponding graph, if any.
 	    /// Needed to speedup access to a graph's edge from a Section
 	    /// Can be null
 	    Edge edge;
+
+	    // A Section has no proper id, but a stop_from and a stop_to
+	    db_id_t stop_from;
+	    db_id_t stop_to;
+
 	    /// must not be null
 	    db_id_t network_id;
 	};

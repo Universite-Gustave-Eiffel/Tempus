@@ -16,8 +16,8 @@ namespace Tempus
 	graph_(Application::instance()->graph())
     {
 	// default metrics
-	metrics_[ "time_s" ] = 0.0;
-	metrics_[ "iterations" ] = 0;
+	metrics_[ "time_s" ] = (float)0.0;
+	metrics_[ "iterations" ] = (int)0;
     }
 
     void Plugin::declare_option( const std::string& name, OptionType type, const std::string& description )

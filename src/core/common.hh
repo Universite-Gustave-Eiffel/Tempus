@@ -88,6 +88,13 @@ namespace Tempus
     };
 
     ///
+    /// 2D Points
+    struct Point2D
+    {
+	double x,y;
+    };
+
+    ///
     /// Road types constants.
     typedef std::map<db_id_t, RoadType> RoadTypes;
 

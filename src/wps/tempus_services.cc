@@ -361,23 +361,14 @@ namespace WPS
     Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
     {
 	string q = (boost::format( "SELECT id FROM tempus.road_node WHERE ST_DWithin( geom, "
-				   "ST_SetSRID(ST_Point(%1%, %2%), 2154), 30)" ) % x % y).str();
+				   "ST_SetSRID(ST_Point(%1%, %2%), 2154), 30) ORDER BY "
+				   "ST_Distance(geom, ST_SetSRID(ST_Point(%1%, %2%), 2154))") % x % y).str();
 	Db::Result res = db.exec( q );
 	if ( res.size() == 0 )
 	    return 0;
 	return res[0][0].as<Tempus::db_id_t>();
     }
-    
-    void coordinates_from_road_vertex_id( Db::Connection& db, Tempus::db_id_t id, double& x, double& y )
-    {
-	string q = (boost::format( "SELECT x(geom), y(geom) FROM tempus.road_node WHERE id=%1%" ) % id).str();
-	cout << q << endl;
-	Db::Result res = db.exec( q );
-	BOOST_ASSERT( res.size() > 0 );
-	x = res[0][0].as<Tempus::db_id_t>();
-	y = res[0][1].as<Tempus::db_id_t>();
-    }
-    
+        
     class PreProcessService : public PluginService, public Tempus::Request
     {
     public:
@@ -564,6 +555,7 @@ namespace WPS
 				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"PublicTransportStep\">\n"
 				  "  <xs:sequence>\n"
+				  "    <xs:element name=\"network_id\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"departure_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"arrival_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"trip\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
@@ -581,7 +573,7 @@ namespace WPS
 				  "      <xs:element name=\"overview_path\" minOccurs=\"0\" maxOccurs=\"1\">\n" // 0..1
 				  "        <xs:complexType>\n"
 				  "          <xs:sequence>\n"
-				  "            <xs:element name=\"node\" type=\"Point\" maxOccurs=\"unbounded\"/>\n"
+				  "            <xs:element name=\"node\" type=\"Point\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
 				  "          </xs:sequence>\n"
 				  "        </xs:complexType>\n"
 				  "      </xs:element>\n"
@@ -598,23 +590,27 @@ namespace WPS
 	    Plugin* plugin = get_plugin( input_parameter_map );
 	    Tempus::Result& result = plugin->result();
 	    
-	    Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
+	    MultimodalGraph& graph_ = Application::instance()->graph();
+	    Tempus::Road::Graph& road_graph = graph_.road;
 	    Db::Connection& db = Application::instance()->db_connection();
 	    
-	    Tempus::Roadmap& roadmap = result.back();
 	    xmlNode* root_node = xmlNewNode( /*ns=*/ NULL, (const xmlChar*)"result" );
+	    if ( result.size() == 0 )
+	    {
+		output_parameters_["result"] = root_node;
+		return output_parameters_;
+	    }
+	    Tempus::Roadmap& roadmap = result.back();
 	    xmlNode* overview_path_node = xmlNewNode( /* ns = */ NULL,
 						      (const xmlChar*)"overview_path" );
-	    Roadmap::VertexList::iterator it;
+	    Roadmap::PointList::iterator it;
 	    for ( it = roadmap.overview_path.begin(); it != roadmap.overview_path.end(); it++ )
 	    {
-		double x, y;
-		coordinates_from_road_vertex_id( db, road_graph[*it].db_id, x, y );
 		xmlNode *node = xmlNewNode( /* ns = */ NULL, (const xmlChar*)"node" );
 		xmlNode *x_node = xmlNewNode( NULL, (const xmlChar*)"x" );
 		xmlNode *y_node = xmlNewNode( NULL, (const xmlChar*)"y" );
-		xmlAddChild( x_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(x)).c_str()) ) );
-		xmlAddChild( y_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(y)).c_str()) ) );
+		xmlAddChild( x_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(it->x)).c_str()) ) );
+		xmlAddChild( y_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(it->y)).c_str()) ) );
 		xmlAddChild( node, x_node );
 		xmlAddChild( node, y_node );
 		xmlAddChild( overview_path_node, node );
@@ -623,10 +619,12 @@ namespace WPS
 	    Roadmap::StepList::iterator sit;
 	    for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
 	    {
+		xmlNode* step_node;
+		Roadmap::Step* gstep = *sit;
 		if ( (*sit)->step_type == Roadmap::Step::RoadStep )
 		{
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
-		    xmlNode* road_step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
+		    step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
 		    xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road_section" );
 		    Tempus::db_id_t rs_id;
 		    if ( edge_exists(step->road_section, road_graph) )
@@ -651,24 +649,65 @@ namespace WPS
 		    xmlNode* end_movement_node = xmlNewNode( NULL, (const xmlChar*)"end_movement" );
 		    xmlAddChild( end_movement_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->end_movement )).c_str()) );
 		    
-		    xmlAddChild( road_step_node, rs_node );
-		    xmlAddChild( road_step_node, rd_node );
-		    xmlAddChild( road_step_node, distance_node );
-		    xmlAddChild( road_step_node, end_movement_node );
-		    for ( Tempus::Costs::iterator cit = step->costs.begin(); cit != step->costs.end(); cit++ )
-		    {
-			xmlNode* cost_node = xmlNewNode( NULL, (const xmlChar*)"cost" );
-			xmlNewProp( cost_node,
-				(const xmlChar*)"type",
-				    (const xmlChar*)(boost::lexical_cast<string>( cit->first )).c_str() );
-			xmlNewProp( cost_node,
-				    (const xmlChar*)"value",
-				    (const xmlChar*)(boost::lexical_cast<string>( cit->second )).c_str() );
-		    xmlAddChild( road_step_node, cost_node );
-		    }
-		    xmlAddChild( root_node, road_step_node );
+		    xmlAddChild( step_node, rs_node );
+		    xmlAddChild( step_node, rd_node );
+		    xmlAddChild( step_node, distance_node );
+		    xmlAddChild( step_node, end_movement_node );
 		}
-		// TODO: add PT steps
+		else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
+		{
+		    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *sit );
+
+		    if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() )
+		    {
+			// can't find the pt network
+		    }
+		    PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id ];
+
+		    step_node = xmlNewNode( NULL, (const xmlChar*)"public_transport_step" );
+		    
+		    xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network_id" );
+		    xmlNewProp( network_node,
+				(const xmlChar*)"id",
+				(const xmlChar*)(boost::lexical_cast<string>(step->network_id).c_str()) );
+
+		    xmlNode* departure_node = xmlNewNode( NULL, (const xmlChar*)"departure_stop" );
+		    xmlNode* arrival_node = xmlNewNode( NULL, (const xmlChar*)"arrival_stop" );
+		    Tempus::db_id_t d_id = 0;
+		    cout << "step->departure_stop = " << step->departure_stop << endl;
+		    if ( vertex_exists( step->departure_stop, pt_graph ) )
+		    {
+			d_id = pt_graph[ step->departure_stop ].db_id;
+		    }
+		    Tempus::db_id_t a_id = 0;
+		    if ( vertex_exists( step->arrival_stop, pt_graph ) )
+		    {
+			a_id = pt_graph[ step->arrival_stop ].db_id;
+		    }
+		    xmlNewProp( departure_node,
+				(const xmlChar*)"id",
+				(const xmlChar*)(boost::lexical_cast<string>( d_id )).c_str() );
+		    xmlNewProp( arrival_node,
+				(const xmlChar*)"id",
+				(const xmlChar*)(boost::lexical_cast<string>( a_id )).c_str() );
+		    xmlAddChild( step_node, network_node );
+		    xmlAddChild( step_node, departure_node );
+		    xmlAddChild( step_node, arrival_node );
+		    xmlAddChild( step_node, xmlNewNode( NULL, (const xmlChar*)"trip" ) );
+		}
+
+		for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
+		{
+		    xmlNode* cost_node = xmlNewNode( NULL, (const xmlChar*)"cost" );
+		    xmlNewProp( cost_node,
+				(const xmlChar*)"type",
+				(const xmlChar*)(boost::lexical_cast<string>( cit->first )).c_str() );
+		    xmlNewProp( cost_node,
+				(const xmlChar*)"value",
+				(const xmlChar*)(boost::lexical_cast<string>( cit->second )).c_str() );
+		    xmlAddChild( step_node, cost_node );
+		}
+		xmlAddChild( root_node, step_node );
 	    }
 	    xmlAddChild( root_node, overview_path_node );
 	    

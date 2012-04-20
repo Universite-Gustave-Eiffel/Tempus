@@ -25,6 +25,11 @@ namespace Tempus
     void PQImporter::import_constants( ProgressionCallback& progression )
     {
 	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
+	Tempus::transport_types.clear();
+	Tempus::transport_type_from_name.clear();
+	Tempus::road_types.clear();
+	Tempus::road_type_from_name.clear();
+
 	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    db_id_t db_id;
@@ -69,6 +74,9 @@ namespace Tempus
     void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
     {
 	Road::Graph& road_graph = graph.road;
+	road_graph.clear();
+	graph.network_map.clear();
+	graph.public_transports.clear();
 
 	// locally maps db ID to Node or Section
 	std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
@@ -233,6 +241,9 @@ namespace Tempus
 	    boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );
 	    BOOST_ASSERT( is_added );
 	    pt_graph[e].edge = e;
+	    pt_graph[e].network_id = network_id;
+	    pt_graph[e].stop_from = stop_from_id;
+	    pt_graph[e].stop_to = stop_to_id;
 
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.75) );
 	}

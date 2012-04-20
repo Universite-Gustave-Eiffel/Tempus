@@ -278,10 +278,15 @@ class IfsttarRouting:
         self.canvas.setMapTool(self.clickTool)
 
     def onCompute(self):
-        ox = self.originPoint.x()
-        oy = self.originPoint.y()
-        dx = self.destinationPoint.x()
-        dy = self.destinationPoint.y()
+        [ox,oy] = self.dlg.ui.originText.text().split(',')
+        [dx,dy] = self.dlg.ui.destinationText.text().split(',')
+        print "ox,oy = ", ox, oy
+        print "dx,dy = ", dx, dy
+        
+#        ox = self.originPoint.x()
+#        oy = self.originPoint.y()
+#        dx = self.destinationPoint.x()
+#        dy = self.destinationPoint.y()
         criterion = self.dlg.criterion_id( str(self.dlg.ui.criterionList.currentText()) )
 #        selected = self.dlg.ui.criterionList.selectedItems()
 #        criteria = []

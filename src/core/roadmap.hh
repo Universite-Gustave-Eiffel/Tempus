@@ -77,6 +77,7 @@ namespace Tempus
 	{
 	    PublicTransportStep() : Step( Step::PublicTransportStep ) {}
 
+	    db_id_t network_id;
 	    PublicTransport::Vertex departure_stop;
 	    PublicTransport::Vertex arrival_stop;
 	    db_id_t trip_id; ///< used to indicate the direction
@@ -91,8 +92,8 @@ namespace Tempus
 
 	///
 	/// Optional overview path, which is designed for display purposes, and may be simplified
-	typedef std::vector<Road::Vertex> VertexList;
-	VertexList overview_path;
+	typedef std::vector<Point2D> PointList;
+	PointList overview_path;
 
 	virtual ~Roadmap()
 	{

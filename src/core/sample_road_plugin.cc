@@ -141,7 +141,7 @@ namespace Tempus
 	    {
 		Road::Vertex v = *it;
 		// Overview path
-		roadmap.overview_path.push_back( v );
+		roadmap.overview_path.push_back( coordinates( v, db_, road_graph ) );
 		
 		// User-oriented roadmap
 		if ( first_loop )

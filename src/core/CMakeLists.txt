@@ -1,5 +1,5 @@
 # Core source files
-set( SOURCE_FILES common.cc application.cc plugin.cc pgsql_importer.cc plugin.cc db.cc )
+set( SOURCE_FILES common.cc multimodal_graph.cc application.cc plugin.cc pgsql_importer.cc plugin.cc db.cc )
 
 if (WIN32)
 	set( PQ_INCLUDE_DIR "C:/Program Files/PostgreSQL/9.1/include" CACHE PATH "libpq include directory" )
@@ -27,9 +27,8 @@ target_link_libraries( test ${PQ_LIBS} )
 add_library( tempus SHARED ${SOURCE_FILES} )
 target_link_libraries( tempus ${PQ_LIBS} )
 
-add_library( dummy_plugin MODULE dummy_plugin.cc ${DLL_SOURCES} )
-target_link_libraries( dummy_plugin ${PQ_LIBS} )
-
 add_library( sample_road_plugin MODULE sample_road_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( sample_road_plugin ${PQ_LIBS} )
 
+add_library( sample_pt_plugin MODULE sample_pt_plugin.cc ${DLL_SOURCES} )
+target_link_libraries( sample_pt_plugin ${PQ_LIBS} )

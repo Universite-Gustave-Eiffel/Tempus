@@ -13,6 +13,11 @@
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
 
+namespace Db
+{
+    class Connection;
+};
+
 namespace Tempus
 {
     ///
@@ -79,6 +84,11 @@ namespace Tempus
 	return false;
     }
 
+    ///
+    /// Get 2D coordinates of a road or public transport vertex, from the database
+    Point2D coordinates( Road::Vertex v, Db::Connection& db, Road::Graph& graph );
+    Point2D coordinates( PublicTransport::Vertex v, Db::Connection& db, PublicTransport::Graph& graph );
+
     template <class G, class Tag>
     struct vertex_or_edge
     {
@@ -99,14 +109,24 @@ namespace Tempus
     };
 
     ///
-    /// A FieldPropertyAccessor implementes a Readable Property Map concept and gives read access
+    /// A FieldPropertyAccessor implements a Readable Property Map concept and gives read access
     /// to the member of a vertex or edge
-    /// For instance, FieldPropertyAccessor< Road::Edge, 
     template <class Graph, class Tag, class T, T vertex_or_edge<Graph, Tag>::property_type::*mptr>
     struct FieldPropertyAccessor
     {
 	FieldPropertyAccessor( Graph& graph ) : graph_(graph) {}
 	Graph& graph_;
+    };
+
+    ///
+    /// A FunctionPropertyAccessor implements a Readable Property Map concept
+    /// by means of a function application on a vertex or edge of a graph
+    template <class Graph, class Tag, class T, class Function>
+    struct FunctionPropertyAccessor
+    {
+	FunctionPropertyAccessor( Graph& graph, Function fct ) : graph_(graph), fct_(fct) {}
+	Graph& graph_;
+	Function fct_;
     };
 };
 
@@ -120,6 +140,22 @@ namespace boost
 
     template <class Graph, class Tag, class T, T Tempus::vertex_or_edge<Graph, Tag>::property_type::*mptr>
     struct property_traits<Tempus::FieldPropertyAccessor<Graph, Tag, T, mptr> >
+    {
+	typedef T value_type;
+	typedef T& reference;
+	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
+	typedef Tag category;
+    };
+
+
+    template <class Graph, class Tag, class T, class Function>
+    T get( Tempus::FunctionPropertyAccessor<Graph, Tag, T, Function> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
+    {
+	return pmap.fct_( pmap.graph_, e );
+    }
+
+    template <class Graph, class Tag, class T, class Function>
+    struct property_traits<Tempus::FunctionPropertyAccessor<Graph, Tag, T, Function> >
     {
 	typedef T value_type;
 	typedef T& reference;

@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "db.hh"
 #include "multimodal_graph.hh"
 #include "plugin.hh"
+#include "db.hh"
 
 namespace Tempus
 {
