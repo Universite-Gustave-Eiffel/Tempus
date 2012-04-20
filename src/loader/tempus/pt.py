@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Tempus data loader
+# (c) 2012 Oslandia
+# MIT Licence
+
+import os
+import zipfile
+import tempfile
+import csv
+from tools import is_numeric
+from importer import DataImporter
+from config import *
+
+class GTFSImporter(DataImporter):
+    """Public transportation GTFS data loader class."""
+    GTFSFILES = [('agency', False),
+            ('calendar', True),
+            ('calendar_dates', True),
+            ('fare_attributes', False),
+            ('fare_rules', False),
+            ('frequencies', False),
+            ('routes', True),
+            ('shapes', False),
+            ('stop_times', True),
+            ('stops', True),
+            ('trips', True)]
+    # SQL files to execute before loading GTFS data
+    PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql"]
+    # SQL files to execute after loading GTFS data 
+    POSTLOADSQL = ["gtfs.sql"]
+
+    def __init__(self, source = "", dbstring = "", logfile = None, copymode = True, doclean = True):
+        """Create a new GTFS data loader. Arguments are :
+        source : a Zip file containing GTFS data
+        schema_out : the destination schema in the database
+        dbstring : the database connection string
+        logfile : where to log SQL execution results (stdout by default)
+        """
+        super(GTFSImporter, self).__init__(source, dbstring, logfile, doclean)
+        self.sqlfile = ""
+        self.copymode = copymode
+        self.doclean = doclean
+
+    def check_input(self):
+        """Check if given source is a GTFS zip file."""
+        res = False
+        if zipfile.is_zipfile(self.source):
+            res = True
+            with zipfile.ZipFile(self.source) as zipf:
+                filelist = zipf.namelist()
+                for f, mandatory in GTFSImporter.GTFSFILES:
+                    if res and "%s.txt" % f not in filelist:
+                        if mandatory:
+                            res = False
+        return res
+
+    def load_data(self):
+        """Generate SQL file and load GTFS data to database."""
+        self.sqlfile = self.generate_sql()
+        r = self.load_gtfs()
+        if self.doclean:
+            self.clean()
+        return r
+
+    def generate_sql(self):
+        """Generate a SQL file from GTFS feed."""
+        sqlfile = ""
+        if zipfile.is_zipfile(self.source):
+            # create temp file for SQL output
+            fd, sqlfile = tempfile.mkstemp()
+            tmpfile = os.fdopen(fd, "w")
+            # begin a transaction in SQL file
+            tmpfile.write("SET CLIENT_ENCODING TO UTF8;\n")
+            tmpfile.write("SET STANDARD_CONFORMING_STRINGS TO ON;\n")
+            tmpfile.write("BEGIN;\n")
+
+
+            # open zip file
+            with zipfile.ZipFile(self.source) as zipf:
+                for f, mandatory in GTFSImporter.GTFSFILES:
+                    # try to read the current GTFS txt file with CSV
+                    try:
+                        reader = csv.reader(zipf.open("%s.txt" % f),
+                                delimiter = ',',
+                                quotechar = '"')
+                    # If we can't read and it's a mandatory file, error
+                    except KeyError:
+                        if mandatory:
+                            raise ValueError, "Missing file in GTFS archive : %s" % f
+                        else:
+                            continue
+                    # Write SQL for each beginning of table
+                    tmpfile.write("-- Inserting values for table %s\n\n" % f)
+                    # first row is field names
+                    fieldnames = reader.next()
+                    if self.copymode:
+                        tmpfile.write('COPY "%s"."%s" (%s) FROM stdin;\n' % (IMPORTSCHEMA, f, ",".join(fieldnames)))
+                    # read the rows values
+                    # deduce value type by testing
+                    for row in reader:
+                        insert_row = []
+                        for value in row:
+                            if value == '':
+                                if self.copymode:
+                                    insert_row.append('\N')
+                                else:
+                                    insert_row.append('NULL')
+                            elif not self.copymode and not is_numeric(value):
+                                insert_row.append("'%s'" % value.replace("'", "''"))
+                            else:
+                                insert_row.append(value)
+                        # write SQL statement
+                        if self.copymode:
+                            tmpfile.write("%s\n" % '\t'.join(insert_row))
+                        else:
+                            tmpfile.write("INSERT INTO %s.%s (%s) VALUES (%s);\n" %\
+                                    (IMPORTSCHEMA, f, ",".join(fieldnames), ','.join(insert_row)))
+                    # Write SQL at end of processed table
+                    if self.copymode:
+                        tmpfile.write("\.\n")
+                    tmpfile.write("\n-- Processed table %s.\n\n" % f)
+
+            tmpfile.write("COMMIT;\n")
+            tmpfile.write("-- Processed all data \n\n")
+            tmpfile.close()
+        return sqlfile
+
+    def load_gtfs(self):
+        """Load generated SQL file with GTFS data into the database."""
+        return self.load_sqlfiles([self.sqlfile])
+
+    def clean(self):
+        """Remove previously generated SQL file."""
+        if os.path.isfile(self.sqlfile):
+            os.remove(self.sqlfile)
+
+    
