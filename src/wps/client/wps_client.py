@@ -89,12 +89,9 @@ class HttpCgiConnection:
         self.host = host
         self.url = url
 
-    def reset(self):
-        self.conn.close()
-        self.conn.connect()
-
     def request( self, method, content ):
-        self.reset()
+        headers = {"Content-type" : "text/xml" }
+
         headers = {}
         url = self.url
         if method == "GET":

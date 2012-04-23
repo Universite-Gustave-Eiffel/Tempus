@@ -10,6 +10,24 @@ if (NOT Boost_FOUND)
 endif (NOT Boost_FOUND)
 add_definitions( "-DHAS_BOOST" )
 
+if (WIN32)
+	set( PQ_INCLUDE_DIR "C:/Program Files/PostgreSQL/9.1/include" CACHE PATH "libpq include directory" )
+	set( PQ_LIBS_DIR "C:/Program Files/PostgreSQL/9.1/lib" CACHE PATH "libpq lib directory" )
+	set( PQ_LIBS libpq )
+	# Disable verbose warnings
+	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290" )
+
+	set( LIBTEMPUS tempus )
+else (WIN32)
+	set( PQ_INCLUDE_DIR "/usr/include/postgresql" CACHE PATH "libpq include directory" )
+	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
+	set( PQ_LIBS pq dl boost_program_options )
+	set (LIBTEMPUS tempus )
+endif (WIN32)
+
+include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
+link_directories( ${PQ_LIBS_DIR} ${Boost_LIBRARY_DIRS} )
+
 set( BUILD_TESTS OFF CACHE BOOL "Build unit tests ?" )
 set( BUILD_WPS OFF CACHE BOOL "Build WPS server ?" )
 

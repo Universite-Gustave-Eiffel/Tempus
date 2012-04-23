@@ -152,6 +152,7 @@ namespace WPS
 	}
 	out << "  </wps:ProcessOutputs>" << endl;
 	out << "</wps:ExecuteResponse>" << endl;
+	return out;
     }
 
     Service* Service::get_service( const std::string& name )

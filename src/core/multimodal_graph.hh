@@ -92,8 +92,9 @@ namespace Tempus
     template <class G, class Tag>
     struct vertex_or_edge
     {
-	typedef void property_type;
-	typedef void descriptor;
+	struct null_class {};
+	typedef null_class property_type;
+	typedef null_class descriptor;
     };
     template <class G>
     struct vertex_or_edge<G, boost::vertex_property_tag>
@@ -111,11 +112,13 @@ namespace Tempus
     ///
     /// A FieldPropertyAccessor implements a Readable Property Map concept and gives read access
     /// to the member of a vertex or edge
-    template <class Graph, class Tag, class T, T vertex_or_edge<Graph, Tag>::property_type::*mptr>
+//    template <class Graph, class Tag, class T, T vertex_or_edge<Graph, Tag>::property_type::*mptr>
+    template <class Graph, class Tag, class T, class Member>
     struct FieldPropertyAccessor
     {
-	FieldPropertyAccessor( Graph& graph ) : graph_(graph) {}
+	FieldPropertyAccessor( Graph& graph, Member mem ) : graph_(graph), mem_(mem) {}
 	Graph& graph_;
+	Member mem_;
     };
 
     ///
@@ -132,14 +135,14 @@ namespace Tempus
 
 namespace boost
 {
-    template <class Graph, class Tag, class T, T Tempus::vertex_or_edge<Graph, Tag>::property_type::*mptr>
-    T get( Tempus::FieldPropertyAccessor<Graph, Tag, T, mptr> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
-    {
-	return pmap.graph_[e].*mptr;
+	template <class Graph, class Tag, class T, class Member>
+    T get( Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
+	{
+	return pmap.graph_[e].*(pmap.mem_);
     }
 
-    template <class Graph, class Tag, class T, T Tempus::vertex_or_edge<Graph, Tag>::property_type::*mptr>
-    struct property_traits<Tempus::FieldPropertyAccessor<Graph, Tag, T, mptr> >
+	template <class Graph, class Tag, class T, class Member>
+    struct property_traits<Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> >
     {
 	typedef T value_type;
 	typedef T& reference;
