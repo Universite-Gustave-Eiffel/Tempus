@@ -1,3 +1,7 @@
+// standard stream headers must be included first, to please VC++
+#include <iostream>
+#include <fstream>
+
 #include <fcgi_stdio.h>
 #include <fcgio.h>
 

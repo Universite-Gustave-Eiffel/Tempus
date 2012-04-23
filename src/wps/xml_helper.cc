@@ -7,6 +7,7 @@ using namespace std;
 int XML::init()
 {
     xmlSetGenericErrorFunc( NULL, XML::accumulate_error );
+	return 0;
 }
 
 // Force a call to XML::init() on startup

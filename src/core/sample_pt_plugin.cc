@@ -133,7 +133,7 @@ namespace Tempus
 	    LengthCalculator length_calculator( db_ );
 	    FunctionPropertyAccessor<PublicTransport::Graph,
 				     boost::edge_property_tag,
-				     double,
+					 double,
 				     LengthCalculator> length_map( pt_graph, length_calculator );
 	    
 	    PluginPtGraphVisitor vis( this );
@@ -187,7 +187,6 @@ namespace Tempus
 
 	    // The current trip is set to 0, which means 'null'. This holds because every db's id are 1-based
 	    db_id_t current_trip = 0;
-	    PublicTransport::Vertex previous;
 	    bool first_loop = true;
 		
 	    step = new Roadmap::PublicTransportStep();

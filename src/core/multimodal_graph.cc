@@ -15,8 +15,8 @@ namespace Tempus
 	Db::Result res = db.exec( q );
 	BOOST_ASSERT( res.size() > 0 );
 	Point2D p;
-	p.x = res[0][0].as<Tempus::db_id_t>();
-	p.y = res[0][1].as<Tempus::db_id_t>();
+	p.x = res[0][0].as<double>();
+	p.y = res[0][1].as<double>();
 	return p;
     }
 
@@ -26,8 +26,8 @@ namespace Tempus
 	Db::Result res = db.exec( q );
 	BOOST_ASSERT( res.size() > 0 );
 	Point2D p;
-	p.x = res[0][0].as<Tempus::db_id_t>();
-	p.y = res[0][1].as<Tempus::db_id_t>();
+	p.x = res[0][0].as<double>();
+	p.y = res[0][1].as<double>();
 	return p;
     }
 };

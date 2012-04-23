@@ -10,6 +10,14 @@
    The plugin finds a route between an origin and a destination via Dijkstra.
  */
 
+#include <sys/timeb.h>
+#include <time.h>
+
+#ifdef _WIN32
+#define ftime(x) _ftime(x)
+#define timeb _timeb
+#endif
+ 
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
@@ -74,15 +82,16 @@ namespace Tempus
 
 	    Road::Graph& road_graph = graph_.road;
 
-	    timeval tv_start, tv_stop;
-	    gettimeofday( &tv_start, NULL );
+		timeb t_start, t_stop;
+		ftime( &t_start );
 
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
 	    ///
 	    /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
 	    /// which is the edge property of a Road::Graph
-	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, &Road::Section::length> length_map( road_graph );
+	    //FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, &Road::Section::length> length_map( road_graph );
+		FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
 
 	    ///
 	    /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
@@ -101,10 +110,10 @@ namespace Tempus
 					    vis
 					    );
 
-	    gettimeofday( &tv_stop, NULL );
-	    long long sstart = tv_start.tv_sec * 1000000LL + tv_start.tv_usec;
-	    long long sstop = tv_stop.tv_sec * 1000000LL + tv_stop.tv_usec;
-	    float time_s = (sstop - sstart) / 1000000.0;
+	    ftime( &t_stop );
+	    long long sstart = t_start.time * 1000L + t_start.millitm;
+	    long long sstop = t_stop.time * 1000L + t_stop.millitm;
+	    float time_s = float((sstop - sstart) / 1000.0);
 	    metrics_[ "time_s" ] = time_s;
 
 	    // reorder the path, could have been better included ...
