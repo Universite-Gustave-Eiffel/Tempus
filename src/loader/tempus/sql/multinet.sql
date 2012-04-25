@@ -120,7 +120,7 @@ SELECT
 		ELSE false
 	END AS tollway,
 
-	ST_SetSRID(ST_Force_3DZ(ST_LineMerge(nw.geom)), 2154) AS geom
+	ST_Transform(ST_Force_3DZ(ST_LineMerge(nw.geom)), 2154) AS geom
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
 	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 
