@@ -34,7 +34,7 @@ namespace Tempus
 
 	RoadPlugin( Db::Connection& db ) : Plugin( "road_plugin", db )
 	{
-	    declare_option( "trace_vertex", BoolOption, "Trace vertex traversal" );
+	    declare_option( "trace_vertex", "Trace vertex traversal", false );
 	}
 
 	virtual ~RoadPlugin()

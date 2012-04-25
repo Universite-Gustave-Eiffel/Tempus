@@ -20,13 +20,6 @@ namespace Tempus
 	metrics_[ "iterations" ] = (int)0;
     }
 
-    void Plugin::declare_option( const std::string& name, OptionType type, const std::string& description )
-    {
-	options_descriptions_[name].type = type;
-	options_descriptions_[name].description = description;
-	options_[name] = boost::any();
-    }
-    
     void Plugin::set_option_from_string( const std::string& name, const std::string& value)
     {
 	if ( options_descriptions_.find( name ) == options_descriptions_.end() )
