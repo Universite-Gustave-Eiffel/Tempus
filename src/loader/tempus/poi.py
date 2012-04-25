@@ -21,6 +21,20 @@ class POIImporter(ShpImporter):
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = []
 
+    def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
+            options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True, poi_type = 5):
+        ShpImporter.__init__(self, source, prefix, dbstring, logfile, options, doclean)
+        if poi_type == 5:
+            self.POSTLOADSQL = ['poi.sql']
+        elif poi_type == 4:
+            self.POSTLOADSQL = ['poi_scycle.sql']
+        elif poi_type == 3:
+            self.POSTLOADSQL = ['poi_cycle.sql']
+        elif poi_type == 2:
+            self.POSTLOADSQL = ['poi_carpoint.sql']
+        elif poi_type == 1:
+            self.POSTLOADSQL = ['poi_carpark.sql']
+
     def check_input(self):
         """Check if input is ok : given shape file exists."""
         ret = False
