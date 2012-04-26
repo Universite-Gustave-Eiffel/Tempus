@@ -21,7 +21,7 @@ namespace Tempus
     /// Type used inside the DB to store IDs.
     /// O means NULL.
     ///
-    typedef long long int db_id_t;
+    typedef unsigned long long int db_id_t;
 
     struct ConsistentClass
     {

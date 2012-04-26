@@ -122,6 +122,8 @@ namespace Tempus
 	    
 	    db_id_t node_from_id = res[i][2].as<db_id_t>();
 	    db_id_t node_to_id = res[i][3].as<db_id_t>();
+		BOOST_ASSERT( node_from_id > 0 );
+		BOOST_ASSERT( node_to_id > 0 );
 	    
 	    int j = 4;
 	    res[i][j++] >> section.transport_type_ft;
@@ -150,7 +152,7 @@ namespace Tempus
 	    boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
 	    if ( found )
 	    {
-		cout << "Edge " << e << " already exists" << endl;
+		//cout << "Edge " << e << " already exists" << endl;
 		continue;
 	    }
 	    boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
