@@ -56,4 +56,8 @@ namespace Tempus
     };
 };
 
+#ifdef _WIN32
+extern "C" __declspec(dllexport) Tempus::Application* get_application_instance_();
+#endif
+
 #endif

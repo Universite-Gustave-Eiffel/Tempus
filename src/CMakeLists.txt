@@ -30,6 +30,7 @@ link_directories( ${PQ_LIBS_DIR} ${Boost_LIBRARY_DIRS} )
 
 set( BUILD_TESTS OFF CACHE BOOL "Build unit tests ?" )
 set( BUILD_WPS OFF CACHE BOOL "Build WPS server ?" )
+set( BUILD_QGIS_PLUGIN OFF CACHE BOOL "Build QGIS plugin ?" )
 
 add_subdirectory( core )
 
@@ -40,3 +41,7 @@ endif(BUILD_TESTS)
 if(BUILD_WPS)
 	add_subdirectory( wps )
 endif(BUILD_WPS)
+
+if(BUILD_QGIS_PLUGIN)
+	add_subdirectory( wps_qgis )
+endif(BUILD_QGIS_PLUGIN)

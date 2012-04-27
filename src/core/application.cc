@@ -4,12 +4,37 @@
 #include "common.hh"
 #include "pgsql_importer.hh"
 
+Tempus::Application* get_application_instance_()
+{
+	return Tempus::Application::instance();
+}
+
 namespace Tempus
 {
     Application* Application::instance()
     {
-	static Application app_;
-	return &app_;
+	// On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
+	// DLL have still access to the main EXE memory ...
+	static Application* instance_ = 0;
+	if ( 0 == instance_ )
+	{
+#ifdef _WIN32
+	    // We test if we are in the main module (EXE) or not. If it is the case, a new Application is allocated.
+	    // It will also be returned by modules.
+	    Application* (*main_get_instance)() = (Application* (*)())GetProcAddress(GetModuleHandle(NULL), "get_application_instance_");
+	    if ( main_get_instance == &get_application_instance_ )
+	    {
+		instance_ = new Application();
+	    }
+	    else
+	    {
+		instance_ = main_get_instance();
+	    }
+#else
+	    instance_ = new Application();
+#endif
+	}
+	return instance_;
     }
 
     void Application::connect( const std::string& db_options )

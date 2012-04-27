@@ -6,12 +6,11 @@
 using namespace std;
 using namespace Tempus;
 
-#define DB_COMMON_OPTIONS ""
 #define DB_TEST_NAME "tempus_test_db"
 
 void DbTest::testConnection()
 {
-    string db_options = DB_COMMON_OPTIONS;
+    string db_options = g_db_options;
 
     // Connection to an non-existing database
     bool has_thrown = false;
@@ -19,7 +18,7 @@ void DbTest::testConnection()
     {
 	connection_ = new Db::Connection( db_options + " dbname=zorglub" );
     }
-    catch ( std::runtime_error& e )
+    catch ( std::runtime_error& )
     {
 	has_thrown = true;
     }
@@ -31,7 +30,7 @@ void DbTest::testConnection()
     {
 	connection_ = new Db::Connection( db_options + " dbname = " DB_TEST_NAME );
     }
-    catch ( std::runtime_error& e )
+    catch ( std::runtime_error& )
     {
 	has_thrown = true;
     }
@@ -43,7 +42,7 @@ void DbTest::testConnection()
 
 void DbTest::testQueries()
 {
-    string db_options = DB_COMMON_OPTIONS;
+    string db_options = g_db_options;
     connection_ = new Db::Connection( db_options + " dbname = " DB_TEST_NAME );
 
     // test bad query
@@ -52,7 +51,7 @@ void DbTest::testQueries()
     {
 	connection_->exec( "SELZECT * PHROM zorglub" );
     }
-    catch ( std::runtime_error& e )
+    catch ( std::runtime_error& )
     {
 	has_thrown = true;
     }
@@ -66,26 +65,26 @@ void DbTest::testQueries()
     connection_->exec( "INSERT INTO test_table (time_v) VALUES ('13:52:45')" );
     Db::Result res = connection_->exec( "SELECT * FROM test_table" );
     
-    CPPUNIT_ASSERT( res.size() == 4 );
-    CPPUNIT_ASSERT( res.columns() == 5 );
-    CPPUNIT_ASSERT( res[0][0].as<int>() == 1 );
-    CPPUNIT_ASSERT( res[0][1].as<int>() == 42 );
+    CPPUNIT_ASSERT_EQUAL( (size_t)4, res.size() );
+    CPPUNIT_ASSERT_EQUAL( (size_t)5, res.columns() );
+    CPPUNIT_ASSERT_EQUAL( (int)1, res[0][0].as<int>() );
+    CPPUNIT_ASSERT_EQUAL( (int)42, res[0][1].as<int>() );
     CPPUNIT_ASSERT( res[0][2].is_null() );
 
-    CPPUNIT_ASSERT( res[1][1].as<int>() == -42 );
-    CPPUNIT_ASSERT( res[1][2].as<long long>() == 10000000000LL );
+    CPPUNIT_ASSERT_EQUAL( (int)-42, res[1][1].as<int>());
+    CPPUNIT_ASSERT_EQUAL( 10000000000ULL, res[1][2].as<unsigned long long>() );
 
-    CPPUNIT_ASSERT( res[2][3].as<string>() == "Hello world" );
+    CPPUNIT_ASSERT_EQUAL( string("Hello world"), res[2][3].as<string>() );
 
     Tempus::Time t = res[3][4].as<Tempus::Time>();
-    CPPUNIT_ASSERT( t.n_secs = 13 * 3600 + 52 * 60 + 45 );
+    CPPUNIT_ASSERT_EQUAL( (long)(13 * 3600 + 52 * 60 + 45), t.n_secs );
 
     delete connection_;
 }
 
 void PgImporterTest::setUp()
 {
-    string db_options = DB_COMMON_OPTIONS;
+    string db_options = g_db_options;
     importer_ = new PQImporter( db_options + " dbname = " DB_TEST_NAME );
 }
 
@@ -112,15 +111,15 @@ void PgImporterTest::testConsistency()
     // number of PT networks
     res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_network" );
     long n_networks = res[0][0].as<long>();
-    CPPUNIT_ASSERT( n_networks == graph_.public_transports.size() );
-    CPPUNIT_ASSERT( n_networks == graph_.network_map.size() );
+	
+    CPPUNIT_ASSERT_EQUAL( (size_t)n_networks, graph_.public_transports.size() );
+    CPPUNIT_ASSERT_EQUAL( (size_t)n_networks, graph_.network_map.size() );
 
     MultimodalGraph::PublicTransportGraphList::iterator it;
     for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )
     {
 	db_id_t id = it->first;
 	PublicTransport::Graph& pt_graph = it->second;
-	cout << "Network ID " << id << endl;
 
 	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_stop" );
 	CPPUNIT_ASSERT( res.size() == 1 );

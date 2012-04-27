@@ -21,7 +21,7 @@ namespace Tempus
     /// Type used inside the DB to store IDs.
     /// O means NULL.
     ///
-    typedef long long int db_id_t;
+    typedef unsigned long long int db_id_t;
 
     struct ConsistentClass
     {
@@ -43,14 +43,14 @@ namespace Tempus
 
 #ifdef _DEBUG
     ///
-    /// EXPECT is used in check_concistency_() methods
+    /// EXPECT is used in check_consistency_() methods
     #define EXPECT( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Assertion " #expr " failed" << std::endl; return false; }}
     ///
     /// Pre conditions, will abort if the condition is false
-    #define REQUIRE( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Precondition " #expr " is false" << std::endl; std::abort(); }}
+    #define REQUIRE( expr ) {if (!(expr)) { std::string e_; e_ += __FILE__; e_ += ":"; e_ += __LINE__; e_ += " Precondition " #expr " is false"; throw std::runtime_error( e_ ); }}
     ///
     /// Post conditions, will abort if the condition is false
-    #define ENSURE( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Postcondition " #expr " is false" << std::endl; std::abort(); }}
+    #define ENSURE( expr ) {if (!(expr)) { std::string e_; e_ += __FILE__; e_ += ":"; e_ += __LINE__; e_ += " Postcondition " #expr " is false"; throw std::runtime_error( e_ ); }}
 #else
 #define EXPECT( expr ) ((void)0)
 #define REQUIRE( expr ) ((void)0)

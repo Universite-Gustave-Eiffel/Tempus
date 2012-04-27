@@ -432,6 +432,11 @@ namespace WPS
 		throw std::invalid_argument( "Cannot find origin_id" );
 	    }
 	    this->origin = vertex_from_id( origin_id, road_graph );
+		cout << "origin = " << this->origin << endl;
+		if ( this->origin == Road::Vertex() )
+		{
+			throw std::invalid_argument( "Cannot find origin vertex" );
+		}
 	    
 	    // departure_constraint
 	    // TODO

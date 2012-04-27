@@ -34,17 +34,18 @@ namespace Tempus
 
 	RoadPlugin( Db::Connection& db ) : Plugin( "road_plugin", db )
 	{
+	    declare_option( "trace_vertex", "Trace vertex traversal", false );
 	}
 
 	virtual ~RoadPlugin()
 	{
 	}
+    protected:
+	bool trace_vertex_;
     public:
 	virtual void post_build()
 	{
 	    graph_ = Application::instance()->graph();
-	    Road::EdgeIterator eb, ee;
-	    Road::Graph& road_graph = graph_.road;
 	}
 
 	virtual void pre_process( Request& request ) throw (std::invalid_argument)
@@ -64,14 +65,19 @@ namespace Tempus
 	    }
 
 	    request_ = request;
+
+	    get_option( "trace_vertex", trace_vertex_ );
 	}
 
 	virtual void road_vertex_accessor( Road::Vertex v, int access_type )
 	{
 	    if ( access_type == Plugin::ExamineAccess )
 	    {
-		// very slow
-		// cout << "Examining vertex " << v << endl;
+		if ( trace_vertex_ )
+		{
+		    // very slow
+		    cout << "Examining vertex " << v << endl;
+		}
 	    }
 	}
 
@@ -82,16 +88,15 @@ namespace Tempus
 
 	    Road::Graph& road_graph = graph_.road;
 
-		timeb t_start, t_stop;
-		ftime( &t_start );
+	    timeb t_start, t_stop;
+	    ftime( &t_start );
 
 	    std::vector<Road::Vertex> pred_map( boost::num_vertices(road_graph) );
 	    std::vector<double> distance_map( boost::num_vertices(road_graph) );
 	    ///
 	    /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
 	    /// which is the edge property of a Road::Graph
-	    //FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, &Road::Section::length> length_map( road_graph );
-		FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
+	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
 
 	    ///
 	    /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called

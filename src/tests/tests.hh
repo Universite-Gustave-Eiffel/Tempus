@@ -14,6 +14,8 @@
 #include "pgsql_importer.hh"
 #include "multimodal_graph.hh"
 
+extern std::string g_db_options;
+
 class DbTest : public CppUnit::TestFixture  {
 
     CPPUNIT_TEST_SUITE( DbTest );

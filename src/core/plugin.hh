@@ -64,22 +64,38 @@ namespace Tempus
 	    FloatOption,
 	    StringOption
 	};
+	/// 
+	/// Conversion from a C++ type to an OptionType.
+	/// (Uses template specialization)
+	template <typename T>
+	struct OptionTypeFrom
+	{
+	    static const OptionType type;
+	};
+
+	typedef boost::any OptionValue;
+	typedef std::map<std::string, OptionValue> OptionValueList;
+
 	///
 	/// Plugin option description
 	struct OptionDescription
 	{
 	    OptionType type;
 	    std::string description;
-	    bool mandatory;
+	    OptionValue default_value;
 	};
 	typedef std::map<std::string, OptionDescription> OptionDescriptionList;
-	typedef boost::any OptionValue;
-	typedef std::map<std::string, OptionValue> OptionValueList;
 
 	///
 	/// Method used by a plugin to declare an option
-	void declare_option( const std::string& name, OptionType type, const std::string& description );
-
+	template <class T>
+	void declare_option( const std::string& name, const std::string& description, T default_value )
+	{
+	    options_descriptions_[name].type = OptionTypeFrom<T>::type;
+	    options_descriptions_[name].description = description;
+	    options_[name] = default_value;
+	}
+    
 	///
 	/// Option descriptions accessor
 	OptionDescriptionList& option_descriptions()
@@ -111,7 +127,11 @@ namespace Tempus
 	    {
 		throw std::runtime_error( "get_option(): cannot find option " + name );
 	    }
-	    value = boost::any_cast<T>(options_[name]);
+	    boost::any v = options_[name];
+	    if ( !v.empty() )
+	    {
+		value = boost::any_cast<T>(options_[name]);
+	    }
 	}
 	///
 	/// Method used to get an option value, alternative signature.
@@ -239,6 +259,16 @@ namespace Tempus
 
 	MetricValueList metrics_;
     };
+
+    template <>
+    struct Plugin::OptionTypeFrom<bool> { static const OptionType type = Plugin::BoolOption; };
+    template <>
+    struct Plugin::OptionTypeFrom<int> { static const OptionType type = Plugin::IntOption; };
+    template <>
+    struct Plugin::OptionTypeFrom<float> { static const OptionType type = Plugin::FloatOption; };
+    template <>
+    struct Plugin::OptionTypeFrom<std::string> { static const OptionType type = Plugin::StringOption; };
+
 
     ///
     /// Class used as a boost::visitor.
