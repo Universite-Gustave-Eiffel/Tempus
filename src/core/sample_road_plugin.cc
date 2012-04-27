@@ -46,8 +46,6 @@ namespace Tempus
 	virtual void post_build()
 	{
 	    graph_ = Application::instance()->graph();
-	    Road::EdgeIterator eb, ee;
-	    Road::Graph& road_graph = graph_.road;
 	}
 
 	virtual void pre_process( Request& request ) throw (std::invalid_argument)

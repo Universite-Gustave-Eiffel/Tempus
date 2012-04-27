@@ -14,6 +14,7 @@
 
 #ifdef _WIN32
 #define chdir _chdir
+#define environ _environ
 #endif
 
 using namespace std;

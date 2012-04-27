@@ -130,7 +130,7 @@ namespace WPS
 	char now[21];
 	time_t now_t;
 	time( &now_t );
-	size_t n = strftime( now, 20, "%FT%T", localtime(&now_t) );
+	size_t n = strftime( now, 20, "%Y-%m-%dT%H:%M:%S", localtime(&now_t) );
 	now[n] = 0;
 	out << "  <wps:Status creationTime=\"" << now << "\">" << endl;
 	out << "    <wps:ProcessSucceeded/>" << endl;
