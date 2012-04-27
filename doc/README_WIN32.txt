@@ -39,6 +39,12 @@ Tempus compilation
 - Go to the Tempus src/ directory
 - Create a 'build' subdirectory
 - Enter this directory
+
+- If you also want to compile the QGIS plugin, you should be able to call python, pyuic4 and pyrcc4 from the command line
+( If Python and libs have been installed via OsGeo4W, just execute OSGEO4W_INSTALL_DIR\Osgeo4w.bat )
+  - Set PYUIC4_PROGRAM to the path of 'pyuic4'
+  - Set PYRCC4_PROGRAM to the path of 'pyrcc4'
+
 - Run 'cmake-gui ..' (must be in the path)
 - When clicking on "Configure", choose "NMake Makefiles"
 - Optionaly sets flags in order to compile the WPS server and unit tests
@@ -61,8 +67,13 @@ XML_LIBRARY_DIRS:PATH=E:/libs/libxml2-2.7.8.win32/lib
 
 - Now type "nmake" to build the project
 
+QGIS Plugin installation
+========================
+
+Just type 'nmake install' and it should install the plugin and all required dependencies to your local qgis plugin directory
+
 WPS, FCGI and webserver configuration
-================================
+=====================================
 
 Option 1 - Apache
 -----------------

@@ -1,4 +1,9 @@
-SET(QGIS_DATA_DIR $ENV{HOME}/.qgis/)
+if (WIN32)
+	set( HOME $ENV{USERPROFILE} )
+else (WIN32)
+	set ( HOME $ENV{HOME} )
+endif(WIN32)
+SET(QGIS_DATA_DIR ${HOME}/.qgis/)
 FILE(GLOB INSTALLER_FILES *.py)
 SET(INSTALLER_FILES ${INSTALLER_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../../wps/client/wps_client.py)
 
