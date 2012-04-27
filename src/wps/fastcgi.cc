@@ -6,7 +6,9 @@
 
 #include <fcgi_stdio.h>
 #include <fcgio.h>
+#ifdef _WIN32
 #include <direct.h>
+#endif
 
 #include "wps_service.hh"
 #include "wps_request.hh"
@@ -56,7 +58,7 @@ int main( int argc, char*argv[] )
 
 	if ( chdir_str != "" )
 	{
-		chdir( chdir_str.c_str() );
+	    int c = chdir( chdir_str.c_str() );
 	}
 	
     Tempus::Application* app = Tempus::Application::instance();
