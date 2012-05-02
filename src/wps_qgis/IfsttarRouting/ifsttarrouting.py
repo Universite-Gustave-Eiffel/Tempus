@@ -390,24 +390,37 @@ class IfsttarRouting:
             icon_text = ''
             cost_text = ''
             if step.tag == 'road_step':
-                road_name = step[0].text
+                road_name = step[0].text or ''
                 movement = int(step[1].text)
                 costs = step[2:]
                 text += "<p>"
                 action_txt = 'Walk on '
                 if last_movement == 1:
-                    icon_text += "<img src=\"%s/turn_left.png\" width=\"16\" height=\"16\"/>" % config.DATA_DIR
+                    icon_text += "<img src=\"%s/turn_left.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                     action_txt = "Turn left on "
                 elif last_movement == 2:
-                    icon_text += "<img src=\"%s/turn_right.png\" width=\"16\" height=\"16\"/>" % config.DATA_DIR
+                    icon_text += "<img src=\"%s/turn_right.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                     action_txt = "Turn right on "
                 elif last_movement >= 4 and last_movement < 999:
-                    icon_text += "<img src=\"%s/roundabout.png\" width=\"16\" height=\"16\"/>" % config.DATA_DIR
+                    icon_text += "<img src=\"%s/roundabout.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                 text += action_txt + road_name + "<br/>\n"
                 for cost in costs:
                     cost_text += format_cost( cost ) + "<br/>\n"
                 text += "</p>"
                 last_movement = movement
+
+            elif step.tag == 'public_transport_step':
+                network = step[0].text
+                departure = step[1].text
+                arrival = step[2].text
+                trip = step[3].text
+                costs = step[4:]
+                for cost in costs:
+                    cost_text += format_cost( cost ) + "<br/>\n"
+                # set network text as icon
+                icon_text = network
+                text = "Take the trip %s from '%s' to '%s'" % (trip, departure, arrival)
+                
             self.dlg.ui.roadmapTable.insertRow( row )
             descLbl = QLabel()
             descLbl.setText( text )
@@ -424,6 +437,7 @@ class IfsttarRouting:
             costText.setText( cost_text )
             costText.setMargin( 5 )
             self.dlg.ui.roadmapTable.setCellWidget( row, 2, costText )
+            self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)

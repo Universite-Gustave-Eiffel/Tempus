@@ -558,10 +558,10 @@ namespace WPS
 				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"PublicTransportStep\">\n"
 				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"network_id\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"departure_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"arrival_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"trip\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"network\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"departure_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"arrival_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"trip\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
@@ -652,34 +652,31 @@ namespace WPS
 
 		    step_node = xmlNewNode( NULL, (const xmlChar*)"public_transport_step" );
 		    
-		    xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network_id" );
-		    xmlNewProp( network_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>(step->network_id).c_str()) );
+		    xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network" );
+		    xmlAddChild( network_node, xmlNewText((const xmlChar*)(graph_.network_map[ step->network_id ].name.c_str())) );
 
 		    xmlNode* departure_node = xmlNewNode( NULL, (const xmlChar*)"departure_stop" );
 		    xmlNode* arrival_node = xmlNewNode( NULL, (const xmlChar*)"arrival_stop" );
-		    Tempus::db_id_t d_id = 0;
+		    string departure_str;
 		    cout << "step->departure_stop = " << step->departure_stop << endl;
 		    if ( vertex_exists( step->departure_stop, pt_graph ) )
 		    {
-			d_id = pt_graph[ step->departure_stop ].db_id;
+			departure_str = pt_graph[ step->departure_stop ].name;
 		    }
-		    Tempus::db_id_t a_id = 0;
+		    string arrival_str;
 		    if ( vertex_exists( step->arrival_stop, pt_graph ) )
 		    {
-			a_id = pt_graph[ step->arrival_stop ].db_id;
+			arrival_str = pt_graph[ step->arrival_stop ].name;
 		    }
-		    xmlNewProp( departure_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( d_id )).c_str() );
-		    xmlNewProp( arrival_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( a_id )).c_str() );
+		    xmlAddChild( departure_node, xmlNewText((const xmlChar*)(departure_str.c_str())) );
+		    xmlAddChild( arrival_node, xmlNewText((const xmlChar*)(arrival_str.c_str())) );
+
+		    xmlNode* trip_node = xmlNewNode( NULL, (const xmlChar*)"trip" );
+		    xmlAddChild( trip_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->trip_id ).c_str())) );
 		    xmlAddChild( step_node, network_node );
 		    xmlAddChild( step_node, departure_node );
 		    xmlAddChild( step_node, arrival_node );
-		    xmlAddChild( step_node, xmlNewNode( NULL, (const xmlChar*)"trip" ) );
+		    xmlAddChild( step_node, trip_node );
 		}
 
 		for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
