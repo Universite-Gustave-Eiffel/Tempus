@@ -7,7 +7,7 @@ namespace Db
     template <>
     bool Value::as<bool>()
     {
-		return as<int>() != 0 ? true : false;
+	return std::string(value_, len_ ) == "t" ? true : false;
     }
 
     template <>
