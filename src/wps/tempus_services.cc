@@ -432,11 +432,11 @@ namespace WPS
 		throw std::invalid_argument( "Cannot find origin_id" );
 	    }
 	    this->origin = vertex_from_id( origin_id, road_graph );
-		cout << "origin = " << this->origin << endl;
-		if ( this->origin == Road::Vertex() )
-		{
-			throw std::invalid_argument( "Cannot find origin vertex" );
-		}
+	    cout << "origin = " << this->origin << endl;
+	    if ( this->origin == Road::Vertex() )
+	    {
+		throw std::invalid_argument( "Cannot find origin vertex" );
+	    }
 	    
 	    // departure_constraint
 	    // TODO
@@ -551,9 +551,7 @@ namespace WPS
 				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"RoadStep\">\n"
 				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"road_section\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"road_direction\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"distance_km\" type=\"xs:double\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"road\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"end_movement\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
 				  "  </xs:sequence>\n"
@@ -630,33 +628,16 @@ namespace WPS
 		{
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
 		    step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
-		    xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road_section" );
-		    Tempus::db_id_t rs_id;
+		    xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road" );
+		    string road_name = "Unknown road";
 		    if ( edge_exists(step->road_section, road_graph) )
-			rs_id = road_graph[ step->road_section].db_id;
-		    else
-			rs_id = 0;
-		    xmlNewProp( rs_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( rs_id )).c_str() );
+			road_name = road_graph[ step->road_section].road_name;
+		    xmlAddChild( rs_node, xmlNewText((const xmlChar*)road_name.c_str()) );
 		    
-		    Tempus::db_id_t rd_id;
-		    if ( edge_exists(step->road_direction, road_graph) )
-			rd_id = road_graph[ step->road_direction].db_id;
-		    else
-			rd_id = 0;
-		    xmlNode* rd_node = xmlNewNode( NULL, (const xmlChar*)"road_direction" );
-		    xmlNewProp( rd_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( rd_id )).c_str() );
-		    xmlNode* distance_node = xmlNewNode( NULL, (const xmlChar*)"distance_km" );
-		    xmlAddChild( distance_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->distance_km )).c_str()) );
 		    xmlNode* end_movement_node = xmlNewNode( NULL, (const xmlChar*)"end_movement" );
 		    xmlAddChild( end_movement_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->end_movement )).c_str()) );
 		    
 		    xmlAddChild( step_node, rs_node );
-		    xmlAddChild( step_node, rd_node );
-		    xmlAddChild( step_node, distance_node );
 		    xmlAddChild( step_node, end_movement_node );
 		}
 		else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )

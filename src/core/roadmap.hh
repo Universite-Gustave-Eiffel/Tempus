@@ -56,14 +56,15 @@ namespace Tempus
 	    /// The movement that is to be done at the end of the section
 	    enum EndMovement
 	    {
+		GoAhead,
 		TurnLeft,
 		TurnRight,
-		GoAhead,
 		UTurn,
+		RoundAboutEnter,
 		FirstExit, ///< in a roundabout
 		SecondExit,
 		ThirdExit,
-		ForthExit,
+		FourthExit,
 		FifthExit,
 		SixthExit,
 		YouAreArrived = 999

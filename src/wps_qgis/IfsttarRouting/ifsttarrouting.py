@@ -26,11 +26,34 @@ from qgis.core import *
 from qgis.gui import *
 import re
 from wps_client import *
+import config
 
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
 from ifsttarroutingdock import IfsttarRoutingDock
+
+def format_cost( cost ):
+    cost_id = int(cost.attrib['type'])
+    cost_value = float(cost.attrib['value'])
+    cost_name = ''
+    cost_unit = ''
+    if cost_id == 1:
+        cost_name = 'Distance'
+        cost_unit = 'm'
+    elif cost_id == 2:
+        cost_name = 'Duration'
+        cost_unit = 's'
+    elif cost_id == 3:
+        cost_name = 'Price'
+        cost_unit = '€'
+    elif cost_id == 4:
+        cost_name = 'Carbon'
+        cost_unit = '?'
+    elif cost_id == 5:
+        cost_name = 'Calories'
+        cost_unit = ''
+    return "%s: %.1f %s" % (cost_name, cost_value, cost_unit)
 
 class IfsttarRouting:
 
@@ -56,7 +79,6 @@ class IfsttarRouting:
 
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
-   
 
     def initGui(self):
         # Create action that will start plugin configuration
@@ -82,6 +104,7 @@ class IfsttarRouting:
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )
 
     # Get current WPS server state
     def updateState( self ):
@@ -137,6 +160,26 @@ class IfsttarRouting:
         self.dlg.ui.buildBtn.setEnabled( True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
 
+    def clearLayout( self, lay ):
+        # clean the widget list
+        rc = lay.rowCount()
+        print "rc = ", rc
+        if rc > 0:
+            for row in range(0, rc):
+                print "remove", row
+                l1 = lay.itemAt( row, QFormLayout.LabelRole )
+                l2 = lay.itemAt( row, QFormLayout.FieldRole )
+                if l1 is None or l2 is None:
+                    break
+                lay.removeItem( l1 )
+                lay.removeItem( l2 )
+                w1 = l1.widget()
+                w2 = l2.widget()
+                lay.removeWidget( w1 )
+                lay.removeWidget( w2 )
+                w1.close()
+                w2.close()
+
     def onTabChanged( self, tab ):
         # options tab
         if tab == 1:
@@ -161,24 +204,7 @@ class IfsttarRouting:
                 option_value[ option_val.attrib['name'] ] = option_val.attrib['value']
 
             lay = self.dlg.ui.optionsLayout
-            # clean the widget list
-            rc = lay.rowCount()
-            print "rc = ", rc
-            if rc > 0:
-                for row in range(0, rc):
-                    print "remove", row
-                    l1 = lay.itemAt( row, QFormLayout.LabelRole )
-                    l2 = lay.itemAt( row, QFormLayout.FieldRole )
-                    if l1 is None or l2 is None:
-                        break
-                    lay.removeItem( l1 )
-                    lay.removeItem( l2 )
-                    w1 = l1.widget()
-                    w2 = l2.widget()
-                    lay.removeWidget( w1 )
-                    lay.removeWidget( w2 )
-                    w1.close()
-                    w2.close()
+            self.clearLayout( lay )
 
             row = 0
             for option in options:
@@ -214,7 +240,6 @@ class IfsttarRouting:
                 row += 1
 
     def onOptionChanged( self, option_name, option_type, val ):
-        print option_name, option_type, val
         # bool
         if option_type == 0:
             val = 1 if val else 0
@@ -276,12 +301,10 @@ class IfsttarRouting:
         self.dlg.ui.destinationSelectBtn.setEnabled(False)
         QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onSelectionChanged)
         self.canvas.setMapTool(self.clickTool)
-
+        
     def onCompute(self):
         [ox,oy] = self.dlg.ui.originText.text().split(',')
         [dx,dy] = self.dlg.ui.destinationText.text().split(',')
-        print "ox,oy = ", ox, oy
-        print "dx,dy = ", dx, dy
         
 #        ox = self.originPoint.x()
 #        oy = self.originPoint.y()
@@ -322,10 +345,22 @@ class IfsttarRouting:
             return
 
         overview_path = outputs['result'][-1]
+        #
         # create layer
-        vl = QgsVectorLayer("LineString?crs=epsg:2154", "Itinerary", "memory")
+
+        # first, we remove the first layer found with the same name are reuse it
+        lname = "Itinerary"
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        for k,v in maps.items():
+            if v.name() == lname:
+                vl = v
+                QgsMapLayerRegistry.instance().removeMapLayers( [k] )
+                break
+
+        vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
         s = QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'})
         vl.rendererV2().setSymbol(s)
+
         pr = vl.dataProvider()
 
         # add a feature
@@ -344,6 +379,60 @@ class IfsttarRouting:
 
         QgsMapLayerRegistry.instance().addMapLayer(vl)
 
+        # get the roadmap
+        last_movement = 0
+        roadmap = outputs['result'][0:-1] # all except the overview path
+        row = 0
+        self.dlg.ui.roadmapTable.clear()
+        self.dlg.ui.roadmapTable.setRowCount(0)
+        for step in roadmap:
+            text = ''
+            icon_text = ''
+            cost_text = ''
+            if step.tag == 'road_step':
+                road_name = step[0].text
+                movement = int(step[1].text)
+                costs = step[2:]
+                text += "<p>"
+                action_txt = 'Walk on '
+                if last_movement == 1:
+                    icon_text += "<img src=\"%s/turn_left.png\" width=\"16\" height=\"16\"/>" % config.DATA_DIR
+                    action_txt = "Turn left on "
+                elif last_movement == 2:
+                    icon_text += "<img src=\"%s/turn_right.png\" width=\"16\" height=\"16\"/>" % config.DATA_DIR
+                    action_txt = "Turn right on "
+                elif last_movement >= 4 and last_movement < 999:
+                    icon_text += "<img src=\"%s/roundabout.png\" width=\"16\" height=\"16\"/>" % config.DATA_DIR
+                text += action_txt + road_name + "<br/>\n"
+                for cost in costs:
+                    cost_text += format_cost( cost ) + "<br/>\n"
+                text += "</p>"
+                last_movement = movement
+            self.dlg.ui.roadmapTable.insertRow( row )
+            descLbl = QLabel()
+            descLbl.setText( text )
+            descLbl.setMargin( 5 )
+            self.dlg.ui.roadmapTable.setCellWidget( row, 1, descLbl )
+
+            if icon_text != '':
+                lbl = QLabel()
+                lbl.setText( icon_text )
+                lbl.setMargin(5)
+                self.dlg.ui.roadmapTable.setCellWidget( row, 0, lbl )
+
+            costText = QLabel()
+            costText.setText( cost_text )
+            costText.setMargin( 5 )
+            self.dlg.ui.roadmapTable.setCellWidget( row, 2, costText )
+            row += 1
+        # Adjust column widths
+        w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
+        self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 0, w )
+        w = self.dlg.ui.roadmapTable.sizeHintForColumn(1)
+        self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 1, w )
+        w = self.dlg.ui.roadmapTable.sizeHintForColumn(2)
+        self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 2, w )
+
         # get metrics
         plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
         try:
@@ -353,13 +442,22 @@ class IfsttarRouting:
             return
         metrics = outputs['metrics']
 
-        txt = ''
-        for metric in metrics:
-            line = "%s = %s\n" % ( metric.attrib['name'], metric.attrib['value'] )
-            txt += line
+        row = 0
+        self.clearLayout( self.dlg.ui.resultLayout )
 
-        self.dlg.ui.resultText.setText( txt )
+        for metric in metrics:
+            lay = self.dlg.ui.resultLayout
+            lbl = QLabel( self.dlg )
+            lbl.setText( metric.attrib['name'] + '' )
+            lay.setWidget( row, QFormLayout.LabelRole, lbl )
+            widget = QLineEdit( self.dlg )
+            widget.setText( metric.attrib['value'] + '' )
+            widget.setEnabled( False )
+            lay.setWidget( row, QFormLayout.FieldRole, widget )
+            row += 1
+
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
     def unload(self):
         # Remove the plugin menu item and icon

@@ -279,14 +279,13 @@ namespace WPS {
 	    }
 	    catch (std::invalid_argument& e)
 	    {
-		return print_exception( WPS_INVALID_PARAMETER_VALUE, e.what() );
+	     	return print_exception( WPS_INVALID_PARAMETER_VALUE, e.what() );
 	    }
 	    catch (std::runtime_error& e)
 	    {
+		cout << "Runtime error " << e.what() << endl;
 		return print_error_status( 400, e.what() );
 	    }
-	    cerr << "Execute OK" << endl;
-	    // TODO
 	}
 	else
 	{
