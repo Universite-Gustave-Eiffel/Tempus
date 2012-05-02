@@ -108,7 +108,7 @@ class IfsttarRouting:
 
     # Get current WPS server state
     def updateState( self ):
-        self.state = 0
+        self.state = -1
         try:
             outputs = self.wps.execute( 'state', {} )
         except RuntimeError as e:
@@ -121,7 +121,16 @@ class IfsttarRouting:
                     self.dlg.ui.dbOptionsText.setText( content.text )
             elif name == 'state':
                 self.state = int( content.text )
-                self.dlg.ui.stateText.setText( content.text )
+                if self.state == 0:
+                    state_text = 'Started'
+                elif self.state == 1:
+                    state_text = 'Connected'
+                elif self.state == 2:
+                    state_text = 'Graph pre-built'
+                elif self.state == 3:
+                    state_text = 'Graph built'
+
+                self.dlg.ui.stateText.setText( state_text )
         # enable query tab only if the database if loaded
         if self.state >= 3:
             self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
