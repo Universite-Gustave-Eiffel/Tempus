@@ -319,32 +319,26 @@ class IfsttarRouting:
 #        oy = self.originPoint.y()
 #        dx = self.destinationPoint.x()
 #        dy = self.destinationPoint.y()
-        criterion = self.dlg.criterion_id( str(self.dlg.ui.criterionList.currentText()) )
-#        selected = self.dlg.ui.criterionList.selectedItems()
-#        criteria = []
-#        for it in self.dlg.ui.criterionList.selectedItems():
-#            stdtxt = str(it.text())
-#            criteria.append(self.dlg.criterion_id(stdtxt))
-#
-#        fmt_criteria = []
-#        for criterion in criteria:
-#            fmt_criteria.append(['optimizing_criterion', criterion])
-        
+        criteria = self.dlg.selected_criteria()
+
+        r = [ 'request',
+            ['origin', ['x', str(ox)], ['y', str(oy)] ],
+            ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ]]
+        for criterion in criteria:
+            r.append(['optimizing_criterion', criterion])
+
+        r.append( ['allowed_transport_types', 11 ] )
+        r.append( ['step',
+                   [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                   [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                   [ 'private_vehicule_at_destination', 'true' ]
+                   ] )
+
+        print r
         plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
 
         args = plugin_arg
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', criterion ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
-                            ]
+        args['request'] = [ True, r ]
         try:
             self.wps.execute( 'pre_process', args )
             self.wps.execute( 'process', plugin_arg )

@@ -398,9 +398,9 @@ namespace WPS
 				 "      <xs:element name=\"origin\" type=\"Point\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				 "      <xs:element name=\"departure_constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				 "      <xs:element name=\"parking_location_id\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\"/>\n"
+				 "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"unbounded\"/>\n"
 				 "      <xs:element name=\"allowed_transport_types\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"allowed_network\" type=\"xs:long\" minOccurs=\"0\"/>\n"
+				 "      <xs:element name=\"allowed_network\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
 				 "      <xs:element name=\"step\" type=\"Step\" minOccurs=\"1\"/>\n"
 				 "    </xs:sequence>\n"
 				 "  </xs:complexType>\n"
@@ -420,19 +420,16 @@ namespace WPS
 	    
 	    // now extract actual data
 	    xmlNode* request_node = input_parameter_map["request"];
-	    cout << "request_node " << request_node->name << endl;
 	    xmlNode* field = XML::get_next_nontext( request_node->children );
 	    
 	    Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 	    get_xml_point( field, x, y);
 	    Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
-	    cout << "origin_id = " << origin_id << endl;
 	    if ( origin_id == 0 )
 	    {
 		throw std::invalid_argument( "Cannot find origin_id" );
 	    }
 	    this->origin = vertex_from_id( origin_id, road_graph );
-	    cout << "origin = " << this->origin << endl;
 	    if ( this->origin == Road::Vertex() )
 	    {
 		throw std::invalid_argument( "Cannot find origin vertex" );
@@ -449,17 +446,20 @@ namespace WPS
 		Tempus::db_id_t parking_loc_id = boost::lexical_cast<Tempus::db_id_t>( n->children->content );
 		this->parking_location = vertex_from_id( parking_loc_id, road_graph );
 		field = n;
-		cout << "parking_location " << parking_location << endl;
 	    }
 	    
 	    // optimizing criteria
 	    field = XML::get_next_nontext( field->next );	
 	    this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+	    field = XML::get_next_nontext( field->next );	
+	    while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
+	    {
+		this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+		field = XML::get_next_nontext( field->next );	
+	    }
 	    
 	    // allowed transport types
-	    field = XML::get_next_nontext( field->next );	
 	    this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
-	    cout << "allowed transport types " << allowed_transport_types << endl;
 	
 	    // allowed networks, 1 .. N
 	    field = XML::get_next_nontext( field->next );
@@ -468,14 +468,12 @@ namespace WPS
 		Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
 		this->allowed_networks.push_back( network_id );
 		field = XML::get_next_nontext( field->next );
-		cout << "allowed network " << allowed_networks.size() << endl;
 	    }
 	
 	    // steps, 1 .. N
 	    steps.clear();
 	    while ( field )
 	    {
-		cout << "field " << field->name << endl;
 		this->steps.resize( steps.size() + 1 );
 		
 		xmlNode *subfield;
@@ -483,7 +481,6 @@ namespace WPS
 		subfield = XML::get_next_nontext( field->children );
 		get_xml_point( subfield, x, y);
 		Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );
-		cout << "destination id = " << destination_id << endl;
 		if ( destination_id == 0 )
 		{
 		    throw std::invalid_argument( "Cannot find origin_id" );
@@ -498,7 +495,6 @@ namespace WPS
 		subfield = XML::get_next_nontext( subfield->next );
 		string val = (const char*)subfield->children->content;
 		this->steps.back().private_vehicule_at_destination = ( val == "true" );
-		cout << "pvat " << steps.back().private_vehicule_at_destination << endl;
 	    
 		// next step
 		field = XML::get_next_nontext( field->next ); 

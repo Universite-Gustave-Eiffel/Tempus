@@ -23,6 +23,8 @@
 from PyQt4 import QtCore, QtGui
 from ui_ifsttarrouting import Ui_IfsttarRoutingDock
 
+from criterionchooser import CriterionChooser
+
 import os
 import pickle
 
@@ -36,11 +38,7 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         self.ui = Ui_IfsttarRoutingDock()
         self.ui.setupUi(self)
 
-        self.criterionMap = { "Distance" : 1, "Duration" : 2, "Price" : 3, "Carbon" : 4, "Calories" : 5, "NumberOfChanges" : 6 }
-        n = 0
-        for k,v in self.criterionMap.items():
-            self.ui.criterionList.insertItem( n, k )
-            n += 1
+        self.ui.criterionBox.addWidget( CriterionChooser( self.ui.criterionBox, True ) )
 
         # preferences is an object used to store user preferences
         if os.path.exists( PREFS_FILE ):
@@ -53,9 +51,6 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         else:
             self.prefs = {}
 
-    def criterion_id( self, str ):
-        return self.criterionMap[str]
-
     def closeEvent( self, event ):
         print "close !"
         self.prefs['wps_url_text'] = self.ui.wpsUrlText.text()
@@ -65,3 +60,9 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         f = open( PREFS_FILE, 'w+' )
         pickle.dump( self.prefs, f )
         event.accept()
+
+    def selected_criteria( self ):
+        s = []
+        for c in range( 0, self.ui.criterionBox.count() ):
+            s.append( self.ui.criterionBox.itemAt( c ).widget().selected() )
+        return s
