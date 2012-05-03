@@ -23,10 +23,10 @@ class CriterionChooser( QWidget ):
 
         self.btn = QToolButton( self )
         if first:
-            self.btn.setText( "+" )
+            self.btn.setIcon( QIcon.fromTheme("add") )
             QObject.connect( self.btn, SIGNAL("clicked()"), self.onAdd )
         else:
-            self.btn.setText( "-" )
+            self.btn.setIcon( QIcon.fromTheme("remove") )
             QObject.connect( self.btn, SIGNAL("clicked()"), self.onRemove )
 
         self.layout.addWidget( self.label )

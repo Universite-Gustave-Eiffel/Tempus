@@ -61,9 +61,9 @@ class IfsttarRouting:
         # Save reference to the QGIS interface
         self.iface = iface
         # Create the dialog and keep reference
-        self.dlg = IfsttarRoutingDock()
         self.canvas = self.iface.mapCanvas()
-        self.clickTool = QgsMapToolEmitPoint(self.canvas)
+        self.dlg = IfsttarRoutingDock( self.canvas )
+
         # initialize plugin directory
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/ifsttarrouting"
         # initialize locale
@@ -88,8 +88,8 @@ class IfsttarRouting:
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
 
         QObject.connect(self.dlg.ui.connectBtn, SIGNAL("clicked()"), self.onConnect)
-        QObject.connect(self.dlg.ui.originSelectBtn, SIGNAL("clicked()"), self.onOriginSelect)
-        QObject.connect(self.dlg.ui.destinationSelectBtn, SIGNAL("clicked()"), self.onDestinationSelect)
+#        QObject.connect(self.dlg.ui.originSelectBtn, SIGNAL("clicked()"), self.onOriginSelect)
+#        QObject.connect(self.dlg.ui.destinationSelectBtn, SIGNAL("clicked()"), self.onDestinationSelect)
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
         QObject.connect(self.dlg.ui.buildBtn, SIGNAL("clicked()"), self.onBuildGraphs)
@@ -283,42 +283,11 @@ class IfsttarRouting:
         self.updateState()
         self.dlg.ui.buildBtn.setEnabled( True )
         
-    def onSelectionChanged(self, point, button):
-        geom = QgsGeometry.fromPoint(point)
-        p = geom.asPoint()
-        print "Selection Changed", point.x(), point.y()
-        self.canvas.unsetMapTool( self.clickTool )
-        txt = "%f,%f" % (p.x(), p.y())
-        if self.selectionType == 'origin':
-            self.originPoint = p
-            self.dlg.ui.originText.setText( txt )
-            self.dlg.ui.originSelectBtn.setEnabled(True)
-        else:
-            self.destinationPoint = p
-            self.dlg.ui.destinationText.setText( txt )
-            self.dlg.ui.destinationSelectBtn.setEnabled(True)
-        QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onSelectionChanged)
-
-    def onOriginSelect(self):
-        self.selectionType = 'origin'
-        self.dlg.ui.originSelectBtn.setEnabled(False)
-        QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onSelectionChanged)
-        self.canvas.setMapTool(self.clickTool)
-
-    def onDestinationSelect(self):
-        self.selectionType = 'destination'
-        self.dlg.ui.destinationSelectBtn.setEnabled(False)
-        QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onSelectionChanged)
-        self.canvas.setMapTool(self.clickTool)
-        
     def onCompute(self):
-        [ox,oy] = self.dlg.ui.originText.text().split(',')
-        [dx,dy] = self.dlg.ui.destinationText.text().split(',')
+        coords = self.dlg.get_coordinates()
+        [ox, oy] = coords[0]
+        [dx, dy] = coords[-1]
         
-#        ox = self.originPoint.x()
-#        oy = self.originPoint.y()
-#        dx = self.destinationPoint.x()
-#        dy = self.destinationPoint.y()
         criteria = self.dlg.selected_criteria()
 
         r = [ 'request',
