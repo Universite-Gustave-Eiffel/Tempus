@@ -24,14 +24,30 @@ namespace Tempus
     /// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
     struct MultimodalGraph
     {
+	///
+	/// The road graph
 	Road::Graph road;
 	
+	///
+	/// Public transport networks
 	typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
 	NetworkMap network_map;
 
-	// network_id -> PublicTransport::Graph
+	///
+	/// Public transports graphs
+	/// network_id -> PublicTransport::Graph
 	typedef std::map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
 	PublicTransportGraphList public_transports;
+
+	///
+	/// Variables used to store constants.
+	/// For the sake of readability, always use them with their prefixing namespace
+	RoadTypes road_types;
+	TransportTypes transport_types;
+	
+	typedef std::map<std::string, Tempus::db_id_t> NameToId;
+	NameToId road_type_from_name;
+	NameToId transport_type_from_name;
     };
 
     template <class G>

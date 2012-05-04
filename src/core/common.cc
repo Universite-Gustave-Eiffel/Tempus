@@ -2,13 +2,6 @@
 
 namespace Tempus
 {
-    ///
-    /// Declaration of global arrays
-    RoadTypes road_types;
-    TransportTypes transport_types;
-    NameToId road_type_from_name;
-    NameToId transport_type_from_name;
-
     ProgressionCallback null_progression_callback;
 
     void TextProgression::operator()( float percent, bool finished )

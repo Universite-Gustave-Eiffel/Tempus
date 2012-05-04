@@ -54,7 +54,7 @@ namespace Tempus
 	TextProgression progression(50);
 	std::cout << "Loading graph from database: " << std::endl;
 	std::cout << "Importing constants ... " << std::endl;
-	importer.import_constants();
+	importer.import_constants( graph_ );
 	std::cout << "Importing graph ... " << std::endl;
 	importer.import_graph( graph_, progression );
 
