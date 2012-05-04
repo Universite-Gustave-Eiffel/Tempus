@@ -126,22 +126,10 @@ namespace Tempus
     /// Transport types constants.
     typedef std::map<db_id_t, TransportType> TransportTypes;
 
-    typedef std::map<std::string, db_id_t> NameToId;
-
     ///
     /// Type used to model costs. Either in a Step or as an optimizing criterion.
     /// This is a map to a double value and thus is user extensible.
     typedef std::map<int, double> Costs;
-
-    ///
-    /// Global variables used to store constants. Will be filled by plugins.
-    /// For the sake of readability, always use them with their prefixing namespace
-    extern RoadTypes road_types;
-    extern TransportTypes transport_types;
-    ///
-    /// Maps of type names to type id
-    extern NameToId road_type_from_name;
-    extern NameToId transport_type_from_name;
 
     ///
     /// Default common cost identifiers

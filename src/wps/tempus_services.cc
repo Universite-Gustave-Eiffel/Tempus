@@ -150,6 +150,108 @@ namespace WPS
 	};
     };
 
+    class ConstantListService : public Service
+    {
+    public:
+	ConstantListService() : Service("constant_list")
+	{
+	    add_output_parameter( "road_types",
+				  "<xs:complexType name=\"RoadType\">\n"
+				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
+				  "</xs:complexType>\n"
+				  "<xs:element name=\"road_types\">\n"
+				  "  <xs:complexType>\n"
+				  "    <xs:sequence>\n"
+				  "      <xs:element name=\"road_type\" type=\"RoadType\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				  "    </xs:sequence>\n"
+				  "  </xs:complexType>\n"
+				  "</xs:element>\n"
+				  );
+	    add_output_parameter( "transport_types",
+				  "<xs:complexType name=\"TransportType\">\n"
+				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
+				  "  <xs:attribute name=\"parent_id\" type=\"xs:long\"/>\n"
+				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+				  "  <xs:attribute name=\"need_parking\" type=\"xs:int\"/>\n"
+				  "  <xs:attribute name=\"need_station\" type=\"xs:int\"/>\n"
+				  "  <xs:attribute name=\"need_return\" type=\"xs:int\"/>\n"
+				  "</xs:complexType>\n"
+				  "<xs:element name=\"transport_types\">\n"
+				  "  <xs:complexType>\n"
+				  "    <xs:sequence>\n"
+				  "      <xs:element name=\"transport_type\" type=\"TransportType\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				  "    </xs:sequence>\n"
+				  "  </xs:complexType>\n"
+				  "</xs:element>\n"
+				  );
+	    add_output_parameter( "transport_networks",
+				  "<xs:complexType name=\"TransportNetwork\">\n"
+				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
+				  "</xs:complexType>\n"
+				  "<xs:element name=\"transport_networks\">\n"
+				  "  <xs:complexType>\n"
+				  "    <xs:sequence>\n"
+				  "      <xs:element name=\"transport_network\" type=\"TransportNetwork\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				  "    </xs:sequence>\n"
+				  "  </xs:complexType>\n"
+				  "</xs:element>\n"
+				  );
+	};
+	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	{
+	    output_parameters_.clear();
+	    
+	    Tempus::MultimodalGraph& graph = Application::instance()->graph();
+
+	    {
+		xmlNode* root_node = XML::new_node( "road_types" );
+		Tempus::RoadTypes::iterator it;
+		for ( it = graph.road_types.begin(); it != graph.road_types.end(); it++ )
+		{
+		    xmlNode* node = XML::new_node( "road_type" );
+		    XML::new_prop( node, "id", it->first );
+		    XML::new_prop( node, "name", it->second.name );
+		    XML::add_child( root_node, node );
+		}
+		output_parameters_[ "road_types" ] = root_node;
+	    }
+
+	    {
+		xmlNode* root_node = XML::new_node( "transport_types" );
+		Tempus::TransportTypes::iterator it;
+		for ( it = graph.transport_types.begin(); it != graph.transport_types.end(); it++ )
+		{
+		    xmlNode* node = XML::new_node( "transport_type" );
+		    XML::new_prop( node, "id", it->first );
+		    XML::new_prop( node, "parent_id", it->second.parent_id );
+		    XML::new_prop( node, "name", it->second.name );
+		    XML::new_prop( node, "need_parking", it->second.need_parking );
+		    XML::new_prop( node, "need_station", it->second.need_station );
+		    XML::new_prop( node, "need_return", it->second.need_return );
+		    XML::add_child( root_node, node );
+		}
+		output_parameters_[ "transport_types" ] = root_node;
+	    }
+
+	    {
+		xmlNode* root_node = XML::new_node( "transport_networks" );
+		MultimodalGraph::NetworkMap::iterator it;
+		for ( it = graph.network_map.begin(); it != graph.network_map.end(); it++ )
+		{
+		    xmlNode* node = XML::new_node( "transport_network" );
+		    XML::new_prop( node, "id", it->first );
+		    XML::new_prop( node, "name", it->second.name );
+		    XML::add_child( root_node, node );
+		}
+		output_parameters_[ "transport_networks" ] = root_node;
+	    }
+
+	    return output_parameters_;
+	};
+    };
+
     class PluginService : public Service
     {
     public:
@@ -397,17 +499,30 @@ namespace WPS
 				 "    <xs:sequence>\n"
 				 "      <xs:element name=\"origin\" type=\"Point\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				 "      <xs:element name=\"departure_constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"parking_location_id\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\"/>\n"
+				 "      <xs:element name=\"parking_location\" type=\"Point\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
+				 "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"unbounded\"/>\n"
 				 "      <xs:element name=\"allowed_transport_types\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"allowed_network\" type=\"xs:long\" minOccurs=\"0\"/>\n"
-				 "      <xs:element name=\"step\" type=\"Step\" minOccurs=\"1\"/>\n"
+				 "      <xs:element name=\"allowed_network\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				 "      <xs:element name=\"step\" type=\"Step\" minOccurs=\"1\" maxOccurs=\"unbounded\"/>\n"
 				 "    </xs:sequence>\n"
 				 "  </xs:complexType>\n"
 				 "<xs:element name=\"request\" type=\"Request\"/>\n"
 				 );
 	}
-	
+
+	void parse_constraint( xmlNode* node, Request::TimeConstraint& constraint )
+	{
+	    const char * type_str = (const char*)xmlGetProp( node, (const xmlChar*)"type" );
+	    constraint.type = boost::lexical_cast<int>( type_str );
+
+	    const char* date_time_str = (const char*)xmlGetProp( node, (const xmlChar*)"date_time" );
+	    int day, month, year, hour, min;
+	    sscanf(date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
+	    constraint.date_time = boost::posix_time::ptime(boost::gregorian::date(year, month, day),
+							    boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );
+
+	}
+
 	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
 	    // Ensure XML is OK
@@ -420,46 +535,51 @@ namespace WPS
 	    
 	    // now extract actual data
 	    xmlNode* request_node = input_parameter_map["request"];
-	    cout << "request_node " << request_node->name << endl;
 	    xmlNode* field = XML::get_next_nontext( request_node->children );
 	    
 	    Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 	    get_xml_point( field, x, y);
 	    Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
-	    cout << "origin_id = " << origin_id << endl;
 	    if ( origin_id == 0 )
 	    {
 		throw std::invalid_argument( "Cannot find origin_id" );
 	    }
 	    this->origin = vertex_from_id( origin_id, road_graph );
-		cout << "origin = " << this->origin << endl;
-		if ( this->origin == Road::Vertex() )
-		{
-			throw std::invalid_argument( "Cannot find origin vertex" );
-		}
+	    if ( this->origin == Road::Vertex() )
+	    {
+		throw std::invalid_argument( "Cannot find origin vertex" );
+	    }
 	    
 	    // departure_constraint
-	    // TODO
 	    field = XML::get_next_nontext( field->next );
+	    parse_constraint( field, this->departure_constraint );
 	    
 	    // parking location id, optional
 	    xmlNode *n = XML::get_next_nontext( field->next );
-	    if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location_id" ) )
+	    if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
 	    {
-		Tempus::db_id_t parking_loc_id = boost::lexical_cast<Tempus::db_id_t>( n->children->content );
-		this->parking_location = vertex_from_id( parking_loc_id, road_graph );
+		get_xml_point( n, x, y );
+		Tempus::db_id_t parking_id = road_vertex_id_from_coordinates( db, x, y );
+		if ( parking_id == 0 )
+		{
+		    throw std::invalid_argument( "Cannot find parking_id" );
+		}
+		this->parking_location = vertex_from_id( parking_id, road_graph );
 		field = n;
-		cout << "parking_location " << parking_location << endl;
 	    }
 	    
 	    // optimizing criteria
-	    field = XML::get_next_nontext( field->next );	
+	    field = XML::get_next_nontext( field->next );
 	    this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+	    field = XML::get_next_nontext( field->next );	
+	    while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
+	    {
+		this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+		field = XML::get_next_nontext( field->next );	
+	    }
 	    
 	    // allowed transport types
-	    field = XML::get_next_nontext( field->next );	
 	    this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
-	    cout << "allowed transport types " << allowed_transport_types << endl;
 	
 	    // allowed networks, 1 .. N
 	    field = XML::get_next_nontext( field->next );
@@ -468,14 +588,12 @@ namespace WPS
 		Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
 		this->allowed_networks.push_back( network_id );
 		field = XML::get_next_nontext( field->next );
-		cout << "allowed network " << allowed_networks.size() << endl;
 	    }
 	
 	    // steps, 1 .. N
 	    steps.clear();
 	    while ( field )
 	    {
-		cout << "field " << field->name << endl;
 		this->steps.resize( steps.size() + 1 );
 		
 		xmlNode *subfield;
@@ -483,7 +601,6 @@ namespace WPS
 		subfield = XML::get_next_nontext( field->children );
 		get_xml_point( subfield, x, y);
 		Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );
-		cout << "destination id = " << destination_id << endl;
 		if ( destination_id == 0 )
 		{
 		    throw std::invalid_argument( "Cannot find origin_id" );
@@ -491,14 +608,13 @@ namespace WPS
 		this->steps.back().destination = vertex_from_id( destination_id, road_graph );
 
 		// constraint
-		// TODO
 		subfield = XML::get_next_nontext( subfield->next );
+		parse_constraint( subfield, this->steps.back().constraint );
 	    
 		// private_vehicule_at_destination
 		subfield = XML::get_next_nontext( subfield->next );
 		string val = (const char*)subfield->children->content;
 		this->steps.back().private_vehicule_at_destination = ( val == "true" );
-		cout << "pvat " << steps.back().private_vehicule_at_destination << endl;
 	    
 		// next step
 		field = XML::get_next_nontext( field->next ); 
@@ -551,19 +667,17 @@ namespace WPS
 				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"RoadStep\">\n"
 				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"road_section\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"road_direction\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"distance_km\" type=\"xs:double\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"road\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"end_movement\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"PublicTransportStep\">\n"
 				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"network_id\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"departure_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"arrival_stop\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"trip\" type=\"DbId\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"network\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"departure_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"arrival_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"trip\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
@@ -630,33 +744,16 @@ namespace WPS
 		{
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
 		    step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
-		    xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road_section" );
-		    Tempus::db_id_t rs_id;
+		    xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road" );
+		    string road_name = "Unknown road";
 		    if ( edge_exists(step->road_section, road_graph) )
-			rs_id = road_graph[ step->road_section].db_id;
-		    else
-			rs_id = 0;
-		    xmlNewProp( rs_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( rs_id )).c_str() );
+			road_name = road_graph[ step->road_section].road_name;
+		    xmlAddChild( rs_node, xmlNewText((const xmlChar*)road_name.c_str()) );
 		    
-		    Tempus::db_id_t rd_id;
-		    if ( edge_exists(step->road_direction, road_graph) )
-			rd_id = road_graph[ step->road_direction].db_id;
-		    else
-			rd_id = 0;
-		    xmlNode* rd_node = xmlNewNode( NULL, (const xmlChar*)"road_direction" );
-		    xmlNewProp( rd_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( rd_id )).c_str() );
-		    xmlNode* distance_node = xmlNewNode( NULL, (const xmlChar*)"distance_km" );
-		    xmlAddChild( distance_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->distance_km )).c_str()) );
 		    xmlNode* end_movement_node = xmlNewNode( NULL, (const xmlChar*)"end_movement" );
 		    xmlAddChild( end_movement_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->end_movement )).c_str()) );
 		    
 		    xmlAddChild( step_node, rs_node );
-		    xmlAddChild( step_node, rd_node );
-		    xmlAddChild( step_node, distance_node );
 		    xmlAddChild( step_node, end_movement_node );
 		}
 		else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
@@ -671,34 +768,31 @@ namespace WPS
 
 		    step_node = xmlNewNode( NULL, (const xmlChar*)"public_transport_step" );
 		    
-		    xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network_id" );
-		    xmlNewProp( network_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>(step->network_id).c_str()) );
+		    xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network" );
+		    xmlAddChild( network_node, xmlNewText((const xmlChar*)(graph_.network_map[ step->network_id ].name.c_str())) );
 
 		    xmlNode* departure_node = xmlNewNode( NULL, (const xmlChar*)"departure_stop" );
 		    xmlNode* arrival_node = xmlNewNode( NULL, (const xmlChar*)"arrival_stop" );
-		    Tempus::db_id_t d_id = 0;
+		    string departure_str;
 		    cout << "step->departure_stop = " << step->departure_stop << endl;
 		    if ( vertex_exists( step->departure_stop, pt_graph ) )
 		    {
-			d_id = pt_graph[ step->departure_stop ].db_id;
+			departure_str = pt_graph[ step->departure_stop ].name;
 		    }
-		    Tempus::db_id_t a_id = 0;
+		    string arrival_str;
 		    if ( vertex_exists( step->arrival_stop, pt_graph ) )
 		    {
-			a_id = pt_graph[ step->arrival_stop ].db_id;
+			arrival_str = pt_graph[ step->arrival_stop ].name;
 		    }
-		    xmlNewProp( departure_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( d_id )).c_str() );
-		    xmlNewProp( arrival_node,
-				(const xmlChar*)"id",
-				(const xmlChar*)(boost::lexical_cast<string>( a_id )).c_str() );
+		    xmlAddChild( departure_node, xmlNewText((const xmlChar*)(departure_str.c_str())) );
+		    xmlAddChild( arrival_node, xmlNewText((const xmlChar*)(arrival_str.c_str())) );
+
+		    xmlNode* trip_node = xmlNewNode( NULL, (const xmlChar*)"trip" );
+		    xmlAddChild( trip_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->trip_id ).c_str())) );
 		    xmlAddChild( step_node, network_node );
 		    xmlAddChild( step_node, departure_node );
 		    xmlAddChild( step_node, arrival_node );
-		    xmlAddChild( step_node, xmlNewNode( NULL, (const xmlChar*)"trip" ) );
+		    xmlAddChild( step_node, trip_node );
 		}
 
 		for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
@@ -748,5 +842,6 @@ namespace WPS
     static ProcessService process_service_;
     static ResultService result_service_;
     static CleanupService cleanup_service_;
+    static ConstantListService constant_list_service;
 
 }; // WPS namespace

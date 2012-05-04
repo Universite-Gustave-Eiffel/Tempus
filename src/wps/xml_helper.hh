@@ -14,6 +14,8 @@
 
 #include <string>
 
+#include <boost/lexical_cast.hpp>
+
 ///
 /// Helper class designed to hold already-allocated pointers and call a deletion function
 /// when the object is out of scope.
@@ -78,6 +80,20 @@ public:
     ///
     /// Throws a std::invalid_argument if the given node is not validated against the schema
     static void ensure_validity( xmlNode* node, const std::string& schema_str );
+
+    static xmlNode* new_node( const std::string& name )
+    {
+	return xmlNewNode( NULL, (const xmlChar*)name.c_str() );
+    }
+    template <class T>
+    static void new_prop( xmlNode* node, const std::string& key, T value )
+    {
+	xmlNewProp( node, (const xmlChar*)(key.c_str()), (const xmlChar*)( boost::lexical_cast<std::string>( value ).c_str() ) );
+    }
+    static void add_child( xmlNode* node, xmlNode* child )
+    {
+	xmlAddChild( node, child );
+    }
 
     ///
     /// Get the next non text node

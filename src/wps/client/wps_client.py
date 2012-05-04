@@ -89,7 +89,12 @@ class HttpCgiConnection:
         self.host = host
         self.url = url
 
+    def reset(self):
+        self.conn.close()
+        self.conn.connect()
+ 
     def request( self, method, content ):
+        self.reset()
         headers = {"Content-type" : "text/xml" }
 
         headers = {}
@@ -144,6 +149,7 @@ class WPSClient:
         if status != 200:
             raise RuntimeError( self, msg )
 
+#        print msg
         xml = ET.XML( msg )
         outputs = xml[2] # ProcessOutputs
         outs = {}

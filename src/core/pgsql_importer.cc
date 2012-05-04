@@ -22,13 +22,13 @@ namespace Tempus
 	return connection_.exec( query_str );
     }
 
-    void PQImporter::import_constants( ProgressionCallback& progression )
+    void PQImporter::import_constants( MultimodalGraph& graph, ProgressionCallback& progression )
     {
 	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
-	Tempus::transport_types.clear();
-	Tempus::transport_type_from_name.clear();
-	Tempus::road_types.clear();
-	Tempus::road_type_from_name.clear();
+	graph.transport_types.clear();
+	graph.transport_type_from_name.clear();
+	graph.road_types.clear();
+	graph.road_type_from_name.clear();
 
 	for ( size_t i = 0; i < res.size(); i++ )
 	{
@@ -36,7 +36,7 @@ namespace Tempus
 	    res[i][0] >> db_id;
 	    BOOST_ASSERT( db_id > 0 );
 	    // populate the global variable
-	    TransportType& t = Tempus::transport_types[ db_id ];
+	    TransportType& t = graph.transport_types[ db_id ];
 	    t.db_id = db_id;
 	    // default parent_id == null
 	    t.parent_id = 0;
@@ -47,7 +47,7 @@ namespace Tempus
 	    res[i][5] >> t.need_return;
 
 	    // assign the name <-> id map
-	    Tempus::transport_type_from_name[ t.name ] = t.db_id;
+	    graph.transport_type_from_name[ t.name ] = t.db_id;
 	    
 	    progression( static_cast<float>((i + 0.) / res.size() / 2.0) );
 	}
@@ -59,11 +59,11 @@ namespace Tempus
 	    res[i][0] >> db_id;
 	    BOOST_ASSERT( db_id > 0 );
 	    // populate the global variable
-	    RoadType& t = Tempus::road_types[ db_id ];
+	    RoadType& t = graph.road_types[ db_id ];
 	    t.db_id = db_id;
 	    res[i][1] >> t.name;
 	    // assign the name <-> id map
-	    Tempus::road_type_from_name[ t.name ] = t.db_id;
+	    graph.road_type_from_name[ t.name ] = t.db_id;
 	    
 	    progression( static_cast<float>(((i + 0.) / res.size() / 2.0) + 0.5));
 	}

@@ -23,6 +23,7 @@ else (WIN32)
 	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
 	set( PQ_LIBS pq dl boost_program_options )
 	set (LIBTEMPUS tempus )
+	add_definitions( -Wl,-E )
 endif (WIN32)
 
 include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )

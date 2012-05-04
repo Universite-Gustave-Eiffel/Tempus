@@ -122,7 +122,7 @@ namespace Tempus
 	    return 0;
 	}
 #else
-	void *h = dlopen( complete_dll_name.c_str(), RTLD_NOW );
+	void *h = dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL );
 	if ( !h )
 	{
 	    std::cerr << dlerror() << std::endl;

@@ -95,7 +95,7 @@ void PgImporterTest::tearDown()
 
 void PgImporterTest::testConsistency()
 {
-    importer_->import_constants();
+    importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 
     // get the number of vertices in the graph
