@@ -21,7 +21,7 @@ namespace Tempus
     /// Type used inside the DB to store IDs.
     /// O means NULL.
     ///
-    typedef long int db_id_t;
+    typedef unsigned long long int db_id_t;
 
     struct ConsistentClass
     {
@@ -43,14 +43,14 @@ namespace Tempus
 
 #ifdef _DEBUG
     ///
-    /// EXPECT is used in check_concistency_() methods
+    /// EXPECT is used in check_consistency_() methods
     #define EXPECT( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Assertion " #expr " failed" << std::endl; return false; }}
     ///
     /// Pre conditions, will abort if the condition is false
-    #define REQUIRE( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Precondition " #expr " is false" << std::endl; std::abort(); }}
+    #define REQUIRE( expr ) {if (!(expr)) { std::string e_; e_ += __FILE__; e_ += ":"; e_ += __LINE__; e_ += " Precondition " #expr " is false"; throw std::runtime_error( e_ ); }}
     ///
     /// Post conditions, will abort if the condition is false
-    #define ENSURE( expr ) {if (!(expr)) { std::cerr << __FILE__ << ":" << __LINE__ << " Postcondition " #expr " is false" << std::endl; std::abort(); }}
+    #define ENSURE( expr ) {if (!(expr)) { std::string e_; e_ += __FILE__; e_ += ":"; e_ += __LINE__; e_ += " Postcondition " #expr " is false"; throw std::runtime_error( e_ ); }}
 #else
 #define EXPECT( expr ) ((void)0)
 #define REQUIRE( expr ) ((void)0)
@@ -88,6 +88,13 @@ namespace Tempus
     };
 
     ///
+    /// 2D Points
+    struct Point2D
+    {
+	double x,y;
+    };
+
+    ///
     /// Road types constants.
     typedef std::map<db_id_t, RoadType> RoadTypes;
 
@@ -119,22 +126,10 @@ namespace Tempus
     /// Transport types constants.
     typedef std::map<db_id_t, TransportType> TransportTypes;
 
-    typedef std::map<std::string, db_id_t> NameToId;
-
     ///
     /// Type used to model costs. Either in a Step or as an optimizing criterion.
     /// This is a map to a double value and thus is user extensible.
     typedef std::map<int, double> Costs;
-
-    ///
-    /// Global variables used to store constants. Will be filled by plugins.
-    /// For the sake of readability, always use them with their prefixing namespace
-    extern RoadTypes road_types;
-    extern TransportTypes transport_types;
-    ///
-    /// Maps of type names to type id
-    extern NameToId road_type_from_name;
-    extern NameToId transport_type_from_name;
 
     ///
     /// Default common cost identifiers
@@ -146,6 +141,34 @@ namespace Tempus
 	CostCarbon,
 	CostCalories,
 	CostNumberOfChanges
+    };
+
+    ///
+    /// Base class in charge of progression callback.
+    class ProgressionCallback
+    {
+    public:
+	virtual void operator()( float, bool = false )
+	{
+	    // Default : do nothing
+	}
+    };
+
+    extern ProgressionCallback null_progression_callback;
+
+
+    ///
+    /// Simple progession processing: text based progression bar.
+    struct TextProgression : public Tempus::ProgressionCallback
+    {
+    public:
+	TextProgression( int N = 50 ) : N_(N), old_N_(-1)
+	{
+	}
+	virtual void operator()( float percent, bool finished );
+    protected:
+	int N_;
+	int old_N_;
     };
 
 }; // Tempus namespace

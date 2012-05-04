@@ -1,3 +1,8 @@
+// Tempus core main
+// (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
+// MIT License
+
+#include <boost/program_options.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <iostream>
 
@@ -9,40 +14,111 @@
 using namespace std;
 using namespace Tempus;
 
-int main()
+namespace po = boost::program_options;
+
+int main( int argc, char* argv[])
 {
+    // default db options
+    string db_options = "dbname=tempus";
+    string plugin_name = "sample_road_plugin";
+    Tempus::db_id_t origin_id = 152500201343750;
+    Tempus::db_id_t destination_id = 152500201357468;
+
+    // parse command line arguments
+    po::options_description desc("Allowed options");
+    desc.add_options()
+	("help", "produce help message")
+	("db", po::value<string>(), "set database connection options")
+	("plugin", po::value<string>(), "set the plugin name to launch")
+	("origin", po::value<Tempus::db_id_t>(), "set the origin vertex id")
+	("destination", po::value<Tempus::db_id_t>(), "set the destination vertex id")
+	;
+    
+    po::variables_map vm;
+    po::store(po::parse_command_line( argc, argv, desc ), vm);
+    po::notify(vm);
+    
+    if ( vm.count("help") )
+    {
+	cout << desc << "\n";
+	return 1;
+    }
+
+    if ( vm.count("db") )
+    {
+	db_options = vm["db"].as<string>();
+    }
+    if ( vm.count("plugin") )
+    {
+	plugin_name = vm["plugin"].as<string>();
+    }
+    if ( vm.count("origin") )
+    {
+	origin_id = vm["origin"].as<Tempus::db_id_t>();
+    }
+    if ( vm.count("destination") )
+    {
+	destination_id = vm["destination"].as<Tempus::db_id_t>();
+    }
+
+    Tempus::Application* app = Tempus::Application::instance();
+    app->connect( db_options );
     ///
     /// Plugins
     try
     {
-	Plugin* plugin = Tempus::Plugin::load( "dummy_plugin" );
+	Plugin* plugin = app->load_plugin( plugin_name );
 	
-	cout << "[plugin " << plugin->get_name() << "]" << endl;
+	cout << "[plugin " << plugin->name() << "]" << endl;
 	
 	cout << endl << ">> pre_build" << endl;
-	plugin->pre_build();
+	app->pre_build_graph();
 	cout << endl << ">> build" << endl;
-	plugin->build();
-	cout << endl << ">> post_build" << endl;
-	plugin->post_build();
+	app->build_graph();
 
 	//
 	// Build the user request
-	MultimodalGraph* graph = plugin->get_graph();
-	Road::Graph& road_graph = graph->road;
+	MultimodalGraph& graph = app->graph();
+	Road::Graph& road_graph = graph.road;
 
 	Road::VertexIterator vb, ve;
 	boost::tie( vb, ve) = boost::vertices( road_graph );
 	ve--;
 
-	// go from the first road node, to the last one
 	Request req;
-	req.allowed_transport_types = Tempus::transport_type_from_name[ "Tramway" ];
-	// allow only one transport network
-	req.allowed_networks.push_back( 1 );
-	req.origin = *vb;
 	Request::Step step;
-	step.destination = *ve;
+	Road::VertexIterator vi, vi_end;
+	bool found_origin = false;
+	bool found_destination = false;
+	for ( boost::tie(vi, vi_end) = boost::vertices(road_graph); vi != vi_end; vi++ )
+	{
+	    if (road_graph[*vi].db_id == origin_id )
+	    {
+		req.origin = *vi;
+		found_origin = true;
+		break;
+	    }
+	}
+	if ( !found_origin )
+	{
+	    cerr << "Cannot find origin vertex ID " << origin_id << endl;
+	    return 1;
+	}
+	for ( boost::tie(vi, vi_end) = boost::vertices(road_graph); vi != vi_end; vi++ )
+	{
+	    if (road_graph[*vi].db_id == destination_id )
+	    {
+		step.destination = *vi;
+		found_destination = true;
+		break;
+	    }
+	}
+	if ( !found_destination )
+	{
+	    cerr << "Cannot find destination vertex ID " << destination_id << endl;
+	    return 1;
+	}
+
 	req.steps.push_back( step );
 
 	// the only optimizing criterion
@@ -59,7 +135,7 @@ int main()
 	    return 1;
 	}
 	cout << endl << ">> process" << endl;
-	plugin->process( req );
+	plugin->process();
 	cout << endl << ">> post_process" << endl;
 	plugin->post_process();
 

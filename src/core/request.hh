@@ -73,7 +73,7 @@ namespace Tempus
 
 	///
 	/// Shortcut to get the final destination (the last step)
-	Road::Vertex get_destination() { return steps.back().destination; }
+	Road::Vertex destination() { return steps.back().destination; }
 	
 	///
 	/// Criteria to optimize. The list is ordered by criterion priority.

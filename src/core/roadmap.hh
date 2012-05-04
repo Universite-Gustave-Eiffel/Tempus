@@ -20,9 +20,29 @@ namespace Tempus
     {
     public:
 	///
-	/// A Step that occurs on the road, either by a pedestrian or a private vehicle
-	struct RoadStep
+	/// A Step is a part of a route, where the transport type is constant
+	/// This a generic class
+	struct Step
 	{
+	    enum StepType
+	    {
+		VertexStep = 0,
+		RoadStep,
+		PublicTransportStep,
+	    };
+	    StepType step_type;
+
+	    Costs costs;
+
+	    Step( StepType type ) : step_type( type ) {}
+	};
+
+	///
+	/// A Step that occurs on the road, either by a pedestrian or a private vehicle
+	struct RoadStep : public Step
+	{
+	    RoadStep() : Step( Step::RoadStep ) {}
+
 	    ///
 	    /// The road section where to start from
 	    Road::Edge road_section;
@@ -36,14 +56,15 @@ namespace Tempus
 	    /// The movement that is to be done at the end of the section
 	    enum EndMovement
 	    {
+		GoAhead,
 		TurnLeft,
 		TurnRight,
-		GoAhead,
 		UTurn,
+		RoundAboutEnter,
 		FirstExit, ///< in a roundabout
 		SecondExit,
 		ThirdExit,
-		ForthExit,
+		FourthExit,
 		FifthExit,
 		SixthExit,
 		YouAreArrived = 999
@@ -53,33 +74,35 @@ namespace Tempus
 
 	///
 	/// A Step made with a public transport
-	struct PublicTransportStep
+	struct PublicTransportStep : public Step
 	{
+	    PublicTransportStep() : Step( Step::PublicTransportStep ) {}
+
+	    db_id_t network_id;
 	    PublicTransport::Vertex departure_stop;
 	    PublicTransport::Vertex arrival_stop;
 	    db_id_t trip_id; ///< used to indicate the direction
 	};
 
 	///
-	/// A Step is a part of a route, where the transport type is constant
-	/// This a generic class
-	struct Step
-	{
-	    db_id_t /* TransportType */ transport_type;
-	    Costs costs;
-
-	    ///
-	    /// It is either a step made of road steps or public transport steps.
-	    /// TODO: if it is too memory-demanding, consider using derived classes (Step <= RoadStep and Step <= PublicTransportStep)
-	    RoadStep road;
-	    PublicTransportStep pt;
-	};
-
-	///
 	/// A Roadmap is a list of Step augmented with some total costs.
-	typedef std::vector<Step> StepList;
+	/// Ownership : pointers are allocated by the caller but freed on Roadmap destruction
+	typedef std::vector<Step*> StepList;
 	StepList steps;
 	Costs total_costs;
+
+	///
+	/// Optional overview path, which is designed for display purposes, and may be simplified
+	typedef std::vector<Point2D> PointList;
+	PointList overview_path;
+
+	virtual ~Roadmap()
+	{
+	    for ( StepList::iterator it = steps.begin(); it != steps.end(); it++ )
+	    {
+		delete *it;
+	    }
+	}
     };
 
     ///
