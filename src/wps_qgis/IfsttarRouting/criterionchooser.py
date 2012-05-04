@@ -1,5 +1,6 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+import config
 
 class CriterionChooser( QWidget ):
 
@@ -23,10 +24,10 @@ class CriterionChooser( QWidget ):
 
         self.btn = QToolButton( self )
         if first:
-            self.btn.setIcon( QIcon.fromTheme("add") )
+            self.btn.setIcon( QIcon( config.DATA_DIR + "/add.png" ) )
             QObject.connect( self.btn, SIGNAL("clicked()"), self.onAdd )
         else:
-            self.btn.setIcon( QIcon.fromTheme("remove") )
+            self.btn.setIcon( QIcon( config.DATA_DIR + "/remove.png" ) )
             QObject.connect( self.btn, SIGNAL("clicked()"), self.onRemove )
 
         self.layout.addWidget( self.label )

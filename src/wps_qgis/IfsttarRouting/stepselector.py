@@ -39,13 +39,13 @@ class StepSelector( QFrame ):
 
         if name == "Destination":
             self.plusBtn = QToolButton()
-            self.plusBtn.setIcon( QIcon.fromTheme("add") )
+            self.plusBtn.setIcon( QIcon( config.DATA_DIR + "/add.png" ) )
             self.hlayout.addWidget( self.plusBtn )
             QObject.connect( self.plusBtn, SIGNAL("clicked()"), self.onAdd )
         else:
             if name != "Origin":
                 self.minusBtn = QToolButton()
-                self.minusBtn.setIcon( QIcon.fromTheme("remove") )
+                self.minusBtn.setIcon( QIcon( config.DATA_DIR + "/remove.png" ) )
                 self.hlayout.addWidget( self.minusBtn )
                 QObject.connect( self.minusBtn, SIGNAL("clicked()"), self.onRemove )
 
