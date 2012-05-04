@@ -149,7 +149,7 @@ class WPSClient:
         if status != 200:
             raise RuntimeError( self, msg )
 
-        print msg
+#        print msg
         xml = ET.XML( msg )
         outputs = xml[2] # ProcessOutputs
         outs = {}

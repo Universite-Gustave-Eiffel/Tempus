@@ -205,6 +205,18 @@ class TestWPS(unittest.TestCase):
         outputs = self.wps.execute( 'result', plugin_arg )
         self.assertEqual( len(outputs['result'][-1]), 8 )
 
+    def test_constants( self ):
+        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+        self.assert_min_state( 1 )
+
+        self.wps.execute( 'pre_build', {} )
+        self.assert_min_state( 2 )
+
+        self.wps.execute( 'build', {} )
+        self.assert_min_state( 3 )
+
+        outputs = self.wps.execute( 'constant_list', {} )
+
     def test_pt_plugin( self ):
         self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
         self.assert_min_state( 1 )

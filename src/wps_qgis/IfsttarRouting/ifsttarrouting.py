@@ -80,6 +80,8 @@ class IfsttarRouting:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
+        self.wps = None
+
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(QIcon(":/plugins/ifsttarrouting/icon.png"), \
@@ -88,11 +90,11 @@ class IfsttarRouting:
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
 
         QObject.connect(self.dlg.ui.connectBtn, SIGNAL("clicked()"), self.onConnect)
-#        QObject.connect(self.dlg.ui.originSelectBtn, SIGNAL("clicked()"), self.onOriginSelect)
-#        QObject.connect(self.dlg.ui.destinationSelectBtn, SIGNAL("clicked()"), self.onDestinationSelect)
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
         QObject.connect(self.dlg.ui.buildBtn, SIGNAL("clicked()"), self.onBuildGraphs)
+
+        QObject.connect( self.dlg.ui.pluginCombo, SIGNAL("currentIndexChanged(int)"), self.update_plugin_options )
 
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
@@ -131,7 +133,12 @@ class IfsttarRouting:
                     state_text = 'Graph built'
 
                 self.dlg.ui.stateText.setText( state_text )
-        # enable query tab only if the database if loaded
+        # enable query tab only if the database is loaded
+        if self.state >= 1:
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
+        else:
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
+
         if self.state >= 3:
             self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
         else:
@@ -164,18 +171,14 @@ class IfsttarRouting:
         self.dlg.ui.dbOptionsText.setEnabled( True )
         self.dlg.ui.dbOptionsLbl.setEnabled( True )
         self.dlg.ui.pluginCombo.setEnabled( True )
-        self.dlg.ui.pluginLbl.setEnabled( True )
         self.dlg.ui.stateLbl.setEnabled( True )
         self.dlg.ui.buildBtn.setEnabled( True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
 
     def clearLayout( self, lay ):
         # clean the widget list
         rc = lay.rowCount()
-        print "rc = ", rc
         if rc > 0:
             for row in range(0, rc):
-                print "remove", row
                 l1 = lay.itemAt( row, QFormLayout.LabelRole )
                 l2 = lay.itemAt( row, QFormLayout.FieldRole )
                 if l1 is None or l2 is None:
@@ -189,64 +192,94 @@ class IfsttarRouting:
                 w1.close()
                 w2.close()
 
-    def onTabChanged( self, tab ):
-        # options tab
-        if tab == 1:
-            plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
+    def update_plugin_options( self, plugin_idx ):
+        if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
+            return
 
+        plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
+
+        try:
+            outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            return
+        options = outputs['options']
+        
+        try:
+            outputs = self.wps.execute( 'get_options', plugin_arg )
+        except RuntimeError as e:
+            QMessageBox.warning( None, "Error", e.args[1] )
+            return
+        options_value = outputs['options']
+        
+        option_value = {}
+        for option_val in options_value:
+            option_value[ option_val.attrib['name'] ] = option_val.attrib['value']
+
+        lay = self.dlg.ui.optionsLayout
+        self.clearLayout( lay )
+
+        row = 0
+        for option in options:
+            lbl = QLabel( self.dlg )
+            name = option.attrib['name'] + ''
+            lbl.setText( name )
+            lay.setWidget( row, QFormLayout.LabelRole, lbl )
+            
+            t = int(option.attrib['type'])
+            
+            val = option_value[name]
+            # bool type
+            if t == 0:
+                widget = QCheckBox( self.dlg )
+                if val == '1':
+                    widget.setCheckState( Qt.Checked )
+                else:
+                    widget.setCheckState( Qt.Unchecked )
+                QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=name, t=t: self.onOptionChanged( name, t, checked ) )
+            else:
+                widget = QLineEdit( self.dlg )
+                if t == 1:
+                    valid = QIntValidator( widget )
+                    widget.setValidator( valid )
+                if t == 2:
+                    valid = QDoubleValidator( widget )
+                    widget.setValidator( valid )
+                widget.setText( val )
+                QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t: self.onOptionChanged( name, t, text ) )
+            lay.setWidget( row, QFormLayout.FieldRole, widget )
+            
+            row += 1
+
+    def onTabChanged( self, tab ):
+        # 'Query' tab
+        if tab == 2:
+            if self.wps is None:
+                return
             try:
-                outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
+                outputs = self.wps.execute( 'constant_list', {} )
             except RuntimeError as e:
                 QMessageBox.warning( self.dlg, "Error", e.args[1] )
                 return
-            options = outputs['options']
-
-            try:
-                outputs = self.wps.execute( 'get_options', plugin_arg )
-            except RuntimeError as e:
-                QMessageBox.warning( None, "Error", e.args[1] )
-                return
-            options_value = outputs['options']
-
-            option_value = {}
-            for option_val in options_value:
-                option_value[ option_val.attrib['name'] ] = option_val.attrib['value']
-
-            lay = self.dlg.ui.optionsLayout
-            self.clearLayout( lay )
+            row = 0
+            self.transport_type = []
+            self.dlg.ui.transportList.clear()
+            for transport_type in outputs['transport_types']:
+                idt = int(transport_type.attrib['id'])
+                self.transport_type.append(transport_type.attrib)
+                self.dlg.ui.transportList.insertItem( row, transport_type.attrib['name'] )
+                row += 1
+            self.dlg.ui.transportList.selectAll()
 
             row = 0
-            for option in options:
-                print option.attrib['name'], option.attrib['type'], option.attrib['description']
-                lbl = QLabel( self.dlg )
-                name = option.attrib['name'] + ''
-                lbl.setText( name )
-                lay.setWidget( row, QFormLayout.LabelRole, lbl )
-
-                t = int(option.attrib['type'])
-
-                val = option_value[name]
-                # bool type
-                if t == 0:
-                    widget = QCheckBox( self.dlg )
-                    if val == '1':
-                        widget.setCheckState( Qt.Checked )
-                    else:
-                        widget.setCheckState( Qt.Unchecked )
-                    QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=name, t=t: self.onOptionChanged( name, t, checked ) )
-                else:
-                    widget = QLineEdit( self.dlg )
-                    if t == 1:
-                        valid = QIntValidator( widget )
-                        widget.setValidator( valid )
-                    if t == 2:
-                        valid = QDoubleValidator( widget )
-                        widget.setValidator( valid )
-                    widget.setText( val )
-                    QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t: self.onOptionChanged( name, t, text ) )
-                lay.setWidget( row, QFormLayout.FieldRole, widget )
-
+            self.network = []
+            self.dlg.ui.networkList.clear()
+            for network in outputs['transport_networks']:
+                idt = int(network.attrib['id'])
+                self.network.append(network.attrib)
+                self.dlg.ui.networkList.insertItem( row, network.attrib['name'] )
                 row += 1
+            self.dlg.ui.networkList.selectAll()
 
     def onOptionChanged( self, option_name, option_type, val ):
         # bool
@@ -286,24 +319,48 @@ class IfsttarRouting:
     def onCompute(self):
         coords = self.dlg.get_coordinates()
         [ox, oy] = coords[0]
-        [dx, dy] = coords[-1]
         
         criteria = self.dlg.selected_criteria()
 
+        constraints = self.dlg.get_constraints()
+
+        parking = self.dlg.get_parking()
+
+        pvads = self.dlg.get_pvads()
+
+        networks = [ self.network[x] for x in self.dlg.selected_networks() ]
+        transports = [ self.transport_type[x] for x in self.dlg.selected_transports() ]
+
         r = [ 'request',
             ['origin', ['x', str(ox)], ['y', str(oy)] ],
-            ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ]]
+            ['departure_constraint', { 'type': constraints[0][0], 'date_time': constraints[0][1] } ]]
+
+        if parking != []:
+            r.append(['parking_location', ['x', parking[0]], ['y', parking[1]] ])
+
         for criterion in criteria:
             r.append(['optimizing_criterion', criterion])
 
-        r.append( ['allowed_transport_types', 11 ] )
-        r.append( ['step',
-                   [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                   [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                   [ 'private_vehicule_at_destination', 'true' ]
-                   ] )
+        allowed_transports = 0
+        for x in transports:
+            allowed_transports += int(x['id'])
 
-        print r
+        r.append( ['allowed_transport_types', allowed_transports ] )
+
+        for n in networks:
+            r.append( ['allowed_network', int(n['id']) ] )
+
+        n = len(constraints)
+        for i in range(1, n):
+            pvad = 'false'
+            if pvads[i] == True:
+                pvad = 'true'
+            r.append( ['step',
+                       [ 'destination', ['x', str(coords[i][0])], ['y', str(coords[i][1])] ],
+                       [ 'constraint', { 'type' : constraints[i][0], 'date_time': constraints[i][1] } ],
+                       [ 'private_vehicule_at_destination', pvad ]
+                       ] )
+
         plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
 
         args = plugin_arg
