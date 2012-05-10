@@ -40,6 +40,11 @@ namespace Tempus
 	PublicTransportGraphList public_transports;
 
 	///
+	/// Point of interests
+	typedef std::map<db_id_t, POI> PoiList;
+	PoiList pois;
+
+	///
 	/// Variables used to store constants.
 	/// For the sake of readability, always use them with their prefixing namespace
 	RoadTypes road_types;
