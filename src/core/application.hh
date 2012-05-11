@@ -43,14 +43,14 @@ namespace Tempus
 	void pre_build_graph();
 	void build_graph();
 
-	Tempus::MultimodalGraph& graph() { return graph_; }
+	Multimodal::Graph& graph() { return graph_; }
     protected:
 	// private constructor
 	Application() {}
 
 	Db::Connection db_;
 	std::string db_options_;
-	MultimodalGraph graph_;
+	Multimodal::Graph graph_;
 	
 	State state_;
     };

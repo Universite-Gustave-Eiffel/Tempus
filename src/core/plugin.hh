@@ -235,7 +235,7 @@ namespace Tempus
     protected:
 	///
 	/// Graph extracted from the database
-	MultimodalGraph& graph_;
+	Multimodal::Graph& graph_;
 	///
 	/// User request
 	Request request_;

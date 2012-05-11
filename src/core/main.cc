@@ -78,7 +78,7 @@ int main( int argc, char* argv[])
 
 	//
 	// Build the user request
-	MultimodalGraph& graph = app->graph();
+	Multimodal::Graph& graph = app->graph();
 	Road::Graph& road_graph = graph.road;
 
 	Road::VertexIterator vb, ve;

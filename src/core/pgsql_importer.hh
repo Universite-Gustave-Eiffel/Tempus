@@ -28,11 +28,11 @@ namespace Tempus
 
 	///
 	/// Import constants (road, transports types) into global variables.
-	void import_constants( MultimodalGraph& graph, ProgressionCallback& callback = null_progression_callback );
+	void import_constants( Multimodal::Graph& graph, ProgressionCallback& callback = null_progression_callback );
 
 	///
 	/// Import the multimodal graph
-	void import_graph( MultimodalGraph& graph, ProgressionCallback& callback = null_progression_callback ); 
+	void import_graph( Multimodal::Graph& graph, ProgressionCallback& callback = null_progression_callback ); 
 
 	///
 	/// Access to underlying connection object

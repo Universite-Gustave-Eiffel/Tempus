@@ -22,7 +22,7 @@ namespace Tempus
 	return connection_.exec( query_str );
     }
 
-    void PQImporter::import_constants( MultimodalGraph& graph, ProgressionCallback& progression )
+    void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression )
     {
 	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
 	graph.transport_types.clear();
@@ -71,7 +71,7 @@ namespace Tempus
 
     ///
     /// Function used to import the road and public transport graphs from a PostgreSQL database.
-    void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
+    void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& progression )
     {
 	Road::Graph& road_graph = graph.road;
 	road_graph.clear();
@@ -227,7 +227,7 @@ namespace Tempus
 
 	//
 	// For all public transport nodes, add a reference to it to the attached road section
-	MultimodalGraph::PublicTransportGraphList::iterator it;
+	Multimodal::Graph::PublicTransportGraphList::iterator it;
 	for ( it = graph.public_transports.begin(); it != graph.public_transports.end(); it++ )
 	{
 	    PublicTransport::Graph& g = it->second;
