@@ -513,11 +513,11 @@ namespace Tempus
 	    {
 		for ( Graph::PoiList::const_iterator it = graph_.pois.begin(); it != graph_.pois.end(); it++ )
 		{
-		    n++;
 		    if ( &it->second == v.poi )
 		    {
 			break;
 		    }
+		    n++;
 		}
 	    }
 	    return n;

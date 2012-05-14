@@ -67,9 +67,8 @@ namespace Tempus
 		}
 	    }
 
-	    Multimodal::Vertex origin, destination;
-	    origin = vertex_from_road_node_id( 19953 );
-	    destination = vertex_from_road_node_id( 22510 );
+	    Multimodal::Vertex origin( &graph_.road, request_.origin );
+	    Multimodal::Vertex destination( &graph_.road, request_.destination() );
 
 	    cout << "origin = " << origin << endl;
 	    cout << "destination = " << destination << endl;
@@ -123,6 +122,7 @@ namespace Tempus
 	    Multimodal::Vertex previous;
 	    for ( std::list<Multimodal::Vertex>::const_iterator it = path.begin(); it != path.end(); it++ )
 	    {
+		cout << *it << endl;
 		roadmap.overview_path.push_back( coordinates( *it, db_, graph_ ) );
 	    }
 

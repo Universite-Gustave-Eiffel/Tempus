@@ -2,6 +2,7 @@
 #include <string>
 
 #include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "tests.hh"
 
@@ -135,6 +136,19 @@ void PgImporterTest::testConsistency()
     }
 }
 
+Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& graph_ )
+{
+    Multimodal::VertexIterator vi, vi_end;
+    for ( boost::tie( vi, vi_end ) = vertices( graph_ ); vi != vi_end; vi++ )
+    {
+	if ( vi->type == Multimodal::Vertex::Road && graph_.road[ vi->road_vertex ].db_id == id )
+	{
+	    return *vi;
+	}
+    }
+}
+
+
 void PgImporterTest::testMultimodal()
 {
     importer_->import_constants( graph_ );
@@ -231,6 +245,17 @@ void PgImporterTest::testMultimodal()
     cout << "num_edges = " << num_edges( graph_ ) << endl;
     CPPUNIT_ASSERT_EQUAL( sum, num_edges( graph_ ) );
 
+    // test vertex index
+    Multimodal::VertexIndexProperty index = get( boost::vertex_index, graph_ );
+    for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
+    {
+	size_t idx = get( index, *vi );
+	if ( vi->type == Multimodal::Vertex::Road )
+	{
+	    CPPUNIT_ASSERT( idx < num_vertices( graph_.road ) );
+	}
+    }
+ 
     // test graph traversal
     {
 	std::map<Multimodal::Vertex, boost::default_color_type> colors;
@@ -238,6 +263,53 @@ void PgImporterTest::testMultimodal()
 				   boost::dfs_visitor<boost::null_visitor>(),
 				   boost::make_assoc_property_map( colors )
 				   );
+    }
+
+    // test dijkstra
+    {
+	size_t n = num_vertices( graph_ );
+	std::vector<boost::default_color_type> color_map( n );
+	std::vector<Multimodal::Vertex> pred_map( n );
+	std::vector<double> distance_map( n );
+	std::map< Multimodal::Edge, double > lengths;
+	
+	Multimodal::EdgeIterator ei, ei_end;
+	for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
+	{
+	    if ( ei->connection_type() == Multimodal::Edge::Road2Road )
+	    {
+		lengths[ *ei ] = 10.0;
+	    }
+	    else
+	    {
+		lengths[ *ei ] = 1.0;
+	    }
+	}
+	
+	Multimodal::Vertex origin, destination;
+	origin = vertex_from_road_node_id( 19953, graph_ );
+	destination = vertex_from_road_node_id( 22510, graph_ );
+	
+	cout << "origin = " << origin << endl;
+	cout << "destination = " << destination << endl;
+	
+	Multimodal::VertexIndexProperty vertex_index = get( boost::vertex_index, graph_ );
+	cout << "ok" << endl;
+	
+	boost::dijkstra_shortest_paths( graph_,
+					origin,
+					boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+					boost::make_iterator_property_map( distance_map.begin(), vertex_index ),
+					boost::make_assoc_property_map( lengths ),
+					vertex_index,
+					std::less<double>(),
+					boost::closed_plus<double>(),
+					std::numeric_limits<double>::max(),
+					0.0,
+					boost::dijkstra_visitor<boost::null_visitor>(),
+					boost::make_iterator_property_map( color_map.begin(), vertex_index )
+					);
+	cout << "Dijkstra OK" << endl;
     }
 }
 
