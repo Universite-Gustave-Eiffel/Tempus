@@ -357,14 +357,14 @@ namespace Tempus
 	    {
 		BOOST_ASSERT( road_it_ != road_it_end_ );
 		Road::Vertex r_target = boost::target( *road_it_, graph_->road );
-		if ( road2stop_connection_ >= 0 && road2stop_connection_ < graph_->road[ *road_it_ ].stops.size() )
+		if ( road2stop_connection_ >= 0 && (size_t)road2stop_connection_ < graph_->road[ *road_it_ ].stops.size() )
 		{
 		    size_t idx = road2stop_connection_;
 		    const PublicTransport::Graph* pt_graph = graph_->road[ *road_it_ ].stops[ idx ]->graph;
 		    PublicTransport::Vertex v = graph_->road[ *road_it_ ].stops[ idx ]->vertex;
 		    mm_target = Multimodal::Vertex( pt_graph, v );
 		}
-		else if ( road2poi_connection_ >= 0 && road2poi_connection_ < graph_->road[ *road_it_ ].pois.size() )
+		else if ( road2poi_connection_ >= 0 && (size_t)road2poi_connection_ < graph_->road[ *road_it_ ].pois.size() )
 		{
 		    size_t idx = road2poi_connection_;
 		    const POI* poi = graph_->road[ *road_it_ ].pois[ idx ];
@@ -413,11 +413,11 @@ namespace Tempus
 	    BOOST_ASSERT( graph_ != 0 );
 	    if ( source_.type == Vertex::Road )
 	    {
-		if ( road2stop_connection_ >= 0 && road2stop_connection_ < graph_->road[*road_it_].stops.size() )
+		if ( road2stop_connection_ >= 0 && (size_t)road2stop_connection_ < graph_->road[*road_it_].stops.size() )
 		{
 		    road2stop_connection_++;
 		}
-		else if ( road2poi_connection_ >= 0 && road2poi_connection_ < graph_->road[*road_it_].pois.size() )
+		else if ( road2poi_connection_ >= 0 && (size_t)road2poi_connection_ < graph_->road[*road_it_].pois.size() )
 		{
 		    road2poi_connection_++;
 		}
