@@ -143,20 +143,24 @@ void PgImporterTest::testMultimodal()
     size_t nv = 0;
     size_t n_road_vertices = 0;
     size_t n_pt_vertices = 0;
+    size_t n_pois = 0;
     Multimodal::VertexIterator vi, vi_end;
     for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
     {
 	nv++;
-	if ( vi->is_road )
+	if ( vi->type == Multimodal::Vertex::Road )
 	    n_road_vertices++;
-	else
+	else if ( vi->type == Multimodal::Vertex::PublicTransport )
 	    n_pt_vertices++;
+	else
+	    n_pois ++;
     }
 
     const PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
     cout << "nv = " << nv << endl;
     cout << "n_road_vertices = " << n_road_vertices << " num_vertices(road) = " << num_vertices( graph_.road ) << endl;
     cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt) = " << num_vertices( pt_graph ) << endl;
+    cout << "n_pois = " << n_pois << " pois.size() = " << graph_.pois.size() << endl;
     cout << "num_vertices = " << num_vertices( graph_ ) << endl;
     CPPUNIT_ASSERT_EQUAL( nv, num_vertices( graph_ ) );
 
@@ -178,6 +182,9 @@ void PgImporterTest::testMultimodal()
     size_t n_road2transport = 0;
     size_t n_transport2road = 0;
     size_t n_transport2transport = 0;
+    size_t n_road2poi = 0;
+    size_t n_poi2road = 0;
+    
     bool b;
     for ( boost::tie( ei, ei_end ) = edges( graph_ ); ( b = ei != ei_end ); ei++ )
     {
@@ -196,6 +203,12 @@ void PgImporterTest::testMultimodal()
 	case Multimodal::Edge::Transport2Transport:
 	    n_transport2transport++;
 	    break;
+	case Multimodal::Edge::Road2Poi:
+	    n_road2poi++;
+	    break;
+	case Multimodal::Edge::Poi2Road:
+	    n_poi2road++;
+	    break;
 	}
     }
 
@@ -210,6 +223,8 @@ void PgImporterTest::testMultimodal()
     cout << "n_road2road = " << n_road2road << " num_edges(road) = " << num_edges( graph_.road ) << endl;
     cout << "n_road2transport = " << n_road2transport << endl;
     cout << "n_transport2road = " << n_transport2road << endl;
+    cout << "n_road2poi = " << n_road2poi << endl;
+    cout << "n_poi2road = " << n_poi2road << endl;
     cout << "n_transport2transport = " << n_transport2transport << " num_edges(pt) = " << num_edges( pt_graph ) << endl;
     size_t sum = n_road2road + n_road2transport + n_transport2road + n_transport2transport;
     cout << "sum = " << sum << endl;

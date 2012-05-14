@@ -31,27 +31,47 @@ namespace Tempus
 	return p;
     }
 
+    Point2D coordinates( const POI* poi, Db::Connection& db )
+    {
+	string q = (boost::format( "SELECT x(geom), y(geom) FROM tempus.poi WHERE id=%1%" ) % poi->db_id).str();
+	Db::Result res = db.exec( q );
+	BOOST_ASSERT( res.size() > 0 );
+	Point2D p;
+	p.x = res[0][0].as<double>();
+	p.y = res[0][1].as<double>();
+	return p;
+    }
+
     Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph )
     {
-	if ( v.is_road )
+	if ( v.type == Multimodal::Vertex::Road )
 	{
-	    return coordinates( v.road.vertex, db, *v.road.graph );
+	    return coordinates( v.road_vertex, db, *v.road_graph );
+	}
+	else if ( v.type == Multimodal::Vertex::PublicTransport )
+	{
+	    return coordinates( v.pt_vertex, db, *v.pt_graph );
 	}
 	// else
-	return coordinates( v.pt.vertex, db, *v.pt.graph );
+	return coordinates( v.poi, db );
     }
 
     namespace Multimodal
     {
 	bool Vertex::operator==( const Vertex& v ) const
 	{
-	    if ( is_road != v.is_road )
+	    if ( type != v.type )
 		return false;
-	    if ( is_road )
+	    if ( type == Road )
 	    {
-		return road.vertex == v.road.vertex;
+		return road_graph == v.road_graph && road_vertex == v.road_vertex;
 	    }
-	    return ( pt.graph == v.pt.graph ) && ( pt.vertex == v.pt.vertex );
+	    else if (type == PublicTransport )
+	    {
+		return ( pt_graph == v.pt_graph ) && ( pt_vertex == v.pt_vertex );
+	    }
+	    // else (poi)
+	    return poi == v.poi;
 	}
 
 	bool Vertex::operator!=( const Vertex& v ) const
@@ -61,58 +81,79 @@ namespace Tempus
 	
 	bool Vertex::operator<( const Vertex& v ) const
 	{
-	    if ( is_road && !v.is_road )
-		return true;
-	    if ( !is_road && v.is_road )
-		return false;
+	    if ( type != v.type )
+		return (int)type < (int)v.type;
 	    
-	    if ( is_road ) // && v.is_road
+	    if ( type == Vertex::Road )
 	    {
-		return road.vertex < v.road.vertex;
+		if ( road_graph != v.road_graph )
+		    return road_graph < v.road_graph;
+		return road_vertex < v.road_vertex;
 	    }
-	    // else
-	    if ( pt.graph != v.pt.graph )
-		return pt.graph < v.pt.graph;
-	    return pt.vertex < v.pt.vertex;
+	    else if ( type == Vertex::PublicTransport )
+	    {
+		if ( pt_graph != v.pt_graph )
+		    return pt_graph < v.pt_graph;
+		return pt_vertex < v.pt_vertex;
+	    }
+	    // else (poi)
+	    return poi < v.poi;
 	}
 	
 	Vertex::Vertex( const Road::Graph* graph, Road::Vertex vertex )
 	{
-	    is_road = true;
-	    road.graph = graph;
-	    road.vertex = vertex;
+	    type = Road;
+	    road_graph = graph;
+	    road_vertex = vertex;
 	}
 	Vertex::Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex )
 	{
-	    is_road = false;
-	    pt.graph = graph;
-	    pt.vertex = vertex;
+	    type = PublicTransport;
+	    pt_graph = graph;
+	    pt_vertex = vertex;
+	}
+	Vertex::Vertex( const POI* poi )
+	{
+	    type = Poi;
+	    this->poi = poi;
 	}
     
 	Edge::ConnectionType Edge::connection_type() const
 	{
-	    if ( source.is_road )
+	    if ( source.type == Vertex::Road )
 	    {
-		if ( target.is_road )
+		if ( target.type == Vertex::Road )
 		{
 		    return Road2Road;
 		}
-		else
+		else if ( target.type == Vertex::PublicTransport )
 		{
 		    return Road2Transport;
 		}
+		else
+		{
+		    return Road2Poi;
+		}
 	    }
-	    else
+	    else if (source.type == Vertex::PublicTransport )
 	    {
-		if ( target.is_road )
+		if ( target.type == Vertex::Road )
 		{
 		    return Transport2Road;
 		}
-		else
+		else if (target.type == Vertex::PublicTransport )
 		{
 		    return Transport2Transport;
 		}
 	    }
+	    else
+	    {
+		if ( target.type == Vertex::Road )
+		{
+		    return Poi2Road;
+		}
+	    }
+	    return UnknownConnection;
 	}
 	
 	VertexIterator::VertexIterator( const Multimodal::Graph& graph )
@@ -121,6 +162,8 @@ namespace Tempus
 	    boost::tie( road_it_, road_it_end_ ) = boost::vertices( graph_->road );
 	    pt_graph_it_ = graph_->public_transports.begin();
 	    pt_graph_it_end_ = graph_->public_transports.end();
+	    poi_it_ = graph_->pois.begin();
+	    poi_it_end_ = graph_->pois.end();
 	    boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
 	}
 	
@@ -130,21 +173,36 @@ namespace Tempus
 	    road_it_ = road_it_end_;
 	    pt_graph_it_ = pt_graph_it_end_;
 	    pt_it_ = pt_it_end_;
+	    poi_it_ = poi_it_end_;
 	}
 	
 	Vertex& VertexIterator::dereference() const
 	{
 	    BOOST_ASSERT( graph_ != 0 );
-	    vertex_.is_road = ( road_it_ != road_it_end_ );
-	    if ( vertex_.is_road )
+	    if ( road_it_ != road_it_end_ )
 	    {
-		vertex_.road.vertex = *road_it_;
-		vertex_.road.graph = &graph_->road;
+		vertex_.type = Vertex::Road;
 	    }
 	    else
 	    {
-		vertex_.pt.graph = &(pt_graph_it_->second);
-		vertex_.pt.vertex = *pt_it_;
+		if ( pt_it_ != pt_it_end_ )
+		{
+		    vertex_.type = Vertex::PublicTransport;
+		}
+		else
+		{
+		    vertex_.type = Vertex::Poi;
+		}
+	    }
+	    if ( vertex_.type == Vertex::Road )
+	    {
+		vertex_.road_vertex = *road_it_;
+		vertex_.road_graph = &graph_->road;
+	    }
+	    else if ( vertex_.type == Vertex::PublicTransport )
+	    {
+		vertex_.pt_graph = &(pt_graph_it_->second);
+		vertex_.pt_vertex = *pt_it_;
 	    }
 	    return vertex_;
 	}
@@ -172,6 +230,12 @@ namespace Tempus
 			boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
 		    }
 		}
+
+		if ( pt_graph_it_ == pt_graph_it_end_ )
+		{
+		    if ( poi_it_ != poi_it_end_ )
+			poi_it_++;
+		}
 	    }
 	}
 
@@ -192,7 +256,11 @@ namespace Tempus
 		return false;
 	    
 	    // else, same pt graph
-	    return pt_it_ == v.pt_it_;
+	    if ( pt_graph_it_ != pt_graph_it_end_ )
+		return pt_it_ == v.pt_it_;
+
+	    // else, on poi
+	    return poi_it_ == v.poi_it_;
 	}
 	
 	EdgeIterator::EdgeIterator( const Multimodal::Graph& graph )
@@ -251,16 +319,18 @@ namespace Tempus
 	{
 	    graph_ = &graph;
 	    source_ = source;
-	    if ( source.is_road )
+	    if ( source.type == Vertex::Road )
 	    {
-		boost::tie( road_it_, road_it_end_ ) = boost::out_edges( source.road.vertex, graph_->road );
+		boost::tie( road_it_, road_it_end_ ) = boost::out_edges( source.road_vertex, graph_->road );
 	    }
-	    else
+	    else if ( source.type == Vertex::PublicTransport )
 	    {
-		boost::tie( pt_it_, pt_it_end_ ) = boost::out_edges( source.pt.vertex, *source.pt.graph );
+		boost::tie( pt_it_, pt_it_end_ ) = boost::out_edges( source.pt_vertex, *source.pt_graph );
 	    }
 	    stop2road_connection_ = 0;
 	    road2stop_connection_ = 0;
+	    road2poi_connection_ = 0;
+	    poi2road_connection_ = 0;
 	}
 
 	void OutEdgeIterator::to_end()
@@ -269,6 +339,8 @@ namespace Tempus
 	    road_it_ = road_it_end_;
 	    stop2road_connection_ = 2;
 	    road2stop_connection_ = -1;
+	    road2poi_connection_ = -1;
+	    poi2road_connection_ = 2;
 	}
 
 	Multimodal::Edge& OutEdgeIterator::dereference() const
@@ -277,7 +349,7 @@ namespace Tempus
 	    Multimodal::Vertex mm_target;
 	    edge_.source = source_;
 
-	    if ( source_.is_road )
+	    if ( source_.type == Vertex::Road )
 	    {
 		BOOST_ASSERT( road_it_ != road_it_end_ );
 		Road::Vertex r_target = boost::target( *road_it_, graph_->road );
@@ -288,15 +360,21 @@ namespace Tempus
 		    PublicTransport::Vertex v = graph_->road[ *road_it_ ].stops[ idx ]->vertex;
 		    mm_target = Multimodal::Vertex( pt_graph, v );
 		}
+		else if ( road2poi_connection_ >= 0 && road2poi_connection_ < graph_->road[ *road_it_ ].pois.size() )
+		{
+		    size_t idx = road2poi_connection_;
+		    const POI* poi = graph_->road[ *road_it_ ].pois[ idx ];
+		    mm_target = Multimodal::Vertex( poi );
+		}
 		else
 		{
 		    mm_target = Multimodal::Vertex( &graph_->road, r_target );
 		}
 	    }
-	    else
+	    else if ( source_.type == Vertex::PublicTransport )
 	    {
-		const PublicTransport::Graph* pt_graph = source_.pt.graph;
-		PublicTransport::Vertex r_source = source_.pt.vertex;
+		const PublicTransport::Graph* pt_graph = source_.pt_graph;
+		PublicTransport::Vertex r_source = source_.pt_vertex;
 		if ( stop2road_connection_ == 0 )
 		{
 		    mm_target = Multimodal::Vertex( &graph_->road, boost::source( (*pt_graph)[ r_source ].road_section, graph_->road ) );
@@ -311,6 +389,17 @@ namespace Tempus
 		    mm_target = Multimodal::Vertex( pt_graph, r_target );
 		}
 	    }
+	    else if ( source_.type == Vertex::Poi )
+	    {
+		if ( poi2road_connection_ == 0 )
+		{
+		    mm_target = Multimodal::Vertex( &graph_->road, boost::source( source_.poi->road_section, graph_->road ) );
+		}
+		else if ( poi2road_connection_ == 1 )
+		{
+		    mm_target = Multimodal::Vertex( &graph_->road, boost::target( source_.poi->road_section, graph_->road ) );
+		}		
+	    }
 	    edge_.target = mm_target;
 	    return edge_;
 	}
@@ -318,11 +407,15 @@ namespace Tempus
 	void OutEdgeIterator::increment()
 	{
 	    BOOST_ASSERT( graph_ != 0 );
-	    if ( source_.is_road )
+	    if ( source_.type == Vertex::Road )
 	    {
-		if ( road2stop_connection_ < graph_->road[*road_it_].stops.size() )
+		if ( road2stop_connection_ >= 0 && road2stop_connection_ < graph_->road[*road_it_].stops.size() )
 		{
 		    road2stop_connection_++;
+		}
+		else if ( road2poi_connection_ >= 0 && road2poi_connection_ < graph_->road[*road_it_].pois.size() )
+		{
+		    road2poi_connection_++;
 		}
 		else
 		{
@@ -330,7 +423,7 @@ namespace Tempus
 		    road_it_++;
 		}
 	    }
-	    else
+	    else if ( source_.type == Vertex::PublicTransport )
 	    {
 		if ( stop2road_connection_ < 2 )
 		{
@@ -345,6 +438,13 @@ namespace Tempus
 		    }
 		}
 	    }
+	    else if ( source_.type == Vertex::Poi )
+	    {
+		if ( road2poi_connection_ < 2 )
+		{
+		    road2poi_connection_ ++;
+		}
+	    }
 	}
 
 	bool OutEdgeIterator::equal( const OutEdgeIterator& v ) const
@@ -356,7 +456,7 @@ namespace Tempus
 	    if ( source_ != v.source_ )
 		return false;
 
-	    if ( source_.is_road )
+	    if ( source_.type == Vertex::Road )
 	    {
 		if ( road_it_ == road_it_end_ )
 		    return v.road_it_ == v.road_it_end_;
@@ -364,11 +464,15 @@ namespace Tempus
 		return road_it_ == v.road_it_ && road2stop_connection_ == v.road2stop_connection_;
 	    }
 
-	    // else
-	    if ( stop2road_connection_ != v.stop2road_connection_ )
-		return false;
+	    if ( source_.type == Vertex::PublicTransport )
+	    {
+		if ( stop2road_connection_ != v.stop2road_connection_ )
+		    return false;
+		return pt_it_ == v.pt_it_;
+	    }
 
-	    return pt_it_ == v.pt_it_;
+	    // else
+	    return road2poi_connection_ == v.road2poi_connection_;
 	}
 
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph ) { return VertexIndexProperty( graph ); }
@@ -380,23 +484,35 @@ namespace Tempus
 	// FIXME : slow ?
 	size_t VertexIndexProperty::get_index( const Vertex& v ) const
 	{
-	    if ( v.is_road )
+	    if ( v.type == Vertex::Road )
 	    {
-		return boost::get( boost::get( boost::vertex_index, *v.road.graph ), v.road.vertex );
+		return boost::get( boost::get( boost::vertex_index, *v.road_graph ), v.road_vertex );
 	    }
 	    // else
 	    size_t n = num_vertices( graph_.road );
 	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
 	    for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )	    
 	    {
-		if ( &it->second != v.pt.graph )
+		if ( &it->second != v.pt_graph )
 		{
 		    n += num_vertices( it->second );
 		}
 		else
 		{
-		    n += boost::get( boost::get( boost::vertex_index, *v.pt.graph ), v.pt.vertex );
+		    n += boost::get( boost::get( boost::vertex_index, *v.pt_graph ), v.pt_vertex );
 		    break;
+		}
+	    }
+
+	    if ( v.type == Vertex::Poi )
+	    {
+		for ( Graph::PoiList::const_iterator it = graph_.pois.begin(); it != graph_.pois.end(); it++ )
+		{
+		    if ( &it->second == v.poi )
+		    {
+			break;
+		    }
+		    n++;
 		}
 	    }
 	    return n;
@@ -410,7 +526,7 @@ namespace Tempus
 	    {
 		n += num_vertices( it->second );
 	    }
-	    return n + num_vertices( graph.road );
+	    return n + num_vertices( graph.road ) + graph.pois.size();
 	}
 	size_t num_edges( const Graph& graph )
 	{
@@ -421,7 +537,7 @@ namespace Tempus
 		n += num_edges( it->second );
 		n += num_vertices( it->second ) * 4;
 	    }
-	    return n + num_edges( graph.road ) * 2;
+	    return n + num_edges( graph.road ) * 2 + graph.pois.size() * 4;
 	}
 	Vertex& source( Edge& e, const Graph& graph )
 	{
@@ -453,18 +569,22 @@ namespace Tempus
 
 	size_t out_degree( Vertex& v, const Graph& graph )
 	{
-	    if ( v.is_road )
+	    if ( v.type == Vertex::Road )
 	    {
 		size_t sum = 0;
 		Road::OutEdgeIterator ei, ei_end;
-		for ( boost::tie(ei, ei_end) = out_edges( v.road.vertex, graph.road ); ei != ei_end; ei++ )
+		for ( boost::tie(ei, ei_end) = out_edges( v.road_vertex, graph.road ); ei != ei_end; ei++ )
 		{
-		    sum += graph.road[ *ei ].stops.size() + 1;
+		    sum += graph.road[ *ei ].stops.size() + graph.road[ *ei ].pois.size() + 1;
 		}
 		return sum;
 	    }
-	    // else
-	    return out_degree( v.pt.vertex, *v.pt.graph ) + 2;
+	    else if ( v.type == Vertex::PublicTransport )
+	    {
+		return out_degree( v.pt_vertex, *v.pt_graph ) + 2;
+	    }
+	    // else (Poi)
+	    return 2;
 	}
 
 	std::pair< Edge, bool> edge( const Vertex& u, const Vertex& v, const Graph& graph )
@@ -486,13 +606,17 @@ namespace Tempus
 	
     ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
     {
-	if ( v.is_road )
+	if ( v.type == Multimodal::Vertex::Road )
 	{
-	    out << "R" << (*v.road.graph)[v.road.vertex].db_id;
+	    out << "R" << (*v.road_graph)[v.road_vertex].db_id;
 	}
-	else
+	else if ( v.type == Multimodal::Vertex::PublicTransport )
 	{
-	    out << "PT" << (*v.pt.graph)[v.pt.vertex].db_id;
+	    out << "PT" << (*v.pt_graph)[v.pt_vertex].db_id;
+	}
+	else if ( v.type == Multimodal::Vertex::Poi )
+	{
+	    out << "POI" << v.poi->db_id;
 	}
 	return out;
     }
@@ -512,6 +636,12 @@ namespace Tempus
 	    break;
 	case Multimodal::Edge::Transport2Transport:
 	    out << "Transport2Transport ";
+	    break;
+	case Multimodal::Edge::Road2Poi:
+	    out << "Road2Poi ";
+	    break;
+	case Multimodal::Edge::Poi2Road:
+	    out << "Poi2Road ";
 	    break;
 	}
 	out << "(" << e.source << "," << e.target << ")";

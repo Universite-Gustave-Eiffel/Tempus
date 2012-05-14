@@ -26,17 +26,25 @@ namespace Tempus
 	/// A Multimodal::Vertex is either a Road::Vertex or PublicTransport::Vertex on a particular public transport network
 	struct Vertex
 	{
-	    bool is_road;
-	    struct
+	    enum VertexType
 	    {
-		const Road::Graph* graph;
-		Road::Vertex vertex;
-	    } road;
-	    struct
+		Road,
+		PublicTransport,
+		Poi
+	    };
+	    VertexType type;
+
+	    union
 	    {
-		const PublicTransport::Graph* graph;
-		PublicTransport::Vertex vertex;
-	    } pt;
+		const Road::Graph* road_graph;
+		const PublicTransport::Graph* pt_graph;
+		const POI* poi;
+	    };
+	    // things that cannot stored in the union ( have non trivial constructors )
+	    // If it's a road
+	    Road::Vertex road_vertex;
+	    // If it's a public transport
+	    PublicTransport::Vertex pt_vertex;
 	    
 	    bool operator==( const Vertex& v ) const;
 	    bool operator!=( const Vertex& v ) const;
@@ -44,6 +52,7 @@ namespace Tempus
 	    Vertex() {}
 	    Vertex( const Road::Graph* graph, Road::Vertex vertex );
 	    Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex );
+	    Vertex( const POI* poi );
 	};
 	
 	///
@@ -54,10 +63,13 @@ namespace Tempus
 	    Multimodal::Vertex target;
 	    enum ConnectionType
 	    {
+		UnknownConnection,
 		Road2Road,
 		Road2Transport,
 		Transport2Road,
-		Transport2Transport
+		Transport2Transport,
+		Road2Poi,
+		Poi2Road
 	    };
 	    
 	    ConnectionType connection_type() const;
@@ -105,13 +117,14 @@ namespace Tempus
 	    
 	    ///
 	    /// Variables used to store constants.
-	    /// For the sake of readability, always use them with their prefixing namespace
 	    RoadTypes road_types;
 	    TransportTypes transport_types;
 	    
 	    typedef std::map<std::string, Tempus::db_id_t> NameToId;
 	    NameToId road_type_from_name;
 	    NameToId transport_type_from_name;
+
+	    
 	};
 
 	struct VertexIterator :
@@ -131,6 +144,7 @@ namespace Tempus
 	protected:
 	    Road::VertexIterator road_it_, road_it_end_;
 	    Multimodal::Graph::PublicTransportGraphList::const_iterator pt_graph_it_, pt_graph_it_end_;
+	    Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
 	    PublicTransport::VertexIterator pt_it_, pt_it_end_;
 	    const Multimodal::Graph* graph_;
 	    mutable Multimodal::Vertex vertex_;
@@ -151,6 +165,11 @@ namespace Tempus
 	    size_t stop2road_connection_;
 	    // 0 .. N, -1 road2stop connection
 	    int road2stop_connection_;
+
+	    // 0 -> N
+	    int road2poi_connection_;
+	    // O -> 2
+	    int poi2road_connection_;
 	public:
 	    OutEdgeIterator() : graph_(0) {}
 	    OutEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
@@ -349,6 +368,7 @@ namespace Tempus
     /// Get 2D coordinates of a road or public transport vertex, from the database
     Point2D coordinates( const Road::Vertex& v, Db::Connection& db, const Road::Graph& graph );
     Point2D coordinates( const PublicTransport::Vertex& v, Db::Connection& db, const PublicTransport::Graph& graph );
+    Point2D coordinates( const POI* poi, Db::Connection& db );
     Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph );
 
     template <class G, class Tag>
