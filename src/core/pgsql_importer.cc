@@ -22,7 +22,7 @@ namespace Tempus
 	return connection_.exec( query_str );
     }
 
-    void PQImporter::import_constants( MultimodalGraph& graph, ProgressionCallback& progression )
+    void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression )
     {
 	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
 	graph.transport_types.clear();
@@ -71,7 +71,7 @@ namespace Tempus
 
     ///
     /// Function used to import the road and public transport graphs from a PostgreSQL database.
-    void PQImporter::import_graph( MultimodalGraph& graph, ProgressionCallback& progression )
+    void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& progression )
     {
 	Road::Graph& road_graph = graph.road;
 	road_graph.clear();
@@ -122,8 +122,8 @@ namespace Tempus
 	    
 	    db_id_t node_from_id = res[i][2].as<db_id_t>();
 	    db_id_t node_to_id = res[i][3].as<db_id_t>();
-		BOOST_ASSERT( node_from_id > 0 );
-		BOOST_ASSERT( node_to_id > 0 );
+	    BOOST_ASSERT( node_from_id > 0 );
+	    BOOST_ASSERT( node_to_id > 0 );
 	    
 	    int j = 4;
 	    res[i][j++] >> section.transport_type_ft;
@@ -152,7 +152,7 @@ namespace Tempus
 	    boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
 	    if ( found )
 	    {
-		//cout << "Edge " << e << " already exists" << endl;
+		cout << "Edge " << e << " already exists" << endl;
 		continue;
 	    }
 	    boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
@@ -176,7 +176,7 @@ namespace Tempus
 	    graph.public_transports[network.db_id] = PublicTransport::Graph();
 	}
 
-	res = connection_.exec( "SELECT DISTINCT s.network_id, n.id, n.psname, n.location_type, n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section FROM tempus.pt_stop as n JOIN tempus.pt_section as s ON s.stop_from = n.id OR s.stop_to = n.id" );
+	res = connection_.exec( "SELECT DISTINCT s.network_id, n.id, n.psname, n.location_type, n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section FROM tempus.pt_stop as n JOIN tempus.pt_section as s ON s.stop_from = n.id OR s.stop_to = n.id ORDER by n.id" );
 	
 	for ( size_t i = 0; i < res.size(); i++ )
 	{
@@ -204,8 +204,14 @@ namespace Tempus
 		stop.has_parent = true;
 	    }
 
-	    int road_section;
+	    Tempus::db_id_t road_section;
 	    res[i][j++] >> road_section;
+	    BOOST_ASSERT( road_section > 0 );
+	    if ( road_sections_map.find( road_section ) == road_sections_map.end() )
+	    {
+		cout << "Cannot find road_section of ID " << road_section << ", pt node " << stop.db_id << " rejected" << endl;
+		continue;
+	    }
 	    stop.road_section = road_sections_map[ road_section ];
 
 	    res[i][j++] >> stop.zone_id;
@@ -214,8 +220,23 @@ namespace Tempus
 	    PublicTransport::Vertex v = boost::add_vertex( stop, pt_graph );
 	    pt_nodes_map[network_id][ stop.db_id ] = v;
 	    pt_graph[v].vertex = v;
+	    pt_graph[v].graph = &pt_graph;
 
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.5) );
+	}
+
+	//
+	// For all public transport nodes, add a reference to it to the attached road section
+	Multimodal::Graph::PublicTransportGraphList::iterator it;
+	for ( it = graph.public_transports.begin(); it != graph.public_transports.end(); it++ )
+	{
+	    PublicTransport::Graph& g = it->second;
+	    PublicTransport::VertexIterator vi, vi_end;
+	    for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ )
+	    {
+		Road::Edge rs = g[ *vi ].road_section;
+		road_graph[ rs ].stops.push_back( &g[*vi] );
+	    }
 	}
 
 	res = connection_.exec( "SELECT network_id, stop_from, stop_to FROM tempus.pt_section" );
@@ -236,6 +257,16 @@ namespace Tempus
 	    BOOST_ASSERT( stop_from_id > 0 );
 	    BOOST_ASSERT( stop_to_id > 0 );
 
+	    if ( pt_nodes_map[network_id].find( stop_from_id ) == pt_nodes_map[network_id].end() )
+	    {
+		cout << "Cannot find 'from' node of ID " << stop_from_id << endl;
+		continue;
+	    }
+	    if ( pt_nodes_map[network_id].find( stop_to_id ) == pt_nodes_map[network_id].end() )
+	    {
+		cout << "Cannot find 'to' node of ID " << stop_to_id << endl;
+		continue;
+	    }
 	    PublicTransport::Vertex stop_from = pt_nodes_map[network_id][ stop_from_id ];
 	    PublicTransport::Vertex stop_to = pt_nodes_map[network_id][ stop_to_id ];
 	    PublicTransport::Edge e;
@@ -243,6 +274,7 @@ namespace Tempus
 	    boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );
 	    BOOST_ASSERT( is_added );
 	    pt_graph[e].edge = e;
+	    pt_graph[e].graph = &pt_graph;
 	    pt_graph[e].network_id = network_id;
 	    pt_graph[e].stop_from = stop_from_id;
 	    pt_graph[e].stop_to = stop_to_id;
@@ -250,6 +282,41 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.75) );
 	}
 
+	res = connection_.exec( "SELECT id, poi_type, pname, parking_transport_type, road_section_id, abscissa_road_section FROM tempus.poi" );
+	for ( size_t i = 0; i < res.size(); i++ )
+	{
+	    POI poi;
+
+	    res[i][0] >> poi.db_id;
+	    BOOST_ASSERT( poi.db_id > 0 );
+
+	    res[i][1] >> poi.poi_type;
+	    res[i][2] >> poi.name;
+	    res[i][3] >> poi.parking_transport_type;
+
+	    db_id_t road_section_id;
+	    res[i][4] >> road_section_id;
+	    BOOST_ASSERT( road_section_id > 0 );
+	    if ( road_sections_map.find( road_section_id ) == road_sections_map.end() )
+	    {
+		cout << "Cannot find road_section of ID " << road_section_id << ", poi " << poi.db_id << " rejected" << endl;
+		continue;
+	    }
+	    poi.road_section = road_sections_map[ road_section_id ];
+
+	    res[i][5] >> poi.abscissa_road_section;
+
+	    graph.pois[ poi.db_id ] = poi;
+	}
+	//
+	// For all POIs, add a reference to it to the attached road section
+	Multimodal::Graph::PoiList::iterator pit;
+	for ( pit = graph.pois.begin(); pit != graph.pois.end(); pit++ )
+	{
+	    Road::Edge rs = pit->second.road_section;
+	    graph.road[ rs ].pois.push_back( &pit->second );
+	}
+	
 	progression( 1.0, /* finished = */ true );
 
     }

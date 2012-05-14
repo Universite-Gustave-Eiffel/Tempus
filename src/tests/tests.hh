@@ -35,6 +35,7 @@ class PgImporterTest : public CppUnit::TestFixture  {
 
     CPPUNIT_TEST_SUITE( PgImporterTest );
     CPPUNIT_TEST( testConsistency );
+    CPPUNIT_TEST( testMultimodal );
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -42,8 +43,9 @@ public:
     void tearDown();
 
     void testConsistency();
+    void testMultimodal();
 protected:
     Tempus::PQImporter *  importer_;
 
-    Tempus::MultimodalGraph graph_;
+    Tempus::Multimodal::Graph graph_;
 };

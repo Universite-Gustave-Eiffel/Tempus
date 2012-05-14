@@ -19,6 +19,13 @@
 
 namespace Tempus
 {
+    // forward declaration
+    namespace PublicTransport
+    {
+	struct Stop;
+    };
+    struct POI;
+
     namespace Road
     {
 	///
@@ -29,7 +36,7 @@ namespace Tempus
 	///
 	/// To make a long line short: VertexDescriptor is either typedef'd to size_t or to a pointer,
 	/// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
-	typedef boost::mpl::if_<typename boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
+	typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 	/// see adjacency_list.hpp
 	typedef boost::detail::edge_desc_impl<boost::undirected_tag, Vertex> Edge;
 
@@ -79,10 +86,18 @@ namespace Tempus
 	    bool          is_tunnel;
 	    bool          is_ramp;
 	    bool          is_tollway;
+
+	    ///
+	    /// List of public transport stops, attached to this road section
+	    std::vector< PublicTransport::Stop* > stops;
+	    ///
+	    /// List of Point Of Interests attached to this road section
+	    std::vector<POI*> pois;
 	};
 
 	typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 	typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
+	typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 
 	///
 	/// refers to the 'road_road' DB's table

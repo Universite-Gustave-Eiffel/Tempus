@@ -21,6 +21,9 @@ add_library( tempus SHARED ${SOURCE_FILES} )
 endif (WIN32)
 target_link_libraries( tempus ${PQ_LIBS} )
 
+add_library( sample_multi_plugin MODULE sample_multi_plugin.cc ${DLL_SOURCES} )
+target_link_libraries( sample_multi_plugin ${PQ_LIBS} )
+
 add_library( sample_road_plugin MODULE sample_road_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( sample_road_plugin ${PQ_LIBS} )
 

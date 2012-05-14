@@ -26,6 +26,7 @@ int main( int argc, char*argv[] )
     bool standalone = false;
     string port_str = "9000";
     string chdir_str = "";
+    std::vector<string> plugins;
     if (argc > 1 )
     {
 	for ( int i = 1; i < argc; i++ )
@@ -46,11 +47,19 @@ int main( int argc, char*argv[] )
 		    chdir_str = argv[++i];
 		}
 	    }
+	    else if ( arg == "-l" )
+	    {
+		if ( argc > i+1 )
+		{
+		    plugins.push_back( argv[++i] );
+		}
+	    }
 	    else
 	    {
 		cerr << "Options: " << endl;
 		cerr << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
 		cerr << "\t-c dir\tchange directory to dir before execution" << endl;
+		cerr << "\t-l plugin\tload plugin at startup" << endl;
 		return 1;
 	    }
 	}
@@ -62,8 +71,10 @@ int main( int argc, char*argv[] )
     }
     
     Tempus::Application* app = Tempus::Application::instance();
-    app->load_plugin( "sample_road_plugin" );
-    app->load_plugin( "sample_pt_plugin" );
+    for ( size_t i = 0; i < plugins.size(); i++ )
+    {
+	app->load_plugin( plugins[i] );
+    }
 
     FCGX_Request request;
 

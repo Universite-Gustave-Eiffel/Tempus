@@ -203,7 +203,7 @@ namespace WPS
 	{
 	    output_parameters_.clear();
 	    
-	    Tempus::MultimodalGraph& graph = Application::instance()->graph();
+	    Tempus::Multimodal::Graph& graph = Application::instance()->graph();
 
 	    {
 		xmlNode* root_node = XML::new_node( "road_types" );
@@ -237,7 +237,7 @@ namespace WPS
 
 	    {
 		xmlNode* root_node = XML::new_node( "transport_networks" );
-		MultimodalGraph::NetworkMap::iterator it;
+		Multimodal::Graph::NetworkMap::iterator it;
 		for ( it = graph.network_map.begin(); it != graph.network_map.end(); it++ )
 		{
 		    xmlNode* node = XML::new_node( "transport_network" );
@@ -709,7 +709,7 @@ namespace WPS
 	    Plugin* plugin = get_plugin( input_parameter_map );
 	    Tempus::Result& result = plugin->result();
 	    
-	    MultimodalGraph& graph_ = Application::instance()->graph();
+	    Multimodal::Graph& graph_ = Application::instance()->graph();
 	    Tempus::Road::Graph& road_graph = graph_.road;
 	    Db::Connection& db = Application::instance()->db_connection();
 	    

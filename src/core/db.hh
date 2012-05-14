@@ -189,6 +189,7 @@ namespace Db
 
 	Connection( const std::string& db_options ) : conn_(0)
 	{
+	    nrefs_ = 0;
 	    connect( db_options );
 	}
 

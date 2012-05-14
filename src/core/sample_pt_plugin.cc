@@ -133,7 +133,7 @@ namespace Tempus
 	    LengthCalculator length_calculator( db_ );
 	    FunctionPropertyAccessor<PublicTransport::Graph,
 				     boost::edge_property_tag,
-					 double,
+				     double,
 				     LengthCalculator> length_map( pt_graph, length_calculator );
 	    
 	    PluginPtGraphVisitor vis( this );

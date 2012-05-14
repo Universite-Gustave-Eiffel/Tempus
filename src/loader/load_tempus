@@ -29,9 +29,9 @@ def import_osm(args, shape_options):
     osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     osmi.load()
 
-def import_poi(args, shape_options):
+def import_poi(args, shape_options, poi_type):
     """Load a point shapefile into a PostGIS database."""
-    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type)
     poii.load()
 
 if __name__ == "__main__":
@@ -57,6 +57,8 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--noclean', required=False,
             action='store_true', default = False,
             help="Do not clean temporary SQL file after loading.")
+    parser.add_argument('-y', '--poitype', required=False,
+            default = 5, help = "Poi type (1: Car park, 2: shared car, 3: Cycle, 4:Shared cycle, 5:user)")
     args = parser.parse_args()
     if args.type in ['tomtom', 'navteq', 'poi', 'osm']:
         if not args.srid:
@@ -81,5 +83,12 @@ if __name__ == "__main__":
     elif args.type == 'gtfs':
         import_pt(args)
     elif args.type == 'poi':
-        import_poi(args, shape_options)
+        try:
+            poi_type = int(args.poitype)
+            if poi_type not in range(1, 6):
+                raise ValueError
+        except ValueError:
+            print "Wrong poi type. Assuming User type (5). Correct values are in range 1-5."
+            poi_type = 5
+        import_poi(args, shape_options, poi_type)
 
