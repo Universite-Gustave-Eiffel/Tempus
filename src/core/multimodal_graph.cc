@@ -204,6 +204,10 @@ namespace Tempus
 		vertex_.pt_graph = &(pt_graph_it_->second);
 		vertex_.pt_vertex = *pt_it_;
 	    }
+	    else if ( vertex_.type == Vertex::Poi )
+	    {
+		vertex_.poi = &poi_it_->second;
+	    }
 	    return vertex_;
 	}
 	
@@ -221,6 +225,12 @@ namespace Tempus
 		    pt_it_++;
 		}
 
+		if ( pt_graph_it_ == pt_graph_it_end_ )
+		{
+		    if ( poi_it_ != poi_it_end_ )
+			poi_it_++;
+		}
+
 		while ( pt_it_ == pt_it_end_ && pt_graph_it_ != pt_graph_it_end_ )
 		{
 		    pt_graph_it_++;
@@ -229,12 +239,6 @@ namespace Tempus
 			// set on the beginning of the next pt_graph
 			boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
 		    }
-		}
-
-		if ( pt_graph_it_ == pt_graph_it_end_ )
-		{
-		    if ( poi_it_ != poi_it_end_ )
-			poi_it_++;
 		}
 	    }
 	}
@@ -420,6 +424,7 @@ namespace Tempus
 		else
 		{
 		    road2stop_connection_ = 0;
+		    road2poi_connection_ = 0;
 		    road_it_++;
 		}
 	    }
@@ -440,9 +445,9 @@ namespace Tempus
 	    }
 	    else if ( source_.type == Vertex::Poi )
 	    {
-		if ( road2poi_connection_ < 2 )
+		if ( poi2road_connection_ < 2 )
 		{
-		    road2poi_connection_ ++;
+		    poi2road_connection_ ++;
 		}
 	    }
 	}
@@ -461,7 +466,7 @@ namespace Tempus
 		if ( road_it_ == road_it_end_ )
 		    return v.road_it_ == v.road_it_end_;
 
-		return road_it_ == v.road_it_ && road2stop_connection_ == v.road2stop_connection_;
+		return road_it_ == v.road_it_ && road2stop_connection_ == v.road2stop_connection_ && road2poi_connection_ == v.road2poi_connection_;
 	    }
 
 	    if ( source_.type == Vertex::PublicTransport )
@@ -472,7 +477,7 @@ namespace Tempus
 	    }
 
 	    // else
-	    return road2poi_connection_ == v.road2poi_connection_;
+	    return poi2road_connection_ == v.poi2road_connection_;
 	}
 
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph ) { return VertexIndexProperty( graph ); }
@@ -508,11 +513,11 @@ namespace Tempus
 	    {
 		for ( Graph::PoiList::const_iterator it = graph_.pois.begin(); it != graph_.pois.end(); it++ )
 		{
+		    n++;
 		    if ( &it->second == v.poi )
 		    {
 			break;
 		    }
-		    n++;
 		}
 	    }
 	    return n;

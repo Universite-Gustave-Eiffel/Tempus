@@ -224,9 +224,9 @@ void PgImporterTest::testMultimodal()
     cout << "n_road2transport = " << n_road2transport << endl;
     cout << "n_transport2road = " << n_transport2road << endl;
     cout << "n_road2poi = " << n_road2poi << endl;
-    cout << "n_poi2road = " << n_poi2road << endl;
+    cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph_.pois.size() << endl;
     cout << "n_transport2transport = " << n_transport2transport << " num_edges(pt) = " << num_edges( pt_graph ) << endl;
-    size_t sum = n_road2road + n_road2transport + n_transport2road + n_transport2transport;
+    size_t sum = n_road2road + n_road2transport + n_transport2road + n_transport2transport + n_poi2road + n_road2poi;
     cout << "sum = " << sum << endl;
     cout << "num_edges = " << num_edges( graph_ ) << endl;
     CPPUNIT_ASSERT_EQUAL( sum, num_edges( graph_ ) );

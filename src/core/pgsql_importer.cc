@@ -282,6 +282,41 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.75) );
 	}
 
+	res = connection_.exec( "SELECT id, poi_type, pname, parking_transport_type, road_section_id, abscissa_road_section FROM tempus.poi" );
+	for ( size_t i = 0; i < res.size(); i++ )
+	{
+	    POI poi;
+
+	    res[i][0] >> poi.db_id;
+	    BOOST_ASSERT( poi.db_id > 0 );
+
+	    res[i][1] >> poi.poi_type;
+	    res[i][2] >> poi.name;
+	    res[i][3] >> poi.parking_transport_type;
+
+	    db_id_t road_section_id;
+	    res[i][4] >> road_section_id;
+	    BOOST_ASSERT( road_section_id > 0 );
+	    if ( road_sections_map.find( road_section_id ) == road_sections_map.end() )
+	    {
+		cout << "Cannot find road_section of ID " << road_section_id << ", poi " << poi.db_id << " rejected" << endl;
+		continue;
+	    }
+	    poi.road_section = road_sections_map[ road_section_id ];
+
+	    res[i][5] >> poi.abscissa_road_section;
+
+	    graph.pois[ poi.db_id ] = poi;
+	}
+	//
+	// For all POIs, add a reference to it to the attached road section
+	Multimodal::Graph::PoiList::iterator pit;
+	for ( pit = graph.pois.begin(); pit != graph.pois.end(); pit++ )
+	{
+	    Road::Edge rs = pit->second.road_section;
+	    graph.road[ rs ].pois.push_back( &pit->second );
+	}
+	
 	progression( 1.0, /* finished = */ true );
 
     }
