@@ -1,9 +1,6 @@
 // WPS request
 // (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
 // MIT Licence
-/**
-
- */
 
 #ifndef TEMPUS_WPS_REQUEST_HH
 #define TEMPUS_WPS_REQUEST_HH
@@ -16,6 +13,8 @@
 
 namespace WPS
 {
+    ///
+    /// WPS::Request
     class Request
     {
     public:

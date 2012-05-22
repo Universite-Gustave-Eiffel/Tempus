@@ -2,13 +2,6 @@
 // (c) 2012 Oslandia
 // MIT License
 
-/**
-   A Tempus plugin is made of :
-   - some user-defined options
-   - some callback functions called when user requests are processed
-   - some performance metrics
- */
-
 #ifndef TEMPUS_PLUGIN_CORE_HH
 #define TEMPUS_PLUGIN_CORE_HH
 
@@ -37,9 +30,14 @@
 
 namespace Tempus
 {
-    ///
-    /// Base class that has to be derived in plugins
-    ///
+    /**
+       Base class that has to be derived in plugins
+
+       A Tempus plugin is made of :
+       - some user-defined options
+       - some callback functions called when user requests are processed
+       - some performance metrics
+    */
     class Plugin
     {
     public:

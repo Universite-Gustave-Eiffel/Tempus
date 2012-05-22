@@ -1,3 +1,6 @@
+// (c) 2012 Oslandia
+// MIT License
+
 #ifndef TEMPUS_APPLICATION_HH
 #define TEMPUS_APPLICATION_HH
 

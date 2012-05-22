@@ -2,18 +2,18 @@
 // (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
 // MIT License
 
+#ifndef TEMPUS_DB_HH
+#define TEMPUS_DB_HH
+
 /**
    Database access is modeled by means of the following classes, inspired by pqxx:
    * A Db::Connection objet represents a connection to a database. It is a lightweighted objet that is reference-counted and thus can be copied safely.
-   * A Db::Result objet represents result of a query. oIt is a lightweighted objet that is reference-counted and thus can be copied safely.
+   * A Db::Result objet represents result of a query. It is a lightweighted objet that is reference-counted and thus can be copied safely.
    * A Db::RowValue object represents a row of a result and is obtained by Db::Result::operator[]
    * A Db::Value object represent a basic value. It is obtained by Db::RowValue::operator[]. It has templated conversion operators for common data types.
 
    These classes throw std::runtime_error on problem.
  */
-
-#ifndef TEMPUS_DB_HH
-#define TEMPUS_DB_HH
 
 #include <libpq-fe.h>
 
@@ -67,8 +67,8 @@ namespace Db
 	bool isnull_;
     };
 
-    ///
-    /// List of conversion specializations
+    //
+    // List of conversion specializations
     template <>
     bool Value::as<bool>();
     template <>
@@ -178,7 +178,7 @@ namespace Db
     };
 
     ///
-    /// Class representing conncetion to a database.
+    /// Class representing connection to a database.
     class Connection
     {
     public:

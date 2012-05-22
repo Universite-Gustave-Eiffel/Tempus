@@ -1,12 +1,13 @@
 // WPS service
 // (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
 // MIT Licence
-/**
-   A WPS Service is a generic process callable through the 'Execute' WPS operation.
- */
 
 #ifndef TEMPUS_WPS_SERVER_HH
 #define TEMPUS_WPS_SERVER_HH
+
+/**
+   A WPS Service is a generic process callable through the 'Execute' WPS operation.
+ */
 
 #include <map>
 #include <string>

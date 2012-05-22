@@ -2,16 +2,6 @@
 // (c) 2012 Oslandia
 // MIT License
 
-/**
-   This file contains declarations of classes used to model public transport graphs
-
-   It generally maps to the database's schema: one class exists for each table.
-   Tables with 1<->N arity are represented by STL containers (vectors or lists)
-   External keys are represented by pointers to other classes or by vertex/edge descriptors.
-   
-   PublicTransport::Stop and PublicTransport::Section classes are used to build a BGL public transport graph.
- */
-
 #ifndef TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 #define TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 
@@ -20,6 +10,15 @@
 
 namespace Tempus
 {
+    /**
+       A PublicTransport::Graph is a made of PublicTransport::Stop and PublicTransport::Section
+       
+       It generally maps to the database's schema: one class exists for each table.
+       Tables with 1<->N arity are represented by STL containers (vectors or lists)
+       External keys are represented by pointers to other classes or by vertex/edge descriptors.
+       
+       PublicTransport::Stop and PublicTransport::Section classes are used to build a BGL public transport graph.
+    */
     namespace PublicTransport
     {
 	struct Network : public Base

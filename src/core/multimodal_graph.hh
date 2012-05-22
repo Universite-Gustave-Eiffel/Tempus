@@ -2,10 +2,6 @@
 // (c) 2012 Oslandia
 // MIT License
 
-/**
-   A MultimodalGraph is a Road::Graph and a list of PublicTransport::Graph
- */
-
 #ifndef TEMPUS_MULTIMODAL_GRAPH_HH
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
@@ -20,6 +16,11 @@ namespace Db
 
 namespace Tempus
 {
+    ///
+    /// Multimodal namespace
+    ///
+    /// A Multimodal::Graph is a Road::Graph and a list of PublicTransport::Graph
+    ///
     namespace Multimodal
     {
 	///
@@ -40,7 +41,7 @@ namespace Tempus
 		const PublicTransport::Graph* pt_graph;
 		const POI* poi;
 	    };
-	    // things that cannot stored in the union ( have non trivial constructors )
+	    // things that cannot be stored in the union ( have non trivial constructors )
 	    // If it's a road
 	    Road::Vertex road_vertex;
 	    // If it's a public transport
@@ -365,10 +366,16 @@ namespace Tempus
     }
 
     ///
-    /// Get 2D coordinates of a road or public transport vertex, from the database
+    /// Get 2D coordinates of a road vertex, from the database
     Point2D coordinates( const Road::Vertex& v, Db::Connection& db, const Road::Graph& graph );
+    ///
+    /// Get 2D coordinates of a public transport vertex, from the database
     Point2D coordinates( const PublicTransport::Vertex& v, Db::Connection& db, const PublicTransport::Graph& graph );
+    ///
+    /// Get 2D coordinates of a POI, from the database
     Point2D coordinates( const POI* poi, Db::Connection& db );
+    ///
+    /// Get 2D coordinates of a multimodal vertex, from the database
     Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph );
 
     template <class G, class Tag>

@@ -23,7 +23,6 @@
 ///
 /// There is no reference counting. Objets are "moved" from instances (as boost::auto_ptr does)
 /// For example a = b transfers ownership from b to a and b is set to null
-
 template <class T, void deletion_fct (T*)>
 class scoped_ptr
 {
@@ -66,6 +65,8 @@ protected:
 typedef scoped_ptr<xmlNode, xmlFreeNode> scoped_xmlNode;
 typedef scoped_ptr<xmlDoc, xmlFreeDoc> scoped_xmlDoc;
 
+///
+/// XML helper class
 class XML
 {
 public:
