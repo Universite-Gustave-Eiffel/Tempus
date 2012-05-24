@@ -202,6 +202,8 @@ namespace Tempus
 	virtual void road_edge_accessor( Road::Edge e, int access_type ) {}
 	virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type ) {}
 	virtual void pt_edge_accessor( PublicTransport::Edge e, int access_type ) {}
+	virtual void vertex_accessor( Multimodal::Vertex v, int access_type ) {}
+	virtual void edge_accessor( Multimodal::Edge e, int access_type ) {}
 
 	///
 	/// Cycle
@@ -276,10 +278,10 @@ namespace Tempus
 	      void (Plugin::*VertexAccessorFunction)(typename boost::graph_traits<Graph>::vertex_descriptor, int),
 	      void (Plugin::*EdgeAccessorFunction)(typename boost::graph_traits<Graph>::edge_descriptor, int)
 	      >	      
-    class PluginGraphVisitor
+    class PluginGraphVisitorHelper
     {
     public:
-	PluginGraphVisitor( Plugin* plugin ) : plugin_(plugin) {}
+	PluginGraphVisitorHelper( Plugin* plugin ) : plugin_(plugin) {}
 	typedef typename boost::graph_traits<Graph>::vertex_descriptor VDescriptor;
 	typedef typename boost::graph_traits<Graph>::edge_descriptor EDescriptor;
 	
@@ -353,8 +355,9 @@ namespace Tempus
 	Plugin *plugin_;
     };
 
-    typedef PluginGraphVisitor< Road::Graph, &Plugin::road_vertex_accessor, &Plugin::road_edge_accessor > PluginRoadGraphVisitor;
-    typedef PluginGraphVisitor< PublicTransport::Graph, &Plugin::pt_vertex_accessor, &Plugin::pt_edge_accessor > PluginPtGraphVisitor;
+    typedef PluginGraphVisitorHelper< Road::Graph, &Plugin::road_vertex_accessor, &Plugin::road_edge_accessor > PluginRoadGraphVisitor;
+    typedef PluginGraphVisitorHelper< PublicTransport::Graph, &Plugin::pt_vertex_accessor, &Plugin::pt_edge_accessor > PluginPtGraphVisitor;
+    typedef PluginGraphVisitorHelper< Multimodal::Graph, &Plugin::vertex_accessor, &Plugin::edge_accessor > PluginGraphVisitor;
 }; // Tempus namespace
 
 

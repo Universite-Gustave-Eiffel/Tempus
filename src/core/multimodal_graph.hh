@@ -124,8 +124,6 @@ namespace Tempus
 	    typedef std::map<std::string, Tempus::db_id_t> NameToId;
 	    NameToId road_type_from_name;
 	    NameToId transport_type_from_name;
-
-	    
 	};
 
 	struct VertexIterator :

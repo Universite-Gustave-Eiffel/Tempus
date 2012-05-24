@@ -51,7 +51,7 @@ PROJECT_LOGO           =
 # If a relative path is entered, it will be relative to the location 
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = /home/hme/IFSTTAR/git/TempusV2/doc
+OUTPUT_DIRECTORY       = /home/hme/IFSTTAR/git/TempusV2/doc/api
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 
 # 4096 sub-directories (in 2 levels) under the output directory of each output 
@@ -137,8 +137,7 @@ FULL_PATH_NAMES        = YES
 # If left blank the directory from which doxygen is run is used as the 
 # path to strip.
 
-STRIP_FROM_PATH        =  \
-                         /home/hme/IFSTTAR/git/TempusV2/src/
+STRIP_FROM_PATH        = /home/hme/IFSTTAR/git/TempusV2/src/
 
 # The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of 
 # the path mentioned in the documentation of a class, which tells 
