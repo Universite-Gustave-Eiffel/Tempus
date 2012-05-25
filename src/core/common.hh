@@ -1,9 +1,9 @@
 // Tempus core data structures
 // (c) 2012 Oslandia
 // MIT License
-/**
-   This file contains common declarations and constants used by all the object inside the "Tempus" namespace
- */
+//
+// This file contains common declarations and constants used by all the object inside the "Tempus" namespace
+//
 
 #ifndef TEMPUS_COMMON_HH
 #define TEMPUS_COMMON_HH

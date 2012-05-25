@@ -31,7 +31,7 @@ class PsqlLoader:
     def fill_template(self, template, values):
         """Takes a template text file and replace every occurence of
         "%key%" with the corresponding value in the given dictionnary."""
-        raise NotImplementedError
+        return template % values;
 
     def set_sqlfile(self, sqlfile):
         self.sqlfile = sqlfile
@@ -54,35 +54,44 @@ class PsqlLoader:
     def load(self):
         """Load SQL file into the DB."""
         res = False
+        is_file = True
         if os.path.isfile(self.sqlfile):
-            # call psql with sqlfile
-            command = [PSQL]
-            if self.dbparams.has_key('host'):
-                command.append("--host=%s" % self.dbparams['host'])
-            if self.dbparams.has_key('user'):
-                command.append("--username=%s" % self.dbparams['user'])
-            if self.dbparams.has_key('port'):
-                command.append("--port=%s" % self.dbparams['port'])
-            command.append("--file=%s" % self.sqlfile)
-            if self.dbparams.has_key('dbname'):
-                command.append("--dbname=%s" % self.dbparams['dbname'])
-            if self.logfile:
-                try:
-                    out = open(self.logfile, "a")
-                    err = out
-                except IOError as (errno, strerror):
-                    sys.stderr.write("%s : I/O error(%s): %s\n" % (self.logfile, errno, strerror))
-            else:
-                out = sys.stdout
-                err = sys.stderr
-            retcode = 0
-            try:
-                retcode = subprocess.call(command, stdout = out, stderr = err)
-            except OSError as (errno, strerror):
-                sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
-            if self.logfile:
-                out.close()
-            if retcode == 0: res = True
+            is_file = True
         else:
-            sys.stderr.write("Cannot find SQL file %s.\n" % self.sqlfile)
+            is_file = False
+
+        # call psql with sqlfile
+        command = [PSQL]
+        if self.dbparams.has_key('host'):
+            command.append("--host=%s" % self.dbparams['host'])
+        if self.dbparams.has_key('user'):
+            command.append("--username=%s" % self.dbparams['user'])
+        if self.dbparams.has_key('port'):
+            command.append("--port=%s" % self.dbparams['port'])
+        if is_file:
+            command.append("--file=%s" % self.sqlfile)
+        if self.dbparams.has_key('dbname'):
+            command.append("--dbname=%s" % self.dbparams['dbname'])
+        if self.logfile:
+            try:
+                out = open(self.logfile, "a")
+                err = out
+            except IOError as (errno, strerror):
+                sys.stderr.write("%s : I/O error(%s): %s\n" % (self.logfile, errno, strerror))
+        else:
+            out = sys.stdout
+            err = sys.stderr
+        retcode = 0
+        try:
+            if is_file:
+                retcode = subprocess.call(command, stdout = out, stderr = err)
+            else:
+                p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
+                p.communicate( self.sqlfile )
+                retcode = p.returncode
+        except OSError as (errno, strerror):
+            sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
+        if self.logfile:
+            out.close()
+        if retcode == 0: res = True
         return res

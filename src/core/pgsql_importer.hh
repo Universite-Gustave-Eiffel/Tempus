@@ -2,12 +2,12 @@
 // (c) 2012 Oslandia
 // MIT License
 
-/**
-   Tempus PostgreSQL importer. Uses libpqxx
- */
-
 #ifndef TEMPUS_PGSQL_IMPORTER_HH
 #define TEMPUS_PGSQL_IMPORTER_HH
+
+/**
+   Tempus PostgreSQL importer.
+ */
 
 #include <string>
 

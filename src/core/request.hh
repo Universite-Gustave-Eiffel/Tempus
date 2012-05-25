@@ -2,10 +2,6 @@
 // (c) 2012 Oslandia
 // MIT License
 
-/**
-   A Request is used to model user requests to the planning engine.
- */
-
 #ifndef TEMPUS_REQUEST_HH
 #define TEMPUS_REQUEST_HH
 
@@ -17,6 +13,9 @@
 
 namespace Tempus
 {
+    /**
+       A Request is used to model user requests to the planning engine.
+    */
     class Request : public ConsistentClass
     {
     public:

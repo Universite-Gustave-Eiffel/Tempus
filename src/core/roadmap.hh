@@ -2,11 +2,6 @@
 // (c) 2012 Oslandia
 // MIT License
 
-/**
-   A Roadmap is an object used to model steps involved in a multimodal route.
-   It is a base for result values of a request.
- */
-
 #ifndef TEMPUS_ROADMAP_HH
 #define TEMPUS_ROADMAP_HH
 
@@ -16,6 +11,10 @@
 
 namespace Tempus
 {
+    /**
+       A Roadmap is an object used to model steps involved in a multimodal route.
+       It is a base for result values of a request.
+    */
     class Roadmap
     {
     public:

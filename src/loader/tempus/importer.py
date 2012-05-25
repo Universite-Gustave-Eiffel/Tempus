@@ -67,10 +67,21 @@ class DataImporter(object):
         Stop if one was wrong."""
         ret = True
         for sqlfile in files:
+            is_template = False
+            if isinstance(sqlfile, tuple):
+                values = sqlfile[1]
+                sqlfile = sqlfile[0]
+                is_template = True
+
             filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sql', sqlfile)
             # Stop if one SQL execution was wrong
             if ret and os.path.isfile(filename):
-                self.ploader.set_sqlfile(filename)
+                if is_template:
+                    f = open(filename, 'r')
+                    template = f.read()
+                    self.ploader.set_from_template( template, values )
+                else:
+                    self.ploader.set_sqlfile(filename)
                 ret = self.ploader.load()
         return ret
 
@@ -135,6 +146,8 @@ class ShpImporter(DataImporter):
             # prefix has not been given, try to deduce it from files
             if self.source:
                 prefixes = []
+                if not os.path.isdir(self.source):
+                    return ''
                 for filename in os.listdir(self.source):
                     for shp in self.SHAPEFILES:
                         # if we find the table name at the end of the file name (w/o ext), add prefix to the list

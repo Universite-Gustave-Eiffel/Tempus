@@ -1,15 +1,6 @@
 // Tempus core data structures
 // (c) 2012 Oslandia
 // MIT License
-/**
-   This file contains declarations of classes used to model road graphs
-
-   It generally maps to the database's schema: one class exists for each table.
-   Tables with 1<->N arity are represented by STL containers (vectors or lists)
-   External keys are represented by pointer to other classes or by vertex/edge descriptors
-   
-   Road::Node and Road::Section classes are used to build a BGL road graph as "bundled" edge and vertex properties
- */
 
 #ifndef TEMPUS_ROAD_GRAPH_HH
 #define TEMPUS_ROAD_GRAPH_HH
@@ -26,6 +17,15 @@ namespace Tempus
     };
     struct POI;
 
+    /**
+       A Road::Graph is made of Road::Node and Road::Section
+       
+       It generally maps to the database's schema: one class exists for each table.
+       Tables with 1<->N arity are represented by STL containers (vectors or lists)
+       External keys are represented by reference to other classes or by vertex/edge descriptors
+       
+       Road::Node and Road::Section classes are used to build a BGL road graph as "bundled" edge and vertex properties
+    */
     namespace Road
     {
 	///
