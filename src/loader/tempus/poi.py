@@ -22,18 +22,26 @@ class POIImporter(ShpImporter):
     POSTLOADSQL = []
 
     def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
-            options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True, poi_type = 5):
+            options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True, poi_type = 5, subs = {}):
         ShpImporter.__init__(self, source, prefix, dbstring, logfile, options, doclean)
-        if poi_type == 5:
-            self.POSTLOADSQL = ['poi.sql']
-        elif poi_type == 4:
-            self.POSTLOADSQL = ['poi_scycle.sql']
-        elif poi_type == 3:
-            self.POSTLOADSQL = ['poi_cycle.sql']
-        elif poi_type == 2:
-            self.POSTLOADSQL = ['poi_carpoint.sql']
-        elif poi_type == 1:
-            self.POSTLOADSQL = ['poi_carpark.sql']
+
+        if not 'name' in subs.keys():
+            subs['name'] = 'pname'
+        subs['poi_type'] = poi_type
+
+        if not 'parking_transport_type' in subs.keys():
+            if poi_type == 5:
+                subs['parking_transport_type'] = '0'
+            elif poi_type == 4:
+                subs['parking_transport_type'] = '128'
+            elif poi_type == 3:
+                subs['parking_transport_type'] = '4'
+            elif poi_type == 2:
+                subs['parking_transport_type'] = '256'
+            elif poi_type == 1:
+                subs['parking_transport_type'] = '1'
+
+        self.POSTLOADSQL = [('poi.sql', subs)]
 
     def check_input(self):
         """Check if input is ok : given shape file exists."""
