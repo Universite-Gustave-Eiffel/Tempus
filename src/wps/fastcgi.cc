@@ -98,12 +98,16 @@ int main( int argc, char*argv[] )
     while ( FCGX_Accept_r(&request) == 0 )
     {
 	fcgi_streambuf cin_fcgi_streambuf( request.in );
-	fcgi_streambuf cout_fcgi_streambuf( request.out );
+	// This causes a crash under Windows (??). We rely on a classic stringstream and FCGX_PutStr
+	// fcgi_streambuf cout_fcgi_streambuf( request.out );
+	std::ostringstream outbuf;
 
 	environ = request.envp;
 
-	WPS::Request wps_request( &cin_fcgi_streambuf, &cout_fcgi_streambuf );
+	WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf() );
 	wps_request.process();
+	std::string& outstr = outbuf.str();
+	FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
     }
 
     return 0;
