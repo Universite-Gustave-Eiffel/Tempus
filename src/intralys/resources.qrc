@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/intralys" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>

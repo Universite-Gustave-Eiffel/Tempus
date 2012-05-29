@@ -1,3 +1,3 @@
-include( PyQt4Macros.cmake )
+include( ../PyQt4Macros.cmake )
 
 add_subdirectory( IfsttarRouting )
