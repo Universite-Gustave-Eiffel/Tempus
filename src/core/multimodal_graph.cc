@@ -58,6 +58,20 @@ namespace Tempus
 
     namespace Multimodal
     {
+	FilteredTransportConstIterator Graph::public_transports_begin() const
+	{
+	    return FilteredTransportConstIterator( filtering_predicate,
+						   public_transports.begin(),
+						   public_transports.end() );
+	}
+
+	FilteredTransportConstIterator Graph::public_transports_end() const
+	{
+	    return FilteredTransportConstIterator( filtering_predicate,
+						   public_transports.end(),
+						   public_transports.end() );
+	}
+
 	bool Vertex::operator==( const Vertex& v ) const
 	{
 	    if ( type != v.type )
