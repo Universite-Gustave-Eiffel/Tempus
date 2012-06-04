@@ -13,6 +13,7 @@ using namespace Tempus;
 
 void DbTest::testConnection()
 {
+    cout << "DbTest::testConnection()" << endl;
     string db_options = g_db_options;
 
     // Connection to an non-existing database
@@ -45,6 +46,7 @@ void DbTest::testConnection()
 
 void DbTest::testQueries()
 {
+    cout << "DbTest::testQueries()" << endl;
     string db_options = g_db_options;
     connection_ = new Db::Connection( db_options + " dbname = " DB_TEST_NAME );
 
@@ -98,6 +100,7 @@ void PgImporterTest::tearDown()
 
 void PgImporterTest::testConsistency()
 {
+    cout << "PgImporterTest::testConsistency()" << endl;
     importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 
@@ -151,6 +154,7 @@ Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph
 
 void PgImporterTest::testMultimodal()
 {
+    cout << "PgImporterTest::testMultimodal()" << endl;
     importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 

@@ -58,20 +58,6 @@ namespace Tempus
 
     namespace Multimodal
     {
-	FilteredTransportConstIterator Graph::public_transports_begin() const
-	{
-	    return FilteredTransportConstIterator( filtering_predicate,
-						   public_transports.begin(),
-						   public_transports.end() );
-	}
-
-	FilteredTransportConstIterator Graph::public_transports_end() const
-	{
-	    return FilteredTransportConstIterator( filtering_predicate,
-						   public_transports.end(),
-						   public_transports.end() );
-	}
-
 	bool Vertex::operator==( const Vertex& v ) const
 	{
 	    if ( type != v.type )
@@ -174,8 +160,8 @@ namespace Tempus
 	{
 	    graph_ = &graph;
 	    boost::tie( road_it_, road_it_end_ ) = boost::vertices( graph_->road );
-	    pt_graph_it_ = graph_->public_transports.begin();
-	    pt_graph_it_end_ = graph_->public_transports.end();
+	    pt_graph_it_ = graph_->public_transports.subset_begin();
+	    pt_graph_it_end_ = graph_->public_transports.subset_end();
 	    poi_it_ = graph_->pois.begin();
 	    poi_it_end_ = graph_->pois.end();
 	    boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );

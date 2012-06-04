@@ -8,7 +8,7 @@
 #include "common.hh"
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
-#include <boost/iterator/filter_iterator.hpp>
+#include "sub_map.hh"
 
 namespace Db
 {
@@ -93,28 +93,6 @@ namespace Tempus
 	    }
 	};
 
-	typedef std::map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
-	typedef std::set<db_id_t> PublicTransportSelection;
-
-	///
-	/// Predicate used for filtering public transport graph iterator
-	struct PublicTransportIteratorFilter
-	{
-	    PublicTransportIteratorFilter( const PublicTransportSelection& select ) : selection_(select) {}
-	    bool operator() ( PublicTransportGraphList::const_iterator it ) const
-	    {
-		// if the iterator's db_id can be found in the selection
-		return selection_.find( it->first ) != selection_.end();
-	    }
-	    bool operator() ( PublicTransportGraphList::iterator it )
-	    {
-		// if the iterator's db_id can be found in the selection
-		return selection_.find( it->first ) != selection_.end();
-	    }
-	protected:
-	    const PublicTransportSelection& selection_;
-	};
-	
 	///
 	/// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
 	struct Graph
@@ -131,16 +109,10 @@ namespace Tempus
 	    ///
 	    /// Public transports graphs
 	    /// network_id -> PublicTransport::Graph
+	    /// This a sub_map that can thus be filtered to select only a subset
+	    typedef sub_map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
 	    PublicTransportGraphList public_transports;
 
-	    ///
-	    /// Public transport network selection. 
-	    PublicTransportSelection public_transport_selection;
-
-	    typedef boost::filter_iterator< PublicTransportIteratorFilter, PublicTransportGraphList::const_iterator > FilteredTransportConstIterator;
-	    FilteredTransportConstIterator public_transports_begin() const;
-	    FilteredTransportConstIterator public_transports_end() const;
-	    
 	    ///
 	    /// Point of interests
 	    typedef std::map<db_id_t, POI> PoiList;
@@ -172,7 +144,7 @@ namespace Tempus
 	    bool equal( const VertexIterator& v ) const;
 	protected:
 	    Road::VertexIterator road_it_, road_it_end_;
-	    Multimodal::PublicTransportGraphList::const_iterator pt_graph_it_, pt_graph_it_end_;
+	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator pt_graph_it_, pt_graph_it_end_;
 	    Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
 	    PublicTransport::VertexIterator pt_it_, pt_it_end_;
 	    const Multimodal::Graph* graph_;
