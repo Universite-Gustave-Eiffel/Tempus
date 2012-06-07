@@ -106,7 +106,7 @@ int main( int argc, char*argv[] )
 
 	WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf() );
 	wps_request.process();
-	std::string& outstr = outbuf.str();
+	const std::string& outstr = outbuf.str();
 	FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
     }
 

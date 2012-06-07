@@ -315,5 +315,63 @@ void PgImporterTest::testMultimodal()
 					);
 	cout << "Dijkstra OK" << endl;
     }
+
+    // test public transport sub map
+    {
+	// 1 // create other public transport networks, if needed
+	if ( graph_.public_transports.size() < 2 )
+	{
+	    // get the maximum pt id
+	    db_id_t max_id = 0;
+	    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports.begin();
+		  it != graph_.public_transports.end();
+		  it++ )
+	    {
+		if ( it->first > max_id )
+		{
+		    max_id = it->first;
+		}
+	    }
+	    size_t n_vertices = num_vertices( graph_ );
+	    size_t n_edges = num_edges( graph_ );
+
+	    // insert a new pt that is a copy of the first
+	    graph_.public_transports[max_id+1] = graph_.public_transports.begin()->second;
+	    graph_.public_transports.select_all();
+
+	    size_t n_vertices2 = num_vertices( graph_ );
+	    size_t n_edges2 = num_edges( graph_ );
+
+	    // unselect the first network
+	    std::set<db_id_t> selection = graph_.public_transports.selection();
+	    selection.erase( graph_.public_transports.begin()->first );
+	    graph_.public_transports.select( selection );
+
+	    size_t n_vertices3 = num_vertices( graph_ );
+	    size_t n_edges3 = num_edges( graph_ );
+	    size_t n_computed_vertices = 0;
+	    Multimodal::VertexIterator vi, vi_end;
+	    for ( boost::tie( vi, vi_end ) = vertices( graph_ ); vi != vi_end; vi++ )
+	    {
+		n_computed_vertices ++;
+	    }
+
+	    size_t n_computed_edges = 0;
+	    Multimodal::EdgeIterator ei, ei_end;
+	    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
+	    {
+		n_computed_edges ++;
+	    }
+
+	    // check that number of vertices are still ok
+	    CPPUNIT_ASSERT_EQUAL( n_vertices, n_vertices3 );
+	    // check the use of vertex iterators
+	    CPPUNIT_ASSERT_EQUAL( n_computed_vertices, n_vertices3 );
+	    // check that number of vertices are still ok
+	    CPPUNIT_ASSERT_EQUAL( n_edges, n_edges3 );
+	    // check the use of edges iterators
+	    CPPUNIT_ASSERT_EQUAL( n_computed_edges, n_edges3 );
+	}
+    }
 }
 
