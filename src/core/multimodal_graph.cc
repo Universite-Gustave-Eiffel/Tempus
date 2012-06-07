@@ -160,8 +160,8 @@ namespace Tempus
 	{
 	    graph_ = &graph;
 	    boost::tie( road_it_, road_it_end_ ) = boost::vertices( graph_->road );
-	    pt_graph_it_ = graph_->public_transports.begin();
-	    pt_graph_it_end_ = graph_->public_transports.end();
+	    pt_graph_it_ = graph_->public_transports.subset_begin();
+	    pt_graph_it_end_ = graph_->public_transports.subset_end();
 	    poi_it_ = graph_->pois.begin();
 	    poi_it_end_ = graph_->pois.end();
 	    boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
@@ -495,6 +495,7 @@ namespace Tempus
 	    }
 	    // else
 	    size_t n = num_vertices( graph_.road );
+	    // FIXME : we should have used subset_iterator here, but it slows down everything ...
 	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
 	    for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )	    
 	    {
@@ -526,8 +527,8 @@ namespace Tempus
 	size_t num_vertices( const Graph& graph )
 	{
 	    size_t n = 0;
-	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
-	    for ( it = graph.public_transports.begin(); it != graph.public_transports.end(); it++ )
+	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
+	    for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ )
 	    {
 		n += num_vertices( it->second );
 	    }
@@ -536,8 +537,8 @@ namespace Tempus
 	size_t num_edges( const Graph& graph )
 	{
 	    size_t n = 0;
-	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
-	    for ( it = graph.public_transports.begin(); it != graph.public_transports.end(); it++ )
+	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
+	    for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ )
 	    {
 		n += num_edges( it->second );
 		n += num_vertices( it->second ) * 4;

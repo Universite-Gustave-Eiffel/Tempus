@@ -13,6 +13,7 @@ using namespace Tempus;
 
 void DbTest::testConnection()
 {
+    cout << "DbTest::testConnection()" << endl;
     string db_options = g_db_options;
 
     // Connection to an non-existing database
@@ -45,6 +46,7 @@ void DbTest::testConnection()
 
 void DbTest::testQueries()
 {
+    cout << "DbTest::testQueries()" << endl;
     string db_options = g_db_options;
     connection_ = new Db::Connection( db_options + " dbname = " DB_TEST_NAME );
 
@@ -98,6 +100,7 @@ void PgImporterTest::tearDown()
 
 void PgImporterTest::testConsistency()
 {
+    cout << "PgImporterTest::testConsistency()" << endl;
     importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 
@@ -151,6 +154,7 @@ Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph
 
 void PgImporterTest::testMultimodal()
 {
+    cout << "PgImporterTest::testMultimodal()" << endl;
     importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 
@@ -310,6 +314,64 @@ void PgImporterTest::testMultimodal()
 					boost::make_iterator_property_map( color_map.begin(), vertex_index )
 					);
 	cout << "Dijkstra OK" << endl;
+    }
+
+    // test public transport sub map
+    {
+	// 1 // create other public transport networks, if needed
+	if ( graph_.public_transports.size() < 2 )
+	{
+	    // get the maximum pt id
+	    db_id_t max_id = 0;
+	    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports.begin();
+		  it != graph_.public_transports.end();
+		  it++ )
+	    {
+		if ( it->first > max_id )
+		{
+		    max_id = it->first;
+		}
+	    }
+	    size_t n_vertices = num_vertices( graph_ );
+	    size_t n_edges = num_edges( graph_ );
+
+	    // insert a new pt that is a copy of the first
+	    graph_.public_transports[max_id+1] = graph_.public_transports.begin()->second;
+	    graph_.public_transports.select_all();
+
+	    size_t n_vertices2 = num_vertices( graph_ );
+	    size_t n_edges2 = num_edges( graph_ );
+
+	    // unselect the first network
+	    std::set<db_id_t> selection = graph_.public_transports.selection();
+	    selection.erase( graph_.public_transports.begin()->first );
+	    graph_.public_transports.select( selection );
+
+	    size_t n_vertices3 = num_vertices( graph_ );
+	    size_t n_edges3 = num_edges( graph_ );
+	    size_t n_computed_vertices = 0;
+	    Multimodal::VertexIterator vi, vi_end;
+	    for ( boost::tie( vi, vi_end ) = vertices( graph_ ); vi != vi_end; vi++ )
+	    {
+		n_computed_vertices ++;
+	    }
+
+	    size_t n_computed_edges = 0;
+	    Multimodal::EdgeIterator ei, ei_end;
+	    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
+	    {
+		n_computed_edges ++;
+	    }
+
+	    // check that number of vertices are still ok
+	    CPPUNIT_ASSERT_EQUAL( n_vertices, n_vertices3 );
+	    // check the use of vertex iterators
+	    CPPUNIT_ASSERT_EQUAL( n_computed_vertices, n_vertices3 );
+	    // check that number of vertices are still ok
+	    CPPUNIT_ASSERT_EQUAL( n_edges, n_edges3 );
+	    // check the use of edges iterators
+	    CPPUNIT_ASSERT_EQUAL( n_computed_edges, n_edges3 );
+	}
     }
 }
 
