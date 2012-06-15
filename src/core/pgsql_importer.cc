@@ -316,6 +316,10 @@ namespace Tempus
 	    Road::Edge rs = pit->second.road_section;
 	    graph.road[ rs ].pois.push_back( &pit->second );
 	}
+
+	//
+	// By default, all public transport networks are part of the selected subset
+	graph.public_transports.select_all();
 	
 	progression( 1.0, /* finished = */ true );
 

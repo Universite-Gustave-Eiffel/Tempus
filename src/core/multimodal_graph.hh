@@ -8,6 +8,7 @@
 #include "common.hh"
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
+#include "sub_map.hh"
 
 namespace Db
 {
@@ -108,9 +109,10 @@ namespace Tempus
 	    ///
 	    /// Public transports graphs
 	    /// network_id -> PublicTransport::Graph
-	    typedef std::map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
+	    /// This a sub_map that can thus be filtered to select only a subset
+	    typedef sub_map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
 	    PublicTransportGraphList public_transports;
-	    
+
 	    ///
 	    /// Point of interests
 	    typedef std::map<db_id_t, POI> PoiList;
@@ -142,7 +144,7 @@ namespace Tempus
 	    bool equal( const VertexIterator& v ) const;
 	protected:
 	    Road::VertexIterator road_it_, road_it_end_;
-	    Multimodal::Graph::PublicTransportGraphList::const_iterator pt_graph_it_, pt_graph_it_end_;
+	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator pt_graph_it_, pt_graph_it_end_;
 	    Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
 	    PublicTransport::VertexIterator pt_it_, pt_it_end_;
 	    const Multimodal::Graph* graph_;
