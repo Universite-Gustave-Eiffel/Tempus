@@ -77,6 +77,7 @@ namespace Tempus
 	road_graph.clear();
 	graph.network_map.clear();
 	graph.public_transports.clear();
+	graph.pois.clear();
 
 	// locally maps db ID to Node or Section
 	std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
