@@ -231,7 +231,7 @@ namespace Tempus
 
 		if ( previous_section && !on_roundabout && !action )
 		{
-		    string q1 = (boost::format("SELECT ST_Azimuth( endpoint(s1.geom), startpoint(s1.geom) ), ST_Azimuth( startpoint(s2.geom), endpoint(s2.geom) ), endpoint(s1.geom)=startpoint(s2.geom) "
+		    string q1 = (boost::format("SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
 					       "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%") % previous_section % road_graph[step->road_section].db_id).str();
 		    Db::Result res = db_.exec(q1);
 		    double pi = 3.14159265;
