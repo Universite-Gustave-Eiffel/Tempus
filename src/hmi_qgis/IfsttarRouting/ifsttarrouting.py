@@ -280,15 +280,23 @@ class IfsttarRouting:
             except RuntimeError as e:
                 QMessageBox.warning( self.dlg, "Error", e.args[1] )
                 return
-            row = 0
+
+            # add each transport type to the list
+            listModel = QStandardItemModel()
+
+#            row = 0
             self.transport_type = []
-            self.dlg.ui.transportList.clear()
+#            self.dlg.ui.transportList.clear()
             for transport_type in outputs['transport_types']:
                 idt = int(transport_type.attrib['id'])
                 self.transport_type.append(transport_type.attrib)
-                self.dlg.ui.transportList.insertItem( row, transport_type.attrib['name'] )
-                row += 1
-            self.dlg.ui.transportList.selectAll()
+#                self.dlg.ui.transportList.insertItem( row, transport_type.attrib['name'] )
+                item = QStandardItem( transport_type.attrib['name'] )
+                item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                item.setData(QVariant(Qt.Checked), Qt.CheckStateRole)
+                listModel.appendRow(item)
+#                row += 1
+            self.dlg.ui.transportList.setModel( listModel )
 
             row = 0
             self.network = []

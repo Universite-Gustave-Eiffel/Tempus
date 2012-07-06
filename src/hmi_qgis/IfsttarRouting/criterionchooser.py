@@ -4,7 +4,7 @@ import config
 
 class CriterionChooser( QWidget ):
 
-    criterion_id = { "Distance" : 1, "Duration" : 2, "Price" : 3, "Carbon" : 4, "Calories" : 5, "NumberOfChanges" : 6 }
+    criterion_id = { "Distance" : 1, "Duration" : 2, "Price" : 3, "Carbon" : 4, "Calories" : 5, "NumberOfChanges" : 6, "Variability" : 7 }
 
     def __init__( self, parent, first = False ):
         QWidget.__init__( self )

@@ -42,7 +42,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -201,7 +201,7 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QListWidget" name="transportList">
+           <widget class="QListView" name="transportList">
             <property name="selectionMode">
              <enum>QAbstractItemView::MultiSelection</enum>
             </property>
