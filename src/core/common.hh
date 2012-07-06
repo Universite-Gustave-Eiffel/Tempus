@@ -140,7 +140,8 @@ namespace Tempus
 	CostPrice,
 	CostCarbon,
 	CostCalories,
-	CostNumberOfChanges
+	CostNumberOfChanges,
+	CostVariability
     };
 
     ///
