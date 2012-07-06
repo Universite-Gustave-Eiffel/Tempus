@@ -50,12 +50,8 @@ class StepSelector( QFrame ):
                 QObject.connect( self.minusBtn, SIGNAL("clicked()"), self.onRemove )
 
         n = datetime.now()
-        self.dateText = QLineEdit( n.strftime("%d/%m/%Y") )
-        self.timeText = QLineEdit( n.strftime("%H:%M") )
-        self.dateText.setMaxLength( 10 )
-        self.dateText.setInputMask( "99/99/9999" )
-        self.timeText.setMaxLength( 5 )
-        self.timeText.setInputMask( "99:99" )
+        self.dateEdit = QDateTimeEdit( self )
+        self.dateEdit.setCalendarPopup( True )
         self.constraintBox = QComboBox()
         self.constraintBox.insertItem(0, "No constraint" )
         self.constraintBox.insertItem(1, "Before" )
@@ -64,10 +60,8 @@ class StepSelector( QFrame ):
         self.hlayout2 = QHBoxLayout()
         self.hlayout2.setMargin( 0 )
         self.hlayout2.addWidget( self.constraintBox )
-        self.hlayout2.addWidget( QLabel("Date") )
-        self.hlayout2.addWidget( self.dateText )
-        self.hlayout2.addWidget( QLabel("Time") )
-        self.hlayout2.addWidget( self.timeText )
+        self.hlayout2.addWidget( QLabel("Date and time") )
+        self.hlayout2.addWidget( self.dateEdit )
 
         self.layout.addLayout( self.hlayout2 )
 
@@ -97,23 +91,11 @@ class StepSelector( QFrame ):
         self.constraintBox.setCurrentIndex( idx )
 
     def get_constraint( self ):
-        date = self.dateText.text().split("/")
-        if len(date) != 3:
-            date = [01,01,1980]
-        time = self.timeText.text().split(":")
-        if len(time) != 2:
-            time = [12,00]
-        date = [ int(x) for x in date ]
-        time = [ int(x) for x in time ]
-
-        return "%04d-%02d-%02dT%02d:%02d:00" % ( date[2], date[1], date[0], time[0], time[1] )
+        return self.dateEdit.dateTime().toString(Qt.ISODate)
 
     def set_constraint( self, str ):
-        [ date, time ] = str.split('T')
-        [ year, month, day ] = [ int(x) for x in date.split('-') ]
-        [ hour, minutes, seconds ] = [ int(x) for x in time.split(':') ]
-        self.dateText.setText( "%02d/%02d/%04d" % ( day, month, year) )
-        self.timeText.setText( "%02d:%02d" % ( hour, minutes ) )
+        datetime = QDateTime.fromString( str, Qt.ISODate )
+        self.dateEdit.setDateTime( datetime )
 
     def get_pvad( self ):
         if self.pvadCheck is None:

@@ -22,6 +22,7 @@
 # Import the PyQt and QGIS libraries
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from PyQt4 import QtCore, QtGui
 from qgis.core import *
 from qgis.gui import *
 import re
@@ -32,6 +33,10 @@ import config
 import resources_rc
 # Import the code for the dialog
 from ifsttarroutingdock import IfsttarRoutingDock
+# Import the splash screen
+from ui_splash_screen import Ui_SplashScreen
+
+from result_selection import ResultSelection
 
 def format_cost( cost ):
     cost_id = int(cost.attrib['type'])
@@ -53,7 +58,19 @@ def format_cost( cost ):
     elif cost_id == 5:
         cost_name = 'Calories'
         cost_unit = ''
+    elif cost_id == 6:
+        cost_name = 'Number of changes'
+        cost_unit = ''
+    elif cost_id == 7:
+        cost_name = 'Variability'
+        cost_unit = ''
     return "%s: %.1f %s" % (cost_name, cost_value, cost_unit)
+
+class SplashScreen(QtGui.QDialog):
+    def __init__(self):
+        QtGui.QDialog.__init__(self)
+        self.ui = Ui_SplashScreen()
+        self.ui.setupUi(self)
 
 class IfsttarRouting:
 
@@ -63,6 +80,8 @@ class IfsttarRouting:
         # Create the dialog and keep reference
         self.canvas = self.iface.mapCanvas()
         self.dlg = IfsttarRoutingDock( self.canvas )
+        # show the splash screen
+        self.splash = SplashScreen()
 
         # initialize plugin directory
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/ifsttarrouting"
@@ -409,6 +428,10 @@ class IfsttarRouting:
         QgsMapLayerRegistry.instance().addMapLayer(vl)
 
         # get the roadmap
+        rselect = ResultSelection()
+        rselect.addCost("Distance", "167km")
+        self.dlg.ui.resultSelectionLayout.addWidget( rselect )
+
         last_movement = 0
         roadmap = outputs['result'][0:-1] # all except the overview path
         row = 0
@@ -509,5 +532,6 @@ class IfsttarRouting:
 
     # run method that performs all the real work
     def run(self):
+        self.splash.show()
         # show the dialog
         self.dlg.show()

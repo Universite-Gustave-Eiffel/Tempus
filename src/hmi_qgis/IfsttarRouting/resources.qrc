@@ -1,5 +1,8 @@
 <RCC>
-    <qresource prefix="/plugins/ifsttarrouting" >
-        <file>icon.png</file>
-    </qresource>
+  <qresource prefix="/plugins/ifsttarrouting">
+    <file>Logo-TEMPUS.jpg</file>
+    <file>icon.png</file>
+    <file>IFSTTAR_logo.png</file>
+    <file>entpe.gif</file>
+  </qresource>
 </RCC>
