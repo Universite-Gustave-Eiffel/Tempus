@@ -48,7 +48,7 @@ if(BUILD_WPS)
 endif(BUILD_WPS)
 
 if(BUILD_QGIS_PLUGIN)
-  add_subdirectory( wps_qgis )
+  add_subdirectory( hmi_qgis )
 endif(BUILD_QGIS_PLUGIN)
 
 if(BUILD_INTRALYS_PLUGIN)
