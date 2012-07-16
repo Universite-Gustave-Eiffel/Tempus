@@ -462,9 +462,7 @@ namespace WPS
     
     Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
     {
-	string q = (boost::format( "SELECT id FROM tempus.road_node WHERE ST_DWithin( geom, "
-				   "ST_SetSRID(ST_Point(%1%, %2%), 2154), 30) ORDER BY "
-				   "ST_Distance(geom, ST_SetSRID(ST_Point(%1%, %2%), 2154))") % x % y).str();
+	string q = (boost::format( "SELECT tempus.road_node_id_from_coordinates(%1%, %2%)") % x % y).str();
 	Db::Result res = db.exec( q );
 	if ( res.size() == 0 )
 	    return 0;
@@ -670,6 +668,7 @@ namespace WPS
 				  "    <xs:element name=\"road\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"end_movement\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"PublicTransportStep\">\n"
@@ -679,6 +678,7 @@ namespace WPS
 				  "    <xs:element name=\"arrival_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"trip\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
 				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
 				  "<xs:element name=\"result\">\n"
@@ -689,13 +689,13 @@ namespace WPS
 				  "        <xs:element name=\"public_transport_step\" type=\"PublicTransportStep\"/>\n"
 				  "      </xs:choice>\n"
 				  "      <xs:element name=\"cost\" type=\"Cost\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
-				  "      <xs:element name=\"overview_path\" minOccurs=\"0\" maxOccurs=\"1\">\n" // 0..1
-				  "        <xs:complexType>\n"
-				  "          <xs:sequence>\n"
-				  "            <xs:element name=\"node\" type=\"Point\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "          </xs:sequence>\n"
-				  "        </xs:complexType>\n"
-				  "      </xs:element>\n"
+				  //				  "      <xs:element name=\"overview_path\" minOccurs=\"0\" maxOccurs=\"1\">\n" // 0..1
+				  //				  "        <xs:complexType>\n"
+				  //				  "          <xs:sequence>\n"
+				  //				  "            <xs:element name=\"node\" type=\"Point\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				  //				  "          </xs:sequence>\n"
+				  //				  "        </xs:complexType>\n"
+				  //				  "      </xs:element>\n"
 				  "    </xs:sequence>\n"
 				  "  </xs:complexType>\n"
 				  "</xs:element>\n"
@@ -720,6 +720,7 @@ namespace WPS
 		return output_parameters_;
 	    }
 	    Tempus::Roadmap& roadmap = result.back();
+#if 0
 	    xmlNode* overview_path_node = xmlNewNode( /* ns = */ NULL,
 						      (const xmlChar*)"overview_path" );
 	    Roadmap::PointList::iterator it;
@@ -734,12 +735,16 @@ namespace WPS
 		xmlAddChild( node, y_node );
 		xmlAddChild( overview_path_node, node );
 	    }
-	    
+#endif	    
 	    Roadmap::StepList::iterator sit;
 	    for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
 	    {
 		xmlNode* step_node;
 		Roadmap::Step* gstep = *sit;
+
+		xmlNode* wkb_node = xmlNewNode( NULL, (const xmlChar*)"wkb" );
+		xmlAddChild( wkb_node, xmlNewText((const xmlChar*)((*sit)->geometry_wkb.c_str())) );
+
 		if ( (*sit)->step_type == Roadmap::Step::RoadStep )
 		{
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
@@ -806,9 +811,12 @@ namespace WPS
 				(const xmlChar*)(boost::lexical_cast<string>( cit->second )).c_str() );
 		    xmlAddChild( step_node, cost_node );
 		}
+
+		xmlAddChild( step_node, wkb_node );
+
 		xmlAddChild( root_node, step_node );
 	    }
-	    xmlAddChild( root_node, overview_path_node );
+	    //	    xmlAddChild( root_node, overview_path_node );
 	    
 	    output_parameters_[ "result" ] = root_node;
 	    return output_parameters_;

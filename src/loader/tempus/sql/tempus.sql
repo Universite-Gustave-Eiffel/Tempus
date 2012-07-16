@@ -305,6 +305,16 @@ CREATE TABLE tempus.pt_transfer
 
 
 --
+-- Utilitary functions
+--
+
+
+create or replace function tempus.road_node_id_from_coordinates( float8, float8 ) returns bigint
+as '
+select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) limit 1
+'
+language 'SQL';
+--
 -- PostGIS geometry 
 --
 SELECT AddGeometryColumn('tempus', 'road_section', 'geom', 2154, 'LINESTRING', 3);
