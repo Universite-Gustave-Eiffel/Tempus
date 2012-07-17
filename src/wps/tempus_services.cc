@@ -176,6 +176,7 @@ namespace WPS
 				  "  <xs:attribute name=\"need_parking\" type=\"xs:int\"/>\n"
 				  "  <xs:attribute name=\"need_station\" type=\"xs:int\"/>\n"
 				  "  <xs:attribute name=\"need_return\" type=\"xs:int\"/>\n"
+				  "  <xs:attribute name=\"need_network\" type=\"xs:int\"/>\n"
 				  "</xs:complexType>\n"
 				  "<xs:element name=\"transport_types\">\n"
 				  "  <xs:complexType>\n"
@@ -189,6 +190,7 @@ namespace WPS
 				  "<xs:complexType name=\"TransportNetwork\">\n"
 				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
 				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
+				  "  <xs:attribute name=\"provided_transport_types\" type=\"xs:long\"/>\n"
 				  "</xs:complexType>\n"
 				  "<xs:element name=\"transport_networks\">\n"
 				  "  <xs:complexType>\n"
@@ -230,6 +232,7 @@ namespace WPS
 		    XML::new_prop( node, "need_parking", it->second.need_parking );
 		    XML::new_prop( node, "need_station", it->second.need_station );
 		    XML::new_prop( node, "need_return", it->second.need_return );
+		    XML::new_prop( node, "need_network", it->second.need_network );
 		    XML::add_child( root_node, node );
 		}
 		output_parameters_[ "transport_types" ] = root_node;
@@ -243,6 +246,7 @@ namespace WPS
 		    xmlNode* node = XML::new_node( "transport_network" );
 		    XML::new_prop( node, "id", it->first );
 		    XML::new_prop( node, "name", it->second.name );
+		    XML::new_prop( node, "provided_transport_types", it->second.provided_transport_types );
 		    XML::add_child( root_node, node );
 		}
 		output_parameters_[ "transport_networks" ] = root_node;

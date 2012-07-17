@@ -282,32 +282,59 @@ class IfsttarRouting:
                 QMessageBox.warning( self.dlg, "Error", e.args[1] )
                 return
 
+            #
             # add each transport type to the list
-            listModel = QStandardItemModel()
+            #
 
-#            row = 0
+            # retrieve the list of transport types
             self.transport_type = []
-#            self.dlg.ui.transportList.clear()
             for transport_type in outputs['transport_types']:
-                idt = int(transport_type.attrib['id'])
                 self.transport_type.append(transport_type.attrib)
-#                self.dlg.ui.transportList.insertItem( row, transport_type.attrib['name'] )
-                item = QStandardItem( transport_type.attrib['name'] )
+
+            # retrieve the network list
+            self.network = []
+            for network in outputs['transport_networks']:
+                self.network.append(network.attrib)
+
+            listModel = QStandardItemModel()
+            for ttype in self.transport_type:
+                need_network = int(ttype['need_network'])
+                idt = int(ttype['id'])
+                has_network = False
+                if need_network:
+                    # look for networks that provide this kind of transport
+                    for network in self.network:
+                        ptt = int(network['provided_transport_types'])
+                        if ptt & idt:
+                            has_network = True
+                            break
+
+                item = QStandardItem( ttype['name'] )
+                if need_network and not has_network:
+                    item.setFlags(Qt.ItemIsUserCheckable)
+                    item.setData(QVariant(Qt.Unchecked), Qt.CheckStateRole)
+                else:
+                    item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    item.setData(QVariant(Qt.Checked), Qt.CheckStateRole)
+                listModel.appendRow(item)
+            self.dlg.ui.transportList.setModel( listModel )
+                
+            networkListModel = QStandardItemModel()
+            for network in self.network:
+                title = network['name']
+
+                # look for provided transport types
+                tlist = []
+                ptt = int( network['provided_transport_types'] )
+                for ttype in self.transport_type:
+                    if ptt & int(ttype['id']):
+                        tlist.append( ttype['name'] )
+
+                item = QStandardItem( network['name'] + ' (' + ', '.join(tlist) + ')')
                 item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                 item.setData(QVariant(Qt.Checked), Qt.CheckStateRole)
-                listModel.appendRow(item)
-#                row += 1
-            self.dlg.ui.transportList.setModel( listModel )
-
-            row = 0
-            self.network = []
-            self.dlg.ui.networkList.clear()
-            for network in outputs['transport_networks']:
-                idt = int(network.attrib['id'])
-                self.network.append(network.attrib)
-                self.dlg.ui.networkList.insertItem( row, network.attrib['name'] )
-                row += 1
-            self.dlg.ui.networkList.selectAll()
+                networkListModel.appendRow(item)
+            self.dlg.ui.networkList.setModel( networkListModel )
 
     def onOptionChanged( self, option_name, option_type, val ):
         # bool
@@ -451,7 +478,7 @@ class IfsttarRouting:
             geo.fromWkb( binascii.unhexlify(wkb) )
             if step.tag == 'road_step':
                 transport_type = 1
-            elif step.tag == 'transport_step':
+            elif step.tag == 'public_transport_step':
                 transport_type = 2
             else:
                 transport_type = 3

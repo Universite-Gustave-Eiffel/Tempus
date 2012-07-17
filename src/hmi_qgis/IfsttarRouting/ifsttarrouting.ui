@@ -190,9 +190,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="label">
             <property name="text">
-             <string>Public networks</string>
+             <string>Transport networks</string>
             </property>
            </widget>
           </item>
@@ -208,7 +208,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QListWidget" name="networkList">
+           <widget class="QListView" name="networkList">
             <property name="selectionMode">
              <enum>QAbstractItemView::MultiSelection</enum>
             </property>

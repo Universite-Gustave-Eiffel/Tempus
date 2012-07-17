@@ -110,6 +110,7 @@ namespace Tempus
 	bool need_parking;
 	bool need_station;
 	bool need_return;
+	bool need_network;
 	
     protected:
 	bool check_consistency_()

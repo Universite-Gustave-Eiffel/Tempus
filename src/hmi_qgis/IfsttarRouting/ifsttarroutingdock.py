@@ -49,7 +49,7 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         self.ui.stepBox.addWidget( dest )
 
         # add the private parking chooser
-        self.parkingChooser = StepSelector( self.ui.queryPage, "Private parking", True )
+        self.parkingChooser = StepSelector( self.ui.queryPage, "Private parking location", True )
         self.parkingChooser.set_canvas( self.canvas )
         self.ui.parkingLayout.addWidget( self.parkingChooser )
 

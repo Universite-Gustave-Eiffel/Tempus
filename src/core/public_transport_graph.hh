@@ -24,6 +24,10 @@ namespace Tempus
 	struct Network : public Base
 	{
 	    std::string name;
+
+	    /// Transport types provided by this network
+	    /// It is a ORed combination of TransportType IDs (power of two)
+	    db_id_t provided_transport_types;
 	};
 
 	///
