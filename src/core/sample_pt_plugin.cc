@@ -188,43 +188,33 @@ namespace Tempus
 	    // The current trip is set to 0, which means 'null'. This holds because every db's id are 1-based
 	    db_id_t current_trip = 0;
 	    bool first_loop = true;
-		
+
+	    Road::Vertex previous = *path.begin();
 	    for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
+		    if ( first_loop ) {
+			    first_loop = false;
+			    continue;
+		    }
 		    step = new Roadmap::PublicTransportStep();
 		    roadmap.steps.push_back( step );
 
 		    bool found = false;
 		    PublicTransport::Edge e;
-		    boost::tie( e, found ) = boost::edge( 
+		    boost::tie( e, found ) = boost::edge( previous, *it, pt_graph );
+
+		    step->section = e;
+		    // default
+		    step->network_id = 1;
+		    step->trip_id = 1;
+
+		    previous = *it;
+
+		    step->costs[ CostDistance ] = distance_map[ *it ];
+		    roadmap.total_costs[ CostDistance ] += step->costs[ CostDistance ];
+
+		    roadmap.steps.push_back( step );
 	    }
-
-	    step->costs[ CostDistance ] = distance_map[ step->arrival_stop ];
-
-	    roadmap.total_costs[ CostDistance ] += step->costs[ CostDistance ];
-	}
-
-	Result& result()
-	{
-	    if (result_.size() == 0)
-		return result_;
-
-	    Roadmap& roadmap = result_.back();
-	    PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-
-	    std::cout << "Total duration: " << roadmap.total_costs[CostDuration] << std::endl;
-	    std::cout << "Total distance: " << roadmap.total_costs[CostDistance] << std::endl;
-	    std::cout << "Number of changes: " << (roadmap.steps.size() - 1) << std::endl;
-	    int k = 1;
-	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++, k++ )
-	    {
-		Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *it );
-		std::cout << k << " - Take the trip #" << step->trip_id << " from '" << pt_graph[step->departure_stop].name << "' to '" << pt_graph[step->arrival_stop].name << "'" << std::endl;
-		std::cout << "Duration: " << step->costs[CostDuration] << "s" << std::endl;
-		std::cout << "Distance: " << step->costs[CostDistance] << "km" << std::endl;
-		std::cout << std::endl;
-	    }
-	    return result_;
 	}
 
 	void cleanup()
