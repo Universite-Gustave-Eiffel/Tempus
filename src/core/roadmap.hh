@@ -33,6 +33,10 @@ namespace Tempus
 
 	    Costs costs;
 
+	    /// Geometry of the step, described as a WKB, for visualization purpose
+	    /// May be empty.
+	    std::string geometry_wkb;
+
 	    Step( StepType type ) : step_type( type ) {}
 	};
 
@@ -73,13 +77,18 @@ namespace Tempus
 
 	///
 	/// A Step made with a public transport
+	///
+	/// For a trip from station A to station C that passes through the station B,
+	/// 2 steps are stored, each with the same trip_id.
 	struct PublicTransportStep : public Step
 	{
 	    PublicTransportStep() : Step( Step::PublicTransportStep ) {}
 
 	    db_id_t network_id;
-	    PublicTransport::Vertex departure_stop;
-	    PublicTransport::Vertex arrival_stop;
+	    ///
+	    /// The public transport section part of the step
+	    PublicTransport::Edge section;
+
 	    db_id_t trip_id; ///< used to indicate the direction
 	};
 
@@ -89,11 +98,6 @@ namespace Tempus
 	typedef std::vector<Step*> StepList;
 	StepList steps;
 	Costs total_costs;
-
-	///
-	/// Optional overview path, which is designed for display purposes, and may be simplified
-	typedef std::vector<Point2D> PointList;
-	PointList overview_path;
 
 	virtual ~Roadmap()
 	{

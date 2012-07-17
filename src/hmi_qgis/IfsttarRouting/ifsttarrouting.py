@@ -28,6 +28,7 @@ from qgis.gui import *
 import re
 from wps_client import *
 import config
+import binascii
 
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -400,11 +401,10 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
 
-        overview_path = outputs['result'][-1]
         #
         # create layer
 
-        # first, we remove the first layer found with the same name are reuse it
+        # first, we remove the first layer found with the same name to reuse it
         lname = "Itinerary"
         maps = QgsMapLayerRegistry.instance().mapLayers()
         for k,v in maps.items():
@@ -413,22 +413,54 @@ class IfsttarRouting:
                 QgsMapLayerRegistry.instance().removeMapLayers( [k] )
                 break
 
+        # create a new vector layer
         vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
-        s = QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'})
-        vl.rendererV2().setSymbol(s)
+
+        # road steps are red
+        # public transport steps are blue
+        # others are yellow
+        root_rule = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'} ))
+        rule1 = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,0,0'}),
+                                             0,
+                                             0,
+                                             "transport_type=1" )
+        rule2 = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '0,0,255'}),
+                                             0,
+                                             0,
+                                             "transport_type=2" )
+        root_rule.appendChild( rule1 )
+        root_rule.appendChild( rule2 )
+        renderer = QgsRuleBasedRendererV2( root_rule );
+        vl.setRendererV2( renderer )
 
         pr = vl.dataProvider()
 
-        # add a feature
-        points = []
-        for node in overview_path:
-            x = float(node[0].text)
-            y = float(node[1].text)
-            points.append( QgsPoint( x, y ) )
-        fet = QgsFeature()
-        fet.setGeometry( QgsGeometry().fromPolyline( points ) )
-        pr.addFeatures( [fet] )
+        pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
         
+        # browse steps
+        steps = outputs['result']
+        for step in steps:
+            # find wkb geometry
+            wkb=''
+            for prop in step:
+                if prop.tag == 'wkb':
+                    wkb = prop.text
+
+            fet = QgsFeature()
+            geo = QgsGeometry()
+            geo.fromWkb( binascii.unhexlify(wkb) )
+            if step.tag == 'road_step':
+                transport_type = 1
+            elif step.tag == 'transport_step':
+                transport_type = 2
+            else:
+                transport_type = 3
+            fet.setAttributeMap( { 0: QVariant( transport_type ) } )
+            fet.setGeometry( geo )
+            pr.addFeatures( [fet] )
+
+        # We MUST call this manually (see http://hub.qgis.org/issues/4687)
+        vl.updateFieldMap()
         # update layer's extent when new features have been added
         # because change of extent in provider is not propagated to the layer
         vl.updateExtents()
@@ -436,12 +468,12 @@ class IfsttarRouting:
         QgsMapLayerRegistry.instance().addMapLayer(vl)
 
         # get the roadmap
-        rselect = ResultSelection()
-        rselect.addCost("Distance", "167km")
-        self.dlg.ui.resultSelectionLayout.addWidget( rselect )
+#        rselect = ResultSelection()
+#        rselect.addCost("Distance", "167km")
+#        self.dlg.ui.resultSelectionLayout.addWidget( rselect )
 
         last_movement = 0
-        roadmap = outputs['result'][0:-1] # all except the overview path
+        roadmap = outputs['result']
         row = 0
         self.dlg.ui.roadmapTable.clear()
         self.dlg.ui.roadmapTable.setRowCount(0)
@@ -452,7 +484,7 @@ class IfsttarRouting:
             if step.tag == 'road_step':
                 road_name = step[0].text or ''
                 movement = int(step[1].text)
-                costs = step[2:]
+                costs = step[2:-1]
                 text += "<p>"
                 action_txt = 'Walk on '
                 if last_movement == 1:
@@ -474,7 +506,7 @@ class IfsttarRouting:
                 departure = step[1].text
                 arrival = step[2].text
                 trip = step[3].text
-                costs = step[4:]
+                costs = step[4:-1]
                 for cost in costs:
                     cost_text += format_cost( cost ) + "<br/>\n"
                 # set network text as icon

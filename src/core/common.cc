@@ -27,4 +27,42 @@ namespace Tempus
 	}
 	old_N_ = new_N;
     }
+
+    std::string cost_name( int cost )
+    {
+	switch ( cost ) {
+	case CostDistance:
+	    return "distance";
+	case CostDuration:
+	    return "duration";
+	case CostPrice:
+	    return "price";
+	case CostCarbon:
+	    return "carbon";
+	case CostCalories:
+	    return "calories";
+	case CostNumberOfChanges:
+	    return "number of changes";
+	case CostVariability:
+	    return "variability";
+	}
+	return "--";
+    }
+
+    std::string cost_unit( int cost )
+    {
+	switch ( cost ) {
+	case CostDistance:
+	    return "km";
+	case CostDuration:
+	    return "s";
+	case CostPrice:
+	    return "€";
+	case CostCarbon:
+	    return "g/m^3";
+	case CostCalories:
+	    return "kcal";
+	}
+	return "";
+    }
 };

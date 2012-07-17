@@ -145,6 +145,14 @@ namespace Tempus
     };
 
     ///
+    /// Returns the name of a cost
+    std::string cost_name( int cost );
+
+    ///
+    /// Returns the unit of a cost
+    std::string cost_unit( int cost );
+
+    ///
     /// Base class in charge of progression callback.
     class ProgressionCallback
     {

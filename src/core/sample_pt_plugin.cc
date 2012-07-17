@@ -189,19 +189,14 @@ namespace Tempus
 	    db_id_t current_trip = 0;
 	    bool first_loop = true;
 		
-	    step = new Roadmap::PublicTransportStep();
-	    roadmap.steps.push_back( step );
-	    // default network
-	    step->network_id = 1;
-	    step->departure_stop = *path.begin();
-	    std::list<PublicTransport::Vertex>::iterator it = path.end();
-	    it--;
-	    step->arrival_stop = *it;
-
-	    for ( it = path.begin(); it != path.end(); it++ )
+	    for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
-		Point2D p = coordinates(*it, db_, pt_graph );
-		roadmap.overview_path.push_back( p );
+		    step = new Roadmap::PublicTransportStep();
+		    roadmap.steps.push_back( step );
+
+		    bool found = false;
+		    PublicTransport::Edge e;
+		    boost::tie( e, found ) = boost::edge( 
 	    }
 
 	    step->costs[ CostDistance ] = distance_map[ step->arrival_stop ];

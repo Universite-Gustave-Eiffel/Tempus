@@ -604,6 +604,7 @@ namespace Tempus
 		{
 		    found = true;
 		    e = *ei;
+		    break;
 		}
 	    }
 	    return std::make_pair( e, found );

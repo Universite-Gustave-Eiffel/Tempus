@@ -119,19 +119,58 @@ namespace Tempus
 
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
-	    Multimodal::Vertex previous;
-	    for ( std::list<Multimodal::Vertex>::const_iterator it = path.begin(); it != path.end(); it++ )
+	    std::list<Multimodal::Vertex>::const_iterator previous = path.begin();
+	    std::cout << "first: " << *previous << std::endl;
+	    std::list<Multimodal::Vertex>::const_iterator it = ++previous; --previous;
+	    for ( ; it != path.end(); ++it )
 	    {
-		cout << *it << endl;
-		roadmap.overview_path.push_back( coordinates( *it, db_, graph_ ) );
+		    if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
+			    Roadmap::RoadStep* step = new Roadmap::RoadStep();
+			    Road::Graph& road_graph = graph_.road;
+			    Road::Edge e;
+			    bool found = false;
+			    boost::tie( e, found ) = edge( previous->road_vertex, it->road_vertex, *it->road_graph );
+			    if ( !found ) {
+				    std::cerr << "Can't find the road edge!!!" << std::endl;
+				    continue;
+			    }
+			    step->road_section = e;
+			    step->costs[CostDistance] += road_graph[e].length;
+			    roadmap.total_costs[CostDistance] += road_graph[e].length;
+
+			    // add to the roadmap
+			    roadmap.steps.push_back( step );
+		    }
+
+		    else if ( previous->type == Multimodal::Vertex::PublicTransport && it->type == Multimodal::Vertex::PublicTransport ) {
+			    Roadmap::PublicTransportStep* step = new Roadmap::PublicTransportStep();
+			    PublicTransport::Edge e;
+			    bool found = false;
+			    boost::tie( e, found ) = edge( previous->pt_vertex, it->pt_vertex, *it->pt_graph );
+			    if ( !found ) {
+				    std::cerr << "Can't find the pt edge!!!" << std::endl;
+				    continue;
+			    }
+			    step->section = e;
+			    // Set the trip ID
+			    step->trip_id = 1; 
+			    // find the network_id
+			    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {
+				    if ( it->pt_graph == &nit->second ) {
+					    step->network_id = nit->first;
+					    break;
+				    }
+			    }
+			    // compute distance
+			    step->costs[CostDistance] += 1.0;
+			    roadmap.total_costs[CostDistance] += 1.0;
+
+			    // add to the roadmap
+			    roadmap.steps.push_back( step );
+		    }
+
+		    previous = it;
 	    }
-
-	    cout << "END" << endl;
-	}
-
-	Result& result()
-	{
-	    return result_;
 	}
 
 	void cleanup()

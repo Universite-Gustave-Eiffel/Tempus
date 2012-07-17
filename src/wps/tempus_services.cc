@@ -779,15 +779,16 @@ namespace WPS
 		    xmlNode* departure_node = xmlNewNode( NULL, (const xmlChar*)"departure_stop" );
 		    xmlNode* arrival_node = xmlNewNode( NULL, (const xmlChar*)"arrival_stop" );
 		    string departure_str;
-		    cout << "step->departure_stop = " << step->departure_stop << endl;
-		    if ( vertex_exists( step->departure_stop, pt_graph ) )
+		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
+		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
+		    if ( vertex_exists( v1, pt_graph ) )
 		    {
-			departure_str = pt_graph[ step->departure_stop ].name;
+			departure_str = pt_graph[ v1 ].name;
 		    }
 		    string arrival_str;
-		    if ( vertex_exists( step->arrival_stop, pt_graph ) )
+		    if ( vertex_exists( v2, pt_graph ) )
 		    {
-			arrival_str = pt_graph[ step->arrival_stop ].name;
+			arrival_str = pt_graph[ v2 ].name;
 		    }
 		    xmlAddChild( departure_node, xmlNewText((const xmlChar*)(departure_str.c_str())) );
 		    xmlAddChild( arrival_node, xmlNewText((const xmlChar*)(arrival_str.c_str())) );
