@@ -51,7 +51,6 @@ namespace Tempus
 	virtual void pre_process( Request& request ) throw (std::invalid_argument)
 	{
 	    REQUIRE( request.check_consistency() );
-	    REQUIRE( request.steps.size() == 1 );
 
 	    Road::Vertex origin = request.origin;
 	    Road::Vertex destination = request.destination();
@@ -83,9 +82,6 @@ namespace Tempus
 
 	virtual void process()
 	{
-	    Road::Vertex origin = request_.origin;
-	    Road::Vertex destination = request_.destination();
-
 	    Road::Graph& road_graph = graph_.road;
 
 	    timeb t_start, t_stop;
@@ -102,45 +98,56 @@ namespace Tempus
 	    /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
 	    Tempus::PluginRoadGraphVisitor vis( this );
 
-	    boost::dijkstra_shortest_paths( road_graph,
-					    origin,
-					    &pred_map[0],
-					    &distance_map[0],
-					    length_map,
-					    boost::get( boost::vertex_index, road_graph ),
-					    std::less<double>(),
-					    boost::closed_plus<double>(),
-					    std::numeric_limits<double>::max(),
-					    0.0,
-					    vis
-					    );
+	    std::list<Road::Vertex> path;
+	    Road::Vertex origin = request_.origin;
+	    // resolve each step, in reverse order
+	    for ( size_t ik = request_.steps.size(); ik >= 1; --ik ) {
+		    size_t i = ik - 1;
+		    if ( i > 0 )
+			    origin = request_.steps[i-1].destination;
+		    else
+			    origin = request_.origin;
+		    Road::Vertex destination = request_.steps[i].destination;
+
+		    boost::dijkstra_shortest_paths( road_graph,
+						    origin,
+						    &pred_map[0],
+						    &distance_map[0],
+						    length_map,
+						    boost::get( boost::vertex_index, road_graph ),
+						    std::less<double>(),
+						    boost::closed_plus<double>(),
+						    std::numeric_limits<double>::max(),
+						    0.0,
+						    vis
+						    );
+		    
+		    // reorder the path, could have been better included ...
+		    Road::Vertex current = destination;
+		    bool found = true;
+		    while ( current != origin )
+		    {
+			    path.push_front( current );
+			    if ( pred_map[current] == current )
+			    {
+				    found = false;
+				    break;
+			    }
+			    current = pred_map[ current ];
+		    }
+		    if ( !found )
+		    {
+			    cerr << "No path found !" << endl;
+			    return;
+		    }
+	    }
+	    path.push_front( origin );
 
 	    ftime( &t_stop );
 	    long long sstart = t_start.time * 1000L + t_start.millitm;
 	    long long sstop = t_stop.time * 1000L + t_stop.millitm;
 	    float time_s = float((sstop - sstart) / 1000.0);
-	    metrics_[ "time_s" ] = time_s;
-
-	    // reorder the path, could have been better included ...
-	    std::list<Road::Vertex> path;
-	    Road::Vertex current = destination;
-	    bool found = true;
-	    while ( current != origin )
-	    {
-		path.push_front( current );
-		if ( pred_map[current] == current )
-		{
-		    found = false;
-		    break;
-		}
-		current = pred_map[ current ];
-	    }
-	    if ( !found )
-	    {
-		cerr << "No path found !" << endl;
-		return;
-	    }
-	    path.push_front( origin );
+	    metrics_[ "time_s" ] = time_s;	    
 
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
@@ -154,8 +161,6 @@ namespace Tempus
 	    for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
 		Road::Vertex v = *it;
-		// Overview path
-		//		roadmap.overview_path.push_back( coordinates( v, db_, road_graph ) );
 		
 		// User-oriented roadmap
 		if ( first_loop )

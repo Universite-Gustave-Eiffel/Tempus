@@ -272,7 +272,10 @@ namespace Tempus
 		Db::Result res = db_.exec(q);
 		std::string wkb = res[0][0].as<std::string>();
 		// get rid of the heading '\x'
-		step->geometry_wkb = wkb.substr(2);
+		if ( wkb.size() > 0 )
+		    step->geometry_wkb = wkb.substr(2);
+		else
+		    step->geometry_wkb = "";
 	    
 		//
 		// For a road step, we have to compute directions of turn
