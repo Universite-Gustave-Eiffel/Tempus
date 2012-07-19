@@ -82,6 +82,8 @@ class StepSelector( QFrame ):
         return [ 0, 0 ]
 
     def set_coordinates( self, xy ):
+        if xy == []:
+            xy = [ 0, 0 ]
         self.coordinates.setText( "%f, %f" % ( xy[0], xy[1] ) )
 
     def get_constraint_type( self ):
@@ -106,8 +108,8 @@ class StepSelector( QFrame ):
         if self.pvadCheck is None:
             return
         state = Qt.Checked
-        if state == False:
-            state = Qt.UnChecked
+        if check == False:
+            state = Qt.Unchecked
         self.pvadCheck.setCheckState( state )
 
     def onAdd( self ):

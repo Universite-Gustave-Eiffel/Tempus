@@ -21,6 +21,9 @@
 """
 
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
 from ui_ifsttarrouting import Ui_IfsttarRoutingDock
 
 from criterionchooser import CriterionChooser
@@ -31,8 +34,40 @@ import pickle
 
 PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
-# create the dialog for zoom to point
+# create the dialog for route queries
 class IfsttarRoutingDock(QtGui.QDockWidget):
+    #
+    # Set widgets' states from a hash
+    #
+    def loadState( self, state ):
+        self.ui.wpsUrlText.setText( state['wps_url_text'] )
+        self.ui.dbOptionsText.setText( state['db_options'] )
+        self.ui.pluginCombo.setCurrentIndex( state['plugin_selected'] )
+        
+        self.set_steps( state['nsteps'] )
+        self.set_selected_criteria( state['criteria'] )
+        self.set_coordinates( state['coordinates'] )
+        self.set_constraints( state['constraints'] )
+        self.set_parking( state['parking'] )
+        self.set_pvads( state['pvads'] )
+
+    #
+    # Save widgets' states
+    #
+    def saveState( self ):
+        state = {
+            'wps_url_text': self.ui.wpsUrlText.text(),
+            'plugin_selected': self.ui.pluginCombo.currentIndex(),
+            'db_options': self.ui.dbOptionsText.text(),
+            'nsteps': self.nsteps(),
+            'criteria' : self.get_selected_criteria(),
+            'coordinates': self.get_coordinates(),
+            'constraints': self.get_constraints(),
+            'parking' : self.get_parking(),
+            'pvads': self.get_pvads(),
+            }
+        return state
+
     def __init__(self, canvas):
         QtGui.QDockWidget.__init__(self)
         self.canvas = canvas
@@ -57,34 +92,33 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         if os.path.exists( PREFS_FILE ):
             f = open( PREFS_FILE, 'r' )
             self.prefs = pickle.load( f )
-            self.ui.wpsUrlText.setText( self.prefs['wps_url_text'] )
-            self.ui.pluginCombo.setCurrentIndex( self.prefs['plugin_selected'] )
-            nsteps = self.prefs['nsteps']
-            for i in range(0, nsteps-1):
-                self.ui.stepBox.itemAt(0).widget().onAdd()
-
-            self.set_coordinates( self.prefs['coordinates'] )
-            self.set_constraints( self.prefs['constraints'] )
-            self.set_pvads( self.prefs['pvads'] )
+            self.loadState( self.prefs )
         else:
             self.prefs = {}
 
     def closeEvent( self, event ):
-        self.prefs['wps_url_text'] = self.ui.wpsUrlText.text()
-        self.prefs['plugin_selected'] = self.ui.pluginCombo.currentIndex()
-        self.prefs['nsteps'] = self.nsteps()
-        self.prefs['coordinates'] = self.get_coordinates()
-        self.prefs['constraints'] = self.get_constraints()
-        self.prefs['pvads'] = self.get_pvads()
+        self.prefs = self.saveState()
         f = open( PREFS_FILE, 'w+' )
         pickle.dump( self.prefs, f )
         event.accept()
 
-    def selected_criteria( self ):
+    def get_selected_criteria( self ):
         s = []
         for c in range( 0, self.ui.criterionBox.count() ):
             s.append( self.ui.criterionBox.itemAt( c ).widget().selected() )
         return s
+
+    def set_selected_criteria( self, sel ):
+        c = self.ui.criterionBox.count()
+        for i in range(0, c-1):
+            self.ui.criterionBox.itemAt(1).widget().onRemove()
+        for i in range(0, len(sel)-1 ):
+            self.ui.criterionBox.itemAt(0).widget().onAdd()
+
+        i = 0
+        for selected in sel:
+            self.ui.criterionBox.itemAt(i).widget().set_selection( selected )
+            i += 1
 
     # get coordinates of all steps
     def get_coordinates( self ):
@@ -140,15 +174,60 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
             i += 1
 
     def selected_networks( self ):
-        s = self.ui.networkList.selectedIndexes()
-        return [ x.row() for x in s ]
+        s = []
+        model = self.ui.networkList.model()
+        n = model.rowCount()
+        for i in range(0, n):
+            v = model.data( model.index(i,0), Qt.CheckStateRole )
+            if v.toBool():
+                s.append( i )
+        return s
 
     def selected_transports( self ):
-        s = self.ui.transportList.selectedIndexes()
-        return [ x.row() for x in s ]
+        s = []
+        model = self.ui.transportList.model()
+        n = model.rowCount()
+        for i in range(0, n):
+            v = model.data( model.index(i,0), Qt.CheckStateRole )
+            if v.toBool():
+                s.append( i )
+        return s
+
+    def set_selected_networks( self, sel ):
+        model = self.ui.networkList.model()
+        n = model.rowCount()
+        for i in range(0, n):
+            if i in sel:
+                q = QVariant(Qt.Checked)
+            else:
+                q = QVariant(Qt.Unchecked)
+            model.setData( model.index(i,0), q, Qt.CheckStateRole )
+
+    def set_selected_transports( self, sel ):
+        model = self.ui.transportList.model()
+        n = model.rowCount()
+        for i in range(0, n):
+            if i in sel:
+                q = QVariant(Qt.Checked)
+            else:
+                q = QVariant(Qt.Unchecked)
+            model.setData( model.index(i,0), q, Qt.CheckStateRole )
 
     def get_parking( self ):
         [x,y] = self.parkingChooser.get_coordinates()
         if x < 0.001:
             return []
         return [x,y]
+
+    def set_parking( self, xy ):
+        self.parkingChooser.set_coordinates( xy )
+
+    def set_steps( self, nsteps ):
+        # first remove all intermediary steps
+        c = self.ui.stepBox.count()
+        # remove from idx 1 to N-1 (skip destination)
+        for i in range(1, c):
+            self.ui.stepBox.itemAt(0).widget().onRemove()
+        
+        for i in range(0, nsteps-1):
+            self.ui.stepBox.itemAt(0).widget().onAdd()

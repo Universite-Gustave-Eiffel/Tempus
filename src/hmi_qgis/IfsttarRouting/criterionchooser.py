@@ -45,3 +45,17 @@ class CriterionChooser( QWidget ):
 
     def selected( self ):
         return CriterionChooser.criterion_id[ str(self.criterionList.currentText()) ]
+
+    def set_selection( self, selection_id ):
+        # look for this ID
+        name = ''
+        for k,nid in CriterionChooser.criterion_id.items():
+            if nid == selection_id:
+               name = k
+               break
+        # select based on a name
+        for i in range(0, self.criterionList.count()):
+            t = self.criterionList.itemText( i )
+            if t == name:
+                self.criterionList.setCurrentIndex( i )
+                break
