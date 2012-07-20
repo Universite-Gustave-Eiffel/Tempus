@@ -493,6 +493,8 @@ class IfsttarRouting:
         row = 0
         self.dlg.ui.roadmapTable.clear()
         self.dlg.ui.roadmapTable.setRowCount(0)
+        self.dlg.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
+
         for step in roadmap:
             text = ''
             icon_text = ''
@@ -554,6 +556,7 @@ class IfsttarRouting:
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 1, w )
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(2)
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 2, w )
+        self.dlg.ui.roadmapTable.horizontalHeader().setStretchLastSection( True )
 
     #
     # Take a XML tree from the WPS 'metrics' operation

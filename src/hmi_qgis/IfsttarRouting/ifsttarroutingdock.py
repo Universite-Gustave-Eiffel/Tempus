@@ -77,6 +77,9 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
 
         self.ui.criterionBox.addWidget( CriterionChooser( self.ui.criterionBox, True ) )
 
+        # set roadmap's header
+        self.ui.roadmapTable.setHorizontalHeader(QHeaderView(Qt.Horizontal))
+
         # add the Destination chooser
         self.ui.origin.set_canvas( self.canvas )
         dest = StepSelector( self.ui.stepBox, "Destination" )
