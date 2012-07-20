@@ -18,8 +18,11 @@
     <layout class="QHBoxLayout" name="hLayout">
      <item>
       <widget class="QRadioButton" name="radioButton">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
        <property name="text">
-        <string/>
+        <string>text</string>
        </property>
       </widget>
      </item>

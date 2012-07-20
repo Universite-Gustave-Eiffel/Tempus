@@ -148,6 +148,10 @@ namespace Tempus
 			      (boost::format("Non existing node_to %1% on road_section %2%") % node_to_id % section.db_id).str().c_str());
 	    Road::Vertex v_from = road_nodes_map[ node_from_id ];
 	    Road::Vertex v_to = road_nodes_map[ node_to_id ];
+	    if ( v_from == v_to ) {
+		    cout << "Cannot add a road cycle from " << v_from << " to " << v_to << endl;
+		    continue;
+	    }
 
 	    Road::Edge e;
 	    bool is_added, found;

@@ -571,6 +571,7 @@ namespace WPS
 	    }
 	    
 	    // optimizing criteria
+	    this->optimizing_criteria.clear();
 	    field = XML::get_next_nontext( field->next );
 	    this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
 	    field = XML::get_next_nontext( field->next );	
@@ -584,6 +585,7 @@ namespace WPS
 	    this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
 	
 	    // allowed networks, 1 .. N
+	    this->allowed_networks.clear();
 	    field = XML::get_next_nontext( field->next );
 	    while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
 	    {
@@ -653,7 +655,7 @@ namespace WPS
     public:
 	ResultService() : PluginService( "result" )
 	{
-	    add_output_parameter( "result",
+	    add_output_parameter( "results",
 				  "<xs:complexType name=\"DbId\">\n"
 				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n" // db_id
 				  "</xs:complexType>\n"
@@ -685,21 +687,20 @@ namespace WPS
 				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
-				  "<xs:element name=\"result\">\n"
+				  "<xs:element name=\"results\">\n"
 				  "  <xs:complexType>\n"
 				  "    <xs:sequence>\n"
-				  "      <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
-				  "        <xs:element name=\"road_step\" type=\"RoadStep\"/>\n"
-				  "        <xs:element name=\"public_transport_step\" type=\"PublicTransportStep\"/>\n"
-				  "      </xs:choice>\n"
-				  "      <xs:element name=\"cost\" type=\"Cost\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
-				  //				  "      <xs:element name=\"overview_path\" minOccurs=\"0\" maxOccurs=\"1\">\n" // 0..1
-				  //				  "        <xs:complexType>\n"
-				  //				  "          <xs:sequence>\n"
-				  //				  "            <xs:element name=\"node\" type=\"Point\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  //				  "          </xs:sequence>\n"
-				  //				  "        </xs:complexType>\n"
-				  //				  "      </xs:element>\n"
+				  "    <xs:element name=\"result\" minOccurs=\"0\" maxOccurs=\"unbounded\">\n"
+				  "      <xs:complexType>\n"
+				  "        <xs:sequence>\n"
+				  "          <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
+				  "            <xs:element name=\"road_step\" type=\"RoadStep\"/>\n"
+				  "            <xs:element name=\"public_transport_step\" type=\"PublicTransportStep\"/>\n"
+				  "          </xs:choice>\n"
+				  "          <xs:element name=\"cost\" type=\"Cost\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+				  "        </xs:sequence>\n"
+				  "      </xs:complexType>\n"
+				  "    </xs:element>\n"
 				  "    </xs:sequence>\n"
 				  "  </xs:complexType>\n"
 				  "</xs:element>\n"
@@ -717,95 +718,103 @@ namespace WPS
 	    Tempus::Road::Graph& road_graph = graph_.road;
 	    Db::Connection& db = Application::instance()->db_connection();
 	    
-	    xmlNode* root_node = xmlNewNode( /*ns=*/ NULL, (const xmlChar*)"result" );
+	    xmlNode* root_node = xmlNewNode( /*ns=*/ NULL, (const xmlChar*)"results" );
 	    if ( result.size() == 0 )
 	    {
-		output_parameters_["result"] = root_node;
+		output_parameters_["results"] = root_node;
 		return output_parameters_;
 	    }
-	    Tempus::Roadmap& roadmap = result.back();
-#if 0
-	    xmlNode* overview_path_node = xmlNewNode( /* ns = */ NULL,
-						      (const xmlChar*)"overview_path" );
-	    Roadmap::PointList::iterator it;
-	    for ( it = roadmap.overview_path.begin(); it != roadmap.overview_path.end(); it++ )
-	    {
-		xmlNode *node = xmlNewNode( /* ns = */ NULL, (const xmlChar*)"node" );
-		xmlNode *x_node = xmlNewNode( NULL, (const xmlChar*)"x" );
-		xmlNode *y_node = xmlNewNode( NULL, (const xmlChar*)"y" );
-		xmlAddChild( x_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(it->x)).c_str()) ) );
-		xmlAddChild( y_node, xmlNewText( (const xmlChar*)((boost::lexical_cast<string>(it->y)).c_str()) ) );
-		xmlAddChild( node, x_node );
-		xmlAddChild( node, y_node );
-		xmlAddChild( overview_path_node, node );
-	    }
-#endif	    
-	    Roadmap::StepList::iterator sit;
-	    for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
-	    {
-		xmlNode* step_node;
-		Roadmap::Step* gstep = *sit;
 
-		xmlNode* wkb_node = xmlNewNode( NULL, (const xmlChar*)"wkb" );
-		xmlAddChild( wkb_node, xmlNewText((const xmlChar*)((*sit)->geometry_wkb.c_str())) );
-
-		if ( (*sit)->step_type == Roadmap::Step::RoadStep )
+	    Tempus::Result::const_iterator rit;
+	    for ( rit = result.begin(); rit != result.end(); ++rit ) {
+		const Tempus::Roadmap& roadmap = *rit;
+		
+		xmlNode* result_node = xmlNewNode( NULL, (const xmlChar*)"result" );
+		Roadmap::StepList::const_iterator sit;
+		for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
 		{
-		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
-		    step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
-		    xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road" );
-		    string road_name = "Unknown road";
-		    if ( edge_exists(step->road_section, road_graph) )
-			road_name = road_graph[ step->road_section].road_name;
-		    xmlAddChild( rs_node, xmlNewText((const xmlChar*)road_name.c_str()) );
+		    xmlNode* step_node;
+		    Roadmap::Step* gstep = *sit;
 		    
-		    xmlNode* end_movement_node = xmlNewNode( NULL, (const xmlChar*)"end_movement" );
-		    xmlAddChild( end_movement_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->end_movement )).c_str()) );
+		    xmlNode* wkb_node = xmlNewNode( NULL, (const xmlChar*)"wkb" );
+		    xmlAddChild( wkb_node, xmlNewText((const xmlChar*)((*sit)->geometry_wkb.c_str())) );
 		    
-		    xmlAddChild( step_node, rs_node );
-		    xmlAddChild( step_node, end_movement_node );
+		    if ( (*sit)->step_type == Roadmap::Step::RoadStep )
+		    {
+			Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
+			step_node = xmlNewNode( NULL, (const xmlChar*)"road_step" );
+			xmlNode* rs_node = xmlNewNode( NULL, (const xmlChar*)"road" );
+			string road_name = "Unknown road";
+			if ( edge_exists(step->road_section, road_graph) )
+			    road_name = road_graph[ step->road_section].road_name;
+			xmlAddChild( rs_node, xmlNewText((const xmlChar*)road_name.c_str()) );
+			
+			xmlNode* end_movement_node = xmlNewNode( NULL, (const xmlChar*)"end_movement" );
+			xmlAddChild( end_movement_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->end_movement )).c_str()) );
+			
+			xmlAddChild( step_node, rs_node );
+			xmlAddChild( step_node, end_movement_node );
+		    }
+		    else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
+		    {
+			Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *sit );
+			
+			if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() )
+			{
+			    // can't find the pt network
+			}
+			PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id ];
+			
+			step_node = xmlNewNode( NULL, (const xmlChar*)"public_transport_step" );
+			
+			xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network" );
+			xmlAddChild( network_node, xmlNewText((const xmlChar*)(graph_.network_map[ step->network_id ].name.c_str())) );
+			
+			xmlNode* departure_node = xmlNewNode( NULL, (const xmlChar*)"departure_stop" );
+			xmlNode* arrival_node = xmlNewNode( NULL, (const xmlChar*)"arrival_stop" );
+			string departure_str;
+			PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
+			PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
+			if ( vertex_exists( v1, pt_graph ) )
+			{
+			    departure_str = pt_graph[ v1 ].name;
+			}
+			string arrival_str;
+			if ( vertex_exists( v2, pt_graph ) )
+			{
+			    arrival_str = pt_graph[ v2 ].name;
+			}
+			xmlAddChild( departure_node, xmlNewText((const xmlChar*)(departure_str.c_str())) );
+			xmlAddChild( arrival_node, xmlNewText((const xmlChar*)(arrival_str.c_str())) );
+			
+			xmlNode* trip_node = xmlNewNode( NULL, (const xmlChar*)"trip" );
+			xmlAddChild( trip_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->trip_id ).c_str())) );
+			xmlAddChild( step_node, network_node );
+			xmlAddChild( step_node, departure_node );
+			xmlAddChild( step_node, arrival_node );
+			xmlAddChild( step_node, trip_node );
+		    }
+		    
+		    for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
+		    {
+			xmlNode* cost_node = xmlNewNode( NULL, (const xmlChar*)"cost" );
+			xmlNewProp( cost_node,
+				    (const xmlChar*)"type",
+				    (const xmlChar*)(boost::lexical_cast<string>( cit->first )).c_str() );
+			xmlNewProp( cost_node,
+				    (const xmlChar*)"value",
+				    (const xmlChar*)(boost::lexical_cast<string>( cit->second )).c_str() );
+			xmlAddChild( step_node, cost_node );
+		    }
+		    
+		    xmlAddChild( step_node, wkb_node );
+		    
+		    xmlAddChild( result_node, step_node );
 		}
-		else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
-		{
-		    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *sit );
-
-		    if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() )
-		    {
-			// can't find the pt network
-		    }
-		    PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id ];
-
-		    step_node = xmlNewNode( NULL, (const xmlChar*)"public_transport_step" );
-		    
-		    xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network" );
-		    xmlAddChild( network_node, xmlNewText((const xmlChar*)(graph_.network_map[ step->network_id ].name.c_str())) );
-
-		    xmlNode* departure_node = xmlNewNode( NULL, (const xmlChar*)"departure_stop" );
-		    xmlNode* arrival_node = xmlNewNode( NULL, (const xmlChar*)"arrival_stop" );
-		    string departure_str;
-		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
-		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
-		    if ( vertex_exists( v1, pt_graph ) )
-		    {
-			departure_str = pt_graph[ v1 ].name;
-		    }
-		    string arrival_str;
-		    if ( vertex_exists( v2, pt_graph ) )
-		    {
-			arrival_str = pt_graph[ v2 ].name;
-		    }
-		    xmlAddChild( departure_node, xmlNewText((const xmlChar*)(departure_str.c_str())) );
-		    xmlAddChild( arrival_node, xmlNewText((const xmlChar*)(arrival_str.c_str())) );
-
-		    xmlNode* trip_node = xmlNewNode( NULL, (const xmlChar*)"trip" );
-		    xmlAddChild( trip_node, xmlNewText((const xmlChar*)(boost::lexical_cast<string>( step->trip_id ).c_str())) );
-		    xmlAddChild( step_node, network_node );
-		    xmlAddChild( step_node, departure_node );
-		    xmlAddChild( step_node, arrival_node );
-		    xmlAddChild( step_node, trip_node );
-		}
-
-		for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
+		
+		// total costs
+		
+		for ( Tempus::Costs::const_iterator cit = roadmap.total_costs.begin(); cit != roadmap.total_costs.end(); cit++ )
 		{
 		    xmlNode* cost_node = xmlNewNode( NULL, (const xmlChar*)"cost" );
 		    xmlNewProp( cost_node,
@@ -814,16 +823,12 @@ namespace WPS
 		    xmlNewProp( cost_node,
 				(const xmlChar*)"value",
 				(const xmlChar*)(boost::lexical_cast<string>( cit->second )).c_str() );
-		    xmlAddChild( step_node, cost_node );
+		    xmlAddChild( result_node, cost_node );
 		}
 
-		xmlAddChild( step_node, wkb_node );
-
-		xmlAddChild( root_node, step_node );
-	    }
-	    //	    xmlAddChild( root_node, overview_path_node );
-	    
-	    output_parameters_[ "result" ] = root_node;
+		xmlAddChild( root_node, result_node );
+	    } // for each result
+	    output_parameters_[ "results" ] = root_node;
 	    return output_parameters_;
 	}
     };

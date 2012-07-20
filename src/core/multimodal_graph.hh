@@ -89,7 +89,7 @@ namespace Tempus
 	    }
 	    bool operator<( const Multimodal::Edge& e ) const
 	    {
-		return source < e.source && target < e.target;
+		return source < e.source || ((source == e.source) && target < e.target);
 	    }
 	};
 
@@ -254,6 +254,16 @@ namespace Tempus
 	/// Find an edge, based on a source and target vertex.
 	/// It does not implements AdjacencyMatrix, since it does not returns in constant time (linear in the number of edges)
 	std::pair< Edge, bool > edge( const Vertex& u, const Vertex& v, const Graph& graph );
+
+	///
+	/// Get the road edge if the given edge is a Road2Road
+	/// else, return false
+	std::pair< Road::Edge, bool > road_edge( const Multimodal::Edge& e );
+
+	///
+	/// Get the public transport edge if the given edge is a Transport2Transport
+	/// else, return false
+	std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
 
 	///
 	/// Overloading of get()

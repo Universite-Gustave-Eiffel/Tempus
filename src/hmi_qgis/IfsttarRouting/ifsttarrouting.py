@@ -48,33 +48,83 @@ import pickle
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
-def format_cost( cost ):
+ROADMAP_LAYER_NAME = "Roadmap_"
+
+def cost_name( cost ):
     cost_id = int(cost.attrib['type'])
-    cost_value = float(cost.attrib['value'])
     cost_name = ''
-    cost_unit = ''
     if cost_id == 1:
         cost_name = 'Distance'
-        cost_unit = 'm'
     elif cost_id == 2:
         cost_name = 'Duration'
-        cost_unit = 's'
     elif cost_id == 3:
         cost_name = 'Price'
-        cost_unit = '€'
     elif cost_id == 4:
         cost_name = 'Carbon'
-        cost_unit = '?'
     elif cost_id == 5:
         cost_name = 'Calories'
-        cost_unit = ''
     elif cost_id == 6:
         cost_name = 'Number of changes'
-        cost_unit = ''
     elif cost_id == 7:
         cost_name = 'Variability'
+    return cost_name
+
+def cost_unit( cost ):
+    cost_id = int(cost.attrib['type'])
+    cost_unit = ''
+    if cost_id == 1:
+        cost_unit = 'm'
+    elif cost_id == 2:
+        cost_unit = 'min'
+    elif cost_id == 3:
+        cost_unit = '€'
+    elif cost_id == 4:
+        cost_unit = '?'
+    elif cost_id == 5:
         cost_unit = ''
-    return "%s: %.1f %s" % (cost_name, cost_value, cost_unit)
+    elif cost_id == 6:
+        cost_unit = ''
+    elif cost_id == 7:
+        cost_unit = ''
+    return cost_unit
+
+def format_cost( cost ):
+    cost_value = float(cost.attrib['value'])
+    return "%s: %.1f %s" % (cost_name(cost), cost_value, cost_unit(cost))
+
+#
+# clears a FormLayout
+def clearLayout( lay ):
+    # clean the widget list
+    rc = lay.rowCount()
+    if rc > 0:
+        for row in range(0, rc):
+            l1 = lay.itemAt( rc-row-1, QFormLayout.LabelRole )
+            l2 = lay.itemAt( rc-row-1, QFormLayout.FieldRole )
+#            if l1 is None or l2 is None:
+#                break
+            lay.removeItem( l1 )
+            lay.removeItem( l2 )
+            w1 = l1.widget()
+            w2 = l2.widget()
+            lay.removeWidget( w1 )
+            lay.removeWidget( w2 )
+            w1.close()
+            w2.close()
+
+#
+# clears a BoxLayout
+def clearBoxLayout( lay ):
+    rc = lay.count()
+    if rc == 0:
+        return
+    for row in range(0, rc):
+        # remove in reverse
+        item = lay.itemAt(rc - row - 1)
+        lay.removeItem(item)
+        w = item.widget()
+        lay.removeWidget(w)
+        w.close()
 
 class SplashScreen(QtGui.QDialog):
     def __init__(self):
@@ -143,6 +193,9 @@ class IfsttarRouting:
         # click on the 'reset' button in history tab
         QObject.connect( self.dlg.ui.reloadHistoryBtn, SIGNAL("clicked()"), self.loadHistory )
         QObject.connect( self.dlg.ui.deleteHistoryBtn, SIGNAL("clicked()"), self.onDeleteHistoryItem )
+
+        # click on a result radio button
+        QObject.connect(ResultSelection.buttonGroup, SIGNAL("buttonClicked(int)"), self.onResultSelected )
 
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
@@ -228,24 +281,6 @@ class IfsttarRouting:
         self.dlg.ui.dbOptionsLbl.setEnabled( True )
         self.dlg.ui.pluginCombo.setEnabled( True )
         self.dlg.ui.buildBtn.setEnabled( True )
-
-    def clearLayout( self, lay ):
-        # clean the widget list
-        rc = lay.rowCount()
-        if rc > 0:
-            for row in range(0, rc):
-                l1 = lay.itemAt( row, QFormLayout.LabelRole )
-                l2 = lay.itemAt( row, QFormLayout.FieldRole )
-                if l1 is None or l2 is None:
-                    break
-                lay.removeItem( l1 )
-                lay.removeItem( l2 )
-                w1 = l1.widget()
-                w2 = l2.widget()
-                lay.removeWidget( w1 )
-                lay.removeWidget( w2 )
-                w1.close()
-                w2.close()
 
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
@@ -378,21 +413,12 @@ class IfsttarRouting:
     #
     # Take a XML tree from the WPS 'result' operation
     # add an 'Itinerary' layer on the map
-    # and fill also the 'Roadmap' tab
     #
-    def displayRoadmap(self, steps):
+    def displayRoadmapLayer(self, steps, lid):
         #
         # create layer
 
-        # first, we remove the first layer found with the same name to reuse it
-        lname = "Itinerary"
-        maps = QgsMapLayerRegistry.instance().mapLayers()
-        for k,v in maps.items():
-            if v.name() == lname:
-                vl = v
-                QgsMapLayerRegistry.instance().removeMapLayers( [k] )
-                break
-
+        lname = "%s%d" % (ROADMAP_LAYER_NAME, lid)
         # create a new vector layer
         vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
 
@@ -445,12 +471,23 @@ class IfsttarRouting:
         vl.updateExtents()
 
         QgsMapLayerRegistry.instance().addMapLayer(vl)
+        self.selectRoadmapLayer( lid )
 
-        # get the roadmap
-#        rselect = ResultSelection()
-#        rselect.addCost("Distance", "167km")
-#        self.dlg.ui.resultSelectionLayout.addWidget( rselect )
-
+    def selectRoadmapLayer( self, id ):
+        legend = self.iface.legendInterface()
+        lname = "%s%d" % (ROADMAP_LAYER_NAME, id)
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        for k,v in maps.items():
+            if v.name()[0:len(ROADMAP_LAYER_NAME)] == ROADMAP_LAYER_NAME:
+                if v.name() == lname:
+                    legend.setLayerVisible( v, True )
+                else:
+                    legend.setLayerVisible( v, False )
+    #
+    # Take a XML tree from the WPS 'result' operation
+    # and fill the "roadmap" tab
+    #
+    def displayRoadmapTab( self, steps ):
         last_movement = 0
         roadmap = steps
         row = 0
@@ -524,7 +561,7 @@ class IfsttarRouting:
     #
     def displayMetrics( self, metrics ):
         row = 0
-        self.clearLayout( self.dlg.ui.resultLayout )
+        clearLayout( self.dlg.ui.resultLayout )
 
         for metric in metrics:
             lay = self.dlg.ui.resultLayout
@@ -557,7 +594,7 @@ class IfsttarRouting:
             option_value[ option_val.attrib['name'] ] = option_val.attrib['value']
 
         lay = self.dlg.ui.optionsLayout
-        self.clearLayout( lay )
+        clearLayout( lay )
 
         row = 0
         for option in options:
@@ -632,6 +669,44 @@ class IfsttarRouting:
             networkListModel.appendRow(item)
         self.dlg.ui.networkList.setModel( networkListModel )
 
+    def displayResults( self, results ):
+        # result radio button id
+        self.result_ids=[]
+        # clear the vbox layout
+        clearBoxLayout( self.dlg.ui.resultSelectionLayout )
+        k = 1
+        for result in results:
+            name = "%s%d" % (ROADMAP_LAYER_NAME,k)
+            rselect = ResultSelection()
+            rselect.setText( name )
+            for r in result:
+                if r.tag == 'cost':
+                    # get the roadmap
+                    rselect.addCost(cost_name(r), "%.1f%s" % (float(r.attrib['value']), cost_unit(r)))
+            self.dlg.ui.resultSelectionLayout.addWidget( rselect )
+            self.result_ids.append( rselect.id() )
+            k += 1
+        self.results = results
+
+        # delete pre existing roadmap layers
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        for k,v in maps.items():
+            if v.name()[0:len(ROADMAP_LAYER_NAME)] == ROADMAP_LAYER_NAME:
+                QgsMapLayerRegistry.instance().removeMapLayers( [k] )
+
+        # then display each layer
+        k = 1
+        for result in results:
+            self.displayRoadmapLayer( result, k )
+            k += 1
+
+    def onResultSelected( self, id ):
+        for i in range(0, len(self.result_ids)):
+            if id == self.result_ids[i]:
+                self.displayRoadmapTab( self.results[i] )
+                self.selectRoadmapLayer( i+1 )
+                break
+
     #
     # When the 'compute' button gets clicked
     #
@@ -694,8 +769,8 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
 
-        results = outputs['result']
-        self.displayRoadmap( results )
+        results = outputs['results']
+        self.displayResults( results )
 
         # get metrics
         plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : currentPlugin } ] ] }
@@ -725,7 +800,7 @@ class IfsttarRouting:
                    'selected_networks' : self.dlg.selected_networks(),
                    'selected_transports' : self.dlg.selected_transports(),
                    'metrics' : metrics,
-                   'roadmap' : results }
+                   'results' : results }
         str_record = pickle.dumps( record )
 
         self.historyFile.addRecord( str_record )
@@ -764,7 +839,7 @@ class IfsttarRouting:
         self.dlg.set_selected_transports( v['selected_transports'] )
 
         self.displayMetrics( v['metrics'] )
-        self.displayRoadmap( v['roadmap'] )
+        self.displayResults( v['results'] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )

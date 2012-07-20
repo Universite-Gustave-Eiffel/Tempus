@@ -53,9 +53,9 @@ namespace Tempus
     {
 	switch ( cost ) {
 	case CostDistance:
-	    return "km";
+	    return "m";
 	case CostDuration:
-	    return "s";
+	    return "min";
 	case CostPrice:
 	    return "€";
 	case CostCarbon:

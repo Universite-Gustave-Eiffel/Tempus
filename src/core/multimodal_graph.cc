@@ -609,8 +609,30 @@ namespace Tempus
 	    }
 	    return std::make_pair( e, found );
 	}
-    };
+
+	std::pair<Road::Edge, bool> road_edge( const Multimodal::Edge& e )
+	{
+	    if ( e.connection_type() != Multimodal::Edge::Road2Road )
+		return std::make_pair( Road::Edge(), false );
+	    
+	    Road::Edge ret_edge;
+	    bool found;
+	    boost::tie( ret_edge, found ) = edge( e.source.road_vertex, e.target.road_vertex, *(e.source.road_graph) );
+	    return std::make_pair( ret_edge, found );
+	}
 	
+	std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::Edge& e )
+	{
+	    if ( e.connection_type() != Multimodal::Edge::Transport2Transport )
+		return std::make_pair( PublicTransport::Edge(), false );
+	    
+	    PublicTransport::Edge ret_edge;
+	    bool found;
+	    boost::tie( ret_edge, found ) = edge( e.source.pt_vertex, e.target.pt_vertex, *(e.source.pt_graph) );
+	    return std::make_pair( ret_edge, found );
+	}
+    }; // namespace Multimodal
+
     ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
     {
 	if ( v.type == Multimodal::Vertex::Road )

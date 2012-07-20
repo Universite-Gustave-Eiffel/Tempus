@@ -25,9 +25,8 @@ namespace Tempus
 	{
 	    enum StepType
 	    {
-		VertexStep = 0,
 		RoadStep,
-		PublicTransportStep,
+		PublicTransportStep
 	    };
 	    StepType step_type;
 
