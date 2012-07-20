@@ -677,6 +677,16 @@ namespace WPS
 				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
 				  "  </xs:sequence>\n"
 				  "</xs:complexType>\n"
+				  "<xs:complexType name=\"RoadTransportStep\">\n"
+				  "  <xs:sequence>\n"
+				  "    <xs:element name=\"type\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"road\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"network\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
+				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
+				  "  </xs:sequence>\n"
+				  "</xs:complexType>\n"
 				  "<xs:complexType name=\"PublicTransportStep\">\n"
 				  "  <xs:sequence>\n"
 				  "    <xs:element name=\"network\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
@@ -696,6 +706,7 @@ namespace WPS
 				  "          <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
 				  "            <xs:element name=\"road_step\" type=\"RoadStep\"/>\n"
 				  "            <xs:element name=\"public_transport_step\" type=\"PublicTransportStep\"/>\n"
+				  "            <xs:element name=\"road_transport_step\" type=\"RoadTransportStep\"/>\n"
 				  "          </xs:choice>\n"
 				  "          <xs:element name=\"cost\" type=\"Cost\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
 				  "        </xs:sequence>\n"
@@ -758,7 +769,7 @@ namespace WPS
 		    else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
 		    {
 			Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *sit );
-			
+ 			
 			if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() )
 			{
 			    // can't find the pt network
@@ -793,6 +804,56 @@ namespace WPS
 			xmlAddChild( step_node, departure_node );
 			xmlAddChild( step_node, arrival_node );
 			xmlAddChild( step_node, trip_node );
+		    }
+		    else if ( (*sit)->step_type == Roadmap::Step::GenericStep )
+		    {
+			Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( *sit );
+			Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
+
+			const Road::Graph* road_graph = 0;
+			const PublicTransport::Graph* pt_graph = 0;
+			db_id_t network_id = 0;
+			std::string stop_name, road_name;
+			std::string type_str = boost::lexical_cast<std::string>( edge->connection_type());
+			if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
+				road_graph = edge->source.road_graph;
+				pt_graph = edge->target.pt_graph;
+				stop_name = (*pt_graph)[edge->target.pt_vertex].name;
+				road_name = (*road_graph)[ (*pt_graph)[edge->target.pt_vertex].road_section].road_name;
+			}
+			else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
+				road_graph = edge->target.road_graph;
+				pt_graph = edge->source.pt_graph;
+				stop_name = (*pt_graph)[edge->source.pt_vertex].name;
+				road_name = (*road_graph)[ (*pt_graph)[edge->source.pt_vertex].road_section].road_name;
+			}
+			for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();
+			      nit != graph_.public_transports.end();
+			      ++nit ) {
+				if ( &nit->second == pt_graph ) {
+					network_id = nit->first;
+					break;
+				}
+			}
+			step_node = xmlNewNode( NULL, (const xmlChar*)"road_transport_step" );
+
+			xmlNode* type_node = xmlNewNode( NULL, (const xmlChar*)"type" );
+			xmlAddChild( type_node, xmlNewText((const xmlChar*)(type_str.c_str())) );
+
+			xmlNode* road_node = xmlNewNode( NULL, (const xmlChar*)"road" );
+			xmlAddChild( road_node, xmlNewText((const xmlChar*)(road_name.c_str())) );
+
+			xmlNode* network_node = xmlNewNode( NULL, (const xmlChar*)"network" );
+			xmlAddChild( network_node, xmlNewText((const xmlChar*)(graph_.network_map[ network_id ].name.c_str())) );
+			
+			xmlNode* stop_node = xmlNewNode( NULL, (const xmlChar*)"stop" );
+			xmlAddChild( stop_node, xmlNewText((const xmlChar*)(stop_name.c_str())) );
+
+
+			xmlAddChild( step_node, type_node );
+			xmlAddChild( step_node, road_node );
+			xmlAddChild( step_node, network_node );
+			xmlAddChild( step_node, stop_node );
 		    }
 		    
 		    for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )

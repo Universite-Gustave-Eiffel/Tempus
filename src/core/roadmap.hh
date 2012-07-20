@@ -8,6 +8,7 @@
 #include <map>
 
 #include "common.hh"
+#include "multimodal_graph.hh"
 
 namespace Tempus
 {
@@ -26,7 +27,8 @@ namespace Tempus
 	    enum StepType
 	    {
 		RoadStep,
-		PublicTransportStep
+		PublicTransportStep,
+		GenericStep
 	    };
 	    StepType step_type;
 
@@ -89,6 +91,15 @@ namespace Tempus
 	    PublicTransport::Edge section;
 
 	    db_id_t trip_id; ///< used to indicate the direction
+	};
+
+	///
+	/// A generic step from a vertex to another
+	/// Inherits from Step as well as from Multimodal::Edge
+	struct GenericStep : public Step, public Multimodal::Edge
+	{
+	    GenericStep() : Step( Step::GenericStep ), Edge() {}
+	    GenericStep( const Multimodal::Edge& edge ) : Step( Step::GenericStep ), Edge( edge ) {}
 	};
 
 	///

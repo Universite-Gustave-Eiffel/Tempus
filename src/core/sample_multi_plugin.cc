@@ -175,8 +175,10 @@ namespace Tempus
 		bool found;
 		boost::tie( me, found ) = edge( *previous, *it, graph_ );
 
+		Roadmap::Step* mstep = 0;
 		if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
-		    Roadmap::RoadStep* step = new Roadmap::RoadStep();
+		    mstep = new Roadmap::RoadStep();
+		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>(mstep);
 		    Road::Graph& road_graph = graph_.road;
 		    Road::Edge e;
 		    bool found = false;
@@ -186,17 +188,11 @@ namespace Tempus
 			continue;
 		    }
 		    step->road_section = e;
-		    step->costs[CostDistance] = distances[me];
-		    step->costs[CostDuration] = durations[me];
-		    roadmap.total_costs[CostDistance] += distances[me];
-		    roadmap.total_costs[CostDuration] += durations[me];
-		    
-		    // add to the roadmap
-		    roadmap.steps.push_back( step );
 		}
 		
 		else if ( previous->type == Multimodal::Vertex::PublicTransport && it->type == Multimodal::Vertex::PublicTransport ) {
-		    Roadmap::PublicTransportStep* step = new Roadmap::PublicTransportStep();
+		    mstep = new Roadmap::PublicTransportStep();
+		    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>(mstep);
 		    PublicTransport::Edge e;
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->pt_vertex, it->pt_vertex, *it->pt_graph );
@@ -214,15 +210,17 @@ namespace Tempus
 			    break;
 			}
 		    }
-		    // compute distance
-		    step->costs[CostDistance] = distances[me];
-		    step->costs[CostDuration] = durations[me];
-		    roadmap.total_costs[CostDistance] += distances[me];
-		    roadmap.total_costs[CostDuration] += durations[me];
-		    
-		    // add to the roadmap
-		    roadmap.steps.push_back( step );
 		}
+		else {
+		    // Make a multimodal edge and copy it into the roadmap as a 'generic' step
+		    mstep = new Roadmap::GenericStep( Multimodal::Edge( *previous, *it ));
+		}
+
+		roadmap.steps.push_back( mstep );
+		mstep->costs[CostDistance] = distances[me];
+		mstep->costs[CostDuration] = durations[me];
+		roadmap.total_costs[CostDistance] += distances[me];
+		roadmap.total_costs[CostDuration] += durations[me];
 		
 		previous = it;
 	    }

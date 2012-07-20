@@ -224,7 +224,6 @@ namespace Tempus
 		std::cout << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
 	    }
 	    
-	    int k = 1;
 	    std::string road_name = "";
 	    double distance = 0.0;
 	    Tempus::db_id_t previous_section = 0;
@@ -236,10 +235,54 @@ namespace Tempus
 	    Tempus::db_id_t roundabout_leave;
 	    Roadmap::RoadStep *last_step = 0;
 	    
+	    // Counter for direction texts
+	    int direction_i = 1;
 	    Roadmap::RoadStep::EndMovement movement;
 	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++ )
 	    {
-		if ( (*it)->step_type == Roadmap::Step::PublicTransportStep ) {
+		if ( (*it)->step_type == Roadmap::Step::GenericStep ) {
+		    Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( *it );
+		    Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
+
+		    bool is_road_pt = false;
+		    db_id_t road_id, pt_id;
+		    switch ( edge->connection_type()) {
+		    case Multimodal::Edge::Road2Transport: {
+			is_road_pt = true;
+			const Road::Graph& road_graph = *(edge->source.road_graph);
+			const PublicTransport::Graph& pt_graph = *(edge->target.pt_graph);
+			road_id = road_graph[ edge->source.road_vertex ].db_id;
+			pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
+
+			std::cout << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
+
+		    } break;
+		    case Multimodal::Edge::Transport2Road: {
+			is_road_pt = true;
+			const PublicTransport::Graph& pt_graph = *(edge->source.pt_graph);
+			const Road::Graph& road_graph = *(edge->target.road_graph);
+			pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
+			road_id = road_graph[ edge->target.road_vertex ].db_id;				 
+
+			std::cout << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
+
+		    } break;
+		    }
+
+		    if ( is_road_pt ) {
+			std::string query = (boost::format( "SELECT st_asbinary(st_force_2d(st_makeline(t1.geom, t2.geom))) from "
+							    "(select geom from tempus.road_node where id=%1%) as t1, "
+							    "(select geom from tempus.pt_stop where id=%2%) as t2" ) %
+					     road_id %
+					     pt_id ).str();
+			Db::Result res = db_.exec(query);
+			BOOST_ASSERT( res.size() > 0 );
+			std::string wkb = res[0][0].as<std::string>();
+			// get rid of the heading '\x'
+			step->geometry_wkb = wkb.substr(2);
+		    }
+		}
+		else if ( (*it)->step_type == Roadmap::Step::PublicTransportStep ) {
 		    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *it );
 		    PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id];
 		    
@@ -254,7 +297,7 @@ namespace Tempus
 		    
 		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
 		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
-		    std::cout << k << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
+		    std::cout << direction_i++ << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
 		    // display associated costs
 		    for ( Costs::const_iterator cit = step->costs.begin(); cit != step->costs.end(); ++cit ) {
 			std::cout << cost_name( cit->first ) << ": " << cit->second << cost_unit( cit->first ) << " ";
@@ -337,16 +380,16 @@ namespace Tempus
 		    switch ( movement )
 		    {
 		    case Roadmap::RoadStep::GoAhead:
-			std::cout << k++ << " - Walk on " << road_name << " for " << distance << cost_unit(CostDistance) << std::endl;
+			std::cout << direction_i++ << " - Walk on " << road_name << " for " << distance << cost_unit(CostDistance) << std::endl;
 			break;
 		    case Roadmap::RoadStep::TurnLeft:
-			std::cout << k++ << " - Turn left on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
+			std::cout << direction_i++ << " - Turn left on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
 			break;
 		    case Roadmap::RoadStep::TurnRight:
-			std::cout << k++ << " - Turn right on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
+			std::cout << direction_i++ << " - Turn right on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
 			break;
 		    case Roadmap::RoadStep::RoundAboutEnter:
-			std::cout << k++ << " - Enter the roundabout on " << road_name << std::endl;
+			std::cout << direction_i++ << " - Enter the roundabout on " << road_name << std::endl;
 			break;
 		    case Roadmap::RoadStep::FirstExit:
 		    case Roadmap::RoadStep::SecondExit:
@@ -354,7 +397,7 @@ namespace Tempus
 		    case Roadmap::RoadStep::FourthExit:
 		    case Roadmap::RoadStep::FifthExit:
 		    case Roadmap::RoadStep::SixthExit:
-			std::cout << k++ << " - Leave the roundabout on " << road_name << std::endl;
+			std::cout << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
 			break;
 		    }
 		    previous_section = road_graph[step->road_section].db_id;

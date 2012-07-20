@@ -514,8 +514,6 @@ class IfsttarRouting:
                 elif last_movement >= 4 and last_movement < 999:
                     icon_text += "<img src=\"%s/roundabout.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                 text += action_txt + road_name + "<br/>\n"
-                for cost in costs:
-                    cost_text += format_cost( cost ) + "<br/>\n"
                 text += "</p>"
                 last_movement = movement
 
@@ -525,11 +523,23 @@ class IfsttarRouting:
                 arrival = step[2].text
                 trip = step[3].text
                 costs = step[4:-1]
-                for cost in costs:
-                    cost_text += format_cost( cost ) + "<br/>\n"
                 # set network text as icon
                 icon_text = network
                 text = "Take the trip %s from '%s' to '%s'" % (trip, departure, arrival)
+
+            elif step.tag == 'road_transport_step':
+                stype = int(step[0].text)
+                road = step[1].text
+                icon_text = step[2].text
+                stop = step[3].text
+                costs = step[4:-1]
+                if stype == 2:
+                    text = "Go to the '%s' station from %s" % (stop, road)
+                else:
+                    text = "Leave the '%s' station to %s" % (stop, road)
+
+            for cost in costs:
+                cost_text += format_cost( cost ) + "<br/>\n"
                 
             self.dlg.ui.roadmapTable.insertRow( row )
             descLbl = QLabel()
@@ -549,6 +559,7 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.setCellWidget( row, 2, costText )
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
+
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 0, w )
