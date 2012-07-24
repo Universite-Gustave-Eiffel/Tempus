@@ -5,6 +5,8 @@
 -- 3. insert a new way that is made of the second part of the split
 --
 -- must be repeated until no new row are added (ways with N crossing points are cut in N-1 executions)
+begin;
+
 drop schema if exists _processing cascade;
 create schema _processing;
 
@@ -29,6 +31,11 @@ create table _processing.tmp as
 		p.id != w.node_from
 	and
 		p.id != w.node_to
+-- if two nodes (with different ids) share the same coordinates
+	and
+		not st_equals( p.geom, st_startpoint(w.geom))
+	and
+		not st_equals( p.geom, st_endpoint(w.geom))
 ) as t
 );
 
@@ -37,7 +44,8 @@ update tempus.road_section
 set
 	node_from = tmp.node_from,
 	node_to = tmp.pid,
-	geom = st_geometryN(tmp.split, 1)
+	geom = st_geometryN(tmp.split, 1),
+	length = st_length(st_geometryN(tmp.split, 1))
 from
 	_processing.tmp as tmp
 where
@@ -54,10 +62,10 @@ select
 	nextval('seq_section')::bigint as id,
 	olds.road_type,
 	tmp.pid as node_from,
-	olds.node_to,
+	tmp.node_to,
 	olds.transport_type_ft,
 	olds.transport_type_tf,
-	olds.length,
+	st_length(st_geometryN(tmp.split,2)),
 	olds.car_speed_limit,
 	olds.car_average_speed,
 	olds.road_name,
@@ -74,4 +82,5 @@ join
 	_processing.tmp as tmp
 on
 	olds.id = tmp.wid;
-	
+
+commit;

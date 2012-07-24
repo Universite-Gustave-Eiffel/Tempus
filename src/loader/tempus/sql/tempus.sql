@@ -35,9 +35,9 @@ INSERT INTO tempus.transport_type VALUES (8, NULL, 'Bus', 'f', 'f', 'f', 't');
 INSERT INTO tempus.transport_type VALUES (16, NULL, 'Tramway', 'f', 'f', 'f', 't');
 INSERT INTO tempus.transport_type VALUES (32, NULL, 'Metro', 'f', 'f', 'f', 't');
 INSERT INTO tempus.transport_type VALUES (64, NULL, 'Train', 'f', 'f', 'f', 't');
-INSERT INTO tempus.transport_type VALUES (128, 4, 'Shared cycle', 't', 't', 'f');
-INSERT INTO tempus.transport_type VALUES (256, 1, 'Shared car', 't', 't', 'f');
-INSERT INTO tempus.transport_type VALUES (512, 6, 'Roller', 'f', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (128, 4, 'Shared cycle', 't', 't', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (256, 1, 'Shared car', 't', 't', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (512, 6, 'Roller', 'f', 'f', 'f', 'f');
 
 
 --
