@@ -17,6 +17,20 @@ namespace Db
 
 namespace Tempus
 {
+    namespace Multimodal
+    {
+	class VertexIterator;
+	class OutEdgeIterator;
+	class EdgeIterator;
+    }
+    // For debugging purposes
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator& it );
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it );
+}
+
+namespace Tempus
+{
     ///
     /// Multimodal namespace
     ///
@@ -142,6 +156,8 @@ namespace Tempus
 	    Vertex& dereference() const;
 	    void increment();
 	    bool equal( const VertexIterator& v ) const;
+
+	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
 	protected:
 	    Road::VertexIterator road_it_, road_it_end_;
 	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator pt_graph_it_, pt_graph_it_end_;
@@ -171,6 +187,8 @@ namespace Tempus
 	    int road2poi_connection_;
 	    // O -> 2
 	    int poi2road_connection_;
+
+	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const OutEdgeIterator& it );
 	public:
 	    OutEdgeIterator() : graph_(0) {}
 	    OutEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
@@ -190,6 +208,8 @@ namespace Tempus
 	    const Multimodal::Graph* graph_;
 	    Multimodal::VertexIterator vi_, vi_end_;
 	    Multimodal::OutEdgeIterator ei_, ei_end_;
+
+	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const EdgeIterator& it );
 	public:
 	    EdgeIterator() : graph_(0) {}
 	    EdgeIterator( const Multimodal::Graph& graph );

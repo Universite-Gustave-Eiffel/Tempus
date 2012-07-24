@@ -266,12 +266,18 @@ namespace Tempus
 	    // else, on poi
 	    return poi_it_ == v.poi_it_;
 	}
-	
+
 	EdgeIterator::EdgeIterator( const Multimodal::Graph& graph )
 	{
 	    graph_ = &graph;
 	    boost::tie( vi_, vi_end_ ) = vertices( graph );
-	    boost::tie( ei_, ei_end_ ) = out_edges( *vi_, *graph_ );
+	    // move to the first vertex with some out edges
+	    do {
+		boost::tie( ei_, ei_end_ ) = out_edges( *vi_, *graph_ );
+		if ( ei_ == ei_end_ ) {
+		    vi_++;
+		}
+	    } while ( ei_ == ei_end_ && vi_ != vi_end_ );
 	}
 
 	void EdgeIterator::to_end()
@@ -676,4 +682,50 @@ namespace Tempus
 	out << "(" << e.source << "," << e.target << ")";
 	return out;
     }
+
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it )
+    {
+#if 0
+	ostr << "vertexiterator{ graph(" << it.graph_ << "), road_it(" << it.road_it_ << "), road_it_end(" << it.road_it_end_;
+	ostr << "), pt_graph_it(" << it.pt_graph_it_ << "), pt_graph_it_end(" << it.pt_graph_it_end_;
+	ostr << "), poi_it(" << it.poi_it_ << "), poi_it_end(" << it.poi_it_end_;
+	ostr << "), pt_it(" << it.pt_it_ << "), pt_it_end(" << it.pt_it_end_;
+	ostr << "), vertex(" << it.vertex_ << ")";
+#endif
+	ostr << "{ graph(" << it.graph_ << "), vertex(" << it.vertex_ << ") }";
+	ostr << it.vertex_ ;
+	return ostr;
+    }	
+
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator& it )
+    {
+	ostr << "out_edge_iterator{ source(" << it.source_ << "), graph(" << it.graph_;
+	ostr << "), road_it(";
+	if ( it.road_it_ == it.road_it_end_ ) {
+	    ostr << "-END-";
+	}
+	else {
+	    ostr << *it.road_it_;
+	}
+	ostr << "), pt_it(";
+	if ( it.pt_it_ == it.pt_it_end_ ) {
+	    ostr << "-END-";
+	}
+	else {
+	    ostr << *it.pt_it_;
+	}
+	ostr << "), stop2road(" << it.stop2road_connection_ << "), road2stop(" << it.road2stop_connection_;
+	ostr << "), poi2road(" << it.poi2road_connection_ << "), road2poi(" << it.road2poi_connection_;
+	ostr << ")}" ;
+	return ostr;
+    }	
+
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it )
+    {
+	ostr << "edge_iterator{";
+	ostr << "vi(" << it.vi_;
+	ostr << "), ei(" << it.ei_;
+	ostr << ")}" ;
+	return ostr;
+    }	
 };
