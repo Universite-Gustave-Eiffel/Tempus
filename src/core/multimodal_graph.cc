@@ -164,7 +164,9 @@ namespace Tempus
 	    pt_graph_it_end_ = graph_->public_transports.subset_end();
 	    poi_it_ = graph_->pois.begin();
 	    poi_it_end_ = graph_->pois.end();
-	    boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
+		if ( pt_it_ != pt_it_end_ ) {
+			boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
+		}
 	}
 	
 	void VertexIterator::to_end()
@@ -271,6 +273,8 @@ namespace Tempus
 	{
 	    graph_ = &graph;
 	    boost::tie( vi_, vi_end_ ) = vertices( graph );
+		if ( vi_ == vi_end_ )
+			return;
 	    // move to the first vertex with some out edges
 	    do {
 		boost::tie( ei_, ei_end_ ) = out_edges( *vi_, *graph_ );
