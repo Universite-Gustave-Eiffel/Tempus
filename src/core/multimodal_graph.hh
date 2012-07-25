@@ -19,9 +19,9 @@ namespace Tempus
 {
     namespace Multimodal
     {
-	class VertexIterator;
-	class OutEdgeIterator;
-	class EdgeIterator;
+	struct VertexIterator;
+	struct OutEdgeIterator;
+	struct EdgeIterator;
     }
     // For debugging purposes
     std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
