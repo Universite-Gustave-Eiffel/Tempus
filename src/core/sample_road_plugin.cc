@@ -66,6 +66,8 @@ namespace Tempus
 	    request_ = request;
 
 	    get_option( "trace_vertex", trace_vertex_ );
+
+	    result_.clear();
 	}
 
 	virtual void road_vertex_accessor( Road::Vertex v, int access_type )

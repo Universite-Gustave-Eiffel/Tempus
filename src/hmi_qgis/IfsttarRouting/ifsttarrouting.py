@@ -101,8 +101,8 @@ def clearLayout( lay ):
         for row in range(0, rc):
             l1 = lay.itemAt( rc-row-1, QFormLayout.LabelRole )
             l2 = lay.itemAt( rc-row-1, QFormLayout.FieldRole )
-#            if l1 is None or l2 is None:
-#                break
+            if l1 is None or l2 is None:
+                break
             lay.removeItem( l1 )
             lay.removeItem( l2 )
             w1 = l1.widget()

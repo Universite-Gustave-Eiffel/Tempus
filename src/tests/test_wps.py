@@ -203,7 +203,11 @@ class TestWPS(unittest.TestCase):
         outputs = self.wps.execute( 'process', plugin_arg )
 
         outputs = self.wps.execute( 'result', plugin_arg )
-        self.assertEqual( len(outputs['result'][-1]), 8 )
+        n = 0
+        for step in outputs['results'][0]:
+            if step.tag != 'cost':
+                n += 1
+        self.assertEqual( n, 12 )
 
     def test_constants( self ):
         self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
@@ -217,7 +221,7 @@ class TestWPS(unittest.TestCase):
 
         outputs = self.wps.execute( 'constant_list', {} )
 
-    def test_pt_plugin( self ):
+    def test_multi_plugin( self ):
         self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
         self.assert_min_state( 1 )
 
@@ -227,7 +231,7 @@ class TestWPS(unittest.TestCase):
         self.wps.execute( 'build', {} )
         self.assert_min_state( 3 )
 
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_pt_plugin' } ] ] }
+        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_multi_plugin' } ] ] }
 
         # two road nodes that are linked to a public transport stop
         ox = 355349.238904
@@ -254,7 +258,54 @@ class TestWPS(unittest.TestCase):
         outputs = self.wps.execute( 'process', plugin_arg )
 
         outputs = self.wps.execute( 'result', plugin_arg )
-#        self.assertEqual(len(outputs['result'][-1]), 6)
+        n = 0
+        for step in outputs['results'][0]:
+            if step.tag != 'cost':
+                n += 1
+        self.assertEqual( n, 16 )
+
+    def test_pt_plugin( self ):
+        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+        self.assert_min_state( 1 )
+
+        self.wps.execute( 'pre_build', {} )
+        self.assert_min_state( 2 )
+
+        self.wps.execute( 'build', {} )
+        self.assert_min_state( 3 )
+
+        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_pt_plugin' } ] ] }
+
+        # two road nodes that are linked to a public transport stop
+        ox = 356118.752929
+        oy = 6687853.943756
+        dx = 355385.975128
+        dy = 6689324.323148
+
+        args = dict(plugin_arg.items())
+        args['request'] = [ True, ['request', 
+                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
+                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
+                                   ['optimizing_criterion', 1 ], 
+                                   ['allowed_transport_types', 11 ],
+                                   ['step',
+                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                                    [ 'private_vehicule_at_destination', 'true' ]
+                                    ]
+                                   ]
+                            ]
+
+        outputs = self.wps.execute( 'pre_process', args )
+
+        outputs = self.wps.execute( 'process', plugin_arg )
+
+        outputs = self.wps.execute( 'result', plugin_arg )
+        n = 0
+        for step in outputs['results'][0]:
+            if step.tag != 'cost':
+                n += 1
+        self.assertEqual( n, 5 )
 
 if __name__ == '__main__':
     unittest.main()

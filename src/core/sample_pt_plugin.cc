@@ -88,37 +88,23 @@ namespace Tempus
 		else
 		    node = request_.destination();
 		
-		bool found = false;
 		PublicTransport::Vertex found_vertex;
 
-		PublicTransport::VertexIterator vb, ve;
-		for ( boost::tie(vb, ve) = boost::vertices( pt_graph ); vb != ve; vb++ )
-		{
-		    PublicTransport::Stop& stop = pt_graph[*vb];
-		    Road::Edge section = stop.road_section;
-		    Road::Vertex s, t;
-		    s = boost::source( section, road_graph );
-		    t = boost::target( section, road_graph );
-		    if ( (node == s) || (node == t) )
-		    {
-			found_vertex = *vb;
-			found = true;
-			break;
-		    }
+		std::string q = (boost::format("select s.id from tempus.road_node as n join tempus.pt_stop as s on st_dwithin( n.geom, s.geom, 100 ) "
+					       "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1") % road_graph[node].db_id ).str();
+		Db::Result res = db_.exec(q);
+		if ( res.size() < 1 ) {
+			std::cerr << "Cannot find node " << node << std::endl;
+			return;
 		}
-		
-		if (found)
+		db_id_t vid = res[0][0].as<db_id_t>();
+		found_vertex = vertex_from_id( vid, pt_graph );
 		{
 		    if ( i == 0 )
 			departure = found_vertex;
 		    if ( i == 1 )
 			arrival = found_vertex;
 		    std::cout << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id << std::endl;
-		}
-		else
-		{
-		    cerr << "Cannot find road node" << endl;
-		    return;
 		}
 	    }
 	    cout << "departure = " << departure << " arrival = " << arrival << endl;
@@ -192,6 +178,7 @@ namespace Tempus
 	    Road::Vertex previous = *path.begin();
 	    for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
+		    std::cout << "peth " << *it << std::endl;
 		    if ( first_loop ) {
 			    first_loop = false;
 			    continue;
@@ -212,8 +199,6 @@ namespace Tempus
 
 		    step->costs[ CostDistance ] = distance_map[ *it ];
 		    roadmap.total_costs[ CostDistance ] += step->costs[ CostDistance ];
-
-		    roadmap.steps.push_back( step );
 	    }
 	}
 

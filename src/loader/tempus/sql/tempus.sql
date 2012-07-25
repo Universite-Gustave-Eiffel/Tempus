@@ -313,7 +313,7 @@ CREATE TABLE tempus.pt_transfer
 
 create or replace function tempus.road_node_id_from_coordinates( float8, float8 ) returns bigint
 as '
-select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) limit 1
+select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) order by st_distance( geom, st_setsrid(st_point($1, $2), 2154)) asc limit 1
 '
 language 'SQL';
 --

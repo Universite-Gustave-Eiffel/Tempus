@@ -196,6 +196,7 @@ namespace Tempus
     {
 	std::cout << "[plugin_base]: pre_process" << std::endl;
 	request_ = request;
+	result_.clear();
     }
 
     ///
