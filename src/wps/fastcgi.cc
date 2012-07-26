@@ -106,6 +106,7 @@ int main( int argc, char*argv[] )
     
     while ( FCGX_Accept_r(&request) == 0 )
     {
+		try {
 	fcgi_streambuf cin_fcgi_streambuf( request.in );
 	// This causes a crash under Windows (??). We rely on a classic stringstream and FCGX_PutStr
 	// fcgi_streambuf cout_fcgi_streambuf( request.out );
@@ -117,6 +118,11 @@ int main( int argc, char*argv[] )
 	wps_request.process();
 	const std::string& outstr = outbuf.str();
 	FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
+		}
+		catch ( std::exception& e )
+		{
+			cerr << "Exception during WPS execution: " << e.what() << std::endl;
+		}
     }
 
     return 0;

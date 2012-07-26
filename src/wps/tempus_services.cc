@@ -574,7 +574,8 @@ namespace WPS
 	{
 	    constraint.type = boost::lexical_cast<int>( XML::get_prop( node, "type") );
 	    
-	    const char* date_time_str = XML::get_prop( node, "date_time" ).c_str();
+		std::string date_time = XML::get_prop( node, "date_time" );
+	    const char* date_time_str = date_time.c_str();
 	    int day, month, year, hour, min;
 	    sscanf(date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
 	    constraint.date_time = boost::posix_time::ptime(boost::gregorian::date(year, month, day),
