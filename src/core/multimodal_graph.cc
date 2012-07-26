@@ -166,7 +166,7 @@ namespace Tempus
 	    poi_it_end_ = graph_->pois.end();
 
 	    // If we have at least one public transport network
-	    if ( pt_it_ != pt_it_end_ ) {
+	    if ( pt_graph_it_ != pt_graph_it_end_ ) {
 		boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
 	    }
 	}
@@ -276,8 +276,8 @@ namespace Tempus
 	{
 	    graph_ = &graph;
 	    boost::tie( vi_, vi_end_ ) = vertices( graph );
-		if ( vi_ == vi_end_ )
-			return;
+	    if ( vi_ == vi_end_ )
+		return;
 	    // move to the first vertex with some out edges
 	    do {
 		boost::tie( ei_, ei_end_ ) = out_edges( *vi_, *graph_ );
