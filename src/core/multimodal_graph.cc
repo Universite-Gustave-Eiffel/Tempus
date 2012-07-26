@@ -164,9 +164,11 @@ namespace Tempus
 	    pt_graph_it_end_ = graph_->public_transports.subset_end();
 	    poi_it_ = graph_->pois.begin();
 	    poi_it_end_ = graph_->pois.end();
-		if ( pt_it_ != pt_it_end_ ) {
-			boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
-		}
+
+	    // If we have at least one public transport network
+	    if ( pt_it_ != pt_it_end_ ) {
+		boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
+	    }
 	}
 	
 	void VertexIterator::to_end()
@@ -196,6 +198,7 @@ namespace Tempus
 		    vertex_.type = Vertex::Poi;
 		}
 	    }
+
 	    if ( vertex_.type == Vertex::Road )
 	    {
 		vertex_.road_vertex = *road_it_;
@@ -491,21 +494,27 @@ namespace Tempus
 	}
 
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph ) { return VertexIndexProperty( graph ); }
-	EdgeIndexProperty get( boost::edge_index_t, const Multimodal::Graph& graph ) { return EdgeIndexProperty( graph ); }
 
 	size_t get( const VertexIndexProperty& p, const Multimodal::Vertex& v ) { return p.get_index( v ); }
-	size_t get( const EdgeIndexProperty& p, const Multimodal::Edge& e ) { return p.get_index( e ); }
 
-	// FIXME : slow ?
 	size_t VertexIndexProperty::get_index( const Vertex& v ) const
 	{
+	    // Maps a vertex to an integer in (0, num_vertices-1).
+	    //
+	    // If the vertex is a road vertex, maps it to its vertex_index in the road graph
+	    // If it is a public transport vertex, maps it to its vertex_index in the pt graph
+	    // and adds the number of vertices of the road graph and all the preceding public transport
+	    // graphs.
+	    // If it is a poi, maps it to its vertex index + the sum of num_vertices for all previous graphs.
+	    //
+	    // The complexity is then not constant (linear in terms of number of public transports graphs and pois).
 	    if ( v.type == Vertex::Road )
 	    {
 		return boost::get( boost::get( boost::vertex_index, *v.road_graph ), v.road_vertex );
 	    }
 	    // else
 	    size_t n = num_vertices( graph_.road );
-	    // FIXME : we should have used subset_iterator here, but it slows down everything ...
+
 	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
 	    for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )	    
 	    {
@@ -536,6 +545,11 @@ namespace Tempus
 
 	size_t num_vertices( const Graph& graph )
 	{
+	    //
+	    // The number of vertices of a Multimodal::Graph is :
+	    // num_vertices of the road graph
+	    // + num_vertices of each pt graph
+	    // + the number of pois
 	    size_t n = 0;
 	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
 	    for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ )
@@ -546,6 +560,12 @@ namespace Tempus
 	}
 	size_t num_edges( const Graph& graph )
 	{
+	    //
+	    // The number of edges of a Multimodal::Graph is:
+	    // num_edges of the road_graph * 2 ( a Multimodal::Graph is oriented but not the Road::Graph )
+	    // + 1 for each edge of each pt graph
+	    // + 4 for each stop of each pt graph (each stop gives access to 2 road nodes, in both directions)
+	    // + 4 for each POI (again 2 road nodes for each POI)
 	    size_t n = 0;
 	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
 	    for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ )
@@ -589,6 +609,11 @@ namespace Tempus
 	    {
 		size_t sum = 0;
 		Road::OutEdgeIterator ei, ei_end;
+		//
+		// For each out edge of the vertex, we have access to
+		// N stops (given by stops.size())
+		// M POis (given by pois.size())
+		// the out edge (+1)
 		for ( boost::tie(ei, ei_end) = out_edges( v.road_vertex, graph.road ); ei != ei_end; ei++ )
 		{
 		    sum += graph.road[ *ei ].stops.size() + graph.road[ *ei ].pois.size() + 1;
@@ -597,9 +622,11 @@ namespace Tempus
 	    }
 	    else if ( v.type == Vertex::PublicTransport )
 	    {
+		//
+		// For a PublicTransport::Vertex, we have access to 2 additional nodes (the road nodes)
 		return out_degree( v.pt_vertex, *v.pt_graph ) + 2;
 	    }
-	    // else (Poi)
+	    // else (Poi), 2 road nodes are reachable
 	    return 2;
 	}
 

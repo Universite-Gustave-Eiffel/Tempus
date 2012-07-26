@@ -56,14 +56,6 @@ namespace Tempus
 	    result_.clear();
  	}
 
-	virtual void pt_edge_accessor( PublicTransport::Edge e, int access_type )
-	{
-	    // if ( access_type == Plugin::ExamineAccess )
-	    // {
-	    // 	PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-	    // 	cout << "Examining " << pt_graph[e].db_id << endl;
-	    // }
-	}
 	virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type )
 	{
 	    if ( access_type == Plugin::ExamineAccess )

@@ -11,11 +11,12 @@
 
 ///
 /// A sub_map is a specialization of std::map
-/// where a subset of keys can is selected for iteration.
+/// where a subset of keys is selected for iteration.
 ///
 /// It is used the same way a std::map is used.
 /// In addition, the selected subset can be set with select( std::set<KT>& )
-/// and can be iterated with a pair of iterators given by subset_begin() and subset_end()
+/// and can be iterated over with a pair of iterators given by subset_begin() and subset_end()
+//
 template <class KT, class VT>
 class sub_map : public std::map<KT, VT>
 {

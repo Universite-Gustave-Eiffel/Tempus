@@ -2,6 +2,10 @@
 // (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
 // MIT License
 
+///
+/// This is a demo of a CLI program that uses the Tempus core and plugins to operate a path searching
+///
+
 #include <boost/program_options.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <iostream>
@@ -19,10 +23,10 @@ namespace po = boost::program_options;
 int main( int argc, char* argv[])
 {
     // default db options
-    string db_options = "dbname=tempus";
+    string db_options = "dbname=tempus_test_db";
     string plugin_name = "sample_road_plugin";
-    Tempus::db_id_t origin_id = 152500201343750;
-    Tempus::db_id_t destination_id = 152500201357468;
+    Tempus::db_id_t origin_id = 21406;
+    Tempus::db_id_t destination_id = 21015;
 
     // parse command line arguments
     po::options_description desc("Allowed options");
@@ -80,10 +84,6 @@ int main( int argc, char* argv[])
 	// Build the user request
 	Multimodal::Graph& graph = app->graph();
 	Road::Graph& road_graph = graph.road;
-
-	Road::VertexIterator vb, ve;
-	boost::tie( vb, ve) = boost::vertices( road_graph );
-	ve--;
 
 	Request req;
 	Request::Step step;

@@ -6,7 +6,7 @@
 
 Tempus::Application* get_application_instance_()
 {
-	return Tempus::Application::instance();
+    return Tempus::Application::instance();
 }
 
 namespace Tempus
@@ -70,11 +70,13 @@ namespace Tempus
 
     Plugin* Application::load_plugin( const std::string& dll_name )
     {
+	// call to the Plugin class method
 	return Plugin::load( dll_name );
     }
 
     void Application::unload_plugin( Plugin* handle )
     {
+	// call to the Plugin class method
 	Plugin::unload( handle );
     }
 };

@@ -17,7 +17,6 @@ namespace WPS
 
     void Service::check_parameters( ParameterMap& parameter_map, SchemaMap& schema_map )
     {
-	cout << "mapsize = " << parameter_map.size() << " schemasize = " << schema_map.size() << endl;
 	if ( parameter_map.size() != schema_map.size() )
 	{
 	    throw std::invalid_argument( "Wrong number of parameters" );

@@ -1,3 +1,19 @@
+// Plugin sample that deals with multimodal requests
+// (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
+// MIT License
+
+/**
+   Sample plugin that deals with multimodal path planning.
+   The chosen database must have at least one public transport network.
+
+   This plugin is able to process shortest (CostDistance) and fastest (CostDuration) queries.
+
+   The graph algorithm is very simple (Dijkstra). Intermediary steps are processed independently.
+
+   It also supports multiple results, but not multi-objective requests.
+   If the request contains multiple criteria, a result is added for each criterion.
+ */
+
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -7,11 +23,6 @@
 #include "db.hh"
 
 using namespace std;
-
-// TODO
-// * include pt_transfer
-// * POI ?
-// * Filter pt networks
 
 namespace Tempus
 {
@@ -35,6 +46,9 @@ namespace Tempus
 
     public:
 
+	///
+	/// In the post_build, we pre-compute a table of distances for each edge
+	///
 	virtual void post_build()
 	{
 	    durations.clear();

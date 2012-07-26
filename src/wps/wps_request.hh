@@ -14,7 +14,7 @@
 namespace WPS
 {
     ///
-    /// WPS::Request
+    /// WPS::Request. It is in charge of processing a WPS request
     class Request
     {
     public:

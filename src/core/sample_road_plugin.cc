@@ -5,7 +5,6 @@
 /**
    Sample plugin that processes very simple user request on a road graph.
    * Only distance minimization is considered
-   * No intermediary point is supported
 
    The plugin finds a route between an origin and a destination via Dijkstra.
  */

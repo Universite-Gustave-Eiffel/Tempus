@@ -45,7 +45,6 @@ namespace WPS
 	    return output_parameters_;
 	}
 
-	// FIXME : return in raw XML
 	///
 	/// Returns an XML string that conforms to a DescribeProcess operation
 	std::ostream& get_xml_description( std::ostream& out );

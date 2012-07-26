@@ -10,8 +10,8 @@ else (WIN32)
 	set( DLL_SOURCES "" )
 endif (WIN32)
 
-add_executable( test main.cc ${SOURCE_FILES} )
-target_link_libraries( test ${PQ_LIBS} )
+add_executable( sample_app sample_app.cc ${SOURCE_FILES} )
+target_link_libraries( sample_app ${PQ_LIBS} )
 
 # TO BE FIXED
 if (WIN32)

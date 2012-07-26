@@ -79,6 +79,7 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
 
         # set roadmap's header
         self.ui.roadmapTable.setHorizontalHeader(QHeaderView(Qt.Horizontal))
+        self.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
 
         # add the Destination chooser
         self.ui.origin.set_canvas( self.canvas )

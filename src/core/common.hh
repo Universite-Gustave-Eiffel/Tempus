@@ -2,7 +2,7 @@
 // (c) 2012 Oslandia
 // MIT License
 //
-// This file contains common declarations and constants used by all the object inside the "Tempus" namespace
+// This file contains common declarations and constants used by all the objects inside the "Tempus" namespace
 //
 
 #ifndef TEMPUS_COMMON_HH
@@ -14,6 +14,29 @@
 #include <boost/date_time.hpp>
 
 #define _DEBUG
+
+///
+/// @mainpage TempusV2 API
+///
+/// TempusV2 is a framework which offers generic graph manipulation abilities in order to develop multimodal
+/// path planning requests.
+///
+/// It is designed around a core, whose documentation is detailed here.
+/// Main classes processed by TempusV2 are:
+/// - Tempus::Road::Graph representing the road graph
+/// - Tempus::PublicTransport::Graph representing a public transport graph
+/// - Tempus::POI representing points of interest on the road graph
+/// - Tempus::Multimodal::Graph which is a wrapper around a road graph, public transport graphs and POIs
+///
+/// These graphs are filled up with data coming from a database. Please refer to the Db namespace to see available functions.
+/// Especially have a look at the Tempus::PQImporter class.
+///
+/// Path planning algorithms are designed to be written as user plugins. The Plugin base class gives access to some callbacks.
+/// Please have a look at the three different sample plugins shipped with TempusV2: Tempus::RoadPlugin, Tempus::PtPlugin and Tempus::MultiPlugin.
+///
+/// The internal API is exposed to other programs and languages through a WPS server.
+/// Have a look at the WPS::Service class and at its derived classes.
+///
 
 namespace Tempus
 {
@@ -33,6 +56,8 @@ namespace Tempus
 	{
 #ifdef _DEBUG
 	    return check_consistency_();
+#else
+	    return true;
 #endif
 	}
     protected:
@@ -147,14 +172,21 @@ namespace Tempus
 
     ///
     /// Returns the name of a cost
+    /// @param[in] cost The cost identifier. @relates CostId
+    /// @param[out]     The string representation of the cost
     std::string cost_name( int cost );
 
     ///
     /// Returns the unit of a cost
+    /// @param[in] cost The cost identifier. @relates CostId
+    /// @param[out]     The string representation of the cost
     std::string cost_unit( int cost );
 
     ///
     /// Base class in charge of progression callback.
+    ///
+    /// This is used for methods that might take time before giving user feedback
+    /// See pgsql_importer.hh for instance
     class ProgressionCallback
     {
     public:
@@ -164,6 +196,8 @@ namespace Tempus
 	}
     };
 
+    ///
+    /// The default (null) progression callback that does nothing
     extern ProgressionCallback null_progression_callback;
 
 
