@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/plugins/ifsttarrouting" >
-        <file>icon.png</file>
-    </qresource>
-</RCC>

@@ -22,21 +22,22 @@ CREATE TABLE tempus.transport_type
 	ttname varchar,
 	need_parking boolean NOT NULL,  -- If vehicule need to be parked
 	need_station boolean NOT NULL,  -- If vehicule is shared and use a/some stations
-	need_return boolean NOT NULL    -- If vehicule is shared and must be returned 
+	need_return boolean NOT NULL,    -- If vehicule is shared and must be returned 
                                         --        in the same station on the way back.
+	need_network boolean NOT NULL   -- Whether a public network must be associated to this kind of transport
 );
 -- TODO Add a CHECK on parent_id related to id bitfield values
 
-INSERT INTO tempus.transport_type VALUES (1, NULL, 'Car', 't', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (2, NULL, 'Pedestrial', 'f', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (4, NULL, 'cycle', 't', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (8, NULL, 'Bus', 'f', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (16, NULL, 'Tramway', 'f', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (32, NULL, 'Metro', 'f', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (64, NULL, 'Train', 'f', 'f', 'f');
-INSERT INTO tempus.transport_type VALUES (128, 4, 'Shared cycle', 't', 't', 'f');
-INSERT INTO tempus.transport_type VALUES (256, 1, 'Shared car', 't', 't', 'f');
-INSERT INTO tempus.transport_type VALUES (512, 6, 'Roller', 'f', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (1, NULL, 'Car', 't', 'f', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (2, NULL, 'Pedestrial', 'f', 'f', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (4, NULL, 'cycle', 't', 'f', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (8, NULL, 'Bus', 'f', 'f', 'f', 't');
+INSERT INTO tempus.transport_type VALUES (16, NULL, 'Tramway', 'f', 'f', 'f', 't');
+INSERT INTO tempus.transport_type VALUES (32, NULL, 'Metro', 'f', 'f', 'f', 't');
+INSERT INTO tempus.transport_type VALUES (64, NULL, 'Train', 'f', 'f', 'f', 't');
+INSERT INTO tempus.transport_type VALUES (128, 4, 'Shared cycle', 't', 't', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (256, 1, 'Shared car', 't', 't', 'f', 'f');
+INSERT INTO tempus.transport_type VALUES (512, 6, 'Roller', 'f', 'f', 'f', 'f');
 
 
 --
@@ -142,7 +143,8 @@ CREATE TABLE tempus.poi
 CREATE TABLE tempus.pt_network
 (
 	id serial PRIMARY KEY,
-	pnname varchar NOT NULL
+	pnname varchar NOT NULL,
+	provided_transport_types integer NOT NULL
 	, import_date timestamp not null default current_timestamp
 );
 
@@ -304,6 +306,16 @@ CREATE TABLE tempus.pt_transfer
 
 
 
+--
+-- Utilitary functions
+--
+
+
+create or replace function tempus.road_node_id_from_coordinates( float8, float8 ) returns bigint
+as '
+select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) order by st_distance( geom, st_setsrid(st_point($1, $2), 2154)) asc limit 1
+'
+language 'SQL';
 --
 -- PostGIS geometry 
 --

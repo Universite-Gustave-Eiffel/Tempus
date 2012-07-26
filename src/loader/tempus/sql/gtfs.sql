@@ -1,8 +1,9 @@
 /* ==== PT network ==== */
 insert into
-	tempus.pt_network (pnname)
+	tempus.pt_network (pnname, provided_transport_types)
 select
-	agency_name as pnname
+	agency_name as pnname,
+	56 as provided_transport_types -- bus + metro + tramway
 from
 	_tempus_import.agency;
 	

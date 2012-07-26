@@ -1,5 +1,5 @@
 // Database access classes
-// (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
+// (c) 2012 Oslandia
 // MIT License
 
 #ifndef TEMPUS_DB_HH

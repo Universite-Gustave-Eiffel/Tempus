@@ -56,14 +56,6 @@ namespace Tempus
 	    result_.clear();
  	}
 
-	virtual void pt_edge_accessor( PublicTransport::Edge e, int access_type )
-	{
-	    // if ( access_type == Plugin::ExamineAccess )
-	    // {
-	    // 	PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-	    // 	cout << "Examining " << pt_graph[e].db_id << endl;
-	    // }
-	}
 	virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type )
 	{
 	    if ( access_type == Plugin::ExamineAccess )
@@ -88,37 +80,23 @@ namespace Tempus
 		else
 		    node = request_.destination();
 		
-		bool found = false;
 		PublicTransport::Vertex found_vertex;
 
-		PublicTransport::VertexIterator vb, ve;
-		for ( boost::tie(vb, ve) = boost::vertices( pt_graph ); vb != ve; vb++ )
-		{
-		    PublicTransport::Stop& stop = pt_graph[*vb];
-		    Road::Edge section = stop.road_section;
-		    Road::Vertex s, t;
-		    s = boost::source( section, road_graph );
-		    t = boost::target( section, road_graph );
-		    if ( (node == s) || (node == t) )
-		    {
-			found_vertex = *vb;
-			found = true;
-			break;
-		    }
+		std::string q = (boost::format("select s.id from tempus.road_node as n join tempus.pt_stop as s on st_dwithin( n.geom, s.geom, 100 ) "
+					       "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1") % road_graph[node].db_id ).str();
+		Db::Result res = db_.exec(q);
+		if ( res.size() < 1 ) {
+			std::cerr << "Cannot find node " << node << std::endl;
+			return;
 		}
-		
-		if (found)
+		db_id_t vid = res[0][0].as<db_id_t>();
+		found_vertex = vertex_from_id( vid, pt_graph );
 		{
 		    if ( i == 0 )
 			departure = found_vertex;
 		    if ( i == 1 )
 			arrival = found_vertex;
 		    std::cout << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id << std::endl;
-		}
-		else
-		{
-		    cerr << "Cannot find road node" << endl;
-		    return;
 		}
 	    }
 	    cout << "departure = " << departure << " arrival = " << arrival << endl;
@@ -188,48 +166,32 @@ namespace Tempus
 	    // The current trip is set to 0, which means 'null'. This holds because every db's id are 1-based
 	    db_id_t current_trip = 0;
 	    bool first_loop = true;
-		
-	    step = new Roadmap::PublicTransportStep();
-	    roadmap.steps.push_back( step );
-	    // default network
-	    step->network_id = 1;
-	    step->departure_stop = *path.begin();
-	    std::list<PublicTransport::Vertex>::iterator it = path.end();
-	    it--;
-	    step->arrival_stop = *it;
 
-	    for ( it = path.begin(); it != path.end(); it++ )
+	    Road::Vertex previous = *path.begin();
+	    for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
-		Point2D p = coordinates(*it, db_, pt_graph );
-		roadmap.overview_path.push_back( p );
+		    std::cout << "peth " << *it << std::endl;
+		    if ( first_loop ) {
+			    first_loop = false;
+			    continue;
+		    }
+		    step = new Roadmap::PublicTransportStep();
+		    roadmap.steps.push_back( step );
+
+		    bool found = false;
+		    PublicTransport::Edge e;
+		    boost::tie( e, found ) = boost::edge( previous, *it, pt_graph );
+
+		    step->section = e;
+		    // default
+		    step->network_id = 1;
+		    step->trip_id = 1;
+
+		    previous = *it;
+
+		    step->costs[ CostDistance ] = distance_map[ *it ];
+		    roadmap.total_costs[ CostDistance ] += step->costs[ CostDistance ];
 	    }
-
-	    step->costs[ CostDistance ] = distance_map[ step->arrival_stop ];
-
-	    roadmap.total_costs[ CostDistance ] += step->costs[ CostDistance ];
-	}
-
-	Result& result()
-	{
-	    if (result_.size() == 0)
-		return result_;
-
-	    Roadmap& roadmap = result_.back();
-	    PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-
-	    std::cout << "Total duration: " << roadmap.total_costs[CostDuration] << std::endl;
-	    std::cout << "Total distance: " << roadmap.total_costs[CostDistance] << std::endl;
-	    std::cout << "Number of changes: " << (roadmap.steps.size() - 1) << std::endl;
-	    int k = 1;
-	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++, k++ )
-	    {
-		Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *it );
-		std::cout << k << " - Take the trip #" << step->trip_id << " from '" << pt_graph[step->departure_stop].name << "' to '" << pt_graph[step->arrival_stop].name << "'" << std::endl;
-		std::cout << "Duration: " << step->costs[CostDuration] << "s" << std::endl;
-		std::cout << "Distance: " << step->costs[CostDistance] << "km" << std::endl;
-		std::cout << std::endl;
-	    }
-	    return result_;
 	}
 
 	void cleanup()

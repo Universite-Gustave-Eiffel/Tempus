@@ -1,3 +1,7 @@
+// Tempus WPS server
+// (c) 2012 Oslandia
+// MIT License
+//
 // standard stream headers must be included first, to please VC++
 #include <iostream>
 #include <fstream>
@@ -21,9 +25,14 @@
 
 using namespace std;
 
+///
+/// This is the main WPS server. It is designed to be called by a FastCGI-aware web server
+///
+
 int main( int argc, char*argv[] )
 {
     bool standalone = false;
+    // the default TCP port to listen to
     string port_str = "9000";
     string chdir_str = "";
     std::vector<string> plugins;
@@ -97,6 +106,7 @@ int main( int argc, char*argv[] )
     
     while ( FCGX_Accept_r(&request) == 0 )
     {
+		try {
 	fcgi_streambuf cin_fcgi_streambuf( request.in );
 	// This causes a crash under Windows (??). We rely on a classic stringstream and FCGX_PutStr
 	// fcgi_streambuf cout_fcgi_streambuf( request.out );
@@ -108,6 +118,11 @@ int main( int argc, char*argv[] )
 	wps_request.process();
 	const std::string& outstr = outbuf.str();
 	FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
+		}
+		catch ( std::exception& e )
+		{
+			cerr << "Exception during WPS execution: " << e.what() << std::endl;
+		}
     }
 
     return 0;

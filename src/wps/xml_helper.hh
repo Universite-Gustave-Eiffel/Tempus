@@ -23,6 +23,7 @@
 ///
 /// There is no reference counting. Objets are "moved" from instances (as boost::auto_ptr does)
 /// For example a = b transfers ownership from b to a and b is set to null
+///
 template <class T, void deletion_fct (T*)>
 class scoped_ptr
 {
@@ -82,15 +83,38 @@ public:
     /// Throws a std::invalid_argument if the given node is not validated against the schema
     static void ensure_validity( xmlNode* node, const std::string& schema_str );
 
+    ///
+    /// Shortcut to xmlNewNode, using C++ std::string
     static xmlNode* new_node( const std::string& name )
     {
 	return xmlNewNode( NULL, (const xmlChar*)name.c_str() );
     }
+
+    ///
+    /// Shortcut to xmlNewText, using C++ std::string
+    static xmlNode* new_text( const std::string& text )
+    {
+	return xmlNewText( (const xmlChar*)text.c_str() );
+    }
+
+    ///
+    /// Shortcut to xmlNewProp, using C++ std::string
     template <class T>
     static void new_prop( xmlNode* node, const std::string& key, T value )
     {
 	xmlNewProp( node, (const xmlChar*)(key.c_str()), (const xmlChar*)( boost::lexical_cast<std::string>( value ).c_str() ) );
     }
+
+    ///
+    /// Shortcut to xmlGetProp, using C++ std::string
+    static std::string get_prop( xmlNode* node, const std::string& key )
+    {
+	return (const char*)xmlGetProp( node, (const xmlChar*)(key.c_str()) );
+    }
+
+    ///
+    /// Shortcut to xmlAddChild
+
     static void add_child( xmlNode* node, xmlNode* child )
     {
 	xmlAddChild( node, child );

@@ -11,7 +11,7 @@ namespace Tempus
 {
     Point2D coordinates( const Road::Vertex& v, Db::Connection& db, const Road::Graph& graph )
     {
-	string q = (boost::format( "SELECT x(geom), y(geom) FROM tempus.road_node WHERE id=%1%" ) % graph[v].db_id).str();
+	string q = (boost::format( "SELECT st_x(geom), st_y(geom) FROM tempus.road_node WHERE id=%1%" ) % graph[v].db_id).str();
 	Db::Result res = db.exec( q );
 	BOOST_ASSERT( res.size() > 0 );
 	Point2D p;
@@ -22,7 +22,7 @@ namespace Tempus
 
     Point2D coordinates( const PublicTransport::Vertex& v, Db::Connection& db, const PublicTransport::Graph& graph )
     {
-	string q = (boost::format( "SELECT x(geom), y(geom) FROM tempus.pt_stop WHERE id=%1%" ) % graph[v].db_id).str();
+	string q = (boost::format( "SELECT st_x(geom), st_y(geom) FROM tempus.pt_stop WHERE id=%1%" ) % graph[v].db_id).str();
 	Db::Result res = db.exec( q );
 	BOOST_ASSERT( res.size() > 0 );
 	Point2D p;
@@ -33,7 +33,7 @@ namespace Tempus
 
     Point2D coordinates( const POI* poi, Db::Connection& db )
     {
-	string q = (boost::format( "SELECT x(geom), y(geom) FROM tempus.poi WHERE id=%1%" ) % poi->db_id).str();
+	string q = (boost::format( "SELECT st_x(geom), st_y(geom) FROM tempus.poi WHERE id=%1%" ) % poi->db_id).str();
 	Db::Result res = db.exec( q );
 	BOOST_ASSERT( res.size() > 0 );
 	Point2D p;
@@ -164,7 +164,11 @@ namespace Tempus
 	    pt_graph_it_end_ = graph_->public_transports.subset_end();
 	    poi_it_ = graph_->pois.begin();
 	    poi_it_end_ = graph_->pois.end();
-	    boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
+
+	    // If we have at least one public transport network
+	    if ( pt_graph_it_ != pt_graph_it_end_ ) {
+		boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( pt_graph_it_->second );
+	    }
 	}
 	
 	void VertexIterator::to_end()
@@ -194,6 +198,7 @@ namespace Tempus
 		    vertex_.type = Vertex::Poi;
 		}
 	    }
+
 	    if ( vertex_.type == Vertex::Road )
 	    {
 		vertex_.road_vertex = *road_it_;
@@ -266,12 +271,20 @@ namespace Tempus
 	    // else, on poi
 	    return poi_it_ == v.poi_it_;
 	}
-	
+
 	EdgeIterator::EdgeIterator( const Multimodal::Graph& graph )
 	{
 	    graph_ = &graph;
 	    boost::tie( vi_, vi_end_ ) = vertices( graph );
-	    boost::tie( ei_, ei_end_ ) = out_edges( *vi_, *graph_ );
+	    if ( vi_ == vi_end_ )
+		return;
+	    // move to the first vertex with some out edges
+	    do {
+		boost::tie( ei_, ei_end_ ) = out_edges( *vi_, *graph_ );
+		if ( ei_ == ei_end_ ) {
+		    vi_++;
+		}
+	    } while ( ei_ == ei_end_ && vi_ != vi_end_ );
 	}
 
 	void EdgeIterator::to_end()
@@ -481,21 +494,27 @@ namespace Tempus
 	}
 
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph ) { return VertexIndexProperty( graph ); }
-	EdgeIndexProperty get( boost::edge_index_t, const Multimodal::Graph& graph ) { return EdgeIndexProperty( graph ); }
 
 	size_t get( const VertexIndexProperty& p, const Multimodal::Vertex& v ) { return p.get_index( v ); }
-	size_t get( const EdgeIndexProperty& p, const Multimodal::Edge& e ) { return p.get_index( e ); }
 
-	// FIXME : slow ?
 	size_t VertexIndexProperty::get_index( const Vertex& v ) const
 	{
+	    // Maps a vertex to an integer in (0, num_vertices-1).
+	    //
+	    // If the vertex is a road vertex, maps it to its vertex_index in the road graph
+	    // If it is a public transport vertex, maps it to its vertex_index in the pt graph
+	    // and adds the number of vertices of the road graph and all the preceding public transport
+	    // graphs.
+	    // If it is a poi, maps it to its vertex index + the sum of num_vertices for all previous graphs.
+	    //
+	    // The complexity is then not constant (linear in terms of number of public transports graphs and pois).
 	    if ( v.type == Vertex::Road )
 	    {
 		return boost::get( boost::get( boost::vertex_index, *v.road_graph ), v.road_vertex );
 	    }
 	    // else
 	    size_t n = num_vertices( graph_.road );
-	    // FIXME : we should have used subset_iterator here, but it slows down everything ...
+
 	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
 	    for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )	    
 	    {
@@ -526,6 +545,11 @@ namespace Tempus
 
 	size_t num_vertices( const Graph& graph )
 	{
+	    //
+	    // The number of vertices of a Multimodal::Graph is :
+	    // num_vertices of the road graph
+	    // + num_vertices of each pt graph
+	    // + the number of pois
 	    size_t n = 0;
 	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
 	    for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ )
@@ -536,6 +560,12 @@ namespace Tempus
 	}
 	size_t num_edges( const Graph& graph )
 	{
+	    //
+	    // The number of edges of a Multimodal::Graph is:
+	    // num_edges of the road_graph * 2 ( a Multimodal::Graph is oriented but not the Road::Graph )
+	    // + 1 for each edge of each pt graph
+	    // + 4 for each stop of each pt graph (each stop gives access to 2 road nodes, in both directions)
+	    // + 4 for each POI (again 2 road nodes for each POI)
 	    size_t n = 0;
 	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
 	    for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ )
@@ -579,6 +609,11 @@ namespace Tempus
 	    {
 		size_t sum = 0;
 		Road::OutEdgeIterator ei, ei_end;
+		//
+		// For each out edge of the vertex, we have access to
+		// N stops (given by stops.size())
+		// M POis (given by pois.size())
+		// the out edge (+1)
 		for ( boost::tie(ei, ei_end) = out_edges( v.road_vertex, graph.road ); ei != ei_end; ei++ )
 		{
 		    sum += graph.road[ *ei ].stops.size() + graph.road[ *ei ].pois.size() + 1;
@@ -587,9 +622,11 @@ namespace Tempus
 	    }
 	    else if ( v.type == Vertex::PublicTransport )
 	    {
+		//
+		// For a PublicTransport::Vertex, we have access to 2 additional nodes (the road nodes)
 		return out_degree( v.pt_vertex, *v.pt_graph ) + 2;
 	    }
-	    // else (Poi)
+	    // else (Poi), 2 road nodes are reachable
 	    return 2;
 	}
 
@@ -604,12 +641,35 @@ namespace Tempus
 		{
 		    found = true;
 		    e = *ei;
+		    break;
 		}
 	    }
 	    return std::make_pair( e, found );
 	}
-    };
+
+	std::pair<Road::Edge, bool> road_edge( const Multimodal::Edge& e )
+	{
+	    if ( e.connection_type() != Multimodal::Edge::Road2Road )
+		return std::make_pair( Road::Edge(), false );
+	    
+	    Road::Edge ret_edge;
+	    bool found;
+	    boost::tie( ret_edge, found ) = edge( e.source.road_vertex, e.target.road_vertex, *(e.source.road_graph) );
+	    return std::make_pair( ret_edge, found );
+	}
 	
+	std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::Edge& e )
+	{
+	    if ( e.connection_type() != Multimodal::Edge::Transport2Transport )
+		return std::make_pair( PublicTransport::Edge(), false );
+	    
+	    PublicTransport::Edge ret_edge;
+	    bool found;
+	    boost::tie( ret_edge, found ) = edge( e.source.pt_vertex, e.target.pt_vertex, *(e.source.pt_graph) );
+	    return std::make_pair( ret_edge, found );
+	}
+    }; // namespace Multimodal
+
     ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
     {
 	if ( v.type == Multimodal::Vertex::Road )
@@ -653,4 +713,50 @@ namespace Tempus
 	out << "(" << e.source << "," << e.target << ")";
 	return out;
     }
+
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it )
+    {
+#if 0
+	ostr << "vertexiterator{ graph(" << it.graph_ << "), road_it(" << it.road_it_ << "), road_it_end(" << it.road_it_end_;
+	ostr << "), pt_graph_it(" << it.pt_graph_it_ << "), pt_graph_it_end(" << it.pt_graph_it_end_;
+	ostr << "), poi_it(" << it.poi_it_ << "), poi_it_end(" << it.poi_it_end_;
+	ostr << "), pt_it(" << it.pt_it_ << "), pt_it_end(" << it.pt_it_end_;
+	ostr << "), vertex(" << it.vertex_ << ")";
+#endif
+	ostr << "{ graph(" << it.graph_ << "), vertex(" << it.vertex_ << ") }";
+	ostr << it.vertex_ ;
+	return ostr;
+    }	
+
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator& it )
+    {
+	ostr << "out_edge_iterator{ source(" << it.source_ << "), graph(" << it.graph_;
+	ostr << "), road_it(";
+	if ( it.road_it_ == it.road_it_end_ ) {
+	    ostr << "-END-";
+	}
+	else {
+	    ostr << *it.road_it_;
+	}
+	ostr << "), pt_it(";
+	if ( it.pt_it_ == it.pt_it_end_ ) {
+	    ostr << "-END-";
+	}
+	else {
+	    ostr << *it.pt_it_;
+	}
+	ostr << "), stop2road(" << it.stop2road_connection_ << "), road2stop(" << it.road2stop_connection_;
+	ostr << "), poi2road(" << it.poi2road_connection_ << "), road2poi(" << it.road2poi_connection_;
+	ostr << ")}" ;
+	return ostr;
+    }	
+
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it )
+    {
+	ostr << "edge_iterator{";
+	ostr << "vi(" << it.vi_;
+	ostr << "), ei(" << it.ei_;
+	ostr << ")}" ;
+	return ostr;
+    }	
 };

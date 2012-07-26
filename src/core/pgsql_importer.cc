@@ -24,7 +24,7 @@ namespace Tempus
 
     void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression )
     {
-	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return FROM tempus.transport_type" );
+	Db::Result res = connection_.exec( "SELECT id, parent_id, ttname, need_parking, need_station, need_return, need_network FROM tempus.transport_type" );
 	graph.transport_types.clear();
 	graph.transport_type_from_name.clear();
 	graph.road_types.clear();
@@ -45,6 +45,7 @@ namespace Tempus
 	    res[i][3] >> t.need_parking;
 	    res[i][4] >> t.need_station;
 	    res[i][5] >> t.need_return;
+	    res[i][6] >> t.need_network;
 
 	    // assign the name <-> id map
 	    graph.transport_type_from_name[ t.name ] = t.db_id;
@@ -77,6 +78,7 @@ namespace Tempus
 	road_graph.clear();
 	graph.network_map.clear();
 	graph.public_transports.clear();
+	graph.pois.clear();
 
 	// locally maps db ID to Node or Section
 	std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
@@ -146,6 +148,10 @@ namespace Tempus
 			      (boost::format("Non existing node_to %1% on road_section %2%") % node_to_id % section.db_id).str().c_str());
 	    Road::Vertex v_from = road_nodes_map[ node_from_id ];
 	    Road::Vertex v_to = road_nodes_map[ node_to_id ];
+	    if ( v_from == v_to ) {
+		    cout << "Cannot add a road cycle from " << v_from << " to " << v_to << endl;
+		    continue;
+	    }
 
 	    Road::Edge e;
 	    bool is_added, found;
@@ -163,7 +169,7 @@ namespace Tempus
 	    progression( static_cast<float>(((i + 0.) / res.size() / 4.0) + 0.25) );
 	}
 
-	res = connection_.exec( "SELECT id, pnname FROM tempus.pt_network" );
+	res = connection_.exec( "SELECT id, pnname, provided_transport_types FROM tempus.pt_network" );
 	for ( size_t i = 0; i < res.size(); i++ )
 	{
 	    PublicTransport::Network network;
@@ -171,6 +177,7 @@ namespace Tempus
 	    res[i][0] >> network.db_id;
 	    BOOST_ASSERT( network.db_id > 0 );
 	    res[i][1] >> network.name;
+	    res[i][2] >> network.provided_transport_types;
 
 	    graph.network_map[network.db_id] = network;
 	    graph.public_transports[network.db_id] = PublicTransport::Graph();

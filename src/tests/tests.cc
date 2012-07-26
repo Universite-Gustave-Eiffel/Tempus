@@ -134,7 +134,9 @@ void PgImporterTest::testConsistency()
 	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_section" );
 	CPPUNIT_ASSERT( res.size() == 1 );
 	long n_pt_edges = res[0][0].as<long>();
+	std::cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt_graph) = " << num_vertices(pt_graph) << std::endl;
 	CPPUNIT_ASSERT( n_pt_vertices = boost::num_vertices( pt_graph ) );
+	std::cout << "n_pt_edges = " << n_pt_edges << " num_edges(pt_graph) = " << num_edges(pt_graph) << std::endl;
 	CPPUNIT_ASSERT( n_pt_edges = boost::num_edges( pt_graph ) );
     }
 }
@@ -203,8 +205,12 @@ void PgImporterTest::testMultimodal()
     size_t n_road2poi = 0;
     size_t n_poi2road = 0;
     
-    bool b;
-    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ( b = ei != ei_end ); ei++ )
+    Road::OutEdgeIterator ri, ri_end;
+    Road::Vertex v1 = *(vertices( graph_.road ).first);
+    boost::tie( ri, ri_end ) = out_edges( v1, graph_.road );
+    //    BOOST_ASSERT( ri != ri_end );
+
+    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
     {
 	ne++;
 	switch ( ei->connection_type() )
@@ -260,6 +266,24 @@ void PgImporterTest::testMultimodal()
 	}
     }
  
+    // test that graph vertices and edges can be used as a map key
+    // i.e. the operator< forms a complete order
+    {
+	    std::set< Multimodal::Vertex > vertex_set;
+	    for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; ++vi ) {
+		    vertex_set.insert( *vi );
+	    }
+	    // check whether we have one entry per vertex
+	    CPPUNIT_ASSERT_EQUAL( vertex_set.size(), num_vertices( graph_ ));
+
+	    std::set< Multimodal::Edge > edge_set;
+	    for ( boost::tie(ei, ei_end) = edges( graph_ ); ei != ei_end; ++ei ) {
+		    edge_set.insert( *ei );
+	    }
+	    // check whether we have one entry per vertex
+	    CPPUNIT_ASSERT_EQUAL( edge_set.size(), num_edges( graph_ ));
+    }
+
     // test graph traversal
     {
 	std::map<Multimodal::Vertex, boost::default_color_type> colors;

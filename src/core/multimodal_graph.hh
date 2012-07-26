@@ -17,10 +17,25 @@ namespace Db
 
 namespace Tempus
 {
+    // forward declarations
+    namespace Multimodal
+    {
+	class VertexIterator;
+	class OutEdgeIterator;
+	class EdgeIterator;
+    }
+    // For debugging purposes
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator& it );
+    std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it );
+}
+
+namespace Tempus
+{
     ///
     /// Multimodal namespace
     ///
-    /// A Multimodal::Graph is a Road::Graph and a list of PublicTransport::Graph
+    /// A Multimodal::Graph is a Road::Graph, a list of PublicTransport::Graph and a list of POIs
     ///
     namespace Multimodal
     {
@@ -30,9 +45,9 @@ namespace Tempus
 	{
 	    enum VertexType
 	    {
-		Road,
-		PublicTransport,
-		Poi
+		Road,            /// This vertex is a road vertex
+		PublicTransport, /// This vertex is a public transport stop
+		Poi              /// This vertex is a POI
 	    };
 	    VertexType type;
 
@@ -42,15 +57,20 @@ namespace Tempus
 		const PublicTransport::Graph* pt_graph;
 		const POI* poi;
 	    };
-	    // things that cannot be stored in the union ( have non trivial constructors )
-	    // If it's a road
+
+	    ///
+	    /// The road vertex if this is relevant ( cannot be stored in a union since it has non trivial constructors )
 	    Road::Vertex road_vertex;
-	    // If it's a public transport
+	    ///
+	    /// The public transport vertex if this is relevant ( cannot be stored in a union since it has non trivial constructors )
 	    PublicTransport::Vertex pt_vertex;
 	    
+	    ///
+	    /// Comparison operator
 	    bool operator==( const Vertex& v ) const;
 	    bool operator!=( const Vertex& v ) const;
 	    bool operator<( const Vertex& v ) const;
+
 	    Vertex() {}
 	    Vertex( const Road::Graph* graph, Road::Vertex vertex );
 	    Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex );
@@ -61,8 +81,13 @@ namespace Tempus
 	/// A multimodal edge is a pair of multimodal vertices
 	struct Edge
 	{
+	    ///
+	    /// The source vertex
 	    Multimodal::Vertex source;
+	    ///
+	    /// The target vertex
 	    Multimodal::Vertex target;
+
 	    enum ConnectionType
 	    {
 		UnknownConnection,
@@ -74,6 +99,8 @@ namespace Tempus
 		Poi2Road
 	    };
 	    
+	    ///
+	    /// Get the connection type of the edge
 	    ConnectionType connection_type() const;
 	    
 	    Edge() {}
@@ -89,7 +116,7 @@ namespace Tempus
 	    }
 	    bool operator<( const Multimodal::Edge& e ) const
 	    {
-		return source < e.source && target < e.target;
+		return source < e.source || ((source == e.source) && target < e.target);
 	    }
 	};
 
@@ -124,11 +151,25 @@ namespace Tempus
 	    TransportTypes transport_types;
 	    
 	    typedef std::map<std::string, Tempus::db_id_t> NameToId;
+	    ///
+	    /// Associative array that maps a road type name to a road type id
 	    NameToId road_type_from_name;
+	    ///
+	    /// Associative array that maps a transport type name to a transport type id
 	    NameToId transport_type_from_name;
 	};
 
-	struct VertexIterator :
+	///
+	/// Class that implements the Iterator concept for vertices of a Multimodal::Graph
+	///
+	/// It is a wrapper around:
+	///  - a vertex iterator on the current road graph
+	///  - an iterator on the public networks
+	///  - a vertex iterator on the current public network
+	///
+	/// Deferencing, incrementation and comparison operators are defined by means of these underlying iterators
+	///
+	class VertexIterator :
 	    public boost::iterator_facade< VertexIterator,
 					   Vertex,
 					   boost::forward_traversal_tag >
@@ -138,39 +179,52 @@ namespace Tempus
 	    VertexIterator() : graph_(0) {}
 	    VertexIterator( const Graph& graph );
 
+	    ///
+	    /// Move the iterator to the end. Used mainly by vertices( const Multimodal::Graph& )
 	    void to_end();
+
+	    ///
+	    /// Dereferencing. Needed by boost::iterator_facade
 	    Vertex& dereference() const;
+
+	    ///
+	    /// Incrementing. Needed by boost::iterator_facade
 	    void increment();
+
+	    ///
+	    /// Comparison operator. Needed by boost::iterator_facade
 	    bool equal( const VertexIterator& v ) const;
+
 	protected:
 	    Road::VertexIterator road_it_, road_it_end_;
 	    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator pt_graph_it_, pt_graph_it_end_;
 	    Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
 	    PublicTransport::VertexIterator pt_it_, pt_it_end_;
 	    const Multimodal::Graph* graph_;
+
+	    ///
+	    /// Object returned by the deferencing operator
 	    mutable Multimodal::Vertex vertex_;
+
+	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
 	};
 
-	struct OutEdgeIterator :
+	///
+	/// Class that implements the out edges iterator concept of a Multimodal::Graph
+	///
+	/// It is a wrapper around:
+	///  - a source vertex
+	///  - a road edge iterator for road edges
+	///  - a public transport edge iterator
+	///  - various counters to deal with road <-> transport stops and road <-> poi
+	///
+	/// Deferencing, incrementation and comparison operators are defined by means of these underlying iterators
+	///
+	class OutEdgeIterator :
 	    public boost::iterator_facade< OutEdgeIterator,
 					   Multimodal::Edge,
 					   boost::forward_traversal_tag >
 	{
-	protected:
-	    Multimodal::Vertex source_;
-	    const Multimodal::Graph* graph_;
-	    mutable Multimodal::Edge edge_;
-	    Road::OutEdgeIterator road_it_, road_it_end_;
-	    PublicTransport::OutEdgeIterator pt_it_, pt_it_end_;
-	    // 0 / 1 / 2 stop2road connection
-	    size_t stop2road_connection_;
-	    // 0 .. N, -1 road2stop connection
-	    int road2stop_connection_;
-
-	    // 0 -> N
-	    int road2poi_connection_;
-	    // O -> 2
-	    int poi2road_connection_;
 	public:
 	    OutEdgeIterator() : graph_(0) {}
 	    OutEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
@@ -179,17 +233,67 @@ namespace Tempus
 	    Multimodal::Edge& dereference() const;
 	    void increment();
 	    bool equal( const OutEdgeIterator& v ) const;
+ 	protected:
+	    ///
+	    /// The source vertex
+	    Multimodal::Vertex source_;
+
+	    ///
+	    /// The underlying graph
+	    const Multimodal::Graph* graph_;
+
+	    ///
+	    /// The edge used during the dereferencing operation
+	    mutable Multimodal::Edge edge_;
+
+	    ///
+	    /// A pair of out edge iterators for road vertices
+	    Road::OutEdgeIterator road_it_, road_it_end_;
+
+	    ///
+	    /// A pair of out edge iterators for public transport vertices
+	    PublicTransport::OutEdgeIterator pt_it_, pt_it_end_;
+
+	    ///
+	    /// A counter used to represent position on a Transport2Road connection.
+	    /// Indeed, a transport stop is linked to a road section and thus to 2 road nodes.
+	    /// 0: on the node_from of the associated road section
+	    /// 1: on the node_to
+	    /// 2: out of the connection
+	    size_t stop2road_connection_;
+
+	    ///
+	    /// A counter used to represent position on a Road2Transport connection.
+	    /// A road node can be linked to 0..N public transport nodes (@relates Road::Section::stops)
+	    int road2stop_connection_;
+
+	    ///
+	    /// A counter used to represent position on a Road2Poi connection.
+	    /// A road node can be linked to 0..N POI (@relates Road::Section::pois)
+	    int road2poi_connection_;
+
+	    ///
+	    /// A counter used to represent position on a Poi2Road connection.
+	    /// Indeed, a POI is linked to a road section and thus to 2 road nodes.
+	    /// 0: on the node_from of the associated road section
+	    /// 1: on the node_to
+	    /// 2: out of the connection
+	    int poi2road_connection_;
+
+	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const OutEdgeIterator& it );
 	};
 
-	struct EdgeIterator :
+	///
+	/// Class that implements the edge iterator concept of a Multimodal::Graph
+	///
+	/// It is a wrapper around a VertexIterator and an OutEdgeIterator.
+	/// Basically, iterating over edges is done by a double for loop that iterates over each out edges of each vertex
+	///
+	class EdgeIterator :
 	    public boost::iterator_facade< EdgeIterator,
 					   Multimodal::Edge,
 					   boost::forward_traversal_tag >
 	{
-	protected:
-	    const Multimodal::Graph* graph_;
-	    Multimodal::VertexIterator vi_, vi_end_;
-	    Multimodal::OutEdgeIterator ei_, ei_end_;
 	public:
 	    EdgeIterator() : graph_(0) {}
 	    EdgeIterator( const Multimodal::Graph& graph );
@@ -198,8 +302,26 @@ namespace Tempus
 	    Multimodal::Edge& dereference() const;
 	    void increment();
 	    bool equal( const EdgeIterator& v ) const;
+	protected:
+	    ///
+	    /// The underlying graph
+	    const Multimodal::Graph* graph_;
+
+	    ///
+	    /// A pair of VertexIterator
+	    Multimodal::VertexIterator vi_, vi_end_;
+
+	    ///
+	    /// A pair of OutEdgeIterator
+	    Multimodal::OutEdgeIterator ei_, ei_end_;
+
+	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const EdgeIterator& it );
 	};
 
+	///
+	/// Class that implemented the property map vertex_index.
+	///
+	/// The goal is to map an integer in the range (0, num_vertices-1) to a vertex
 	class VertexIndexProperty
 	{
 	public:
@@ -207,17 +329,6 @@ namespace Tempus
 	    size_t get_index( const Vertex& v ) const;
 
 	    size_t operator[] ( const Vertex& v ) const { return get_index( v ); }
-	protected:
-	    const Multimodal::Graph& graph_;
-	};
-
-	class EdgeIndexProperty
-	{
-	public:
-	    EdgeIndexProperty( const Graph& graph ) : graph_(graph) {}
-	    size_t get_index( const Edge& v ) const {/* TODO */ return 0; }
-
-	    size_t operator[] ( const Edge& e ) const { return get_index( e ); }
 	protected:
 	    const Multimodal::Graph& graph_;
 	};
@@ -256,18 +367,28 @@ namespace Tempus
 	std::pair< Edge, bool > edge( const Vertex& u, const Vertex& v, const Graph& graph );
 
 	///
+	/// Get the road edge if the given edge is a Road2Road
+	/// else, return false
+	std::pair< Road::Edge, bool > road_edge( const Multimodal::Edge& e );
+
+	///
+	/// Get the public transport edge if the given edge is a Transport2Transport
+	/// else, return false
+	std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
+
+	///
 	/// Overloading of get()
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph );
-	EdgeIndexProperty get( boost::edge_index_t, const Multimodal::Graph& graph );
 
 	size_t get( const VertexIndexProperty& p, const Multimodal::Vertex& v );
-	size_t get( const EdgeIndexProperty& p, const Multimodal::Edge& e );
     };
 };
 
 namespace boost
 {
 
+    ///
+    /// VertexIndexProperty declaration inside boost::property_traits<>
     template <>
     struct property_traits<Tempus::Multimodal::VertexIndexProperty>
     {
@@ -277,17 +398,8 @@ namespace boost
 	typedef boost::vertex_property_tag category;
     };
 
-    template <>
-    struct property_traits<Tempus::Multimodal::EdgeIndexProperty>
-    {
-	typedef size_t value_type;
-	typedef size_t& reference;
-	typedef Tempus::Multimodal::Edge key_type;
-	typedef boost::edge_property_tag category;
-    };
-
-    //
-    // Boost graph traits definition
+    ///
+    /// Boost graph traits definition
     template <>
     struct graph_traits< Tempus::Multimodal::Graph >
     {
@@ -315,6 +427,9 @@ namespace Tempus
     std::ostream& operator<<( std::ostream& out, const Multimodal::Vertex& v );
     std::ostream& operator<<( std::ostream& out, const Multimodal::Edge& v );
 
+    ///
+    /// Get a vertex descriptor from its database's id.
+    /// This is templated in a way that it is compliant with Road::Vertex, PublicTransport::Vertex
     template <class G>
     typename boost::graph_traits<G>::vertex_descriptor vertex_from_id( Tempus::db_id_t db_id, G& graph)
     {
@@ -328,6 +443,10 @@ namespace Tempus
     	return typename boost::graph_traits<G>::vertex_descriptor();
     }
 
+    ///
+    /// Get an edge descriptor from its database's id.
+    /// This is templated in a way that it is compliant with Road::Edge
+    /// A PublicTransport::Edge has no unique id associated.
     template <class G>
     typename boost::graph_traits<G>::edge_descriptor edge_from_id( Tempus::db_id_t db_id, G& graph)
     {
@@ -341,6 +460,8 @@ namespace Tempus
     	return typename boost::graph_traits<G>::edge_descriptor();
     }
 
+    ///
+    /// Tests if a vertex exists. Works for Road::Vertex, PublicTransport::Vertex and Multimodal::Vertex
     template <class G>
     bool vertex_exists( typename boost::graph_traits<G>::vertex_descriptor v, G& graph )
     {
@@ -353,6 +474,8 @@ namespace Tempus
 	return false;
     }
 
+    ///
+    /// Tests if an edge exists. Works for Road::Edge, PublicTransport::Edge and Multimodal::Edge
     template <class G>
     bool edge_exists( typename boost::graph_traits<G>::edge_descriptor v, G& graph )
     {
@@ -378,6 +501,8 @@ namespace Tempus
     /// Get 2D coordinates of a multimodal vertex, from the database
     Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph );
 
+    ///
+    /// Template magic used to abstract a graph object (either a vertex or an edge)
     template <class G, class Tag>
     struct vertex_or_edge
     {
@@ -423,12 +548,16 @@ namespace Tempus
 
 namespace boost
 {
+    ///
+    /// Implementation of FieldPropertyAccessor
     template <class Graph, class Tag, class T, class Member>
     T get( Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
     {
 	return pmap.graph_[e].*(pmap.mem_);
     }
 
+    ///
+    /// Specialization of property_traits for FieldPropertyAccessor
     template <class Graph, class Tag, class T, class Member>
     struct property_traits<Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> >
     {
@@ -439,12 +568,16 @@ namespace boost
     };
 
 
+    ///
+    /// Implementation of FunctionPropertyAccessor
     template <class Graph, class Tag, class T, class Function>
     T get( Tempus::FunctionPropertyAccessor<Graph, Tag, T, Function> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
     {
 	return pmap.fct_( pmap.graph_, e );
     }
 
+    ///
+    /// Specialization of property_traits for FunctionPropertyAccessor
     template <class Graph, class Tag, class T, class Function>
     struct property_traits<Tempus::FunctionPropertyAccessor<Graph, Tag, T, Function> >
     {

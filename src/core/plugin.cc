@@ -1,6 +1,8 @@
 #include <string>
 #include <iostream>
 
+#include <boost/format.hpp>
+
 #include "plugin.hh"
 
 typedef Tempus::Plugin* (*PluginCreationFct)( Db::Connection& );
@@ -194,6 +196,7 @@ namespace Tempus
     {
 	std::cout << "[plugin_base]: pre_process" << std::endl;
 	request_ = request;
+	result_.clear();
     }
 
     ///
@@ -210,10 +213,206 @@ namespace Tempus
     }
 
     ///
-    /// ??? text formatting ?
+    /// Text formatting and preparation of roadmap
     Result& Plugin::result()
     {
-	std::cout << "[plugin_base]: result" << std::endl;
+	for ( Result::iterator rit = result_.begin(); rit != result_.end(); ++rit ) {
+	    Roadmap& roadmap = *rit;
+	    Road::Graph& road_graph = graph_.road;
+	    
+	    // display the global costs of the result
+	    for ( Costs::const_iterator it = roadmap.total_costs.begin(); it != roadmap.total_costs.end(); ++it ) {
+		std::cout << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
+	    }
+	    
+	    std::string road_name = "";
+	    double distance = 0.0;
+	    Tempus::db_id_t previous_section = 0;
+	    bool on_roundabout = false;
+	    bool was_on_roundabout = false;
+	    // road section at the beginning of the roundabout
+	    Tempus::db_id_t roundabout_enter;
+	    // road section at the end of the roundabout
+	    Tempus::db_id_t roundabout_leave;
+	    Roadmap::RoadStep *last_step = 0;
+	    
+	    // Counter for direction texts
+	    int direction_i = 1;
+	    Roadmap::RoadStep::EndMovement movement;
+	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++ )
+	    {
+		if ( (*it)->step_type == Roadmap::Step::GenericStep ) {
+		    Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( *it );
+		    Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
+
+		    bool is_road_pt = false;
+		    db_id_t road_id, pt_id;
+		    switch ( edge->connection_type()) {
+		    case Multimodal::Edge::Road2Transport: {
+			is_road_pt = true;
+			const Road::Graph& road_graph = *(edge->source.road_graph);
+			const PublicTransport::Graph& pt_graph = *(edge->target.pt_graph);
+			road_id = road_graph[ edge->source.road_vertex ].db_id;
+			pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
+
+			std::cout << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
+
+		    } break;
+		    case Multimodal::Edge::Transport2Road: {
+			is_road_pt = true;
+			const PublicTransport::Graph& pt_graph = *(edge->source.pt_graph);
+			const Road::Graph& road_graph = *(edge->target.road_graph);
+			pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
+			road_id = road_graph[ edge->target.road_vertex ].db_id;				 
+
+			std::cout << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
+
+		    } break;
+		    }
+
+		    if ( is_road_pt ) {
+			std::string query = (boost::format( "SELECT st_asbinary(st_force_2d(st_makeline(t1.geom, t2.geom))) from "
+							    "(select geom from tempus.road_node where id=%1%) as t1, "
+							    "(select geom from tempus.pt_stop where id=%2%) as t2" ) %
+					     road_id %
+					     pt_id ).str();
+			Db::Result res = db_.exec(query);
+			BOOST_ASSERT( res.size() > 0 );
+			std::string wkb = res[0][0].as<std::string>();
+			// get rid of the heading '\x'
+			step->geometry_wkb = wkb.substr(2);
+		    }
+		}
+		else if ( (*it)->step_type == Roadmap::Step::PublicTransportStep ) {
+		    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *it );
+		    PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id];
+		    
+		    //
+		    // retrieval of the step's geometry
+		    std::string q = (boost::format("SELECT st_asbinary(st_force_2d(geom)) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%") %
+				     pt_graph[step->section].stop_from % pt_graph[step->section].stop_to ).str();
+		    Db::Result res = db_.exec(q);
+		    std::string wkb = res[0][0].as<std::string>();
+		    // get rid of the heading '\x'
+		    step->geometry_wkb = wkb.substr(2);
+		    
+		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
+		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
+		    std::cout << direction_i++ << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
+		    // display associated costs
+		    for ( Costs::const_iterator cit = step->costs.begin(); cit != step->costs.end(); ++cit ) {
+			std::cout << cost_name( cit->first ) << ": " << cit->second << cost_unit( cit->first ) << " ";
+		    }
+		    std::cout << ")" << std::endl;
+		}
+		else if ( (*it)->step_type == Roadmap::Step::RoadStep ) {
+		    
+		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *it );
+
+		    //
+		    // retrieval of the step's geometry
+		    std::string q = (boost::format("SELECT st_asbinary(st_force_2d(geom)) FROM tempus.road_section WHERE id=%1%") %
+				     road_graph[step->road_section].db_id ).str();
+		    Db::Result res = db_.exec(q);
+		    std::string wkb = res[0][0].as<std::string>();
+		    // get rid of the heading '\x'
+		    if ( wkb.size() > 0 )
+			step->geometry_wkb = wkb.substr(2);
+		    else
+			step->geometry_wkb = "";
+	    
+		    //
+		    // For a road step, we have to compute directions of turn
+		    //
+		    movement = Roadmap::RoadStep::GoAhead;
+		
+		    on_roundabout =  road_graph[step->road_section].is_roundabout;
+		
+		    bool action = false;
+		    if ( on_roundabout && !was_on_roundabout )
+		    {
+			// we enter a roundabout
+			roundabout_enter = road_graph[step->road_section].db_id;
+			movement = Roadmap::RoadStep::RoundAboutEnter;
+			action = true;
+		    }
+		    if ( !on_roundabout && was_on_roundabout )
+		    {
+			// we leave a roundabout
+			roundabout_leave = road_graph[step->road_section].db_id;
+			// FIXME : compute the exit number
+			movement = Roadmap::RoadStep::FirstExit;
+			action = true;
+		    }
+		
+		    if ( previous_section && !on_roundabout && !action )
+		    {
+			std::string q1 = (boost::format("SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
+							"FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%") % previous_section % road_graph[step->road_section].db_id).str();
+			Db::Result res = db_.exec(q1);
+			double pi = 3.14159265;
+			double z1 = res[0][0].as<double>() / pi * 180.0;
+			double z2 = res[0][1].as<double>() / pi * 180.0;
+			bool continuous =  res[0][2].as<bool>();
+			if ( !continuous )
+			    z1 = z1 - 180;
+		    
+			int z = int(z1 - z2);
+			z = (z + 360) % 360;
+			if ( z >= 30 && z <= 150 )
+			{
+			    movement = Roadmap::RoadStep::TurnRight;
+			}
+			if ( z >= 210 && z < 330 )
+			{
+			    movement = Roadmap::RoadStep::TurnLeft;
+			}
+		    }
+		
+		    road_name = road_graph[step->road_section].road_name;
+		    distance = road_graph[step->road_section].length;
+		
+		    if ( last_step )
+		    {
+			last_step->end_movement = movement;
+			last_step->distance_km = -1.0;
+		    }
+		
+		    switch ( movement )
+		    {
+		    case Roadmap::RoadStep::GoAhead:
+			std::cout << direction_i++ << " - Walk on " << road_name << " for " << distance << cost_unit(CostDistance) << std::endl;
+			break;
+		    case Roadmap::RoadStep::TurnLeft:
+			std::cout << direction_i++ << " - Turn left on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
+			break;
+		    case Roadmap::RoadStep::TurnRight:
+			std::cout << direction_i++ << " - Turn right on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
+			break;
+		    case Roadmap::RoadStep::RoundAboutEnter:
+			std::cout << direction_i++ << " - Enter the roundabout on " << road_name << std::endl;
+			break;
+		    case Roadmap::RoadStep::FirstExit:
+		    case Roadmap::RoadStep::SecondExit:
+		    case Roadmap::RoadStep::ThirdExit:
+		    case Roadmap::RoadStep::FourthExit:
+		    case Roadmap::RoadStep::FifthExit:
+		    case Roadmap::RoadStep::SixthExit:
+			std::cout << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
+			break;
+		    }
+		    previous_section = road_graph[step->road_section].db_id;
+		    was_on_roundabout = on_roundabout;
+		    last_step = step;
+		}
+	    }
+
+	    if ( last_step ) {
+		last_step->end_movement = Roadmap::RoadStep::YouAreArrived;
+		last_step->distance_km = -1.0;
+	    }
+	}
+
 	return result_;
     }
 
