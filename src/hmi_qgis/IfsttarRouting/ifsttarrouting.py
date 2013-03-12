@@ -50,6 +50,9 @@ HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
 ROADMAP_LAYER_NAME = "Roadmap_"
 
+# There has been an API change regarding vector layer on 1.9 branch
+NEW_API = 'commitChanges' in dir(QgsVectorLayer)
+
 def cost_name( cost ):
     cost_id = int(cost.attrib['type'])
     cost_name = ''
@@ -441,8 +444,12 @@ class IfsttarRouting:
 
         pr = vl.dataProvider()
 
-        pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
-        
+        if NEW_API:
+            vl.startEditing()
+            vl.addAttribute( QgsField( "transport_type", QVariant.Int ) )
+        else:
+            pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
+
         # browse steps
         for step in steps:
             # find wkb geometry
@@ -460,17 +467,24 @@ class IfsttarRouting:
                 transport_type = 2
             else:
                 transport_type = 3
-            fet.setAttributeMap( { 0: QVariant( transport_type ) } )
+
+            if NEW_API:
+                fet.setAttributes( [ transport_type ] )
+            else:
+                fet.setAttributeMap( { 0: QVariant( transport_type ) } )
             fet.setGeometry( geo )
             pr.addFeatures( [fet] )
 
-        # We MUST call this manually (see http://hub.qgis.org/issues/4687)
-        vl.updateFieldMap()
+        if NEW_API:
+            vl.commitChanges()
+        else:
+            # We MUST call this manually (see http://hub.qgis.org/issues/4687)
+            vl.updateFieldMap()
         # update layer's extent when new features have been added
         # because change of extent in provider is not propagated to the layer
         vl.updateExtents()
 
-        QgsMapLayerRegistry.instance().addMapLayer(vl)
+        QgsMapLayerRegistry.instance().addMapLayers( [vl] )
         self.selectRoadmapLayer( lid )
 
     def selectRoadmapLayer( self, id ):
