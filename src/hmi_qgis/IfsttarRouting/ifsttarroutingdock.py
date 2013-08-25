@@ -20,22 +20,21 @@
  ***************************************************************************/
 """
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-
-from ui_ifsttarrouting import Ui_IfsttarRoutingDock
-
 from criterionchooser import CriterionChooser
 from stepselector import StepSelector
 
 import os
 import pickle
 
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from ui_ifsttarrouting import Ui_IfsttarRoutingDock
+
 PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 # create the dialog for route queries
-class IfsttarRoutingDock(QtGui.QDockWidget):
+class IfsttarRoutingDock(QDockWidget):
     #
     # Set widgets' states from a hash
     #
@@ -69,7 +68,7 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         return state
 
     def __init__(self, canvas):
-        QtGui.QDockWidget.__init__(self)
+        QDockWidget.__init__(self)
         self.canvas = canvas
         # Set up the user interface from Designer.
         self.ui = Ui_IfsttarRoutingDock()
@@ -183,7 +182,7 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         n = model.rowCount()
         for i in range(0, n):
             v = model.data( model.index(i,0), Qt.CheckStateRole )
-            if v.toBool():
+            if v == Qt.Checked:
                 s.append( i )
         return s
 
@@ -193,7 +192,7 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         n = model.rowCount()
         for i in range(0, n):
             v = model.data( model.index(i,0), Qt.CheckStateRole )
-            if v.toBool():
+            if v == Qt.Checked:
                 s.append( i )
         return s
 
@@ -202,9 +201,9 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         n = model.rowCount()
         for i in range(0, n):
             if i in sel:
-                q = QVariant(Qt.Checked)
+                q = Qt.Checked
             else:
-                q = QVariant(Qt.Unchecked)
+                q = Qt.Unchecked
             model.setData( model.index(i,0), q, Qt.CheckStateRole )
 
     def set_selected_transports( self, sel ):
@@ -212,9 +211,9 @@ class IfsttarRoutingDock(QtGui.QDockWidget):
         n = model.rowCount()
         for i in range(0, n):
             if i in sel:
-                q = QVariant(Qt.Checked)
+                q = Qt.Checked
             else:
-                q = QVariant(Qt.Unchecked)
+                q = Qt.Unchecked
             model.setData( model.index(i,0), q, Qt.CheckStateRole )
 
     def get_parking( self ):

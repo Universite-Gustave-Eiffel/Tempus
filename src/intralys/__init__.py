@@ -29,7 +29,9 @@ def version():
 def icon():
     return "icon.png"
 def qgisMinimumVersion():
-    return "1.0"
+    return "1.8"
+def qgisMaximumVersion():
+    return "2.9"
 def classFactory(iface):
     # load Intralys class from file Intralys
     from intralys import Intralys
