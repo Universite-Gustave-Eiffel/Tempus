@@ -4,12 +4,12 @@ else (WIN32)
 	set ( HOME $ENV{HOME} )
 endif(WIN32)
 
-SET(QGIS_DATA_DIR ${HOME}/.qgis/)
+SET(QGIS_DATA_DIR ${HOME}/.qgis2/)
 SET(QGIS_PLUGIN_DIR "${QGIS_DATA_DIR}/python/plugins/ifsttarrouting" )
 
 configure_file( config.py.in config.py )
 
-FILE(GLOB INSTALLER_FILES *.py)
+FILE(GLOB INSTALLER_FILES metadata.txt *.py)
 FILE(GLOB IMAGES_FILES *.png)
 SET(INSTALLER_FILES ${INSTALLER_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../../wps/client/wps_client.py ${IMAGES_FILES} ${CMAKE_CURRENT_BINARY_DIR}/config.py )
 

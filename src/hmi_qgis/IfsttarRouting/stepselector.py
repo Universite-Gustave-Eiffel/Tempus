@@ -50,7 +50,7 @@ class StepSelector( QFrame ):
                 QObject.connect( self.minusBtn, SIGNAL("clicked()"), self.onRemove )
 
         n = datetime.now()
-        self.dateEdit = QDateTimeEdit( self )
+        self.dateEdit = QDateTimeEdit( QDateTime.currentDateTime(), self )
         self.dateEdit.setCalendarPopup( True )
         self.constraintBox = QComboBox()
         self.constraintBox.insertItem(0, "No constraint" )

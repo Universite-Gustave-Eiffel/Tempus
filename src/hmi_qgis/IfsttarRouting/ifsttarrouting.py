@@ -19,12 +19,6 @@
  *                                                                         *
  ***************************************************************************/
 """
-# Import the PyQt and QGIS libraries
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4 import QtCore, QtGui
-from qgis.core import *
-from qgis.gui import *
 import re
 from wps_client import *
 import config
@@ -32,6 +26,14 @@ import binascii
 import pickle
 import os
 from datetime import datetime
+
+# Import the PyQt and QGIS libraries
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from qgis.core import *
+from qgis.gui import *
+#import PyQt4.QtCore
+#import PyQt4.QtGui
 
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -129,9 +131,9 @@ def clearBoxLayout( lay ):
         lay.removeWidget(w)
         w.close()
 
-class SplashScreen(QtGui.QDialog):
+class SplashScreen(QDialog):
     def __init__(self):
-        QtGui.QDialog.__init__(self)
+        QDialog.__init__(self)
         self.ui = Ui_SplashScreen()
         self.ui.setupUi(self)
 
@@ -150,7 +152,7 @@ class IfsttarRouting:
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/ifsttarrouting"
         # initialize locale
         localePath = ""
-        locale = QSettings().value("locale/userLocale").toString()[0:2]
+        locale = QSettings().value("locale/userLocale")[0:2]
        
         if QFileInfo(self.plugin_dir).exists():
             localePath = self.plugin_dir + "/i18n/ifsttarrouting_" + locale + ".qm"
@@ -352,7 +354,7 @@ class IfsttarRouting:
             dt = datetime.strptime( date, "%Y-%m-%dT%H:%M:%S.%f" )
             item = QListWidgetItem()
             item.setText(dt.strftime( "%Y-%m-%d at %H:%M:%S" ))
-            item.setData( Qt.UserRole, QVariant( int(id) ) )
+            item.setData( Qt.UserRole, int(id) )
             self.dlg.ui.historyList.addItem( item )
 
     def onDeleteHistoryItem( self ):
@@ -367,7 +369,7 @@ class IfsttarRouting:
 
         sel = self.dlg.ui.historyList.selectedIndexes()
         for item in sel:
-            (id, is_ok) = item.data( Qt.UserRole ).toInt()
+            id = item.data( Qt.UserRole )
             self.historyFile.removeRecord( id )
         # reload
         self.loadHistory()
@@ -471,7 +473,7 @@ class IfsttarRouting:
             if NEW_API:
                 fet.setAttributes( [ transport_type ] )
             else:
-                fet.setAttributeMap( { 0: QVariant( transport_type ) } )
+                fet.setAttributeMap( { 0: transport_type } )
             fet.setGeometry( geo )
             pr.addFeatures( [fet] )
 
@@ -673,10 +675,10 @@ class IfsttarRouting:
             item = QStandardItem( ttype['name'] )
             if need_network and not has_network:
                 item.setFlags(Qt.ItemIsUserCheckable)
-                item.setData(QVariant(Qt.Unchecked), Qt.CheckStateRole)
+                item.setData( Qt.Unchecked, Qt.CheckStateRole)
             else:
                 item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                item.setData(QVariant(Qt.Checked), Qt.CheckStateRole)
+                item.setData( Qt.Checked, Qt.CheckStateRole)
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
 
@@ -693,7 +695,7 @@ class IfsttarRouting:
 
             item = QStandardItem( network['name'] + ' (' + ', '.join(tlist) + ')')
             item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData(QVariant(Qt.Checked), Qt.CheckStateRole)
+            item.setData( Qt.Checked, Qt.CheckStateRole)
             networkListModel.appendRow(item)
         self.dlg.ui.networkList.setModel( networkListModel )
 
@@ -843,7 +845,7 @@ class IfsttarRouting:
         if ret == QMessageBox.No:
             return
 
-        (id, is_ok) = item.data( Qt.UserRole ).toInt()
+        id = item.data( Qt.UserRole )
         # load from db
         r = self.historyFile.getRecord( id )
         # unserialize the raw data
