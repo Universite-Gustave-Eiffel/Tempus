@@ -29,3 +29,6 @@ target_link_libraries( sample_road_plugin ${PQ_LIBS} )
 
 add_library( sample_pt_plugin MODULE sample_pt_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( sample_pt_plugin ${PQ_LIBS} )
+
+add_library( forbidden_movement_plugin MODULE forbidden_movement_plugin.cc ${DLL_SOURCES} )
+target_link_libraries( forbidden_movement_plugin ${PQ_LIBS} )
