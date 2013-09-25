@@ -93,7 +93,8 @@ namespace Tempus
 	    ///
 	    /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
 	    /// which is the edge property of a Road::Graph
-	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
+            //	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
+            boost::property_map<Road::Graph, double Road::Section::*>::type length_map( get(&Road::Section::length, road_graph ) );
 
 	    ///
 	    /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
