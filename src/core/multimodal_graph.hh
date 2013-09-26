@@ -529,6 +529,11 @@ namespace Tempus
     template <class Graph, class Tag, class T, class Member>
     struct FieldPropertyAccessor
     {
+	typedef T value_type;
+	typedef T& reference;
+	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
+	typedef boost::readable_property_map_tag category;
+
 	FieldPropertyAccessor( Graph& graph, Member mem ) : graph_(graph), mem_(mem) {}
 	Graph& graph_;
 	Member mem_;
@@ -540,6 +545,11 @@ namespace Tempus
     template <class Graph, class Tag, class T, class Function>
     struct FunctionPropertyAccessor
     {
+	typedef T value_type;
+	typedef T& reference;
+	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
+	typedef boost::readable_property_map_tag category;
+
 	FunctionPropertyAccessor( Graph& graph, Function fct ) : graph_(graph), fct_(fct) {}
 	Graph& graph_;
 	Function fct_;
@@ -556,6 +566,7 @@ namespace boost
 	return pmap.graph_[e].*(pmap.mem_);
     }
 
+#if 0
     ///
     /// Specialization of property_traits for FieldPropertyAccessor
     template <class Graph, class Tag, class T, class Member>
@@ -566,6 +577,7 @@ namespace boost
 	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
 	typedef Tag category;
     };
+#endif
 
 
     ///
@@ -576,6 +588,7 @@ namespace boost
 	return pmap.fct_( pmap.graph_, e );
     }
 
+#if 0
     ///
     /// Specialization of property_traits for FunctionPropertyAccessor
     template <class Graph, class Tag, class T, class Function>
@@ -586,6 +599,7 @@ namespace boost
 	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
 	typedef Tag category;
     };
+#endif
 };
 
 #endif
