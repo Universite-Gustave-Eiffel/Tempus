@@ -40,7 +40,9 @@ void combined_dijkstra(
 
     // priority queue for vertices
     // sort elements by distance_map[v]
+    
 #if 0
+    // we can choose here among types available in boost::heap
     typedef boost::heap::d_ary_heap< Label,
                                      boost::heap::arity<4>,
                                      boost::heap::compare< Cmp >,
@@ -92,7 +94,7 @@ void combined_dijkstra(
 
             double c = get( weight_map, current_edge );
             if ( q != qp ) {
-                double p = get( penalty_map, qp );
+                double p = get( penalty_map, q );
                 std::cout << "penalty: " << p << std::endl;
                 c += p;
             }
