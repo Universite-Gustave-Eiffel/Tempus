@@ -234,7 +234,7 @@ struct CombinedWeightMap
         boost::tie( e, ok ) = edge( v1.first, v2.first, graph_.graph_ );
         BOOST_ASSERT( ok );
         double w = boost::get( wmap_, e );
-        double p = boost::get( pmap_, v2.second );
+        double p = boost::get( pmap_, v1.second );
         //        std::cout << "weight " << e << " state= " << v2.second << " = " << w << " +" << p << std::endl;
         return w + p;
     }
