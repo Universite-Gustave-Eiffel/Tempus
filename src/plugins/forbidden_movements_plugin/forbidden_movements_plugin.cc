@@ -81,8 +81,8 @@ namespace Tempus
             boost::tie( e2, ok ) = boost::add_edge( v2, v3, automaton_ );
             BOOST_ASSERT( ok );
 
-            // forbidden edges
-            automaton_[ e1 ].source = vertex_from_id( 21712, road_graph );
+            // forbidden edges (on tempus_test_db)
+            automaton_[ e1 ].source = vertex_from_id( 21556, road_graph );
             automaton_[ e1 ].target = vertex_from_id( 21652, road_graph );
 
             automaton_[ e2 ].source = vertex_from_id( 21652, road_graph );
