@@ -1,0 +1,9 @@
+# swap files
+*.swp
+# temp working files
+*~
+# compiled python files
+*.pyc
+ui_*.py
+resources_rc.py
+build
