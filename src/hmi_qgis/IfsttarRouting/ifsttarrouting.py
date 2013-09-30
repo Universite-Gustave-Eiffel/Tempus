@@ -630,7 +630,7 @@ class IfsttarRouting:
         for option in options:
             lbl = QLabel( self.dlg )
             name = option.attrib['name'] + ''
-            lbl.setText( name )
+            lbl.setText( option.attrib['description'] )
             lay.setWidget( row, QFormLayout.LabelRole, lbl )
             
             t = int(option.attrib['type'])
