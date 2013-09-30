@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Tempus" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+        <title>Tempus</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+
+          <h1 id="project_title">Tempus</h1>
+
+          <a href="index.html">About</a> | <a href="authors.html">Authors</a> | <a href="documentation.html">Documentation</a> | <a href="dev.html">Development</a> | <a href="screencast.html">Screencast</a> | <a href="installation.html">Installation</a>
+
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+<h3>Documentation</h3>
+
+<p>Tempus is designed around a core, whose documentation is detailed here. Main classes processed by TempusV2 are:</p>
+<ul>
+    <li>Tempus::Road::Graph representing the road graph</li>
+    <li>Tempus::PublicTransport::Graph representing a public transport graph</li>
+    <li>Tempus::POI representing points of interest on the road graph</li>
+    <li>Tempus::Multimodal::Graph which is a wrapper around a road graph, public transport graphs and POIs</li>
+</ul>
+
+<p>These graphs are filled up with data coming from a database. Please refer to the Db namespace to see available functions. Especially have a look at the Tempus::PQImporter class.</p>
+
+<p> Path planning algorithms are designed to be written as user plugins. The Plugin base class gives access to some callbacks. Please have a look at the three different sample plugins shipped with TempusV2: Tempus::RoadPlugin, Tempus::PtPlugin and Tempus::MultiPlugin.  </p>
+
+<p> The internal API is exposed to other programs and languages through a WPS server.</p>
+
+<h4>WPS server</h4>
+
+<p>The wps server uderstands XML requests. Those can be written directly, using a python script or using QGIS <i>via</i> the provided plugin.</p>
+
+<h5>XML requests</h5>
+
+<textarea cols="90" rows="42">
+<wps:Execute version="1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:wps="http://www.opengis.net/wps/1.0.0" service="WPS">
+  <ows:Identifier>pre_process</ows:Identifier>
+  <DataInputs>
+    <Input>
+      <Identifier>request</Identifier>
+      <Data>
+        <ComplexData mimeType="text/xml" encoding="UTF-8">
+          <request>
+            <origin>
+              <x>356241.225231</x>
+              <y>6688158.05338</y>
+            </origin>
+            <departure_constraint date_time="2012-03-14T11:05:34" type="0"/>
+            <optimizing_criterion>1</optimizing_criterion>
+            <allowed_transport_types>11</allowed_transport_types>
+            <step>
+              <destination>
+                <x>355763.149926</x>
+                <y>6688721.87684</y>
+              </destination>
+              <constraint date_time="2012-04-23T00:00:00" type="0"/>
+              <private_vehicule_at_destination>true</private_vehicule_at_destination>
+            </step>
+          </request>
+        </ComplexData>
+      </Data>
+    </Input>
+    <Input>
+      <Identifier>plugin</Identifier>
+      <Data>
+        <ComplexData mimeType="text/xml" encoding="UTF-8">
+          <plugin name="sample_road_plugin"/>
+        </ComplexData>
+      </Data>
+    </Input>
+  </DataInputs>
+  <ResponseForm>
+    <RawDataOutput/>
+  </ResponseForm>
+</wps:Execute>
+</textarea>
+
+<h5>Python generated requests</h5>
+
+<pre>
+from wps_client import *
+
+WPS_HOST = '127.0.0.1'
+WPS_PATH = '/wps'
+client = HttpCgiConnection( WPS_HOST, WPS_PATH )
+wps = WPSClient(client)
+wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+wps.execute( 'pre_build', {} )
+wps.execute( 'build', {} )
+wps.execute( 'plugin_list', {} )
+
+# route that passes near a public transport line (Nantes data)
+
+plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_road_plugin' } ] ] }
+wps.execute( 'get_option_descriptions', plugin_arg )
+ox = 356241.225231
+oy = 6688158.053382
+dx = 355763.149926
+dy = 6688721.876838
+
+args = dict(plugin_arg.items())
+args['request'] = [ True, ['request', 
+                              ['origin', ['x', str(ox)], ['y', str(oy)] ],
+                              ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
+                              ['optimizing_criterion', 1 ], 
+                              ['allowed_transport_types', 11 ],
+                              ['step',
+                                  ['destination', ['x', str(dx)], ['y', str(dy)] ],
+                                  ['constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                                  ['private_vehicule_at_destination', 'true' ]
+                              ]
+                          ]
+                  ]
+
+outputs = wps.execute( 'pre_process', args )
+outputs = wps.execute( 'process', plugin_arg )
+outputs = wps.execute( 'result', plugin_arg )
+n = 0
+for step in outputs['results'][0]:
+    if step.tag != 'cost':
+        n += 1
+</pre>
+
+
+<h5>QGIS generated requests</h5>
+
+
+<h4>C++ API</h4>
+<p><a href=>C++ API documentation</a> is generated by doxygen</p>
+
+
+
+      </section>
+    </div>
+
+  </body>
+</html>

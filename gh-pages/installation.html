@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Tempus" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+        <title>Tempus</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+
+          <h1 id="project_title">Tempus</h1>
+
+          <a href="index.html">About</a> | <a href="authors.html">Authors</a> | <a href="documentation.html">Documentation</a> | <a href="dev.html">Development</a> | <a href="screencast.html">Screencast</a> | <a href="installation.html">Installation</a>
+
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+<h3>Installation</h3>
+
+
+<h4>Compilation</h4>
+
+<p>In the root directory, create a <code>build</code> directory and enter it</p>
+<pre>
+cmake .. && make -j 4 </pre>
+
+<h4>QGIS Plugin installation</h4>
+
+<p>Just type <code>nmake install</code> (Windows) or <code>make intsall</code> (Linux) and it should install the plugin and all required dependencies to your local qgis plugin directory</p>
+
+<p>When QGIs is launched, go to the "Extension management" dialog, look for "ifsttar" and enable it.</p>
+
+<h4>Server installation</h4>
+
+<h5>Apache</h5>
+
+<p>Download apache2 and mod_fcgid from http://www.apachelounge.com/download/ (Windows) or install package libapache2-mod-fcgid (Ubuntu).</p>
+
+<p>
+You will have to setup a directory where FastCGI programs can be called from the Apache webserver.
+On Windows implementation, you have to choose a directory <strong>without spaces</strong>
+</p>
+
+
+<p>Add this to the configuration file (conf/httpd.conf):</p>
+<pre>
+LoadModule fcgid_module modules/mod_fcgid.so
+
+Alias /fcgi-bin/ some_directory_on_disk
+<Directory some_directory_on_disk>
+SetHandler fcgid-script
+Options +ExecCGI
+Order allow,deny
+Allow from all
+</Directory>
+</pre>
+
+<p>The WPS executable, Tempus plugin DLLs and DLL dependencies must be copied into the fcgi-bin directory (called <code>some_directory_on_disk</code>).</p>
+
+<p>Restart the Apache server.
+You can now test the WPS installation with a browser pointing to http://127.0.0.1/wps?service=wps&version=1.0.0&request=GetCapabilities</p>
+
+<p>
+The problem with this kind of installation is that it is hard to debug in case of problems. You do not have access to any messages
+that could be displayed by the wps executable and Apache must be restarted for every new WPS compilation.</p>
+
+<h5>nginx</h5>
+
+<p>
+The second option is to use the standalone mode of the WPS server and a light httpd server (like nginx or lighttpd) that
+just "passes" execution to this executable.</p>
+
+<p>You have to launch the "wps.exe" executable from a command line, like so:</p>
+<code>
+hme@socompa:~/build$ wps\wps -c core -l plugin1 -l plugin2 -p 9000
+</code>
+
+<p>
+This will create a listening socket on port 9000 and start wps in the "core" directory
+(needed because the core looks for external plugins which are located in the "core" directory")
+This way, you can see debugging outputs.
+</p>
+
+<p>
+On Windows, nginx can be downloaded from http://nginx.org/en/download.html. Just unzip it wherever you like. On Ubuntu you can install the package nginx.</p>
+
+<p>You can now configure nginx, by adding the following lines inside the <code>server {...}</code> configuration part of nginx.conf (/etc/nginx/sites-available/default on Ubuntu)</p>
+<pre>
+location /wps {
+        include fastcgi_params;
+        fastcgi_pass 127.0.0.1:9000;
+}
+</pre>
+		
+<p>nginx has normally to be launched only once.</p>
+
+      </section>
+    </div>
+
+  </body>
+</html>

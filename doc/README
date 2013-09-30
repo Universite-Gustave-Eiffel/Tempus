@@ -56,7 +56,7 @@ just "passes" execution to this executable.
 
 You have to launch the "wps.exe" executable from a command line, like so:
 
-hme@socompa:~/build$ wps\wps -c core -p 9000
+hme@socompa:~/build$ wps\wps -c core -l plugin1 -l plugin2 -p 9000
 
 It will create a listening socket on port 9000 and start wps in the "core" directory
 (needed because the core looks for external plugins which are located in the "core" directory")
