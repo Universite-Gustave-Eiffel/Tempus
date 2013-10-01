@@ -46,54 +46,34 @@ cmake .. && make -j 4 </pre>
 
 <h4>Server installation</h4>
 
-<h5>Apache</h5>
-
-<p>Download apache2 and mod_fcgid from http://www.apachelounge.com/download/ (Windows) or install package libapache2-mod-fcgid (Ubuntu).</p>
-
 <p>
-You will have to setup a directory where FastCGI programs can be called from the Apache webserver.
-On Windows implementation, you have to choose a directory <strong>without spaces</strong>
-</p>
-
-
-<p>Add this to the configuration file (conf/httpd.conf):</p>
-<pre>
-LoadModule fcgid_module modules/mod_fcgid.so
-
-Alias /fcgi-bin/ some_directory_on_disk
-<Directory some_directory_on_disk>
-SetHandler fcgid-script
-Options +ExecCGI
-Order allow,deny
-Allow from all
-</Directory>
-</pre>
-
-<p>The WPS executable, Tempus plugin DLLs and DLL dependencies must be copied into the fcgi-bin directory (called <code>some_directory_on_disk</code>).</p>
-
-<p>Restart the Apache server.
-You can now test the WPS installation with a browser pointing to http://127.0.0.1/wps?service=wps&version=1.0.0&request=GetCapabilities</p>
-
-<p>
-The problem with this kind of installation is that it is hard to debug in case of problems. You do not have access to any messages
-that could be displayed by the wps executable and Apache must be restarted for every new WPS compilation.</p>
-
-<h5>nginx</h5>
-
-<p>
-The second option is to use the standalone mode of the WPS server and a light httpd server (like nginx or lighttpd) that
+The idea is to use the standalone mode of the WPS server and an httpd server (like nginx or Apache2) that
 just "passes" execution to this executable.</p>
 
-<p>You have to launch the "wps.exe" executable from a command line, like so:</p>
+<p>You have to launch the "wps" executable from a command line, like so:</p>
 <code>
-hme@socompa:~/build$ wps\wps -c core -l plugin1 -l plugin2 -p 9000
+hme@socompa:~/build/plugins$ ../wps/wps -l plugin1 -l plugin2 -p 9000
 </code>
 
 <p>
-This will create a listening socket on port 9000 and start wps in the "core" directory
-(needed because the core looks for external plugins which are located in the "core" directory")
+This will create a listening socket on port 9000 and start a WPS server.
 This way, you can see debugging outputs.
 </p>
+
+<h5>Apache</h5>
+
+<p>Download apache2 and mod_fastcgi from XXX (Windows) or install package libapache2-mod-fastcgi (Ubuntu).</p>
+
+<p>After installation, within the Apache2 configuration directory (/etc/apache2 under Linux), check that the fastcgi module is correctly loaded. A link to <tt>mods-available/mod_fastcgi.conf</tt> must exist in <tt>mods-enabled</tt>.
+
+<p>Then this file must have the following first line :</p>
+<pre>
+FastCgiExternalServer /var/www/wps -host 127.0.0.1:9000</pre>
+
+<p>Restart the Apache server.
+You can now test the WPS installation with a browser pointing to <a href="http://127.0.0.1/wps?service=wps&version=1.0.0&request=GetCapabilities">http://127.0.0.1/wps?service=wps&version=1.0.0&request=GetCapabilities</a></p>
+
+<h5>nginx</h5>
 
 <p>
 On Windows, nginx can be downloaded from http://nginx.org/en/download.html. Just unzip it wherever you like. On Ubuntu you can install the package nginx.</p>
