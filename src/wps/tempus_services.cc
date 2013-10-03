@@ -6,6 +6,7 @@
 #include "request.hh"
 #include "roadmap.hh"
 #include "db.hh"
+#include "utils/graph_db_link.hh"
 
 using namespace std;
 using namespace Tempus;

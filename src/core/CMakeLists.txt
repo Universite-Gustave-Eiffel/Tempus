@@ -1,5 +1,5 @@
 # Core source files
-set( SOURCE_FILES common.cc multimodal_graph.cc application.cc plugin.cc pgsql_importer.cc plugin.cc db.cc )
+set( SOURCE_FILES common.cc multimodal_graph.cc application.cc plugin.cc pgsql_importer.cc plugin.cc db.cc utils/graph_db_link.cc )
 
 if (WIN32)
 	# With Visual C++, DLLs must be compiled with the core, in order to resolve external symbols

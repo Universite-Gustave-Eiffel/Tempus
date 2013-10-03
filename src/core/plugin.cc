@@ -4,6 +4,7 @@
 #include <boost/format.hpp>
 
 #include "plugin.hh"
+#include "utils/graph_db_link.hh"
 
 typedef Tempus::Plugin* (*PluginCreationFct)( Db::Connection& );
 typedef void (*PluginDeletionFct)(Tempus::Plugin*);

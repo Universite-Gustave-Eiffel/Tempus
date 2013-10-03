@@ -4,6 +4,7 @@
 #include "plugin.hh"
 #include "pgsql_importer.hh"
 #include "db.hh"
+#include "utils/graph_db_link.hh"
 #include "tempus_property_maps.hh"
 
 using namespace std;
