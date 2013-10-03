@@ -11,7 +11,7 @@
 #include "plugin.hh"
 #include "road_graph.hh"
 #include "utils/graph_db_link.hh"
-#include "tempus_property_maps.hh"
+#include "utils/field_property_accessor.hh"
 
 #include "combined_graph.hh"
 #include "combined_dijkstra.hh"
