@@ -322,6 +322,11 @@ namespace Tempus
 	class VertexIndexProperty
 	{
 	public:
+            typedef size_t                     value_type;
+            typedef size_t&                    reference;
+            typedef Tempus::Multimodal::Vertex key_type;
+            typedef boost::vertex_property_tag category;
+
 	    VertexIndexProperty( const Graph& graph ) : graph_(graph) {}
 	    size_t get_index( const Vertex& v ) const;
 
@@ -383,18 +388,6 @@ namespace Tempus
 
 namespace boost
 {
-
-    ///
-    /// VertexIndexProperty declaration inside boost::property_traits<>
-    template <>
-    struct property_traits<Tempus::Multimodal::VertexIndexProperty>
-    {
-	typedef size_t value_type;
-	typedef size_t& reference;
-	typedef Tempus::Multimodal::Vertex key_type;
-	typedef boost::vertex_property_tag category;
-    };
-
     ///
     /// Boost graph traits definition
     template <>
