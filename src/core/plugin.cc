@@ -79,7 +79,7 @@ namespace Tempus
 
     Plugin::Plugin( const std::string& name, Db::Connection& db ) :
 	name_(name),
-	db_(db),
+	db_(db.dbOption()), // create onoter connection
 	graph_(Application::instance()->graph())
     {
 	// default metrics

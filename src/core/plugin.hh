@@ -244,7 +244,7 @@ namespace Tempus
 	std::string name_;
 
 	/// Db connection
-	Db::Connection& db_;
+	Db::Connection db_; // each plugin has it's own connection
 	
 	/// Plugin option management
 	OptionDescriptionList options_descriptions_;

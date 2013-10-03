@@ -77,6 +77,7 @@ private:
 
 int main( int argc, char*argv[] )
 {
+    xmlInitParser();
     bool standalone = false;
     // the default TCP port to listen to
     string port_str = ""; // ex 9000

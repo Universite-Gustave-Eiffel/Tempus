@@ -153,7 +153,7 @@ namespace WPS {
 		return print_error_status( 405, "Method not allowed" );
 	    }
 
-	    WPS::Service* service = WPS::Service::get_service( query["identifier"] );
+        WPS::Service* service = WPS::Service::get_service( query["identifier"] );
 	    if ( !service )
 	    {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier" );
@@ -263,7 +263,7 @@ namespace WPS {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown service identifier " + identifier );
 	    }
 	    // all inputs are now defined, parse them
-	    WPS::Service* service = WPS::Service::get_service( identifier );
+        std::auto_ptr<WPS::Service> service( WPS::Service::get_service( identifier )->clone() );
 	    try
 	    {
 		WPS::Service::ParameterMap& output_parameters = service->execute( input_parameter_map );
