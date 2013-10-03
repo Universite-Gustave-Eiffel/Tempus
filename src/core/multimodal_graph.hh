@@ -552,20 +552,6 @@ namespace boost
 	return pmap.graph_[e].*(pmap.mem_);
     }
 
-#if 0
-    ///
-    /// Specialization of property_traits for FieldPropertyAccessor
-    template <class Graph, class Tag, class T, class Member>
-    struct property_traits<Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> >
-    {
-	typedef T value_type;
-	typedef T& reference;
-	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
-	typedef Tag category;
-    };
-#endif
-
-
     ///
     /// Implementation of FunctionPropertyAccessor
     template <class Graph, class Tag, class T, class Function>
@@ -573,19 +559,6 @@ namespace boost
     {
 	return pmap.fct_( pmap.graph_, e );
     }
-
-#if 0
-    ///
-    /// Specialization of property_traits for FunctionPropertyAccessor
-    template <class Graph, class Tag, class T, class Function>
-    struct property_traits<Tempus::FunctionPropertyAccessor<Graph, Tag, T, Function> >
-    {
-	typedef T value_type;
-	typedef T& reference;
-	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
-	typedef Tag category;
-    };
-#endif
 };
 
 #endif
