@@ -124,6 +124,28 @@ namespace Tempus
 	/// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
 	struct Graph
 	{
+            // declaration for boost::graph
+            typedef Tempus::Multimodal::Vertex          vertex_descriptor;
+            typedef Tempus::Multimodal::Edge            edge_descriptor;
+            typedef Tempus::Multimodal::OutEdgeIterator out_edge_iterator;
+            typedef Tempus::Multimodal::VertexIterator  vertex_iterator;
+            typedef Tempus::Multimodal::EdgeIterator    edge_iterator;
+
+            typedef boost::directed_tag                 directed_category;
+
+            typedef boost::disallow_parallel_edge_tag   edge_parallel_category;
+            typedef boost::incidence_graph_tag          traversal_category;
+
+            typedef size_t vertices_size_type;
+            typedef size_t edges_size_type;
+            typedef size_t degree_size_type;
+
+            // unused types (here to please boost::graph_traits<>)
+            typedef void adjacency_iterator;
+            typedef void in_edge_iterator;
+
+            static inline vertex_descriptor null_vertex();
+
 	    ///
 	    /// The road graph
 	    Road::Graph road;
@@ -383,32 +405,6 @@ namespace Tempus
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph );
 
 	size_t get( const VertexIndexProperty& p, const Multimodal::Vertex& v );
-    };
-};
-
-namespace boost
-{
-    ///
-    /// Boost graph traits definition
-    template <>
-    struct graph_traits< Tempus::Multimodal::Graph >
-    {
-	typedef Tempus::Multimodal::Vertex vertex_descriptor;
-	typedef Tempus::Multimodal::Edge edge_descriptor;
-        typedef Tempus::Multimodal::OutEdgeIterator out_edge_iterator;
-        typedef Tempus::Multimodal::VertexIterator vertex_iterator;
-        typedef Tempus::Multimodal::EdgeIterator edge_iterator;
-
-	typedef directed_tag directed_category;
-
-	typedef disallow_parallel_edge_tag edge_parallel_category;
-        typedef incidence_graph_tag traversal_category;
-
-        typedef size_t vertices_size_type;
-        typedef size_t edges_size_type;
-        typedef size_t degree_size_type;
-
-        static inline vertex_descriptor null_vertex();
     };
 };
 
