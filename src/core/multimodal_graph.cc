@@ -708,13 +708,6 @@ namespace Tempus
 
     std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it )
     {
-#if 0
-	ostr << "vertexiterator{ graph(" << it.graph_ << "), road_it(" << it.road_it_ << "), road_it_end(" << it.road_it_end_;
-	ostr << "), pt_graph_it(" << it.pt_graph_it_ << "), pt_graph_it_end(" << it.pt_graph_it_end_;
-	ostr << "), poi_it(" << it.poi_it_ << "), poi_it_end(" << it.poi_it_end_;
-	ostr << "), pt_it(" << it.pt_it_ << "), pt_it_end(" << it.pt_it_end_;
-	ostr << "), vertex(" << it.vertex_ << ")";
-#endif
 	ostr << "{ graph(" << it.graph_ << "), vertex(" << *it << ") }";
 	return ostr;
     }	
