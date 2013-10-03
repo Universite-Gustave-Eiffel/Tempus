@@ -172,7 +172,8 @@ namespace Tempus
 	class VertexIterator :
 	    public boost::iterator_facade< VertexIterator,
 					   Vertex,
-					   boost::forward_traversal_tag >
+					   boost::forward_traversal_tag,
+                                           /* reference */ Vertex>
 	
 	{
 	public:
@@ -185,7 +186,7 @@ namespace Tempus
 
 	    ///
 	    /// Dereferencing. Needed by boost::iterator_facade
-	    Vertex& dereference() const;
+	    Vertex dereference() const;
 
 	    ///
 	    /// Incrementing. Needed by boost::iterator_facade
@@ -201,10 +202,6 @@ namespace Tempus
 	    Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
 	    PublicTransport::VertexIterator pt_it_, pt_it_end_;
 	    const Multimodal::Graph* graph_;
-
-	    ///
-	    /// Object returned by the deferencing operator
-	    mutable Multimodal::Vertex vertex_;
 
 	    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
 	};
@@ -359,7 +356,7 @@ namespace Tempus
 	///
 	/// Returns a range of EdgeIterator that allows to iterate on out edges of a vertex. Constant time
 	std::pair<OutEdgeIterator, OutEdgeIterator> out_edges( const Vertex& v, const Graph& graph );
-	size_t out_degree( Vertex& v, const Graph& graph );
+	size_t out_degree( const Vertex& v, const Graph& graph );
 
 	///
 	/// Find an edge, based on a source and target vertex.

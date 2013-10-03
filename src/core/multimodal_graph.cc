@@ -180,40 +180,32 @@ namespace Tempus
 	    poi_it_ = poi_it_end_;
 	}
 	
-	Vertex& VertexIterator::dereference() const
+	Vertex VertexIterator::dereference() const
 	{
+            Vertex vertex;
 	    BOOST_ASSERT( graph_ != 0 );
 	    if ( road_it_ != road_it_end_ )
 	    {
-		vertex_.type = Vertex::Road;
+		vertex.type = Vertex::Road;
+		vertex.road_vertex = *road_it_;
+		vertex.road_graph = &graph_->road;
 	    }
 	    else
 	    {
 		if ( pt_it_ != pt_it_end_ )
 		{
-		    vertex_.type = Vertex::PublicTransport;
+		    vertex.type = Vertex::PublicTransport;
+                    vertex.pt_graph = &(pt_graph_it_->second);
+                    vertex.pt_vertex = *pt_it_;
 		}
 		else
 		{
-		    vertex_.type = Vertex::Poi;
+		    vertex.type = Vertex::Poi;
+                    vertex.poi = &poi_it_->second;
 		}
 	    }
 
-	    if ( vertex_.type == Vertex::Road )
-	    {
-		vertex_.road_vertex = *road_it_;
-		vertex_.road_graph = &graph_->road;
-	    }
-	    else if ( vertex_.type == Vertex::PublicTransport )
-	    {
-		vertex_.pt_graph = &(pt_graph_it_->second);
-		vertex_.pt_vertex = *pt_it_;
-	    }
-	    else if ( vertex_.type == Vertex::Poi )
-	    {
-		vertex_.poi = &poi_it_->second;
-	    }
-	    return vertex_;
+	    return vertex;
 	}
 	
 	void VertexIterator::increment()
@@ -603,7 +595,7 @@ namespace Tempus
 	    return std::make_pair( v_begin, v_end );
 	}
 
-	size_t out_degree( Vertex& v, const Graph& graph )
+	size_t out_degree( const Vertex& v, const Graph& graph )
 	{
 	    if ( v.type == Vertex::Road )
 	    {
@@ -723,8 +715,7 @@ namespace Tempus
 	ostr << "), pt_it(" << it.pt_it_ << "), pt_it_end(" << it.pt_it_end_;
 	ostr << "), vertex(" << it.vertex_ << ")";
 #endif
-	ostr << "{ graph(" << it.graph_ << "), vertex(" << it.vertex_ << ") }";
-	ostr << it.vertex_ ;
+	ostr << "{ graph(" << it.graph_ << "), vertex(" << *it << ") }";
 	return ostr;
     }	
 
