@@ -10,6 +10,7 @@
 
 #include "plugin.hh"
 #include "road_graph.hh"
+#include "tempus_property_maps.hh"
 
 #include "combined_graph.hh"
 #include "combined_dijkstra.hh"
