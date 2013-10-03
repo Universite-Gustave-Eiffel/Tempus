@@ -11,10 +11,7 @@ from wps_client import *
 
 WPS_HOST = '127.0.0.1'
 WPS_PATH = '/wps'
-DB_OPTIONS = ""
-DB_NAME = "tempus_test_db"
 
-db_options = "%s dbname=%s" % (DB_OPTIONS, DB_NAME)
 
 class TestWPS(unittest.TestCase):
 
@@ -86,8 +83,8 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( status, 200 )
         
     def test_describe_process(self):
-        [status, msg] = self.wps.describe_process( "pre_process" )
-        self.assertEqual( status, 200 )
+#       [status, msg] = self.wps.describe_process( "pre_process" )
+#       self.assertEqual( status, 200 )
         # TODO : test errors
         [status, msg] = self.wps.describe_process( "I do not exist" )
         self.assertEqual( status, 400 )
@@ -106,62 +103,62 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( is_ex, True )
         self.assertEqual( code, 'InvalidParameterValue' )
 
-        # Test wrong number of input arguments
-        is_ex = False
-        code = 0
-        try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'arg1' : [True, ''], 'arg2' : [True, 4] } )
-        except RuntimeError as e:
-            [ is_ex, code ] = get_wps_exception( e.args[1] )
-        self.assertEqual( is_ex, True )
-        self.assertEqual( code, 'InvalidParameterValue' )
+#       # Test wrong number of input arguments
+#       is_ex = False
+#       code = 0
+#       try:
+#           # connect only takes 1 argument
+#           outputs = self.wps.execute( "connect", { 'arg1' : [True, ''], 'arg2' : [True, 4] } )
+#       except RuntimeError as e:
+#           [ is_ex, code ] = get_wps_exception( e.args[1] )
+#       self.assertEqual( is_ex, True )
+#       self.assertEqual( code, 'InvalidParameterValue' )
 
-        # TODO: test bad input argument name
-        is_ex = False
-        code = 0
-        try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'db_optios' : [True, [ 'db_options', db_options] ] } )
-        except RuntimeError as e:
-            [ is_ex, code ] = get_wps_exception( e.args[1] )
-        self.assertEqual( is_ex, True )
-        self.assertEqual( code, 'InvalidParameterValue' )
-        is_ex = False
-        code = 0
-        try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'db_options' : [True, [ 'db_optis', db_options] ] } )
-        except RuntimeError as e:
-            [ is_ex, code ] = get_wps_exception( e.args[1] )
-        self.assertEqual( is_ex, True )
-        self.assertEqual( code, 'InvalidParameterValue' )
+#       # TODO: test bad input argument name
+#       is_ex = False
+#       code = 0
+#       try:
+#           # connect only takes 1 argument
+#           outputs = self.wps.execute( "connect", { 'db_optios' : [True, [ 'db_options', db_options] ] } )
+#       except RuntimeError as e:
+#           [ is_ex, code ] = get_wps_exception( e.args[1] )
+#       self.assertEqual( is_ex, True )
+#       self.assertEqual( code, 'InvalidParameterValue' )
+#       is_ex = False
+#       code = 0
+#       try:
+#           # connect only takes 1 argument
+#           outputs = self.wps.execute( "connect", { 'db_options' : [True, [ 'db_optis', db_options] ] } )
+#       except RuntimeError as e:
+#           [ is_ex, code ] = get_wps_exception( e.args[1] )
+#       self.assertEqual( is_ex, True )
+#       self.assertEqual( code, 'InvalidParameterValue' )
 
-        # Test non validating input
-        is_ex = False
-        code = 0
-        try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'db_options' : [True, [ 'db_options', {}, [ 'toto', 'ok'] ] ] } )
-        except RuntimeError as e:
-            [ is_ex, code ] = get_wps_exception( e.args[1] )
-        self.assertEqual( is_ex, True )
-        self.assertEqual( code, 'InvalidParameterValue' )
+#       # Test non validating input
+#       is_ex = False
+#       code = 0
+#       try:
+#           # connect only takes 1 argument
+#           outputs = self.wps.execute( "connect", { 'db_options' : [True, [ 'db_options', {}, [ 'toto', 'ok'] ] ] } )
+#       except RuntimeError as e:
+#           [ is_ex, code ] = get_wps_exception( e.args[1] )
+#       self.assertEqual( is_ex, True )
+#       self.assertEqual( code, 'InvalidParameterValue' )
         pass
 
-    def assert_min_state( self, state ):
-        outputs = self.wps.execute( 'state', {} )
-        self.assertEqual( int(outputs['state'].text), state )
+#   def assert_min_state( self, state ):
+#       outputs = self.wps.execute( 'state', {} )
+#       self.assertEqual( int(outputs['state'].text), state )
 
     def test_execution_cycle(self):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
+#       self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+#       self.assert_min_state( 1 )
 
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
+#       self.wps.execute( 'pre_build', {} )
+#       self.assert_min_state( 2 )
 
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
+#       self.wps.execute( 'build', {} )
+#       self.assert_min_state( 3 )
 
         self.wps.execute( 'plugin_list', {} )
 
@@ -198,11 +195,7 @@ class TestWPS(unittest.TestCase):
                                    ]
                             ]
 
-        outputs = self.wps.execute( 'pre_process', args )
-
-        outputs = self.wps.execute( 'process', plugin_arg )
-
-        outputs = self.wps.execute( 'result', plugin_arg )
+        outputs = self.wps.execute( 'select', args )
         n = 0
         for step in outputs['results'][0]:
             if step.tag != 'cost':
@@ -210,26 +203,26 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( n, 12 )
 
     def test_constants( self ):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
+#       self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+#       self.assert_min_state( 1 )
 
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
+#       self.wps.execute( 'pre_build', {} )
+#       self.assert_min_state( 2 )
 
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
+#       self.wps.execute( 'build', {} )
+#       self.assert_min_state( 3 )
 
         outputs = self.wps.execute( 'constant_list', {} )
 
     def test_multi_plugin( self ):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
+#       self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+#       self.assert_min_state( 1 )
 
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
+#       self.wps.execute( 'pre_build', {} )
+#       self.assert_min_state( 2 )
 
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
+#       self.wps.execute( 'build', {} )
+#       self.assert_min_state( 3 )
 
         plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_multi_plugin' } ] ] }
 
@@ -253,11 +246,8 @@ class TestWPS(unittest.TestCase):
                                    ]
                             ]
 
-        outputs = self.wps.execute( 'pre_process', args )
+        outputs = self.wps.execute( 'select', args )
 
-        outputs = self.wps.execute( 'process', plugin_arg )
-
-        outputs = self.wps.execute( 'result', plugin_arg )
         n = 0
         for step in outputs['results'][0]:
             if step.tag != 'cost':
@@ -265,14 +255,14 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( n, 16 )
 
     def test_pt_plugin( self ):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
+#       self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
+#       self.assert_min_state( 1 )
 
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
+#       self.wps.execute( 'pre_build', {} )
+#       self.assert_min_state( 2 )
 
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
+#       self.wps.execute( 'build', {} )
+#       self.assert_min_state( 3 )
 
         plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_pt_plugin' } ] ] }
 
@@ -296,11 +286,7 @@ class TestWPS(unittest.TestCase):
                                    ]
                             ]
 
-        outputs = self.wps.execute( 'pre_process', args )
-
-        outputs = self.wps.execute( 'process', plugin_arg )
-
-        outputs = self.wps.execute( 'result', plugin_arg )
+        outputs = self.wps.execute( 'select', args )
         n = 0
         for step in outputs['results'][0]:
             if step.tag != 'cost':

@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <string>
+#include <boost/thread.hpp>
 
 #include <fcgi_stdio.h>
 #include <fcgio.h>
@@ -23,17 +24,62 @@
 #define environ _environ
 #endif
 
+#define DEBUG_TRACE if(1) (std::cout << __FILE__ << ":" << __LINE__ << " debug: ")
 using namespace std;
 
 ///
 /// This is the main WPS server. It is designed to be called by a FastCGI-aware web server
 ///
 
+boost::mutex mutex;
+
+struct RequestThread
+{
+    RequestThread( int listen_socket )
+        :_listen_socket(listen_socket)
+    {
+    }
+
+    void operator ()(void)
+    {
+        FCGX_Request request;
+        FCGX_InitRequest(&request, _listen_socket, 0);
+
+        DEBUG_TRACE << "listening\n";
+
+        for (;;)
+        {
+            {
+                boost::lock_guard< boost::mutex > lock(mutex);
+                DEBUG_TRACE << "accepting\n";
+                if ( FCGX_Accept_r(&request) ) throw std::runtime_error("error in accept");
+            }
+            fcgi_streambuf cin_fcgi_streambuf( request.in );
+            // This causes a crash under Windows (??). We rely on a classic stringstream and FCGX_PutStr
+            // fcgi_streambuf cout_fcgi_streambuf( request.out );
+            std::ostringstream outbuf;
+
+            environ = request.envp;
+
+            DEBUG_TRACE << "processing\n";
+            WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf() );
+            wps_request.process();
+            const std::string& outstr = outbuf.str();
+            FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
+            FCGX_Finish_r(&request);
+        }
+    }
+
+private:
+    const int _listen_socket;
+};
+
+
 int main( int argc, char*argv[] )
 {
     bool standalone = false;
     // the default TCP port to listen to
-    string port_str = "9000";
+    string port_str = ""; // ex 9000
     string chdir_str = "";
     std::vector<string> plugins;
     if (argc > 1 )
@@ -76,54 +122,44 @@ int main( int argc, char*argv[] )
     
     if ( chdir_str != "" )
     {
-	int c = chdir( chdir_str.c_str() );
+        int c = chdir( chdir_str.c_str() );
     }
     
-    Tempus::Application* app = Tempus::Application::instance();
-    for ( size_t i = 0; i < plugins.size(); i++ )
-    {
-	app->load_plugin( plugins[i] );
-    }
-
     FCGX_Request request;
 
     FCGX_Init();
+
+
+    // initialise connection and graph
+    Tempus::Application::instance()->connect( "dbname=tempus_test_db" );
+    Tempus::Application::instance()->state( Tempus::Application::Connected );
+    Tempus::Application::instance()->pre_build_graph();
+    Tempus::Application::instance()->state( Tempus::Application::GraphPreBuilt );
+    Tempus::Application::instance()->build_graph();
+    Tempus::Application::instance()->state( Tempus::Application::GraphBuilt );
+
+    int listen_socket = 0;
     if ( standalone )
     {
-	int listen_socket;
-	listen_socket = FCGX_OpenSocket((":" + port_str).c_str(), 10);
-	if ( listen_socket < 0 )
-	{
-	    cerr << "Problem opening the socket" << endl;
-	    return 2;
-	}
-	FCGX_InitRequest(&request, listen_socket, 0);
-    }
-    else
-    {
-	FCGX_InitRequest(&request, 0, 0);
+        listen_socket = FCGX_OpenSocket((":" + port_str).c_str(), 10);
+        if ( listen_socket < 0 )
+        {
+            cerr << "Problem opening the socket on port " << port_str << std::endl;
+            return EXIT_FAILURE;
+        }
     }
     
-    while ( FCGX_Accept_r(&request) == 0 )
+    try{
+        boost::thread_group pool; 
+        for (size_t i=0; i<8; i++) 
+            pool.add_thread( new boost::thread( RequestThread( listen_socket ) ) );
+        pool.join_all();
+
+    }
+    catch ( std::exception& e )
     {
-		try {
-	fcgi_streambuf cin_fcgi_streambuf( request.in );
-	// This causes a crash under Windows (??). We rely on a classic stringstream and FCGX_PutStr
-	// fcgi_streambuf cout_fcgi_streambuf( request.out );
-	std::ostringstream outbuf;
-
-	environ = request.envp;
-
-	WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf() );
-	wps_request.process();
-	const std::string& outstr = outbuf.str();
-	FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
-		}
-		catch ( std::exception& e )
-		{
-			cerr << "Exception during WPS execution: " << e.what() << std::endl;
-		}
+        cerr << "Exception during WPS execution: " << e.what() << std::endl;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

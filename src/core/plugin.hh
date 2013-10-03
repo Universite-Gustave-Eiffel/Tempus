@@ -9,6 +9,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <boost/noncopyable.hpp>
+
 #include "multimodal_graph.hh"
 #include "request.hh"
 #include "roadmap.hh"
@@ -28,8 +30,14 @@
   #define DLL_PREFIX "./lib"
 #endif
 
+// this is the type of pointer to dll
+#ifndef _WIN32
+#   define HMODULE void*
+#endif
+
 namespace Tempus
 {
+
     /**
        Base class that has to be derived in plugins
 
@@ -41,17 +49,6 @@ namespace Tempus
     class Plugin
     {
     public:
-	///
-	/// Static function used to load a plugin from disk
-	static Plugin* load( const std::string& dll_name );
-	///
-	/// Static funtion used to unload a plugin
-	static void unload( Plugin* plugin );			     
-
-	///
-	/// Access to global plugin list
-	typedef std::map<std::string, Plugin*> PluginList;
-	static PluginList& plugin_list() { return plugin_list_; }
 
 	///
 	/// Plugin option type
@@ -158,10 +155,10 @@ namespace Tempus
 	///
 	/// Name accessor
 	std::string name() const { return name_; }
-    public:
+
 	///
-	/// Called when the plugin is loaded into memory (install)
-	Plugin( const std::string& name, Db::Connection& db );
+	/// Ctor
+	Plugin( const std::string& dll_name, Db::Connection& db );
 	
 	///
 	/// Called when the plugin is unloaded from memory (uninstall)
@@ -243,16 +240,12 @@ namespace Tempus
 	/// Result
 	Result result_;
 
-	/// Name of this plugin
+	/// Name of the dll this plugin comes from
 	std::string name_;
 
 	/// Db connection
 	Db::Connection& db_;
 	
-	static PluginList plugin_list_;
-	/// The concrete plugin handler (HMODULE or void*)
-	void* module_;
-
 	/// Plugin option management
 	OptionDescriptionList options_descriptions_;
 	OptionValueList options_;
@@ -358,6 +351,43 @@ namespace Tempus
     typedef PluginGraphVisitorHelper< Road::Graph, &Plugin::road_vertex_accessor, &Plugin::road_edge_accessor > PluginRoadGraphVisitor;
     typedef PluginGraphVisitorHelper< PublicTransport::Graph, &Plugin::pt_vertex_accessor, &Plugin::pt_edge_accessor > PluginPtGraphVisitor;
     typedef PluginGraphVisitorHelper< Multimodal::Graph, &Plugin::vertex_accessor, &Plugin::edge_accessor > PluginGraphVisitor;
+
+    /**
+     * Handles dll so that they are only loaded once and unloaded
+     * at the program termination (static plugin_factory)
+     */
+    struct PluginFactory: boost::noncopyable
+    {
+        ~PluginFactory();
+
+        /** 
+         * list loaded plugins
+         */
+        std::vector<std::string> plugin_list() const;
+
+        
+        Plugin::OptionDescriptionList& option_descriptions( const std::string & dll_name )
+        {
+            throw std::runtime_error("not imlemented");
+        }
+
+        /**
+         * create a Plugin from a given dll
+         * throws std::runtime_error if dll cannot be loaded
+         */
+        Plugin * createPlugin( const std::string & dll_name );
+    private:
+        /**
+         * throws std::runtime_error if dll cannot be found
+         * if dll is already loaded, well do nothing
+         */
+        void load( const std::string& dll_name );
+        typedef Tempus::Plugin* (*PluginCreationFct)( Db::Connection& );
+        typedef std::pair< HMODULE, PluginCreationFct > DllCreatePair; 
+        typedef std::map<std::string, DllCreatePair> DllMap;
+        DllMap dll_;
+    };
+    static PluginFactory plugin_factory;
 }; // Tempus namespace
 
 

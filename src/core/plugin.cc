@@ -1,16 +1,81 @@
 #include <string>
 #include <iostream>
+#include <memory>
 
 #include <boost/format.hpp>
 
 #include "plugin.hh"
 
-typedef Tempus::Plugin* (*PluginCreationFct)( Db::Connection& );
-typedef void (*PluginDeletionFct)(Tempus::Plugin*);
 
 namespace Tempus
 {
-    Plugin::PluginList Plugin::plugin_list_;
+
+    PluginFactory::~PluginFactory()
+    {
+        for ( DllMap::iterator i=dll_.begin(); i!=dll_.end(); i++)
+        {
+#ifdef _WIN32
+            FreeLibrary( i->second.first );
+#else
+            if ( dlclose( i->second.first ) )
+            {
+                std::cerr << "Error on dlclose " << dlerror() << std::endl;
+            }
+#endif
+        }
+    }
+
+    void PluginFactory::load( const std::string& dll_name )
+    {
+        if ( dll_.find(dll_name) != dll_.end() ) return;// already there 
+        const std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
+        std::cout << "Loading " << complete_dll_name << std::endl;
+#ifdef _WIN32
+        HMODULE h = LoadLibrary( complete_dll_name.c_str() );
+        if ( h == NULL )
+        {
+            throw std::runtime_error("DLL loading problem: "+std::string(GetLastError()));
+        }
+        PluginCreationFct createFct = (PluginCreationFct) GetProcAddress( h, "createPlugin" );
+        if ( createFct == NULL )
+        {
+            throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
+            FreeLibrary( h );
+        }
+#else
+        HMODULE h = dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL );
+        if ( !h )
+        {
+            throw std::runtime_error( dlerror() );
+        }
+        PluginCreationFct createFct = (PluginCreationFct)dlsym( h, "createPlugin" );
+        if ( createFct == 0 )
+        {
+            dlclose( h );
+            throw std::runtime_error( dlerror() );
+        }
+#endif
+        dll_.insert( std::make_pair( dll_name, std::make_pair( h, createFct ) ) );
+    }
+
+    std::vector<std::string> PluginFactory::plugin_list() const
+    {
+        std::vector<std::string> names;
+        for ( DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++)
+            names.push_back( i->first );
+        return names;
+    }
+
+    Plugin * PluginFactory::createPlugin( const std::string & dll_name )
+    {
+        load( dll_name );
+        DllMap::const_iterator dll = dll_.find(dll_name);
+        std::auto_ptr<Plugin> p( dll->second.second( Application::instance()->db_connection() ) );
+        p->post_build();
+        p->validate();
+        return p.release();
+    }
+    
 
     Plugin::Plugin( const std::string& name, Db::Connection& db ) :
 	name_(name),
@@ -103,78 +168,6 @@ namespace Tempus
 	throw std::invalid_argument( "No known conversion for metric " + name );
 	// never happens
 	return "";
-    }
-
-    Plugin* Plugin::load( const std::string& dll_name )
-    {
-	std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
-	std::cout << "Loading " << complete_dll_name << std::endl;
-#ifdef _WIN32
-	HMODULE h = LoadLibrary( complete_dll_name.c_str() );
-	if ( h == NULL )
-	{
-	    std::cerr << "DLL loading problem: " << GetLastError() << std::endl;
-	    return 0;
-	}
-	PluginCreationFct createFct = (PluginCreationFct) GetProcAddress( h, "createPlugin" );
-	if ( createFct == NULL )
-	{
-	    std::cerr << "GetProcAddress problem: " << GetLastError() << std::endl;
-	    FreeLibrary( h );
-	    return 0;
-	}
-#else
-	void *h = dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL );
-	if ( !h )
-	{
-	    std::cerr << dlerror() << std::endl;
-	    return 0;
-	}
-	PluginCreationFct createFct = (PluginCreationFct)dlsym( h, "createPlugin" );
-	if ( createFct == 0 )
-	{
-	    std::cerr << dlerror() << std::endl;
-	    dlclose( h );
-	    return 0;
-	}
-#endif
-	Tempus::Plugin* plugin = createFct( Application::instance()->db_connection() );
-	plugin->module_ = h;
-	plugin_list_[dll_name] = plugin;
-	return plugin;
-    }
-
-    void Plugin::unload( Plugin* handle )
-    {
-	if ( handle )
-	{
-	    PluginList::iterator it;
-	    for ( it = plugin_list_.begin(); it != plugin_list_.end(); it++ )
-	    {
-		if ( it->second == handle )
-		{
-		    plugin_list_.erase( it );
-		    break;
-		}
-	    }
-
-	    ///
-	    /// We cannot call delete directly on the plugin pointer, since it has been allocated from within another DLL.
-#ifdef _WIN32
-	    PluginDeletionFct deleteFct = (PluginDeletionFct) GetProcAddress( (HMODULE)handle->module_, "deletePlugin" );
-	    HMODULE module = (HMODULE)handle->module_;
-	    deleteFct(handle);
-	    FreeLibrary( module );
-#else
-	    PluginDeletionFct deleteFct = (PluginDeletionFct) dlsym( handle->module_, "deletePlugin" );
-	    void* module = handle->module_;
-	    deleteFct(handle);
-	    if ( dlclose( module ) )
-	    {
-		std::cerr << "Error on dlclose " << dlerror() << std::endl;
-	    }
-#endif
-	}
     }
 
     void Plugin::post_build()
