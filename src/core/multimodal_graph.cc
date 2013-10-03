@@ -288,7 +288,7 @@ namespace Tempus
 	    BOOST_ASSERT( ei_ == ei_end_ );
 	}
 
-	Multimodal::Edge& EdgeIterator::dereference() const
+	Multimodal::Edge EdgeIterator::dereference() const
 	{
 	    BOOST_ASSERT( graph_ != 0 );
 	    BOOST_ASSERT( ei_ != ei_end_ );
@@ -352,11 +352,12 @@ namespace Tempus
 	    poi2road_connection_ = 2;
 	}
 
-	Multimodal::Edge& OutEdgeIterator::dereference() const
+	Multimodal::Edge OutEdgeIterator::dereference() const
 	{
+            Multimodal::Edge edge;
 	    BOOST_ASSERT( graph_ != 0 );
 	    Multimodal::Vertex mm_target;
-	    edge_.source = source_;
+	    edge.source = source_;
 
 	    if ( source_.type == Vertex::Road )
 	    {
@@ -409,8 +410,8 @@ namespace Tempus
 		    mm_target = Multimodal::Vertex( &graph_->road, boost::target( source_.poi->road_section, graph_->road ) );
 		}		
 	    }
-	    edge_.target = mm_target;
-	    return edge_;
+	    edge.target = mm_target;
+	    return edge;
 	}
 
 	void OutEdgeIterator::increment()
@@ -567,11 +568,11 @@ namespace Tempus
 	    }
 	    return n + num_edges( graph.road ) * 2 + graph.pois.size() * 4;
 	}
-	Vertex& source( Edge& e, const Graph& graph )
+	Vertex source( const Edge& e, const Graph& graph )
 	{
 	    return e.source;
 	}
-	Vertex& target( Edge& e, const Graph& graph )
+	Vertex target( const Edge& e, const Graph& graph )
 	{
 	    return e.target;
 	}

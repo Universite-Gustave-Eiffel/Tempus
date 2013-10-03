@@ -242,14 +242,15 @@ namespace Tempus
 	class OutEdgeIterator :
 	    public boost::iterator_facade< OutEdgeIterator,
 					   Multimodal::Edge,
-					   boost::forward_traversal_tag >
+					   boost::forward_traversal_tag,
+                                           /* reference */ Multimodal::Edge>
 	{
 	public:
 	    OutEdgeIterator() : graph_(0) {}
 	    OutEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
 
 	    void to_end();
-	    Multimodal::Edge& dereference() const;
+	    Multimodal::Edge dereference() const;
 	    void increment();
 	    bool equal( const OutEdgeIterator& v ) const;
  	protected:
@@ -261,11 +262,7 @@ namespace Tempus
 	    /// The underlying graph
 	    const Multimodal::Graph* graph_;
 
-	    ///
-	    /// The edge used during the dereferencing operation
-	    mutable Multimodal::Edge edge_;
-
-	    ///
+            ///
 	    /// A pair of out edge iterators for road vertices
 	    Road::OutEdgeIterator road_it_, road_it_end_;
 
@@ -311,14 +308,15 @@ namespace Tempus
 	class EdgeIterator :
 	    public boost::iterator_facade< EdgeIterator,
 					   Multimodal::Edge,
-					   boost::forward_traversal_tag >
+					   boost::forward_traversal_tag,
+                                           /* reference */ Multimodal::Edge>
 	{
 	public:
 	    EdgeIterator() : graph_(0) {}
 	    EdgeIterator( const Multimodal::Graph& graph );
 
 	    void to_end();
-	    Multimodal::Edge& dereference() const;
+	    Multimodal::Edge dereference() const;
 	    void increment();
 	    bool equal( const EdgeIterator& v ) const;
 	protected:
@@ -369,10 +367,10 @@ namespace Tempus
 	size_t num_edges( const Graph& graph );
 	///
 	/// Returns source vertex from an edge. Constant time (linear in number of PT networks)
-	Vertex& source( Edge& e, const Graph& graph );
+	Vertex source( const Edge& e, const Graph& graph );
 	///
 	/// Returns source vertex from an edge. Constant time (linear in number of PT networks)
-	Vertex& target( Edge& e, const Graph& graph );
+	Vertex target( const Edge& e, const Graph& graph );
 
 	///
 	/// Returns a range of VertexIterator. Constant time
