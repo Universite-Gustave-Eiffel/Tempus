@@ -35,6 +35,8 @@ from qgis.gui import *
 #import PyQt4.QtCore
 #import PyQt4.QtGui
 
+from xml.etree import ElementTree as ET
+
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
@@ -210,54 +212,12 @@ class IfsttarRouting:
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )
 
         # init the history
         self.loadHistory()
-        self.updateState()
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
-
-    # Get current WPS server state
-    def updateState( self ):
-        if self.wps is None:
-            self.setStateText( "Disconnected" )
-            return
-            
-        try:
-            outputs = self.wps.execute( 'state', {} )
-        except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
-            return
-
-        for name, content in outputs.items():
-            if name == 'db_options':
-                if content.text is not None:
-                    self.dlg.ui.dbOptionsText.setText( content.text )
-            elif name == 'state':
-                self.state = int( content.text )
-                if self.state == 0:
-                    state_text = 'Connected to WPS'
-                elif self.state == 1:
-                    state_text = 'Connected to the database'
-                elif self.state == 2:
-                    state_text = 'Graph pre-built'
-                elif self.state == 3:
-                    state_text = 'Graph built'
-
-                self.setStateText( state_text )
-        # enable query tab only if the database is loaded
-        if self.state >= 1:
-            self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
-        else:
-            self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
-
-        if self.state >= 3:
-            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
-        else:
-            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
 
     # when the 'connect' button gets clicked
     def onConnect( self ):
@@ -268,8 +228,6 @@ class IfsttarRouting:
         connection = HttpCgiConnection( host, path )
         self.wps = WPSClient(connection)
 
-        self.updateState()
-
         # get plugin list
         try:
             outputs = self.wps.execute( 'plugin_list', {} )
@@ -278,12 +236,15 @@ class IfsttarRouting:
             return
 
         self.plugins = outputs['plugins']
+        # FIXME
+        self.plugins = [ ET.Element('plugin', { 'name' : 'sample_road_plugin' } ) ]
         self.displayPlugins( self.plugins, 0 )
             
-        # enable db_options text edit
-        self.dlg.ui.dbOptionsText.setEnabled( True )
-        self.dlg.ui.dbOptionsLbl.setEnabled( True )
         self.dlg.ui.pluginCombo.setEnabled( True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
@@ -770,23 +731,13 @@ class IfsttarRouting:
         args = plugin_arg
         args['request'] = [ True, r ]
         try:
-            self.wps.execute( 'pre_process', args )
-            self.wps.execute( 'process', plugin_arg )
-            outputs = self.wps.execute( 'result', plugin_arg )
+            outputs = self.wps.execute( 'select', args )
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
 
         results = outputs['results']
         self.displayResults( results )
-
-        # get metrics
-        plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : currentPlugin } ] ] }
-        try:
-            outputs = self.wps.execute( 'get_metrics', plugin_arg )
-        except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
-            return
 
         metrics = outputs['metrics']
         self.displayMetrics( metrics )
@@ -857,7 +808,6 @@ class IfsttarRouting:
         
         # simulate a disconnection
         self.wps = None
-        self.updateState()
 
     def unload(self):
         # Remove the plugin menu item and icon
