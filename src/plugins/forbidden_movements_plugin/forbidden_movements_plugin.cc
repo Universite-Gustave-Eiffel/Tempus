@@ -44,9 +44,17 @@ namespace Tempus
     {
     public:
 
+        static const OptionDescriptionList option_descriptions()
+        { 
+            OptionDescriptionList odl;
+            odl.declare_option("approach", "Use combined Dijkstra (0) or the combined graph adaptor (1)", 1 );
+            return odl; 
+        }
+
 	ForbiddenMovementPlugin( Db::Connection& db ) : Plugin( "forbidden_movements_plugin", db )
 	{
-            declare_option("approach", "Use combined Dijkstra (0) or the combined graph adaptor (1)", 1 );
+            OptionDescriptionList odl(option_descriptions());
+            odl.set_options_default_value(this);
 	}
 
 	virtual ~ForbiddenMovementPlugin()
@@ -225,8 +233,8 @@ namespace Tempus
         }
     };
 
-    DECLARE_TEMPUS_PLUGIN( ForbiddenMovementPlugin );
-};
+}
+DECLARE_TEMPUS_PLUGIN( Tempus::ForbiddenMovementPlugin );
 
 
 

@@ -30,10 +30,17 @@ namespace Tempus
     class RoadPlugin : public Plugin
     {
     public:
+        static const OptionDescriptionList option_descriptions()
+        { 
+            OptionDescriptionList odl;
+	    odl.declare_option( "trace_vertex", "Trace vertex traversal", false );
+            return odl; 
+        }
 
 	RoadPlugin( Db::Connection& db ) : Plugin( "road_plugin", db )
 	{
-	    declare_option( "trace_vertex", "Trace vertex traversal", false );
+            OptionDescriptionList odl(option_descriptions());
+            odl.set_options_default_value(this);
 	}
 
 	virtual ~RoadPlugin()
@@ -197,11 +204,9 @@ namespace Tempus
 	{
 	    // nothing special to clean up
 	}
-
     };
-
-    DECLARE_TEMPUS_PLUGIN( RoadPlugin );
-};
+}
+DECLARE_TEMPUS_PLUGIN( Tempus::RoadPlugin );
 
 
 

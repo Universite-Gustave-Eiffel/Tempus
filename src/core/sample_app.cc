@@ -71,7 +71,7 @@ int main( int argc, char* argv[])
     /// Plugins
     try
     {
-        std::auto_ptr<Plugin> plugin( plugin_factory.createPlugin( plugin_name ) );
+        std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_name ) );
 	
 	cout << "[plugin " << plugin->name() << "]" << endl;
 	

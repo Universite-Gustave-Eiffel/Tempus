@@ -16,15 +16,17 @@ namespace Tempus
         for ( DllMap::iterator i=dll_.begin(); i!=dll_.end(); i++)
         {
 #ifdef _WIN32
-            FreeLibrary( i->second.first );
+            FreeLibrary( i->second.handle_ );
 #else
-            if ( dlclose( i->second.first ) )
+            if ( dlclose( i->second.handle_ ) )
             {
                 std::cerr << "Error on dlclose " << dlerror() << std::endl;
             }
 #endif
         }
     }
+
+    PluginFactory PluginFactory::instance;
 
     void PluginFactory::load( const std::string& dll_name )
     {
@@ -37,8 +39,14 @@ namespace Tempus
         {
             throw std::runtime_error("DLL loading problem: "+std::string(GetLastError()));
         }
-        PluginCreationFct createFct = (PluginCreationFct) GetProcAddress( h, "createPlugin" );
+        Dll::PluginCreationFct createFct = (Dll::PluginCreationFct) GetProcAddress( h, "createPlugin" );
         if ( createFct == NULL )
+        {
+            throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
+            FreeLibrary( h );
+        }
+        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) GetProcAddress( h, "optDescFct" );
+        if ( optDescFct == NULL )
         {
             throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
             FreeLibrary( h );
@@ -49,14 +57,22 @@ namespace Tempus
         {
             throw std::runtime_error( dlerror() );
         }
-        PluginCreationFct createFct = (PluginCreationFct)dlsym( h, "createPlugin" );
+        Dll::PluginCreationFct createFct = (Dll::PluginCreationFct)dlsym( h, "createPlugin" );
         if ( createFct == 0 )
         {
             dlclose( h );
             throw std::runtime_error( dlerror() );
         }
+        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct)dlsym( h, "option_descriptions" );
+        if ( optDescFct == 0 )
+        {
+            dlclose( h );
+            throw std::runtime_error( dlerror() );
+        }
 #endif
-        dll_.insert( std::make_pair( dll_name, std::make_pair( h, createFct ) ) );
+        Dll dll = { h, createFct, optDescFct };
+        dll_.insert( std::make_pair( dll_name, dll ) );
+        std::cout << "loaded " << dll_name << "\n";
     }
 
     std::vector<std::string> PluginFactory::plugin_list() const
@@ -67,20 +83,33 @@ namespace Tempus
         return names;
     }
 
-    Plugin * PluginFactory::createPlugin( const std::string & dll_name )
+    Plugin * PluginFactory::createPlugin( const std::string & dll_name ) const
     {
-        load( dll_name );
+        std::string loaded;
+        for (DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++)
+            loaded += " " + i->first;
         DllMap::const_iterator dll = dll_.find(dll_name);
-        std::auto_ptr<Plugin> p( dll->second.second( Application::instance()->db_connection() ) );
+        if ( dll == dll_.end() ) throw std::runtime_error(dll_name + " is not loaded (loaded:" + loaded+")");
+        std::auto_ptr<Plugin> p( dll->second.create( Application::instance()->db_connection() ) );
         p->post_build();
         p->validate();
         return p.release();
     }
     
+    const Plugin::OptionDescriptionList PluginFactory::option_descriptions( const std::string & dll_name ) const
+    {
+        std::string loaded;
+        for (DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++)
+            loaded += " " + i->first;
+        DllMap::const_iterator dll = dll_.find(dll_name);
+        if ( dll == dll_.end() ) throw std::runtime_error(dll_name + " is not loaded (loaded:" + loaded+")");
+        return dll->second.options_description( );
+    }
+    
 
     Plugin::Plugin( const std::string& name, Db::Connection& db ) :
 	name_(name),
-	db_(db.dbOption()), // create onoter connection
+	db_(db.dbOption()), // create another connection
 	graph_(Application::instance()->graph())
     {
 	// default metrics

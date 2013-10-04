@@ -59,10 +59,11 @@ struct RequestThread
             // fcgi_streambuf cout_fcgi_streambuf( request.out );
             std::ostringstream outbuf;
 
-            environ = request.envp;
+            //environ = request.envp;
 
-            DEBUG_TRACE << "processing\n";
-            WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf() );
+            WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf(), request.envp );
+            assert( wps_request.getParam("REQUEST_METHOD") );
+
             wps_request.process();
             const std::string& outstr = outbuf.str();
             FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
@@ -83,6 +84,7 @@ int main( int argc, char*argv[] )
     string port_str = ""; // ex 9000
     string chdir_str = "";
     std::vector<string> plugins;
+    size_t num_threads = 1;
     if (argc > 1 )
     {
 	for ( int i = 1; i < argc; i++ )
@@ -110,12 +112,20 @@ int main( int argc, char*argv[] )
 		    plugins.push_back( argv[++i] );
 		}
 	    }
+	    else if ( arg == "-t" )
+	    {
+		if ( argc > i+1 )
+		{
+		    num_threads = atoi(argv[++i]);
+		}
+	    }
 	    else
 	    {
 		cerr << "Options: " << endl;
 		cerr << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
 		cerr << "\t-c dir\tchange directory to dir before execution" << endl;
-		cerr << "\t-l plugin\tload plugin at startup" << endl;
+		cerr << "\t-t num_threads\tnumber of request-processing threads" << endl;
+		cerr << "\t-l plugin_name\tload plugin" << endl;
 		return 1;
 	    }
 	}
@@ -149,10 +159,17 @@ int main( int argc, char*argv[] )
             return EXIT_FAILURE;
         }
     }
-    
+
     try{
+        // load plugins
+        for ( size_t i=0; i< plugins.size(); i++ )
+        {
+            using namespace Tempus;
+            PluginFactory::instance.load( plugins[i] );
+        }
+
         boost::thread_group pool; 
-        for (size_t i=0; i<8; i++) 
+        for (size_t i=0; i<num_threads; i++) 
             pool.add_thread( new boost::thread( RequestThread( listen_socket ) ) );
         pool.join_all();
 

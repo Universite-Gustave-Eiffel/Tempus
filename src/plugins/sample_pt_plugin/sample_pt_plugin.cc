@@ -12,6 +12,7 @@ using namespace std;
 namespace Tempus
 {
 
+
     class LengthCalculator
     {
     public:
@@ -33,9 +34,13 @@ namespace Tempus
     class PtPlugin : public Plugin
     {
     public:
+        
+        static const OptionDescriptionList option_descriptions(){ return OptionDescriptionList(); }
 
 	PtPlugin( Db::Connection& db ) : Plugin( "myplugin", db )
 	{
+            OptionDescriptionList odl(option_descriptions());
+            odl.set_options_default_value(this);
 	}
 
 	virtual ~PtPlugin()
@@ -63,7 +68,7 @@ namespace Tempus
 	    if ( access_type == Plugin::ExamineAccess )
 	    {
 	     	PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-	     	cout << "Examining vertex " << pt_graph[v].db_id << endl;
+	     	//cout << "Examining vertex " << pt_graph[v].db_id << endl;
 	    }
 	}
 	virtual void process()
@@ -202,9 +207,8 @@ namespace Tempus
 	}
 
     };
-
-    DECLARE_TEMPUS_PLUGIN( PtPlugin );
-};
+}
+DECLARE_TEMPUS_PLUGIN( Tempus::PtPlugin );
 
 
 

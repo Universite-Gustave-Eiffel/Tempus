@@ -59,7 +59,7 @@ namespace WPS
 	    output_parameters_.clear();
 	    
 	    xmlNode* root_node = XML::new_node( "plugins" );
-	    std::vector<std::string> names( plugin_factory.plugin_list() );
+	    std::vector<std::string> names( PluginFactory::instance.plugin_list() );
 	    for ( size_t i=0; i<names.size(); i++ )
 	    {
 		xmlNode* node = XML::new_node( "plugin" );
@@ -235,7 +235,7 @@ namespace WPS
 	    std::string plugin_str = XML::get_prop( plugin_node, "name" );
 	    
 	    xmlNode * options_node = XML::new_node( "options" );
-	    Plugin::OptionDescriptionList options = plugin_factory.option_descriptions(plugin_str);
+	    Plugin::OptionDescriptionList options = PluginFactory::instance.option_descriptions(plugin_str);
 	    Plugin::OptionDescriptionList::iterator it;
 	    for ( it = options.begin(); it != options.end(); it++ )
 	    {
@@ -409,14 +409,81 @@ namespace WPS
 	
 	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
-            output_parameters_.clear();
-            // Ensure XML is OK
-            Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-            ensure_minimum_state( Application::GraphBuilt );
-            xmlNode* plugin_node = input_parameter_map["plugin"];
-            const std::string plugin_str = XML::get_prop( plugin_node, "name" );
-            std::auto_ptr<Plugin> plugin( plugin_factory.createPlugin( plugin_str ));
-            // pre_process
+	    output_parameters_.clear();
+	    // Ensure XML is OK
+	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	    ensure_minimum_state( Application::GraphBuilt );
+	    xmlNode* plugin_node = input_parameter_map["plugin"];
+	    const std::string plugin_str = XML::get_prop( plugin_node, "name" );
+        std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_str ));
+        // pre_process
+        {
+            
+            double x,y;
+            Db::Connection& db = Application::instance()->db_connection();
+            
+            // now extract actual data
+            xmlNode* request_node = input_parameter_map["request"];
+            xmlNode* field = XML::get_next_nontext( request_node->children );
+            
+            Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
+            get_xml_point( field, x, y);
+            Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
+            if ( origin_id == 0 )
+            {
+            throw std::invalid_argument( "Cannot find origin_id" );
+            }
+            this->origin = vertex_from_id( origin_id, road_graph );
+            if ( this->origin == Road::Vertex() )
+            {
+            throw std::invalid_argument( "Cannot find origin vertex" );
+            }
+            
+            // departure_constraint
+            field = XML::get_next_nontext( field->next );
+            parse_constraint( field, this->departure_constraint );
+            
+            // parking location id, optional
+            xmlNode *n = XML::get_next_nontext( field->next );
+            if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
+            {
+            get_xml_point( n, x, y );
+            Tempus::db_id_t parking_id = road_vertex_id_from_coordinates( db, x, y );
+            if ( parking_id == 0 )
+            {
+                throw std::invalid_argument( "Cannot find parking_id" );
+            }
+            this->parking_location = vertex_from_id( parking_id, road_graph );
+            field = n;
+            }
+            
+            // optimizing criteria
+            this->optimizing_criteria.clear();
+            field = XML::get_next_nontext( field->next );
+            this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+            field = XML::get_next_nontext( field->next );	
+            while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
+            {
+            this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+            field = XML::get_next_nontext( field->next );	
+            }
+            
+            // allowed transport types
+            this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
+        
+            // allowed networks, 1 .. N
+            this->allowed_networks.clear();
+            field = XML::get_next_nontext( field->next );
+            while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
+            {
+            Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
+            this->allowed_networks.push_back( network_id );
+            field = XML::get_next_nontext( field->next );
+            }
+        
+            // steps, 1 .. N
+            steps.clear();
+            while ( field )
             {
                 
                 double x,y;
