@@ -80,24 +80,24 @@ namespace Tempus
 	    std::string description;
 	    OptionValue default_value;
 	};
-	typedef std::map<std::string, OptionDescription> OptionDescriptionList;
 
-	///
-	/// Method used by a plugin to declare an option
-	template <class T>
-	void declare_option( const std::string& name, const std::string& description, T default_value )
-	{
-	    options_descriptions_[name].type = OptionTypeFrom<T>::type;
-	    options_descriptions_[name].description = description;
-	    options_[name] = default_value;
-	}
-    
-	///
-	/// Option descriptions accessor
-	OptionDescriptionList& option_descriptions()
-	{
-	    return options_descriptions_;
-	}
+    struct OptionDescriptionList: std::map<std::string, OptionDescription>
+    {
+        ///
+        /// Method used by a plugin to declare an option
+        template <class T>
+        void declare_option( const std::string& name, const std::string& description, T default_value )
+        {
+            (*this)[name].type = OptionTypeFrom<T>::type;
+            (*this)[name].description = description;
+            (*this)[name].default_value = default_value;
+        }
+        void set_options_default_value( Plugin * plugin )
+        {
+            for (iterator i=begin(); i!=end(); i++) plugin->set_option( i->first, i->second.default_value );
+        }
+    };
+
 	OptionValueList& options() { return options_; }
 	
 	///
@@ -367,45 +367,37 @@ namespace Tempus
         std::vector<std::string> plugin_list() const;
 
         
-        Plugin::OptionDescriptionList& option_descriptions( const std::string & dll_name )
-        {
-            throw std::runtime_error("not imlemented");
-        }
+        const Plugin::OptionDescriptionList option_descriptions( const std::string & dll_name ) const;
 
         /**
          * create a Plugin from a given dll
-         * throws std::runtime_error if dll cannot be loaded
+         * throws std::runtime_error if dll is not loaded
          */
-        Plugin * createPlugin( const std::string & dll_name );
-    private:
+        Plugin * createPlugin( const std::string & dll_name ) const;
+
         /**
          * throws std::runtime_error if dll cannot be found
          * if dll is already loaded, well do nothing
          */
         void load( const std::string& dll_name );
-        typedef Tempus::Plugin* (*PluginCreationFct)( Db::Connection& );
-        typedef std::pair< HMODULE, PluginCreationFct > DllCreatePair; 
-        typedef std::map<std::string, DllCreatePair> DllMap;
+
+        static PluginFactory instance;
+    private:
+
+        struct Dll 
+        {
+            typedef Plugin* (*PluginCreationFct)( Db::Connection& );
+            typedef const Plugin::OptionDescriptionList (*PluginOptionDescriptionFct)();
+            HMODULE           handle_;
+            PluginCreationFct create;
+            PluginOptionDescriptionFct options_description;
+        };
+
+        typedef std::map<std::string, Dll > DllMap;
         DllMap dll_;
     };
-    // use of volatile for shared resources is explaned here 
-    static volatile PluginFactory plugin_factory;
-    static boost::mutex plugin_factory_mutex;
+    // use of volatile for shared resources is explaned here http://www.drdobbs.com/cpp/volatile-the-multithreaded-programmers-b/184403766
 
-
-    template < typename T >
-    struct LockMutexPtr
-    {
-        LockMutexPtr( boost::mutex & mutex,volatile T * ptr)
-            :lock_( mutex )
-            ,ptr_( const_cast< T * >( ptr ) )
-        {}
-        T & operator*(){ return *ptr_; }
-        T * operator->(){ return ptr_; }
-    private:
-        T * ptr_;
-        boost::lock_guard< boost::mutex > lock_;
-    };
 
 }; // Tempus namespace
 
@@ -417,6 +409,7 @@ namespace Tempus
 /// This way, the constructor will be called on library loading and the destructor on library unloading
 #define DECLARE_TEMPUS_PLUGIN( type ) \
     extern "C" EXPORT Tempus::Plugin* createPlugin( Db::Connection& db ) { return new type( db ); } \
+    extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList option_descriptions( ) { return type::option_descriptions(); } \
     extern "C" EXPORT void deletePlugin(Tempus::Plugin* p_) { delete p_; }
 
 #endif

@@ -105,6 +105,13 @@ int main( int argc, char*argv[] )
 		    chdir_str = argv[++i];
 		}
 	    }
+	    else if ( arg == "-l" )
+	    {
+		if ( argc > i+1 )
+		{
+		    plugins.push_back( argv[++i] );
+		}
+	    }
 	    else if ( arg == "-t" )
 	    {
 		if ( argc > i+1 )
@@ -118,6 +125,7 @@ int main( int argc, char*argv[] )
 		cerr << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
 		cerr << "\t-c dir\tchange directory to dir before execution" << endl;
 		cerr << "\t-t num_threads\tnumber of request-processing threads" << endl;
+		cerr << "\t-l plugin_name\tload plugin" << endl;
 		return 1;
 	    }
 	}
@@ -151,8 +159,15 @@ int main( int argc, char*argv[] )
             return EXIT_FAILURE;
         }
     }
-    
+
     try{
+        // load plugins
+        for ( size_t i=0; i< plugins.size(); i++ )
+        {
+            using namespace Tempus;
+            PluginFactory::instance.load( plugins[i] );
+        }
+
         boost::thread_group pool; 
         for (size_t i=0; i<num_threads; i++) 
             pool.add_thread( new boost::thread( RequestThread( listen_socket ) ) );
