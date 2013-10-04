@@ -187,7 +187,9 @@ namespace Db
 	    nrefs_ = 0;
 	}
 
-	Connection( const std::string& db_options ) : conn_(0)
+	Connection( const std::string& db_options ) 
+        : conn_(0)
+        , db_options_(db_options)
 	{
 	    nrefs_ = 0;
 	    connect( db_options );
@@ -195,6 +197,7 @@ namespace Db
 
 	void connect( const std::string& db_options )
 	{
+        db_options_=db_options;
 	    dec_refs();
 	    conn_ = PQconnectdb( db_options.c_str() );
 	    if (conn_ == NULL || PQstatus(conn_) != CONNECTION_OK )
@@ -227,6 +230,8 @@ namespace Db
 	    return *this;
 	}
 
+    const std::string dbOption() const {return db_options_;}
+
 	///
 	/// Query execution. Returns a Db::Result. Throws a std::runtime_error on problem
 	Result exec( const std::string& query ) throw (std::runtime_error)
@@ -245,6 +250,7 @@ namespace Db
 	}
     protected:
 	PGconn* conn_;
+    std::string db_options_;
 
 	void dec_refs() const
 	{

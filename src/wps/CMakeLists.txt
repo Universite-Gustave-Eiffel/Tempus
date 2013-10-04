@@ -20,4 +20,4 @@ link_directories(  ${ICONV_LIBRARY_DIRS} ${FCGI_LIBRARY_DIRS} ${CMAKE_CURRENt_BU
 include_directories( ${LIBXML2_INCLUDE_DIR} ${ICONV_INCLUDE_DIR} ${FCGI_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../core )
 
 add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
-target_link_libraries( wps ${LIBXML2_LIBRARIES} ${ICONV_LIBS} ${FCGI_LIBS} ${LIBTEMPUS} )
+target_link_libraries( wps ${LIBXML2_LIBRARIES} ${ICONV_LIBS} ${FCGI_LIBS} ${LIBTEMPUS} boost_thread )

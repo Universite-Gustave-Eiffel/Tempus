@@ -71,7 +71,7 @@ int main( int argc, char* argv[])
     /// Plugins
     try
     {
-	Plugin* plugin = app->load_plugin( plugin_name );
+        std::auto_ptr<Plugin> plugin( plugin_factory.createPlugin( plugin_name ) );
 	
 	cout << "[plugin " << plugin->name() << "]" << endl;
 	
@@ -145,7 +145,6 @@ int main( int argc, char* argv[])
 	cout << endl << ">> cleanup" << endl;
 	plugin->cleanup();
 	
-	Tempus::Plugin::unload( plugin );
     }
     catch (std::exception& e)
     {

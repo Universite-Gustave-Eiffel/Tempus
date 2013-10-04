@@ -20,39 +20,6 @@ using namespace Tempus;
 
 namespace WPS
 {
-    ///
-    /// "state" service.
-    /// Output var: state, the server state.
-    /// Output var: db_options, options used to connect to the database.
-    ///
-    class StateService : public Service
-    {
-    public:
-	StateService() : Service("state")
-	{
-	    add_output_parameter( "state",
-				  "<xs:element name=\"state\" type=\"xs:int\"/>\n" );
-	    add_output_parameter( "db_options",
-				  "<xs:element name=\"db_options\" type=\"xs:string\"/>\n" );
-	}
-	Service::ParameterMap& execute( Service::ParameterMap& input_parameter_map )
-	{
-	    output_parameters_.clear();
-	    
-	    int state = Application::instance()->state();
-	    
-	    xmlNode* root_node = XML::new_node( "state" );
-	    XML::add_child( root_node, XML::new_text( boost::lexical_cast<std::string>( state ) ));
-	    output_parameters_["state"] = root_node;
-	    
-	    xmlNode* options_node = XML::new_node( "db_options" );
-	    XML::add_child( options_node, XML::new_text( Application::instance()->db_options() ));
-	    output_parameters_["db_options"] = options_node;
-	    
-	    return output_parameters_;
-	}
-    };
-    
     void ensure_minimum_state( int state )
     {
 	int a_state = Application::instance()->state();
@@ -64,79 +31,6 @@ namespace WPS
     }
     
     ///
-    /// "connect" service.
-    /// Input var: db_options, the options used to connect to the database to consider
-    ///
-    class ConnectService : public Service
-    {
-    public:
-	ConnectService() : Service("connect")
-	{
-	    add_input_parameter( "db_options",
-				 "<xs:element name=\"db_options\" type=\"xs:string\"/>" );
-	}
-	
-	Service::ParameterMap& execute( Service::ParameterMap& input_parameter_map )
-	{
-	    // Ensure XML is OK
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    
-	    // now extract actual data
-	    xmlNode* request_node = input_parameter_map["db_options"];
-	    std::string db_options = (const char*)request_node->children->content;
-	    
-	    Application::instance()->connect( db_options );
-	    output_parameters_.clear();
-	    Application::instance()->state( Application::Connected );
-	    return output_parameters_;
-	}
-    };
-    
-    ///
-    /// "pre_build" service, invokes pre_build()
-    ///
-    class PreBuildService : public Service
-    {
-    public:
-	PreBuildService() : Service("pre_build")
-	{
-	}
-	Service::ParameterMap& execute( Service::ParameterMap& input_parameter_map )
-	{
-	    // Ensure XML is OK
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    
-	    ensure_minimum_state( Application::Connected );
-	    Application::instance()->pre_build_graph();
-	    output_parameters_.clear();
-	    Application::instance()->state( Application::GraphPreBuilt );
-	    return output_parameters_;
-	}
-    };
-
-    ///
-    /// "build" service, invokes build_graph()
-    ///
-    class BuildService : public Service
-    {
-    public:
-	BuildService() : Service("build")
-	{
-	}
-	Service::ParameterMap& execute( Service::ParameterMap& input_parameter_map )
-	{
-	    // Ensure XML is OK
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    
-	    ensure_minimum_state( Application::GraphPreBuilt );
-	    Application::instance()->build_graph();
-	    output_parameters_.clear();
-	    Application::instance()->state( Application::GraphBuilt );
-	    return output_parameters_;
-	}
-    };
-
-    ///
     /// "plugin_list" service, lists loaded plugins.
     ///
     /// Output var: plugins, list of plugin names
@@ -144,6 +38,7 @@ namespace WPS
     class PluginListService : public Service
     {
     public:
+    Service * clone() const { return new PluginListService(*this);}
 	PluginListService() : Service("plugin_list")
 	{
 	    add_output_parameter( "plugins",
@@ -164,13 +59,13 @@ namespace WPS
 	    output_parameters_.clear();
 	    
 	    xmlNode* root_node = XML::new_node( "plugins" );
-	    Plugin::PluginList::iterator it;
-	    for ( it = Plugin::plugin_list().begin(); it != Plugin::plugin_list().end(); it++ )
+	    std::vector<std::string> names( plugin_factory.plugin_list() );
+	    for ( size_t i=0; i<names.size(); i++ )
 	    {
 		xmlNode* node = XML::new_node( "plugin" );
 		XML::new_prop( node,
 			       "name",
-			       it->first );
+			       names[i] );
 		XML::add_child( root_node, node );
 	    }
 	    output_parameters_[ "plugins" ] = root_node;
@@ -188,6 +83,7 @@ namespace WPS
     class ConstantListService : public Service
     {
     public:
+    Service * clone() const { return new ConstantListService(*this);}
 	ConstantListService() : Service("constant_list")
 	{
 	    add_output_parameter( "road_types",
@@ -306,15 +202,6 @@ namespace WPS
 				 "</xs:complexType>\n"
 				 "<xs:element name=\"plugin\" type=\"Plugin\"/>\n" );
 	}
-	Plugin* get_plugin( ParameterMap& input_parameters )
-	{
-	    xmlNode* plugin_node = input_parameters["plugin"];
-	    std::string plugin_str = XML::get_prop( plugin_node, "name" );
-	    Plugin::PluginList::iterator it = Plugin::plugin_list().find( plugin_str );
-	    if ( it == Plugin::plugin_list().end() )
-		throw std::invalid_argument( "Plugin " + plugin_str + " is not loaded" );
-	    return it->second;
-	}
     };
 
     ///
@@ -325,6 +212,7 @@ namespace WPS
     class GetOptionsDescService : public PluginService
     {
     public:
+    Service * clone() const { return new GetOptionsDescService(*this);}
 	GetOptionsDescService() : PluginService("get_option_descriptions")
 	{
 	    add_output_parameter( "options",
@@ -343,10 +231,11 @@ namespace WPS
 	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
 	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    Plugin* plugin = get_plugin( input_parameter_map );
+	    xmlNode* plugin_node = input_parameter_map["plugin"];
+	    std::string plugin_str = XML::get_prop( plugin_node, "name" );
 	    
 	    xmlNode * options_node = XML::new_node( "options" );
-	    Plugin::OptionDescriptionList options = plugin->option_descriptions();
+	    Plugin::OptionDescriptionList options = plugin_factory.option_descriptions(plugin_str);
 	    Plugin::OptionDescriptionList::iterator it;
 	    for ( it = options.begin(); it != options.end(); it++ )
 	    {
@@ -364,145 +253,6 @@ namespace WPS
 	}
     };
 
-    ///
-    /// "get_metrics" service, outputs metrics of a plugin.
-    ///
-    /// Output var: metrics, list of metrics with their name and value
-    ///
-    class GetMetricsService : public PluginService
-    {
-    public:
-	GetMetricsService() : PluginService("get_metrics")
-	{
-	    add_output_parameter( "metrics",
-				  "<xs:complexType name=\"Metric\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"Metrics\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"metric\" type=\"Metric\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"metrics\" type=\"Metrics\"/>\n" );
-	}
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    
-	    xmlNode * metrics_node = XML::new_node( "metrics" );
-	    Plugin::MetricValueList metrics = plugin->metrics();
-	    Plugin::MetricValueList::iterator it;
-	    for ( it = metrics.begin(); it != metrics.end(); it++ )
-	    {
-		xmlNode* metric_node = XML::new_node( "metric" );
-		XML::new_prop( metric_node, "name", it->first );
-		XML::new_prop( metric_node, "value",
-			       plugin->metric_to_string( it->first ) );
-		
-		XML::add_child( metrics_node, metric_node );
-	    }
-	    
-	    output_parameters_.clear();
-	    output_parameters_[ "metrics" ] = metrics_node;
-	    return output_parameters_;
-	}
-    };
-
-    ///
-    /// "get_options" service, lists values of plugin's options.
-    ///
-    /// Output var: options, list of options with their name and value
-    ///
-    class GetOptionsService : public PluginService
-    {
-    public:
-	GetOptionsService() : PluginService("get_options")
-	{
-	    add_output_parameter( "options",
-				  "<xs:complexType name=\"Option\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"Options\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"options\" type=\"Options\"/>\n" );
-	}
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    
-	    xmlNode * options_node = XML::new_node( "options" );
-	    Plugin::OptionValueList options = plugin->options();
-	    Plugin::OptionValueList::iterator it;
-	    for ( it = options.begin(); it != options.end(); it++ )
-	    {
-		xmlNode* option_node = XML::new_node( "option" );
-		XML::new_prop( option_node,
-			       "name",
-			       it->first );
-		XML::new_prop( option_node,
-			       "value",
-			       plugin->option_to_string( it->first ) );
-		
-		XML::add_child( options_node, option_node );
-	    }
-	    
-	    output_parameters_.clear();
-	    output_parameters_[ "options" ] = options_node;
-	    return output_parameters_;
-	}
-    };
-
-    ///
-    /// "set_options" service, used to set plugin's options.
-    ///
-    /// Input var: options, list of options with their name and value
-    ///
-    class SetOptionsService : public PluginService
-    {
-    public:
-	SetOptionsService() : PluginService("set_options")
-	{
-	    add_input_parameter( "options",
-				 "<xs:complexType name=\"Option\">\n"
-				 "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				 "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
-				 "</xs:complexType>\n"
-				 "<xs:complexType name=\"Options\">\n"
-				 "  <xs:sequence>\n"
-				 "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				 "  </xs:sequence>\n"
-				 "</xs:complexType>\n"
-				 "<xs:element name=\"options\" type=\"Options\"/>\n" );
-	}
-	
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    
-	    xmlNode *options_node = input_parameter_map[ "options" ];
-	    xmlNode *option_node = options_node->children;
-	    
-	    while ( option_node = XML::get_next_nontext( option_node ) )
-	    {
-		string name = XML::get_prop( option_node, "name" );
-		string value = XML::get_prop( option_node, "value" );
-		plugin->set_option_from_string( name, value );
-		option_node = option_node->next;
-	    }
-	    
-	    output_parameters_.clear();
-	    return output_parameters_;
-	}
-    };
-    
     void get_xml_point( xmlNode* node, double& x, double& y )
     {
 	xmlNode* x_node = XML::get_next_nontext( node->children );
@@ -528,16 +278,16 @@ namespace WPS
     }
 
     ///
-    /// "pre_process" service.
+    /// "result" service, get results from a path query.
     ///
-    /// Input var: request, the path request (see request.hh)
+    /// Output var: results, see roadmap.hh
     ///
-    class PreProcessService : public PluginService, public Tempus::Request
+    class SelectService : public PluginService, public Tempus::Request
     {
     public:
-	PreProcessService() : PluginService("pre_process"), Tempus::Request()
+    Service * clone() const { return new SelectService(*this);}
+	SelectService() : PluginService( "select" ), Tempus::Request()
 	{
-	    // define the XML schema of input parameters
 	    add_input_parameter( "request",
 				 "  <xs:complexType name=\"TimeConstraint\">\n"
 				 "    <xs:attribute name=\"type\" type=\"xs:int\"/>\n"
@@ -569,159 +319,7 @@ namespace WPS
 				 "  </xs:complexType>\n"
 				 "<xs:element name=\"request\" type=\"Request\"/>\n"
 				 );
-	}
 
-	void parse_constraint( xmlNode* node, Request::TimeConstraint& constraint )
-	{
-	    constraint.type = boost::lexical_cast<int>( XML::get_prop( node, "type") );
-	    
-		std::string date_time = XML::get_prop( node, "date_time" );
-	    const char* date_time_str = date_time.c_str();
-	    int day, month, year, hour, min;
-	    sscanf(date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
-	    constraint.date_time = boost::posix_time::ptime(boost::gregorian::date(year, month, day),
-							    boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );
-	    
-	}
-	
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    // Ensure XML is OK
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    ensure_minimum_state( Application::GraphBuilt );
-	    
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    double x,y;
-	    Db::Connection& db = Application::instance()->db_connection();
-	    
-	    // now extract actual data
-	    xmlNode* request_node = input_parameter_map["request"];
-	    xmlNode* field = XML::get_next_nontext( request_node->children );
-	    
-	    Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
-	    get_xml_point( field, x, y);
-	    Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
-	    if ( origin_id == 0 )
-	    {
-		throw std::invalid_argument( "Cannot find origin_id" );
-	    }
-	    this->origin = vertex_from_id( origin_id, road_graph );
-	    if ( this->origin == Road::Vertex() )
-	    {
-		throw std::invalid_argument( "Cannot find origin vertex" );
-	    }
-	    
-	    // departure_constraint
-	    field = XML::get_next_nontext( field->next );
-	    parse_constraint( field, this->departure_constraint );
-	    
-	    // parking location id, optional
-	    xmlNode *n = XML::get_next_nontext( field->next );
-	    if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
-	    {
-		get_xml_point( n, x, y );
-		Tempus::db_id_t parking_id = road_vertex_id_from_coordinates( db, x, y );
-		if ( parking_id == 0 )
-		{
-		    throw std::invalid_argument( "Cannot find parking_id" );
-		}
-		this->parking_location = vertex_from_id( parking_id, road_graph );
-		field = n;
-	    }
-	    
-	    // optimizing criteria
-	    this->optimizing_criteria.clear();
-	    field = XML::get_next_nontext( field->next );
-	    this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
-	    field = XML::get_next_nontext( field->next );	
-	    while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
-	    {
-		this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
-		field = XML::get_next_nontext( field->next );	
-	    }
-	    
-	    // allowed transport types
-	    this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
-	
-	    // allowed networks, 1 .. N
-	    this->allowed_networks.clear();
-	    field = XML::get_next_nontext( field->next );
-	    while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
-	    {
-		Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
-		this->allowed_networks.push_back( network_id );
-		field = XML::get_next_nontext( field->next );
-	    }
-	
-	    // steps, 1 .. N
-	    steps.clear();
-	    while ( field )
-	    {
-		this->steps.resize( steps.size() + 1 );
-		
-		xmlNode *subfield;
-		// destination id
-		subfield = XML::get_next_nontext( field->children );
-		get_xml_point( subfield, x, y);
-		Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );
-		if ( destination_id == 0 )
-		{
-		    throw std::invalid_argument( "Cannot find origin_id" );
-		}
-		this->steps.back().destination = vertex_from_id( destination_id, road_graph );
-
-		// constraint
-		subfield = XML::get_next_nontext( subfield->next );
-		parse_constraint( subfield, this->steps.back().constraint );
-	    
-		// private_vehicule_at_destination
-		subfield = XML::get_next_nontext( subfield->next );
-		string val = (const char*)subfield->children->content;
-		this->steps.back().private_vehicule_at_destination = ( val == "true" );
-	    
-		// next step
-		field = XML::get_next_nontext( field->next ); 
-	    }
-
-	    // call cycle
-	    plugin->cycle();
-
-	    // then call pre_process
-	    plugin->pre_process( *this );
-	    output_parameters_.clear();
-	    return output_parameters_;
-	}
-    };
-
-    ///
-    /// "process" service, invokes process() on a plugin
-    ///
-    class ProcessService : public PluginService
-    {
-    public:
-	ProcessService() : PluginService("process")
-	{
-	}
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    ensure_minimum_state( Application::GraphBuilt );
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    plugin->process();
-	    output_parameters_.clear();
-	    return output_parameters_;
-	}
-    };
-
-    ///
-    /// "result" service, get results from a path query.
-    ///
-    /// Output var: results, see roadmap.hh
-    ///
-    class ResultService : public PluginService
-    {
-    public:
-	ResultService() : PluginService( "result" )
-	{
 	    add_output_parameter( "results",
 				  "<xs:complexType name=\"DbId\">\n"
 				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n" // db_id
@@ -783,14 +381,148 @@ namespace WPS
 				  "  </xs:complexType>\n"
 				  "</xs:element>\n"
 				  );
+	    add_output_parameter( "metrics",
+				  "<xs:complexType name=\"Metric\">\n"
+				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+				  "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
+				  "</xs:complexType>\n"
+				  "<xs:complexType name=\"Metrics\">\n"
+				  "  <xs:sequence>\n"
+				  "    <xs:element name=\"metric\" type=\"Metric\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				  "  </xs:sequence>\n"
+				  "</xs:complexType>\n"
+				  "<xs:element name=\"metrics\" type=\"Metrics\"/>\n" );
+	}
+
+	void parse_constraint( xmlNode* node, Request::TimeConstraint& constraint )
+	{
+	    constraint.type = boost::lexical_cast<int>( XML::get_prop( node, "type") );
+	    
+		std::string date_time = XML::get_prop( node, "date_time" );
+	    const char* date_time_str = date_time.c_str();
+	    int day, month, year, hour, min;
+	    sscanf(date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
+	    constraint.date_time = boost::posix_time::ptime(boost::gregorian::date(year, month, day),
+							    boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );
+	    
 	}
 	
 	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
-	    ensure_minimum_state( Application::GraphBuilt );
 	    output_parameters_.clear();
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    Tempus::Result& result = plugin->result();
+	    // Ensure XML is OK
+	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+	    ensure_minimum_state( Application::GraphBuilt );
+	    xmlNode* plugin_node = input_parameter_map["plugin"];
+	    const std::string plugin_str = XML::get_prop( plugin_node, "name" );
+        std::auto_ptr<Plugin> plugin( plugin_factory.createPlugin( plugin_str ));
+        // pre_process
+        {
+            
+            double x,y;
+            Db::Connection& db = Application::instance()->db_connection();
+            
+            // now extract actual data
+            xmlNode* request_node = input_parameter_map["request"];
+            xmlNode* field = XML::get_next_nontext( request_node->children );
+            
+            Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
+            get_xml_point( field, x, y);
+            Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
+            if ( origin_id == 0 )
+            {
+            throw std::invalid_argument( "Cannot find origin_id" );
+            }
+            this->origin = vertex_from_id( origin_id, road_graph );
+            if ( this->origin == Road::Vertex() )
+            {
+            throw std::invalid_argument( "Cannot find origin vertex" );
+            }
+            
+            // departure_constraint
+            field = XML::get_next_nontext( field->next );
+            parse_constraint( field, this->departure_constraint );
+            
+            // parking location id, optional
+            xmlNode *n = XML::get_next_nontext( field->next );
+            if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
+            {
+            get_xml_point( n, x, y );
+            Tempus::db_id_t parking_id = road_vertex_id_from_coordinates( db, x, y );
+            if ( parking_id == 0 )
+            {
+                throw std::invalid_argument( "Cannot find parking_id" );
+            }
+            this->parking_location = vertex_from_id( parking_id, road_graph );
+            field = n;
+            }
+            
+            // optimizing criteria
+            this->optimizing_criteria.clear();
+            field = XML::get_next_nontext( field->next );
+            this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+            field = XML::get_next_nontext( field->next );	
+            while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
+            {
+            this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+            field = XML::get_next_nontext( field->next );	
+            }
+            
+            // allowed transport types
+            this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
+        
+            // allowed networks, 1 .. N
+            this->allowed_networks.clear();
+            field = XML::get_next_nontext( field->next );
+            while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
+            {
+            Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
+            this->allowed_networks.push_back( network_id );
+            field = XML::get_next_nontext( field->next );
+            }
+        
+            // steps, 1 .. N
+            steps.clear();
+            while ( field )
+            {
+            this->steps.resize( steps.size() + 1 );
+            
+            xmlNode *subfield;
+            // destination id
+            subfield = XML::get_next_nontext( field->children );
+            get_xml_point( subfield, x, y);
+            Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );
+            if ( destination_id == 0 )
+            {
+                throw std::invalid_argument( "Cannot find origin_id" );
+            }
+            this->steps.back().destination = vertex_from_id( destination_id, road_graph );
+
+            // constraint
+            subfield = XML::get_next_nontext( subfield->next );
+            parse_constraint( subfield, this->steps.back().constraint );
+            
+            // private_vehicule_at_destination
+            subfield = XML::get_next_nontext( subfield->next );
+            string val = (const char*)subfield->children->content;
+            this->steps.back().private_vehicule_at_destination = ( val == "true" );
+            
+            // next step
+            field = XML::get_next_nontext( field->next ); 
+            }
+
+            // call cycle
+            plugin->cycle();
+
+            // then call pre_process
+            plugin->pre_process( *this );
+        }
+
+        // process
+	    plugin->process();
+
+        // result
+        Tempus::Result& result = plugin->result();
 	    
 	    Multimodal::Graph& graph_ = Application::instance()->graph();
 	    Tempus::Road::Graph& road_graph = graph_.road;
@@ -799,8 +531,8 @@ namespace WPS
 	    xmlNode* root_node = XML::new_node( "results" );
 	    if ( result.size() == 0 )
 	    {
-		output_parameters_["results"] = root_node;
-		return output_parameters_;
+            output_parameters_["results"] = root_node;
+            return output_parameters_;
 	    }
 
 	    Tempus::Result::const_iterator rit;
@@ -956,40 +688,28 @@ namespace WPS
 		XML::add_child( root_node, result_node );
 	    } // for each result
 	    output_parameters_[ "results" ] = root_node;
+
+	    xmlNode * metrics_node = XML::new_node( "metrics" );
+	    Plugin::MetricValueList metrics = plugin->metrics();
+	    Plugin::MetricValueList::iterator it;
+	    for ( it = metrics.begin(); it != metrics.end(); it++ )
+	    {
+		xmlNode* metric_node = XML::new_node( "metric" );
+		XML::new_prop( metric_node, "name", it->first );
+		XML::new_prop( metric_node, "value",
+			       plugin->metric_to_string( it->first ) );
+		
+		XML::add_child( metrics_node, metric_node );
+	    }
+	    
+	    output_parameters_[ "metrics" ] = metrics_node;
 	    return output_parameters_;
 	}
     };
 
-    ///
-    /// "cleanup" service, invokes cleanup() on a plugin
-    ///
-    class CleanupService : public PluginService
-    {
-    public:
-	CleanupService() : PluginService("cleanup") {}
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    ensure_minimum_state( Application::GraphBuilt );
-	    Plugin* plugin = get_plugin( input_parameter_map );
-	    plugin->cleanup();
-	    output_parameters_.clear();
-	    return output_parameters_;
-	}
-    };
-
-    static StateService state_service_;
-    static GetMetricsService get_metrics_service;
-    static GetOptionsService get_options_service;
     static GetOptionsDescService get_option_desc_service;
-    static SetOptionsService set_option_service;
-    static ConnectService connect_service_;
     static PluginListService plugin_list_service;
-    static PreBuildService pre_build_service_;
-    static BuildService build_service_;
-    static PreProcessService pre_process_service_;
-    static ProcessService process_service_;
-    static ResultService result_service_;
-    static CleanupService cleanup_service_;
+    static SelectService select_service;
     static ConstantListService constant_list_service;
 
 }; // WPS namespace
