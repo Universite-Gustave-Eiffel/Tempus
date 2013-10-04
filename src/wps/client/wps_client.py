@@ -25,7 +25,7 @@ from xml.etree import ElementTree as ET
 #   </ul>
 # </a>
 
-# to_xml_indent : function that is called recursively to print out a python 'Tree'
+# to_xml_indent : function that is called recursively to print out a python 'Tree' (pson)
 # indent_size : recursive argument
 # returns a [ string, boolean ] where the boolean indicates whether the string is a text node or not
 def to_xml_indent( expr, indent_size ):
@@ -63,11 +63,25 @@ def to_xml_indent( expr, indent_size ):
             return [' ' * indent_size + "<" + o_str +">" + children_str + "</" + name + ">\n", False]
         return [' ' * indent_size + "<" + o_str +">\n" + children_str + ' ' * indent_size + "</" + name + ">\n", False]
     else:
-        # FIXME : must escape
-        return [str(expr), True]
+        return [unicode(expr), True]
 
 def to_xml( expr ):
     return to_xml_indent( expr, 0)[0]
+
+#
+# Convert a ElementTree XML tree to a Python expression (pson)
+def to_pson( tree ):
+    r = [ tree.tag ]
+    if len(tree.attrib) > 0:
+        r.append( tree.attrib )
+    if len(tree) > 0:
+        for child in tree:
+            r.append( to_pson( child ) )
+    else:
+        if tree.text:
+            r.append( tree.text )
+    return r
+        
 
 # returns [ bool, exception_code ]
 def get_wps_exception( str ):
@@ -122,16 +136,16 @@ class WPSClient:
         return self.conn.request( 'GET', 'service=wps&version=1.0.0&request=DescribeProcess&identifier=' + identifier )
 
     #
-    # inputs : dictionary of argument_name -> [ is_complex ?, xml value ]
+    # inputs : dictionary of argument_name -> xml_value
+    #          if xml_value is a list, it is considered a 'complex' datum
+    #          else, it is a 'literal' data
     def execute( self, identifier, inputs ):
         r = []
         for arg, v in inputs.items():
-            is_complex = v[0]
-            xml_value = v[1]
-            if is_complex:
-                data = [ 'ComplexData', {'mimeType' : 'text/xml', 'encoding' : 'UTF-8'}, xml_value ]
+            if isinstance(v, list):
+                data = [ 'ComplexData', {'mimeType' : 'text/xml', 'encoding' : 'UTF-8'}, v ]
             else:
-                data = [ 'LiteralData', xml_value ]
+                data = [ 'LiteralData', v ]
 
             r.append( [ 'Input',
                         [ 'Identifier', arg ],

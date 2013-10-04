@@ -31,6 +31,8 @@ from PyQt4.QtGui import *
 
 from ui_ifsttarrouting import Ui_IfsttarRoutingDock
 
+from wps_client import *
+
 PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 # create the dialog for route queries
@@ -49,6 +51,55 @@ class IfsttarRoutingDock(QDockWidget):
         self.set_parking( state['parking'] )
         self.set_pvads( state['pvads'] )
 
+    def loadFromXML( self, xml ):
+        pson = to_pson(xml)
+
+        criteria = []
+        steps = []
+        networks = []
+        parking = None
+        origin = None
+        dep = None
+        for child in pson[1:]:
+            print child
+            if child[0] == 'origin':
+                origin = child
+            elif child[0] == 'departure_constraint':
+                dep = child
+            elif child[0] == 'parking_location':
+                parking = child
+            elif child[0] == 'optimizing_criterion':
+                criteria.append(int(child[1]))
+            elif child[0] == 'allowed_transport_types':
+                ttypes = child
+            elif child[0] == 'allowed_network':
+                networks.append(int(child[1]))
+            elif child[0] == 'step':
+                steps.append(child)
+                
+        if parking:
+            parking = [ float(parking[1][1]), float(parking[2][1]) ]
+            self.set_parking( parking )
+        self.set_steps( len(steps) )
+
+        coords = [ [ float(origin[1][1]), float(origin[2][1]) ] ]
+        constraints = [ [int(dep[1]['type']), dep[1]['date_time'] ] ]
+        pvads = []
+        for step in steps:
+            for p in step:
+                if p[0] == 'destination':
+                    coords.append( [float(p[1][1]), float(p[2][1]) ] )
+                elif p[0] == 'constraint':
+                    c = p[1]
+                    constraints.append( [int(c['type']), c['date_time'] ] )
+                elif p[0] == 'private_vehicule_at_destination':
+                    pvads.append( p[1] == 'true' )
+
+        self.set_selected_criteria( criteria )
+        self.set_coordinates( coords )
+        self.set_pvads( pvads )
+        self.set_constraints( constraints )
+        
     #
     # Save widgets' states
     #

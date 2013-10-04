@@ -169,8 +169,6 @@ class IfsttarRouting:
         self.wps = None
         self.historyFile = HistoryFile( HISTORY_FILE )
 
-        # list of plugins
-        self.plugins = {}
         # list of option descriptions
         self.options = {}
         # list of option values
@@ -179,6 +177,9 @@ class IfsttarRouting:
         self.transport_types = {}
         #list of public networks
         self.networks = {}
+
+        # list of things to save onto history
+        self.save = {}
 
     def initGui(self):
         # Create action that will start plugin configuration
@@ -235,16 +236,16 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
 
-        self.plugins = outputs['plugins']
         # FIXME
-        self.plugins = [ ET.Element('plugin', { 'name' : 'sample_road_plugin' } ) ]
-        self.displayPlugins( self.plugins, 0 )
+        p = ET.Element('plugins')
+        p.append( ET.Element('plugin', { 'name' : 'sample_road_plugin' } ) )
+        outputs['plugins'] = p
+        self.displayPlugins( outputs['plugins'], 0 )
+        self.save['plugins'] = to_pson(outputs['plugins'])
             
         self.dlg.ui.pluginCombo.setEnabled( True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
@@ -252,7 +253,7 @@ class IfsttarRouting:
         if self.wps is None:
             return
 
-        plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ] }
+        plugin_arg = { 'plugin' : ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] }
 
         try:
             outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
@@ -285,21 +286,9 @@ class IfsttarRouting:
                 QMessageBox.warning( self.dlg, "Error", e.args[1] )
                 return
 
-            #
-            # add each transport type to the list
-            #
-
-            # retrieve the list of transport types
-            self.transport_types = []
-            for transport_type in outputs['transport_types']:
-                self.transport_types.append(transport_type.attrib)
-
-            # retrieve the network list
-            self.networks = []
-            for network in outputs['transport_networks']:
-                self.networks.append(network.attrib)
-
-            self.displayTransportAndNetworks( self.transport_types, self.networks )
+            self.save['transport_types'] = to_pson(outputs['transport_types'])
+            self.save['transport_networks'] = to_pson(outputs['transport_networks'])
+            self.displayTransportAndNetworks( outputs['transport_types'], outputs['transport_networks'] )
 
     def loadHistory( self ):
         #
@@ -346,8 +335,8 @@ class IfsttarRouting:
         elif option_type == 2:
             val = float(val)
 
-        args = { 'plugin' : [ True, ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] ],
-                 'options': [ True, ['options', ['option', {'name' : option_name, 'value' : str(val) } ] ] ] }
+        args = { 'plugin' : ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ],
+                 'options': ['options', ['option', {'name' : option_name, 'value' : str(val) } ] ] }
 
         try:
             outputs = self.wps.execute( 'set_options', args )
@@ -428,6 +417,9 @@ class IfsttarRouting:
         QgsMapLayerRegistry.instance().addMapLayers( [vl] )
         self.selectRoadmapLayer( lid )
 
+    #
+    # Select the roadmap layer
+    #
     def selectRoadmapLayer( self, id ):
         legend = self.iface.legendInterface()
         lname = "%s%d" % (ROADMAP_LAYER_NAME, id)
@@ -544,7 +536,7 @@ class IfsttarRouting:
             row += 1
 
     #
-    # Take XML tress of 'plugins' and an index of selection
+    # Take XML trees of 'plugins' and an index of selection
     # and fill the 'plugin' tab
     #
     def displayPlugins( self, plugins, selection ):
@@ -554,7 +546,7 @@ class IfsttarRouting:
         self.dlg.ui.pluginCombo.setCurrentIndex( selection )
 
     #
-    # Take XML tress of 'options' and 'option_values'
+    # Take XML trees of 'options' and 'option_values'
     # and fill the options part of the 'plugin' tab
     #
     def displayPluginOptions( self, options, options_value ):
@@ -597,47 +589,68 @@ class IfsttarRouting:
             
             row += 1
 
-    def displayTransportAndNetworks( self, transport_types, networks ):
-        listModel = QStandardItemModel()
-        for ttype in transport_types:
-            need_network = int(ttype['need_network'])
-            idt = int(ttype['id'])
-            has_network = False
-            if need_network:
-                # look for networks that provide this kind of transport
-                for network in networks:
-                    ptt = int(network['provided_transport_types'])
-                    if ptt & idt:
-                        has_network = True
-                        break
+    #
+    # Take an XML trees from 'constant_list'
+    # load them and display them
+    def displayTransportAndNetworks( self, xmlTransportTypes, xmlTransportNetworks ):
+            #
+            # add each transport type to the list
+            #
 
-            item = QStandardItem( ttype['name'] )
-            if need_network and not has_network:
-                item.setFlags(Qt.ItemIsUserCheckable)
-                item.setData( Qt.Unchecked, Qt.CheckStateRole)
-            else:
+            # retrieve the list of transport types
+            self.transport_types = []
+            for transport_type in xmlTransportTypes:
+                self.transport_types.append(transport_type.attrib)
+
+            # retrieve the network list
+            self.networks = []
+            for network in xmlTransportNetworks:
+                self.networks.append(network.attrib)
+
+            listModel = QStandardItemModel()
+            for ttype in self.transport_types:
+                need_network = int(ttype['need_network'])
+                idt = int(ttype['id'])
+                has_network = False
+                if need_network:
+                    # look for networks that provide this kind of transport
+                    for network in self.networks:
+                        ptt = int(network['provided_transport_types'])
+                        if ptt & idt:
+                            has_network = True
+                            break
+
+                item = QStandardItem( ttype['name'] )
+                if need_network and not has_network:
+                    item.setFlags(Qt.ItemIsUserCheckable)
+                    item.setData( Qt.Unchecked, Qt.CheckStateRole)
+                else:
+                    item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    item.setData( Qt.Checked, Qt.CheckStateRole)
+                listModel.appendRow(item)
+            self.dlg.ui.transportList.setModel( listModel )
+
+            networkListModel = QStandardItemModel()
+            for network in self.networks:
+                title = network['name']
+
+                # look for provided transport types
+                tlist = []
+                ptt = int( network['provided_transport_types'] )
+                for ttype in self.transport_types:
+                    if ptt & int(ttype['id']):
+                        tlist.append( ttype['name'] )
+
+                item = QStandardItem( network['name'] + ' (' + ', '.join(tlist) + ')')
                 item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                 item.setData( Qt.Checked, Qt.CheckStateRole)
-            listModel.appendRow(item)
-        self.dlg.ui.transportList.setModel( listModel )
+                networkListModel.appendRow(item)
+            self.dlg.ui.networkList.setModel( networkListModel )
 
-        networkListModel = QStandardItemModel()
-        for network in networks:
-            title = network['name']
-
-            # look for provided transport types
-            tlist = []
-            ptt = int( network['provided_transport_types'] )
-            for ttype in transport_types:
-                if ptt & int(ttype['id']):
-                    tlist.append( ttype['name'] )
-
-            item = QStandardItem( network['name'] + ' (' + ', '.join(tlist) + ')')
-            item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData( Qt.Checked, Qt.CheckStateRole)
-            networkListModel.appendRow(item)
-        self.dlg.ui.networkList.setModel( networkListModel )
-
+    #
+    # Take an XML tree from the WPS 'results'
+    # and load/display them
+    #
     def displayResults( self, results ):
         # result radio button id
         self.result_ids=[]
@@ -726,41 +739,51 @@ class IfsttarRouting:
 
         currentPluginIdx = self.dlg.ui.pluginCombo.currentIndex()
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
-        plugin_arg = { 'plugin' : [ True, ['plugin', {'name' : currentPlugin } ] ] }
+        plugin_arg = { 'plugin' : ['plugin', {'name' : currentPlugin } ] }
 
         args = plugin_arg
-        args['request'] = [ True, r ]
+        args['request'] = r
+        print args
         try:
             outputs = self.wps.execute( 'select', args )
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
 
-        results = outputs['results']
-        self.displayResults( results )
-
-        metrics = outputs['metrics']
-        self.displayMetrics( metrics )
+        self.displayResults( outputs['results'] )
+        self.displayMetrics( outputs['metrics'] )
 
         # enable 'metrics' and 'roadmap' tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
+        self.save['plugin'] = args['plugin']
+        self.save['request'] = args['request']
+        self.save['results'] = to_pson(outputs['results'])
+        self.save['metrics'] = to_pson(outputs['metrics'])
+
         #
         # Add the query / result to the history
         #
-        record = { 'query' : self.dlg.saveState(),
-                   'plugins' : self.plugins,
-                   'current_plugin' : currentPluginIdx,
-                   'plugin_options' : self.options,
-                   'plugin_options_value' : self.options_value,
-                   'transport_types' : self.transport_types,
-                   'networks' : self.networks,
-                   'selected_networks' : self.dlg.selected_networks(),
-                   'selected_transports' : self.dlg.selected_transports(),
-                   'metrics' : metrics,
-                   'results' : results }
-        str_record = pickle.dumps( record )
+#        record = { 'query' : self.dlg.saveState(),
+#                   'plugins' : self.plugins,
+#                   'current_plugin' : currentPluginIdx,
+#                   'plugin_options' : self.options,
+#                   'plugin_options_value' : self.options_value,
+#                   'transport_types' : self.save['transport_types'],
+#                   'transport_networks' : self.save['transport_networks'],
+#                   'selected_networks' : self.dlg.selected_networks(),
+#                   'selected_transports' : self.dlg.selected_transports(),
+#                   'metrics' : self.save['metrics'],
+#                   'results' : self.save['results'] }
+
+        pson = [ 'save' ]
+        for k,v in self.save.iteritems():
+            pson.append( v )
+
+        print pson
+        str_record = to_xml(pson)
+        print str_record
 
         self.historyFile.addRecord( str_record )
 
@@ -776,29 +799,33 @@ class IfsttarRouting:
 
         id = item.data( Qt.UserRole )
         # load from db
-        r = self.historyFile.getRecord( id )
+        (id, date, xmlStr) = self.historyFile.getRecord( id )
+        tree = ET.XML(xmlStr)
+        for child in tree:
+            self.save[ child.tag ] = child
+
         # unserialize the raw data
-        v = pickle.loads( r[2] )
+        #v = pickle.loads( r[2] )
 
         # update UI
-        self.dlg.loadState( v['query'] )
+        self.dlg.loadFromXML( self.save['request'] )
 
-        self.plugins = v['plugins']
-        self.displayPlugins( self.plugins, v['current_plugin'] )
+        # FIXME
+        self.displayPlugins( self.save['plugins'], 0);
 
-        self.options = v['plugin_options']
-        self.options_value = v['plugin_options_value']
-        self.displayPluginOptions( self.options, self.options_value )
+        #self.options = v['plugin_options']
+        #self.options_value = v['plugin_options_value']
+        #self.displayPluginOptions( self.options, self.options_value )
 
-        self.transport_types = v['transport_types']
-        self.networks = v['networks']
+        self.transport_types = self.save['transport_types']
+        self.networks = self.save['transport_networks']
         self.displayTransportAndNetworks( self.transport_types, self.networks )
 
-        self.dlg.set_selected_networks( v['selected_networks'] )
-        self.dlg.set_selected_transports( v['selected_transports'] )
+        #self.dlg.set_selected_networks( v['selected_networks'] )
+        #self.dlg.set_selected_transports( v['selected_transports'] )
 
-        self.displayMetrics( v['metrics'] )
-        self.displayResults( v['results'] )
+        self.displayMetrics( self.save['metrics'] )
+        self.displayResults( self.save['results'] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )

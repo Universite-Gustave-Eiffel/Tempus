@@ -163,7 +163,7 @@ class TestWPS(unittest.TestCase):
         self.wps.execute( 'plugin_list', {} )
 
         # non existing plugin
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'I dont exist_plugin' } ] ] }
+        plugin_arg = { 'plugin': ['plugin', {'name' : 'I dont exist_plugin' } ] }
         is_ex = False
         try:
             self.wps.execute( 'get_option_descriptions', plugin_arg )
@@ -172,7 +172,7 @@ class TestWPS(unittest.TestCase):
             is_ex=True
         self.assertEqual( is_ex, True )
 
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_road_plugin' } ] ] }
+        plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_road_plugin' } ] }
         self.wps.execute( 'get_option_descriptions', plugin_arg )
 
         # route that passes near a public transport line (Nantes data)
@@ -182,18 +182,17 @@ class TestWPS(unittest.TestCase):
         dy = 6688721.876838
 
         args = dict(plugin_arg.items())
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', 1 ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
+        args['request'] = ['request', 
+                           ['origin', ['x', str(ox)], ['y', str(oy)] ],
+                           ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
+                           ['optimizing_criterion', 1 ], 
+                           ['allowed_transport_types', 11 ],
+                           ['step',
+                            [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                            [ 'private_vehicule_at_destination', 'true' ]
                             ]
+                           ]
 
         outputs = self.wps.execute( 'select', args )
         n = 0
@@ -224,7 +223,7 @@ class TestWPS(unittest.TestCase):
 #       self.wps.execute( 'build', {} )
 #       self.assert_min_state( 3 )
 
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_multi_plugin' } ] ] }
+        plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_multi_plugin' } ] }
 
         # two road nodes that are linked to a public transport stop
         ox = 355349.238904
@@ -233,18 +232,17 @@ class TestWPS(unittest.TestCase):
         dy = 6687761.706782
 
         args = dict(plugin_arg.items())
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', 1 ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
+        args['request'] = ['request', 
+                           ['origin', ['x', str(ox)], ['y', str(oy)] ],
+                           ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
+                           ['optimizing_criterion', 1 ], 
+                           ['allowed_transport_types', 11 ],
+                           ['step',
+                            [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                            [ 'private_vehicule_at_destination', 'true' ]
                             ]
+                           ]
 
         outputs = self.wps.execute( 'select', args )
 
@@ -264,7 +262,7 @@ class TestWPS(unittest.TestCase):
 #       self.wps.execute( 'build', {} )
 #       self.assert_min_state( 3 )
 
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_pt_plugin' } ] ] }
+        plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_pt_plugin' } ] }
 
         # two road nodes that are linked to a public transport stop
         ox = 356118.752929
@@ -273,18 +271,17 @@ class TestWPS(unittest.TestCase):
         dy = 6689324.323148
 
         args = dict(plugin_arg.items())
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', 1 ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
+        args['request'] = ['request', 
+                           ['origin', ['x', str(ox)], ['y', str(oy)] ],
+                           ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
+                           ['optimizing_criterion', 1 ], 
+                           ['allowed_transport_types', 11 ],
+                           ['step',
+                            [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
+                            [ 'private_vehicule_at_destination', 'true' ]
                             ]
+                           ]
 
         outputs = self.wps.execute( 'select', args )
         n = 0
