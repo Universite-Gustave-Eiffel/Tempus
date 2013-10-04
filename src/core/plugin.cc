@@ -272,7 +272,7 @@ namespace Tempus
 		    }
 
 		    if ( is_road_pt ) {
-			std::string query = (boost::format( "SELECT st_asbinary(st_force2d(st_makeline(t1.geom, t2.geom))) from "
+			std::string query = (boost::format( "SELECT st_asbinary(st_force_2d(st_makeline(t1.geom, t2.geom))) from "
 							    "(select geom from tempus.road_node where id=%1%) as t1, "
 							    "(select geom from tempus.pt_stop where id=%2%) as t2" ) %
 					     road_id %
@@ -290,7 +290,7 @@ namespace Tempus
 		    
 		    //
 		    // retrieval of the step's geometry
-		    std::string q = (boost::format("SELECT st_asbinary(st_force2d(geom)) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%") %
+		    std::string q = (boost::format("SELECT st_asbinary(st_force_2d(geom)) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%") %
 				     pt_graph[step->section].stop_from % pt_graph[step->section].stop_to ).str();
 		    Db::Result res = db_.exec(q);
 		    std::string wkb = res[0][0].as<std::string>();
@@ -312,7 +312,7 @@ namespace Tempus
 
 		    //
 		    // retrieval of the step's geometry
-		    std::string q = (boost::format("SELECT st_asbinary(st_force2d(geom)) FROM tempus.road_section WHERE id=%1%") %
+		    std::string q = (boost::format("SELECT st_asbinary(st_force_2d(geom)) FROM tempus.road_section WHERE id=%1%") %
 				     road_graph[step->road_section].db_id ).str();
 		    Db::Result res = db_.exec(q);
 		    std::string wkb = res[0][0].as<std::string>();
