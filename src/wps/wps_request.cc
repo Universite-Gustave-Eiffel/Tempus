@@ -42,12 +42,12 @@ namespace WPS {
 
     int Request::process()
     {
-	if ( getenv("REQUEST_METHOD") == 0 )
+	if ( getParam("REQUEST_METHOD") == 0 )
 	{
 	    cerr << "This program is intended to be called from a web server, as a CGI" << endl;
 	    return 1;
 	}
-	string request_method = getenv( "REQUEST_METHOD" );
+	string request_method = getParam( "REQUEST_METHOD" );
     
 	// libxml inits
 	scoped_xmlDoc xml_doc;
@@ -60,7 +60,7 @@ namespace WPS {
 	map<string, string> query;
 	if ( request_method == "GET" )
 	{
-	    string query_string = getenv( "QUERY_STRING" );
+	    string query_string = getParam( "QUERY_STRING" );
 	    //
 	    // Parse GET parameters
 	    vector<string> strs;
@@ -82,7 +82,7 @@ namespace WPS {
 	else if ( request_method == "POST" )
 	{
 	    // Data should be in text/xml
-	    if ( string(getenv( "CONTENT_TYPE" )) != "text/xml" )
+	    if ( string(getParam( "CONTENT_TYPE" )) != "text/xml" )
 	    {
 		return print_error_status( 406, "Wrong content-type. Must be text/xml" );
 	    }
@@ -143,7 +143,7 @@ namespace WPS {
 	    outs_ << "Content-type: text/xml" << endl;
 	    outs_ << endl;
 
-	    WPS::Service::get_xml_capabilities( outs_ );
+	    WPS::Service::get_xml_capabilities( outs_, getParam("SCRIPT_NAME") );
 	    outs_.flush();
 	}
 	else if ( wps_request == "DescribeProcess" )
@@ -270,7 +270,7 @@ namespace WPS {
 		
 		outs_ << "Content-type: text/xml" << endl;
 		outs_ << endl;
-		service->get_xml_execute_response( outs_ );
+		service->get_xml_execute_response( outs_, getParam("REQUEST_URI") );
 	    }
 	    catch (std::invalid_argument& e)
 	    {

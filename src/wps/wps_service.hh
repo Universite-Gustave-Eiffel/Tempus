@@ -53,7 +53,7 @@ namespace WPS
 
 	///
 	/// Returns an XML string that represents results of an Execute operation
-	std::ostream& get_xml_execute_response( std::ostream& out );
+	std::ostream& get_xml_execute_response( std::ostream& out, const std::string & service_instance );
 
 	///
 	/// Global service map interface: returns a Service* based on a service name
@@ -68,7 +68,7 @@ namespace WPS
 
 	///
 	/// Global service map interface: returns an XML string that conforms to a 'GetCapabilities' operation
-	static std::ostream& get_xml_capabilities( std::ostream& out );
+	static std::ostream& get_xml_capabilities( std::ostream& out, const std::string & script_name );
 
     protected:
 	///
