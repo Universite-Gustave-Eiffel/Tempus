@@ -59,7 +59,7 @@ namespace WPS
 	    output_parameters_.clear();
 	    
 	    xmlNode* root_node = XML::new_node( "plugins" );
-	    std::vector<std::string> names( plugin_factory.plugin_list() );
+	    std::vector<std::string> names( LockMutexPtr<PluginFactory>(plugin_factory_mutex, &plugin_factory)->plugin_list() );
 	    for ( size_t i=0; i<names.size(); i++ )
 	    {
 		xmlNode* node = XML::new_node( "plugin" );
@@ -235,7 +235,7 @@ namespace WPS
 	    std::string plugin_str = XML::get_prop( plugin_node, "name" );
 	    
 	    xmlNode * options_node = XML::new_node( "options" );
-	    Plugin::OptionDescriptionList options = plugin_factory.option_descriptions(plugin_str);
+	    Plugin::OptionDescriptionList options = LockMutexPtr<PluginFactory>(plugin_factory_mutex, &plugin_factory)->option_descriptions(plugin_str);
 	    Plugin::OptionDescriptionList::iterator it;
 	    for ( it = options.begin(); it != options.end(); it++ )
 	    {
@@ -415,7 +415,7 @@ namespace WPS
 	    ensure_minimum_state( Application::GraphBuilt );
 	    xmlNode* plugin_node = input_parameter_map["plugin"];
 	    const std::string plugin_str = XML::get_prop( plugin_node, "name" );
-        std::auto_ptr<Plugin> plugin( plugin_factory.createPlugin( plugin_str ));
+        std::auto_ptr<Plugin> plugin( LockMutexPtr<PluginFactory>(plugin_factory_mutex, &plugin_factory)->createPlugin( plugin_str ));
         // pre_process
         {
             

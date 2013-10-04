@@ -115,11 +115,10 @@ namespace WPS
 	return out;
     }
 
-    std::ostream& Service::get_xml_execute_response( std::ostream& out )
+    std::ostream& Service::get_xml_execute_response( std::ostream& out, const std::string & service_instance )
     {
 	check_parameters( output_parameters_, output_parameter_schema_ );
 
-	string service_instance = getenv( "REQUEST_URI" );
 	out << "<wps:ExecuteResponse xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" serviceInstance=\"" << service_instance << "\">" << endl;
 	out << "  <wps:Process wps:processVersion=\"1\">" << endl;
 	out << "    <ows:Identifier>" << name_ << "</ows:Identifier>" << endl;
@@ -161,9 +160,8 @@ namespace WPS
 	return 0;
     }
 
-    std::ostream& Service::get_xml_capabilities( std::ostream& out )
+    std::ostream& Service::get_xml_capabilities( std::ostream& out, const std::string & script_name )
     {
-	string script_name = getenv( "SCRIPT_NAME" );
 	
 	out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	out << "<wps:Capabilities service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsGetCapabilities_response.xsd\" updateSequence=\"1\">\n";

@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include <boost/noncopyable.hpp>
+#include <boost/thread.hpp>
 
 #include "multimodal_graph.hh"
 #include "request.hh"
@@ -387,7 +388,25 @@ namespace Tempus
         typedef std::map<std::string, DllCreatePair> DllMap;
         DllMap dll_;
     };
-    static PluginFactory plugin_factory;
+    // use of volatile for shared resources is explaned here 
+    static volatile PluginFactory plugin_factory;
+    static boost::mutex plugin_factory_mutex;
+
+
+    template < typename T >
+    struct LockMutexPtr
+    {
+        LockMutexPtr( boost::mutex & mutex,volatile T * ptr)
+            :lock_( mutex )
+            ,ptr_( const_cast< T * >( ptr ) )
+        {}
+        T & operator*(){ return *ptr_; }
+        T * operator->(){ return ptr_; }
+    private:
+        T * ptr_;
+        boost::lock_guard< boost::mutex > lock_;
+    };
+
 }; // Tempus namespace
 
 
