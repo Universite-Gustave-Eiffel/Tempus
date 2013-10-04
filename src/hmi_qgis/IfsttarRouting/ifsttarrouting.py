@@ -188,7 +188,6 @@ class IfsttarRouting:
         QObject.connect(self.dlg.ui.connectBtn, SIGNAL("clicked()"), self.onConnect)
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
-        QObject.connect(self.dlg.ui.buildBtn, SIGNAL("clicked()"), self.onBuildGraphs)
 
         QObject.connect( self.dlg.ui.pluginCombo, SIGNAL("currentIndexChanged(int)"), self.update_plugin_options )
 
@@ -285,7 +284,6 @@ class IfsttarRouting:
         self.dlg.ui.dbOptionsText.setEnabled( True )
         self.dlg.ui.dbOptionsLbl.setEnabled( True )
         self.dlg.ui.pluginCombo.setEnabled( True )
-        self.dlg.ui.buildBtn.setEnabled( True )
 
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
@@ -395,26 +393,6 @@ class IfsttarRouting:
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
 
-    # when the 'build' button gets clicked
-    def onBuildGraphs(self):
-        if self.wps is None:
-            return
-
-        self.dlg.ui.buildBtn.setEnabled( False )
-        # get the db options
-        db_options = str(self.dlg.ui.dbOptionsText.text())
-
-        try:
-            self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ]] } )
-            self.wps.execute( 'pre_build', {} )
-            self.wps.execute( 'build', {} )
-        except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
-            return
-
-        self.updateState()
-        self.dlg.ui.buildBtn.setEnabled( True )
-        
     #
     # Take a XML tree from the WPS 'result' operation
     # add an 'Itinerary' layer on the map
@@ -880,9 +858,6 @@ class IfsttarRouting:
         # simulate a disconnection
         self.wps = None
         self.updateState()
-        self.dlg.ui.dbOptionsText.setEnabled( False )
-        self.dlg.ui.dbOptionsLbl.setEnabled( False )
-        self.dlg.ui.buildBtn.setEnabled( False )
 
     def unload(self):
         # Remove the plugin menu item and icon

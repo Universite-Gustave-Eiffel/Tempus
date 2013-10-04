@@ -40,7 +40,6 @@ class IfsttarRoutingDock(QDockWidget):
     #
     def loadState( self, state ):
         self.ui.wpsUrlText.setText( state['wps_url_text'] )
-        self.ui.dbOptionsText.setText( state['db_options'] )
         self.ui.pluginCombo.setCurrentIndex( state['plugin_selected'] )
         
         self.set_steps( state['nsteps'] )
@@ -57,7 +56,6 @@ class IfsttarRoutingDock(QDockWidget):
         state = {
             'wps_url_text': self.ui.wpsUrlText.text(),
             'plugin_selected': self.ui.pluginCombo.currentIndex(),
-            'db_options': self.ui.dbOptionsText.text(),
             'nsteps': self.nsteps(),
             'criteria' : self.get_selected_criteria(),
             'coordinates': self.get_coordinates(),
