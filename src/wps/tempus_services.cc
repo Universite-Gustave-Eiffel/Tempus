@@ -25,7 +25,7 @@ namespace WPS
 	int a_state = Application::instance()->state();
 	if ( a_state < state )
 	{
-	    std::string state_str = boost::lexical_cast<std::string>(a_state);
+	    std::string state_str = to_string(a_state);
 	    throw std::invalid_argument( "Invalid application state: " + state_str );
 	}
     }
@@ -242,7 +242,7 @@ namespace WPS
 		xmlNode* option_node = XML::new_node( "option" );
 		XML::new_prop( option_node, "name", it->first );
 		XML::new_prop( option_node, "type",
-			       boost::lexical_cast<std::string>( it->second.type ) );
+			       to_string( it->second.type ) );
 		XML::new_prop( option_node, "description", it->second.description );
 		XML::add_child( options_node, option_node );
 	    }
@@ -261,8 +261,8 @@ namespace WPS
 	string x_str = (const char*)x_node->children->content;
 	string y_str = (const char*)y_node->children->content;
 	
-	x = boost::lexical_cast<double>( x_str );
-	y = boost::lexical_cast<double>( y_str );
+	x = lexical_cast<double>( x_str );
+	y = lexical_cast<double>( y_str );
     }
     
     Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
@@ -396,7 +396,7 @@ namespace WPS
 
 	void parse_constraint( xmlNode* node, Request::TimeConstraint& constraint )
 	{
-	    constraint.type = boost::lexical_cast<int>( XML::get_prop( node, "type") );
+	    constraint.type = lexical_cast<int>( XML::get_prop( node, "type") );
 	    
 		std::string date_time = XML::get_prop( node, "date_time" );
 	    const char* date_time_str = date_time.c_str();
@@ -460,23 +460,23 @@ namespace WPS
                 // optimizing criteria
                 this->optimizing_criteria.clear();
                 field = XML::get_next_nontext( field->next );
-                this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+                this->optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
                 field = XML::get_next_nontext( field->next );   
                 while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
                 {
-                    this->optimizing_criteria.push_back( boost::lexical_cast<int>( field->children->content ) );
+                    this->optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
                     field = XML::get_next_nontext( field->next );       
                 }
             
                 // allowed transport types
-                this->allowed_transport_types = boost::lexical_cast<int>( field->children->content );
+                this->allowed_transport_types = lexical_cast<int>( field->children->content );
         
                 // allowed networks, 1 .. N
                 this->allowed_networks.clear();
                 field = XML::get_next_nontext( field->next );
                 while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
                 {
-                    Tempus::db_id_t network_id = boost::lexical_cast<Tempus::db_id_t>(field->children->content);
+                    Tempus::db_id_t network_id = lexical_cast<Tempus::db_id_t>(field->children->content);
                     this->allowed_networks.push_back( network_id );
                     field = XML::get_next_nontext( field->next );
                 }
@@ -560,7 +560,7 @@ namespace WPS
                         XML::add_child( rs_node, XML::new_text( road_name ));
                         
                         xmlNode* end_movement_node = XML::new_node( "end_movement" );
-                        XML::add_child( end_movement_node, XML::new_text( boost::lexical_cast<string>( step->end_movement ) ));
+                        XML::add_child( end_movement_node, XML::new_text( to_string( step->end_movement ) ));
                         
                         XML::add_child( step_node, rs_node );
                         XML::add_child( step_node, end_movement_node );
@@ -598,7 +598,7 @@ namespace WPS
                         XML::add_child( arrival_node, XML::new_text( arrival_str ));
                                                         
                         xmlNode* trip_node = XML::new_node( "trip" );
-                        XML::add_child( trip_node, XML::new_text( boost::lexical_cast<string>( step->trip_id ) ));
+                        XML::add_child( trip_node, XML::new_text( to_string( step->trip_id ) ));
                         XML::add_child( step_node, network_node );
                         XML::add_child( step_node, departure_node );
                         XML::add_child( step_node, arrival_node );
@@ -613,7 +613,7 @@ namespace WPS
                         const PublicTransport::Graph* pt_graph = 0;
                         db_id_t network_id = 0;
                         std::string stop_name, road_name;
-                        std::string type_str = boost::lexical_cast<std::string>( edge->connection_type());
+                        std::string type_str = to_string( edge->connection_type());
                         if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
                             road_graph = edge->source.road_graph;
                             pt_graph = edge->target.pt_graph;
@@ -659,10 +659,10 @@ namespace WPS
                         xmlNode* cost_node = XML::new_node( "cost" );
                         XML::new_prop( cost_node,
                                        "type",
-                                       boost::lexical_cast<string>( cit->first ) );
+                                       to_string( cit->first ) );
                         XML::new_prop( cost_node,
                                        "value",
-                                       boost::lexical_cast<string>( cit->second ) );
+                                       to_string( cit->second ) );
                         XML::add_child( step_node, cost_node );
                     }
 
@@ -678,10 +678,10 @@ namespace WPS
                     xmlNode* cost_node = XML::new_node( "cost" );
                     XML::new_prop( cost_node,
                                    "type",
-                                   boost::lexical_cast<string>( cit->first ) );
+                                   to_string( cit->first ) );
                     XML::new_prop( cost_node,
                                    "value",
-                                   boost::lexical_cast<string>( cit->second ) );
+                                   to_string( cit->second ) );
                     XML::add_child( result_node, cost_node );
                 }
 
