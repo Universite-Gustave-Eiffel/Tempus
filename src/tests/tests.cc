@@ -68,7 +68,7 @@ void DbTest::testQueries()
     connection_->exec( "INSERT INTO test_table (id, int_v, bigint_v) VALUES ('2', '-42', '10000000000')" );
     connection_->exec( "INSERT INTO test_table (str_v) VALUES ('Hello world')" );
     connection_->exec( "INSERT INTO test_table (time_v) VALUES ('13:52:45')" );
-    Db::Result res = connection_->exec( "SELECT * FROM test_table" );
+    Db::Result res( connection_->exec( "SELECT * FROM test_table" ));
     
     CPPUNIT_ASSERT_EQUAL( (size_t)4, res.size() );
     CPPUNIT_ASSERT_EQUAL( (size_t)5, res.columns() );
@@ -105,22 +105,29 @@ void PgImporterTest::testConsistency()
     importer_->import_graph( graph_ );
 
     // get the number of vertices in the graph
-    Db::Result res = importer_->query( "SELECT COUNT(*) FROM tempus.road_node" );
-    CPPUNIT_ASSERT( res.size() == 1 );
-    long n_road_vertices = res[0][0].as<long>();
-    res = importer_->query( "SELECT COUNT(*) FROM tempus.road_section" );
-    CPPUNIT_ASSERT( res.size() == 1 );
-    long n_road_edges = res[0][0].as<long>();
+    long n_road_vertices, n_road_edges;
+    {
+        Db::Result res( importer_->query( "SELECT COUNT(*) FROM tempus.road_node" ));
+        CPPUNIT_ASSERT( res.size() == 1 );
+        n_road_vertices = res[0][0].as<long>();
+    }
+    {
+        Db::Result res( importer_->query( "SELECT COUNT(*) FROM tempus.road_section" ));
+        CPPUNIT_ASSERT( res.size() == 1 );
+        n_road_edges = res[0][0].as<long>();
+    }
     COUT << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges << endl;
     CPPUNIT_ASSERT( n_road_vertices = boost::num_vertices( graph_.road ) );
     CPPUNIT_ASSERT( n_road_edges = boost::num_edges( graph_.road ) );
     
     // number of PT networks
-    res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_network" );
-    long n_networks = res[0][0].as<long>();
-	
-    CPPUNIT_ASSERT_EQUAL( (size_t)n_networks, graph_.public_transports.size() );
-    CPPUNIT_ASSERT_EQUAL( (size_t)n_networks, graph_.network_map.size() );
+    {
+        Db::Result res( importer_->query( "SELECT COUNT(*) FROM tempus.pt_network" ));
+        long n_networks = res[0][0].as<long>();
+            
+        CPPUNIT_ASSERT_EQUAL( (size_t)n_networks, graph_.public_transports.size() );
+        CPPUNIT_ASSERT_EQUAL( (size_t)n_networks, graph_.network_map.size() );
+    }
 
     Multimodal::Graph::PublicTransportGraphList::iterator it;
     for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )
@@ -128,12 +135,18 @@ void PgImporterTest::testConsistency()
 	db_id_t id = it->first;
 	PublicTransport::Graph& pt_graph = it->second;
 
-	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_stop" );
-	CPPUNIT_ASSERT( res.size() == 1 );
-	long n_pt_vertices = res[0][0].as<long>();
-	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_section" );
-	CPPUNIT_ASSERT( res.size() == 1 );
-	long n_pt_edges = res[0][0].as<long>();
+        long n_pt_vertices, n_pt_edges;
+        {
+            Db::Result res( importer_->query( "SELECT COUNT(*) FROM tempus.pt_stop" ));
+	    CPPUNIT_ASSERT( res.size() == 1 );
+	    n_pt_vertices = res[0][0].as<long>();
+        }
+	
+        {
+            Db::Result res( importer_->query( "SELECT COUNT(*) FROM tempus.pt_section" ));
+            CPPUNIT_ASSERT( res.size() == 1 );
+            n_pt_edges = res[0][0].as<long>();
+        }
 	COUT << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt_graph) = " << num_vertices(pt_graph) << std::endl;
 	CPPUNIT_ASSERT( n_pt_vertices = boost::num_vertices( pt_graph ) );
 	COUT << "n_pt_edges = " << n_pt_edges << " num_edges(pt_graph) = " << num_edges(pt_graph) << std::endl;

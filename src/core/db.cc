@@ -4,6 +4,8 @@
 
 namespace Db
 {
+    boost::mutex Connection::mutex;
+
     template <>
     bool Value::as<bool>()
     {

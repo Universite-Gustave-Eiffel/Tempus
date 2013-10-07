@@ -71,7 +71,6 @@ namespace Tempus
 
 	virtual void post_build()
 	{
-	    graph_ = Application::instance()->graph();
             Road::Graph& road_graph = graph_.road;
 
             automaton_.clear();

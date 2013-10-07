@@ -27,7 +27,7 @@
 
 #define IOSTREAM_OUTPUT_LOCATION
 #ifdef IOSTREAM_OUTPUT_LOCATION
-#   define TEMPUS_LOCATION __FILE__ << ":" << __LINE__
+#   define TEMPUS_LOCATION __FILE__ << ":" << __LINE__ << " "
 #else
 #   define TEMPUS_LOCATION ""
 #endif

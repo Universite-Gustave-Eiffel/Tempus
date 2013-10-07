@@ -51,7 +51,6 @@ namespace Tempus
     public:
 	virtual void post_build()
 	{
-	    graph_ = Application::instance()->graph();
 	}
 
 	virtual void pre_process( Request& request ) throw (std::invalid_argument)

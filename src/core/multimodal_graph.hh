@@ -122,7 +122,7 @@ namespace Tempus
 
 	///
 	/// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
-	struct Graph
+	struct Graph: boost::noncopyable
 	{
             // declaration for boost::graph
             typedef Tempus::Multimodal::Vertex          vertex_descriptor;

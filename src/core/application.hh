@@ -73,9 +73,11 @@ namespace Tempus
 	///
 	/// Graph accessor (non const)
 	Multimodal::Graph& graph() { return graph_; }
+
     protected:
 	// private constructor
-	Application() {}
+	Application() 
+        {}
 
 	Db::Connection db_;
 	std::string db_options_;
