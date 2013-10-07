@@ -10,6 +10,8 @@
 import sqlite3
 import os
 from datetime import datetime
+from zipfile import *
+import tempfile
 
 class HistoryFile(object):
 
@@ -51,3 +53,57 @@ class HistoryFile(object):
         r = cursor.fetchone()
         cursor.close()
         return r
+
+class ZipHistoryFile(object):
+
+    def __init__( self, filename ):
+        self.filename = filename
+
+        self.zf = None
+        self.reset()
+
+    def __del__( self ):
+        self.zf.close()
+
+    def reset( self ):
+        if self.zf:
+            self.zf.close()
+        self.zf = ZipFile( self.filename, 'a')
+        self.lastid = 0
+        for info in self.zf.infolist():
+            n = int(info.filename)
+            if n > self.lastid:
+                self.lastid = n
+
+    def addRecord( self, record ):
+        f = tempfile.NamedTemporaryFile( delete = False)
+        f.write( record.encode('utf-8') )
+        f.close()
+        self.lastid = self.lastid+1
+        n = "%d" % self.lastid
+        self.zf.write( f.name, n )
+
+        self.reset()
+
+    def removeRecord( self, id ):
+        # TODO
+        pass
+
+    def getRecordsSummary( self ):
+        self.reset()
+        infos = self.zf.infolist()
+        r = []
+        for info in infos:
+            if info.filename != 'lastid':
+                t = info.date_time
+                dt = "%04d-%02d-%02dT%02d:%02d:%02d.0" % t
+                r.append( [int(info.filename), dt] )
+        return r
+
+    def getRecord( self, id ):
+        f = str(id)
+        info = self.zf.getinfo( f )
+        dt =  "%04d-%02d-%02dT%02d:%02d:%02d.0" % info.date_time
+        ff = self.zf.open( f, 'r' )
+        tt = ff.read()
+        return (id, dt, tt )

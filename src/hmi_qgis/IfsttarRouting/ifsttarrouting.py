@@ -44,7 +44,7 @@ from ifsttarroutingdock import IfsttarRoutingDock
 # Import the splash screen
 from ui_splash_screen import Ui_SplashScreen
 
-from history_file import HistoryFile
+from history_file import ZipHistoryFile
 
 from result_selection import ResultSelection
 
@@ -167,7 +167,7 @@ class IfsttarRouting:
                 QCoreApplication.installTranslator(self.translator)
 
         self.wps = None
-        self.historyFile = HistoryFile( HISTORY_FILE )
+        self.historyFile = ZipHistoryFile( HISTORY_FILE )
 
         # list of transport types
         self.transport_types = {}
@@ -747,7 +747,6 @@ class IfsttarRouting:
         options.insert( 0, 'options' )
         args['options'] = options
 
-        print args
         try:
             outputs = self.wps.execute( 'select', args )
         except RuntimeError as e:
@@ -778,10 +777,7 @@ class IfsttarRouting:
         for k,v in self.save.iteritems():
             pson.append( v )
 
-        print pson
         str_record = to_xml(pson)
-        print str_record
-
         self.historyFile.addRecord( str_record )
 
     def onHistoryItemSelect( self, item ):
@@ -797,6 +793,7 @@ class IfsttarRouting:
         id = item.data( Qt.UserRole )
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
+        print xmlStr
         tree = ET.XML(xmlStr)
         loaded = {}
         for child in tree:
