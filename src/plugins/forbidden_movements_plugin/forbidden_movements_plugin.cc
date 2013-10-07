@@ -51,7 +51,7 @@ namespace Tempus
             return odl; 
         }
 
-	ForbiddenMovementPlugin( Db::Connection& db ) : Plugin( "forbidden_movements_plugin", db )
+	ForbiddenMovementPlugin( const std::string& name, Db::Connection& db ) : Plugin( name, db )
 	{
             OptionDescriptionList odl(option_descriptions());
             odl.set_options_default_value(this);
@@ -233,7 +233,7 @@ namespace Tempus
     };
 
 }
-DECLARE_TEMPUS_PLUGIN( Tempus::ForbiddenMovementPlugin );
+DECLARE_TEMPUS_PLUGIN( "forbidden_movements", Tempus::ForbiddenMovementPlugin );
 
 
 

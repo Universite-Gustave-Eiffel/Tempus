@@ -173,7 +173,6 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( is_ex, True )
 
         plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_road_plugin' } ] }
-        self.wps.execute( 'get_option_descriptions', plugin_arg )
 
         # route that passes near a public transport line (Nantes data)
         ox = 356241.225231
@@ -193,6 +192,7 @@ class TestWPS(unittest.TestCase):
                             [ 'private_vehicule_at_destination', 'true' ]
                             ]
                            ]
+        args['options'] = [ 'options', [ 'option', { 'name' : 'trace_vertex', 'value' : '1' } ] ]
 
         outputs = self.wps.execute( 'select', args )
         n = 0
@@ -200,6 +200,16 @@ class TestWPS(unittest.TestCase):
             if step.tag != 'cost':
                 n += 1
         self.assertEqual( n, 12 )
+
+        # run without options
+        args['options'] = [ 'options']
+        is_ex = False
+        try:
+            self.wps.execute( 'select', args )
+        except RuntimeError as e:
+            is_ex=True
+        self.assertEqual( is_ex, False )
+
 
     def test_constants( self ):
 #       self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
@@ -244,6 +254,8 @@ class TestWPS(unittest.TestCase):
                             ]
                            ]
 
+        args['options'] = [ 'options' ]
+
         outputs = self.wps.execute( 'select', args )
 
         n = 0
@@ -282,6 +294,8 @@ class TestWPS(unittest.TestCase):
                             [ 'private_vehicule_at_destination', 'true' ]
                             ]
                            ]
+
+        args['options'] = [ 'options' ]
 
         outputs = self.wps.execute( 'select', args )
         n = 0

@@ -37,10 +37,8 @@ namespace Tempus
             return odl; 
         }
 
-	RoadPlugin( Db::Connection& db ) : Plugin( "road_plugin", db )
+	RoadPlugin( const std::string& name, Db::Connection& db ) : Plugin( name, db )
 	{
-            OptionDescriptionList odl(option_descriptions());
-            odl.set_options_default_value(this);
 	}
 
 	virtual ~RoadPlugin()
@@ -71,6 +69,7 @@ namespace Tempus
 	    request_ = request;
 
 	    get_option( "trace_vertex", trace_vertex_ );
+            COUT << "trace_vertex: " << trace_vertex_ << std::endl;
 
 	    result_.clear();
 	}
@@ -205,7 +204,7 @@ namespace Tempus
 	}
     };
 }
-DECLARE_TEMPUS_PLUGIN( Tempus::RoadPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_road_plugin", Tempus::RoadPlugin );
 
 
 

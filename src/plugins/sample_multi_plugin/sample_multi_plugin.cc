@@ -32,10 +32,8 @@ namespace Tempus
 
         static const OptionDescriptionList option_descriptions(){ return OptionDescriptionList(); }
 
-	MultiPlugin( Db::Connection& db ) : Plugin( "multiplugin", db )
+	MultiPlugin( const std::string& name, Db::Connection& db ) : Plugin( name, db )
 	{
-            OptionDescriptionList odl(option_descriptions());
-            odl.set_options_default_value(this);
 	}
 
 	virtual ~MultiPlugin()
@@ -351,4 +349,4 @@ namespace Tempus
 
     };
 }
-DECLARE_TEMPUS_PLUGIN( Tempus::MultiPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_multi_plugin", Tempus::MultiPlugin );
