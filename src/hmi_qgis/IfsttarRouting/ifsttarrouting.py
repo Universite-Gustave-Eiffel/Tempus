@@ -183,6 +183,8 @@ class IfsttarRouting:
         # option desc
         self.options = {}
 
+        self.setStateText("DISCONNECTED")
+
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(QIcon(":/plugins/ifsttarrouting/icon.png"), \
@@ -215,6 +217,8 @@ class IfsttarRouting:
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )
 
         # init the history
         self.loadHistory()
@@ -248,6 +252,10 @@ class IfsttarRouting:
         self.dlg.ui.pluginCombo.setEnabled( True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+        self.dlg.ui.computeBtn.setEnabled( True )
+        self.setStateText("connected")
 
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
@@ -825,6 +833,8 @@ class IfsttarRouting:
         
         # simulate a disconnection
         self.wps = None
+        self.dlg.ui.computeBtn.setEnabled(False)
+        self.setStateText("DISCONNECTED")
 
     def unload(self):
         # Remove the plugin menu item and icon
