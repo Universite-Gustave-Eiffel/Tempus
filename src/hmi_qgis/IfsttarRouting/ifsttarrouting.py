@@ -169,10 +169,6 @@ class IfsttarRouting:
         self.wps = None
         self.historyFile = HistoryFile( HISTORY_FILE )
 
-        # list of option descriptions
-        self.options = {}
-        # list of option values
-        self.options_value = {}
         # list of transport types
         self.transport_types = {}
         #list of public networks
@@ -183,6 +179,9 @@ class IfsttarRouting:
 
         # where to store plugin options
         self.plugin_options = {}
+
+        # option desc
+        self.options = {}
 
     def initGui(self):
         # Create action that will start plugin configuration
@@ -267,20 +266,17 @@ class IfsttarRouting:
         self.options = outputs['options']
 
         # initialize options
-        poptions = {}
-        if self.plugin_options.has_key( plugin_name ):
-            poptions = self.plugin_options[plugin_name]
+        opt_values = {}
+        if len(self.plugin_options[plugin_name]) > 0:
+            opt_values = self.plugin_options[plugin_name]
         else:
-            a = {}
             for option in self.options:
                 k = option.attrib['name']
-                a[k] = ''
-            poptions = a
+                opt_values[k] = ''
 
-        self.plugin_options[plugin_name] = poptions
-        print self.plugin_options
+        self.plugin_options[plugin_name] = opt_values
 
-        self.displayPluginOptions( plugin_name, self.options, poptions )
+        self.displayPluginOptions( plugin_name, self.options, opt_values )
 
     def onTabChanged( self, tab ):
         # Plugin tab
@@ -336,12 +332,7 @@ class IfsttarRouting:
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
         # bool
         if option_type == 0:
-            val = 1 if val else 0
-        # int
-        elif option_type == 1:
-            val = int(val)
-        elif option_type == 2:
-            val = float(val)
+            val = '1' if val else 0
 
         self.plugin_options[plugin_name][option_name] = val
 
@@ -545,14 +536,14 @@ class IfsttarRouting:
         self.dlg.ui.pluginCombo.clear()
         for plugin in plugins:
             self.dlg.ui.pluginCombo.insertItem(0, plugin.attrib['name'] )
+            self.plugin_options[plugin.attrib['name']] = {}
         self.dlg.ui.pluginCombo.setCurrentIndex( selection )
 
     #
-    # Take XML trees of 'options' and 'option_values'
+    # Take XML tree of 'options' and a dict 'option_values'
     # and fill the options part of the 'plugin' tab
     #
     def displayPluginOptions( self, plugin_name, options, options_value ):
-
         lay = self.dlg.ui.optionsLayout
         clearLayout( lay )
 
@@ -569,7 +560,7 @@ class IfsttarRouting:
             # bool type
             if t == 0:
                 widget = QCheckBox( self.dlg )
-                if val == 1:
+                if val == '1':
                     widget.setCheckState( Qt.Checked )
                 else:
                     widget.setCheckState( Qt.Unchecked )
@@ -766,21 +757,14 @@ class IfsttarRouting:
         self.save['request'] = args['request']
         self.save['results'] = to_pson(outputs['results'])
         self.save['metrics'] = to_pson(outputs['metrics'])
-
-        #
-        # Add the query / result to the history
-        #
-#        record = { 'query' : self.dlg.saveState(),
-#                   'plugins' : self.plugins,
-#                   'current_plugin' : currentPluginIdx,
-#                   'plugin_options' : self.options,
-#                   'plugin_options_value' : self.options_value,
-#                   'transport_types' : self.save['transport_types'],
-#                   'transport_networks' : self.save['transport_networks'],
-#                   'selected_networks' : self.dlg.selected_networks(),
-#                   'selected_transports' : self.dlg.selected_transports(),
-#                   'metrics' : self.save['metrics'],
-#                   'results' : self.save['results'] }
+        # save options
+        # merge option desc and values
+        options = [ 'options' ]
+        for option in self.options:
+            a = option.attrib # name, type, description
+            a['value'] = self.plugin_options[currentPlugin][option.attrib['name']]
+            options.append( [ 'option', a ] )
+        self.save['options'] = options
 
         pson = [ 'save' ]
         for k,v in self.save.iteritems():
@@ -806,31 +790,32 @@ class IfsttarRouting:
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
         tree = ET.XML(xmlStr)
+        loaded = {}
         for child in tree:
-            self.save[ child.tag ] = child
-
-        # unserialize the raw data
-        #v = pickle.loads( r[2] )
+            loaded[ child.tag ] = child
 
         # update UI
-        self.dlg.loadFromXML( self.save['request'] )
+        self.dlg.loadFromXML( loaded['request'] )
 
-        # FIXME
-        self.displayPlugins( self.save['plugins'], 0);
+        self.displayPlugins( loaded['plugins'], 0);
+        
+        opt_values = {}
+        options = loaded['options']
+        for option in options:
+            k = option.attrib['name']
+            v = option.attrib['value']
+            opt_values[k] = v
+        # option is reused as option_desc here
+        currentPlugin = loaded['plugin'].attrib['name']
+        self.plugin_options[currentPlugin] = opt_values
+        self.displayPluginOptions( currentPlugin, loaded['options'], opt_values )
 
-        #self.options = v['plugin_options']
-        #self.options_value = v['plugin_options_value']
-        #self.displayPluginOptions( self.options, self.options_value )
-
-        self.transport_types = self.save['transport_types']
-        self.networks = self.save['transport_networks']
+        self.transport_types = loaded['transport_types']
+        self.networks = loaded['transport_networks']
         self.displayTransportAndNetworks( self.transport_types, self.networks )
 
-        #self.dlg.set_selected_networks( v['selected_networks'] )
-        #self.dlg.set_selected_transports( v['selected_transports'] )
-
-        self.displayMetrics( self.save['metrics'] )
-        self.displayResults( self.save['results'] )
+        self.displayMetrics( loaded['metrics'] )
+        self.displayResults( loaded['results'] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
