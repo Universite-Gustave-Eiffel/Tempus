@@ -10,6 +10,7 @@
 
 #include <map>
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
@@ -24,6 +25,7 @@
 /// find easilly where à given print is done.
 /// 
 
+#define IOSTREAM_OUTPUT_LOCATION
 #ifdef IOSTREAM_OUTPUT_LOCATION
 #   define TEMPUS_LOCATION __FILE__ << ":" << __LINE__
 #else
@@ -59,6 +61,29 @@
 namespace Tempus
 {
     extern boost::mutex iostream_mutex; // its a plain old global variable
+
+    // because boost::lexical_cast calls locale, which is not thread safe
+    template <typename TOUT>
+    TOUT lexical_cast(const std::string & in)
+    {
+        TOUT out;
+        if( !(std::istringstream(in) >> out) ) throw std::runtime_error("cannot cast " + in + " to " + typeid(TOUT).name());
+        return out;
+    }
+
+    template <typename TOUT>
+    TOUT lexical_cast( const unsigned char * in) // for xmlChar*
+    {
+        return lexical_cast<TOUT>(std::string(reinterpret_cast<const char*>(in)));
+    }
+
+    template <typename TIN>
+    std::string to_string(const TIN & in)
+    {
+        std::stringstream ss;
+        ss << in;
+        return ss.str();
+    }
 
     ///
     /// Type used inside the DB to store IDs.

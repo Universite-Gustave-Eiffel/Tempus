@@ -20,7 +20,7 @@ namespace WPS {
 
     int Request::print_error_status( int status, const std::string& msg )
     {
-	outs_ << "Status: " + boost::lexical_cast<string>(status) + " " + msg << endl;
+	outs_ << "Status: " << status << " " << msg << endl;
 	outs_ << "Content-type: text/html" << endl;
 	outs_ << endl;
 	outs_ << "<h2>" + msg + "</h2>" << endl;
