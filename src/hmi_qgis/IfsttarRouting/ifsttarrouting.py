@@ -181,6 +181,9 @@ class IfsttarRouting:
         # list of things to save onto history
         self.save = {}
 
+        # where to store plugin options
+        self.plugin_options = {}
+
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(QIcon(":/plugins/ifsttarrouting/icon.png"), \
@@ -253,7 +256,8 @@ class IfsttarRouting:
         if self.wps is None:
             return
 
-        plugin_arg = { 'plugin' : ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ] }
+        plugin_name = str(self.dlg.ui.pluginCombo.currentText())
+        plugin_arg = { 'plugin' : ['plugin', {'name' : plugin_name } ] }
 
         try:
             outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
@@ -261,15 +265,22 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
         self.options = outputs['options']
-        
-        try:
-            outputs = self.wps.execute( 'get_options', plugin_arg )
-        except RuntimeError as e:
-            QMessageBox.warning( None, "Error", e.args[1] )
-            return
-        self.options_value = outputs['options']
-        
-        self.displayPluginOptions( self.options, self.options_value )
+
+        # initialize options
+        poptions = {}
+        if self.plugin_options.has_key( plugin_name ):
+            poptions = self.plugin_options[plugin_name]
+        else:
+            a = {}
+            for option in self.options:
+                k = option.attrib['name']
+                a[k] = ''
+            poptions = a
+
+        self.plugin_options[plugin_name] = poptions
+        print self.plugin_options
+
+        self.displayPluginOptions( plugin_name, self.options, poptions )
 
     def onTabChanged( self, tab ):
         # Plugin tab
@@ -322,10 +333,7 @@ class IfsttarRouting:
         # reload
         self.loadHistory()
 
-    def onOptionChanged( self, option_name, option_type, val ):
-        if self.wps is None:
-            return
-
+    def onOptionChanged( self, plugin_name, option_name, option_type, val ):
         # bool
         if option_type == 0:
             val = 1 if val else 0
@@ -335,13 +343,7 @@ class IfsttarRouting:
         elif option_type == 2:
             val = float(val)
 
-        args = { 'plugin' : ['plugin', {'name' : str(self.dlg.ui.pluginCombo.currentText())} ],
-                 'options': ['options', ['option', {'name' : option_name, 'value' : str(val) } ] ] }
-
-        try:
-            outputs = self.wps.execute( 'set_options', args )
-        except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+        self.plugin_options[plugin_name][option_name] = val
 
     #
     # Take a XML tree from the WPS 'result' operation
@@ -549,10 +551,7 @@ class IfsttarRouting:
     # Take XML trees of 'options' and 'option_values'
     # and fill the options part of the 'plugin' tab
     #
-    def displayPluginOptions( self, options, options_value ):
-        option_value = {}
-        for option_val in options_value:
-            option_value[ option_val.attrib['name'] ] = option_val.attrib['value']
+    def displayPluginOptions( self, plugin_name, options, options_value ):
 
         lay = self.dlg.ui.optionsLayout
         clearLayout( lay )
@@ -566,15 +565,15 @@ class IfsttarRouting:
             
             t = int(option.attrib['type'])
             
-            val = option_value[name]
+            val = options_value[name]
             # bool type
             if t == 0:
                 widget = QCheckBox( self.dlg )
-                if val == '1':
+                if val == 1:
                     widget.setCheckState( Qt.Checked )
                 else:
                     widget.setCheckState( Qt.Unchecked )
-                QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=name, t=t: self.onOptionChanged( name, t, checked ) )
+                QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, checked ) )
             else:
                 widget = QLineEdit( self.dlg )
                 if t == 1:
@@ -584,7 +583,7 @@ class IfsttarRouting:
                     valid = QDoubleValidator( widget )
                     widget.setValidator( valid )
                 widget.setText( val )
-                QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t: self.onOptionChanged( name, t, text ) )
+                QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, text ) )
             lay.setWidget( row, QFormLayout.FieldRole, widget )
             
             row += 1
@@ -743,6 +742,12 @@ class IfsttarRouting:
 
         args = plugin_arg
         args['request'] = r
+
+        # plugin options processing
+        options = [ [ 'option', { 'name':k, 'value':str(v)}] for k,v in self.plugin_options[currentPlugin].iteritems() ]
+        options.insert( 0, 'options' )
+        args['options'] = options
+
         print args
         try:
             outputs = self.wps.execute( 'select', args )
