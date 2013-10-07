@@ -45,8 +45,14 @@ namespace Tempus
             throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
             FreeLibrary( h );
         }
-        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) GetProcAddress( h, "optDescFct" );
+        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) GetProcAddress( h, "optionDescriptions" );
         if ( optDescFct == NULL )
+        {
+            throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
+            FreeLibrary( h );
+        }
+        Dll::PluginNameFct nameFct = (Dll::PluginNameFct) GetProcAddress( h, "plugin_name" );
+        if ( nameFct == NULL )
         {
             throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
             FreeLibrary( h );
@@ -63,16 +69,23 @@ namespace Tempus
             dlclose( h );
             throw std::runtime_error( dlerror() );
         }
-        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct)dlsym( h, "option_descriptions" );
+        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct)dlsym( h, "optionDescriptions" );
         if ( optDescFct == 0 )
+        {
+            dlclose( h );
+            throw std::runtime_error( dlerror() );
+        }
+        Dll::PluginNameFct nameFct = (Dll::PluginNameFct)dlsym( h, "pluginName" );
+        if ( nameFct == 0 )
         {
             dlclose( h );
             throw std::runtime_error( dlerror() );
         }
 #endif
         Dll dll = { h, createFct, optDescFct };
-        dll_.insert( std::make_pair( dll_name, dll ) );
-        COUT << "loaded " << dll_name << "\n";
+        const std::string pluginName = (*nameFct)();
+        dll_.insert( std::make_pair( pluginName, dll ) );
+        COUT << "loaded " << pluginName << " from " << dll_name << "\n";
     }
 
     std::vector<std::string> PluginFactory::plugin_list() const
@@ -117,11 +130,40 @@ namespace Tempus
 	metrics_[ "iterations" ] = (int)0;
     }
 
+    template <class T>
+    void Plugin::get_option( const std::string& name, T& value )
+    {
+        const OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
+        OptionDescriptionList::const_iterator descIt = desc.find( name );
+        if ( descIt == desc.end() )
+        {
+            throw std::runtime_error( "get_option(): cannot find option " + name );
+        }
+        if ( options_.find( name ) == options_.end() )
+        {
+            // return default value
+            value = boost::any_cast<T>( descIt->second.default_value );
+            return;
+        }
+        boost::any v = options_[name];
+        if ( !v.empty() )
+        {
+            value = boost::any_cast<T>(options_[name]);
+        }
+    }
+    // template instanciations
+    template void Plugin::get_option<bool>( const std::string&, bool& );
+    template void Plugin::get_option<int>( const std::string&, int& );
+    template void Plugin::get_option<double>( const std::string&, double& );
+    template void Plugin::get_option<std::string>( const std::string&, std::string& );
+
     void Plugin::set_option_from_string( const std::string& name, const std::string& value)
     {
-	if ( options_descriptions_.find( name ) == options_descriptions_.end() )
+        const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
+        Plugin::OptionDescriptionList::const_iterator descIt = desc.find( name );
+	if ( descIt == desc.end() )
 	    return;
-	OptionType t = options_descriptions_[name].type;
+	const OptionType t = descIt->second.type;
 	switch (t)
 	{
 	case BoolOption:
@@ -143,11 +185,13 @@ namespace Tempus
 
     std::string Plugin::option_to_string( const std::string& name )
     {
-	if ( options_descriptions_.find( name ) == options_descriptions_.end() )
+        const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
+        Plugin::OptionDescriptionList::const_iterator descIt = desc.find( name );
+	if ( descIt == desc.end() )
 	{
 	    throw std::invalid_argument( "Cannot find option " + name );
 	}
-	OptionType t = options_descriptions_[name].type;
+	OptionType t = descIt->second.type;
 	boost::any value = options_[name];
 	if ( value.empty() )
 	    return "";

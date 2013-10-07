@@ -320,6 +320,18 @@ namespace WPS
 				 "<xs:element name=\"request\" type=\"Request\"/>\n"
 				 );
 
+	    add_input_parameter( "options",
+				  "<xs:complexType name=\"Option\">\n"
+				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
+				  "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
+				  "</xs:complexType>\n"
+				  "<xs:complexType name=\"Options\">\n"
+				  "  <xs:sequence>\n"
+				  "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+				  "  </xs:sequence>\n"
+				  "</xs:complexType>\n"
+				  "<xs:element name=\"options\" type=\"Options\"/>\n" );
+
 	    add_output_parameter( "results",
 				  "<xs:complexType name=\"DbId\">\n"
 				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n" // db_id
@@ -416,9 +428,22 @@ namespace WPS
             xmlNode* plugin_node = input_parameter_map["plugin"];
             const std::string plugin_str = XML::get_prop( plugin_node, "name" );
             std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_str ));
+
+            // get options
+            xmlNode* options_node = input_parameter_map["options"];
+            xmlNode* field = XML::get_next_nontext( options_node->children );
+            while ( field && !xmlStrcmp( field->name, (const xmlChar*)"option" ) )
+            {
+		std::string name = XML::get_prop( field, "name" );
+                std::string value = XML::get_prop( field, "value" );
+
+                COUT << "set option " << name << " to " << value << std::endl;
+                plugin->set_option_from_string( name, value );
+                field = XML::get_next_nontext( field->next );       
+            }
+
             // pre_process
             {
-            
                 double x,y;
                 Db::Connection& db = Application::instance()->db_connection();
             

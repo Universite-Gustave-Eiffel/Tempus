@@ -117,18 +117,8 @@ namespace Tempus
 	///
 	/// Method used to get an option value
 	template <class T>
-	void get_option( const std::string& name, T& value)
-	{
-	    if ( options_.find( name ) == options_.end() )
-	    {
-		throw std::runtime_error( "get_option(): cannot find option " + name );
-	    }
-	    boost::any v = options_[name];
-	    if ( !v.empty() )
-	    {
-		value = boost::any_cast<T>(options_[name]);
-	    }
-	}
+	void get_option( const std::string& name, T& value);
+
 	///
 	/// Method used to get an option value, alternative signature.
 	template <class T>
@@ -159,7 +149,7 @@ namespace Tempus
 
 	///
 	/// Ctor
-	Plugin( const std::string& dll_name, Db::Connection& db );
+	Plugin( const std::string&, Db::Connection& db );
 	
 	///
 	/// Called when the plugin is unloaded from memory (uninstall)
@@ -248,7 +238,6 @@ namespace Tempus
 	Db::Connection db_; // each plugin has it's own connection
 	
 	/// Plugin option management
-	OptionDescriptionList options_descriptions_;
 	OptionValueList options_;
 
 	MetricValueList metrics_;
@@ -386,8 +375,9 @@ namespace Tempus
 
         struct Dll 
         {
-            typedef Plugin* (*PluginCreationFct)( Db::Connection& );
+            typedef Plugin*                             (*PluginCreationFct)( Db::Connection& );
             typedef const Plugin::OptionDescriptionList (*PluginOptionDescriptionFct)();
+            typedef const std::string                   (*PluginNameFct)();
             HMODULE           handle_;
             PluginCreationFct create;
             PluginOptionDescriptionFct options_description;
@@ -407,9 +397,10 @@ namespace Tempus
 ///
 /// Macro used inside plugins.
 /// This way, the constructor will be called on library loading and the destructor on library unloading
-#define DECLARE_TEMPUS_PLUGIN( type ) \
-    extern "C" EXPORT Tempus::Plugin* createPlugin( Db::Connection& db ) { return new type( db ); } \
-    extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList option_descriptions( ) { return type::option_descriptions(); } \
-    extern "C" EXPORT void deletePlugin(Tempus::Plugin* p_) { delete p_; }
+#define DECLARE_TEMPUS_PLUGIN( name, type )                              \
+    extern "C" EXPORT Tempus::Plugin*                             createPlugin( Db::Connection& db ) { return new type( name, db ); } \
+    extern "C" EXPORT const std::string                           pluginName() { return name; } \
+    extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList optionDescriptions( ) { return type::option_descriptions(); } \
+    extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; }
 
 #endif

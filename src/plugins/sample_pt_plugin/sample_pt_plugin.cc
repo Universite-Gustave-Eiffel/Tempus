@@ -37,10 +37,8 @@ namespace Tempus
         
         static const OptionDescriptionList option_descriptions(){ return OptionDescriptionList(); }
 
-	PtPlugin( Db::Connection& db ) : Plugin( "myplugin", db )
+	PtPlugin( const std::string & name, Db::Connection& db ) : Plugin( name, db )
 	{
-            OptionDescriptionList odl(option_descriptions());
-            odl.set_options_default_value(this);
 	}
 
 	virtual ~PtPlugin()
@@ -208,7 +206,7 @@ namespace Tempus
 
     };
 }
-DECLARE_TEMPUS_PLUGIN( Tempus::PtPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin );
 
 
 
