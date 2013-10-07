@@ -59,7 +59,7 @@ namespace Tempus
 	    distances.clear();
 
 	    // retrieve the length of each pt section
-	    std::cout << "Computing the length of each section..." << std::endl;
+	    COUT << "Computing the length of each section..." << std::endl;
 	    typedef std::map< std::pair<db_id_t, db_id_t>, double > PtLength;
 	    PtLength pt_lengths;
 	    Db::Result res = db_.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
@@ -93,7 +93,7 @@ namespace Tempus
 		    bool found;
 		    boost::tie( e, found ) = public_transport_edge( *ei );
 		    if (!found) {
-			std::cerr << "Can't find pt edge" << *ei << std::endl;
+			CERR << "Can't find pt edge" << *ei << std::endl;
 		    }
 		    distances[*ei] = pt_lengths[ std::make_pair(pt_graph[e].stop_from, pt_graph[e].stop_to) ];
 		    // average public transport speed : 25 km / h
@@ -185,7 +185,7 @@ namespace Tempus
 	    roadmap.total_costs[CostDistance] = 0.0;
 	    roadmap.total_costs[CostDuration] = 0.0;
 	    std::list<Multimodal::Vertex>::const_iterator previous = path.begin();
-	    std::cout << "first: " << *previous << std::endl;
+	    COUT << "first: " << *previous << std::endl;
 	    std::list<Multimodal::Vertex>::const_iterator it = ++previous; --previous;
 	    for ( ; it != path.end(); ++it )
 	    {
@@ -202,7 +202,7 @@ namespace Tempus
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->road_vertex, it->road_vertex, *it->road_graph );
 		    if ( !found ) {
-			std::cerr << "Can't find the road edge!!!" << std::endl;
+			CERR << "Can't find the road edge!!!" << std::endl;
 			continue;
 		    }
 		    step->road_section = e;
@@ -215,7 +215,7 @@ namespace Tempus
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->pt_vertex, it->pt_vertex, *it->pt_graph );
 		    if ( !found ) {
-			std::cerr << "Can't find the pt edge!!!" << std::endl;
+			CERR << "Can't find the pt edge!!!" << std::endl;
 			continue;
 		    }
 		    step->section = e;
@@ -289,7 +289,7 @@ namespace Tempus
 						);
 	    }
 
-	    cout << "Dijkstra OK" << endl;
+	    COUT << "Dijkstra OK" << endl;
 
 	    Multimodal::Vertex current = destination;
 	    bool found = true;
@@ -331,12 +331,12 @@ namespace Tempus
 			vorigin = Multimodal::Vertex( &graph_.road, request_.steps[j - 1].destination );
 		    }
 		    vdestination = Multimodal::Vertex( &graph_.road, request_.steps[j].destination );
-		    std::cout << "Resolving from " << vorigin << " to " << vdestination << std::endl;
+		    COUT << "Resolving from " << vorigin << " to " << vdestination << std::endl;
 
 		    bool found;
 		    found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], path );
 		    if ( !found ) {
-			std::cerr << "Cannot find a path between " << vorigin << " and " << vdestination << std::endl;
+			CERR << "Cannot find a path between " << vorigin << " and " << vdestination << std::endl;
 		    }
 		}
 		// convert the path to a roadmap

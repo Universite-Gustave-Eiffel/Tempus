@@ -52,10 +52,10 @@ namespace Tempus
 	// request the database
 	PQImporter importer( db_options_ );
 	TextProgression progression(50);
-	std::cout << "Loading graph from database: " << std::endl;
-	std::cout << "Importing constants ... " << std::endl;
+	COUT << "Loading graph from database: " << std::endl;
+	COUT << "Importing constants ... " << std::endl;
 	importer.import_constants( graph_ );
-	std::cout << "Importing graph ... " << std::endl;
+	COUT << "Importing graph ... " << std::endl;
 	importer.import_graph( graph_, progression );
 
     }

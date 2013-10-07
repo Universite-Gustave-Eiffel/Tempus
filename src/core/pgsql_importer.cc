@@ -149,7 +149,7 @@ namespace Tempus
 	    Road::Vertex v_from = road_nodes_map[ node_from_id ];
 	    Road::Vertex v_to = road_nodes_map[ node_to_id ];
 	    if ( v_from == v_to ) {
-		    cout << "Cannot add a road cycle from " << v_from << " to " << v_to << endl;
+		    COUT << "Cannot add a road cycle from " << v_from << " to " << v_to << endl;
 		    continue;
 	    }
 
@@ -158,7 +158,7 @@ namespace Tempus
 	    boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
 	    if ( found )
 	    {
-		cout << "Edge " << e << " already exists" << endl;
+		COUT << "Edge " << e << " already exists" << endl;
 		continue;
 	    }
 	    boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
@@ -216,7 +216,7 @@ namespace Tempus
 	    BOOST_ASSERT( road_section > 0 );
 	    if ( road_sections_map.find( road_section ) == road_sections_map.end() )
 	    {
-		cout << "Cannot find road_section of ID " << road_section << ", pt node " << stop.db_id << " rejected" << endl;
+		COUT << "Cannot find road_section of ID " << road_section << ", pt node " << stop.db_id << " rejected" << endl;
 		continue;
 	    }
 	    stop.road_section = road_sections_map[ road_section ];
@@ -266,12 +266,12 @@ namespace Tempus
 
 	    if ( pt_nodes_map[network_id].find( stop_from_id ) == pt_nodes_map[network_id].end() )
 	    {
-		cout << "Cannot find 'from' node of ID " << stop_from_id << endl;
+		COUT << "Cannot find 'from' node of ID " << stop_from_id << endl;
 		continue;
 	    }
 	    if ( pt_nodes_map[network_id].find( stop_to_id ) == pt_nodes_map[network_id].end() )
 	    {
-		cout << "Cannot find 'to' node of ID " << stop_to_id << endl;
+		COUT << "Cannot find 'to' node of ID " << stop_to_id << endl;
 		continue;
 	    }
 	    PublicTransport::Vertex stop_from = pt_nodes_map[network_id][ stop_from_id ];
@@ -306,7 +306,7 @@ namespace Tempus
 	    BOOST_ASSERT( road_section_id > 0 );
 	    if ( road_sections_map.find( road_section_id ) == road_sections_map.end() )
 	    {
-		cout << "Cannot find road_section of ID " << road_section_id << ", poi " << poi.db_id << " rejected" << endl;
+		COUT << "Cannot find road_section of ID " << road_section_id << ", poi " << poi.db_id << " rejected" << endl;
 		continue;
 	    }
 	    poi.road_section = road_sections_map[ road_section_id ];

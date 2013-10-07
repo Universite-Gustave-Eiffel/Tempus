@@ -13,7 +13,7 @@ using namespace Tempus;
 
 void DbTest::testConnection()
 {
-    cout << "DbTest::testConnection()" << endl;
+    COUT << "DbTest::testConnection()" << endl;
     string db_options = g_db_options;
 
     // Connection to an non-existing database
@@ -46,7 +46,7 @@ void DbTest::testConnection()
 
 void DbTest::testQueries()
 {
-    cout << "DbTest::testQueries()" << endl;
+    COUT << "DbTest::testQueries()" << endl;
     string db_options = g_db_options;
     connection_ = new Db::Connection( db_options + " dbname = " DB_TEST_NAME );
 
@@ -100,7 +100,7 @@ void PgImporterTest::tearDown()
 
 void PgImporterTest::testConsistency()
 {
-    cout << "PgImporterTest::testConsistency()" << endl;
+    COUT << "PgImporterTest::testConsistency()" << endl;
     importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 
@@ -111,7 +111,7 @@ void PgImporterTest::testConsistency()
     res = importer_->query( "SELECT COUNT(*) FROM tempus.road_section" );
     CPPUNIT_ASSERT( res.size() == 1 );
     long n_road_edges = res[0][0].as<long>();
-    cout << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges << endl;
+    COUT << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges << endl;
     CPPUNIT_ASSERT( n_road_vertices = boost::num_vertices( graph_.road ) );
     CPPUNIT_ASSERT( n_road_edges = boost::num_edges( graph_.road ) );
     
@@ -134,9 +134,9 @@ void PgImporterTest::testConsistency()
 	res = importer_->query( "SELECT COUNT(*) FROM tempus.pt_section" );
 	CPPUNIT_ASSERT( res.size() == 1 );
 	long n_pt_edges = res[0][0].as<long>();
-	std::cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt_graph) = " << num_vertices(pt_graph) << std::endl;
+	COUT << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt_graph) = " << num_vertices(pt_graph) << std::endl;
 	CPPUNIT_ASSERT( n_pt_vertices = boost::num_vertices( pt_graph ) );
-	std::cout << "n_pt_edges = " << n_pt_edges << " num_edges(pt_graph) = " << num_edges(pt_graph) << std::endl;
+	COUT << "n_pt_edges = " << n_pt_edges << " num_edges(pt_graph) = " << num_edges(pt_graph) << std::endl;
 	CPPUNIT_ASSERT( n_pt_edges = boost::num_edges( pt_graph ) );
     }
 }
@@ -156,7 +156,7 @@ Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph
 
 void PgImporterTest::testMultimodal()
 {
-    cout << "PgImporterTest::testMultimodal()" << endl;
+    COUT << "PgImporterTest::testMultimodal()" << endl;
     importer_->import_constants( graph_ );
     importer_->import_graph( graph_ );
 
@@ -177,11 +177,11 @@ void PgImporterTest::testMultimodal()
     }
 
     const PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-    cout << "nv = " << nv << endl;
-    cout << "n_road_vertices = " << n_road_vertices << " num_vertices(road) = " << num_vertices( graph_.road ) << endl;
-    cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt) = " << num_vertices( pt_graph ) << endl;
-    cout << "n_pois = " << n_pois << " pois.size() = " << graph_.pois.size() << endl;
-    cout << "num_vertices = " << num_vertices( graph_ ) << endl;
+    COUT << "nv = " << nv << endl;
+    COUT << "n_road_vertices = " << n_road_vertices << " num_vertices(road) = " << num_vertices( graph_.road ) << endl;
+    COUT << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt) = " << num_vertices( pt_graph ) << endl;
+    COUT << "n_pois = " << n_pois << " pois.size() = " << graph_.pois.size() << endl;
+    COUT << "num_vertices = " << num_vertices( graph_ ) << endl;
     CPPUNIT_ASSERT_EQUAL( nv, num_vertices( graph_ ) );
 
     for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
@@ -243,16 +243,16 @@ void PgImporterTest::testMultimodal()
 	n_stops += graph_.road[ *pei ].stops.size();
     }
 
-    cout << "ne = " << ne << endl;
-    cout << "n_road2road = " << n_road2road << " num_edges(road) = " << num_edges( graph_.road ) << endl;
-    cout << "n_road2transport = " << n_road2transport << endl;
-    cout << "n_transport2road = " << n_transport2road << endl;
-    cout << "n_road2poi = " << n_road2poi << endl;
-    cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph_.pois.size() << endl;
-    cout << "n_transport2transport = " << n_transport2transport << " num_edges(pt) = " << num_edges( pt_graph ) << endl;
+    COUT << "ne = " << ne << endl;
+    COUT << "n_road2road = " << n_road2road << " num_edges(road) = " << num_edges( graph_.road ) << endl;
+    COUT << "n_road2transport = " << n_road2transport << endl;
+    COUT << "n_transport2road = " << n_transport2road << endl;
+    COUT << "n_road2poi = " << n_road2poi << endl;
+    COUT << "n_poi2road = " << n_poi2road << " pois.size = " << graph_.pois.size() << endl;
+    COUT << "n_transport2transport = " << n_transport2transport << " num_edges(pt) = " << num_edges( pt_graph ) << endl;
     size_t sum = n_road2road + n_road2transport + n_transport2road + n_transport2transport + n_poi2road + n_road2poi;
-    cout << "sum = " << sum << endl;
-    cout << "num_edges = " << num_edges( graph_ ) << endl;
+    COUT << "sum = " << sum << endl;
+    COUT << "num_edges = " << num_edges( graph_ ) << endl;
     CPPUNIT_ASSERT_EQUAL( sum, num_edges( graph_ ) );
 
     // test vertex index
@@ -318,11 +318,11 @@ void PgImporterTest::testMultimodal()
 	origin = vertex_from_road_node_id( 19953, graph_ );
 	destination = vertex_from_road_node_id( 22510, graph_ );
 	
-	cout << "origin = " << origin << endl;
-	cout << "destination = " << destination << endl;
+	COUT << "origin = " << origin << endl;
+	COUT << "destination = " << destination << endl;
 	
 	Multimodal::VertexIndexProperty vertex_index = get( boost::vertex_index, graph_ );
-	cout << "ok" << endl;
+	COUT << "ok" << endl;
 	
 	boost::dijkstra_shortest_paths( graph_,
 					origin,
@@ -337,7 +337,7 @@ void PgImporterTest::testMultimodal()
 					boost::dijkstra_visitor<boost::null_visitor>(),
 					boost::make_iterator_property_map( color_map.begin(), vertex_index )
 					);
-	cout << "Dijkstra OK" << endl;
+	COUT << "Dijkstra OK" << endl;
     }
 
     // test public transport sub map

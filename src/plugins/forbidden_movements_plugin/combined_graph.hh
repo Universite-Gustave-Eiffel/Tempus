@@ -235,7 +235,7 @@ struct CombinedWeightMap
         BOOST_ASSERT( ok );
         double w = boost::get( wmap_, e );
         double p = boost::get( pmap_, v1.second );
-        //        std::cout << "weight " << e << " state= " << v2.second << " = " << w << " +" << p << std::endl;
+        //        COUT << "weight " << e << " state= " << v2.second << " = " << w << " +" << p << std::endl;
         return w + p;
     }
 private:

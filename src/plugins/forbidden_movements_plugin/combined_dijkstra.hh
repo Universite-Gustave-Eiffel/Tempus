@@ -66,7 +66,7 @@ void combined_dijkstra(
  
     while ( !vertex_queue.empty() ) {
         for ( typename VertexQueue::ordered_iterator it = vertex_queue.ordered_begin(); it != vertex_queue.ordered_end(); ++it ) {
-            std::cout << graph[it->first].db_id << ", " << it->second << " dist: " << get(distance_map, *it) << std::endl;
+            COUT << graph[it->first].db_id << ", " << it->second << " dist: " << get(distance_map, *it) << std::endl;
         }
         Label min_l = vertex_queue.top();
 
@@ -76,7 +76,7 @@ void combined_dijkstra(
         }
         AVertex q = min_l.second;
 
-        std::cout << "u: " << graph[u].db_id << ", " << q << std::endl;
+        COUT << "u: " << graph[u].db_id << ", " << q << std::endl;
 
         vertex_queue.pop();
 
@@ -86,7 +86,7 @@ void combined_dijkstra(
         BGL_FORALL_OUTEDGES_T(u, current_edge, graph, Graph) {
 
             GVertex v = target( current_edge, graph );
-            std::cout << "v: " << graph[v].db_id << std::endl;
+            COUT << "v: " << graph[v].db_id << std::endl;
 
             // is an automaton transition has been found ?
             bool transition_found = false;
@@ -95,7 +95,7 @@ void combined_dijkstra(
             double c = get( weight_map, current_edge );
             if ( q != qp ) {
                 double p = get( penalty_map, q );
-                std::cout << "penalty: " << p << std::endl;
+                COUT << "penalty: " << p << std::endl;
                 c += p;
             }
 
@@ -106,15 +106,15 @@ void combined_dijkstra(
             if ( pi_uq + c < pi_vqp ) {
                 put( distance_map, new_l, pi_uq + c );
                 put( predecessor_map, new_l, min_l );
-                std::cout << "push " << graph[new_l.first].db_id << ", " << new_l.second << " dist: " << (pi_uq + c) << std::endl;
+                COUT << "push " << graph[new_l.first].db_id << ", " << new_l.second << " dist: " << (pi_uq + c) << std::endl;
 
                 vertex_queue.push( new_l );
 
             }
         }
 
-        std::cout << "loop" << std::endl;
+        COUT << "loop" << std::endl;
     }
-    std::cout << "end" << std::endl;
+    COUT << "end" << std::endl;
 }
 

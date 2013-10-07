@@ -20,7 +20,7 @@ namespace Tempus
 #else
             if ( dlclose( i->second.handle_ ) )
             {
-                std::cerr << "Error on dlclose " << dlerror() << std::endl;
+                CERR << "Error on dlclose " << dlerror() << std::endl;
             }
 #endif
         }
@@ -32,7 +32,7 @@ namespace Tempus
     {
         if ( dll_.find(dll_name) != dll_.end() ) return;// already there 
         const std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
-        std::cout << "Loading " << complete_dll_name << std::endl;
+        COUT << "Loading " << complete_dll_name << std::endl;
 #ifdef _WIN32
         HMODULE h = LoadLibrary( complete_dll_name.c_str() );
         if ( h == NULL )
@@ -72,7 +72,7 @@ namespace Tempus
 #endif
         Dll dll = { h, createFct, optDescFct };
         dll_.insert( std::make_pair( dll_name, dll ) );
-        std::cout << "loaded " << dll_name << "\n";
+        COUT << "loaded " << dll_name << "\n";
     }
 
     std::vector<std::string> PluginFactory::plugin_list() const
@@ -202,22 +202,22 @@ namespace Tempus
 
     void Plugin::post_build()
     {
-	std::cout << "[plugin_base]: post_build" << std::endl;
+	COUT << "[plugin_base]: post_build" << std::endl;
     }
 
     void Plugin::validate()
     {
-	std::cout << "[plugin_base]: validate" << std::endl;
+	COUT << "[plugin_base]: validate" << std::endl;
     }
 
     void Plugin::cycle()
     {
-	std::cout << "[plugin_base]: cycle" << std::endl;
+	COUT << "[plugin_base]: cycle" << std::endl;
     }
 
     void Plugin::pre_process( Request& request ) throw (std::invalid_argument)
     {
-	std::cout << "[plugin_base]: pre_process" << std::endl;
+	COUT << "[plugin_base]: pre_process" << std::endl;
 	request_ = request;
 	result_.clear();
     }
@@ -227,12 +227,12 @@ namespace Tempus
     /// Must populates the 'result_' object.
     void Plugin::process()
     {
-	std::cout << "[plugin_base]: process" << std::endl;
+	COUT << "[plugin_base]: process" << std::endl;
     }
 
     void Plugin::post_process()
     {
-	std::cout << "[plugin_base]: post_process" << std::endl;
+	COUT << "[plugin_base]: post_process" << std::endl;
     }
 
     ///
@@ -245,7 +245,7 @@ namespace Tempus
 	    
 	    // display the global costs of the result
 	    for ( Costs::const_iterator it = roadmap.total_costs.begin(); it != roadmap.total_costs.end(); ++it ) {
-		std::cout << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
+		COUT << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
 	    }
 	    
 	    std::string road_name = "";
@@ -278,7 +278,7 @@ namespace Tempus
 			road_id = road_graph[ edge->source.road_vertex ].db_id;
 			pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
 
-			std::cout << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
+			COUT << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
 
 		    } break;
 		    case Multimodal::Edge::Transport2Road: {
@@ -288,7 +288,7 @@ namespace Tempus
 			pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
 			road_id = road_graph[ edge->target.road_vertex ].db_id;				 
 
-			std::cout << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
+			COUT << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
 
 		    } break;
 		    }
@@ -321,12 +321,12 @@ namespace Tempus
 		    
 		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
 		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
-		    std::cout << direction_i++ << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
+		    COUT << direction_i++ << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
 		    // display associated costs
 		    for ( Costs::const_iterator cit = step->costs.begin(); cit != step->costs.end(); ++cit ) {
-			std::cout << cost_name( cit->first ) << ": " << cit->second << cost_unit( cit->first ) << " ";
+			COUT << cost_name( cit->first ) << ": " << cit->second << cost_unit( cit->first ) << " ";
 		    }
-		    std::cout << ")" << std::endl;
+		    COUT << ")" << std::endl;
 		}
 		else if ( (*it)->step_type == Roadmap::Step::RoadStep ) {
 		    
@@ -404,16 +404,16 @@ namespace Tempus
 		    switch ( movement )
 		    {
 		    case Roadmap::RoadStep::GoAhead:
-			std::cout << direction_i++ << " - Walk on " << road_name << " for " << distance << cost_unit(CostDistance) << std::endl;
+			COUT << direction_i++ << " - Walk on " << road_name << " for " << distance << cost_unit(CostDistance) << std::endl;
 			break;
 		    case Roadmap::RoadStep::TurnLeft:
-			std::cout << direction_i++ << " - Turn left on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
+			COUT << direction_i++ << " - Turn left on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
 			break;
 		    case Roadmap::RoadStep::TurnRight:
-			std::cout << direction_i++ << " - Turn right on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
+			COUT << direction_i++ << " - Turn right on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
 			break;
 		    case Roadmap::RoadStep::RoundAboutEnter:
-			std::cout << direction_i++ << " - Enter the roundabout on " << road_name << std::endl;
+			COUT << direction_i++ << " - Enter the roundabout on " << road_name << std::endl;
 			break;
 		    case Roadmap::RoadStep::FirstExit:
 		    case Roadmap::RoadStep::SecondExit:
@@ -421,7 +421,7 @@ namespace Tempus
 		    case Roadmap::RoadStep::FourthExit:
 		    case Roadmap::RoadStep::FifthExit:
 		    case Roadmap::RoadStep::SixthExit:
-			std::cout << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
+			COUT << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
 			break;
 		    }
 		    previous_section = road_graph[step->road_section].db_id;
@@ -441,7 +441,7 @@ namespace Tempus
 
     void Plugin::cleanup()
     {
-	std::cout << "[plugin_base]: cleanup" << std::endl;
+	COUT << "[plugin_base]: cleanup" << std::endl;
     }
 };
 

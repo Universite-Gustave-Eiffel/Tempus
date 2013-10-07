@@ -44,7 +44,7 @@ namespace WPS {
     {
 	if ( getParam("REQUEST_METHOD") == 0 )
 	{
-	    cerr << "This program is intended to be called from a web server, as a CGI" << endl;
+	   CERR << "This program is intended to be called from a web server, as a CGI" << endl;
 	    return 1;
 	}
 	string request_method = getParam( "REQUEST_METHOD" );
@@ -98,7 +98,7 @@ namespace WPS {
 		    break;
 		doc.push_back(c);
 	    }
-	    cerr << doc << endl;
+	   CERR << doc << endl;
 	
 	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), "query.xml", NULL, 0 );
 	    if ( xml_doc.get() == NULL )
@@ -278,7 +278,7 @@ namespace WPS {
 	    }
 	    catch (std::runtime_error& e)
 	    {
-		cout << "Runtime error " << e.what() << endl;
+		COUT << "Runtime error " << e.what() << endl;
 		return print_error_status( 400, e.what() );
 	    }
 	}

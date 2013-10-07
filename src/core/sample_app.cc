@@ -44,7 +44,7 @@ int main( int argc, char* argv[])
     
     if ( vm.count("help") )
     {
-	cout << desc << "\n";
+	COUT << desc << "\n";
 	return 1;
     }
 
@@ -73,11 +73,11 @@ int main( int argc, char* argv[])
     {
         std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_name ) );
 	
-	cout << "[plugin " << plugin->name() << "]" << endl;
+	COUT << "[plugin " << plugin->name() << "]" << endl;
 	
-	cout << endl << ">> pre_build" << endl;
+	COUT << endl << ">> pre_build" << endl;
 	app->pre_build_graph();
-	cout << endl << ">> build" << endl;
+	COUT << endl << ">> build" << endl;
 	app->build_graph();
 
 	//
@@ -101,7 +101,7 @@ int main( int argc, char* argv[])
 	}
 	if ( !found_origin )
 	{
-	    cerr << "Cannot find origin vertex ID " << origin_id << endl;
+	    CERR << "Cannot find origin vertex ID " << origin_id << endl;
 	    return 1;
 	}
 	for ( boost::tie(vi, vi_end) = boost::vertices(road_graph); vi != vi_end; vi++ )
@@ -115,7 +115,7 @@ int main( int argc, char* argv[])
 	}
 	if ( !found_destination )
 	{
-	    cerr << "Cannot find destination vertex ID " << destination_id << endl;
+	    CERR << "Cannot find destination vertex ID " << destination_id << endl;
 	    return 1;
 	}
 
@@ -124,31 +124,31 @@ int main( int argc, char* argv[])
 	// the only optimizing criterion
 	req.optimizing_criteria.push_back( CostDistance );
 
-	cout << endl << ">> pre_process" << endl;
+	COUT << endl << ">> pre_process" << endl;
 	try
 	{
 	    plugin->pre_process( req );
 	}
 	catch ( std::invalid_argument& e )
 	{
-	    std::cerr << "Can't process request : " << e.what() << std::endl;
+	    CERR << "Can't process request : " << e.what() << std::endl;
 	    return 1;
 	}
-	cout << endl << ">> process" << endl;
+	COUT << endl << ">> process" << endl;
 	plugin->process();
-	cout << endl << ">> post_process" << endl;
+	COUT << endl << ">> post_process" << endl;
 	plugin->post_process();
 
-	cout << endl << ">> result" << endl;
+	COUT << endl << ">> result" << endl;
 	plugin->result();
 
-	cout << endl << ">> cleanup" << endl;
+	COUT << endl << ">> cleanup" << endl;
 	plugin->cleanup();
 	
     }
     catch (std::exception& e)
     {
-	cerr << "Exception: " << e.what() << endl;
+	CERR << "Exception: " << e.what() << endl;
     }
     
     return 0;

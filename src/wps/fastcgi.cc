@@ -24,7 +24,7 @@
 #define environ _environ
 #endif
 
-#define DEBUG_TRACE if(1) (std::cout << __FILE__ << ":" << __LINE__ << " debug: ")
+#define DEBUG_TRACE if(1) (COUT << __FILE__ << ":" << __LINE__ << " debug: ")
 using namespace std;
 
 ///
@@ -121,11 +121,11 @@ int main( int argc, char*argv[] )
 	    }
 	    else
 	    {
-		cerr << "Options: " << endl;
-		cerr << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
-		cerr << "\t-c dir\tchange directory to dir before execution" << endl;
-		cerr << "\t-t num_threads\tnumber of request-processing threads" << endl;
-		cerr << "\t-l plugin_name\tload plugin" << endl;
+		CERR << "Options: " << endl;
+		CERR << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
+		CERR << "\t-c dir\tchange directory to dir before execution" << endl;
+		CERR << "\t-t num_threads\tnumber of request-processing threads" << endl;
+		CERR << "\t-l plugin_name\tload plugin" << endl;
 		return 1;
 	    }
 	}
@@ -155,7 +155,7 @@ int main( int argc, char*argv[] )
         listen_socket = FCGX_OpenSocket((":" + port_str).c_str(), 10);
         if ( listen_socket < 0 )
         {
-            cerr << "Problem opening the socket on port " << port_str << std::endl;
+           CERR << "Problem opening the socket on port " << port_str << std::endl;
             return EXIT_FAILURE;
         }
     }
@@ -176,7 +176,7 @@ int main( int argc, char*argv[] )
     }
     catch ( std::exception& e )
     {
-        cerr << "Exception during WPS execution: " << e.what() << std::endl;
+       CERR << "Exception during WPS execution: " << e.what() << std::endl;
     }
 
     return EXIT_SUCCESS;

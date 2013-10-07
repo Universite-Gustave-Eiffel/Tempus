@@ -83,7 +83,7 @@ namespace Tempus
 		if ( trace_vertex_ )
 		{
 		    // very slow
-		    cout << "Examining vertex " << v << endl;
+		    COUT << "Examining vertex " << v << endl;
 		}
 	    }
 	}
@@ -146,7 +146,7 @@ namespace Tempus
 		    }
 		    if ( !found )
 		    {
-			    cerr << "No path found !" << endl;
+			   CERR << "No path found !" << endl;
 			    return;
 		    }
 	    }

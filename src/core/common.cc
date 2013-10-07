@@ -1,7 +1,10 @@
 #include "common.hh"
 
+
 namespace Tempus
 {
+    boost::mutex iostream_mutex;
+
     ProgressionCallback null_progression_callback;
 
     void TextProgression::operator()( float percent, bool finished )
@@ -13,17 +16,17 @@ namespace Tempus
 	
 	if ( finished || (old_N_ == -1) )
 	{
-	    std::cout << "\r";
-	    std::cout << "[";
+	    COUT << "\r";
+	    COUT << "[";
 	    for (int i = 0; i < new_N; i++)
-		std::cout << ".";
+		COUT << ".";
 	    for (int i = new_N; i < N_; i++)
-		std::cout << " ";
-	    std::cout << "] ";
-	    std::cout << int(percent * 100) << "%";
+		COUT << " ";
+	    COUT << "] ";
+	    COUT << int(percent * 100) << "%";
 	    if ( finished )
-		std::cout << std::endl;
-	    std::cout.flush();
+		COUT << std::endl;
+	    COUT.flush();
 	}
 	old_N_ = new_N;
     }

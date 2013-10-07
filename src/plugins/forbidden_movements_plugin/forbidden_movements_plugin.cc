@@ -111,8 +111,8 @@ namespace Tempus
             source_ = vertex_from_id( 21687, road_graph );
             destination_ = vertex_from_id( 21422, road_graph );
 
-            std::cout << "source: " << source_ << std::endl;
-            std::cout << "destination: " << destination_ << std::endl;
+            COUT << "source: " << source_ << std::endl;
+            COUT << "destination: " << destination_ << std::endl;
 	}
 
 	virtual void process()

@@ -68,12 +68,12 @@ namespace Tempus
 	    if ( access_type == Plugin::ExamineAccess )
 	    {
 	     	PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-	     	//cout << "Examining vertex " << pt_graph[v].db_id << endl;
+	     	//COUT << "Examining vertex " << pt_graph[v].db_id << endl;
 	    }
 	}
 	virtual void process()
 	{
-	    cout << "origin = " << request_.origin << " dest = " << request_.destination() << endl;
+	    COUT << "origin = " << request_.origin << " dest = " << request_.destination() << endl;
 	    PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
 	    Road::Graph& road_graph = graph_.road;
 
@@ -93,7 +93,7 @@ namespace Tempus
 					       "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1") % road_graph[node].db_id ).str();
 		Db::Result res = db_.exec(q);
 		if ( res.size() < 1 ) {
-			std::cerr << "Cannot find node " << node << std::endl;
+			CERR << "Cannot find node " << node << std::endl;
 			return;
 		}
 		db_id_t vid = res[0][0].as<db_id_t>();
@@ -103,10 +103,10 @@ namespace Tempus
 			departure = found_vertex;
 		    if ( i == 1 )
 			arrival = found_vertex;
-		    std::cout << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id << std::endl;
+		    COUT << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id << std::endl;
 		}
 	    }
-	    cout << "departure = " << departure << " arrival = " << arrival << endl;
+	    COUT << "departure = " << departure << " arrival = " << arrival << endl;
 	    
 	    //
 	    // Call to Dijkstra
@@ -151,7 +151,7 @@ namespace Tempus
 	    }
 	    if ( !found )
 	    {
-		cerr << "No path found" << endl;
+		CERR << "No path found" << endl;
 		return;
 	    }
 	    path.push_front( departure );
@@ -177,7 +177,7 @@ namespace Tempus
 	    Road::Vertex previous = *path.begin();
 	    for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
 	    {
-		    std::cout << "peth " << *it << std::endl;
+		    COUT << "peth " << *it << std::endl;
 		    if ( first_loop ) {
 			    first_loop = false;
 			    continue;

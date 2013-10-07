@@ -21,6 +21,5 @@ int main( int argc, char **argv )
     runner.addTest( registry.makeTest() );
     runner.setOutputter( new CppUnit::CompilerOutputter( &runner.result(),
 							 std::cerr ) );
-    bool wasSuccessful = runner.run( "", false );
-    return wasSuccessful;   
+    return runner.run( "", false ) ? EXIT_SUCCESS : EXIT_FAILURE;   
 }
