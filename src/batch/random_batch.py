@@ -62,7 +62,7 @@ if __name__ == "__main__":
         tempus.request( plugin_name = "sample_road_plugin",
                         plugin_options = { 'prepare_result' : 0 },
                         origin = dep,
-                        steps = [Step(destination = arr)] )
+                        steps = [RequestStep(destination = arr)] )
 
         # time spend by the algorithm
         t = float(tempus.metrics['time_s'])
@@ -72,10 +72,15 @@ if __name__ == "__main__":
         r = time.time() - start_time
         total_rtime += r
 
-        print "i=%d, t=%f, r=%f" % (i, t, r)
+        # total cost
+        rDistance = 0.0
+        if len(tempus.results) > 0:
+            rDistance =  tempus.results[0].costs[1]
+
+        print "i=%d, t=%f, r=%f, d=%f" % (i, t, r, rDistance)
 
         times.append(t)
-        distances.append(dist)
+        distances.append(rDistance)
 
     print total_time, total_rtime
 
