@@ -181,7 +181,7 @@ class IfsttarRouting:
         self.plugin_options = {}
 
         # option desc
-        self.options = {}
+        self.options = None
 
         self.setStateText("DISCONNECTED")
 
@@ -244,6 +244,9 @@ class IfsttarRouting:
 
         self.displayPlugins( outputs['plugins'], 0 )
         self.save['plugins'] = to_pson(outputs['plugins'])
+
+        # get plugin options
+        self.update_plugin_options( 0 )
             
         self.dlg.ui.pluginCombo.setEnabled( True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -254,12 +257,14 @@ class IfsttarRouting:
         self.setStateText("connected")
 
     def update_plugin_options( self, plugin_idx ):
-        if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
-            return
+        #if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
+        #    return
         if self.wps is None:
             return
 
         plugin_name = str(self.dlg.ui.pluginCombo.currentText())
+        if plugin_name == '':
+            return
         plugin_arg = { 'plugin' : ['plugin', {'name' : plugin_name } ] }
 
         try:
@@ -539,8 +544,8 @@ class IfsttarRouting:
     def displayPlugins( self, plugins, selection ):
         self.dlg.ui.pluginCombo.clear()
         for plugin in plugins:
-            self.dlg.ui.pluginCombo.insertItem(0, plugin.attrib['name'] )
             self.plugin_options[plugin.attrib['name']] = {}
+            self.dlg.ui.pluginCombo.insertItem(0, plugin.attrib['name'] )
         self.dlg.ui.pluginCombo.setCurrentIndex( selection )
 
     #
@@ -761,16 +766,14 @@ class IfsttarRouting:
         self.save['results'] = to_pson(outputs['results'])
         self.save['metrics'] = to_pson(outputs['metrics'])
         # save options
-        # merge option desc and values
-        options = [ 'options' ]
-        for option in self.options:
-            a = option.attrib # name, type, description
-            a['value'] = self.plugin_options[currentPlugin][option.attrib['name']]
-            options.append( [ 'option', a ] )
-        self.save['options'] = options
+        # self.options : option descriptions
+        # options : option values
+        self.save['options_values'] = options
+        self.save['options'] = to_pson(self.options)
 
         pson = [ 'save' ]
         for k,v in self.save.iteritems():
+            v[0] = k
             pson.append( v )
 
         str_record = to_xml(pson)
@@ -789,7 +792,6 @@ class IfsttarRouting:
         id = item.data( Qt.UserRole )
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
-        print xmlStr
         tree = ET.XML(xmlStr)
         loaded = {}
         for child in tree:
@@ -801,12 +803,11 @@ class IfsttarRouting:
         self.displayPlugins( loaded['plugins'], 0);
         
         opt_values = {}
-        options = loaded['options']
+        options = loaded['options_values']
         for option in options:
             k = option.attrib['name']
             v = option.attrib['value']
             opt_values[k] = v
-        # option is reused as option_desc here
         currentPlugin = loaded['plugin'].attrib['name']
         self.plugin_options[currentPlugin] = opt_values
         self.displayPluginOptions( currentPlugin, loaded['options'], opt_values )
