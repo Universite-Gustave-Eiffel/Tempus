@@ -245,8 +245,8 @@ class IfsttarRouting:
         self.displayPlugins( outputs['plugins'], 0 )
         self.save['plugins'] = to_pson(outputs['plugins'])
 
-        # get plugin options
-        self.update_plugin_options( 0 )
+        # get plugin options for the current plugin
+        self.getPluginOptions( str(self.dlg.ui.pluginCombo.currentText()) )
             
         self.dlg.ui.pluginCombo.setEnabled( True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -256,15 +256,7 @@ class IfsttarRouting:
         self.dlg.ui.computeBtn.setEnabled( True )
         self.setStateText("connected")
 
-    def update_plugin_options( self, plugin_idx ):
-        #if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
-        #    return
-        if self.wps is None:
-            return
-
-        plugin_name = str(self.dlg.ui.pluginCombo.currentText())
-        if plugin_name == '':
-            return
+    def getPluginOptions( self, plugin_name ):
         plugin_arg = { 'plugin' : ['plugin', {'name' : plugin_name } ] }
 
         try:
@@ -284,7 +276,16 @@ class IfsttarRouting:
                 opt_values[k] = ''
 
         self.plugin_options[plugin_name] = opt_values
+        return opt_values
 
+    def update_plugin_options( self, plugin_idx ):
+        if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
+            return
+        if self.wps is None:
+            return
+
+        plugin_name = str(self.dlg.ui.pluginCombo.currentText())
+        opt_values = self.getPluginOptions( plugin_name )
         self.displayPluginOptions( plugin_name, self.options, opt_values )
 
     def onTabChanged( self, tab ):
