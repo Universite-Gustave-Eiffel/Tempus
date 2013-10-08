@@ -161,7 +161,6 @@ namespace Tempus
 	    Roadmap::RoadStep* step = 0;
 
 	    Road::Edge current_road;
-	    double distance = 0.0;
 	    Road::Vertex previous;
 	    bool first_loop = true;
 

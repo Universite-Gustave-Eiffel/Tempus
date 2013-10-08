@@ -521,11 +521,11 @@ namespace Tempus
 	    }
 	    return n + num_edges( graph.road ) * 2 + graph.pois.size() * 4;
 	}
-	Vertex source( const Edge& e, const Graph& graph )
+	Vertex source( const Edge& e, const Graph& )
 	{
 	    return e.source;
 	}
-	Vertex target( const Edge& e, const Graph& graph )
+	Vertex target( const Edge& e, const Graph& )
 	{
 	    return e.target;
 	}
@@ -655,6 +655,8 @@ namespace Tempus
 	case Multimodal::Edge::Poi2Road:
 	    out << "Poi2Road ";
 	    break;
+	case Multimodal::Edge::UnknownConnection:
+            throw std::runtime_error("bug: should not reach here");
 	}
 	out << "(" << e.source << "," << e.target << ")";
 	return out;

@@ -167,6 +167,7 @@ namespace Tempus
 		    return *vi;
 		}
 	    }
+            throw std::runtime_error("bug: should not reach here");
 	}
 
 	///
@@ -195,7 +196,6 @@ namespace Tempus
 		if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
 		    mstep = new Roadmap::RoadStep();
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>(mstep);
-		    Road::Graph& road_graph = graph_.road;
 		    Road::Edge e;
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->road_vertex, it->road_vertex, *it->road_graph );

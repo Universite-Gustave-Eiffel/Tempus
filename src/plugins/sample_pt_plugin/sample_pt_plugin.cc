@@ -66,7 +66,7 @@ namespace Tempus
 	    if ( access_type == Plugin::ExamineAccess )
 	    {
 	     	PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-	     	//COUT << "Examining vertex " << pt_graph[v].db_id << endl;
+	     	COUT << "Examining vertex " << pt_graph[v].db_id << endl;
 	    }
 	}
 	virtual void process()
@@ -169,7 +169,7 @@ namespace Tempus
 	    // for each step in the graph, find the common trip and add each step to the roadmap
 
 	    // The current trip is set to 0, which means 'null'. This holds because every db's id are 1-based
-	    db_id_t current_trip = 0;
+	    // db_id_t current_trip = 0; // unused
 	    bool first_loop = true;
 
 	    Road::Vertex previous = *path.begin();

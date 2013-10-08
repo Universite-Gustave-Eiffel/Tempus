@@ -24,7 +24,7 @@
 #define environ _environ
 #endif
 
-#define DEBUG_TRACE if(1) (COUT << __FILE__ << ":" << __LINE__ << " debug: ")
+#define DEBUG_TRACE if(1) std::cout << " debug: "
 using namespace std;
 
 ///
@@ -45,28 +45,28 @@ struct RequestThread
         FCGX_Request request;
         FCGX_InitRequest(&request, _listen_socket, 0);
 
-        DEBUG_TRACE << "listening\n";
-
         for (;;)
         {
             {
                 boost::lock_guard< boost::mutex > lock(mutex);
-                DEBUG_TRACE << "accepting\n";
+                //DEBUG_TRACE << "accepting\n";
                 if ( FCGX_Accept_r(&request) ) throw std::runtime_error("error in accept");
             }
             fcgi_streambuf cin_fcgi_streambuf( request.in );
+            fcgi_streambuf cout_fcgi_streambuf( request.out );
             // This causes a crash under Windows (??). We rely on a classic stringstream and FCGX_PutStr
             // fcgi_streambuf cout_fcgi_streambuf( request.out );
-            std::ostringstream outbuf;
+            //std::ostringstream outbuf;
 
             //environ = request.envp;
 
-            WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf(), request.envp );
+            //WPS::Request wps_request( &cin_fcgi_streambuf, outbuf.rdbuf(), request.envp );
+            WPS::Request wps_request( &cin_fcgi_streambuf, &cout_fcgi_streambuf, request.envp );
             assert( wps_request.getParam("REQUEST_METHOD") );
 
             wps_request.process();
-            const std::string& outstr = outbuf.str();
-            FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
+            //const std::string& outstr = outbuf.str();
+            //FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
             FCGX_Finish_r(&request);
         }
     }
@@ -133,13 +133,14 @@ int main( int argc, char*argv[] )
     
     if ( chdir_str != "" )
     {
-        int c = chdir( chdir_str.c_str() );
+        if( chdir( chdir_str.c_str() ) )
+        {
+            CERR << "cannot change directory to " << chdir_str << std::endl;
+            return 1;
+        }
     }
     
-    FCGX_Request request;
-
     FCGX_Init();
-
 
     // initialise connection and graph
     Tempus::Application::instance()->connect( "dbname=tempus_test_db" );

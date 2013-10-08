@@ -164,7 +164,9 @@ namespace Db
     public:
 	Connection() 
         : conn_(0)
-        {}
+        {
+            assert(PQisthreadsafe());
+        }
 
 	Connection( const std::string& db_options ) 
         : conn_(0)

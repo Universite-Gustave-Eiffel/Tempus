@@ -116,14 +116,15 @@ namespace Tempus
             loaded += " " + i->first;
         DllMap::const_iterator dll = dll_.find(dll_name);
         if ( dll == dll_.end() ) throw std::runtime_error(dll_name + " is not loaded (loaded:" + loaded+")");
-        return dll->second.options_description( );
+        std::unique_ptr<const Plugin::OptionDescriptionList> list( dll->second.options_description() );  
+        return Plugin::OptionDescriptionList(*list);
     }
     
 
     Plugin::Plugin( const std::string& name, Db::Connection& db ) :
+	graph_(Application::instance()->graph()),
 	name_(name),
-	db_(db.dbOption()), // create another connection
-	graph_(Application::instance()->graph())
+	db_(db.dbOption()) // create another connection
     {
 	// default metrics
 	metrics_[ "time_s" ] = (float)0.0;
@@ -335,10 +336,11 @@ namespace Tempus
 			COUT << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
 
 		    } break;
+                    default: break;
 		    }
 
 		    if ( is_road_pt ) {
-			std::string query = (boost::format( "SELECT st_asbinary(st_force_2d(st_makeline(t1.geom, t2.geom))) from "
+			std::string query = (boost::format( "SELECT st_asbinary(st_force2d(st_makeline(t1.geom, t2.geom))) from "
 							    "(select geom from tempus.road_node where id=%1%) as t1, "
 							    "(select geom from tempus.pt_stop where id=%2%) as t2" ) %
 					     road_id %
@@ -356,7 +358,7 @@ namespace Tempus
 		    
 		    //
 		    // retrieval of the step's geometry
-		    std::string q = (boost::format("SELECT st_asbinary(st_force_2d(geom)) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%") %
+		    std::string q = (boost::format("SELECT st_asbinary(st_force2d(geom)) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%") %
 				     pt_graph[step->section].stop_from % pt_graph[step->section].stop_to ).str();
 		    Db::Result res = db_.exec(q);
 		    std::string wkb = res[0][0].as<std::string>();
@@ -378,7 +380,7 @@ namespace Tempus
 
 		    //
 		    // retrieval of the step's geometry
-		    std::string q = (boost::format("SELECT st_asbinary(st_force_2d(geom)) FROM tempus.road_section WHERE id=%1%") %
+		    std::string q = (boost::format("SELECT st_asbinary(st_force2d(geom)) FROM tempus.road_section WHERE id=%1%") %
 				     road_graph[step->road_section].db_id ).str();
 		    Db::Result res = db_.exec(q);
 		    std::string wkb = res[0][0].as<std::string>();
@@ -467,6 +469,12 @@ namespace Tempus
 		    case Roadmap::RoadStep::SixthExit:
 			COUT << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
 			break;
+                    case Roadmap::RoadStep::UTurn:
+                        COUT << direction_i++ << " - Make a U-turn" << std::endl;
+                        break;
+                    case Roadmap::RoadStep::YouAreArrived:
+                        COUT << direction_i++ << " - You are arrived" << std::endl;
+                        break;
 		    }
 		    previous_section = road_graph[step->road_section].db_id;
 		    was_on_roundabout = on_roundabout;

@@ -132,7 +132,6 @@ void PgImporterTest::testConsistency()
     Multimodal::Graph::PublicTransportGraphList::iterator it;
     for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )
     {
-	db_id_t id = it->first;
 	PublicTransport::Graph& pt_graph = it->second;
 
         long n_pt_vertices, n_pt_edges;
@@ -164,6 +163,7 @@ Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph
 	    return *vi;
 	}
     }
+    throw std::runtime_error("bug: should not reach here");
 }
 
 
@@ -246,6 +246,8 @@ void PgImporterTest::testMultimodal()
 	case Multimodal::Edge::Poi2Road:
 	    n_poi2road++;
 	    break;
+	case Multimodal::Edge::UnknownConnection:
+	    throw std::runtime_error("bug: should not reah here");
 	}
     }
 
@@ -375,9 +377,6 @@ void PgImporterTest::testMultimodal()
 	    // insert a new pt that is a copy of the first
 	    graph_.public_transports[max_id+1] = graph_.public_transports.begin()->second;
 	    graph_.public_transports.select_all();
-
-	    size_t n_vertices2 = num_vertices( graph_ );
-	    size_t n_edges2 = num_edges( graph_ );
 
 	    // unselect the first network
 	    std::set<db_id_t> selection = graph_.public_transports.selection();

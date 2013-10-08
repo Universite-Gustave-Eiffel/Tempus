@@ -54,7 +54,7 @@ namespace WPS
 				  "</xs:element>\n"
 				  );
 	};
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	Service::ParameterMap& execute( ParameterMap& /*input_parameter_map*/ )
 	{
 	    output_parameters_.clear();
 	    
@@ -132,7 +132,7 @@ namespace WPS
 				  "</xs:element>\n"
 				  );
 	};
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	Service::ParameterMap& execute( ParameterMap& /*input_parameter_map*/ )
 	{
 	    output_parameters_.clear();
 	    
@@ -551,7 +551,7 @@ namespace WPS
             
             Multimodal::Graph& graph_ = Application::instance()->graph();
             Tempus::Road::Graph& road_graph = graph_.road;
-            Db::Connection& db = Application::instance()->db_connection();
+            /*Db::Connection& db =*/ Application::instance()->db_connection();
             
             xmlNode* root_node = XML::new_node( "results" );
             if ( result.size() == 0 )

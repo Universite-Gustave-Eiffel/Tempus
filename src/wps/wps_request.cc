@@ -98,9 +98,9 @@ namespace WPS {
 		    break;
 		doc.push_back(c);
 	    }
-	   CERR << doc << endl;
+	    CERR << doc << endl;
 	
-	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), "query.xml", NULL, 0 );
+	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), getParam( "REQUEST_URI" ), NULL, XML_PARSE_NOERROR );
 	    if ( xml_doc.get() == NULL )
 	    {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Malformed XML request: " + string(xmlGetLastError()->message) );
@@ -266,7 +266,7 @@ namespace WPS {
         std::auto_ptr<WPS::Service> service( WPS::Service::get_service( identifier )->clone() );
 	    try
 	    {
-		WPS::Service::ParameterMap& output_parameters = service->execute( input_parameter_map );
+		/*WPS::Service::ParameterMap& output_parameters =*/ service->execute( input_parameter_map );
 		
 		outs_ << "Content-type: text/xml" << endl;
 		outs_ << endl;

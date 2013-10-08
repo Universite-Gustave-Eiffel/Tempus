@@ -189,7 +189,6 @@ namespace Tempus
 
             std::list<Road::Vertex> path;
             Label current = std::make_pair( target_vertex, 0 );
-            bool found = true;
             while ( current.first != start_vertex )
             {
                 path.push_front( current.first );
