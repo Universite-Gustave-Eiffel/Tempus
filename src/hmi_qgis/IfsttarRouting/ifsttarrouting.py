@@ -242,10 +242,6 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
 
-        # FIXME
-        p = ET.Element('plugins')
-        p.append( ET.Element('plugin', { 'name' : 'sample_road_plugin' } ) )
-        outputs['plugins'] = p
         self.displayPlugins( outputs['plugins'], 0 )
         self.save['plugins'] = to_pson(outputs['plugins'])
             
