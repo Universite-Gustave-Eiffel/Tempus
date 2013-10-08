@@ -84,7 +84,7 @@ if __name__ == "__main__":
                             ]
                            ]
         # requested argument
-        args['options'] = ['options']
+        args['options'] = ['options', [ 'option', {'name':'prepare_result', 'value':'0'} ]]
 
         outputs = wps.execute( 'select', args )
 

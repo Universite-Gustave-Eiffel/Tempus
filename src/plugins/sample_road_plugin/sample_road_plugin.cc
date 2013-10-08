@@ -34,6 +34,7 @@ namespace Tempus
         { 
             OptionDescriptionList odl;
 	    odl.declare_option( "trace_vertex", "Trace vertex traversal", false );
+	    odl.declare_option( "prepare_result", "Prepare result", true );
             return odl; 
         }
 
@@ -46,6 +47,7 @@ namespace Tempus
 	}
     protected:
 	bool trace_vertex_;
+        bool prepare_result_;
     public:
 	virtual void post_build()
 	{
@@ -70,6 +72,7 @@ namespace Tempus
 	    request_ = request;
 
 	    get_option( "trace_vertex", trace_vertex_ );
+            get_option( "prepare_result", prepare_result_ );
 
 	    result_.clear();
 	}
@@ -202,6 +205,14 @@ namespace Tempus
 	{
 	    // nothing special to clean up
 	}
+
+        Result& result()
+        {
+            if ( prepare_result_ ) {
+                return Plugin::result();
+            }
+            return result_;
+        }
     };
 }
 DECLARE_TEMPUS_PLUGIN( "sample_road_plugin", Tempus::RoadPlugin );
