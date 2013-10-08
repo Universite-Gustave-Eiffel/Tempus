@@ -55,6 +55,7 @@ class HistoryFile(object):
         return r
 
 class ZipHistoryFile(object):
+    """A ZipHistoryFile stores records in a .zip file. Each filename is named by its ID."""
 
     def __init__( self, filename ):
         self.filename = filename
@@ -109,9 +110,14 @@ class ZipHistoryFile(object):
         self.reset()
         infos = self.zf.infolist()
         r = []
+        def compareDates( x, y ):
+            dt1 = "%04d-%02d-%02dT%02d:%02d:%02d.0" % x.date_time
+            dt2 = "%04d-%02d-%02dT%02d:%02d:%02d.0" % y.date_time
+            return cmp(dt2,dt1)
+        # sort by dates, earliest first
+        infos.sort( cmp = compareDates )
         for info in infos:
-            t = info.date_time
-            dt = "%04d-%02d-%02dT%02d:%02d:%02d.0" % t
+            dt = "%04d-%02d-%02dT%02d:%02d:%02d.0" % info.date_time
             r.append( [int(info.filename), dt] )
         return r
 
