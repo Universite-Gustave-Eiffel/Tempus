@@ -545,6 +545,21 @@ namespace WPS
             // process
             plugin->process();
 
+            // metrics
+            xmlNode * metrics_node = XML::new_node( "metrics" );
+            Plugin::MetricValueList metrics = plugin->metrics();
+            Plugin::MetricValueList::iterator it;
+            for ( it = metrics.begin(); it != metrics.end(); it++ )
+            {
+                xmlNode* metric_node = XML::new_node( "metric" );
+                XML::new_prop( metric_node, "name", it->first );
+                XML::new_prop( metric_node, "value",
+                               plugin->metric_to_string( it->first ) );
+                
+                XML::add_child( metrics_node, metric_node );
+            }
+            output_parameters_[ "metrics" ] = metrics_node;
+
             // result
             Tempus::Result& result = plugin->result();
             
@@ -556,7 +571,6 @@ namespace WPS
             if ( result.size() == 0 )
             {
                 output_parameters_["results"] = root_node;
-                output_parameters_["metrics"] = XML::new_node( "metrics" );
                 return output_parameters_;
             }
 
@@ -714,20 +728,6 @@ namespace WPS
             } // for each result
             output_parameters_[ "results" ] = root_node;
 
-            xmlNode * metrics_node = XML::new_node( "metrics" );
-            Plugin::MetricValueList metrics = plugin->metrics();
-            Plugin::MetricValueList::iterator it;
-            for ( it = metrics.begin(); it != metrics.end(); it++ )
-            {
-                xmlNode* metric_node = XML::new_node( "metric" );
-                XML::new_prop( metric_node, "name", it->first );
-                XML::new_prop( metric_node, "value",
-                               plugin->metric_to_string( it->first ) );
-                
-                XML::add_child( metrics_node, metric_node );
-            }
-            
-            output_parameters_[ "metrics" ] = metrics_node;
             return output_parameters_;
         }
     };
