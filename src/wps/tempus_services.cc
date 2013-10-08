@@ -437,7 +437,6 @@ namespace WPS
 		std::string name = XML::get_prop( field, "name" );
                 std::string value = XML::get_prop( field, "value" );
 
-                COUT << "set option " << name << " to " << value << std::endl;
                 plugin->set_option_from_string( name, value );
                 field = XML::get_next_nontext( field->next );       
             }

@@ -165,23 +165,28 @@ namespace Tempus
 	if ( descIt == desc.end() )
 	    return;
 	const OptionType t = descIt->second.type;
-	switch (t)
-	{
-	case BoolOption:
-	    options_[name] = boost::lexical_cast<int>( value ) == 0 ? false : true;
-	    break;
-	case IntOption:
-	    options_[name] = boost::lexical_cast<int>( value );
-	    break;
-	case FloatOption:
-	    options_[name] = boost::lexical_cast<float>( value );
-	    break;
-	case StringOption:
-	    options_[name] = value;
-	    break;
-	default:
-	    throw std::runtime_error( "Unknown type" );
-	}
+        try {
+            switch (t)
+            {
+            case BoolOption:
+                options_[name] = boost::lexical_cast<int>( value ) == 0 ? false : true;
+                break;
+            case IntOption:
+                options_[name] = boost::lexical_cast<int>( value );
+                break;
+            case FloatOption:
+                options_[name] = boost::lexical_cast<float>( value );
+                break;
+            case StringOption:
+                options_[name] = value;
+                break;
+            default:
+                throw std::runtime_error( "Unknown type" );
+            }
+        }
+        catch ( boost::bad_lexical_cast& ) {
+            options_[name] = descIt->second.default_value;
+        }
     }
 
     std::string Plugin::option_to_string( const std::string& name )
