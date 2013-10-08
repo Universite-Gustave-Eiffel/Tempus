@@ -291,11 +291,13 @@ namespace Tempus
 	for ( Result::iterator rit = result_.begin(); rit != result_.end(); ++rit ) {
 	    Roadmap& roadmap = *rit;
 	    Road::Graph& road_graph = graph_.road;
-	    
+
+#if DO_PRINT
 	    // display the global costs of the result
 	    for ( Costs::const_iterator it = roadmap.total_costs.begin(); it != roadmap.total_costs.end(); ++it ) {
 		COUT << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
 	    }
+#endif
 	    
 	    std::string road_name = "";
 	    double distance = 0.0;
@@ -327,7 +329,9 @@ namespace Tempus
 			road_id = road_graph[ edge->source.road_vertex ].db_id;
 			pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
 
+#if DO_PRINT
 			COUT << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
+#endif
 
 		    } break;
 		    case Multimodal::Edge::Transport2Road: {
@@ -337,7 +341,9 @@ namespace Tempus
 			pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
 			road_id = road_graph[ edge->target.road_vertex ].db_id;				 
 
+#if DO_PRINT
 			COUT << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
+#endif
 
 		    } break;
 		    }
@@ -368,6 +374,7 @@ namespace Tempus
 		    // get rid of the heading '\x'
 		    step->geometry_wkb = wkb.substr(2);
 		    
+#if DO_PRINT
 		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
 		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
 		    COUT << direction_i++ << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
@@ -376,6 +383,7 @@ namespace Tempus
 			COUT << cost_name( cit->first ) << ": " << cit->second << cost_unit( cit->first ) << " ";
 		    }
 		    COUT << ")" << std::endl;
+#endif
 		}
 		else if ( (*it)->step_type == Roadmap::Step::RoadStep ) {
 		    
@@ -450,6 +458,7 @@ namespace Tempus
 			last_step->distance_km = -1.0;
 		    }
 		
+#if DO_PRINT
 		    switch ( movement )
 		    {
 		    case Roadmap::RoadStep::GoAhead:
@@ -473,6 +482,7 @@ namespace Tempus
 			COUT << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
 			break;
 		    }
+#endif
 		    previous_section = road_graph[step->road_section].db_id;
 		    was_on_roundabout = on_roundabout;
 		    last_step = step;

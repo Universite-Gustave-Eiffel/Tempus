@@ -98,7 +98,7 @@ namespace WPS {
 		    break;
 		doc.push_back(c);
 	    }
-	   CERR << doc << endl;
+            //CERR << doc << endl;
 	
 	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), "query.xml", NULL, 0 );
 	    if ( xml_doc.get() == NULL )

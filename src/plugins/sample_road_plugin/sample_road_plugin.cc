@@ -70,7 +70,6 @@ namespace Tempus
 	    request_ = request;
 
 	    get_option( "trace_vertex", trace_vertex_ );
-            COUT << "trace_vertex: " << trace_vertex_ << std::endl;
 
 	    result_.clear();
 	}
