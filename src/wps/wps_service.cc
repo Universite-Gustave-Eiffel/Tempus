@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <boost/format.hpp>
 
 #include "wps_service.hh"
 
@@ -19,7 +20,17 @@ namespace WPS
     {
 	if ( parameter_map.size() != schema_map.size() )
 	{
-	    throw std::invalid_argument( "Wrong number of parameters" );
+            std::string argList;
+            ParameterMap::const_iterator it;
+            for ( it = parameter_map.begin(); it != parameter_map.end(); it++ )
+            {
+                argList += " " + it->first;
+            }
+            
+	    throw std::invalid_argument( (boost::format("Wrong number of parameters got %1% arguments (%3%), %2% expected")
+                                          % parameter_map.size()
+                                          % schema_map.size()
+                                          % argList).str() );
 	}
 	ParameterMap::iterator it;
 	for ( it = parameter_map.begin(); it != parameter_map.end(); it++ )

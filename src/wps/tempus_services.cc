@@ -556,6 +556,7 @@ namespace WPS
             if ( result.size() == 0 )
             {
                 output_parameters_["results"] = root_node;
+                output_parameters_["metrics"] = XML::new_node( "metrics" );
                 return output_parameters_;
             }
 
