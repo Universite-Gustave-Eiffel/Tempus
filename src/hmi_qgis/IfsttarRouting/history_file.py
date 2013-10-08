@@ -86,18 +86,33 @@ class ZipHistoryFile(object):
         self.reset()
 
     def removeRecord( self, id ):
-        # TODO
-        pass
+        # must copy to a new file
+        self.zf.close()
+
+        zf = ZipFile( self.filename, 'r' )
+        newf = self.filename + ".new"
+        zf2 = ZipFile( newf, 'w' )
+        for info in zf.infolist():
+            # copy all except the given id
+            if info.filename != str(id):
+                zf2.writestr( info, zf.read( info.filename ) )
+        zf.close()
+        zf2.close()
+
+        os.unlink( self.filename )
+        os.rename( newf, self.filename )
+        # reopen the new file
+        self.zf = ZipFile( self.filename, 'a' )
+        # last id stays the same
 
     def getRecordsSummary( self ):
         self.reset()
         infos = self.zf.infolist()
         r = []
         for info in infos:
-            if info.filename != 'lastid':
-                t = info.date_time
-                dt = "%04d-%02d-%02dT%02d:%02d:%02d.0" % t
-                r.append( [int(info.filename), dt] )
+            t = info.date_time
+            dt = "%04d-%02d-%02dT%02d:%02d:%02d.0" % t
+            r.append( [int(info.filename), dt] )
         return r
 
     def getRecord( self, id ):
