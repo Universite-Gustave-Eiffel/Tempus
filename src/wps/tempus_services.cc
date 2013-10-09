@@ -418,7 +418,7 @@ namespace WPS
             Tempus::db_id_t id;
             double x, y;
 
-            Db::Connection& db = Application::instance()->db_connection();
+            Db::Connection db( Application::instance()->db_options() );
             Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 
             xmlNode* first_node = XML::get_next_nontext( node->children );
