@@ -65,10 +65,10 @@ namespace Tempus
 	    pt_graph = graph;
 	    pt_vertex = vertex;
 	}
-	Vertex::Vertex( const POI* poi )
+	Vertex::Vertex( const POI* ppoi )
 	{
 	    type = Poi;
-	    this->poi = poi;
+	    this->poi = ppoi;
 	}
     
 	Edge::ConnectionType Edge::connection_type() const
@@ -460,9 +460,8 @@ namespace Tempus
 	    }
 	    // else
 	    size_t n = num_vertices( graph_.road );
-
-	    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
-	    for ( it = graph_.public_transports.begin(); it != graph_.public_transports.end(); it++ )	    
+	    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports.begin(); 
+                    it != graph_.public_transports.end(); it++ )	    
 	    {
 		if ( &it->second != v.pt_graph )
 		{
@@ -614,7 +613,7 @@ namespace Tempus
 	    boost::tie( ret_edge, found ) = edge( e.source.pt_vertex, e.target.pt_vertex, *(e.source.pt_graph) );
 	    return std::make_pair( ret_edge, found );
 	}
-    }; // namespace Multimodal
+    } // namespace Multimodal
 
     ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
     {
@@ -699,4 +698,4 @@ namespace Tempus
 	ostr << ")}" ;
 	return ostr;
     }	
-};
+}

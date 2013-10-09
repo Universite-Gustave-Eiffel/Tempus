@@ -7,8 +7,8 @@
 #include <vector>
 #include <map>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/thread.hpp>
 
 #include "wps_request.hh"
 #include "wps_service.hh"
@@ -16,10 +16,12 @@
 
 using namespace std;
 
+static boost::mutex print_error_status_mutex;
 namespace WPS {
 
     int Request::print_error_status( int status, const std::string& msg )
     {
+        boost::lock_guard< boost::mutex > lock( print_error_status_mutex );
 	outs_ << "Status: " << status << " " << msg << endl;
 	outs_ << "Content-type: text/html" << endl;
 	outs_ << endl;
@@ -199,14 +201,14 @@ namespace WPS {
 			return print_exception( WPS_INVALID_PARAMETER_VALUE, "Only Input elements are allowed inside DataInputs" );
 		    }
 		    xmlNode* nnode = XML::get_next_nontext( node->children );
-		    string identifier;
+		    string id;
 		    xmlNode* data = 0;
 		    while ( nnode )
 		    {
 			if ( !xmlStrcmp( nnode->name, (const xmlChar*)"Identifier") )
 			{
 			    if ( nnode->children && nnode->children->content )
-				identifier = (const char*)nnode->children->content;
+				id= (const char*)nnode->children->content;
 			}
 			else if (!xmlStrcmp( nnode->name, (const xmlChar*)"Data") )
 			{
@@ -217,7 +219,7 @@ namespace WPS {
 			nnode = XML::get_next_nontext( nnode->next );
 		    }
 
-		    if ( identifier == "" )
+		    if ( id== "" )
 		    {
 			return print_exception( WPS_INVALID_PARAMETER_VALUE, "Input identifier undefined" );
 		    }
@@ -233,7 +235,7 @@ namespace WPS {
 		    }
 		    xmlNode *actual_data = XML::get_next_nontext( n->children );
 		    // associate xml data to identifier
-		    input_parameter_map[identifier] = actual_data;
+		    input_parameter_map[id] = actual_data;
 
 		    // next input
 		    node = XML::get_next_nontext( node->next );
@@ -289,4 +291,4 @@ namespace WPS {
     
 	return 0;
     }
-};
+}

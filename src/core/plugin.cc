@@ -103,7 +103,7 @@ namespace Tempus
             loaded += " " + i->first;
         DllMap::const_iterator dll = dll_.find(dll_name);
         if ( dll == dll_.end() ) throw std::runtime_error(dll_name + " is not loaded (loaded:" + loaded+")");
-        std::auto_ptr<Plugin> p( dll->second.create( Application::instance()->db_connection() ) );
+        std::auto_ptr<Plugin> p( dll->second.create( Application::instance()->db_options() ) );
         p->post_build();
         p->validate();
         return p.release();
@@ -121,10 +121,10 @@ namespace Tempus
     }
     
 
-    Plugin::Plugin( const std::string& name, Db::Connection& db ) :
+    Plugin::Plugin( const std::string& nname, const std::string & db_options ) :
 	graph_(Application::instance()->graph()),
-	name_(name),
-	db_(db.dbOption()) // create another connection
+	name_(nname),
+	db_(db_options) // create another connection
     {
 	// default metrics
 	metrics_[ "time_s" ] = (float)0.0;
@@ -132,24 +132,24 @@ namespace Tempus
     }
 
     template <class T>
-    void Plugin::get_option( const std::string& name, T& value )
+    void Plugin::get_option( const std::string& nname, T& value )
     {
         const OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
-        OptionDescriptionList::const_iterator descIt = desc.find( name );
+        OptionDescriptionList::const_iterator descIt = desc.find( nname );
         if ( descIt == desc.end() )
         {
-            throw std::runtime_error( "get_option(): cannot find option " + name );
+            throw std::runtime_error( "get_option(): cannot find option " + nname );
         }
-        if ( options_.find( name ) == options_.end() )
+        if ( options_.find( nname ) == options_.end() )
         {
             // return default value
             value = boost::any_cast<T>( descIt->second.default_value );
             return;
         }
-        boost::any v = options_[name];
+        boost::any v = options_[nname];
         if ( !v.empty() )
         {
-            value = boost::any_cast<T>(options_[name]);
+            value = boost::any_cast<T>(options_[nname]);
         }
     }
     // template instanciations
@@ -158,10 +158,10 @@ namespace Tempus
     template void Plugin::get_option<double>( const std::string&, double& );
     template void Plugin::get_option<std::string>( const std::string&, std::string& );
 
-    void Plugin::set_option_from_string( const std::string& name, const std::string& value)
+    void Plugin::set_option_from_string( const std::string& nname, const std::string& value)
     {
         const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
-        Plugin::OptionDescriptionList::const_iterator descIt = desc.find( name );
+        Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
 	if ( descIt == desc.end() )
 	    return;
 	const OptionType t = descIt->second.type;
@@ -169,47 +169,47 @@ namespace Tempus
             switch (t)
             {
             case BoolOption:
-                options_[name] = boost::lexical_cast<int>( value ) == 0 ? false : true;
+                options_[nname] = lexical_cast<int>( value ) == 0 ? false : true;
                 break;
             case IntOption:
-                options_[name] = boost::lexical_cast<int>( value );
+                options_[nname] = lexical_cast<int>( value );
                 break;
             case FloatOption:
-                options_[name] = boost::lexical_cast<float>( value );
+                options_[nname] = lexical_cast<float>( value );
                 break;
             case StringOption:
-                options_[name] = value;
+                options_[nname] = value;
                 break;
             default:
                 throw std::runtime_error( "Unknown type" );
             }
         }
         catch ( boost::bad_lexical_cast& ) {
-            options_[name] = descIt->second.default_value;
+            options_[nname] = descIt->second.default_value;
         }
     }
 
-    std::string Plugin::option_to_string( const std::string& name )
+    std::string Plugin::option_to_string( const std::string& nname )
     {
         const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
-        Plugin::OptionDescriptionList::const_iterator descIt = desc.find( name );
+        Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
 	if ( descIt == desc.end() )
 	{
-	    throw std::invalid_argument( "Cannot find option " + name );
+	    throw std::invalid_argument( "Cannot find option " + nname );
 	}
 	OptionType t = descIt->second.type;
-	boost::any value = options_[name];
+	boost::any value = options_[nname];
 	if ( value.empty() )
 	    return "";
 
 	switch (t)
 	{
 	case BoolOption:
-	    return boost::lexical_cast<std::string>( boost::any_cast<bool>(value) ? 1 : 0 );
+	    return to_string( boost::any_cast<bool>(value) ? 1 : 0 );
 	case IntOption:
-	    return boost::lexical_cast<std::string>( boost::any_cast<int>(value) );
+	    return to_string( boost::any_cast<int>(value) );
 	case FloatOption:
-	    return boost::lexical_cast<std::string>( boost::any_cast<float>(value) );
+	    return to_string( boost::any_cast<float>(value) );
 	case StringOption:
 	    return boost::any_cast<std::string>(value);
 	default:
@@ -219,33 +219,33 @@ namespace Tempus
 	return "";
     }
 
-    std::string Plugin::metric_to_string( const std::string& name )
+    std::string Plugin::metric_to_string( const std::string& nname )
     {
-	if ( metrics_.find( name ) == metrics_.end() )
+	if ( metrics_.find( nname ) == metrics_.end() )
 	{
-	    throw std::invalid_argument( "Cannot find metric " + name );
+	    throw std::invalid_argument( "Cannot find metric " + nname );
 	}
-	boost::any v = metrics_[name];
+	boost::any v = metrics_[nname];
 	if ( v.empty() )
 	    return "";
 
 	if ( v.type() == typeid( bool ) )
 	{
-	    return boost::lexical_cast<std::string>( boost::any_cast<bool>( v ) ? 1 : 0 );
+	    return to_string( boost::any_cast<bool>( v ) ? 1 : 0 );
 	}
 	else if ( v.type() == typeid( int ) )
 	{
-	    return boost::lexical_cast<std::string>( boost::any_cast<int>( v ) );
+	    return to_string( boost::any_cast<int>( v ) );
 	}
 	else if ( v.type() == typeid( float ) )
 	{
-	    return boost::lexical_cast<std::string>( boost::any_cast<float>( v ) );
+	    return to_string( boost::any_cast<float>( v ) );
 	}
 	else if ( v.type() == typeid( std::string ) )
 	{
 	    return boost::any_cast<std::string>( v );
 	}
-	throw std::invalid_argument( "No known conversion for metric " + name );
+	throw std::invalid_argument( "No known conversion for metric " + nname );
 	// never happens
 	return "";
     }
@@ -323,9 +323,9 @@ namespace Tempus
 		    switch ( edge->connection_type()) {
 		    case Multimodal::Edge::Road2Transport: {
 			is_road_pt = true;
-			const Road::Graph& road_graph = *(edge->source.road_graph);
+			const Road::Graph& rroad_graph = *(edge->source.road_graph);
 			const PublicTransport::Graph& pt_graph = *(edge->target.pt_graph);
-			road_id = road_graph[ edge->source.road_vertex ].db_id;
+			road_id = rroad_graph[ edge->source.road_vertex ].db_id;
 			pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
 
 			COUT << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
@@ -334,9 +334,9 @@ namespace Tempus
 		    case Multimodal::Edge::Transport2Road: {
 			is_road_pt = true;
 			const PublicTransport::Graph& pt_graph = *(edge->source.pt_graph);
-			const Road::Graph& road_graph = *(edge->target.road_graph);
+			const Road::Graph& rroad_graph = *(edge->target.road_graph);
 			pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
-			road_id = road_graph[ edge->target.road_vertex ].db_id;				 
+			road_id = rroad_graph[ edge->target.road_vertex ].db_id;				 
 
 			COUT << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
 
@@ -383,17 +383,20 @@ namespace Tempus
 		    
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *it );
 
+
 		    //
 		    // retrieval of the step's geometry
-		    std::string q = (boost::format("SELECT st_asbinary(st_force2d(geom)) FROM tempus.road_section WHERE id=%1%") %
-				     road_graph[step->road_section].db_id ).str();
-		    Db::Result res = db_.exec(q);
-		    std::string wkb = res[0][0].as<std::string>();
-		    // get rid of the heading '\x'
-		    if ( wkb.size() > 0 )
-			step->geometry_wkb = wkb.substr(2);
-		    else
-			step->geometry_wkb = "";
+                    {
+                        std::string q = (boost::format("SELECT st_asbinary(st_force2d(geom)) FROM tempus.road_section WHERE id=%1%") %
+                                         road_graph[step->road_section].db_id ).str();
+                        Db::Result res = db_.exec(q);
+                        std::string wkb = res[0][0].as<std::string>();
+                        // get rid of the heading '\x'
+                        if ( wkb.size() > 0 )
+                            step->geometry_wkb = wkb.substr(2);
+                        else
+                            step->geometry_wkb = "";
+                    }
 	    
 		    //
 		    // For a road step, we have to compute directions of turn
@@ -500,5 +503,5 @@ namespace Tempus
     {
 	COUT << "[plugin_base]: cleanup" << std::endl;
     }
-};
+}
 

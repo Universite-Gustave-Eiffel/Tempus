@@ -177,16 +177,18 @@ void PgImporterTest::testMultimodal()
     size_t n_road_vertices = 0;
     size_t n_pt_vertices = 0;
     size_t n_pois = 0;
-    Multimodal::VertexIterator vi, vi_end;
-    for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
     {
-	nv++;
-	if ( vi->type == Multimodal::Vertex::Road )
-	    n_road_vertices++;
-	else if ( vi->type == Multimodal::Vertex::PublicTransport )
-	    n_pt_vertices++;
-	else
-	    n_pois ++;
+        Multimodal::VertexIterator vi, vi_end;
+        for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
+        {
+            nv++;
+            if ( vi->type == Multimodal::Vertex::Road )
+                n_road_vertices++;
+            else if ( vi->type == Multimodal::Vertex::PublicTransport )
+                n_pt_vertices++;
+            else
+                n_pois ++;
+        }
     }
 
     const PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
@@ -197,19 +199,21 @@ void PgImporterTest::testMultimodal()
     COUT << "num_vertices = " << num_vertices( graph_ ) << endl;
     CPPUNIT_ASSERT_EQUAL( nv, num_vertices( graph_ ) );
 
-    for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
     {
-    	Multimodal::OutEdgeIterator oei, oei_end;
-    	boost::tie( oei, oei_end ) = out_edges( *vi, graph_ );
-	size_t out_deg = 0;
-    	for ( ; oei != oei_end; oei++ )
-    	{
-    	    out_deg++;
-    	}
-	size_t out_deg2 = out_degree( *vi, graph_ );
-	CPPUNIT_ASSERT_EQUAL( out_deg, out_deg2 );
+        Multimodal::VertexIterator vi, vi_end;
+        for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
+        {
+            Multimodal::OutEdgeIterator oei, oei_end;
+            boost::tie( oei, oei_end ) = out_edges( *vi, graph_ );
+            size_t out_deg = 0;
+            for ( ; oei != oei_end; oei++ )
+            {
+                out_deg++;
+            }
+            size_t out_deg2 = out_degree( *vi, graph_ );
+            CPPUNIT_ASSERT_EQUAL( out_deg, out_deg2 );
+        }
     }
-    Multimodal::EdgeIterator ei, ei_end;
     size_t ne = 0;
     size_t n_road2road = 0;
     size_t n_road2transport = 0;
@@ -223,32 +227,35 @@ void PgImporterTest::testMultimodal()
     boost::tie( ri, ri_end ) = out_edges( v1, graph_.road );
     //    BOOST_ASSERT( ri != ri_end );
 
-    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
     {
-	ne++;
-	switch ( ei->connection_type() )
-	{
-	case Multimodal::Edge::Road2Road:
-	    n_road2road++;
-	    break;
-	case Multimodal::Edge::Road2Transport:
-	    n_road2transport++;
-	    break;
-	case Multimodal::Edge::Transport2Road:
-	    n_transport2road++;
-	    break;
-	case Multimodal::Edge::Transport2Transport:
-	    n_transport2transport++;
-	    break;
-	case Multimodal::Edge::Road2Poi:
-	    n_road2poi++;
-	    break;
-	case Multimodal::Edge::Poi2Road:
-	    n_poi2road++;
-	    break;
-	case Multimodal::Edge::UnknownConnection:
-	    throw std::runtime_error("bug: should not reah here");
-	}
+        Multimodal::EdgeIterator ei, ei_end;
+        for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
+        {
+            ne++;
+            switch ( ei->connection_type() )
+            {
+            case Multimodal::Edge::Road2Road:
+                n_road2road++;
+                break;
+            case Multimodal::Edge::Road2Transport:
+                n_road2transport++;
+                break;
+            case Multimodal::Edge::Transport2Road:
+                n_transport2road++;
+                break;
+            case Multimodal::Edge::Transport2Transport:
+                n_transport2transport++;
+                break;
+            case Multimodal::Edge::Road2Poi:
+                n_road2poi++;
+                break;
+            case Multimodal::Edge::Poi2Road:
+                n_poi2road++;
+                break;
+            case Multimodal::Edge::UnknownConnection:
+                throw std::runtime_error("bug: should not reah here");
+            }
+        }
     }
 
     size_t n_stops = 0;
@@ -272,19 +279,23 @@ void PgImporterTest::testMultimodal()
 
     // test vertex index
     Multimodal::VertexIndexProperty index = get( boost::vertex_index, graph_ );
-    for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
     {
-	size_t idx = get( index, *vi );
-	if ( vi->type == Multimodal::Vertex::Road )
-	{
-	    CPPUNIT_ASSERT( idx < num_vertices( graph_.road ) );
-	}
+        Multimodal::VertexIterator vi, vi_end;
+        for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; vi++ )
+        {
+            size_t idx = get( index, *vi );
+            if ( vi->type == Multimodal::Vertex::Road )
+            {
+                CPPUNIT_ASSERT( idx < num_vertices( graph_.road ) );
+            }
+        }
     }
  
     // test that graph vertices and edges can be used as a map key
     // i.e. the operator< forms a complete order
     {
 	    std::set< Multimodal::Vertex > vertex_set;
+            Multimodal::VertexIterator vi, vi_end;
 	    for ( boost::tie(vi, vi_end) = vertices( graph_ ); vi != vi_end; ++vi ) {
 		    vertex_set.insert( *vi );
 	    }
@@ -292,6 +303,7 @@ void PgImporterTest::testMultimodal()
 	    CPPUNIT_ASSERT_EQUAL( vertex_set.size(), num_vertices( graph_ ));
 
 	    std::set< Multimodal::Edge > edge_set;
+            Multimodal::EdgeIterator ei, ei_end;
 	    for ( boost::tie(ei, ei_end) = edges( graph_ ); ei != ei_end; ++ei ) {
 		    edge_set.insert( *ei );
 	    }
@@ -316,19 +328,20 @@ void PgImporterTest::testMultimodal()
 	std::vector<double> distance_map( n );
 	std::map< Multimodal::Edge, double > lengths;
 	
-	Multimodal::EdgeIterator ei, ei_end;
-	for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
-	{
-	    if ( ei->connection_type() == Multimodal::Edge::Road2Road )
-	    {
-		lengths[ *ei ] = 10.0;
-	    }
-	    else
-	    {
-		lengths[ *ei ] = 1.0;
-	    }
-	}
-	
+        {
+            Multimodal::EdgeIterator ei, ei_end;
+            for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
+            {
+                if ( ei->connection_type() == Multimodal::Edge::Road2Road )
+                {
+                    lengths[ *ei ] = 10.0;
+                }
+                else
+                {
+                    lengths[ *ei ] = 1.0;
+                }
+            }
+        }
 	Multimodal::Vertex origin, destination;
 	origin = vertex_from_road_node_id( 19953, graph_ );
 	destination = vertex_from_road_node_id( 22510, graph_ );

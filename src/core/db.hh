@@ -22,7 +22,6 @@
 
 #include <boost/assert.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 
 #include "common.hh"
@@ -178,7 +177,6 @@ namespace Db
 	void connect( const std::string& db_options )
 	{
             boost::lock_guard<boost::mutex> lock( mutex );
-            db_options_=db_options;
 	    conn_ = PQconnectdb( db_options.c_str() );
 	    if (conn_ == NULL || PQstatus(conn_) != CONNECTION_OK )
 	    {
@@ -193,13 +191,10 @@ namespace Db
             PQfinish( conn_ );
 	}
 
-    const std::string dbOption() const {return db_options_;}
-
 	///
 	/// Query execution. Returns a Db::Result. Throws a std::runtime_error on problem
 	Result exec( const std::string& query ) throw (std::runtime_error)
 	{
-            boost::lock_guard<boost::mutex> lock( mutex );
 	    PGresult* res = PQexec( conn_, query.c_str() );
 	    ExecStatusType ret = PQresultStatus( res );
 	    if ( (ret != PGRES_COMMAND_OK) && (ret != PGRES_TUPLES_OK) )
@@ -214,9 +209,8 @@ namespace Db
 	}
     protected:
 	PGconn* conn_;
-        std::string db_options_;
         static boost::mutex mutex;
     };
-};
+}
 
 #endif

@@ -260,6 +260,6 @@ namespace Tempus
 	int old_N_;
     };
 
-}; // Tempus namespace
+} // Tempus namespace
 
 #endif

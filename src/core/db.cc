@@ -57,6 +57,6 @@ namespace Db
 	return v;
     }
 
-};
+}
 
 

@@ -37,7 +37,7 @@ namespace Tempus
             return odl; 
         }
 
-	RoadPlugin( const std::string& name, Db::Connection& db ) : Plugin( name, db )
+	RoadPlugin( const std::string& nname, const std::string & db_options ) : Plugin( nname, db_options )
 	{
 	}
 
@@ -161,40 +161,35 @@ namespace Tempus
 	    Roadmap::RoadStep* step = 0;
 
 	    Road::Edge current_road;
-	    Road::Vertex previous;
-	    bool first_loop = true;
+	    std::list<Road::Vertex>::iterator prev = path.begin();
+            std::list<Road::Vertex>::iterator it = prev;
+	    if (prev != path.end()) 
+            {
+                for (;;)
+                {
+                    ++it;
+                    if ( it == path.end() ) break;
+                    Road::Vertex v = *it;
+                    Road::Vertex previous = *prev;
+                    ++prev;
+                    
+                    // Find an edge, based on a source and destination vertex
+                    Road::Edge e;
+                    bool found = false;
+                    boost::tie( e, found ) = boost::edge( previous, v, road_graph );
+                    if ( !found ) continue;
 
-	    for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ )
-	    {
-		Road::Vertex v = *it;
-		
-		// User-oriented roadmap
-		if ( first_loop )
-		{
-		    previous = v;
-		    first_loop = false;
-		    continue;
-		}
-
-		// Find an edge, based on a source and destination vertex
-		Road::Edge e;
-		bool found = false;
-		boost::tie( e, found ) = boost::edge( previous, v, road_graph );
-		if ( !found )
-		    continue;
-
-		if ( step == 0 || e != current_road )
-		{
-		    step = new Roadmap::RoadStep();
-		    roadmap.steps.push_back( step );
-		    step->road_section = e;
-		    current_road = e;
-		}
-		step->costs[CostDistance] += road_graph[e].length;
-		roadmap.total_costs[CostDistance] += road_graph[e].length;
-		
-		previous = v;
-	    }
+                    if ( step == 0 || e != current_road )
+                    {
+                        step = new Roadmap::RoadStep();
+                        roadmap.steps.push_back( step );
+                        step->road_section = e;
+                        current_road = e;
+                    }
+                    step->costs[CostDistance] += road_graph[e].length;
+                    roadmap.total_costs[CostDistance] += road_graph[e].length;
+                }
+            }
 	}
 
 	void cleanup()
@@ -203,7 +198,7 @@ namespace Tempus
 	}
     };
 }
-DECLARE_TEMPUS_PLUGIN( "sample_road_plugin", Tempus::RoadPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_road_plugin", Tempus::RoadPlugin )
 
 
 

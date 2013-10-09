@@ -41,6 +41,6 @@ namespace Tempus
     protected:
 	Db::Connection connection_;
     };
-}; // Tempus namespace
+} // Tempus namespace
 
 #endif

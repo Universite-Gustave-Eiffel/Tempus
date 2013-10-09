@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <boost/mpl/vector.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
 #include "pgsql_importer.hh"
@@ -33,7 +32,7 @@ namespace Tempus
 
             for ( size_t i = 0; i < res.size(); i++ )
             {
-                db_id_t db_id;
+                db_id_t db_id=0; // avoid warning "may be used uninitialized"
                 res[i][0] >> db_id;
                 BOOST_ASSERT( db_id > 0 );
                 // populate the global variable
@@ -60,7 +59,7 @@ namespace Tempus
             Db::Result res( connection_.exec( "SELECT id, rtname FROM tempus.road_type" ) );
             for ( size_t i = 0; i < res.size(); i++ )
             {
-                db_id_t db_id;
+                db_id_t db_id=0; // avoid warning "may be used uninitialized"
                 res[i][0] >> db_id;
                 BOOST_ASSERT( db_id > 0 );
                 // populate the global variable
@@ -101,6 +100,7 @@ namespace Tempus
                 node.db_id = res[i][0].as<db_id_t>();
                 node.is_junction = false;
                 node.is_bifurcation = false;
+                node.vertex =  Road::Vertex();
                 BOOST_ASSERT( node.db_id > 0 );
                 // only overwritten if not null
                 res[i][1] >> node.is_junction;
@@ -116,10 +116,10 @@ namespace Tempus
         }
 
         {
-            std::string query = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
+            const std::string qquery = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
                 "car_average_speed, road_name, lane, "
                 "roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section";
-            Db::Result res( connection_.exec( query ));
+            Db::Result res( connection_.exec( qquery ));
             
             for ( size_t i = 0; i < res.size(); i++ )
             {
@@ -216,7 +216,7 @@ namespace Tempus
                 res[i][j++] >> stop.is_station;
 
                 stop.has_parent = false;
-                int parent_station;
+                int parent_station = 0; // initilisation avoid warning
                 res[i][j++] >> parent_station;
                 if ( pt_nodes_map[network_id].find( parent_station ) != pt_nodes_map[network_id].end() )
                 {
@@ -350,4 +350,4 @@ namespace Tempus
 
     }
 
-};
+}

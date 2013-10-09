@@ -13,7 +13,7 @@
 namespace Db
 {
     class Connection;
-};
+}
 
 namespace Tempus
 {
@@ -403,8 +403,8 @@ namespace Tempus
 	VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph );
 
 	size_t get( const VertexIndexProperty& p, const Multimodal::Vertex& v );
-    };
-};
+    }
+}
 
 namespace Tempus
 {
@@ -461,6 +461,6 @@ namespace Tempus
 	typedef typename boost::graph_traits<G>::edge_descriptor descriptor;
     };
 
-};
+}
 
 #endif

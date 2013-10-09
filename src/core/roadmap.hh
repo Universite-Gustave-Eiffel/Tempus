@@ -122,6 +122,6 @@ namespace Tempus
     /// A Result is a list of Roadmap, ordered by relevance towards optimizing criteria
     typedef std::list<Roadmap> Result;
 
-}; // Tempus namespace
+} // Tempus namespace
 
 #endif

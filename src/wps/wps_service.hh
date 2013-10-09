@@ -111,6 +111,6 @@ namespace WPS
 	ParameterMap output_parameters_;
     };
 
-}; // WPS namespace
+} // WPS namespace
 
 #endif

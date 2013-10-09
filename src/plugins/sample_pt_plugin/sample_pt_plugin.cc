@@ -37,7 +37,7 @@ namespace Tempus
         
         static const OptionDescriptionList option_descriptions(){ return OptionDescriptionList(); }
 
-	PtPlugin( const std::string & name, Db::Connection& db ) : Plugin( name, db )
+	PtPlugin( const std::string & nname, const std::string & db_options ) : Plugin( nname, db_options )
 	{
 	}
 
@@ -135,24 +135,26 @@ namespace Tempus
 
 	    // reorder the path
 	    std::list<PublicTransport::Vertex> path;
-	    PublicTransport::Vertex current = arrival;
-	    bool found = true;
-	    while ( current != departure )
-	    {
-		path.push_front( current );
-		if ( pred_map[current] == current )
-		{
-		    found = false;
-		    break;
-		}
-		current = pred_map[ current ];
-	    }
-	    if ( !found )
-	    {
-		CERR << "No path found" << endl;
-		return;
-	    }
-	    path.push_front( departure );
+            {
+                PublicTransport::Vertex current = arrival;
+                bool found = true;
+                while ( current != departure )
+                {
+                    path.push_front( current );
+                    if ( pred_map[current] == current )
+                    {
+                        found = false;
+                        break;
+                    }
+                    current = pred_map[ current ];
+                }
+                if ( !found )
+                {
+                    CERR << "No path found" << endl;
+                    return;
+                }
+                path.push_front( departure );
+            }
 
 	    //
 	    // Final result building.
@@ -206,7 +208,7 @@ namespace Tempus
 
     };
 }
-DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin )
 
 
 

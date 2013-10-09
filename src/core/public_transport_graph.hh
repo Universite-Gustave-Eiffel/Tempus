@@ -298,7 +298,7 @@ namespace Tempus
 	    }
 	};
 
-    }; // PublicTransport namespace
-}; // Tempus namespace
+    } // PublicTransport namespace
+} // Tempus namespace
 
 #endif

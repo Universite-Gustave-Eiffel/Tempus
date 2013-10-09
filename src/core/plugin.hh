@@ -86,11 +86,11 @@ namespace Tempus
         ///
         /// Method used by a plugin to declare an option
         template <class T>
-        void declare_option( const std::string& name, const std::string& description, T default_value )
+        void declare_option( const std::string& nname, const std::string& description, T default_value )
         {
-            (*this)[name].type = OptionTypeFrom<T>::type;
-            (*this)[name].description = description;
-            (*this)[name].default_value = default_value;
+            (*this)[nname].type = OptionTypeFrom<T>::type;
+            (*this)[nname].description = description;
+            (*this)[nname].default_value = default_value;
         }
         void set_options_default_value( Plugin * plugin )
         {
@@ -103,9 +103,9 @@ namespace Tempus
 	///
 	/// Method used to set an option value
 	template <class T>
-	void set_option( const std::string& name, const T& value )
+	void set_option( const std::string& nname, const T& value )
 	{
-	    options_[name] = value;
+	    options_[nname] = value;
 	}
 	///
 	/// Method used to set an option value from a string. Conversions are made, based on the option description
@@ -122,10 +122,10 @@ namespace Tempus
 	///
 	/// Method used to get an option value, alternative signature.
 	template <class T>
-	T get_option( const std::string& name )
+	T get_option( const std::string& nname )
 	{
 	    T v;
-	    get_option( name, v );
+	    get_option( nname, v );
 	    return v;
 	}
 
@@ -149,7 +149,7 @@ namespace Tempus
 
 	///
 	/// Ctor
-	Plugin( const std::string&, Db::Connection& db );
+	Plugin( const std::string& name, const std::string & db_options );
 	
 	///
 	/// Called when the plugin is unloaded from memory (uninstall)
@@ -376,7 +376,7 @@ namespace Tempus
 
         struct Dll 
         {
-            typedef Plugin*                              (*PluginCreationFct)( Db::Connection& );
+            typedef Plugin*                              (*PluginCreationFct)( const std::string & );
             typedef const Plugin::OptionDescriptionList* (*PluginOptionDescriptionFct)();
             typedef const char*                          (*PluginNameFct)();
             HMODULE           handle_;
@@ -390,7 +390,7 @@ namespace Tempus
     // use of volatile for shared resources is explaned here http://www.drdobbs.com/cpp/volatile-the-multithreaded-programmers-b/184403766
 
 
-}; // Tempus namespace
+} // Tempus namespace
 
 
 
@@ -399,7 +399,7 @@ namespace Tempus
 /// Macro used inside plugins.
 /// This way, the constructor will be called on library loading and the destructor on library unloading
 #define DECLARE_TEMPUS_PLUGIN( name, type )                              \
-    extern "C" EXPORT Tempus::Plugin* createPlugin( Db::Connection& db ) { return new type( name, db ); } \
+    extern "C" EXPORT Tempus::Plugin* createPlugin( const std::string & db_options ) { return new type( name, db_options ); } \
     extern "C" EXPORT const char *    pluginName() { return name; } \
     extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList* optionDescriptions( ) { return new Tempus::Plugin::OptionDescriptionList(type::option_descriptions()); } \
     extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; }

@@ -31,7 +31,7 @@ namespace Tempus
 	    /// The application has just been (re)started
 	    Started = 0,
 	    ///
-	    /// The application is connected to a database
+	    /// The application has database connection informations
 	    Connected,
 	    ///
 	    /// Graph has been pre built
@@ -43,7 +43,6 @@ namespace Tempus
 	
 	///
 	/// State accessors
-	void state( State state ) { state_ = state; }
 	State state() const { return state_; }
 
 	///
@@ -53,7 +52,6 @@ namespace Tempus
 
 	///
 	/// Database connection accessors. @relates Db::Connection
-	Db::Connection& db_connection() { return db_; }
 	const std::string& db_options() const { return db_options_; }
 
 	///
@@ -79,13 +77,12 @@ namespace Tempus
 	Application() 
         {}
 
-	Db::Connection db_;
 	std::string db_options_;
 	Multimodal::Graph graph_;
 	
 	State state_;
     };
-};
+}
 
 #ifdef _WIN32
 ///

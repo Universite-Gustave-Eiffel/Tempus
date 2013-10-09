@@ -19,7 +19,7 @@ namespace Tempus
 	Graph& graph_;
 	Member mem_;
     };
-};
+}
 
 namespace boost
 {
@@ -30,6 +30,6 @@ namespace boost
     {
 	return pmap.graph_[e].*(pmap.mem_);
     }
-};
+}
 
 

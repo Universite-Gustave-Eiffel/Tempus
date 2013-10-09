@@ -18,7 +18,7 @@ namespace Tempus
 	Graph& graph_;
 	Function fct_;
     };
-};
+}
 
 namespace boost
 {
@@ -29,4 +29,4 @@ namespace boost
     {
 	return pmap.fct_( pmap.graph_, e );
     }
-};
+}

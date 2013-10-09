@@ -33,8 +33,8 @@ namespace WPS
     protected:
 	std::istream ins_;
 	std::ostream outs_;
-    char ** env_;
+        char ** env_;
     };
-};
+}
 
 #endif

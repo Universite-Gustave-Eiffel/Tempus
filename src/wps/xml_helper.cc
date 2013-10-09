@@ -10,9 +10,6 @@ int XML::init()
 	return 0;
 }
 
-// Force a call to XML::init() on startup
-int XML::init_n_ = XML::init();
-
 std::string XML::xml_error_;
 
 bool XML::clear_errors_ = false;
