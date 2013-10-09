@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 dbstring="dbname=tempus_test_db"
 wpsurl="http://127.0.0.1/wps"
+npts=100
 
 # test command line arguments
 if __name__ == "__main__":
@@ -20,6 +21,8 @@ if __name__ == "__main__":
             help='The database connection string')
     parser.add_argument('-w', '--wpsurl', required=False,
             help='The WPS server URL')
+    parser.add_argument('-n', '--npts', required=False,
+            help='Number of point pairs to test')
 
     args = parser.parse_args()
 
@@ -27,6 +30,8 @@ if __name__ == "__main__":
         dbstring = args.dbstring
     if args.wpsurl:
         wpsurl = args.wpsurl
+    if args.npts:
+        npts = int(args.npts)
 
     tempus = TempusRequest( wpsurl )
 
@@ -46,7 +51,7 @@ if __name__ == "__main__":
     distances = []
     total_time = 0
     total_rtime = 0
-    for i in range(0,100):
+    for i in range(0,npts):
 
         # pick two points at random and ask for an itinerary
         n = len(points)
@@ -84,10 +89,12 @@ if __name__ == "__main__":
 
     print total_time, total_rtime
 
-    plt.clf()
-    plt.xlabel( "Time(s)" )
-    plt.ylabel( "Distance" )
-    
-    plt.plot( times, distances, 'ro' )
-    plt.show()
+    # FIXME
+    if False:
+        plt.clf()
+        plt.xlabel( "Time(s)" )
+        plt.ylabel( "Distance" )
+        
+        plt.plot( times, distances, 'ro' )
+        plt.show()
 
