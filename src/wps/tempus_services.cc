@@ -415,27 +415,31 @@ namespace WPS
         Road::Vertex get_road_vertex_from_point( xmlNode* node )
         {
             Road::Vertex vertex;
+            Tempus::db_id_t id;
+            double x, y;
+
             Db::Connection& db = Application::instance()->db_connection();
             Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 
             xmlNode* first_node = XML::get_next_nontext( node->children );
             if ( !xmlStrcmp( first_node->name, (const xmlChar*)"vertex" ) ) {
                 string v_str = (const char*)first_node->children->content;
-                vertex = lexical_cast<int>( v_str );
-                return vertex;
+                id = lexical_cast<Tempus::db_id_t>( v_str );
             }
-            xmlNode* y_node = XML::get_next_nontext( first_node->next );
+            else {
+                xmlNode* y_node = XML::get_next_nontext( first_node->next );
 
-            string x_str = (const char*)first_node->children->content;
-            string y_str = (const char*)y_node->children->content;
+                string x_str = (const char*)first_node->children->content;
+                string y_str = (const char*)y_node->children->content;
 
-            double x = lexical_cast<double>( x_str );
-            double y = lexical_cast<double>( y_str );
+                x = lexical_cast<double>( x_str );
+                y = lexical_cast<double>( y_str );
 
-            Tempus::db_id_t id = road_vertex_id_from_coordinates( db, x, y );
-            if ( id == 0 )
-            {
-                throw std::invalid_argument( (boost::format("Cannot find vertex id from %1%, %2%") % x % y).str() );
+                id = road_vertex_id_from_coordinates( db, x, y );
+                if ( id == 0 )
+                {
+                    throw std::invalid_argument( (boost::format("Cannot find vertex id from %1%, %2%") % x % y).str() );
+                }
             }
             vertex = vertex_from_id( id, road_graph );
             return vertex;
