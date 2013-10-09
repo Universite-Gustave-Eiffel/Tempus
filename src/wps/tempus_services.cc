@@ -598,8 +598,7 @@ namespace WPS
                         step_node = XML::new_node( "road_step" );
                         xmlNode* rs_node = XML::new_node( "road" );
                         string road_name = "Unknown road";
-                        if ( edge_exists(step->road_section, road_graph) )
-                            road_name = road_graph[ step->road_section].road_name;
+                        road_name = road_graph[ step->road_section].road_name;
                         XML::add_child( rs_node, XML::new_text( road_name ));
                         
                         xmlNode* end_movement_node = XML::new_node( "end_movement" );
@@ -628,15 +627,8 @@ namespace WPS
                         string departure_str;
                         PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
                         PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
-                        if ( vertex_exists( v1, pt_graph ) )
-                        {
-                            departure_str = pt_graph[ v1 ].name;
-                        }
-                        string arrival_str;
-                        if ( vertex_exists( v2, pt_graph ) )
-                        {
-                            arrival_str = pt_graph[ v2 ].name;
-                        }
+                        departure_str = pt_graph[ v1 ].name;
+                        string arrival_str = pt_graph[ v2 ].name;
                         XML::add_child( departure_node, XML::new_text( departure_str ));
                         XML::add_child( arrival_node, XML::new_text( arrival_str ));
                                                         
