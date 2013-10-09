@@ -8,8 +8,6 @@ import time
 
 from tempus_request import *
 
-import matplotlib.pyplot as plt
-
 dbstring="dbname=tempus_test_db"
 wpsurl="http://127.0.0.1/wps"
 npts=100
@@ -87,14 +85,6 @@ if __name__ == "__main__":
         times.append(t)
         distances.append(rDistance)
 
-    print total_time, total_rtime
-
-    # FIXME
-    if False:
-        plt.clf()
-        plt.xlabel( "Time(s)" )
-        plt.ylabel( "Distance" )
-        
-        plt.plot( times, distances, 'ro' )
-        plt.show()
+    print "Total time spend by plugin: %.2fs" % total_time
+    print "Total time (with wps communication): %.2fs" % total_rtime
 
