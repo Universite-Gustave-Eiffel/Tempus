@@ -34,6 +34,7 @@ namespace Tempus
         { 
             OptionDescriptionList odl;
 	    odl.declare_option( "trace_vertex", "Trace vertex traversal", false );
+	    odl.declare_option( "prepare_result", "Prepare result", true );
             return odl; 
         }
 
@@ -46,6 +47,7 @@ namespace Tempus
 	}
     protected:
 	bool trace_vertex_;
+        bool prepare_result_;
     public:
 	virtual void post_build()
 	{
@@ -69,7 +71,7 @@ namespace Tempus
 	    request_ = request;
 
 	    get_option( "trace_vertex", trace_vertex_ );
-            COUT << "trace_vertex: " << trace_vertex_ << std::endl;
+            get_option( "prepare_result", prepare_result_ );
 
 	    result_.clear();
 	}
@@ -108,6 +110,7 @@ namespace Tempus
 	    std::list<Road::Vertex> path;
 	    Road::Vertex origin = request_.origin;
 	    // resolve each step, in reverse order
+            bool path_found = true;
 	    for ( size_t ik = request_.steps.size(); ik >= 1; --ik ) {
 		    size_t i = ik - 1;
 		    if ( i > 0 )
@@ -131,21 +134,19 @@ namespace Tempus
 		    
 		    // reorder the path, could have been better included ...
 		    Road::Vertex current = destination;
-		    bool found = true;
 		    while ( current != origin )
 		    {
 			    path.push_front( current );
 			    if ( pred_map[current] == current )
 			    {
-				    found = false;
+				    path_found = false;
 				    break;
 			    }
 			    current = pred_map[ current ];
 		    }
-		    if ( !found )
+		    if ( !path_found )
 		    {
-			   CERR << "No path found !" << endl;
-			    return;
+                        break;
 		    }
 	    }
 	    path.push_front( origin );
@@ -154,7 +155,12 @@ namespace Tempus
 	    long long sstart = t_start.time * 1000L + t_start.millitm;
 	    long long sstop = t_stop.time * 1000L + t_stop.millitm;
 	    float time_s = float((sstop - sstart) / 1000.0);
-	    metrics_[ "time_s" ] = time_s;	    
+	    metrics_[ "time_s" ] = time_s;
+
+            if ( !path_found ) {
+                CERR << "No path found !" << endl;
+                return;
+            }
 
 	    result_.push_back( Roadmap() );
 	    Roadmap& roadmap = result_.back();
@@ -196,6 +202,14 @@ namespace Tempus
 	{
 	    // nothing special to clean up
 	}
+
+        Result& result()
+        {
+            if ( prepare_result_ ) {
+                return Plugin::result();
+            }
+            return result_;
+        }
     };
 }
 DECLARE_TEMPUS_PLUGIN( "sample_road_plugin", Tempus::RoadPlugin )
