@@ -43,7 +43,7 @@ namespace Tempus
 	return p;
     }
 
-    Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph )
+    Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& )
     {
 	if ( v.type == Multimodal::Vertex::Road )
 	{

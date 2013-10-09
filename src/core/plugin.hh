@@ -86,11 +86,11 @@ namespace Tempus
         ///
         /// Method used by a plugin to declare an option
         template <class T>
-        void declare_option( const std::string& name, const std::string& description, T default_value )
+        void declare_option( const std::string& nname, const std::string& description, T default_value )
         {
-            (*this)[name].type = OptionTypeFrom<T>::type;
-            (*this)[name].description = description;
-            (*this)[name].default_value = default_value;
+            (*this)[nname].type = OptionTypeFrom<T>::type;
+            (*this)[nname].description = description;
+            (*this)[nname].default_value = default_value;
         }
         void set_options_default_value( Plugin * plugin )
         {
@@ -103,9 +103,9 @@ namespace Tempus
 	///
 	/// Method used to set an option value
 	template <class T>
-	void set_option( const std::string& name, const T& value )
+	void set_option( const std::string& nname, const T& value )
 	{
-	    options_[name] = value;
+	    options_[nname] = value;
 	}
 	///
 	/// Method used to set an option value from a string. Conversions are made, based on the option description
@@ -122,10 +122,10 @@ namespace Tempus
 	///
 	/// Method used to get an option value, alternative signature.
 	template <class T>
-	T get_option( const std::string& name )
+	T get_option( const std::string& nname )
 	{
 	    T v;
-	    get_option( name, v );
+	    get_option( nname, v );
 	    return v;
 	}
 
@@ -149,7 +149,7 @@ namespace Tempus
 
 	///
 	/// Ctor
-	Plugin( const std::string&, Db::Connection& db );
+	Plugin( const std::string& name, const std::string & db_options );
 	
 	///
 	/// Called when the plugin is unloaded from memory (uninstall)
@@ -186,12 +186,12 @@ namespace Tempus
 	///
 	/// Acessors methods. They can be called on graph traversals.
 	/// A Plugin is made compatible with a boost::visitor by means of a PluginGraphVisitor
-	virtual void road_vertex_accessor( Road::Vertex v, int access_type ) {}
-	virtual void road_edge_accessor( Road::Edge e, int access_type ) {}
-	virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type ) {}
-	virtual void pt_edge_accessor( PublicTransport::Edge e, int access_type ) {}
-	virtual void vertex_accessor( Multimodal::Vertex v, int access_type ) {}
-	virtual void edge_accessor( Multimodal::Edge e, int access_type ) {}
+	virtual void road_vertex_accessor( Road::Vertex, int /*access_type*/ ) {}
+	virtual void road_edge_accessor( Road::Edge, int /*access_type*/ ) {}
+	virtual void pt_vertex_accessor( PublicTransport::Vertex, int /*access_type*/ ) {}
+	virtual void pt_edge_accessor( PublicTransport::Edge, int /*access_type*/ ) {}
+	virtual void vertex_accessor( Multimodal::Vertex, int /*access_type*/ ) {}
+	virtual void edge_accessor( Multimodal::Edge, int /*access_type*/ ) {}
 
 	///
 	/// Cycle
@@ -223,7 +223,7 @@ namespace Tempus
     protected:
 	///
 	/// Graph extracted from the database
-	Multimodal::Graph& graph_;
+	Multimodal::Graph & graph_;
 	///
 	/// User request
 	Request request_;
@@ -268,68 +268,68 @@ namespace Tempus
 	typedef typename boost::graph_traits<Graph>::vertex_descriptor VDescriptor;
 	typedef typename boost::graph_traits<Graph>::edge_descriptor EDescriptor;
 	
-	void initialize_vertex( VDescriptor v, const Graph& graph )
+	void initialize_vertex( VDescriptor v, const Graph& )
 	{
 	    (plugin_->*VertexAccessorFunction)( v, Plugin::InitAccess );
 	}
-	void examine_vertex( VDescriptor v, const Graph& graph )
+	void examine_vertex( VDescriptor v, const Graph& )
 	{
 	    (plugin_->*VertexAccessorFunction)( v, Plugin::ExamineAccess );
 	}
-	void discover_vertex( VDescriptor v, const Graph& graph )
+	void discover_vertex( VDescriptor v, const Graph& )
 	{
 	    (plugin_->*VertexAccessorFunction)( v, Plugin::DiscoverAccess );
 	}
-	void start_vertex( VDescriptor v, const Graph& graph )
+	void start_vertex( VDescriptor v, const Graph& )
 	{
 	    (plugin_->*VertexAccessorFunction)( v, Plugin::StartAccess );
 	}
-	void finish_vertex( VDescriptor v, const Graph& graph )
+	void finish_vertex( VDescriptor v, const Graph& )
 	{
 	    (plugin_->*VertexAccessorFunction)( v, Plugin::FinishAccess );
 	}
 
-	void examine_edge( EDescriptor e, const Graph& graph )
+	void examine_edge( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::ExamineAccess );
 	}
-	void tree_edge( EDescriptor e, const Graph& graph )
+	void tree_edge( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::TreeEdgeAccess );
 	}
-	void non_tree_edge( EDescriptor e, const Graph& graph )
+	void non_tree_edge( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::NonTreeEdgeAccess );
 	}
-	void back_edge( EDescriptor e, const Graph& graph )
+	void back_edge( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::BackEdgeAccess );
 	}
-	void gray_target( EDescriptor e, const Graph& graph )
+	void gray_target( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::GrayTargetAccess );
 	}
-	void black_target( EDescriptor e, const Graph& graph )
+	void black_target( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::BlackTargetAccess );
 	}
-	void forward_or_cross_edge( EDescriptor e, const Graph& graph )
+	void forward_or_cross_edge( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::ForwardOrCrossEdgeAccess );
 	}
-	void edge_relaxed( EDescriptor e, const Graph& graph )
+	void edge_relaxed( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeRelaxedAccess );
 	}
-	void edge_not_relaxed( EDescriptor e, const Graph& graph )
+	void edge_not_relaxed( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeNotRelaxedAccess );
 	}
-	void edge_minimized( EDescriptor e, const Graph& graph )
+	void edge_minimized( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeMinimizedAccess );
 	}
-	void edge_not_minimized( EDescriptor e, const Graph& graph )
+	void edge_not_minimized( EDescriptor e, const Graph& )
 	{
 	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeNotMinimizedAccess );
 	}
@@ -360,6 +360,7 @@ namespace Tempus
 
         /**
          * create a Plugin from a given dll
+         * the caller takes ownership
          * throws std::runtime_error if dll is not loaded
          */
         Plugin * createPlugin( const std::string & dll_name ) const;
@@ -375,9 +376,9 @@ namespace Tempus
 
         struct Dll 
         {
-            typedef Plugin*                             (*PluginCreationFct)( Db::Connection& );
-            typedef const Plugin::OptionDescriptionList (*PluginOptionDescriptionFct)();
-            typedef const std::string                   (*PluginNameFct)();
+            typedef Plugin*                              (*PluginCreationFct)( const std::string & );
+            typedef const Plugin::OptionDescriptionList* (*PluginOptionDescriptionFct)();
+            typedef const char*                          (*PluginNameFct)();
             HMODULE           handle_;
             PluginCreationFct create;
             PluginOptionDescriptionFct options_description;
@@ -389,7 +390,7 @@ namespace Tempus
     // use of volatile for shared resources is explaned here http://www.drdobbs.com/cpp/volatile-the-multithreaded-programmers-b/184403766
 
 
-}; // Tempus namespace
+} // Tempus namespace
 
 
 
@@ -398,9 +399,9 @@ namespace Tempus
 /// Macro used inside plugins.
 /// This way, the constructor will be called on library loading and the destructor on library unloading
 #define DECLARE_TEMPUS_PLUGIN( name, type )                              \
-    extern "C" EXPORT Tempus::Plugin*                             createPlugin( Db::Connection& db ) { return new type( name, db ); } \
-    extern "C" EXPORT const std::string                           pluginName() { return name; } \
-    extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList optionDescriptions( ) { return type::option_descriptions(); } \
+    extern "C" EXPORT Tempus::Plugin* createPlugin( const std::string & db_options ) { return new type( name, db_options ); } \
+    extern "C" EXPORT const char *    pluginName() { return name; } \
+    extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList* optionDescriptions( ) { return new Tempus::Plugin::OptionDescriptionList(type::option_descriptions()); } \
     extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; }
 
 #endif

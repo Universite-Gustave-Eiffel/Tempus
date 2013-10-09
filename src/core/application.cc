@@ -33,18 +33,20 @@ namespace Tempus
 #else
 	    instance_ = new Application();
 #endif
+            instance_->state_ = Started;
 	}
 	return instance_;
     }
 
-    void Application::connect( const std::string& db_options )
+    void Application::connect( const std::string& ddb_options )
     {
-	db_options_ = db_options;
-	db_.connect( db_options_ );
+	db_options_ = ddb_options;
+        state_ = Connected;
     }
 
     void Application::pre_build_graph()
     {
+        state_ = GraphPreBuilt;
     }
 
     void Application::build_graph()
@@ -57,6 +59,6 @@ namespace Tempus
 	importer.import_constants( graph_ );
 	COUT << "Importing graph ... " << std::endl;
 	importer.import_graph( graph_, progression );
-
+        state_ = GraphBuilt;
     }
-};
+}

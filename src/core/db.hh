@@ -21,7 +21,8 @@
 #include <stdexcept>
 
 #include <boost/assert.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/thread.hpp>
 
 #include "common.hh"
 
@@ -116,32 +117,15 @@ namespace Db
 	Result( PGresult* res ) : res_(res)
 	{
 	    BOOST_ASSERT( res_ );
-	    nrefs_ = 1;
-	}
-	///
-	/// Copy constructor
-	Result( const Result& r )
-	{
-	    r.inc_refs();
-	    dec_refs();
-	    nrefs_ = r.nrefs_;
-	    res_ = r.res_;
-	}
-	///
-	/// Assignment operator. Deals with reference counting
-	Result& operator = ( const Result& r )
-	{
-	    r.inc_refs();
-	    dec_refs();
-	    nrefs_ = r.nrefs_;
-	    res_ = r.res_;
-	    return *this;
 	}
 
-	virtual ~Result()
-	{
-	    dec_refs();
-	}
+        // default cpu ctor is ok and allowed only to be able to return by value
+        // ideally (c++11) we would use the move ctor
+
+        virtual ~Result()
+        {
+            PQclear( res_ );
+        }
 
 	///
 	/// Number of rows
@@ -167,38 +151,32 @@ namespace Db
 
     protected:
 	PGresult* res_;
+    private:
+        Result & operator=(const Result &); // we don't really want copies
 
-	void dec_refs() const
-	{
-	    if ( --nrefs_ == 0 )
-		PQclear( res_ );
-	}
-	void inc_refs() const { nrefs_++; }
-	mutable int nrefs_;
     };
 
     ///
     /// Class representing connection to a database.
-    class Connection
+    class Connection: boost::noncopyable
     {
     public:
-	Connection() : conn_(0)
-	{
-	    nrefs_ = 0;
-	}
+	Connection() 
+        : conn_(0)
+        {
+            assert(PQisthreadsafe());
+        }
 
 	Connection( const std::string& db_options ) 
         : conn_(0)
-        , db_options_(db_options)
+        //, db_options_(db_options) initialized by connect
 	{
-	    nrefs_ = 0;
 	    connect( db_options );
 	}
 
 	void connect( const std::string& db_options )
 	{
-        db_options_=db_options;
-	    dec_refs();
+            boost::lock_guard<boost::mutex> lock( mutex );
 	    conn_ = PQconnectdb( db_options.c_str() );
 	    if (conn_ == NULL || PQstatus(conn_) != CONNECTION_OK )
 	    {
@@ -206,31 +184,12 @@ namespace Db
 		msg += PQerrorMessage( conn_ );
 		throw std::runtime_error( msg.c_str() );
 	    }
-	    nrefs_ = 1;
 	}	
 
 	virtual ~Connection()
 	{
-	    dec_refs();
+            PQfinish( conn_ );
 	}
-
-	Connection( const Connection& r )
-	{
-	    r.inc_refs();
-	    dec_refs();
-	    nrefs_ = r.nrefs_;
-	    conn_ = r.conn_;
-	}
-	Connection& operator = ( const Connection& r )
-	{
-	    r.inc_refs();
-	    dec_refs();
-	    nrefs_ = r.nrefs_;
-	    conn_ = r.conn_;
-	    return *this;
-	}
-
-    const std::string dbOption() const {return db_options_;}
 
 	///
 	/// Query execution. Returns a Db::Result. Throws a std::runtime_error on problem
@@ -250,18 +209,8 @@ namespace Db
 	}
     protected:
 	PGconn* conn_;
-    std::string db_options_;
-
-	void dec_refs() const
-	{
-	    if ( nrefs_ == 0 )
-		return;
-	    if ( --nrefs_ == 0 )
-		PQfinish( conn_ );
-	}
-	void inc_refs() const { nrefs_++; }
-	mutable int nrefs_;
+        static boost::mutex mutex;
     };
-};
+}
 
 #endif

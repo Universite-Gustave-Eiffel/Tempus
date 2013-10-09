@@ -57,4 +57,4 @@ namespace Tempus
     ///
     /// Get 2D coordinates of a multimodal vertex, from the database
     Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph );
-};
+}

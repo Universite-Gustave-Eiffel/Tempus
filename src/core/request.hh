@@ -95,6 +95,6 @@ namespace Tempus
 	    return true;
 	}
     };
-}; // Tempus namespace
+} // Tempus namespace
 
 #endif

@@ -56,8 +56,6 @@ void combined_dijkstra(
 
     VertexQueue vertex_queue( cmp );
 
-    double infinity = std::numeric_limits<double>::max();
-
 
     AVertex q0 = *vertices( automaton ).first;
     Label l0 = std::make_pair( start_vertex, q0 );
@@ -80,7 +78,7 @@ void combined_dijkstra(
 
         vertex_queue.pop();
 
-        double min_distance = get( distance_map, min_l );
+        //double min_distance = get( distance_map, min_l );
 
         typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
         BGL_FORALL_OUTEDGES_T(u, current_edge, graph, Graph) {
@@ -89,7 +87,6 @@ void combined_dijkstra(
             COUT << "v: " << graph[v].db_id << std::endl;
 
             // is an automaton transition has been found ?
-            bool transition_found = false;
             AVertex qp = find_transition( automaton, q, u, v );
 
             double c = get( weight_map, current_edge );

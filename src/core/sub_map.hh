@@ -25,9 +25,9 @@ public:
 
     ///
     /// Set the current subset
-    void select( std::set<KT>& selection )
+    void select( std::set<KT>& sselection )
     {
-	selection_ = selection;
+	selection_ = sselection;
     }
 
     ///

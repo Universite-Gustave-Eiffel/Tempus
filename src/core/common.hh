@@ -27,13 +27,13 @@
 
 #define IOSTREAM_OUTPUT_LOCATION
 #ifdef IOSTREAM_OUTPUT_LOCATION
-#   define TEMPUS_LOCATION __FILE__ << ":" << __LINE__
+#   define TEMPUS_LOCATION __FILE__ << ":" << __LINE__ << " "
 #else
 #   define TEMPUS_LOCATION ""
 #endif
 
-#define CERR (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cerr << TEMPUS_LOCATION )
-#define COUT (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cout << TEMPUS_LOCATION )
+#define CERR if(0) (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cerr << TEMPUS_LOCATION )
+#define COUT if(0) (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cout << TEMPUS_LOCATION )
 
 ///
 /// @mainpage TempusV2 API
@@ -260,6 +260,6 @@ namespace Tempus
 	int old_N_;
     };
 
-}; // Tempus namespace
+} // Tempus namespace
 
 #endif

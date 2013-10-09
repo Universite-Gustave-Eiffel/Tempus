@@ -37,7 +37,7 @@ namespace Tempus
         
         static const OptionDescriptionList option_descriptions(){ return OptionDescriptionList(); }
 
-	PtPlugin( const std::string & name, Db::Connection& db ) : Plugin( name, db )
+	PtPlugin( const std::string & nname, const std::string & db_options ) : Plugin( nname, db_options )
 	{
 	}
 
@@ -66,7 +66,7 @@ namespace Tempus
 	    if ( access_type == Plugin::ExamineAccess )
 	    {
 	     	PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-	     	//COUT << "Examining vertex " << pt_graph[v].db_id << endl;
+	     	COUT << "Examining vertex " << pt_graph[v].db_id << endl;
 	    }
 	}
 	virtual void process()
@@ -135,24 +135,26 @@ namespace Tempus
 
 	    // reorder the path
 	    std::list<PublicTransport::Vertex> path;
-	    PublicTransport::Vertex current = arrival;
-	    bool found = true;
-	    while ( current != departure )
-	    {
-		path.push_front( current );
-		if ( pred_map[current] == current )
-		{
-		    found = false;
-		    break;
-		}
-		current = pred_map[ current ];
-	    }
-	    if ( !found )
-	    {
-		CERR << "No path found" << endl;
-		return;
-	    }
-	    path.push_front( departure );
+            {
+                PublicTransport::Vertex current = arrival;
+                bool found = true;
+                while ( current != departure )
+                {
+                    path.push_front( current );
+                    if ( pred_map[current] == current )
+                    {
+                        found = false;
+                        break;
+                    }
+                    current = pred_map[ current ];
+                }
+                if ( !found )
+                {
+                    CERR << "No path found" << endl;
+                    return;
+                }
+                path.push_front( departure );
+            }
 
 	    //
 	    // Final result building.
@@ -169,7 +171,7 @@ namespace Tempus
 	    // for each step in the graph, find the common trip and add each step to the roadmap
 
 	    // The current trip is set to 0, which means 'null'. This holds because every db's id are 1-based
-	    db_id_t current_trip = 0;
+	    // db_id_t current_trip = 0; // unused
 	    bool first_loop = true;
 
 	    Road::Vertex previous = *path.begin();
@@ -206,7 +208,7 @@ namespace Tempus
 
     };
 }
-DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin )
 
 
 

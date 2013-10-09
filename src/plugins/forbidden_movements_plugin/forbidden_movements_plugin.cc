@@ -51,7 +51,7 @@ namespace Tempus
             return odl; 
         }
 
-	ForbiddenMovementPlugin( const std::string& name, Db::Connection& db ) : Plugin( name, db )
+	ForbiddenMovementPlugin( const std::string& nname, const std::string & db_options ) : Plugin( nname, db_options )
 	{
             OptionDescriptionList odl(option_descriptions());
             odl.set_options_default_value(this);
@@ -71,7 +71,6 @@ namespace Tempus
 
 	virtual void post_build()
 	{
-	    graph_ = Application::instance()->graph();
             Road::Graph& road_graph = graph_.road;
 
             automaton_.clear();
@@ -190,7 +189,6 @@ namespace Tempus
 
             std::list<Road::Vertex> path;
             Label current = std::make_pair( target_vertex, 0 );
-            bool found = true;
             while ( current.first != start_vertex )
             {
                 path.push_front( current.first );
@@ -234,7 +232,7 @@ namespace Tempus
     };
 
 }
-DECLARE_TEMPUS_PLUGIN( "forbidden_movements", Tempus::ForbiddenMovementPlugin );
+DECLARE_TEMPUS_PLUGIN( "forbidden_movements", Tempus::ForbiddenMovementPlugin )
 
 
 

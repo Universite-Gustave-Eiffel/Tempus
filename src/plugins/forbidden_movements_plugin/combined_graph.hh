@@ -100,8 +100,8 @@ public:
         out_edge_iterator( const Graph& graph, const Automaton& automaton, vertex_descriptor source ) :
             graph_(&graph),
             automaton_(&automaton),
-            u(source.first),
-            q(source.second)
+            q(source.second),
+            u(source.first)
         {
             boost::tie( out_edge, out_edge_end ) = out_edges( u, *graph_ );
             update_edge();

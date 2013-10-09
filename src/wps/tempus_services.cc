@@ -54,7 +54,7 @@ namespace WPS
 				  "</xs:element>\n"
 				  );
 	};
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	Service::ParameterMap& execute( ParameterMap& /*input_parameter_map*/ )
 	{
 	    output_parameters_.clear();
 	    
@@ -132,7 +132,7 @@ namespace WPS
 				  "</xs:element>\n"
 				  );
 	};
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	Service::ParameterMap& execute( ParameterMap& /*input_parameter_map*/ )
 	{
 	    output_parameters_.clear();
 	    
@@ -456,21 +456,23 @@ namespace WPS
             std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_str ));
 
             // get options
-            xmlNode* options_node = input_parameter_map["options"];
-            xmlNode* field = XML::get_next_nontext( options_node->children );
-            while ( field && !xmlStrcmp( field->name, (const xmlChar*)"option" ) )
             {
-		std::string name = XML::get_prop( field, "name" );
-                std::string value = XML::get_prop( field, "value" );
+                xmlNode* options_node = input_parameter_map["options"];
+                xmlNode* field = XML::get_next_nontext( options_node->children );
+                while ( field && !xmlStrcmp( field->name, (const xmlChar*)"option" ) )
+                {
+                    std::string name = XML::get_prop( field, "name" );
+                    std::string value = XML::get_prop( field, "value" );
 
-                plugin->set_option_from_string( name, value );
-                field = XML::get_next_nontext( field->next );       
+                    plugin->set_option_from_string( name, value );
+                    field = XML::get_next_nontext( field->next );       
+                }
             }
 
             // pre_process
             {
                 double x,y;
-                Db::Connection& db = Application::instance()->db_connection();
+                Db::Connection db( Application::instance()->db_options() );
             
                 // now extract actual data
                 xmlNode* request_node = input_parameter_map["request"];
@@ -569,7 +571,6 @@ namespace WPS
             
             Multimodal::Graph& graph_ = Application::instance()->graph();
             Tempus::Road::Graph& road_graph = graph_.road;
-            Db::Connection& db = Application::instance()->db_connection();
             
             xmlNode* root_node = XML::new_node( "results" );
             if ( result.size() == 0 )
@@ -586,7 +587,7 @@ namespace WPS
                 Roadmap::StepList::const_iterator sit;
                 for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
                 {
-                    xmlNode* step_node;
+                    xmlNode* step_node = 0;
                     Roadmap::Step* gstep = *sit;
                     
                     xmlNode* wkb_node = XML::new_node( "wkb" );
@@ -644,22 +645,22 @@ namespace WPS
                         Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( *sit );
                         Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
                         
-                        const Road::Graph* road_graph = 0;
+                        const Road::Graph* lroad_graph = 0;
                         const PublicTransport::Graph* pt_graph = 0;
                         db_id_t network_id = 0;
                         std::string stop_name, road_name;
                         std::string type_str = to_string( edge->connection_type());
                         if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
-                            road_graph = edge->source.road_graph;
+                            lroad_graph = edge->source.road_graph;
                             pt_graph = edge->target.pt_graph;
                             stop_name = (*pt_graph)[edge->target.pt_vertex].name;
-                            road_name = (*road_graph)[ (*pt_graph)[edge->target.pt_vertex].road_section].road_name;
+                            road_name = (*lroad_graph)[ (*pt_graph)[edge->target.pt_vertex].road_section].road_name;
                         }
                         else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
-                            road_graph = edge->target.road_graph;
+                            lroad_graph = edge->target.road_graph;
                             pt_graph = edge->source.pt_graph;
                             stop_name = (*pt_graph)[edge->source.pt_vertex].name;
-                            road_name = (*road_graph)[ (*pt_graph)[edge->source.pt_vertex].road_section].road_name;
+                            road_name = (*lroad_graph)[ (*pt_graph)[edge->source.pt_vertex].road_section].road_name;
                         }
                         for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();
                               nit != graph_.public_transports.end();
@@ -733,4 +734,4 @@ namespace WPS
     static SelectService select_service;
     static ConstantListService constant_list_service;
 
-}; // WPS namespace
+} // WPS namespace

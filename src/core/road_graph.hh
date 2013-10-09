@@ -14,7 +14,7 @@ namespace Tempus
     namespace PublicTransport
     {
 	struct Stop;
-    };
+    }
     struct POI;
 
     /**
@@ -111,7 +111,7 @@ namespace Tempus
 	    /// -1 means infinite cost
 	    double cost;
 	};
-    };  // Road namespace
+    }  // Road namespace
 
     ///
     /// refers to the 'poi' DB's table
@@ -136,6 +136,6 @@ namespace Tempus
 	Road::Edge road_section;
 	double abscissa_road_section;
     };
-}; // Tempus namespace
+} // Tempus namespace
 
 #endif

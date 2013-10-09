@@ -10,14 +10,11 @@ int XML::init()
 	return 0;
 }
 
-// Force a call to XML::init() on startup
-int XML::init_n_ = XML::init();
-
 std::string XML::xml_error_;
 
 bool XML::clear_errors_ = false;
 
-void XML::accumulate_error( void* ctx, const char* msg, ...)
+void XML::accumulate_error( void* /*ctx*/, const char* msg, ...)
 {
     if ( clear_errors_ )
     {

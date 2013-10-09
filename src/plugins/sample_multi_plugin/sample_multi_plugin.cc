@@ -32,7 +32,7 @@ namespace Tempus
 
         static const OptionDescriptionList option_descriptions(){ return OptionDescriptionList(); }
 
-	MultiPlugin( const std::string& name, Db::Connection& db ) : Plugin( name, db )
+	MultiPlugin( const std::string& nname, const std::string db_options ) : Plugin( nname, db_options )
 	{
 	}
 
@@ -167,6 +167,7 @@ namespace Tempus
 		    return *vi;
 		}
 	    }
+            throw std::runtime_error("bug: should not reach here");
 	}
 
 	///
@@ -188,14 +189,15 @@ namespace Tempus
 	    for ( ; it != path.end(); ++it )
 	    {
 		Multimodal::Edge me;
-		bool found;
-		boost::tie( me, found ) = edge( *previous, *it, graph_ );
+                {
+		   bool found;
+		   boost::tie( me, found ) = edge( *previous, *it, graph_ );
+                }
 
 		Roadmap::Step* mstep = 0;
 		if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
 		    mstep = new Roadmap::RoadStep();
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>(mstep);
-		    Road::Graph& road_graph = graph_.road;
 		    Road::Edge e;
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->road_vertex, it->road_vertex, *it->road_graph );
@@ -349,4 +351,4 @@ namespace Tempus
 
     };
 }
-DECLARE_TEMPUS_PLUGIN( "sample_multi_plugin", Tempus::MultiPlugin );
+DECLARE_TEMPUS_PLUGIN( "sample_multi_plugin", Tempus::MultiPlugin )

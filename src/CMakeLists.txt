@@ -11,8 +11,6 @@ if (WIN32)
 	set( PQ_INCLUDE_DIR "E:/Program Files/PostgreSQL/9.1/include" CACHE PATH "libpq include directory" )
 	set( PQ_LIBS_DIR "E:/Program Files/PostgreSQL/9.1/lib" CACHE PATH "libpq lib directory" )
 	set( PQ_LIBS libpq )
-	# Disable verbose warnings
-	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290" )
 
 	set( LIBTEMPUS tempus )
 else (WIN32)
@@ -20,7 +18,6 @@ else (WIN32)
 	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
 	set( PQ_LIBS pq dl boost_program_options )
 	set (LIBTEMPUS tempus )
-	add_definitions( -Wl,-E )
 endif (WIN32)
 
 include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )

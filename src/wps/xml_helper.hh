@@ -12,9 +12,11 @@
 #include <libxml/tree.h>
 #include <libxml/xmlschemas.h>
 
-#include <string>
+#include <libxml/xmlschemas.h>
 
-#include <boost/lexical_cast.hpp>
+#include <string>
+#include <sstream>
+
 
 ///
 /// Helper class designed to hold already-allocated pointers and call a deletion function
@@ -68,6 +70,7 @@ typedef scoped_ptr<xmlDoc, xmlFreeDoc> scoped_xmlDoc;
 
 ///
 /// XML helper class
+// @note the static member finction init() must be called once per thread
 class XML
 {
 public:
@@ -102,7 +105,9 @@ public:
     template <class T>
     static void new_prop( xmlNode* node, const std::string& key, T value )
     {
-	xmlNewProp( node, (const xmlChar*)(key.c_str()), (const xmlChar*)( boost::lexical_cast<std::string>( value ).c_str() ) );
+        std::stringstream ss;
+        ss << value;
+	xmlNewProp( node, (const xmlChar*)(key.c_str()), (const xmlChar*)( ss.str().c_str() ) );
     }
 
     ///
@@ -124,6 +129,7 @@ public:
     /// Get the next non text node
     static xmlNode* get_next_nontext( xmlNode* node );
 
+    static int init();
 protected:
     ///
     /// Generic libxml error handling. Accumulate errors in a string.
@@ -132,9 +138,6 @@ protected:
 
     static bool clear_errors_;
     static std::string xml_error_;
-
-    static int init_n_;
-    static int init();
 };
 
 #endif
