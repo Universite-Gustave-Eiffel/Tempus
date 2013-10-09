@@ -298,21 +298,21 @@ namespace Tempus
 	    for ( Costs::const_iterator it = roadmap.total_costs.begin(); it != roadmap.total_costs.end(); ++it ) {
 		COUT << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
 	    }
-#endif
 	    
-	    std::string road_name = "";
 	    double distance = 0.0;
-	    Tempus::db_id_t previous_section = 0;
-	    bool on_roundabout = false;
-	    bool was_on_roundabout = false;
+	    // Counter for direction texts
+	    int direction_i = 1;
+#endif
 	    // road section at the beginning of the roundabout
 	    Tempus::db_id_t roundabout_enter;
 	    // road section at the end of the roundabout
 	    Tempus::db_id_t roundabout_leave;
+	    std::string road_name = "";
+	    Tempus::db_id_t previous_section = 0;
+	    bool on_roundabout = false;
+	    bool was_on_roundabout = false;
 	    Roadmap::RoadStep *last_step = 0;
 	    
-	    // Counter for direction texts
-	    int direction_i = 1;
 	    Roadmap::RoadStep::EndMovement movement;
 	    for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++ )
 	    {
@@ -455,7 +455,6 @@ namespace Tempus
 		    }
 		
 		    road_name = road_graph[step->road_section].road_name;
-		    distance = road_graph[step->road_section].length;
 		
 		    if ( last_step )
 		    {
@@ -464,6 +463,7 @@ namespace Tempus
 		    }
 		
 #if DO_PRINT
+		    distance = road_graph[step->road_section].length;
 		    switch ( movement )
 		    {
 		    case Roadmap::RoadStep::GoAhead:
