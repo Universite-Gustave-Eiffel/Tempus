@@ -253,18 +253,6 @@ namespace WPS
 	}
     };
 
-    void get_xml_point( xmlNode* node, double& x, double& y )
-    {
-	xmlNode* x_node = XML::get_next_nontext( node->children );
-	xmlNode* y_node = XML::get_next_nontext( x_node->next );
-	
-	string x_str = (const char*)x_node->children->content;
-	string y_str = (const char*)y_node->children->content;
-	
-	x = lexical_cast<double>( x_str );
-	y = lexical_cast<double>( y_str );
-    }
-    
     Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
     {
 	//
@@ -294,10 +282,15 @@ namespace WPS
 				 "    <xs:attribute name=\"date_time\" type=\"xs:dateTime\"/>\n"
 				 "  </xs:complexType>\n"
 				 "  <xs:complexType name=\"Point\">\n"
-				 "    <xs:sequence>\n"
-				 "      <xs:element name=\"x\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"y\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "    </xs:sequence>\n"
+                                 "    <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
+				 "      <xs:sequence>\n"
+				 "        <xs:element name=\"x\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				 "        <xs:element name=\"y\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				 "      </xs:sequence>\n"
+				 "      <xs:sequence>\n"
+				 "        <xs:element name=\"vertex\" type=\"xs:long\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
+				 "      </xs:sequence>\n"
+                                 "    </xs:choice>\n"
 				 "  </xs:complexType>\n"
 				 "  <xs:complexType name=\"Step\">\n"
 				 "    <xs:sequence>\n"
@@ -419,6 +412,35 @@ namespace WPS
 	    
 	}
 	
+        Road::Vertex get_road_vertex_from_point( xmlNode* node )
+        {
+            Road::Vertex vertex;
+            Db::Connection& db = Application::instance()->db_connection();
+            Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
+
+            xmlNode* first_node = XML::get_next_nontext( node->children );
+            if ( !xmlStrcmp( first_node->name, (const xmlChar*)"vertex" ) ) {
+                string v_str = (const char*)first_node->children->content;
+                vertex = lexical_cast<int>( v_str );
+                return vertex;
+            }
+            xmlNode* y_node = XML::get_next_nontext( first_node->next );
+
+            string x_str = (const char*)first_node->children->content;
+            string y_str = (const char*)y_node->children->content;
+
+            double x = lexical_cast<double>( x_str );
+            double y = lexical_cast<double>( y_str );
+
+            Tempus::db_id_t id = road_vertex_id_from_coordinates( db, x, y );
+            if ( id == 0 )
+            {
+                throw std::invalid_argument( (boost::format("Cannot find vertex id from %1%, %2%") % x % y).str() );
+            }
+            vertex = vertex_from_id( id, road_graph );
+            return vertex;
+    }
+        
 	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
             output_parameters_.clear();
@@ -451,17 +473,7 @@ namespace WPS
                 xmlNode* field = XML::get_next_nontext( request_node->children );
             
                 Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
-                get_xml_point( field, x, y);
-                Tempus::db_id_t origin_id = road_vertex_id_from_coordinates( db, x, y );
-                if ( origin_id == 0 )
-                {
-                    throw std::invalid_argument( "Cannot find origin_id" );
-                }
-                this->origin = vertex_from_id( origin_id, road_graph );
-                if ( this->origin == Road::Vertex() )
-                {
-                    throw std::invalid_argument( "Cannot find origin vertex" );
-                }
+                this->origin = get_road_vertex_from_point( field );
             
                 // departure_constraint
                 field = XML::get_next_nontext( field->next );
@@ -471,13 +483,7 @@ namespace WPS
                 xmlNode *n = XML::get_next_nontext( field->next );
                 if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
                 {
-                    get_xml_point( n, x, y );
-                    Tempus::db_id_t parking_id = road_vertex_id_from_coordinates( db, x, y );
-                    if ( parking_id == 0 )
-                    {
-                        throw std::invalid_argument( "Cannot find parking_id" );
-                    }
-                    this->parking_location = vertex_from_id( parking_id, road_graph );
+                    this->parking_location = get_road_vertex_from_point( field );
                     field = n;
                 }
             
@@ -514,13 +520,7 @@ namespace WPS
                     xmlNode *subfield;
                     // destination id
                     subfield = XML::get_next_nontext( field->children );
-                    get_xml_point( subfield, x, y);
-                    Tempus::db_id_t destination_id = road_vertex_id_from_coordinates( db, x, y );
-                    if ( destination_id == 0 )
-                    {
-                        throw std::invalid_argument( "Cannot find origin_id" );
-                    }
-                    this->steps.back().destination = vertex_from_id( destination_id, road_graph );
+                    this->steps.back().destination = get_road_vertex_from_point( subfield );
 
                     // constraint
                     subfield = XML::get_next_nontext( subfield->next );

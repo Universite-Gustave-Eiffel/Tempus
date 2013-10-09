@@ -35,10 +35,10 @@ if __name__ == "__main__":
     cur = conn.cursor()
 
     # get every road node
-    cur.execute( "SELECT st_x(geom) as x, st_y(geom) as y FROM tempus.road_node" )
+    cur.execute( "SELECT id, st_x(geom) as x, st_y(geom) as y FROM tempus.road_node" )
     points = []
     for pt in cur:
-        points.append( Point(float(pt[0]), float(pt[1])) )
+        points.append( Point(vertex=int(pt[0])) )
 
     random.seed()
 

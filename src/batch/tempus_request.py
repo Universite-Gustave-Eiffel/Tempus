@@ -10,9 +10,14 @@ sys.path.insert(0, wps_path)
 from wps_client import *
 
 class Point:
-    def __init__( self, x=0.0, y=0.0 ):
+    def __init__( self, x=0.0, y=0.0, vertex=-1 ):
         self.x = x
         self.y = y
+        self.vertex = vertex
+    def to_pson( self, name = 'point' ):
+        if self.vertex == -1:
+            return [ name, [ 'x', str(self.x) ], ['y', str(self.y)] ]
+        return [ name, ['vertex', str(self.vertex)] ]
 
 class DateTime( datetime.datetime ):
     def __init__(self, *args):
@@ -42,7 +47,7 @@ class RequestStep:
 
     def to_pson( self ):
         return ['step',
-                [ 'destination', [ 'x', str(self.destination.x)], ['y', str(self.destination.y)] ],
+                self.destination.to_pson('destination'),
                 self.constraint.to_pson(),
                 [ 'private_vehicule_at_destination', 'true' if self.private_vehicule_at_destination else 'false' ]
                 ]
@@ -183,8 +188,8 @@ class TempusRequest:
 
         args = {}
         args['plugin'] = ['plugin', {'name' : plugin_name } ]
-        args['request'] = ['request', 
-                           ['origin', ['x', str(origin.x)], ['y', str(origin.y)] ],
+        args['request'] = ['request',
+                           origin.to_pson( 'origin' ),
                            ['departure_constraint', { 'type': departure_constraint.type, 'date_time': str(departure_constraint.date_time) } ],
                            ['optimizing_criterion', 1 ], 
                            ['allowed_transport_types', 11 ]
