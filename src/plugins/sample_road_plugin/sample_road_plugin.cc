@@ -48,6 +48,12 @@ namespace Tempus
     protected:
 	bool trace_vertex_;
         bool prepare_result_;
+
+        // exception returned to shortcut Dijkstra
+        struct path_found_exception {};
+
+        Road::Vertex destination_;
+
     public:
 	virtual void post_build()
 	{
@@ -80,6 +86,9 @@ namespace Tempus
 	{
 	    if ( access_type == Plugin::ExamineAccess )
 	    {
+                if ( v == destination_ ) {
+                    throw path_found_exception();
+                }
 		if ( trace_vertex_ )
 		{
 		    // very slow
@@ -117,23 +126,29 @@ namespace Tempus
 			    origin = request_.steps[i-1].destination;
 		    else
 			    origin = request_.origin;
-		    Road::Vertex destination = request_.steps[i].destination;
 
-		    boost::dijkstra_shortest_paths( road_graph,
-						    origin,
-						    &pred_map[0],
-						    &distance_map[0],
-						    length_map,
-						    boost::get( boost::vertex_index, road_graph ),
-						    std::less<double>(),
-						    boost::closed_plus<double>(),
-						    std::numeric_limits<double>::max(),
-						    0.0,
-						    vis
+		    destination_ = request_.steps[i].destination;
+
+                    try {
+                        boost::dijkstra_shortest_paths( road_graph,
+                                                        origin,
+                                                        &pred_map[0],
+                                                        &distance_map[0],
+                                                        length_map,
+                                                        boost::get( boost::vertex_index, road_graph ),
+                                                        std::less<double>(),
+                                                        boost::closed_plus<double>(),
+                                                        std::numeric_limits<double>::max(),
+                                                        0.0,
+                                                        vis
 						    );
+                    }
+                    catch ( path_found_exception& ) {
+                        // Dijkstra has been short cut
+                    }
 		    
 		    // reorder the path, could have been better included ...
-		    Road::Vertex current = destination;
+		    Road::Vertex current = destination_;
 		    while ( current != origin )
 		    {
 			    path.push_front( current );
