@@ -90,6 +90,7 @@ int main( int argc, char*argv[] )
     string chdir_str = "";
     std::vector<string> plugins;
     size_t num_threads = 1;
+    string dbstring = "dbname=tempus_test_db";
     if (argc > 1 )
     {
 	for ( int i = 1; i < argc; i++ )
@@ -124,13 +125,21 @@ int main( int argc, char*argv[] )
 		    num_threads = atoi(argv[++i]);
 		}
 	    }
+	    else if ( arg == "-d" )
+	    {
+		if ( argc > i+1 )
+		{
+		    dbstring = argv[++i];
+		}
+	    }
 	    else
 	    {
-		CERR << "Options: " << endl;
-		CERR << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
-		CERR << "\t-c dir\tchange directory to dir before execution" << endl;
-		CERR << "\t-t num_threads\tnumber of request-processing threads" << endl;
-		CERR << "\t-l plugin_name\tload plugin" << endl;
+		std::cerr << "Options: " << endl;
+		std::cerr << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
+		std::cerr << "\t-c dir\tchange directory to dir before execution" << endl;
+		std::cerr << "\t-t num_threads\tnumber of request-processing threads" << endl;
+		std::cerr << "\t-l plugin_name\tload plugin" << endl;
+		std::cerr << "\t-d dbstring\tstring used to connect to pgsql" << endl;
 		return 1;
 	    }
 	}
@@ -140,7 +149,7 @@ int main( int argc, char*argv[] )
     {
         if( chdir( chdir_str.c_str() ) )
         {
-            CERR << "cannot change directory to " << chdir_str << std::endl;
+            std::cerr << "cannot change directory to " << chdir_str << std::endl;
             return 1;
         }
     }
@@ -148,7 +157,7 @@ int main( int argc, char*argv[] )
     FCGX_Init();
 
     // initialise connection and graph
-    Tempus::Application::instance()->connect( "dbname=tempus_test_db" );
+    Tempus::Application::instance()->connect( dbstring );
     Tempus::Application::instance()->pre_build_graph();
     Tempus::Application::instance()->build_graph();
 
@@ -158,7 +167,7 @@ int main( int argc, char*argv[] )
         listen_socket = FCGX_OpenSocket((":" + port_str).c_str(), 10);
         if ( listen_socket < 0 )
         {
-           CERR << "Problem opening the socket on port " << port_str << std::endl;
+            std::cerr << "Problem opening the socket on port " << port_str << std::endl;
             return EXIT_FAILURE;
         }
     }
@@ -179,7 +188,7 @@ int main( int argc, char*argv[] )
     }
     catch ( std::exception& e )
     {
-       CERR << "Exception during WPS execution: " << e.what() << std::endl;
+        std::cerr << "Exception during WPS execution: " << e.what() << std::endl;
     }
 
     return EXIT_SUCCESS;
