@@ -116,7 +116,7 @@ namespace Tempus
             loaded += " " + i->first;
         DllMap::const_iterator dll = dll_.find(dll_name);
         if ( dll == dll_.end() ) throw std::runtime_error(dll_name + " is not loaded (loaded:" + loaded+")");
-        std::unique_ptr<const Plugin::OptionDescriptionList> list( dll->second.options_description() );  
+        std::auto_ptr<const Plugin::OptionDescriptionList> list( dll->second.options_description() );  
         return Plugin::OptionDescriptionList(*list);
     }
     
