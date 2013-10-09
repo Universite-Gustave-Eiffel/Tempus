@@ -412,13 +412,12 @@ namespace WPS
 	    
 	}
 	
-        Road::Vertex get_road_vertex_from_point( xmlNode* node )
+        Road::Vertex get_road_vertex_from_point( xmlNode* node, Db::Connection& db )
         {
             Road::Vertex vertex;
             Tempus::db_id_t id;
             double x, y;
 
-            Db::Connection db( Application::instance()->db_options() );
             Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 
             xmlNode* first_node = XML::get_next_nontext( node->children );
@@ -471,15 +470,13 @@ namespace WPS
 
             // pre_process
             {
-                double x,y;
                 Db::Connection db( Application::instance()->db_options() );
             
                 // now extract actual data
                 xmlNode* request_node = input_parameter_map["request"];
                 xmlNode* field = XML::get_next_nontext( request_node->children );
             
-                Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
-                this->origin = get_road_vertex_from_point( field );
+                this->origin = get_road_vertex_from_point( field, db );
             
                 // departure_constraint
                 field = XML::get_next_nontext( field->next );
@@ -489,7 +486,7 @@ namespace WPS
                 xmlNode *n = XML::get_next_nontext( field->next );
                 if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
                 {
-                    this->parking_location = get_road_vertex_from_point( field );
+                    this->parking_location = get_road_vertex_from_point( field, db );
                     field = n;
                 }
             
@@ -526,7 +523,7 @@ namespace WPS
                     xmlNode *subfield;
                     // destination id
                     subfield = XML::get_next_nontext( field->children );
-                    this->steps.back().destination = get_road_vertex_from_point( subfield );
+                    this->steps.back().destination = get_road_vertex_from_point( subfield, db );
 
                     // constraint
                     subfield = XML::get_next_nontext( subfield->next );
