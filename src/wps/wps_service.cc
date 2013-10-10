@@ -9,9 +9,43 @@ using namespace std;
 namespace WPS
 {
     std::map<std::string, Service*>* Service::services_ = 0;
-    
-    void Service::parse_xml_parameters( ParameterMap& input_parameter_map )
+
+    Service::Service( const std::string& name ) : name_(name)
     {
+        // It is never freed. It is ok since it is a static object
+        if ( !services_ )
+            services_ = new std::map<std::string, Service*>();
+        // Add this service to the global map of services
+        (*services_)[name] = this;
+    }
+
+    Service::~Service()
+    {
+        for ( SchemaMap::iterator it = input_parameter_schema_.begin(); it != input_parameter_schema_.end(); ++it ) {
+            // delete schema
+            delete it->second;
+        }
+        for ( SchemaMap::iterator it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); ++it ) {
+            // delete schema
+            delete it->second;
+        }
+        // remove me from the global array
+        std::map<std::string, Service*>::iterator it = services_->find( name_ );
+        services_->erase( it );
+    }
+
+    void Service::add_input_parameter( const std::string& name, const std::string& schema )
+    {
+        input_parameter_schema_[name] = new XML::Schema( schema );
+    }
+
+    void Service::add_output_parameter( const std::string& name, const std::string& schema )
+    {
+        output_parameter_schema_[name] = new XML::Schema( schema );
+    }
+
+    void Service::parse_xml_parameters( ParameterMap& input_parameter_map )
+    {        
 	// default behaviour: only check schemas
 	check_parameters( input_parameter_map, input_parameter_schema_ );
     }
@@ -32,15 +66,14 @@ namespace WPS
                                           % schema_map.size()
                                           % argList).str() );
 	}
-	ParameterMap::iterator it;
-	for ( it = parameter_map.begin(); it != parameter_map.end(); it++ )
+	for ( ParameterMap::iterator it = parameter_map.begin(); it != parameter_map.end(); it++ )
 	{
 	    if ( schema_map.find( it->first ) == schema_map.end() )
 	    {
 		throw std::invalid_argument( "Unknown parameter " + it->first );
 	    }
-	    
-	    XML::ensure_validity( it->second, schema_map[it->first].schema );
+
+            schema_map[it->first]->ensure_validity( it->second );
 	}
     }
 
@@ -53,70 +86,53 @@ namespace WPS
 	out << "    <ows:Abstract>" << name_ << "</ows:Abstract>" << endl;
 	
 	out << "    <DataInputs>" << endl;
-	std::map<std::string, ParameterSchema>::iterator it;
-	for ( it = input_parameter_schema_.begin(); it != input_parameter_schema_.end(); it++ )
+	for ( SchemaMap::const_iterator it = input_parameter_schema_.begin(); it != input_parameter_schema_.end(); it++ )
 	{
 	    out << "      <Input>" << endl;
 	    out << "        <ows:Identifier>" << it->first << "</ows:Identifier>" << endl;
 	    out << "        <ows:Title>" << it->first << "</ows:Title>" << endl;
-	    if (it->second.is_complex)
-	    {
-		out << "        <ComplexData>" << endl;
-		out << "          <Default>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Default>" << endl;
-		out << "          <Supported>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Supported>" << endl;
-		out << "        </ComplexData>" << endl;
-	    }
-	    else
-	    {
-		// FIXME !
-		out << "<LiteralData>" + it->second.schema << "</LiteralData>" << endl;
-	    }
+            out << "        <ComplexData>" << endl;
+            out << "          <Default>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Default>" << endl;
+            out << "          <Supported>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Supported>" << endl;
+            out << "        </ComplexData>" << endl;
 	    out << "      </Input>" << endl;
 	}
 	out << "    </DataInputs>" << endl;
 	
 	out << "    <ProcessOutputs>" << endl;
-	for ( it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); it++ )
+	for ( SchemaMap::const_iterator it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); it++ )
 	{
 	    out << "      <Output>" << endl;
 	    out << "        <ows:Identifier>" << it->first << "</ows:Identifier>" << endl;
 	    out << "        <ows:Title>" << it->first << "</ows:Title>" << endl;
-	    if (it->second.is_complex)
-	    {
-		out << "        <ComplexData>" << endl;
-		out << "          <Default>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Default>" << endl;
-		out << "          <Supported>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Supported>" << endl;
-		out << "        </ComplexData>" << endl;
-	    }
-	    else
-	    {
-		// FIXME !
-		out << "<LiteralData>" + it->second.schema << "</LiteralData>" << endl;
-	    }
+            out << "        <ComplexData>" << endl;
+            out << "          <Default>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Default>" << endl;
+            out << "          <Supported>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Supported>" << endl;
+            out << "        </ComplexData>" << endl;
 	    out << "      </Output>" << endl;
 	}
 	out << "    </ProcessOutputs>" << endl;

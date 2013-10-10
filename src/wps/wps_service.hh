@@ -24,14 +24,8 @@ namespace WPS
     public:
 	typedef std::map<std::string, xmlNode*> ParameterMap;
 
-	Service( const std::string& name ) : name_(name)
-	{
-	    // It is never freed. It is ok since it is a static object
-	    if ( !services_ )
-		services_ = new std::map<std::string, Service*>();
-	    // Add this service to the global map of services
-	    (*services_)[name] = this;
-	}
+	Service( const std::string& name );
+        virtual ~Service();
 	
 	///
 	/// Extract input parameters
@@ -74,14 +68,7 @@ namespace WPS
 	///
 	/// A global map of services
 	static std::map<std::string, Service*> *services_;
-	
-	struct ParameterSchema
-	{
-	    std::string schema;
-	    // complexType or not ?
-	    bool is_complex;
-	};
-	typedef std::map<std::string, ParameterSchema> SchemaMap;
+	typedef std::map<std::string, XML::Schema*> SchemaMap;
 	SchemaMap input_parameter_schema_;
 	SchemaMap output_parameter_schema_;
 	std::string name_;
@@ -92,19 +79,11 @@ namespace WPS
 
 	///
 	/// Adds an input parameter definition. To be called by derived classes in their constructor
-	void add_input_parameter( const std::string& name, const std::string& schema, bool is_complex = true )
-	{
-	    input_parameter_schema_[name].schema = schema;
-	    input_parameter_schema_[name].is_complex = is_complex;
-	}
+	void add_input_parameter( const std::string& name, const std::string& schema );
 
 	///
 	/// Adds an output parameter definition. To be called by derived classes in their constructor
-	void add_output_parameter( const std::string& name, const std::string& schema, bool is_complex = true )
-	{
-	    output_parameter_schema_[name].schema = schema;
-	    output_parameter_schema_[name].is_complex = is_complex;
-	}
+	void add_output_parameter( const std::string& name, const std::string& schema );
 
 	///
 	/// Output parameters
