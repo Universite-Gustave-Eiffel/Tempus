@@ -16,7 +16,7 @@ add_library( tempus STATIC ${SOURCE_FILES} )
 else (WIN32)
 add_library( tempus SHARED ${SOURCE_FILES} )
 endif (WIN32)
-target_link_libraries( tempus ${PQ_LIBS} )
+target_link_libraries( tempus ${PQ_LIBS} boost_timer boost_system )
 
 add_executable( sample_app sample_app.cc )
 target_link_libraries( sample_app tempus ${PQ_LIBS} )

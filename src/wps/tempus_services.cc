@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <boost/format.hpp>
 
 #include "wps_service.hh"
@@ -7,6 +8,7 @@
 #include "roadmap.hh"
 #include "db.hh"
 #include "utils/graph_db_link.hh"
+#include <boost/timer/timer.hpp>
 
 using namespace std;
 using namespace Tempus;
@@ -446,13 +448,24 @@ namespace WPS
         
 	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
 	{
+#define TIMING 
+//#define TIMING \
+//            std::cout << __LINE__ << " " <<(timer.elapsed().wall-start)*1.e-9 << " sec\n";\
+//            start = timer.elapsed().wall;
+
+            boost::timer::cpu_timer timer;
+            boost::timer::nanosecond_type start = timer.elapsed().wall;
+            std::cout << std::fixed << std::setprecision(5);
+
             output_parameters_.clear();
             // Ensure XML is OK
             Service::check_parameters( input_parameter_map, input_parameter_schema_ );
             ensure_minimum_state( Application::GraphBuilt );
             xmlNode* plugin_node = input_parameter_map["plugin"];
             const std::string plugin_str = XML::get_prop( plugin_node, "name" );
+            TIMING
             std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_str ));
+            TIMING
 
             // get options
             {
@@ -467,6 +480,7 @@ namespace WPS
                     field = XML::get_next_nontext( field->next );       
                 }
             }
+            TIMING
 
             // pre_process
             {
@@ -538,15 +552,20 @@ namespace WPS
                     field = XML::get_next_nontext( field->next ); 
                 }
 
-                // call cycle
-                plugin->cycle();
-
-                // then call pre_process
-                plugin->pre_process( *this );
             }
+            // call cycle
+            plugin->cycle();
+            TIMING
+
+
+            // then call pre_process
+            plugin->pre_process( *this );
 
             // process
             plugin->process();
+            TIMING
+
+
 
             // metrics
             xmlNode * metrics_node = XML::new_node( "metrics" );
@@ -562,6 +581,7 @@ namespace WPS
                 XML::add_child( metrics_node, metric_node );
             }
             output_parameters_[ "metrics" ] = metrics_node;
+            TIMING
 
             // result
             Tempus::Result& result = plugin->result();
@@ -575,6 +595,7 @@ namespace WPS
                 output_parameters_["results"] = root_node;
                 return output_parameters_;
             }
+            TIMING
 
             Tempus::Result::const_iterator rit;
             for ( rit = result.begin(); rit != result.end(); ++rit ) {
@@ -703,6 +724,7 @@ namespace WPS
 
                     XML::add_child( result_node, step_node );
                 }
+            TIMING
                 
                 // total costs
                 
@@ -722,7 +744,10 @@ namespace WPS
             } // for each result
             output_parameters_[ "results" ] = root_node;
 
+            timer.stop();
+            //std::cout << timer.elapsed().wall*1.e-9 << " in select " << plugin->name()<< "\n";
             return output_parameters_;
+#undef TIMING
         }
     };
 

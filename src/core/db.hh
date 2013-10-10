@@ -24,6 +24,10 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
 
+#ifdef DB_TIMING
+#   include <boost/timer/timer.hpp>
+#endif
+
 #include "common.hh"
 
 namespace Db
@@ -164,18 +168,22 @@ namespace Db
 	Connection() 
         : conn_(0)
         {
-            assert(PQisthreadsafe());
         }
 
 	Connection( const std::string& db_options ) 
         : conn_(0)
         //, db_options_(db_options) initialized by connect
 	{
+            assert(PQisthreadsafe());
 	    connect( db_options );
 	}
 
 	void connect( const std::string& db_options )
 	{
+#ifdef DB_TIMING
+            timer_.start();
+            boost::timer::nanosecond_type start = timer_.elapsed().wall;
+#endif
             boost::lock_guard<boost::mutex> lock( mutex );
 	    conn_ = PQconnectdb( db_options.c_str() );
 	    if (conn_ == NULL || PQstatus(conn_) != CONNECTION_OK )
@@ -184,17 +192,36 @@ namespace Db
 		msg += PQerrorMessage( conn_ );
 		throw std::runtime_error( msg.c_str() );
 	    }
+#ifdef DB_TIMING
+            std::cout << conn_ << " " << (timer_.elapsed().wall - start)*1.e-9 << "s in connection\n";
+            timer_.stop();
+#endif
 	}	
 
 	virtual ~Connection()
 	{
+#ifdef DB_TIMING
+            timer_.resume();
+            boost::timer::nanosecond_type start = timer_.elapsed().wall;
+#endif
             PQfinish( conn_ );
+#ifdef DB_TIMING
+            std::cout << conn_ << " " << (timer_.elapsed().wall - start)*1.e-9 << "s in finish\n";
+            timer_.stop();
+            std::cout << conn_ << " total elapsed " << timer_.elapsed().wall*1.e-9 << "s\n";
+#endif
+
 	}
 
 	///
 	/// Query execution. Returns a Db::Result. Throws a std::runtime_error on problem
 	Result exec( const std::string& query ) throw (std::runtime_error)
 	{
+#ifdef DB_TIMING
+            timer_.resume();
+            boost::timer::nanosecond_type start = timer_.elapsed().wall;
+#endif
+
 	    PGresult* res = PQexec( conn_, query.c_str() );
 	    ExecStatusType ret = PQresultStatus( res );
 	    if ( (ret != PGRES_COMMAND_OK) && (ret != PGRES_TUPLES_OK) )
@@ -205,11 +232,20 @@ namespace Db
 		throw std::runtime_error( msg.c_str() );
 	    }
 
+#ifdef DB_TIMING
+            std::cout << conn_ << " " << (timer_.elapsed().wall - start)*1.e-9 << "s in query: " << query << "\n";
+            timer_.stop();
+#endif
+
 	    return res;
 	}
     protected:
 	PGconn* conn_;
         static boost::mutex mutex;
+
+#ifdef DB_TIMING
+        boost::timer::cpu_timer timer_;
+#endif
     };
 }
 
