@@ -265,7 +265,8 @@ namespace WPS {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown service identifier " + identifier );
 	    }
 	    // all inputs are now defined, parse them
-        std::auto_ptr<WPS::Service> service( WPS::Service::get_service( identifier )->clone() );
+            //            std::auto_ptr<WPS::Service> service( WPS::Service::get_service( identifier )->clone() );
+            WPS::Service* service( WPS::Service::get_service( identifier ) );
 	    try
 	    {
 		/*WPS::Service::ParameterMap& output_parameters =*/ service->execute( input_parameter_map );
