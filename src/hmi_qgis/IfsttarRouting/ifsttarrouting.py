@@ -58,47 +58,10 @@ ROADMAP_LAYER_NAME = "Roadmap_"
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)
 
-def cost_name( cost ):
-    cost_id = int(cost.attrib['type'])
-    cost_name = ''
-    if cost_id == 1:
-        cost_name = 'Distance'
-    elif cost_id == 2:
-        cost_name = 'Duration'
-    elif cost_id == 3:
-        cost_name = 'Price'
-    elif cost_id == 4:
-        cost_name = 'Carbon'
-    elif cost_id == 5:
-        cost_name = 'Calories'
-    elif cost_id == 6:
-        cost_name = 'Number of changes'
-    elif cost_id == 7:
-        cost_name = 'Variability'
-    return cost_name
-
-def cost_unit( cost ):
-    cost_id = int(cost.attrib['type'])
-    cost_unit = ''
-    if cost_id == 1:
-        cost_unit = 'm'
-    elif cost_id == 2:
-        cost_unit = 'min'
-    elif cost_id == 3:
-        cost_unit = '€'
-    elif cost_id == 4:
-        cost_unit = '?'
-    elif cost_id == 5:
-        cost_unit = ''
-    elif cost_id == 6:
-        cost_unit = ''
-    elif cost_id == 7:
-        cost_unit = ''
-    return cost_unit
-
 def format_cost( cost ):
     cost_value = float(cost.attrib['value'])
-    return "%s: %.1f %s" % (cost_name(cost), cost_value, cost_unit(cost))
+    id = int(cost.attrib['type'])
+    return "%s: %.1f %s" % (CostName[id], cost_value, CostUnit[id])
 
 #
 # clears a FormLayout
@@ -662,7 +625,8 @@ class IfsttarRouting:
             for r in result:
                 if r.tag == 'cost':
                     # get the roadmap
-                    rselect.addCost(cost_name(r), "%.1f%s" % (float(r.attrib['value']), cost_unit(r)))
+                    id = int(r.attrib['type'])
+                    rselect.addCost(CostName[id], "%.1f%s" % (float(r.attrib['value']), CostUnit[id]))
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
@@ -770,7 +734,7 @@ class IfsttarRouting:
         self.save['options_values'] = options
         self.save['options'] = to_pson(self.options)
 
-        pson = [ 'save' ]
+        pson = [ 'record' ]
         for k,v in self.save.iteritems():
             v[0] = k
             pson.append( v )

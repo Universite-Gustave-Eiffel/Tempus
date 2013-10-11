@@ -14,6 +14,7 @@ FILE(GLOB IMAGES_FILES *.png)
 SET(INSTALLER_FILES ${INSTALLER_FILES}
   ${CMAKE_CURRENT_SOURCE_DIR}/../../python/wps_client.py
   ${CMAKE_CURRENT_SOURCE_DIR}/../../python/tempus_request.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../python/history_file.py
   ${IMAGES_FILES}
   ${CMAKE_CURRENT_BINARY_DIR}/config.py )
 
