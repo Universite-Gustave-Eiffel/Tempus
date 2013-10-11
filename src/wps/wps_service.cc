@@ -34,6 +34,13 @@ namespace WPS
         services_->erase( it );
     }
 
+    Service::ParameterMap Service::execute( const Service::ParameterMap& input_parameter_map ) const
+    {
+        parse_xml_parameters( input_parameter_map );
+        // No output by default
+        return ParameterMap();
+    }
+
     void Service::add_input_parameter( const std::string& name, const std::string& schema )
     {
         input_parameter_schema_[name] = new XML::Schema( schema );
@@ -44,13 +51,13 @@ namespace WPS
         output_parameter_schema_[name] = new XML::Schema( schema );
     }
 
-    void Service::parse_xml_parameters( ParameterMap& input_parameter_map )
+    void Service::parse_xml_parameters( const ParameterMap& input_parameter_map ) const
     {        
 	// default behaviour: only check schemas
 	check_parameters( input_parameter_map, input_parameter_schema_ );
     }
 
-    void Service::check_parameters( ParameterMap& parameter_map, SchemaMap& schema_map )
+    void Service::check_parameters( const ParameterMap& parameter_map, const SchemaMap& schema_map ) const
     {
 	if ( parameter_map.size() != schema_map.size() )
 	{
@@ -66,18 +73,19 @@ namespace WPS
                                           % schema_map.size()
                                           % argList).str() );
 	}
-	for ( ParameterMap::iterator it = parameter_map.begin(); it != parameter_map.end(); it++ )
+	for ( ParameterMap::const_iterator it = parameter_map.begin(); it != parameter_map.end(); it++ )
 	{
-	    if ( schema_map.find( it->first ) == schema_map.end() )
+            SchemaMap::const_iterator itv = schema_map.find( it->first );
+	    if ( itv == schema_map.end() )
 	    {
 		throw std::invalid_argument( "Unknown parameter " + it->first );
 	    }
 
-            schema_map[it->first]->ensure_validity( it->second );
+            itv->second->ensure_validity( it->second );
 	}
     }
 
-    std::ostream& Service::get_xml_description( std::ostream& out )
+    std::ostream& Service::get_xml_description( std::ostream& out ) const
     {
 	out << "<wps:ProcessDescriptions xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\">\n";
 	out << "  <ProcessDescription wps:processVersion=\"1.0\" storeSupported=\"false\" statusSupported=\"false\">" << endl;
@@ -142,9 +150,9 @@ namespace WPS
 	return out;
     }
 
-    std::ostream& Service::get_xml_execute_response( std::ostream& out, const std::string & service_instance )
+    std::ostream& Service::get_xml_execute_response( std::ostream& out, const std::string & service_instance, const ParameterMap& outputs ) const
     {
-	check_parameters( output_parameters_, output_parameter_schema_ );
+	check_parameters( outputs, output_parameter_schema_ );
 
 	out << "<wps:ExecuteResponse xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" serviceInstance=\"" << service_instance << "\">" << endl;
 	out << "  <wps:Process wps:processVersion=\"1\">" << endl;
@@ -161,7 +169,7 @@ namespace WPS
 	out << "    <wps:ProcessSucceeded/>" << endl;
 	out << "  </wps:Status>" << endl;
 	out << "  <wps:ProcessOutputs>" << endl;
-	for ( ParameterMap::iterator it = output_parameters_.begin(); it != output_parameters_.end(); it++ )
+	for ( ParameterMap::const_iterator it = outputs.begin(); it != outputs.end(); it++ )
 	{
 	    out << "    <wps:Output>" << endl;
 	    out << "      <ows:Identifier>" << it->first << "</ows:Identifier>" << endl;
@@ -180,7 +188,7 @@ namespace WPS
 	return out;
     }
 
-    Service* Service::get_service( const std::string& name )
+    const Service* Service::get_service( const std::string& name )
     {
 	if ( exists(name) )
 	    return (*services_)[name];

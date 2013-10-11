@@ -130,7 +130,7 @@ namespace XML
 
     ///
     /// Shortcut to xmlGetProp, using C++ std::string
-    std::string get_prop( xmlNode* node, const std::string& key );
+    std::string get_prop( const xmlNode* node, const std::string& key );
 
     ///
     /// Shortcut to xmlAddChild
@@ -138,7 +138,7 @@ namespace XML
 
     ///
     /// Get the next non text node
-    xmlNode* get_next_nontext( xmlNode* node );
+    const xmlNode* get_next_nontext( const xmlNode* node );
 
     ///
     /// To be called for each thread

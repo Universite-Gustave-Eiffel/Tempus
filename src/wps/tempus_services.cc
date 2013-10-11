@@ -54,9 +54,9 @@ namespace WPS
 				  "</xs:element>\n"
 				  );
 	};
-	Service::ParameterMap& execute( ParameterMap& /*input_parameter_map*/ )
+	Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const
 	{
-	    output_parameters_.clear();
+            ParameterMap output_parameters;
 	    
 	    xmlNode* root_node = XML::new_node( "plugins" );
 	    std::vector<std::string> names( PluginFactory::instance.plugin_list() );
@@ -68,8 +68,8 @@ namespace WPS
 			       names[i] );
 		XML::add_child( root_node, node );
 	    }
-	    output_parameters_[ "plugins" ] = root_node;
-	    return output_parameters_;
+	    output_parameters[ "plugins" ] = root_node;
+	    return output_parameters;
 	};
     };
 
@@ -132,9 +132,9 @@ namespace WPS
 				  "</xs:element>\n"
 				  );
 	};
-	Service::ParameterMap& execute( ParameterMap& /*input_parameter_map*/ )
+	Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const
 	{
-	    output_parameters_.clear();
+            ParameterMap output_parameters;
 	    
 	    Tempus::Multimodal::Graph& graph = Application::instance()->graph();
 
@@ -148,7 +148,7 @@ namespace WPS
 		    XML::new_prop( node, "name", it->second.name );
 		    XML::add_child( root_node, node );
 		}
-		output_parameters_[ "road_types" ] = root_node;
+		output_parameters[ "road_types" ] = root_node;
 	    }
 	    
 	    {
@@ -166,7 +166,7 @@ namespace WPS
 		    XML::new_prop( node, "need_network", it->second.need_network );
 		    XML::add_child( root_node, node );
 		}
-		output_parameters_[ "transport_types" ] = root_node;
+		output_parameters[ "transport_types" ] = root_node;
 	    }
 	    
 	    {
@@ -180,10 +180,10 @@ namespace WPS
 		    XML::new_prop( node, "provided_transport_types", it->second.provided_transport_types );
 		    XML::add_child( root_node, node );
 		}
-		output_parameters_[ "transport_networks" ] = root_node;
+		output_parameters[ "transport_networks" ] = root_node;
 	    }
 	    
-	    return output_parameters_;
+	    return output_parameters;
 	};
     };
     
@@ -228,10 +228,12 @@ namespace WPS
 				  "</xs:complexType>\n"
 				  "<xs:element name=\"options\" type=\"Options\"/>\n" );
 	}
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const
 	{
+            ParameterMap output_parameters;
+
 	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    xmlNode* plugin_node = input_parameter_map["plugin"];
+	    const xmlNode* plugin_node = input_parameter_map.find("plugin")->second;
 	    std::string plugin_str = XML::get_prop( plugin_node, "name" );
 	    
 	    xmlNode * options_node = XML::new_node( "options" );
@@ -247,9 +249,8 @@ namespace WPS
 		XML::add_child( options_node, option_node );
 	    }
 	    
-	    output_parameters_.clear();
-	    output_parameters_[ "options" ] = options_node;
-	    return output_parameters_;
+	    output_parameters[ "options" ] = options_node;
+	    return output_parameters;
 	}
     };
 
@@ -270,11 +271,11 @@ namespace WPS
     ///
     /// Output var: results, see roadmap.hh
     ///
-    class SelectService : public PluginService, public Tempus::Request
+    class SelectService : public PluginService
     {
     public:
     Service * clone() const { return new SelectService(*this);}
-	SelectService() : PluginService( "select" ), Tempus::Request()
+	SelectService() : PluginService( "select" )
 	{
 	    add_input_parameter( "request",
 				 "  <xs:complexType name=\"TimeConstraint\">\n"
@@ -399,7 +400,7 @@ namespace WPS
 				  "<xs:element name=\"metrics\" type=\"Metrics\"/>\n" );
 	}
 
-	void parse_constraint( xmlNode* node, Request::TimeConstraint& constraint )
+	void parse_constraint( const xmlNode* node, Request::TimeConstraint& constraint ) const
 	{
 	    constraint.type = lexical_cast<int>( XML::get_prop( node, "type") );
 	    
@@ -408,11 +409,10 @@ namespace WPS
 	    int day, month, year, hour, min;
 	    sscanf(date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
 	    constraint.date_time = boost::posix_time::ptime(boost::gregorian::date(year, month, day),
-							    boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );
-	    
+                                                            boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );	    
 	}
 	
-        Road::Vertex get_road_vertex_from_point( xmlNode* node, Db::Connection& db )
+        Road::Vertex get_road_vertex_from_point( const xmlNode* node, Db::Connection& db ) const
         {
             Road::Vertex vertex;
             Tempus::db_id_t id;
@@ -420,13 +420,13 @@ namespace WPS
 
             Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 
-            xmlNode* first_node = XML::get_next_nontext( node->children );
+            const xmlNode* first_node = XML::get_next_nontext( node->children );
             if ( !xmlStrcmp( first_node->name, (const xmlChar*)"vertex" ) ) {
                 string v_str = (const char*)first_node->children->content;
                 id = lexical_cast<Tempus::db_id_t>( v_str );
             }
             else {
-                xmlNode* y_node = XML::get_next_nontext( first_node->next );
+                const xmlNode* y_node = XML::get_next_nontext( first_node->next );
 
                 string x_str = (const char*)first_node->children->content;
                 string y_str = (const char*)y_node->children->content;
@@ -444,20 +444,22 @@ namespace WPS
             return vertex;
     }
         
-	Service::ParameterMap& execute( ParameterMap& input_parameter_map )
+	Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const
 	{
-            output_parameters_.clear();
+            ParameterMap output_parameters;
             // Ensure XML is OK
             Service::check_parameters( input_parameter_map, input_parameter_schema_ );
             ensure_minimum_state( Application::GraphBuilt );
-            xmlNode* plugin_node = input_parameter_map["plugin"];
+            const xmlNode* plugin_node = input_parameter_map.find("plugin")->second;
             const std::string plugin_str = XML::get_prop( plugin_node, "name" );
             std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_str ));
 
+            Tempus::Request request;
+
             // get options
             {
-                xmlNode* options_node = input_parameter_map["options"];
-                xmlNode* field = XML::get_next_nontext( options_node->children );
+                const xmlNode* options_node = input_parameter_map.find("options")->second;
+                const xmlNode* field = XML::get_next_nontext( options_node->children );
                 while ( field && !xmlStrcmp( field->name, (const xmlChar*)"option" ) )
                 {
                     std::string name = XML::get_prop( field, "name" );
@@ -473,66 +475,66 @@ namespace WPS
                 Db::Connection db( Application::instance()->db_options() );
             
                 // now extract actual data
-                xmlNode* request_node = input_parameter_map["request"];
-                xmlNode* field = XML::get_next_nontext( request_node->children );
+                xmlNode* request_node = input_parameter_map.find("request")->second;
+                const xmlNode* field = XML::get_next_nontext( request_node->children );
             
-                this->origin = get_road_vertex_from_point( field, db );
+                request.origin = get_road_vertex_from_point( field, db );
             
                 // departure_constraint
                 field = XML::get_next_nontext( field->next );
-                parse_constraint( field, this->departure_constraint );
+                parse_constraint( field, request.departure_constraint );
             
                 // parking location id, optional
-                xmlNode *n = XML::get_next_nontext( field->next );
+                const xmlNode *n = XML::get_next_nontext( field->next );
                 if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
                 {
-                    this->parking_location = get_road_vertex_from_point( field, db );
+                    request.parking_location = get_road_vertex_from_point( field, db );
                     field = n;
                 }
             
                 // optimizing criteria
-                this->optimizing_criteria.clear();
+                request.optimizing_criteria.clear();
                 field = XML::get_next_nontext( field->next );
-                this->optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
+                request.optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
                 field = XML::get_next_nontext( field->next );   
                 while ( !xmlStrcmp( field->name, (const xmlChar*)"optimizing_criterion" ) )
                 {
-                    this->optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
+                    request.optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
                     field = XML::get_next_nontext( field->next );       
                 }
             
                 // allowed transport types
-                this->allowed_transport_types = lexical_cast<int>( field->children->content );
+                request.allowed_transport_types = lexical_cast<int>( field->children->content );
         
                 // allowed networks, 1 .. N
-                this->allowed_networks.clear();
+                request.allowed_networks.clear();
                 field = XML::get_next_nontext( field->next );
                 while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
                 {
                     Tempus::db_id_t network_id = lexical_cast<Tempus::db_id_t>(field->children->content);
-                    this->allowed_networks.push_back( network_id );
+                    request.allowed_networks.push_back( network_id );
                     field = XML::get_next_nontext( field->next );
                 }
         
                 // steps, 1 .. N
-                steps.clear();
+                request.steps.clear();
                 while ( field )
                 {
-                    this->steps.resize( steps.size() + 1 );
+                    request.steps.resize( request.steps.size() + 1 );
             
-                    xmlNode *subfield;
+                    const xmlNode *subfield;
                     // destination id
                     subfield = XML::get_next_nontext( field->children );
-                    this->steps.back().destination = get_road_vertex_from_point( subfield, db );
+                    request.steps.back().destination = get_road_vertex_from_point( subfield, db );
 
                     // constraint
                     subfield = XML::get_next_nontext( subfield->next );
-                    parse_constraint( subfield, this->steps.back().constraint );
+                    parse_constraint( subfield, request.steps.back().constraint );
             
                     // private_vehicule_at_destination
                     subfield = XML::get_next_nontext( subfield->next );
                     string val = (const char*)subfield->children->content;
-                    this->steps.back().private_vehicule_at_destination = ( val == "true" );
+                    request.steps.back().private_vehicule_at_destination = ( val == "true" );
             
                     // next step
                     field = XML::get_next_nontext( field->next ); 
@@ -542,7 +544,7 @@ namespace WPS
                 plugin->cycle();
 
                 // then call pre_process
-                plugin->pre_process( *this );
+                plugin->pre_process( request );
             }
 
             // process
@@ -561,7 +563,7 @@ namespace WPS
                 
                 XML::add_child( metrics_node, metric_node );
             }
-            output_parameters_[ "metrics" ] = metrics_node;
+            output_parameters[ "metrics" ] = metrics_node;
 
             // result
             Tempus::Result& result = plugin->result();
@@ -572,8 +574,8 @@ namespace WPS
             xmlNode* root_node = XML::new_node( "results" );
             if ( result.size() == 0 )
             {
-                output_parameters_["results"] = root_node;
-                return output_parameters_;
+                output_parameters["results"] = root_node;
+                return output_parameters;
             }
 
             Tempus::Result::const_iterator rit;
@@ -720,9 +722,9 @@ namespace WPS
 
                 XML::add_child( root_node, result_node );
             } // for each result
-            output_parameters_[ "results" ] = root_node;
+            output_parameters[ "results" ] = root_node;
 
-            return output_parameters_;
+            return output_parameters;
         }
     };
 

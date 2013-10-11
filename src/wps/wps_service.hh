@@ -29,29 +29,24 @@ namespace WPS
 	
 	///
 	/// Extract input parameters
-	void parse_xml_parameters( ParameterMap& input_parameter_map );
+	void parse_xml_parameters( const ParameterMap& input_parameter_map ) const;
 
-	virtual ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    parse_xml_parameters( input_parameter_map );
-	    // No output by default
-	    output_parameters_.clear();
-	    return output_parameters_;
-	}
+	virtual ParameterMap execute( const ParameterMap& input_parameter_map ) const;
 
-    virtual Service * clone() const { throw std::runtime_error("not implemented");}
+        virtual Service * clone() const { throw std::runtime_error("not implemented");}
 
 	///
 	/// Returns an XML string that conforms to a DescribeProcess operation
-	std::ostream& get_xml_description( std::ostream& out );
+	std::ostream& get_xml_description( std::ostream& out ) const;
 
 	///
 	/// Returns an XML string that represents results of an Execute operation
-	std::ostream& get_xml_execute_response( std::ostream& out, const std::string & service_instance );
+	std::ostream& get_xml_execute_response( std::ostream& out, const std::string & service_instance, const ParameterMap& outputs ) const;
 
 	///
-	/// Global service map interface: returns a Service* based on a service name
-	static Service* get_service( const std::string& name );
+	/// Global service map interface: returns a Service* based on a service name.
+        /// The returned service is const and can be used in different threads
+	static const Service* get_service( const std::string& name );
 
 	///
 	/// Global service map interface: tests if a service exists
@@ -75,7 +70,7 @@ namespace WPS
 
 	///
 	/// Check parameters against their XML schemas
-	virtual void check_parameters( ParameterMap& parameter_map, SchemaMap& schema_map );
+	virtual void check_parameters( const ParameterMap& parameter_map, const SchemaMap& schema_map ) const;
 
 	///
 	/// Adds an input parameter definition. To be called by derived classes in their constructor
@@ -84,10 +79,6 @@ namespace WPS
 	///
 	/// Adds an output parameter definition. To be called by derived classes in their constructor
 	void add_output_parameter( const std::string& name, const std::string& schema );
-
-	///
-	/// Output parameters
-	ParameterMap output_parameters_;
     };
 
 } // WPS namespace

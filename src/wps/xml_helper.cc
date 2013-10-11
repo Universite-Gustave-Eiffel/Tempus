@@ -71,9 +71,9 @@ xmlNode* new_text( const std::string& text )
     return xmlNewText( (const xmlChar*)text.c_str() );
 }
 
-std::string get_prop( xmlNode* node, const std::string& key )
+std::string get_prop( const xmlNode* node, const std::string& key )
 {
-    return (const char*)xmlGetProp( node, (const xmlChar*)(key.c_str()) );
+    return (const char*)xmlGetProp( const_cast<xmlNode*>(node), (const xmlChar*)(key.c_str()) );
 }
 
 void add_child( xmlNode* node, xmlNode* child )
@@ -178,9 +178,9 @@ void Schema::ensure_validity( const xmlNode* node )
     }
 }
 
-xmlNode* get_next_nontext( xmlNode* node )
+const xmlNode* get_next_nontext( const xmlNode* node )
 {
-    while ( node && xmlNodeIsText(node) )
+    while ( node && xmlNodeIsText(const_cast<xmlNode*>(node)) )
 	node = node->next;
     return node;
 }
