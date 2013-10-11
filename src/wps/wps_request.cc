@@ -173,7 +173,6 @@ namespace WPS {
 	    {
 		return print_error_status( 405, "Method not allowed" );
 	    }
-            Timer timer;
 
 	    xmlNode* root = xmlDocGetRootElement( xml_doc.get() );
 	    const xmlNode* child = XML::get_next_nontext( root->children );
