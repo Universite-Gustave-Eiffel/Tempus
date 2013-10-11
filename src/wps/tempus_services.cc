@@ -270,15 +270,18 @@ namespace WPS
 	Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const
 	{
             ParameterMap output_parameters;
-#define TIMING 
-//#define TIMING \
-//            std::cout << __LINE__ << " " <<(timer.elapsed().wall-start)*1.e-9 << " sec\n";\
-//            start = timer.elapsed().wall;
-
+/*
+*/
+#ifdef TIMING_ENABLED
+#   define TIMING \
+       std::cout << __LINE__ << " " <<(timer.elapsed().wall-start)*1.e-9 << " sec\n";\
+       start = timer.elapsed().wall;
             boost::timer::cpu_timer timer;
             boost::timer::nanosecond_type start = timer.elapsed().wall;
             std::cout << std::fixed << std::setprecision(5);
-
+#else
+#   define TIMING 
+#endif
             // Ensure XML is OK
             Service::check_parameters( input_parameter_map, input_parameter_schema_ );
             ensure_minimum_state( Application::GraphBuilt );
@@ -533,8 +536,10 @@ namespace WPS
             } // for each result
             output_parameters[ "results" ] = root_node;
 
+#ifdef TIMING_ENABLED
             timer.stop();
-            //std::cout << timer.elapsed().wall*1.e-9 << " in select " << plugin->name()<< "\n";
+            std::cout << timer.elapsed().wall*1.e-9 << " in select " << plugin->name()<< "\n";
+#endif
 #undef TIMING
             return output_parameters;
         }
