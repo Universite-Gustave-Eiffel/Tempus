@@ -33,8 +33,6 @@ namespace WPS
 
 	virtual ParameterMap execute( const ParameterMap& input_parameter_map ) const;
 
-        virtual Service * clone() const { throw std::runtime_error("not implemented");}
-
 	///
 	/// Returns an XML string that conforms to a DescribeProcess operation
 	std::ostream& get_xml_description( std::ostream& out ) const;

@@ -38,7 +38,6 @@ namespace WPS
     class PluginListService : public Service
     {
     public:
-    Service * clone() const { return new PluginListService(*this);}
 	PluginListService() : Service("plugin_list")
 	{
 	    add_output_parameter( "plugins",
@@ -83,7 +82,6 @@ namespace WPS
     class ConstantListService : public Service
     {
     public:
-    Service * clone() const { return new ConstantListService(*this);}
 	ConstantListService() : Service("constant_list")
 	{
 	    add_output_parameter( "road_types",
@@ -212,7 +210,6 @@ namespace WPS
     class GetOptionsDescService : public PluginService
     {
     public:
-    Service * clone() const { return new GetOptionsDescService(*this);}
 	GetOptionsDescService() : PluginService("get_option_descriptions")
 	{
 	    add_output_parameter( "options",
@@ -274,7 +271,6 @@ namespace WPS
     class SelectService : public PluginService
     {
     public:
-    Service * clone() const { return new SelectService(*this);}
 	SelectService() : PluginService( "select" )
 	{
 	    add_input_parameter( "request",
