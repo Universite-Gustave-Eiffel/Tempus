@@ -177,8 +177,6 @@ namespace WPS
 	    out << "      <wps:Data>" << endl;
 	    out << "        <wps:ComplexData>" << endl;
 	    out << "          " << XML::to_string( it->second, 5 ) << endl;
-	    // free xmlNode
-	    xmlFreeNode( it->second );
 	    out << "        </wps:ComplexData>" << endl;
 	    out << "      </wps:Data>" << endl;
 	    out << "    </wps:Output>" << endl;

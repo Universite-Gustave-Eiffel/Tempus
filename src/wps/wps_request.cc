@@ -274,6 +274,11 @@ namespace WPS {
 		outs_ << "Content-type: text/xml" << endl;
 		outs_ << endl;
 		service->get_xml_execute_response( outs_, getParam("REQUEST_URI"), outputs );
+
+                // must free xmlNode in outputs
+                for ( WPS::Service::ParameterMap::iterator it = outputs.begin(); it != outputs.end(); ++it ) {
+                    xmlFreeNode( it->second );
+                }
 	    }
 	    catch (std::invalid_argument& e)
 	    {
