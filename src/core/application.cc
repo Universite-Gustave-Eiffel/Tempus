@@ -4,6 +4,8 @@
 #include "common.hh"
 #include "pgsql_importer.hh"
 
+#include "tempus_config.hh"
+
 Tempus::Application* get_application_instance_()
 {
     return Tempus::Application::instance();
@@ -60,5 +62,10 @@ namespace Tempus
 	COUT << "Importing graph ... " << std::endl;
 	importer.import_graph( graph_, progression );
         state_ = GraphBuilt;
+    }
+
+    const std::string Application::data_directory() const
+    {
+        return TEMPUS_DATA_DIRECTORY;
     }
 }

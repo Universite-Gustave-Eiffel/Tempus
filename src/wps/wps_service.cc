@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <boost/format.hpp>
 
+#include "application.hh"
 #include "wps_service.hh"
 
 using namespace std;
@@ -9,14 +10,69 @@ using namespace std;
 namespace WPS
 {
     std::map<std::string, Service*>* Service::services_ = 0;
-    
-    void Service::parse_xml_parameters( ParameterMap& input_parameter_map )
+
+    Service::Service( const std::string& name ) : name_(name)
     {
+        // It is never freed. It is ok since it is a static object
+        if ( !services_ )
+            services_ = new std::map<std::string, Service*>();
+        // Add this service to the global map of services
+        (*services_)[name] = this;
+    }
+
+    Service::~Service()
+    {
+        for ( SchemaMap::iterator it = input_parameter_schema_.begin(); it != input_parameter_schema_.end(); ++it ) {
+            // delete schema
+            delete it->second;
+        }
+        for ( SchemaMap::iterator it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); ++it ) {
+            // delete schema
+            delete it->second;
+        }
+        // remove me from the global array
+        std::map<std::string, Service*>::iterator it = services_->find( name_ );
+        services_->erase( it );
+    }
+
+    Service::ParameterMap Service::execute( const Service::ParameterMap& input_parameter_map ) const
+    {
+        parse_xml_parameters( input_parameter_map );
+        // No output by default
+        return ParameterMap();
+    }
+
+    void Service::add_input_parameter( const std::string& name, const std::string& schema )
+    {
+        if ( schema.empty() ) {
+            // look for the schema file
+            std::string lschema( Tempus::Application::instance()->data_directory() + "/wps_schemas/" + name_ + "/" + name + ".xsd" );
+            input_parameter_schema_[name] = new XML::Schema( lschema );
+        }
+        else {
+            input_parameter_schema_[name] = new XML::Schema( schema );
+        }
+    }
+
+    void Service::add_output_parameter( const std::string& name, const std::string& schema )
+    {
+        if ( schema.empty() ) {
+            // look for the schema file
+            std::string lschema( Tempus::Application::instance()->data_directory() + "/wps_schemas/" + name_ + "/" + name + ".xsd" );
+            output_parameter_schema_[name] = new XML::Schema( lschema );
+        }
+        else {
+            output_parameter_schema_[name] = new XML::Schema( schema );
+        }
+    }
+
+    void Service::parse_xml_parameters( const ParameterMap& input_parameter_map ) const
+    {        
 	// default behaviour: only check schemas
 	check_parameters( input_parameter_map, input_parameter_schema_ );
     }
 
-    void Service::check_parameters( ParameterMap& parameter_map, SchemaMap& schema_map )
+    void Service::check_parameters( const ParameterMap& parameter_map, const SchemaMap& schema_map ) const
     {
 	if ( parameter_map.size() != schema_map.size() )
 	{
@@ -32,19 +88,19 @@ namespace WPS
                                           % schema_map.size()
                                           % argList).str() );
 	}
-	ParameterMap::iterator it;
-	for ( it = parameter_map.begin(); it != parameter_map.end(); it++ )
+	for ( ParameterMap::const_iterator it = parameter_map.begin(); it != parameter_map.end(); it++ )
 	{
-	    if ( schema_map.find( it->first ) == schema_map.end() )
+            SchemaMap::const_iterator itv = schema_map.find( it->first );
+	    if ( itv == schema_map.end() )
 	    {
 		throw std::invalid_argument( "Unknown parameter " + it->first );
 	    }
-	    
-	    XML::ensure_validity( it->second, schema_map[it->first].schema );
+
+            itv->second->ensure_validity( it->second );
 	}
     }
 
-    std::ostream& Service::get_xml_description( std::ostream& out )
+    std::ostream& Service::get_xml_description( std::ostream& out ) const
     {
 	out << "<wps:ProcessDescriptions xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\">\n";
 	out << "  <ProcessDescription wps:processVersion=\"1.0\" storeSupported=\"false\" statusSupported=\"false\">" << endl;
@@ -53,70 +109,53 @@ namespace WPS
 	out << "    <ows:Abstract>" << name_ << "</ows:Abstract>" << endl;
 	
 	out << "    <DataInputs>" << endl;
-	std::map<std::string, ParameterSchema>::iterator it;
-	for ( it = input_parameter_schema_.begin(); it != input_parameter_schema_.end(); it++ )
+	for ( SchemaMap::const_iterator it = input_parameter_schema_.begin(); it != input_parameter_schema_.end(); it++ )
 	{
 	    out << "      <Input>" << endl;
 	    out << "        <ows:Identifier>" << it->first << "</ows:Identifier>" << endl;
 	    out << "        <ows:Title>" << it->first << "</ows:Title>" << endl;
-	    if (it->second.is_complex)
-	    {
-		out << "        <ComplexData>" << endl;
-		out << "          <Default>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Default>" << endl;
-		out << "          <Supported>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Supported>" << endl;
-		out << "        </ComplexData>" << endl;
-	    }
-	    else
-	    {
-		// FIXME !
-		out << "<LiteralData>" + it->second.schema << "</LiteralData>" << endl;
-	    }
+            out << "        <ComplexData>" << endl;
+            out << "          <Default>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Default>" << endl;
+            out << "          <Supported>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Supported>" << endl;
+            out << "        </ComplexData>" << endl;
 	    out << "      </Input>" << endl;
 	}
 	out << "    </DataInputs>" << endl;
 	
 	out << "    <ProcessOutputs>" << endl;
-	for ( it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); it++ )
+	for ( SchemaMap::const_iterator it = output_parameter_schema_.begin(); it != output_parameter_schema_.end(); it++ )
 	{
 	    out << "      <Output>" << endl;
 	    out << "        <ows:Identifier>" << it->first << "</ows:Identifier>" << endl;
 	    out << "        <ows:Title>" << it->first << "</ows:Title>" << endl;
-	    if (it->second.is_complex)
-	    {
-		out << "        <ComplexData>" << endl;
-		out << "          <Default>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Default>" << endl;
-		out << "          <Supported>" << endl;
-		out << "            <Format>" << endl;
-		out << "              <MimeType>text/xml</MimeType>" << endl;
-		out << "              <Encoding>UTF-8</Encoding>" << endl;
-		out << "              <Schema>" << it->second.schema << "</Schema>" << endl;
-		out << "            </Format>" << endl;
-		out << "          </Supported>" << endl;
-		out << "        </ComplexData>" << endl;
-	    }
-	    else
-	    {
-		// FIXME !
-		out << "<LiteralData>" + it->second.schema << "</LiteralData>" << endl;
-	    }
+            out << "        <ComplexData>" << endl;
+            out << "          <Default>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Default>" << endl;
+            out << "          <Supported>" << endl;
+            out << "            <Format>" << endl;
+            out << "              <MimeType>text/xml</MimeType>" << endl;
+            out << "              <Encoding>UTF-8</Encoding>" << endl;
+            out << "              <Schema>" << it->second->to_string() << "</Schema>" << endl;
+            out << "            </Format>" << endl;
+            out << "          </Supported>" << endl;
+            out << "        </ComplexData>" << endl;
 	    out << "      </Output>" << endl;
 	}
 	out << "    </ProcessOutputs>" << endl;
@@ -126,9 +165,9 @@ namespace WPS
 	return out;
     }
 
-    std::ostream& Service::get_xml_execute_response( std::ostream& out, const std::string & service_instance )
+    std::ostream& Service::get_xml_execute_response( std::ostream& out, const std::string & service_instance, const ParameterMap& outputs ) const
     {
-	check_parameters( output_parameters_, output_parameter_schema_ );
+	check_parameters( outputs, output_parameter_schema_ );
 
 	out << "<wps:ExecuteResponse xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd\" service=\"WPS\" version=\"1.0.0\" xml:lang=\"en-US\" serviceInstance=\"" << service_instance << "\">" << endl;
 	out << "  <wps:Process wps:processVersion=\"1\">" << endl;
@@ -145,7 +184,7 @@ namespace WPS
 	out << "    <wps:ProcessSucceeded/>" << endl;
 	out << "  </wps:Status>" << endl;
 	out << "  <wps:ProcessOutputs>" << endl;
-	for ( ParameterMap::iterator it = output_parameters_.begin(); it != output_parameters_.end(); it++ )
+	for ( ParameterMap::const_iterator it = outputs.begin(); it != outputs.end(); it++ )
 	{
 	    out << "    <wps:Output>" << endl;
 	    out << "      <ows:Identifier>" << it->first << "</ows:Identifier>" << endl;
@@ -153,8 +192,6 @@ namespace WPS
 	    out << "      <wps:Data>" << endl;
 	    out << "        <wps:ComplexData>" << endl;
 	    out << "          " << XML::to_string( it->second, 5 ) << endl;
-	    // free xmlNode
-	    xmlFreeNode( it->second );
 	    out << "        </wps:ComplexData>" << endl;
 	    out << "      </wps:Data>" << endl;
 	    out << "    </wps:Output>" << endl;
@@ -164,7 +201,7 @@ namespace WPS
 	return out;
     }
 
-    Service* Service::get_service( const std::string& name )
+    const Service* Service::get_service( const std::string& name )
     {
 	if ( exists(name) )
 	    return (*services_)[name];

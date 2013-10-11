@@ -4,17 +4,18 @@
 
 using namespace std;
 
-int XML::init()
+namespace XML
 {
-    xmlSetGenericErrorFunc( NULL, XML::accumulate_error );
-	return 0;
+
+int init()
+{
+    xmlSetGenericErrorFunc( NULL, ErrorHandling::accumulate_error );
+    return 0;
 }
 
-std::string XML::xml_error_;
-
-bool XML::clear_errors_ = false;
-
-void XML::accumulate_error( void* /*ctx*/, const char* msg, ...)
+std::string ErrorHandling::xml_error_;
+bool ErrorHandling::clear_errors_ = false;
+void ErrorHandling::accumulate_error( void* /*ctx*/, const char* msg, ...)
 {
     if ( clear_errors_ )
     {
@@ -33,7 +34,7 @@ void XML::accumulate_error( void* /*ctx*/, const char* msg, ...)
 #undef TMP_BUF_SIZE
 }
 
-std::string XML::escape_text( const std::string& message )
+std::string escape_text( const std::string& message )
 {
     // escape the given error message
     scoped_ptr<xmlBuffer, xmlBufferFree> buf = xmlBufferCreate();
@@ -42,7 +43,7 @@ std::string XML::escape_text( const std::string& message )
     return (const char*)xmlBufferContent( buf.get() );
 }
 
-std::string XML::to_string( xmlNode* node, int indent_level )
+std::string to_string( xmlNode* node, int indent_level )
 {
     scoped_ptr<xmlBuffer, xmlBufferFree> buf = xmlBufferCreate();
     xmlNodeDump( buf.get(), NULL, node, indent_level, 1 );
@@ -50,52 +51,129 @@ std::string XML::to_string( xmlNode* node, int indent_level )
     return (const char*)xmlBufferContent( buf.get() );
 }
 
-void XML::ensure_validity( xmlNode* node, const std::string& schema_str )
+std::string to_string( xmlDoc* doc )
 {
-    std::string local_schema = "<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
-	+ schema_str +
-	"</xs:schema>\n";
-    scoped_xmlDoc schema_doc = xmlReadMemory(local_schema.c_str(), local_schema.size(), "schema.xml", NULL, 0);
-    if (schema_doc.get() == NULL) {
-	clear_errors_ = true;
-	throw std::invalid_argument( xml_error_ );
+    xmlChar *buf;
+    int size;
+    xmlDocDumpFormatMemory( doc, &buf, &size, 0 );
+    std::string r = (const char*)buf;
+    xmlFree( buf );
+    return r;
+}
+
+xmlNode* new_node( const std::string& name )
+{
+    return xmlNewNode( NULL, (const xmlChar*)name.c_str() );
+}
+
+xmlNode* new_text( const std::string& text )
+{
+    return xmlNewText( (const xmlChar*)text.c_str() );
+}
+
+std::string get_prop( const xmlNode* node, const std::string& key )
+{
+    return (const char*)xmlGetProp( const_cast<xmlNode*>(node), (const xmlChar*)(key.c_str()) );
+}
+
+void add_child( xmlNode* node, xmlNode* child )
+{
+    xmlAddChild( node, child );
+}
+
+Schema::Schema() :
+    schema_doc_(0),
+    parser_ctxt_(0),
+    schema_(0),
+    valid_ctxt_(0),
+    schema_str_("")
+{
+}
+
+Schema::Schema( const std::string& schemaFile )
+{
+    load( schemaFile );
+}
+
+Schema::~Schema()
+{
+    if ( valid_ctxt_ ) {
+        xmlSchemaFreeValidCtxt( valid_ctxt_ );
     }
-    scoped_ptr<xmlSchemaParserCtxt, xmlSchemaFreeParserCtxt> parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc.get());
-    if (parser_ctxt.get() == NULL) {
+    if ( schema_ ) {
+        xmlSchemaFree( schema_ );
+    }
+    if ( parser_ctxt_ ) {
+        xmlSchemaFreeParserCtxt( parser_ctxt_ );
+    }
+    if ( schema_doc_ ) {
+        xmlFreeDoc( schema_doc_ );
+    }
+}
+
+void Schema::load( const std::string& schema )
+{ 
+    // schema is a filename
+    schema_doc_ = xmlReadFile( schema.c_str(), /* encoding ?*/ NULL, /* options */ 0 );
+    if (schema_doc_ == NULL) {
+        ErrorHandling::clear_errors_ = true;
+        throw std::invalid_argument( ErrorHandling::xml_error_ );
+    }
+    schema_str_ = to_string( schema_doc_ );
+    parser_ctxt_ = xmlSchemaNewDocParserCtxt(schema_doc_);
+    if (parser_ctxt_ == NULL) {
 	// unable to create a parser context for the schema
-	clear_errors_ = true;
-	throw std::invalid_argument( xml_error_ );
+	ErrorHandling::clear_errors_ = true;
+	throw std::invalid_argument( ErrorHandling::xml_error_ );
     }
-    scoped_ptr<xmlSchema, xmlSchemaFree> schema = xmlSchemaParse(parser_ctxt.get());
-    if (schema.get() == NULL) {
+    schema_ = xmlSchemaParse(parser_ctxt_);
+    if (schema_ == NULL) {
 	// the schema itself is not valid
-	clear_errors_ = true;
-	throw std::invalid_argument( xml_error_ );
+	ErrorHandling::clear_errors_ = true;
+	throw std::invalid_argument( ErrorHandling::xml_error_ );
     }
-    scoped_ptr<xmlSchemaValidCtxt, xmlSchemaFreeValidCtxt> valid_ctxt = xmlSchemaNewValidCtxt(schema.get());
-    if (valid_ctxt.get() == NULL) {
+    valid_ctxt_ = xmlSchemaNewValidCtxt(schema_);
+    if (valid_ctxt_ == NULL) {
 	// unable to create a validation context for the schema
-	clear_errors_ = true;
-	throw std::invalid_argument( xml_error_ );
+	ErrorHandling::clear_errors_ = true;
+	throw std::invalid_argument( ErrorHandling::xml_error_ );
     }
-    
+}
+
+std::string Schema::to_string( bool with_header ) const
+{
+    if ( with_header ) {
+        return "<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
+            + schema_str_ +
+            "</xs:schema>\n";
+    }
+    return schema_str_;
+}
+
+void Schema::ensure_validity( const xmlNode* node )
+{
+    if ( valid_ctxt_ == 0 ) {
+        return;
+    }
     // create a new Doc from the subtree node
     scoped_xmlDoc subtree_doc = xmlNewDoc((const xmlChar*)"1.0");
     // ! xmlDocSetRootElement update every nodes, use simple pointer affectation instead
-    subtree_doc.get()->children = node;
-    int is_valid = (xmlSchemaValidateDoc( valid_ctxt.get(), subtree_doc.get() ) == 0);
+    subtree_doc.get()->children = const_cast<xmlNode*>(node);
+    int is_valid = (xmlSchemaValidateDoc( valid_ctxt_, subtree_doc.get() ) == 0);
     // remove the root node from the subtree document to prevent double free()
     subtree_doc.get()->children = NULL;
     if ( !is_valid )
     {
-	clear_errors_ = true;
-	throw std::invalid_argument( xml_error_ );
+        ErrorHandling::clear_errors_ = true;
+	throw std::invalid_argument( ErrorHandling::xml_error_ );
     }
 }
 
-xmlNode* XML::get_next_nontext( xmlNode* node )
+const xmlNode* get_next_nontext( const xmlNode* node )
 {
-    while ( node && xmlNodeIsText(node) )
+    while ( node && xmlNodeIsText(const_cast<xmlNode*>(node)) )
 	node = node->next;
     return node;
 }
+
+} // XML namespace

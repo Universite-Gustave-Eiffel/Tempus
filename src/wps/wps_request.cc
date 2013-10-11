@@ -155,7 +155,7 @@ namespace WPS {
 		return print_error_status( 405, "Method not allowed" );
 	    }
 
-        WPS::Service* service = WPS::Service::get_service( query["identifier"] );
+            const WPS::Service* service = WPS::Service::get_service( query["identifier"] );
 	    if ( !service )
 	    {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown identifier" );
@@ -175,7 +175,7 @@ namespace WPS {
 	    }
 
 	    xmlNode* root = xmlDocGetRootElement( xml_doc.get() );
-	    xmlNode* child = XML::get_next_nontext( root->children );
+	    const xmlNode* child = XML::get_next_nontext( root->children );
 
 	    string identifier;
 	    if ( child && !xmlStrcmp(child->name, (const xmlChar*)"Identifier") )
@@ -193,16 +193,16 @@ namespace WPS {
 	    WPS::Service::ParameterMap input_parameter_map;
 	    if ( child && !xmlStrcmp(child->name, (const xmlChar*)"DataInputs") )
 	    {
-		xmlNode* node = XML::get_next_nontext( child->children );
+		const xmlNode* node = XML::get_next_nontext( child->children );
 		while ( node )
 		{
 		    if ( xmlStrcmp(node->name, (const xmlChar*)"Input") )
 		    {
 			return print_exception( WPS_INVALID_PARAMETER_VALUE, "Only Input elements are allowed inside DataInputs" );
 		    }
-		    xmlNode* nnode = XML::get_next_nontext( node->children );
+		    const xmlNode* nnode = XML::get_next_nontext( node->children );
 		    string id;
-		    xmlNode* data = 0;
+		    const xmlNode* data = 0;
 		    while ( nnode )
 		    {
 			if ( !xmlStrcmp( nnode->name, (const xmlChar*)"Identifier") )
@@ -212,7 +212,7 @@ namespace WPS {
 			}
 			else if (!xmlStrcmp( nnode->name, (const xmlChar*)"Data") )
 			{
-			    xmlNode *n = XML::get_next_nontext( nnode->children );
+			    const xmlNode *n = XML::get_next_nontext( nnode->children );
 			    if ( n )
 				data = nnode;
 			}
@@ -228,14 +228,14 @@ namespace WPS {
 			return print_exception( WPS_INVALID_PARAMETER_VALUE, "Undefined data" );
 		    }
 
-		    xmlNode * n = XML::get_next_nontext( data->children );
+		    const xmlNode * n = XML::get_next_nontext( data->children );
 		    if ( xmlStrcmp(n->name, (const xmlChar*)"LiteralData") && xmlStrcmp(n->name, (const xmlChar*)"ComplexData") )
 		    {
 			return print_exception( WPS_INVALID_PARAMETER_VALUE, "Data must be either LiteralData or ComplexData" );
 		    }
-		    xmlNode *actual_data = XML::get_next_nontext( n->children );
+		    const xmlNode *actual_data = XML::get_next_nontext( n->children );
 		    // associate xml data to identifier
-		    input_parameter_map[id] = actual_data;
+		    input_parameter_map[id] = const_cast<xmlNode*>(actual_data);
 
 		    // next input
 		    node = XML::get_next_nontext( node->next );
@@ -265,14 +265,19 @@ namespace WPS {
 		return print_exception( WPS_INVALID_PARAMETER_VALUE, "Unknown service identifier " + identifier );
 	    }
 	    // all inputs are now defined, parse them
-        std::auto_ptr<WPS::Service> service( WPS::Service::get_service( identifier )->clone() );
+            const WPS::Service* service( WPS::Service::get_service( identifier ) );
 	    try
 	    {
-		/*WPS::Service::ParameterMap& output_parameters =*/ service->execute( input_parameter_map );
+		WPS::Service::ParameterMap outputs = service->execute( input_parameter_map );
 		
 		outs_ << "Content-type: text/xml" << endl;
 		outs_ << endl;
-		service->get_xml_execute_response( outs_, getParam("REQUEST_URI") );
+		service->get_xml_execute_response( outs_, getParam("REQUEST_URI"), outputs );
+
+                // must free xmlNode in outputs
+                for ( WPS::Service::ParameterMap::iterator it = outputs.begin(); it != outputs.end(); ++it ) {
+                    xmlFreeNode( it->second );
+                }
 	    }
 	    catch (std::invalid_argument& e)
 	    {

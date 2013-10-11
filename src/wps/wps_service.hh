@@ -24,40 +24,27 @@ namespace WPS
     public:
 	typedef std::map<std::string, xmlNode*> ParameterMap;
 
-	Service( const std::string& name ) : name_(name)
-	{
-	    // It is never freed. It is ok since it is a static object
-	    if ( !services_ )
-		services_ = new std::map<std::string, Service*>();
-	    // Add this service to the global map of services
-	    (*services_)[name] = this;
-	}
+	Service( const std::string& name );
+        virtual ~Service();
 	
 	///
 	/// Extract input parameters
-	void parse_xml_parameters( ParameterMap& input_parameter_map );
+	void parse_xml_parameters( const ParameterMap& input_parameter_map ) const;
 
-	virtual ParameterMap& execute( ParameterMap& input_parameter_map )
-	{
-	    parse_xml_parameters( input_parameter_map );
-	    // No output by default
-	    output_parameters_.clear();
-	    return output_parameters_;
-	}
-
-    virtual Service * clone() const { throw std::runtime_error("not implemented");}
+	virtual ParameterMap execute( const ParameterMap& input_parameter_map ) const;
 
 	///
 	/// Returns an XML string that conforms to a DescribeProcess operation
-	std::ostream& get_xml_description( std::ostream& out );
+	std::ostream& get_xml_description( std::ostream& out ) const;
 
 	///
 	/// Returns an XML string that represents results of an Execute operation
-	std::ostream& get_xml_execute_response( std::ostream& out, const std::string & service_instance );
+	std::ostream& get_xml_execute_response( std::ostream& out, const std::string & service_instance, const ParameterMap& outputs ) const;
 
 	///
-	/// Global service map interface: returns a Service* based on a service name
-	static Service* get_service( const std::string& name );
+	/// Global service map interface: returns a Service* based on a service name.
+        /// The returned service is const and can be used in different threads
+	static const Service* get_service( const std::string& name );
 
 	///
 	/// Global service map interface: tests if a service exists
@@ -74,41 +61,27 @@ namespace WPS
 	///
 	/// A global map of services
 	static std::map<std::string, Service*> *services_;
-	
-	struct ParameterSchema
-	{
-	    std::string schema;
-	    // complexType or not ?
-	    bool is_complex;
-	};
-	typedef std::map<std::string, ParameterSchema> SchemaMap;
+	typedef std::map<std::string, XML::Schema*> SchemaMap;
 	SchemaMap input_parameter_schema_;
 	SchemaMap output_parameter_schema_;
 	std::string name_;
 
 	///
 	/// Check parameters against their XML schemas
-	virtual void check_parameters( ParameterMap& parameter_map, SchemaMap& schema_map );
+	virtual void check_parameters( const ParameterMap& parameter_map, const SchemaMap& schema_map ) const;
 
 	///
 	/// Adds an input parameter definition. To be called by derived classes in their constructor
-	void add_input_parameter( const std::string& name, const std::string& schema, bool is_complex = true )
-	{
-	    input_parameter_schema_[name].schema = schema;
-	    input_parameter_schema_[name].is_complex = is_complex;
-	}
+        /// @param[in] name Name of the parameter
+        /// @param[in] schema The schema filename. If empty, a schema will be looked for
+        ///                   at DATA_DIR/wps_schemas/service_name/parameter_name.xsd
+	void add_input_parameter( const std::string& name, const std::string& schema = "" );
 
 	///
 	/// Adds an output parameter definition. To be called by derived classes in their constructor
-	void add_output_parameter( const std::string& name, const std::string& schema, bool is_complex = true )
-	{
-	    output_parameter_schema_[name].schema = schema;
-	    output_parameter_schema_[name].is_complex = is_complex;
-	}
-
-	///
-	/// Output parameters
-	ParameterMap output_parameters_;
+        /// @param[in] schema The schema filename. If empty, a schema will be looked for
+        ///                   at DATA_DIR/wps_schemas/service_name/parameter_name.xsd
+	void add_output_parameter( const std::string& name, const std::string& schema = "" );
     };
 
 } // WPS namespace

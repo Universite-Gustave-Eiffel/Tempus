@@ -69,41 +69,59 @@ typedef scoped_ptr<xmlNode, xmlFreeNode> scoped_xmlNode;
 typedef scoped_ptr<xmlDoc, xmlFreeDoc> scoped_xmlDoc;
 
 ///
-/// XML helper class
-// @note the static member finction init() must be called once per thread
-class XML
+/// XML helper namespace
+/// @note the static member finction init() must be called once per thread
+namespace XML
 {
-public:
+    class Schema
+    {
+    public:
+        Schema();
+        Schema( const std::string& schema );
+        virtual ~Schema();
+
+        ///
+        /// Load the schema
+        void load( const std::string& );
+
+        ///
+        /// Throws a std::invalid_argument if the given node is not validated against the schema
+        void ensure_validity( const xmlNode* node );
+
+        ///
+        /// Get the string representation of the schema
+        /// @param[in] with_header Whether to include "<?xml>" header
+        std::string to_string( bool with_header = false ) const;
+
+    private:
+        xmlDoc*                           schema_doc_;
+        xmlSchemaParserCtxt* parser_ctxt_;
+        xmlSchema*                     schema_;
+        xmlSchemaValidCtxt*   valid_ctxt_;
+        // temp
+        std::string schema_str_;
+    };
+
     ///
     /// Returns a string that can be written as an XML text node
-    static std::string escape_text( const std::string& message );
+    std::string escape_text( const std::string& message );
 
     ///
     /// Outputs a node to a string, recursively
-    static std::string to_string( xmlNode* node, int indent_level = 0 );
-
-    ///
-    /// Throws a std::invalid_argument if the given node is not validated against the schema
-    static void ensure_validity( xmlNode* node, const std::string& schema_str );
+    std::string to_string( xmlNode* node, int indent_level = 0 );
 
     ///
     /// Shortcut to xmlNewNode, using C++ std::string
-    static xmlNode* new_node( const std::string& name )
-    {
-	return xmlNewNode( NULL, (const xmlChar*)name.c_str() );
-    }
+    xmlNode* new_node( const std::string& name );
 
     ///
     /// Shortcut to xmlNewText, using C++ std::string
-    static xmlNode* new_text( const std::string& text )
-    {
-	return xmlNewText( (const xmlChar*)text.c_str() );
-    }
+    xmlNode* new_text( const std::string& text );
 
     ///
     /// Shortcut to xmlNewProp, using C++ std::string
     template <class T>
-    static void new_prop( xmlNode* node, const std::string& key, T value )
+    void new_prop( xmlNode* node, const std::string& key, T value )
     {
         std::stringstream ss;
         ss << value;
@@ -112,32 +130,29 @@ public:
 
     ///
     /// Shortcut to xmlGetProp, using C++ std::string
-    static std::string get_prop( xmlNode* node, const std::string& key )
-    {
-	return (const char*)xmlGetProp( node, (const xmlChar*)(key.c_str()) );
-    }
+    std::string get_prop( const xmlNode* node, const std::string& key );
 
     ///
     /// Shortcut to xmlAddChild
-
-    static void add_child( xmlNode* node, xmlNode* child )
-    {
-	xmlAddChild( node, child );
-    }
+    void add_child( xmlNode* node, xmlNode* child );
 
     ///
     /// Get the next non text node
-    static xmlNode* get_next_nontext( xmlNode* node );
+    const xmlNode* get_next_nontext( const xmlNode* node );
 
-    static int init();
-protected:
     ///
-    /// Generic libxml error handling. Accumulate errors in a string.
-    /// This is intended to be used to transform XML parsing errors to std::exceptions
-    static void accumulate_error( void* ctx, const char* msg, ...);
+    /// To be called for each thread
+    int init();
 
-    static bool clear_errors_;
-    static std::string xml_error_;
-};
+    ///
+    /// Generic libxml error handling (private class). Accumulate errors in a string.
+    /// This is intended to be used to transform XML parsing errors to std::exceptions
+    struct ErrorHandling
+    {
+        static void accumulate_error( void* ctx, const char* msg, ...);
+        static bool clear_errors_;
+        static std::string xml_error_;
+    };
+}
 
 #endif
