@@ -11,7 +11,11 @@ configure_file( config.py.in config.py )
 
 FILE(GLOB INSTALLER_FILES metadata.txt *.py)
 FILE(GLOB IMAGES_FILES *.png)
-SET(INSTALLER_FILES ${INSTALLER_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../../wps/client/wps_client.py ${IMAGES_FILES} ${CMAKE_CURRENT_BINARY_DIR}/config.py )
+SET(INSTALLER_FILES ${INSTALLER_FILES}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../python/wps_client.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../python/tempus_request.py
+  ${IMAGES_FILES}
+  ${CMAKE_CURRENT_BINARY_DIR}/config.py )
 
 FILE(GLOB UI_FILES *.ui)
 PYQT4_WRAP_UI(PYUI_FILES ${UI_FILES})

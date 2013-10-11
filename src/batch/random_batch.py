@@ -5,7 +5,13 @@ import psycopg2
 import argparse
 import random
 import time
+import os
+import sys
 
+# add ../../python to the include dir
+script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+wps_path = os.path.abspath( script_path + '/../python' )
+sys.path.insert(0, wps_path)
 from tempus_request import *
 
 dbstring="dbname=tempus_test_db"

@@ -21,6 +21,7 @@
 """
 import re
 from wps_client import *
+from tempus_request import *
 import config
 import binascii
 import pickle

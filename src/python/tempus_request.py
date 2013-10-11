@@ -5,10 +5,6 @@ import os
 import sys
 import re
 
-# add ../../wps/client to the include dir
-script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-wps_path = os.path.abspath( script_path + '/../wps/client' )
-sys.path.insert(0, wps_path)
 from wps_client import *
 
 class Cost:
