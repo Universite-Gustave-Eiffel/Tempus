@@ -72,11 +72,16 @@ namespace WPS
 
 	///
 	/// Adds an input parameter definition. To be called by derived classes in their constructor
-	void add_input_parameter( const std::string& name, const std::string& schema );
+        /// @param[in] name Name of the parameter
+        /// @param[in] schema The schema filename. If empty, a schema will be looked for
+        ///                   at DATA_DIR/wps_schemas/service_name/parameter_name.xsd
+	void add_input_parameter( const std::string& name, const std::string& schema = "" );
 
 	///
 	/// Adds an output parameter definition. To be called by derived classes in their constructor
-	void add_output_parameter( const std::string& name, const std::string& schema );
+        /// @param[in] schema The schema filename. If empty, a schema will be looked for
+        ///                   at DATA_DIR/wps_schemas/service_name/parameter_name.xsd
+	void add_output_parameter( const std::string& name, const std::string& schema = "" );
     };
 
 } // WPS namespace

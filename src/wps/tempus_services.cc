@@ -42,18 +42,7 @@ namespace WPS
     public:
 	PluginListService() : Service("plugin_list")
 	{
-	    add_output_parameter( "plugins",
-				  "<xs:complexType name=\"Plugin\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"plugins\">\n"
-				  "  <xs:complexType>\n"
-				  "    <xs:sequence>\n"
-				  "      <xs:element name=\"plugin\" type=\"Plugin\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "    </xs:sequence>\n"
-				  "  </xs:complexType>\n"
-				  "</xs:element>\n"
-				  );
+	    add_output_parameter( "plugins" );
 	};
 	Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const
 	{
@@ -86,51 +75,9 @@ namespace WPS
     public:
 	ConstantListService() : Service("constant_list")
 	{
-	    add_output_parameter( "road_types",
-				  "<xs:complexType name=\"RoadType\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"road_types\">\n"
-				  "  <xs:complexType>\n"
-				  "    <xs:sequence>\n"
-				  "      <xs:element name=\"road_type\" type=\"RoadType\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "    </xs:sequence>\n"
-				  "  </xs:complexType>\n"
-				  "</xs:element>\n"
-				  );
-	    add_output_parameter( "transport_types",
-				  "<xs:complexType name=\"TransportType\">\n"
-				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
-				  "  <xs:attribute name=\"parent_id\" type=\"xs:long\"/>\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"need_parking\" type=\"xs:int\"/>\n"
-				  "  <xs:attribute name=\"need_station\" type=\"xs:int\"/>\n"
-				  "  <xs:attribute name=\"need_return\" type=\"xs:int\"/>\n"
-				  "  <xs:attribute name=\"need_network\" type=\"xs:int\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"transport_types\">\n"
-				  "  <xs:complexType>\n"
-				  "    <xs:sequence>\n"
-				  "      <xs:element name=\"transport_type\" type=\"TransportType\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "    </xs:sequence>\n"
-				  "  </xs:complexType>\n"
-				  "</xs:element>\n"
-				  );
-	    add_output_parameter( "transport_networks",
-				  "<xs:complexType name=\"TransportNetwork\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n"
-				  "  <xs:attribute name=\"provided_transport_types\" type=\"xs:long\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"transport_networks\">\n"
-				  "  <xs:complexType>\n"
-				  "    <xs:sequence>\n"
-				  "      <xs:element name=\"transport_network\" type=\"TransportNetwork\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "    </xs:sequence>\n"
-				  "  </xs:complexType>\n"
-				  "</xs:element>\n"
-				  );
+	    add_output_parameter( "road_types" );
+	    add_output_parameter( "transport_types" );
+	    add_output_parameter( "transport_networks" );
 	};
 	Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const
 	{
@@ -197,10 +144,9 @@ namespace WPS
 	PluginService( const std::string& name ) : Service( name )
 	{
 	    add_input_parameter( "plugin",
-				 "<xs:complexType name=\"Plugin\">\n"
-				 "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				 "</xs:complexType>\n"
-				 "<xs:element name=\"plugin\" type=\"Plugin\"/>\n" );
+                                 // the service name will be set by the derived class
+                                 // we thus set the xsd filename manually
+                                 Application::instance()->data_directory() + "/wps_schemas/plugin/plugin.xsd" );
 	}
     };
 
@@ -214,18 +160,7 @@ namespace WPS
     public:
 	GetOptionsDescService() : PluginService("get_option_descriptions")
 	{
-	    add_output_parameter( "options",
-				  "<xs:complexType name=\"Option\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"type\" type=\"xs:int\"/>\n"
-				  "  <xs:attribute name=\"description\" type=\"xs:string\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"Options\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"options\" type=\"Options\"/>\n" );
+	    add_output_parameter( "options" );
 	}
 	Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const
 	{
@@ -275,127 +210,10 @@ namespace WPS
     public:
 	SelectService() : PluginService( "select" )
 	{
-	    add_input_parameter( "request",
-				 "  <xs:complexType name=\"TimeConstraint\">\n"
-				 "    <xs:attribute name=\"type\" type=\"xs:int\"/>\n"
-				 "    <xs:attribute name=\"date_time\" type=\"xs:dateTime\"/>\n"
-				 "  </xs:complexType>\n"
-				 "  <xs:complexType name=\"Point\">\n"
-                                 "    <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
-				 "      <xs:sequence>\n"
-				 "        <xs:element name=\"x\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "        <xs:element name=\"y\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      </xs:sequence>\n"
-				 "      <xs:sequence>\n"
-				 "        <xs:element name=\"vertex\" type=\"xs:long\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      </xs:sequence>\n"
-                                 "    </xs:choice>\n"
-				 "  </xs:complexType>\n"
-				 "  <xs:complexType name=\"Step\">\n"
-				 "    <xs:sequence>\n"
-				 "      <xs:element name=\"destination\" type=\"Point\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"private_vehicule_at_destination\" type=\"xs:boolean\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "    </xs:sequence>\n"
-				 "  </xs:complexType>\n"
-				 "  <xs:complexType name=\"Request\">\n"
-				 "    <xs:sequence>\n"
-				 "      <xs:element name=\"origin\" type=\"Point\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"departure_constraint\" type=\"TimeConstraint\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"parking_location\" type=\"Point\" minOccurs=\"0\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"optimizing_criterion\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"unbounded\"/>\n"
-				 "      <xs:element name=\"allowed_transport_types\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				 "      <xs:element name=\"allowed_network\" type=\"xs:long\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				 "      <xs:element name=\"step\" type=\"Step\" minOccurs=\"1\" maxOccurs=\"unbounded\"/>\n"
-				 "    </xs:sequence>\n"
-				 "  </xs:complexType>\n"
-				 "<xs:element name=\"request\" type=\"Request\"/>\n"
-				 );
-
-	    add_input_parameter( "options",
-				  "<xs:complexType name=\"Option\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"Options\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"option\" type=\"Option\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"options\" type=\"Options\"/>\n" );
-
-	    add_output_parameter( "results",
-				  "<xs:complexType name=\"DbId\">\n"
-				  "  <xs:attribute name=\"id\" type=\"xs:long\"/>\n" // db_id
-				  "</xs:complexType>\n"
-				  "  <xs:complexType name=\"Point\">\n"
-				  "    <xs:sequence>\n"
-				  "      <xs:element name=\"x\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "      <xs:element name=\"y\" type=\"xs:float\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    </xs:sequence>\n"
-				  "  </xs:complexType>\n"
-				  "<xs:complexType name=\"Cost\">\n"
-				  "  <xs:attribute name=\"type\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"value\" type=\"xs:float\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"RoadStep\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"road\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"end_movement\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
-				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"RoadTransportStep\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"type\" type=\"xs:int\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"road\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"network\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
-				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"PublicTransportStep\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"network\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"departure_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"arrival_stop\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"trip\" type=\"xs:string\" minOccurs=\"1\" maxOccurs=\"1\"/>\n"
-				  "    <xs:element name=\"cost\" type=\"Cost\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
-				  "    <xs:element name=\"wkb\" type=\"xs:string\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"results\">\n"
-				  "  <xs:complexType>\n"
-				  "    <xs:sequence>\n"
-				  "    <xs:element name=\"result\" minOccurs=\"0\" maxOccurs=\"unbounded\">\n"
-				  "      <xs:complexType>\n"
-				  "        <xs:sequence>\n"
-				  "          <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\">\n" // 0..N steps
-				  "            <xs:element name=\"road_step\" type=\"RoadStep\"/>\n"
-				  "            <xs:element name=\"public_transport_step\" type=\"PublicTransportStep\"/>\n"
-				  "            <xs:element name=\"road_transport_step\" type=\"RoadTransportStep\"/>\n"
-				  "          </xs:choice>\n"
-				  "          <xs:element name=\"cost\" type=\"Cost\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n" // 0..N costs
-				  "        </xs:sequence>\n"
-				  "      </xs:complexType>\n"
-				  "    </xs:element>\n"
-				  "    </xs:sequence>\n"
-				  "  </xs:complexType>\n"
-				  "</xs:element>\n"
-				  );
-	    add_output_parameter( "metrics",
-				  "<xs:complexType name=\"Metric\">\n"
-				  "  <xs:attribute name=\"name\" type=\"xs:string\"/>\n"
-				  "  <xs:attribute name=\"value\" type=\"xs:string\"/>\n"
-				  "</xs:complexType>\n"
-				  "<xs:complexType name=\"Metrics\">\n"
-				  "  <xs:sequence>\n"
-				  "    <xs:element name=\"metric\" type=\"Metric\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
-				  "  </xs:sequence>\n"
-				  "</xs:complexType>\n"
-				  "<xs:element name=\"metrics\" type=\"Metrics\"/>\n" );
+	    add_input_parameter( "request" );
+	    add_input_parameter( "options" );
+	    add_output_parameter( "results" );
+	    add_output_parameter( "metrics" );
 	}
 
 	void parse_constraint( const xmlNode* node, Request::TimeConstraint& constraint ) const

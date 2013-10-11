@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <boost/format.hpp>
 
+#include "application.hh"
 #include "wps_service.hh"
 
 using namespace std;
@@ -43,12 +44,26 @@ namespace WPS
 
     void Service::add_input_parameter( const std::string& name, const std::string& schema )
     {
-        input_parameter_schema_[name] = new XML::Schema( schema );
+        if ( schema.empty() ) {
+            // look for the schema file
+            std::string lschema( Tempus::Application::instance()->data_directory() + "/wps_schemas/" + name_ + "/" + name + ".xsd" );
+            input_parameter_schema_[name] = new XML::Schema( lschema );
+        }
+        else {
+            input_parameter_schema_[name] = new XML::Schema( schema );
+        }
     }
 
     void Service::add_output_parameter( const std::string& name, const std::string& schema )
     {
-        output_parameter_schema_[name] = new XML::Schema( schema );
+        if ( schema.empty() ) {
+            // look for the schema file
+            std::string lschema( Tempus::Application::instance()->data_directory() + "/wps_schemas/" + name_ + "/" + name + ".xsd" );
+            output_parameter_schema_[name] = new XML::Schema( lschema );
+        }
+        else {
+            output_parameter_schema_[name] = new XML::Schema( schema );
+        }
     }
 
     void Service::parse_xml_parameters( const ParameterMap& input_parameter_map ) const

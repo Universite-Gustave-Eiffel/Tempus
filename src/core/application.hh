@@ -50,6 +50,10 @@ namespace Tempus
 	/// @param[in] db_options string giving options for database connection (e.g. dbname="" user="", etc.)
 	void connect( const std::string& db_options );
 
+        ///
+        /// Get the directory where data are stored
+        const std::string data_directory() const;
+
 	///
 	/// Database connection accessors. @relates Db::Connection
 	const std::string& db_options() const { return db_options_; }

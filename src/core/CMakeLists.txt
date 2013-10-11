@@ -1,3 +1,9 @@
+# config file generation
+# FIXME use installation directory on install
+set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../data")
+configure_file( tempus_config.hh.in tempus_config.hh )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+
 # Core source files
 set( SOURCE_FILES common.cc multimodal_graph.cc application.cc plugin.cc pgsql_importer.cc plugin.cc db.cc utils/graph_db_link.cc )
 

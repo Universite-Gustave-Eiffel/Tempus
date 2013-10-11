@@ -90,9 +90,9 @@ Schema::Schema() :
 {
 }
 
-Schema::Schema( const std::string& schema_str )
+Schema::Schema( const std::string& schemaFile )
 {
-    load( schema_str );
+    load( schemaFile );
 }
 
 Schema::~Schema()
@@ -113,22 +113,13 @@ Schema::~Schema()
 
 void Schema::load( const std::string& schema )
 { 
-    schema_str_ = schema;
-    std::string local_schema = "<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
-	+ schema_str_ +
-	"</xs:schema>\n";
-    schema_doc_ = xmlReadMemory(local_schema.c_str(), local_schema.size(), "schema.xml", NULL, 0);
+    // schema is a filename
+    schema_doc_ = xmlReadFile( schema.c_str(), /* encoding ?*/ NULL, /* options */ 0 );
     if (schema_doc_ == NULL) {
-	ErrorHandling::clear_errors_ = true;
-	throw std::invalid_argument( ErrorHandling::xml_error_ );
+        ErrorHandling::clear_errors_ = true;
+        throw std::invalid_argument( ErrorHandling::xml_error_ );
     }
-#if 0
-    schema_doc_ = xmlReadFile( filename.c_str(), /* encoding ?*/ NULL, /* options */ 0 );
-    if (schema_doc_ == NULL) {
-	ErrorHandling::clear_errors_ = true;
-	throw std::invalid_argument( ErrorHandling::xml_error_ );
-    }
-#endif
+    schema_str_ = to_string( schema_doc_ );
     parser_ctxt_ = xmlSchemaNewDocParserCtxt(schema_doc_);
     if (parser_ctxt_ == NULL) {
 	// unable to create a parser context for the schema
