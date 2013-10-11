@@ -56,6 +56,18 @@ namespace WPS
 		XML::new_prop( node,
 			       "name",
 			       names[i] );
+
+                Plugin::OptionDescriptionList options = PluginFactory::instance.option_descriptions( names[i] );
+                Plugin::OptionDescriptionList::iterator it;
+                for ( it = options.begin(); it != options.end(); it++ )
+                {
+                    xmlNode* option_node = XML::new_node( "option" );
+                    XML::new_prop( option_node, "name", it->first );
+                    XML::new_prop( option_node, "type",
+                                   to_string( it->second.type ) );
+                    XML::new_prop( option_node, "description", it->second.description );
+                    XML::add_child( node, option_node );
+                }
 		XML::add_child( root_node, node );
 	    }
 	    output_parameters[ "plugins" ] = root_node;
