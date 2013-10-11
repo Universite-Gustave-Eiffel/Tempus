@@ -1,6 +1,6 @@
 set( CMAKE_BUILD_TYPE RELWITHDEBINFO )
 
-find_package(Boost)
+find_package(Boost REQUIRED COMPONENTS timer system)
 if (NOT Boost_FOUND)
 	set( Boost_INCLUDE_DIR "" CACHE PATH "Boost include directory" )
 	set( Boost_LIBRARY_DIRS "" CACHE PATH "Boost library directory" )
@@ -8,8 +8,8 @@ endif (NOT Boost_FOUND)
 add_definitions( "-DHAS_BOOST" )
 
 if (WIN32)
-	set( PQ_INCLUDE_DIR "E:/Program Files/PostgreSQL/9.1/include" CACHE PATH "libpq include directory" )
-	set( PQ_LIBS_DIR "E:/Program Files/PostgreSQL/9.1/lib" CACHE PATH "libpq lib directory" )
+	set( PQ_INCLUDE_DIR "C:/Program Files(x86)/PostgreSQL/9.3/include" CACHE PATH "libpq include directory" )
+	set( PQ_LIBS_DIR "C:/Program Files (x86)/PostgreSQL/9.3/lib" CACHE PATH "libpq lib directory" )
 	set( PQ_LIBS libpq )
 
 	set( LIBTEMPUS tempus )

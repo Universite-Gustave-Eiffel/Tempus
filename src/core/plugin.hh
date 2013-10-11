@@ -244,13 +244,13 @@ namespace Tempus
     };
 
     template <>
-    struct Plugin::OptionTypeFrom<bool> { static const OptionType type = Plugin::BoolOption; };
+    struct Plugin::OptionTypeFrom<bool> { static const Plugin::OptionType type = Plugin::BoolOption; };
     template <>
-    struct Plugin::OptionTypeFrom<int> { static const OptionType type = Plugin::IntOption; };
+    struct Plugin::OptionTypeFrom<int> { static const Plugin::OptionType type = Plugin::IntOption; };
     template <>
-    struct Plugin::OptionTypeFrom<float> { static const OptionType type = Plugin::FloatOption; };
+    struct Plugin::OptionTypeFrom<float> { static const Plugin::OptionType type = Plugin::FloatOption; };
     template <>
-    struct Plugin::OptionTypeFrom<std::string> { static const OptionType type = Plugin::StringOption; };
+    struct Plugin::OptionTypeFrom<std::string> { static const Plugin::OptionType type = Plugin::StringOption; };
 
 
     ///
