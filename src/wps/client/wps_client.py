@@ -161,7 +161,7 @@ class WPSClient:
 #        print "Sent to WPS: ", x
         [status, msg] = self.conn.request( 'POST', x )
         if status == 502:
-            raise RuntimeError( self, "The WPS server appears to be down !")
+            raise RuntimeError( self, "The WPS server appears to be down ! " + msg)
         if status != 200:
             raise RuntimeError( self, msg )
 

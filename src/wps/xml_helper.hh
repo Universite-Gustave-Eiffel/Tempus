@@ -108,7 +108,7 @@ namespace XML
 
     ///
     /// Outputs a node to a string, recursively
-    std::string to_string( xmlNode* node, int indent_level = 0 );
+    std::string to_string( const xmlNode* node, int indent_level = 0 );
 
     ///
     /// Shortcut to xmlNewNode, using C++ std::string
@@ -129,8 +129,16 @@ namespace XML
     }
 
     ///
+    /// Whether the node has a specified attribute
+    bool has_prop( const xmlNode* node, const std::string& key );
+
+    ///
     /// Shortcut to xmlGetProp, using C++ std::string
     std::string get_prop( const xmlNode* node, const std::string& key );
+
+    ///
+    /// Shortcut to xmlSetProp
+    void set_prop( xmlNode* node, const std::string& key, const std::string& value );
 
     ///
     /// Shortcut to xmlAddChild

@@ -5,22 +5,17 @@
     <xs:attribute name="date_time" type="xs:dateTime"/>
   </xs:complexType>
   <xs:complexType name="Point">
-    <xs:choice minOccurs="0" maxOccurs="unbounded">
-    <xs:sequence>
-      <xs:element name="x" type="xs:float" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="y" type="xs:float" minOccurs="1" maxOccurs="1"/>
-    </xs:sequence>
-    <xs:sequence>
-      <xs:element name="vertex" type="xs:long" minOccurs="1" maxOccurs="1"/>
-    </xs:sequence>
-    </xs:choice>
+    <!-- x, y XOR vertex -->
+    <xs:attribute name="x" type="xs:float" use="optional"/>
+    <xs:attribute name="y" type="xs:float" use="optional"/>
+    <xs:attribute name="vertex" type="xs:long" use="optional"/>
   </xs:complexType>
   <xs:complexType name="Step">
     <xs:sequence>
       <xs:element name="destination" type="Point" minOccurs="1" maxOccurs="1"/>
       <xs:element name="constraint" type="TimeConstraint" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="private_vehicule_at_destination" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
+    <xs:attribute name="private_vehicule_at_destination" type="xs:boolean"/>
   </xs:complexType>
   <xs:complexType name="Request">
     <xs:sequence>
@@ -28,10 +23,10 @@
       <xs:element name="departure_constraint" type="TimeConstraint" minOccurs="1" maxOccurs="1"/>
       <xs:element name="parking_location" type="Point" minOccurs="0" maxOccurs="1"/>
       <xs:element name="optimizing_criterion" type="xs:int" minOccurs="1" maxOccurs="unbounded"/>
-      <xs:element name="allowed_transport_types" type="xs:int" minOccurs="1" maxOccurs="1"/>
       <xs:element name="allowed_network" type="xs:long" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="step" type="Step" minOccurs="1" maxOccurs="unbounded"/>
     </xs:sequence>
+    <xs:attribute name="allowed_transport_types" type="xs:int" use="required"/>
   </xs:complexType>
   <xs:element name="request" type="Request"/>
 </xs:schema>

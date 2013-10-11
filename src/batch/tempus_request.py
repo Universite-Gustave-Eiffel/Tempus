@@ -16,8 +16,8 @@ class Point:
         self.vertex = vertex
     def to_pson( self, name = 'point' ):
         if self.vertex == -1:
-            return [ name, [ 'x', str(self.x) ], ['y', str(self.y)] ]
-        return [ name, ['vertex', str(self.vertex)] ]
+            return [ name, { 'x' : str(self.x), 'y' : str(self.y) } ]
+        return [ name, { 'vertex' : str(self.vertex) } ]
 
 class DateTime( datetime.datetime ):
     def __init__(self, *args):
@@ -47,9 +47,9 @@ class RequestStep:
 
     def to_pson( self ):
         return ['step',
+                { 'private_vehicule_at_destination' : 'true' if self.private_vehicule_at_destination else 'false' },
                 self.destination.to_pson('destination'),
                 self.constraint.to_pson(),
-                [ 'private_vehicule_at_destination', 'true' if self.private_vehicule_at_destination else 'false' ]
                 ]
 
 class RoadStep:
@@ -189,10 +189,10 @@ class TempusRequest:
         args = {}
         args['plugin'] = ['plugin', {'name' : plugin_name } ]
         args['request'] = ['request',
+                           {'allowed_transport_types' : 11 },
                            origin.to_pson( 'origin' ),
                            ['departure_constraint', { 'type': departure_constraint.type, 'date_time': str(departure_constraint.date_time) } ],
                            ['optimizing_criterion', 1 ], 
-                           ['allowed_transport_types', 11 ]
                            ]
         for step in steps:
             args['request'].append( step.to_pson() )

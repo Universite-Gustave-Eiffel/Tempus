@@ -384,12 +384,9 @@ class IfsttarRouting:
             pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
 
         # browse steps
-        for step in steps:
+        for step in steps[:-1]:
             # find wkb geometry
-            wkb=''
-            for prop in step:
-                if prop.tag == 'wkb':
-                    wkb = prop.text
+            wkb = step.attrib['wkb']
 
             fet = QgsFeature()
             geo = QgsGeometry()
@@ -450,9 +447,9 @@ class IfsttarRouting:
             icon_text = ''
             cost_text = ''
             if step.tag == 'road_step':
-                road_name = step[0].text or ''
-                movement = int(step[1].text)
-                costs = step[2:-1]
+                road_name = step.attrib['road']
+                movement = int(step.attrib['end_movement'])
+                costs = step
                 text += "<p>"
                 action_txt = 'Walk on '
                 if last_movement == 1:
@@ -468,21 +465,21 @@ class IfsttarRouting:
                 last_movement = movement
 
             elif step.tag == 'public_transport_step':
-                network = step[0].text
-                departure = step[1].text
-                arrival = step[2].text
-                trip = step[3].text
-                costs = step[4:-1]
+                network = step.attrib['network']
+                departure = step.attrib['departure_stop']
+                arrival = step.attrib['arrival_stop']
+                trip = step.attrib['trip']
+                costs = step
                 # set network text as icon
                 icon_text = network
                 text = "Take the trip %s from '%s' to '%s'" % (trip, departure, arrival)
 
             elif step.tag == 'road_transport_step':
-                stype = int(step[0].text)
-                road = step[1].text
-                icon_text = step[2].text
-                stop = step[3].text
-                costs = step[4:-1]
+                stype = int(step.attrib['type'])
+                road = step.attrib['road']
+                icon_text = step.attrib['network']
+                stop = step.attrib['stop']
+                costs = step
                 if stype == 2:
                     text = "Go to the '%s' station from %s" % (stop, road)
                 else:
@@ -707,21 +704,21 @@ class IfsttarRouting:
         transports = [ self.transport_types[x] for x in self.dlg.selected_transports() ]
 
         # build the request
-        r = [ 'request',
-            ['origin', ['x', str(ox)], ['y', str(oy)] ],
-            ['departure_constraint', { 'type': constraints[0][0], 'date_time': constraints[0][1] } ]]
-
-        if parking != []:
-            r.append(['parking_location', ['x', parking[0]], ['y', parking[1]] ])
-
-        for criterion in criteria:
-            r.append(['optimizing_criterion', criterion])
 
         allowed_transports = 0
         for x in transports:
             allowed_transports += int(x['id'])
 
-        r.append( ['allowed_transport_types', allowed_transports ] )
+        r = [ 'request',
+              { 'allowed_transport_types': allowed_transports },
+              ['origin', {'x': str(ox), 'y': str(oy) } ],
+              ['departure_constraint', { 'type': constraints[0][0], 'date_time': constraints[0][1] } ]]
+
+        if parking != []:
+            r.append(['parking_location', {'x': parking[0], 'y': parking[1]} ])
+
+        for criterion in criteria:
+            r.append(['optimizing_criterion', criterion])
 
         for n in networks:
             r.append( ['allowed_network', int(n['id']) ] )
@@ -732,9 +729,9 @@ class IfsttarRouting:
             if pvads[i] == True:
                 pvad = 'true'
             r.append( ['step',
-                       [ 'destination', ['x', str(coords[i][0])], ['y', str(coords[i][1])] ],
+                       { 'private_vehicule_at_destination': pvad },
+                       [ 'destination', {'x': str(coords[i][0]), 'y': str(coords[i][1])} ],
                        [ 'constraint', { 'type' : constraints[i][0], 'date_time': constraints[i][1] } ],
-                       [ 'private_vehicule_at_destination', pvad ]
                        ] )
 
         currentPluginIdx = self.dlg.ui.pluginCombo.currentIndex()
