@@ -63,11 +63,17 @@ namespace Tempus
     extern boost::mutex iostream_mutex; // its a plain old global variable
 
     // because boost::lexical_cast calls locale, which is not thread safe
+    struct bad_lexical_cast : public std::exception
+    {
+        bad_lexical_cast( const std::string& msg ) : std::exception(), msg_(msg) {}
+        virtual const char* what() const throw() { return msg_.c_str(); }
+        std::string msg_;
+    };
     template <typename TOUT>
     TOUT lexical_cast(const std::string & in)
     {
         TOUT out;
-        if( !(std::istringstream(in) >> out) ) throw std::runtime_error("cannot cast " + in + " to " + typeid(TOUT).name());
+        if( !(std::istringstream(in) >> out) ) throw bad_lexical_cast("cannot cast " + in + " to " + typeid(TOUT).name());
         return out;
     }
 

@@ -60,8 +60,7 @@ class IfsttarRoutingDock(QDockWidget):
         parking = None
         origin = None
         dep = None
-        for child in pson[1:]:
-            print child
+        for child in pson[2:]:
             if child[0] == 'origin':
                 origin = child
             elif child[0] == 'departure_constraint':
@@ -70,30 +69,34 @@ class IfsttarRoutingDock(QDockWidget):
                 parking = child
             elif child[0] == 'optimizing_criterion':
                 criteria.append(int(child[1]))
-            elif child[0] == 'allowed_transport_types':
-                ttypes = child
             elif child[0] == 'allowed_network':
                 networks.append(int(child[1]))
             elif child[0] == 'step':
                 steps.append(child)
-                
+        ttypes = pson[1]['allowed_transport_types']
+
+        def readCoords( n ):
+            if n[1].has_key('vertex'):
+                # if the point is given by ID
+                return [ 0.0, 0.0 ]
+            return [ float(n[1]['x']), float(n[1]['y']) ]
+
         if parking:
-            parking = [ float(parking[1][1]), float(parking[2][1]) ]
+            parking = readCoords(parking)
             self.set_parking( parking )
         self.set_steps( len(steps) )
 
-        coords = [ [ float(origin[1][1]), float(origin[2][1]) ] ]
+        coords = [ readCoords(origin) ]
         constraints = [ [int(dep[1]['type']), dep[1]['date_time'] ] ]
         pvads = []
         for step in steps:
-            for p in step:
+            for p in step[2:]:
                 if p[0] == 'destination':
-                    coords.append( [float(p[1][1]), float(p[2][1]) ] )
+                    coords.append( readCoords(p) )
                 elif p[0] == 'constraint':
                     c = p[1]
                     constraints.append( [int(c['type']), c['date_time'] ] )
-                elif p[0] == 'private_vehicule_at_destination':
-                    pvads.append( p[1] == 'true' )
+            pvads.append( step[1]['private_vehicule_at_destination'] == 'true' )
 
         self.set_selected_criteria( criteria )
         self.set_coordinates( coords )

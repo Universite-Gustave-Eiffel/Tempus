@@ -43,19 +43,19 @@ std::string escape_text( const std::string& message )
     return (const char*)xmlBufferContent( buf.get() );
 }
 
-std::string to_string( xmlNode* node, int indent_level )
+std::string to_string( const xmlNode* node, int indent_level )
 {
     scoped_ptr<xmlBuffer, xmlBufferFree> buf = xmlBufferCreate();
-    xmlNodeDump( buf.get(), NULL, node, indent_level, 1 );
+    xmlNodeDump( buf.get(), NULL, const_cast<xmlNode*>(node), indent_level, 1 );
     // avoid a string copy, thanks to scoped_ptr
     return (const char*)xmlBufferContent( buf.get() );
 }
 
-std::string to_string( xmlDoc* doc )
+std::string to_string( const xmlDoc* doc )
 {
     xmlChar *buf;
     int size;
-    xmlDocDumpFormatMemory( doc, &buf, &size, 0 );
+    xmlDocDumpFormatMemory( const_cast<xmlDoc*>(doc), &buf, &size, 0 );
     std::string r = (const char*)buf;
     xmlFree( buf );
     return r;
@@ -71,9 +71,19 @@ xmlNode* new_text( const std::string& text )
     return xmlNewText( (const xmlChar*)text.c_str() );
 }
 
+bool has_prop( const xmlNode* node, const std::string& key )
+{
+    return xmlHasProp( const_cast<xmlNode*>(node), (const xmlChar*)(key.c_str()) ) != NULL;
+}
+
 std::string get_prop( const xmlNode* node, const std::string& key )
 {
     return (const char*)xmlGetProp( const_cast<xmlNode*>(node), (const xmlChar*)(key.c_str()) );
+}
+
+void set_prop( xmlNode* node, const std::string& key, const std::string& value )
+{
+    xmlSetProp( node, (const xmlChar*)key.c_str(), (const xmlChar*)value.c_str() );
 }
 
 void add_child( xmlNode* node, xmlNode* child )
