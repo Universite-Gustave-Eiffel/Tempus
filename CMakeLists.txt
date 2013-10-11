@@ -32,3 +32,5 @@ endif()
  set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus_1_0_0")
  set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
  include(CPack)
+
+ #cmake -DBUILD_TESTS=ON -DLIBXML2_INCLUDE_DIR="C:\Program Files (x86)\libxml2-2.7.8.win32\include" -DLIBXML2_LIBRARIES="C:\Program Files (x86)\libxml2-2.7.8.win32\lib\libxml2.lib" ..

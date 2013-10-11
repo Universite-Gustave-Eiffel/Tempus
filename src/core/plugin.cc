@@ -184,7 +184,7 @@ namespace Tempus
                 throw std::runtime_error( "Unknown type" );
             }
         }
-        catch ( boost::bad_lexical_cast& ) {
+        catch ( Tempus::bad_lexical_cast& ) {
             options_[nname] = descIt->second.default_value;
         }
     }

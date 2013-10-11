@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*- 
+
 import datetime
 import os
 import sys
@@ -9,6 +11,35 @@ wps_path = os.path.abspath( script_path + '/../wps/client' )
 sys.path.insert(0, wps_path)
 from wps_client import *
 
+class Cost:
+    Distance = 1
+    Duration = 2
+    Price = 3
+    Carbon = 4
+    Calories = 5
+    NumberOfChanges = 6
+    Variability = 7
+
+CostName = {
+    1 : 'Distance',
+    2 : 'Duration',
+    3 : 'Price',
+    4 : 'Carbon',
+    5 : 'Calories',
+    6 : 'NumberOfChanges',
+    7 : 'Variability'
+}
+
+CostUnit = {
+    1 : 'm',
+    2 : 'min',
+    3 : '€',
+    4 : 'kg',
+    5 : 'kcal',
+    6 : '',
+    7 : ''
+}
+
 class Point:
     def __init__( self, x=0.0, y=0.0, vertex=-1 ):
         self.x = x
@@ -16,8 +47,8 @@ class Point:
         self.vertex = vertex
     def to_pson( self, name = 'point' ):
         if self.vertex == -1:
-            return [ name, [ 'x', str(self.x) ], ['y', str(self.y)] ]
-        return [ name, ['vertex', str(self.vertex)] ]
+            return [ name, { 'x' : str(self.x), 'y' : str(self.y) } ]
+        return [ name, { 'vertex' : str(self.vertex) } ]
 
 class DateTime( datetime.datetime ):
     def __init__(self, *args):
@@ -47,9 +78,9 @@ class RequestStep:
 
     def to_pson( self ):
         return ['step',
+                { 'private_vehicule_at_destination' : 'true' if self.private_vehicule_at_destination else 'false' },
                 self.destination.to_pson('destination'),
                 self.constraint.to_pson(),
-                [ 'private_vehicule_at_destination', 'true' if self.private_vehicule_at_destination else 'false' ]
                 ]
 
 class RoadStep:
@@ -98,7 +129,12 @@ class TempusRequest:
                  plugin_options = {},
                  origin = Point(),
                  departure_constraint = Constraint(),
-                 steps = [RequestStep()] ):
+                 steps = [RequestStep()],
+                 allowed_transport_types = 255, # allowed transpoort types, bitfield
+                 criteria = [Cost.Distance], # list of optimizing criteria
+                 parking_location = None,
+                 networks = [] # public transport network id
+                 ):
 
         def parse_metrics( metrics ):
             m = {}
@@ -189,11 +225,22 @@ class TempusRequest:
         args = {}
         args['plugin'] = ['plugin', {'name' : plugin_name } ]
         args['request'] = ['request',
+                           {'allowed_transport_types' : allowed_transport_types },
                            origin.to_pson( 'origin' ),
-                           ['departure_constraint', { 'type': departure_constraint.type, 'date_time': str(departure_constraint.date_time) } ],
-                           ['optimizing_criterion', 1 ], 
-                           ['allowed_transport_types', 11 ]
+                           ['departure_constraint', { 'type': departure_constraint.type, 'date_time': str(departure_constraint.date_time) } ]
                            ]
+
+        # parking location
+        if parking_location:
+            args['request'].append( parking_location.to_pson('parking_location') )
+
+        for criterion in criteria:
+            args['request'].append( ['optimizing_criterion', criterion] )
+
+        # networks
+        for network in networks:
+            args['request'].append( ['allowed_network', network] )
+
         for step in steps:
             args['request'].append( step.to_pson() )
 

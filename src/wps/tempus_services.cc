@@ -236,16 +236,23 @@ namespace WPS
 
             Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
 
-            const xmlNode* first_node = XML::get_next_nontext( node->children );
-            if ( !xmlStrcmp( first_node->name, (const xmlChar*)"vertex" ) ) {
-                string v_str = (const char*)first_node->children->content;
+            bool has_vertex = XML::has_prop( node, "vertex" );
+            bool has_x = XML::has_prop( node, "x" );
+            bool has_y = XML::has_prop( node, "y" );
+
+            if ( ! ((has_x & has_y) ^ has_vertex) ) {
+                throw std::invalid_argument( "Node " + XML::to_string(node) + " must have either x and y or vertex" );
+            }
+
+            // if "vertex" attribute is present, use it
+            if ( has_vertex ) {
+                string v_str = XML::get_prop( node, "vertex" );
                 id = lexical_cast<Tempus::db_id_t>( v_str );
             }
             else {
-                const xmlNode* y_node = XML::get_next_nontext( first_node->next );
-
-                string x_str = (const char*)first_node->children->content;
-                string y_str = (const char*)y_node->children->content;
+                // should have "x" and "y" attributes
+                string x_str = XML::get_prop( node, "x" );
+                string y_str = XML::get_prop( node, "y" );
 
                 x = lexical_cast<double>( x_str );
                 y = lexical_cast<double>( y_str );
@@ -304,10 +311,13 @@ namespace WPS
             
                 // now extract actual data
                 xmlNode* request_node = input_parameter_map.find("request")->second;
+                // allowed transport types
+                request.allowed_transport_types = lexical_cast<int>( XML::get_prop( request_node, "allowed_transport_types" ) );
+
                 const xmlNode* field = XML::get_next_nontext( request_node->children );
             
                 request.origin = get_road_vertex_from_point( field, db );
-            
+                    
                 // departure_constraint
                 field = XML::get_next_nontext( field->next );
                 parse_constraint( field, request.departure_constraint );
@@ -316,7 +326,7 @@ namespace WPS
                 const xmlNode *n = XML::get_next_nontext( field->next );
                 if ( !xmlStrcmp( n->name, (const xmlChar*)"parking_location" ) )
                 {
-                    request.parking_location = get_road_vertex_from_point( field, db );
+                    request.parking_location = get_road_vertex_from_point( n, db );
                     field = n;
                 }
             
@@ -331,12 +341,8 @@ namespace WPS
                     field = XML::get_next_nontext( field->next );       
                 }
             
-                // allowed transport types
-                request.allowed_transport_types = lexical_cast<int>( field->children->content );
-        
                 // allowed networks, 1 .. N
                 request.allowed_networks.clear();
-                field = XML::get_next_nontext( field->next );
                 while ( !xmlStrcmp( field->name, (const xmlChar *)"allowed_network" ) )
                 {
                     Tempus::db_id_t network_id = lexical_cast<Tempus::db_id_t>(field->children->content);
@@ -360,8 +366,7 @@ namespace WPS
                     parse_constraint( subfield, request.steps.back().constraint );
             
                     // private_vehicule_at_destination
-                    subfield = XML::get_next_nontext( subfield->next );
-                    string val = (const char*)subfield->children->content;
+                    string val = XML::get_prop( field, "private_vehicule_at_destination" );
                     request.steps.back().private_vehicule_at_destination = ( val == "true" );
             
                     // next step
@@ -421,23 +426,15 @@ namespace WPS
                     xmlNode* step_node = 0;
                     Roadmap::Step* gstep = *sit;
                     
-                    xmlNode* wkb_node = XML::new_node( "wkb" );
-                    XML::add_child( wkb_node, XML::new_text( (*sit)->geometry_wkb ));
-                    
                     if ( (*sit)->step_type == Roadmap::Step::RoadStep )
                     {
                         Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
                         step_node = XML::new_node( "road_step" );
-                        xmlNode* rs_node = XML::new_node( "road" );
+
                         string road_name = "Unknown road";
                         road_name = road_graph[ step->road_section].road_name;
-                        XML::add_child( rs_node, XML::new_text( road_name ));
-                        
-                        xmlNode* end_movement_node = XML::new_node( "end_movement" );
-                        XML::add_child( end_movement_node, XML::new_text( to_string( step->end_movement ) ));
-                        
-                        XML::add_child( step_node, rs_node );
-                        XML::add_child( step_node, end_movement_node );
+                        XML::set_prop( step_node, "road", road_name );
+                        XML::set_prop( step_node, "end_movement", to_string( step->end_movement ) );
                     }
                     else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
                     {
@@ -451,25 +448,16 @@ namespace WPS
                         
                         step_node = XML::new_node( "public_transport_step" );
                         
-                        xmlNode* network_node = XML::new_node( "network" );
-                        XML::add_child( network_node, XML::new_text( graph_.network_map[ step->network_id ].name ));
+                        XML::set_prop( step_node, "network", graph_.network_map[ step->network_id ].name );
                         
-                        xmlNode* departure_node = XML::new_node( "departure_stop" );
-                        xmlNode* arrival_node = XML::new_node( "arrival_stop" );
                         string departure_str;
                         PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
                         PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
                         departure_str = pt_graph[ v1 ].name;
                         string arrival_str = pt_graph[ v2 ].name;
-                        XML::add_child( departure_node, XML::new_text( departure_str ));
-                        XML::add_child( arrival_node, XML::new_text( arrival_str ));
-                                                        
-                        xmlNode* trip_node = XML::new_node( "trip" );
-                        XML::add_child( trip_node, XML::new_text( to_string( step->trip_id ) ));
-                        XML::add_child( step_node, network_node );
-                        XML::add_child( step_node, departure_node );
-                        XML::add_child( step_node, arrival_node );
-                        XML::add_child( step_node, trip_node );
+                        XML::set_prop( step_node, "departure_stop", departure_str );
+                        XML::set_prop( step_node, "arrival_stop", arrival_str);
+                        XML::set_prop( step_node, "trip", to_string( step->trip_id ) );
                     }
                     else if ( (*sit)->step_type == Roadmap::Step::GenericStep )
                     {
@@ -503,22 +491,10 @@ namespace WPS
                         }
                         step_node = XML::new_node( "road_transport_step" );
                         
-                        xmlNode* type_node = XML::new_node( "type" );
-                        XML::add_child( type_node, XML::new_text( type_str ));
-                        
-                        xmlNode* road_node = XML::new_node( "road" );
-                        XML::add_child( road_node, XML::new_text( road_name ));
-                        
-                        xmlNode* network_node = XML::new_node( "network" );
-                        XML::add_child( network_node, XML::new_text( graph_.network_map[ network_id ].name ));
-                        
-                        xmlNode* stop_node = XML::new_node( "stop" );
-                        XML::add_child( stop_node, XML::new_text( stop_name ));
-
-                        XML::add_child( step_node, type_node );
-                        XML::add_child( step_node, road_node );
-                        XML::add_child( step_node, network_node );
-                        XML::add_child( step_node, stop_node );
+                        XML::set_prop( step_node, "type", type_str );
+                        XML::set_prop( step_node, "road", road_name );                        
+                        XML::set_prop( step_node, "network", graph_.network_map[ network_id ].name );
+                        XML::set_prop( step_node, "stop", stop_name );
                     }
                     
                     for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
@@ -533,7 +509,7 @@ namespace WPS
                         XML::add_child( step_node, cost_node );
                     }
 
-                    XML::add_child( step_node, wkb_node );
+                    XML::set_prop( step_node, "wkb", (*sit)->geometry_wkb );
 
                     XML::add_child( result_node, step_node );
                 }

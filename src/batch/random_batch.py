@@ -78,7 +78,7 @@ if __name__ == "__main__":
         # total cost
         rDistance = 0.0
         if len(tempus.results) > 0:
-            rDistance =  tempus.results[0].costs[1]
+            rDistance =  tempus.results[0].costs[Cost.Distance]
 
         print "i=%d, t=%f, r=%f, d=%f" % (i, t, r, rDistance)
 

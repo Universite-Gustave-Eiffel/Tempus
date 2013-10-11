@@ -157,17 +157,18 @@ class TestWPS(unittest.TestCase):
         dy = 6688721.876838
 
         args = dict(plugin_arg.items())
-        args['request'] = ['request', 
-                           ['origin', ['x', str(ox)], ['y', str(oy)] ],
+        args['request'] = ['request',
+                           {'allowed_transport_types': 11 },
+                           ['origin', { 'x': str(ox), 'y': str(oy) }],
                            ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
                            ['optimizing_criterion', 1 ], 
-                           ['allowed_transport_types', 11 ],
                            ['step',
-                            [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                            { 'private_vehicule_at_destination': 'true' },
+                            [ 'destination', {'x': str(dx), 'y': str(dy) } ],
                             [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                            [ 'private_vehicule_at_destination', 'true' ]
-                            ]
                            ]
+                           ]
+                           
         args['options'] = [ 'options', [ 'option', { 'name' : 'trace_vertex', 'value' : '1' } ] ]
 
         outputs = self.wps.execute( 'select', args )
@@ -200,15 +201,15 @@ class TestWPS(unittest.TestCase):
         dy = 6687761.706782
 
         args = dict(plugin_arg.items())
-        args['request'] = ['request', 
-                           ['origin', ['x', str(ox)], ['y', str(oy)] ],
+        args['request'] = ['request',
+                           {'allowed_transport_types': 11 },
+                           ['origin', { 'x': str(ox), 'y': str(oy) }],
                            ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
                            ['optimizing_criterion', 1 ], 
-                           ['allowed_transport_types', 11 ],
                            ['step',
-                            [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
+                            { 'private_vehicule_at_destination': 'true' },
+                            [ 'destination', {'x': str(dx), 'y': str(dy)} ],
                             [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                            [ 'private_vehicule_at_destination', 'true' ]
                             ]
                            ]
 
@@ -232,18 +233,17 @@ class TestWPS(unittest.TestCase):
         dy = 6689324.323148
 
         args = dict(plugin_arg.items())
-        args['request'] = ['request', 
-                           ['origin', ['x', str(ox)], ['y', str(oy)] ],
+        args['request'] = ['request',
+                           {'allowed_transport_types': 11 },
+                           ['origin', { 'x': str(ox), 'y': str(oy) }],
                            ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
                            ['optimizing_criterion', 1 ], 
-                           ['allowed_transport_types', 11 ],
                            ['step',
-                            [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                            [ 'private_vehicule_at_destination', 'true' ]
+                            { 'private_vehicule_at_destination': 'true' },
+                            [ 'destination', {'x': str(dx), 'y': str(dy)} ],
+                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ]
                             ]
                            ]
-
         args['options'] = [ 'options' ]
 
         outputs = self.wps.execute( 'select', args )

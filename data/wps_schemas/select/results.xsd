@@ -3,43 +3,37 @@
   <xs:complexType name="DbId">
     <xs:attribute name="id" type="xs:long"/>
   </xs:complexType>
-  <xs:complexType name="Point">
-    <xs:sequence>
-      <xs:element name="x" type="xs:float" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="y" type="xs:float" minOccurs="1" maxOccurs="1"/>
-    </xs:sequence>
-  </xs:complexType>
   <xs:complexType name="Cost">
     <xs:attribute name="type" type="xs:string"/>
     <xs:attribute name="value" type="xs:float"/>
   </xs:complexType>
   <xs:complexType name="RoadStep">
     <xs:sequence>
-      <xs:element name="road" type="xs:string" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="end_movement" type="xs:int" minOccurs="1" maxOccurs="1"/>
       <xs:element name="cost" type="Cost" maxOccurs="unbounded"/>
-      <xs:element name="wkb" type="xs:string"/>
     </xs:sequence>
+    <xs:attribute name="road" type="xs:string" use="required"/>
+    <xs:attribute name="end_movement" type="xs:int" use="required"/>
+    <xs:attribute name="wkb" type="xs:string" use="required"/>
   </xs:complexType>
   <xs:complexType name="RoadTransportStep">
     <xs:sequence>
-      <xs:element name="type" type="xs:int" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="road" type="xs:string" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="network" type="xs:string" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="stop" type="xs:string" minOccurs="1" maxOccurs="1"/>
       <xs:element name="cost" type="Cost" maxOccurs="unbounded"/>
-      <xs:element name="wkb" type="xs:string"/>
     </xs:sequence>
+    <xs:attribute name="type" type="xs:int"/>
+    <xs:attribute name="road" type="xs:string"/>
+    <xs:attribute name="network" type="xs:string"/>
+    <xs:attribute name="stop" type="xs:string"/>
+    <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
   <xs:complexType name="PublicTransportStep">
     <xs:sequence>
-      <xs:element name="network" type="xs:string" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="departure_stop" type="xs:string" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="arrival_stop" type="xs:string" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="trip" type="xs:string" minOccurs="1" maxOccurs="1"/>
       <xs:element name="cost" type="Cost" maxOccurs="unbounded"/>
-      <xs:element name="wkb" type="xs:string"/>
     </xs:sequence>
+    <xs:attribute name="network" type="xs:string"/>
+    <xs:attribute name="departure_stop" type="xs:string"/>
+    <xs:attribute name="arrival_stop" type="xs:string"/>
+    <xs:attribute name="trip" type="xs:string"/>
+    <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
   <xs:element name="results">
     <xs:complexType>

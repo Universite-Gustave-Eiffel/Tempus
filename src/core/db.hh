@@ -190,6 +190,7 @@ namespace Db
 	    {
 		std::string msg = "Database connection problem: ";
 		msg += PQerrorMessage( conn_ );
+                PQfinish( conn_ ); // otherwise leak
 		throw std::runtime_error( msg.c_str() );
 	    }
 #ifdef DB_TIMING
