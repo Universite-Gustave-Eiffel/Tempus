@@ -332,7 +332,9 @@ class IfsttarRouting:
             pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
 
         # browse steps
-        for step in steps[:-1]:
+        for step in steps:
+            if step.tag == 'cost':
+                continue
             # find wkb geometry
             wkb = step.attrib['wkb']
 
@@ -687,7 +689,7 @@ class IfsttarRouting:
         n = len(constraints)
         for i in range(1, n):
             pvad = 'false'
-            if pvads[i] == True:
+            if pvads[i-1] == True:
                 pvad = 'true'
             r.append( ['step',
                        { 'private_vehicule_at_destination': pvad },
