@@ -2,10 +2,9 @@ WIN32 compilation and installation
 ==================================
 
 List of versions used :
-- Visual Studio 2008 Express
+- Visual Studio 2008 Express or Visual Studio 2010 Express
 - Microsoft windows Server 2003 SP1 Platform SDK
 - FastCGI 2.4.1-SNAP-0910052249
-- CppUnit 1.12.1
 - libxml2 2.7.8.win32 from ftp://ftp.zlatkovic.com/libxml/
 - iconv 1.9.2.win32 from ftp://ftp.zlatkovic.com/libxml/
 - CMake 2.8.7
