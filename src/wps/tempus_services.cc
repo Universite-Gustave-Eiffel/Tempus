@@ -146,60 +146,6 @@ namespace WPS
 	};
     };
     
-    ///
-    /// Base class for services that are linked to a particular plugin.
-    /// Input var: plugin, the plugin name
-    ///
-    class PluginService : public Service
-    {
-    public:
-	PluginService( const std::string& name ) : Service( name )
-	{
-	    add_input_parameter( "plugin",
-                                 // the service name will be set by the derived class
-                                 // we thus set the xsd filename manually
-                                 Application::instance()->data_directory() + "/wps_schemas/plugin/plugin.xsd" );
-	}
-    };
-
-    ///
-    /// "get_option_descriptions" service, get descriptions of a plugin options.
-    ///
-    /// Output var: outputs, lists of option with their name, type and description
-    ///
-    class GetOptionsDescService : public PluginService
-    {
-    public:
-	GetOptionsDescService() : PluginService("get_option_descriptions")
-	{
-	    add_output_parameter( "options" );
-	}
-	Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const
-	{
-            ParameterMap output_parameters;
-
-	    Service::check_parameters( input_parameter_map, input_parameter_schema_ );
-	    const xmlNode* plugin_node = input_parameter_map.find("plugin")->second;
-	    std::string plugin_str = XML::get_prop( plugin_node, "name" );
-	    
-	    xmlNode * options_node = XML::new_node( "options" );
-	    Plugin::OptionDescriptionList options = PluginFactory::instance.option_descriptions(plugin_str);
-	    Plugin::OptionDescriptionList::iterator it;
-	    for ( it = options.begin(); it != options.end(); it++ )
-	    {
-		xmlNode* option_node = XML::new_node( "option" );
-		XML::new_prop( option_node, "name", it->first );
-		XML::new_prop( option_node, "type",
-			       to_string( it->second.type ) );
-		XML::new_prop( option_node, "description", it->second.description );
-		XML::add_child( options_node, option_node );
-	    }
-	    
-	    output_parameters[ "options" ] = options_node;
-	    return output_parameters;
-	}
-    };
-
     Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
     {
 	//
@@ -217,11 +163,12 @@ namespace WPS
     ///
     /// Output var: results, see roadmap.hh
     ///
-    class SelectService : public PluginService
+    class SelectService : public Service
     {
     public:
-	SelectService() : PluginService( "select" )
+	SelectService() : Service( "select" )
 	{
+	    add_input_parameter( "plugin" );
 	    add_input_parameter( "request" );
 	    add_input_parameter( "options" );
 	    add_output_parameter( "results" );
@@ -552,7 +499,6 @@ namespace WPS
         }
     };
 
-    static GetOptionsDescService get_option_desc_service;
     static PluginListService plugin_list_service;
     static SelectService select_service;
     static ConstantListService constant_list_service;
