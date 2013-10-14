@@ -254,7 +254,7 @@ class TempusRequest:
         self.results = parse_results( outputs['results'] )
 
         r = to_xml(args['plugin']) + to_xml(args['request']) + to_xml(args['options']) + ET.tostring(outputs['results']) + ET.tostring(outputs['metrics'])
-        r = "<request>\n" + r + "</request>\n"
+        r = "<select>\n" + r + "</select>\n"
         return r
 
 
