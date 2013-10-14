@@ -37,24 +37,24 @@ namespace Tempus
         HMODULE h = LoadLibrary( complete_dll_name.c_str() );
         if ( h == NULL )
         {
-            throw std::runtime_error("DLL loading problem: "+std::string(GetLastError()));
+            throw std::runtime_error("DLL loading problem: "+to_string(GetLastError()));
         }
         Dll::PluginCreationFct createFct = (Dll::PluginCreationFct) GetProcAddress( h, "createPlugin" );
         if ( createFct == NULL )
         {
-            throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
+            throw std::runtime_error("GetProcAddress problem: "+to_string(GetLastError()));
             FreeLibrary( h );
         }
         Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) GetProcAddress( h, "optionDescriptions" );
         if ( optDescFct == NULL )
         {
-            throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
+            throw std::runtime_error("GetProcAddress problem: "+to_string(GetLastError()));
             FreeLibrary( h );
         }
         Dll::PluginNameFct nameFct = (Dll::PluginNameFct) GetProcAddress( h, "plugin_name" );
         if ( nameFct == NULL )
         {
-            throw std::runtime_error("GetProcAddress problem: "+std::string(GetLastError()));
+            throw std::runtime_error("GetProcAddress problem: "+to_string(GetLastError()));
             FreeLibrary( h );
         }
 #else

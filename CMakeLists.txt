@@ -4,12 +4,28 @@ enable_testing()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+set( CMAKE_BUILD_TYPE RELWITHDEBINFO )
 
 # FIXME use installation directory on install
 set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data")
 
-add_subdirectory(src)
-add_subdirectory(doc)
+if (WIN32)
+	set( PQ_INCLUDE_DIR "C:/Program Files(x86)/PostgreSQL/9.3/include" CACHE PATH "libpq include directory" )
+	set( PQ_LIBS_DIR "C:/Program Files (x86)/PostgreSQL/9.3/lib" CACHE PATH "libpq lib directory" )
+	set( PQ_LIBS libpq )
+    set (Boost_USE_STATIC_LIBS ON)
+	set( LIBTEMPUS tempus )
+else (WIN32)
+	set( PQ_INCLUDE_DIR "/usr/include/postgresql" CACHE PATH "libpq include directory" )
+	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
+	set( PQ_LIBS pq dl boost_program_options )
+	set (LIBTEMPUS tempus )
+endif (WIN32)
+
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread)
+
+include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
+link_directories( ${PQ_LIBS_DIR} ${Boost_LIBRARY_DIRS} )
 
 if(MSVC)
 	# Force to always compile with W4
@@ -20,10 +36,27 @@ if(MSVC)
 	endif()
 	# Disable verbose warnings
 	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290" )
+	
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+
 	# Update if necessary
     set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
     add_definitions( -Wl,-E )
 elseif(CMAKE_CXX_COMPILER MATCHES ".*clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wextra -Werror " CACHE STRING "compile flags" FORCE)
 endif()
+
+set(CPACK_PACKAGE_NAME "tempus")
+set(CPACK_PACKAGE_VENDOR "ifstar")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "tempus - manipulate transport graphs")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus_1_0_0")
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
+include(CPack)
+
+add_subdirectory(src)
+add_subdirectory(doc)
+
+ #cmake -DBUILD_TESTS=ON -DLIBXML2_INCLUDE_DIR="C:\Program Files (x86)\libxml2-2.7.8.win32\include" -DLIBXML2_LIBRARIES="C:\Program Files (x86)\libxml2-2.7.8.win32\lib\libxml2.lib" -DPQ_INCLUDE_DIR="C:/Program Files (x86)/PostgreSQL/9.3/include" -DPQ_LIBS_DIR="C:/Program Files (x86)/PostgreSQL/9.3/lib" -DBUILD_WPS=ON ..
+ 
+ 

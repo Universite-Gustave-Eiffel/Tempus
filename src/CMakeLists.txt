@@ -1,27 +1,3 @@
-set( CMAKE_BUILD_TYPE RELWITHDEBINFO )
-
-find_package(Boost)
-if (NOT Boost_FOUND)
-	set( Boost_INCLUDE_DIR "" CACHE PATH "Boost include directory" )
-	set( Boost_LIBRARY_DIRS "" CACHE PATH "Boost library directory" )
-endif (NOT Boost_FOUND)
-add_definitions( "-DHAS_BOOST" )
-
-if (WIN32)
-	set( PQ_INCLUDE_DIR "E:/Program Files/PostgreSQL/9.1/include" CACHE PATH "libpq include directory" )
-	set( PQ_LIBS_DIR "E:/Program Files/PostgreSQL/9.1/lib" CACHE PATH "libpq lib directory" )
-	set( PQ_LIBS libpq )
-
-	set( LIBTEMPUS tempus )
-else (WIN32)
-	set( PQ_INCLUDE_DIR "/usr/include/postgresql" CACHE PATH "libpq include directory" )
-	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
-	set( PQ_LIBS pq dl boost_program_options )
-	set (LIBTEMPUS tempus )
-endif (WIN32)
-
-include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
-link_directories( ${PQ_LIBS_DIR} ${Boost_LIBRARY_DIRS} )
 
 set( BUILD_CORE ON CACHE BOOL "Build Tempus core ?" )
 set( BUILD_TESTS OFF CACHE BOOL "Build unit tests ?" )

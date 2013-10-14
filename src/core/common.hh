@@ -15,7 +15,9 @@
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
 
+#ifndef _DEBUG
 #define _DEBUG
+#endif
 
 /// 
 /// @brief Macro for mutex protected cerr and cout

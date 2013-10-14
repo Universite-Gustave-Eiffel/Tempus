@@ -1,25 +1,14 @@
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/CompilerOutputter.h>
+#define BOOST_TEST_MODULE UnitTestTempus
+#define BOOST_TEST_ALTERNATIVE_INIT_API
+#ifndef _WIN32
+#   define BOOST_TEST_DYN_LINK
+#endif
+#include <boost/test/unit_test.hpp>
 
-#include "tests.hh"
+using namespace boost::unit_test ;
 
-CPPUNIT_TEST_SUITE_REGISTRATION( DbTest );
-CPPUNIT_TEST_SUITE_REGISTRATION( PgImporterTest );
-
-std::string g_db_options;
-
-int main( int argc, char **argv )
+test_suite* init_unit_test_suite( int, char * * const )
 {
-	if ( argc > 1 )
-	{
-		g_db_options=argv[1];
-	}
-    CppUnit::TextUi::TestRunner runner;
-    CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-    runner.addTest( registry.makeTest() );
-    runner.setOutputter( new CppUnit::CompilerOutputter( &runner.result(),
-							 std::cerr ) );
-    return runner.run( "", false ) ? EXIT_SUCCESS : EXIT_FAILURE;   
+    return 0;
 }
+
