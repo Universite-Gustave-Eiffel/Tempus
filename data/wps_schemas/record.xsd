@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <!-- XML schema of a Tempus request record -->
+  <xs:include schemaLocation="select/plugin.xsd"/>
+  <xs:include schemaLocation="select/request.xsd"/>
+  <xs:include schemaLocation="select/options.xsd"/>
+  <xs:include schemaLocation="select/results.xsd"/>
+  <xs:include schemaLocation="select/metrics.xsd"/>
+
+  <xs:include schemaLocation="plugin_list/plugins.xsd"/>
+
+  <xs:include schemaLocation="constant_list/road_types.xsd"/>
+  <xs:include schemaLocation="constant_list/transport_types.xsd"/>
+  <xs:include schemaLocation="constant_list/transport_networks.xsd"/>
+
+  <xs:complexType name="Record">
+    <xs:sequence>
+      <xs:element name="select" minOccurs="1" maxOccurs="1">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="plugin" type="Plugin"/>
+            <xs:element name="request" type="Request"/>
+            <xs:element name="options" type="Options"/>
+            <xs:element name="results" type="Results"/>
+            <xs:element name="metrics" type="Metrics"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <!-- the following element is optional -->
+      <xs:element name="server_state" minOccurs="0" maxOccurs="1">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="plugins" type="Plugins"/>
+            <xs:element name="road_types" type="RoadTypes"/>
+            <xs:element name="transport_types" type="TransportTypes"/>
+            <xs:element name="transport_networks" type="TransportNetworks"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="record" type="Record"/>
+
+</xs:schema>

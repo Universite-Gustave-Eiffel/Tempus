@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <xs:complexType name="Option">
+  <xs:complexType name="OptionDesc">
     <xs:attribute name="name" type="xs:string"/>
     <xs:attribute name="type" type="xs:int"/>
     <xs:attribute name="description" type="xs:string"/>
   </xs:complexType>
-  <xs:complexType name="Plugin">
+  <xs:complexType name="LoadedPlugin">
     <xs:sequence>
-      <xs:element name="option" type="Option" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="option" type="OptionDesc" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="name" type="xs:string"/>
   </xs:complexType>
-  <xs:element name="plugins">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="plugin" type="Plugin" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+  <xs:complexType name="Plugins">
+    <xs:sequence>
+      <xs:element name="plugin" type="LoadedPlugin" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="plugins" type="Plugins"/>
 </xs:schema>
 

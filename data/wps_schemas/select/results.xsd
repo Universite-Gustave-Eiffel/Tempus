@@ -35,22 +35,21 @@
     <xs:attribute name="trip" type="xs:string"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
-  <xs:element name="results">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="result" minOccurs="0" maxOccurs="unbounded">
-          <xs:complexType>
-            <xs:sequence>
-              <xs:choice minOccurs="0" maxOccurs="unbounded">
+  <xs:complexType name="Results">
+    <xs:sequence>
+      <xs:element name="result" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
               <xs:element name="road_step" type="RoadStep"/>
               <xs:element name="public_transport_step" type="PublicTransportStep"/>
               <xs:element name="road_transport_step" type="RoadTransportStep"/>
-              </xs:choice>
-              <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
-            </xs:sequence>
-          </xs:complexType>
-        </xs:element>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+            </xs:choice>
+            <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="results" type="Results"/>
 </xs:schema>
