@@ -168,6 +168,7 @@ class IfsttarRouting:
         # click on the 'reset' button in history tab
         QObject.connect( self.dlg.ui.reloadHistoryBtn, SIGNAL("clicked()"), self.loadHistory )
         QObject.connect( self.dlg.ui.deleteHistoryBtn, SIGNAL("clicked()"), self.onDeleteHistoryItem )
+        QObject.connect( self.dlg.ui.importHistoryBtn, SIGNAL("clicked()"), self.onImportHistory )
 
         # click on a result radio button
         QObject.connect(ResultSelection.buttonGroup, SIGNAL("buttonClicked(int)"), self.onResultSelected )
@@ -714,7 +715,7 @@ class IfsttarRouting:
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
         # save request state
-        request = [ 'request', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
+        request = [ 'select', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
 
         # save server state (in self.save)
         server_state = [ 'server_state', self.save['plugins'], self.save['road_types'], 
@@ -743,26 +744,25 @@ class IfsttarRouting:
             loaded[ child.tag ] = child
 
         # update UI
-        self.dlg.loadFromXML( loaded['request'][1] )
+        self.dlg.loadFromXML( loaded['select'][1] )
 
         self.displayPlugins( loaded['server_state'][0], 0);
         
         # get current plugin option
-        opt_values = {}
-        options = loaded['request'][2]
+        currentPlugin = loaded['select'][0].attrib['name']
+        plugin_options = self.plugin_options[currentPlugin]
+        options = loaded['select'][2]
         for option in options:
             k = option.attrib['name']
             v = option.attrib['value']
-            opt_values[k] = v
-        currentPlugin = loaded['request'][0].attrib['name']
-        self.plugin_options[currentPlugin] = opt_values
+            plugin_options[k] = v
 
         self.transport_types = loaded['server_state'][2]
         self.networks = loaded['server_state'][3]
         self.displayTransportAndNetworks( self.transport_types, self.networks )
 
-        self.displayMetrics( loaded['request'][4] )
-        self.displayResults( loaded['request'][3] )
+        self.displayMetrics( loaded['select'][4] )
+        self.displayResults( loaded['select'][3] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -774,6 +774,15 @@ class IfsttarRouting:
         self.wps = None
         self.dlg.ui.computeBtn.setEnabled(False)
         self.setStateText("DISCONNECTED")
+
+    def onImportHistory( self ):
+        fname = QFileDialog.getOpenFileName( None, 'Import history file', '')
+        if not fname:
+            return
+
+        # switch historyFile
+        self.historyFile = ZipHistoryFile( fname )
+        self.loadHistory()
 
     def unload(self):
         # Remove the plugin menu item and icon

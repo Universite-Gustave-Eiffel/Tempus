@@ -42,7 +42,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -278,6 +278,13 @@
            <widget class="QPushButton" name="reloadHistoryBtn">
             <property name="text">
              <string>Reload</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="importHistoryBtn">
+            <property name="text">
+             <string>Import</string>
             </property>
            </widget>
           </item>
