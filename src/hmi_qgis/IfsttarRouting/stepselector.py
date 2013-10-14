@@ -82,6 +82,9 @@ class StepSelector( QFrame ):
         return [ 0, 0 ]
 
     def set_coordinates( self, xy ):
+        if not xy:
+            self.coordinates.setText("-- unavailable --")
+            return
         if xy == []:
             xy = [ 0, 0 ]
         self.coordinates.setText( "%f, %f" % ( xy[0], xy[1] ) )

@@ -78,7 +78,7 @@ class IfsttarRoutingDock(QDockWidget):
         def readCoords( n ):
             if n[1].has_key('vertex'):
                 # if the point is given by ID
-                return [ 0.0, 0.0 ]
+                return None
             return [ float(n[1]['x']), float(n[1]['y']) ]
 
         if parking:
