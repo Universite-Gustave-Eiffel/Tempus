@@ -215,16 +215,15 @@ class IfsttarRoutingDock(QDockWidget):
             i += 1
 
     def get_pvads( self ):
-        pvads = [ self.ui.origin.get_pvad() ]
+        pvads = []
         n = self.nsteps()
         for i in range(0, n):
             pvads.append( self.ui.stepBox.itemAt( i ).widget().get_pvad() )
         return pvads
 
     def set_pvads( self, pvads ):
-        self.ui.origin.set_pvad( pvads[0] )
         i = 0
-        for pvad in pvads[1:]:
+        for pvad in pvads:
             self.ui.stepBox.itemAt( i ).widget().set_pvad( pvad )
             i += 1
 

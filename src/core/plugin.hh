@@ -69,7 +69,14 @@ namespace Tempus
 	    static const OptionType type;
 	};
 
-	typedef boost::any OptionValue;
+        class OptionValue : public boost::any
+        {
+        public:
+            OptionValue() : boost::any() {}
+            template <typename T> OptionValue( const T& v ) : boost::any(v) {}
+            std::string to_string( ) const;
+        };
+
 	typedef std::map<std::string, OptionValue> OptionValueList;
 
 	///
@@ -251,7 +258,6 @@ namespace Tempus
     struct Plugin::OptionTypeFrom<float> { static const OptionType type = Plugin::FloatOption; };
     template <>
     struct Plugin::OptionTypeFrom<std::string> { static const OptionType type = Plugin::StringOption; };
-
 
     ///
     /// Class used as a boost::visitor.

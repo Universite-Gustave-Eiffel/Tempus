@@ -290,7 +290,7 @@ class IfsttarRouting:
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
         # bool
         if option_type == 0:
-            val = '1' if val else 0
+            val = 'true' if val else 0
 
         self.plugin_options[plugin_name][option_name] = val
 
@@ -500,7 +500,7 @@ class IfsttarRouting:
             opt_values = {}
             for option in plugin:
                 k = option.attrib['name']
-                opt_values[k] = ''
+                opt_values[k] = option.attrib['default_value']
             self.plugin_options[plugin_name] = opt_values
 
             self.dlg.ui.pluginCombo.insertItem(0, plugin_name )
@@ -527,7 +527,7 @@ class IfsttarRouting:
             # bool type
             if t == 0:
                 widget = QCheckBox( self.dlg )
-                if val == '1':
+                if val == 'true':
                     widget.setCheckState( Qt.Checked )
                 else:
                     widget.setCheckState( Qt.Unchecked )

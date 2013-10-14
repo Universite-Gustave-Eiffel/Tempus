@@ -129,14 +129,12 @@ class StepSelector( QFrame ):
         self.close()
 
     def onSelect( self ):
-        print "onSelect"
         QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
         self.canvas.setMapTool(self.clickTool)
 
     def onCanvasClick( self, point, button ):
         geom = QgsGeometry.fromPoint(point)
         p = geom.asPoint()
-        print "Selection Changed", point.x(), point.y()
         self.canvas.unsetMapTool( self.clickTool )
         self.set_coordinates( [p.x(), p.y()] )
         QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)

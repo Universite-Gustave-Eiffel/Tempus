@@ -66,6 +66,7 @@ namespace WPS
                     XML::new_prop( option_node, "type",
                                    to_string( it->second.type ) );
                     XML::new_prop( option_node, "description", it->second.description );
+                    XML::new_prop( option_node, "default_value", it->second.default_value.to_string() );
                     XML::add_child( node, option_node );
                 }
 		XML::add_child( root_node, node );
