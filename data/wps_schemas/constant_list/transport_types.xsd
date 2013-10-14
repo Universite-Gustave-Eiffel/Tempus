@@ -9,11 +9,10 @@
     <xs:attribute name="need_return" type="xs:int"/>
     <xs:attribute name="need_network" type="xs:int"/>
   </xs:complexType>
-  <xs:element name="transport_types">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="transport_type" type="TransportType" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+  <xs:complexType name="TransportTypes">
+    <xs:sequence>
+      <xs:element name="transport_type" type="TransportType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="transport_types" type="TransportTypes"/>
 </xs:schema>

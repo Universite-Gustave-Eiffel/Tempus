@@ -21,6 +21,7 @@
 """
 import re
 from wps_client import *
+from tempus_request import *
 import config
 import binascii
 import pickle
@@ -35,7 +36,8 @@ from qgis.gui import *
 #import PyQt4.QtCore
 #import PyQt4.QtGui
 
-from xml.etree import ElementTree as ET
+#from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -57,47 +59,10 @@ ROADMAP_LAYER_NAME = "Roadmap_"
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)
 
-def cost_name( cost ):
-    cost_id = int(cost.attrib['type'])
-    cost_name = ''
-    if cost_id == 1:
-        cost_name = 'Distance'
-    elif cost_id == 2:
-        cost_name = 'Duration'
-    elif cost_id == 3:
-        cost_name = 'Price'
-    elif cost_id == 4:
-        cost_name = 'Carbon'
-    elif cost_id == 5:
-        cost_name = 'Calories'
-    elif cost_id == 6:
-        cost_name = 'Number of changes'
-    elif cost_id == 7:
-        cost_name = 'Variability'
-    return cost_name
-
-def cost_unit( cost ):
-    cost_id = int(cost.attrib['type'])
-    cost_unit = ''
-    if cost_id == 1:
-        cost_unit = 'm'
-    elif cost_id == 2:
-        cost_unit = 'min'
-    elif cost_id == 3:
-        cost_unit = '€'
-    elif cost_id == 4:
-        cost_unit = '?'
-    elif cost_id == 5:
-        cost_unit = ''
-    elif cost_id == 6:
-        cost_unit = ''
-    elif cost_id == 7:
-        cost_unit = ''
-    return cost_unit
-
 def format_cost( cost ):
     cost_value = float(cost.attrib['value'])
-    return "%s: %.1f %s" % (cost_name(cost), cost_value, cost_unit(cost))
+    id = int(cost.attrib['type'])
+    return "%s: %.1f %s" % (CostName[id], cost_value, CostUnit[id])
 
 #
 # clears a FormLayout
@@ -204,6 +169,7 @@ class IfsttarRouting:
         # click on the 'reset' button in history tab
         QObject.connect( self.dlg.ui.reloadHistoryBtn, SIGNAL("clicked()"), self.loadHistory )
         QObject.connect( self.dlg.ui.deleteHistoryBtn, SIGNAL("clicked()"), self.onDeleteHistoryItem )
+        QObject.connect( self.dlg.ui.importHistoryBtn, SIGNAL("clicked()"), self.onImportHistory )
 
         # click on a result radio button
         QObject.connect(ResultSelection.buttonGroup, SIGNAL("buttonClicked(int)"), self.onResultSelected )
@@ -235,6 +201,22 @@ class IfsttarRouting:
         connection = HttpCgiConnection( host, path )
         self.wps = WPSClient(connection)
 
+        self.getPluginList()
+        
+        self.dlg.ui.pluginCombo.setEnabled( True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+        self.dlg.ui.computeBtn.setEnabled( True )
+        self.setStateText("connected")
+
+        # restore the history to HISTORY_FILE, if needed (after import)
+        if self.historyFile.filename != HISTORY_FILE:
+            self.historyFile = ZipHistoryFile( HISTORY_FILE )
+            self.loadHistory()
+
+    def getPluginList( self ):
         # get plugin list
         try:
             outputs = self.wps.execute( 'plugin_list', {} )
@@ -245,48 +227,13 @@ class IfsttarRouting:
         self.displayPlugins( outputs['plugins'], 0 )
         self.save['plugins'] = to_pson(outputs['plugins'])
 
-        # get plugin options for the current plugin
-        self.getPluginOptions( str(self.dlg.ui.pluginCombo.currentText()) )
-            
-        self.dlg.ui.pluginCombo.setEnabled( True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
-        self.dlg.ui.computeBtn.setEnabled( True )
-        self.setStateText("connected")
-
-    def getPluginOptions( self, plugin_name ):
-        plugin_arg = { 'plugin' : ['plugin', {'name' : plugin_name } ] }
-
-        try:
-            outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
-        except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
-            return
-        self.options = outputs['options']
-
-        # initialize options
-        opt_values = {}
-        if len(self.plugin_options[plugin_name]) > 0:
-            opt_values = self.plugin_options[plugin_name]
-        else:
-            for option in self.options:
-                k = option.attrib['name']
-                opt_values[k] = ''
-
-        self.plugin_options[plugin_name] = opt_values
-        return opt_values
-
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
             return
-        if self.wps is None:
-            return
 
         plugin_name = str(self.dlg.ui.pluginCombo.currentText())
-        opt_values = self.getPluginOptions( plugin_name )
-        self.displayPluginOptions( plugin_name, self.options, opt_values )
+        options_desc = self.options[plugin_name]
+        self.displayPluginOptions( plugin_name, options_desc, self.plugin_options[plugin_name] )
 
     def onTabChanged( self, tab ):
         # Plugin tab
@@ -303,6 +250,7 @@ class IfsttarRouting:
                 QMessageBox.warning( self.dlg, "Error", e.args[1] )
                 return
 
+            self.save['road_types'] = to_pson(outputs['road_types'])
             self.save['transport_types'] = to_pson(outputs['transport_types'])
             self.save['transport_networks'] = to_pson(outputs['transport_networks'])
             self.displayTransportAndNetworks( outputs['transport_types'], outputs['transport_networks'] )
@@ -342,7 +290,7 @@ class IfsttarRouting:
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
         # bool
         if option_type == 0:
-            val = '1' if val else 0
+            val = 'true' if val else 0
 
         self.plugin_options[plugin_name][option_name] = val
 
@@ -541,21 +489,33 @@ class IfsttarRouting:
     #
     def displayPlugins( self, plugins, selection ):
         self.dlg.ui.pluginCombo.clear()
+        self.options = {}
         for plugin in plugins:
-            self.plugin_options[plugin.attrib['name']] = {}
-            self.dlg.ui.pluginCombo.insertItem(0, plugin.attrib['name'] )
+            plugin_name = plugin.attrib['name']
+
+            # save option description
+            self.options[plugin_name] = plugin
+
+            # initialize options
+            opt_values = {}
+            for option in plugin:
+                k = option.attrib['name']
+                opt_values[k] = option.attrib['default_value']
+            self.plugin_options[plugin_name] = opt_values
+
+            self.dlg.ui.pluginCombo.insertItem(0, plugin_name )
         self.dlg.ui.pluginCombo.setCurrentIndex( selection )
 
     #
     # Take XML tree of 'options' and a dict 'option_values'
     # and fill the options part of the 'plugin' tab
     #
-    def displayPluginOptions( self, plugin_name, options, options_value ):
+    def displayPluginOptions( self, plugin_name, options_desc, options_value ):
         lay = self.dlg.ui.optionsLayout
         clearLayout( lay )
 
         row = 0
-        for option in options:
+        for option in options_desc:
             lbl = QLabel( self.dlg )
             name = option.attrib['name'] + ''
             lbl.setText( option.attrib['description'] )
@@ -567,7 +527,7 @@ class IfsttarRouting:
             # bool type
             if t == 0:
                 widget = QCheckBox( self.dlg )
-                if val == '1':
+                if val == 'true':
                     widget.setCheckState( Qt.Checked )
                 else:
                     widget.setCheckState( Qt.Unchecked )
@@ -661,7 +621,8 @@ class IfsttarRouting:
             for r in result:
                 if r.tag == 'cost':
                     # get the roadmap
-                    rselect.addCost(cost_name(r), "%.1f%s" % (float(r.attrib['value']), cost_unit(r)))
+                    id = int(r.attrib['type'])
+                    rselect.addCost(CostName[id], "%.1f%s" % (float(r.attrib['value']), CostUnit[id]))
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
@@ -759,20 +720,13 @@ class IfsttarRouting:
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
-        self.save['plugin'] = args['plugin']
-        self.save['request'] = args['request']
-        self.save['results'] = to_pson(outputs['results'])
-        self.save['metrics'] = to_pson(outputs['metrics'])
-        # save options
-        # self.options : option descriptions
-        # options : option values
-        self.save['options_values'] = options
-        self.save['options'] = to_pson(self.options)
+        # save request state
+        request = [ 'select', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
 
-        pson = [ 'save' ]
-        for k,v in self.save.iteritems():
-            v[0] = k
-            pson.append( v )
+        # save server state (in self.save)
+        server_state = [ 'server_state', self.save['plugins'], self.save['road_types'], 
+                         self.save['transport_types'], self.save['transport_networks'] ]
+        pson = [ 'record', request, server_state ]
 
         str_record = to_xml(pson)
         self.historyFile.addRecord( str_record )
@@ -790,32 +744,41 @@ class IfsttarRouting:
         id = item.data( Qt.UserRole )
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
-        tree = ET.XML(xmlStr)
+
+        # validate entry
+        schema_root = ET.parse( config.TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" )
+        schema = ET.XMLSchema(schema_root)
+        parser = ET.XMLParser(schema = schema)
+        try:
+            tree = ET.fromstring( xmlStr, parser)
+        except ET.XMLSyntaxError as e:
+            QMessageBox.warning( self.dlg, "XML parsing error", e.msg )
+            return
+
+#        tree = ET.XML(xmlStr)
         loaded = {}
         for child in tree:
             loaded[ child.tag ] = child
 
         # update UI
-        self.dlg.loadFromXML( loaded['request'] )
+        self.dlg.loadFromXML( loaded['select'][1] )
+        self.displayMetrics( loaded['select'][4] )
+        self.displayResults( loaded['select'][3] )
 
-        self.displayPlugins( loaded['plugins'], 0);
+        self.displayPlugins( loaded['server_state'][0], 0);
         
-        opt_values = {}
-        options = loaded['options_values']
+        # get current plugin option
+        currentPlugin = loaded['select'][0].attrib['name']
+        plugin_options = self.plugin_options[currentPlugin]
+        options = loaded['select'][2]
         for option in options:
             k = option.attrib['name']
             v = option.attrib['value']
-            opt_values[k] = v
-        currentPlugin = loaded['plugin'].attrib['name']
-        self.plugin_options[currentPlugin] = opt_values
-        self.displayPluginOptions( currentPlugin, loaded['options'], opt_values )
+            plugin_options[k] = v
 
-        self.transport_types = loaded['transport_types']
-        self.networks = loaded['transport_networks']
+        self.transport_types = loaded['server_state'][2]
+        self.networks = loaded['server_state'][3]
         self.displayTransportAndNetworks( self.transport_types, self.networks )
-
-        self.displayMetrics( loaded['metrics'] )
-        self.displayResults( loaded['results'] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -827,6 +790,15 @@ class IfsttarRouting:
         self.wps = None
         self.dlg.ui.computeBtn.setEnabled(False)
         self.setStateText("DISCONNECTED")
+
+    def onImportHistory( self ):
+        fname = QFileDialog.getOpenFileName( None, 'Import history file', '')
+        if not fname:
+            return
+
+        # switch historyFile
+        self.historyFile = ZipHistoryFile( fname )
+        self.loadHistory()
 
     def unload(self):
         # Remove the plugin menu item and icon

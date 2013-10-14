@@ -3,5 +3,5 @@
   <xs:complexType name="Plugin">
     <xs:attribute name="name" type="xs:string"/>
   </xs:complexType>
-  <xs:element name="plugin" type="Plugin"/>
+<xs:element name="plugin" type="Plugin"/>
 </xs:schema>

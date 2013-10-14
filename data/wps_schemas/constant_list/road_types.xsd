@@ -4,11 +4,10 @@
     <xs:attribute name="name" type="xs:string"/>
     <xs:attribute name="id" type="xs:long"/>
   </xs:complexType>
-  <xs:element name="road_types">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="road_type" type="RoadType" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+  <xs:complexType name="RoadTypes">
+    <xs:sequence>
+      <xs:element name="road_type" type="RoadType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="road_types" type="RoadTypes"/>
 </xs:schema>

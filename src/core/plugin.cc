@@ -158,6 +158,24 @@ namespace Tempus
     template void Plugin::get_option<double>( const std::string&, double& );
     template void Plugin::get_option<std::string>( const std::string&, std::string& );
 
+    std::string Plugin::OptionValue::to_string() const
+    {
+        std::ostringstream ostr;
+        if ( type() == typeid(bool) ) {
+            ostr << (boost::any_cast<bool>( *this ) ? "true" : "false");
+        }
+        else if ( type() == typeid(int) ) {
+            ostr << boost::any_cast<int>( *this );
+        }
+        else if ( type() == typeid(double) ) {
+            ostr << boost::any_cast<double>( *this );
+        }
+        else if ( type() == typeid(std::string) ) {
+            ostr << boost::any_cast<std::string>( *this );
+        }
+        return ostr.str();
+    }
+
     void Plugin::set_option_from_string( const std::string& nname, const std::string& value)
     {
         const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
@@ -169,7 +187,7 @@ namespace Tempus
             switch (t)
             {
             case BoolOption:
-                options_[nname] = lexical_cast<int>( value ) == 0 ? false : true;
+                options_[nname] = value == "true" ? false : true;
                 break;
             case IntOption:
                 options_[nname] = lexical_cast<int>( value );
@@ -205,7 +223,7 @@ namespace Tempus
 	switch (t)
 	{
 	case BoolOption:
-	    return to_string( boost::any_cast<bool>(value) ? 1 : 0 );
+	    return boost::any_cast<bool>(value) ? "true" : "false";
 	case IntOption:
 	    return to_string( boost::any_cast<int>(value) );
 	case FloatOption:

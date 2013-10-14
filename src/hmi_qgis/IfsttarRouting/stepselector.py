@@ -82,6 +82,9 @@ class StepSelector( QFrame ):
         return [ 0, 0 ]
 
     def set_coordinates( self, xy ):
+        if not xy:
+            self.coordinates.setText("-- unavailable --")
+            return
         if xy == []:
             xy = [ 0, 0 ]
         self.coordinates.setText( "%f, %f" % ( xy[0], xy[1] ) )
@@ -129,14 +132,12 @@ class StepSelector( QFrame ):
         self.close()
 
     def onSelect( self ):
-        print "onSelect"
         QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
         self.canvas.setMapTool(self.clickTool)
 
     def onCanvasClick( self, point, button ):
         geom = QgsGeometry.fromPoint(point)
         p = geom.asPoint()
-        print "Selection Changed", point.x(), point.y()
         self.canvas.unsetMapTool( self.clickTool )
         self.set_coordinates( [p.x(), p.y()] )
         QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)

@@ -1,6 +1,4 @@
 # config file generation
-# FIXME use installation directory on install
-set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../data")
 configure_file( tempus_config.hh.in tempus_config.hh )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 

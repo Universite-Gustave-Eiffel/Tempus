@@ -5,8 +5,15 @@ import psycopg2
 import argparse
 import random
 import time
+import os
+import sys
 
+# add ../../python to the include dir
+script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+wps_path = os.path.abspath( script_path + '/../python' )
+sys.path.insert(0, wps_path)
 from tempus_request import *
+from history_file import *
 
 dbstring="dbname=tempus_test_db"
 wpsurl="http://127.0.0.1/wps"
@@ -45,6 +52,9 @@ if __name__ == "__main__":
 
     random.seed()
 
+    server_state_xml = tempus.server_state()
+    history = ZipHistoryFile( "history.save" )
+
     times = []
     distances = []
     total_time = 0
@@ -62,10 +72,10 @@ if __name__ == "__main__":
         start_time = time.time()
 
         # the actual request
-        tempus.request( plugin_name = "sample_road_plugin",
-                        plugin_options = { 'prepare_result' : 0 },
-                        origin = dep,
-                        steps = [RequestStep(destination = arr)] )
+        req_xml = tempus.request( plugin_name = "sample_road_plugin",
+                                  plugin_options = { 'prepare_result' : 1 },
+                                  origin = dep,
+                                  steps = [RequestStep(destination = arr)] )
 
         # time spend by the algorithm
         t = float(tempus.metrics['time_s'])
@@ -85,6 +95,10 @@ if __name__ == "__main__":
         times.append(t)
         distances.append(rDistance)
 
+        # save request
+        history.addRecord( '<record>' + req_xml + server_state_xml + '</record>' )
+
     print "Total time spend by plugin: %.2fs" % total_time
     print "Total time (with wps communication): %.2fs" % total_rtime
+
 

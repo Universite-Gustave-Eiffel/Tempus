@@ -5,11 +5,10 @@
     <xs:attribute name="id" type="xs:long"/>
     <xs:attribute name="provided_transport_types" type="xs:long"/>
   </xs:complexType>
-  <xs:element name="transport_networks">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="transport_network" type="TransportNetwork" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+  <xs:complexType name="TransportNetworks">
+    <xs:sequence>
+      <xs:element name="transport_network" type="TransportNetwork" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="transport_networks" type="TransportNetworks"/>
 </xs:schema>
