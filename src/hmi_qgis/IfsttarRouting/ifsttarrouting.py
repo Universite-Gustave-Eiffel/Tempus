@@ -36,7 +36,8 @@ from qgis.gui import *
 #import PyQt4.QtCore
 #import PyQt4.QtGui
 
-from xml.etree import ElementTree as ET
+#from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -209,6 +210,11 @@ class IfsttarRouting:
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
         self.dlg.ui.computeBtn.setEnabled( True )
         self.setStateText("connected")
+
+        # restore the history to HISTORY_FILE, if needed (after import)
+        if self.historyFile.filename != HISTORY_FILE:
+            self.historyFile = ZipHistoryFile( HISTORY_FILE )
+            self.loadHistory()
 
     def getPluginList( self ):
         # get plugin list
@@ -738,13 +744,26 @@ class IfsttarRouting:
         id = item.data( Qt.UserRole )
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
-        tree = ET.XML(xmlStr)
+
+        # validate entry
+        schema_root = ET.parse( config.TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" )
+        schema = ET.XMLSchema(schema_root)
+        parser = ET.XMLParser(schema = schema)
+        try:
+            tree = ET.fromstring( xmlStr, parser)
+        except ET.XMLSyntaxError as e:
+            QMessageBox.warning( self.dlg, "XML parsing error", e.msg )
+            return
+
+#        tree = ET.XML(xmlStr)
         loaded = {}
         for child in tree:
             loaded[ child.tag ] = child
 
         # update UI
         self.dlg.loadFromXML( loaded['select'][1] )
+        self.displayMetrics( loaded['select'][4] )
+        self.displayResults( loaded['select'][3] )
 
         self.displayPlugins( loaded['server_state'][0], 0);
         
@@ -760,9 +779,6 @@ class IfsttarRouting:
         self.transport_types = loaded['server_state'][2]
         self.networks = loaded['server_state'][3]
         self.displayTransportAndNetworks( self.transport_types, self.networks )
-
-        self.displayMetrics( loaded['select'][4] )
-        self.displayResults( loaded['select'][3] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )

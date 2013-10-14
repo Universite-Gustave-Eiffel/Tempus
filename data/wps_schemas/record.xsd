@@ -26,8 +26,7 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
-      <!-- the following element is optional -->
-      <xs:element name="server_state" minOccurs="0" maxOccurs="1">
+      <xs:element name="server_state" minOccurs="1" maxOccurs="1">
         <xs:complexType>
           <xs:sequence>
             <xs:element name="plugins" type="Plugins"/>
