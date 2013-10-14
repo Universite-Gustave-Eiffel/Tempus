@@ -199,6 +199,17 @@ class IfsttarRouting:
         connection = HttpCgiConnection( host, path )
         self.wps = WPSClient(connection)
 
+        self.getPluginList()
+        
+        self.dlg.ui.pluginCombo.setEnabled( True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+        self.dlg.ui.computeBtn.setEnabled( True )
+        self.setStateText("connected")
+
+    def getPluginList( self ):
         # get plugin list
         try:
             outputs = self.wps.execute( 'plugin_list', {} )
@@ -209,48 +220,13 @@ class IfsttarRouting:
         self.displayPlugins( outputs['plugins'], 0 )
         self.save['plugins'] = to_pson(outputs['plugins'])
 
-        # get plugin options for the current plugin
-        self.getPluginOptions( str(self.dlg.ui.pluginCombo.currentText()) )
-            
-        self.dlg.ui.pluginCombo.setEnabled( True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
-        self.dlg.ui.computeBtn.setEnabled( True )
-        self.setStateText("connected")
-
-    def getPluginOptions( self, plugin_name ):
-        plugin_arg = { 'plugin' : ['plugin', {'name' : plugin_name } ] }
-
-        try:
-            outputs = self.wps.execute( 'get_option_descriptions', plugin_arg )
-        except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
-            return
-        self.options = outputs['options']
-
-        # initialize options
-        opt_values = {}
-        if len(self.plugin_options[plugin_name]) > 0:
-            opt_values = self.plugin_options[plugin_name]
-        else:
-            for option in self.options:
-                k = option.attrib['name']
-                opt_values[k] = ''
-
-        self.plugin_options[plugin_name] = opt_values
-        return opt_values
-
     def update_plugin_options( self, plugin_idx ):
         if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
             return
-        if self.wps is None:
-            return
 
         plugin_name = str(self.dlg.ui.pluginCombo.currentText())
-        opt_values = self.getPluginOptions( plugin_name )
-        self.displayPluginOptions( plugin_name, self.options, opt_values )
+        options_desc = self.options[plugin_name]
+        self.displayPluginOptions( plugin_name, options_desc, self.plugin_options[plugin_name] )
 
     def onTabChanged( self, tab ):
         # Plugin tab
@@ -267,6 +243,7 @@ class IfsttarRouting:
                 QMessageBox.warning( self.dlg, "Error", e.args[1] )
                 return
 
+            self.save['road_types'] = to_pson(outputs['road_types'])
             self.save['transport_types'] = to_pson(outputs['transport_types'])
             self.save['transport_networks'] = to_pson(outputs['transport_networks'])
             self.displayTransportAndNetworks( outputs['transport_types'], outputs['transport_networks'] )
@@ -505,21 +482,33 @@ class IfsttarRouting:
     #
     def displayPlugins( self, plugins, selection ):
         self.dlg.ui.pluginCombo.clear()
+        self.options = {}
         for plugin in plugins:
-            self.plugin_options[plugin.attrib['name']] = {}
-            self.dlg.ui.pluginCombo.insertItem(0, plugin.attrib['name'] )
+            plugin_name = plugin.attrib['name']
+
+            # save option description
+            self.options[plugin_name] = plugin
+
+            # initialize options
+            opt_values = {}
+            for option in plugin:
+                k = option.attrib['name']
+                opt_values[k] = ''
+            self.plugin_options[plugin_name] = opt_values
+
+            self.dlg.ui.pluginCombo.insertItem(0, plugin_name )
         self.dlg.ui.pluginCombo.setCurrentIndex( selection )
 
     #
     # Take XML tree of 'options' and a dict 'option_values'
     # and fill the options part of the 'plugin' tab
     #
-    def displayPluginOptions( self, plugin_name, options, options_value ):
+    def displayPluginOptions( self, plugin_name, options_desc, options_value ):
         lay = self.dlg.ui.optionsLayout
         clearLayout( lay )
 
         row = 0
-        for option in options:
+        for option in options_desc:
             lbl = QLabel( self.dlg )
             name = option.attrib['name'] + ''
             lbl.setText( option.attrib['description'] )
@@ -724,20 +713,13 @@ class IfsttarRouting:
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
 
-        self.save['plugin'] = args['plugin']
-        self.save['request'] = args['request']
-        self.save['results'] = to_pson(outputs['results'])
-        self.save['metrics'] = to_pson(outputs['metrics'])
-        # save options
-        # self.options : option descriptions
-        # options : option values
-        self.save['options_values'] = options
-        self.save['options'] = to_pson(self.options)
+        # save request state
+        request = [ 'request', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
 
-        pson = [ 'record' ]
-        for k,v in self.save.iteritems():
-            v[0] = k
-            pson.append( v )
+        # save server state (in self.save)
+        server_state = [ 'server_state', self.save['plugins'], self.save['road_types'], 
+                         self.save['transport_types'], self.save['transport_networks'] ]
+        pson = [ 'record', request, server_state ]
 
         str_record = to_xml(pson)
         self.historyFile.addRecord( str_record )
@@ -761,26 +743,26 @@ class IfsttarRouting:
             loaded[ child.tag ] = child
 
         # update UI
-        self.dlg.loadFromXML( loaded['request'] )
+        self.dlg.loadFromXML( loaded['request'][1] )
 
-        self.displayPlugins( loaded['plugins'], 0);
+        self.displayPlugins( loaded['server_state'][0], 0);
         
+        # get current plugin option
         opt_values = {}
-        options = loaded['options_values']
+        options = loaded['request'][2]
         for option in options:
             k = option.attrib['name']
             v = option.attrib['value']
             opt_values[k] = v
-        currentPlugin = loaded['plugin'].attrib['name']
+        currentPlugin = loaded['request'][0].attrib['name']
         self.plugin_options[currentPlugin] = opt_values
-        self.displayPluginOptions( currentPlugin, loaded['options'], opt_values )
 
-        self.transport_types = loaded['transport_types']
-        self.networks = loaded['transport_networks']
+        self.transport_types = loaded['server_state'][2]
+        self.networks = loaded['server_state'][3]
         self.displayTransportAndNetworks( self.transport_types, self.networks )
 
-        self.displayMetrics( loaded['metrics'] )
-        self.displayResults( loaded['results'] )
+        self.displayMetrics( loaded['request'][4] )
+        self.displayResults( loaded['request'][3] )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )

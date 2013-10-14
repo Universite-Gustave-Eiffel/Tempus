@@ -120,6 +120,7 @@ class TempusRequest:
         [r, msg] = self.wps.get_capabilities()
         if r != 200:
             raise RuntimeError("WPS connection problem: " + msg)
+        self.save = {}
 
     def request( self, plugin_name = 'sample_road_plugin',
                  plugin_options = {},
@@ -251,4 +252,22 @@ class TempusRequest:
 
         self.metrics = parse_metrics( outputs['metrics'] )
         self.results = parse_results( outputs['results'] )
+
+        r = to_xml(args['plugin']) + to_xml(args['request']) + to_xml(args['options']) + ET.tostring(outputs['results']) + ET.tostring(outputs['metrics'])
+        r = "<request>\n" + r + "</request>\n"
+        return r
+
+
+    def server_state( self ):
+        """Retrieve current server state and return a XML string"""
+        plugins = self.wps.execute( 'plugin_list', {} )
+
+        constants = self.wps.execute( 'constant_list', {} )
+
+        r = "<server_state>" + ET.tostring(plugins['plugins']) \
+            + ET.tostring(constants['road_types']) \
+            + ET.tostring(constants['transport_types']) \
+            + ET.tostring(constants['transport_networks']) \
+            + "</server_state>"
+        return r
 
