@@ -187,7 +187,7 @@ namespace Tempus
             switch (t)
             {
             case BoolOption:
-                options_[nname] = value == "true" ? false : true;
+                options_[nname] = value == "true" ? true : false;
                 break;
             case IntOption:
                 options_[nname] = lexical_cast<int>( value );
