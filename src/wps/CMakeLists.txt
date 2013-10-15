@@ -21,3 +21,5 @@ include_directories( ${LIBXML2_INCLUDE_DIR} ${ICONV_INCLUDE_DIR} ${FCGI_INCLUDE_
 
 add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
 target_link_libraries( wps ${LIBXML2_LIBRARIES} ${ICONV_LIBS} ${FCGI_LIBS} ${LIBTEMPUS} boost_thread )
+
+install( TARGETS wps DESTINATION bin )
