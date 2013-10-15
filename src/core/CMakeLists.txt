@@ -39,4 +39,5 @@ target_link_libraries( tempus ${PQ_LIBS} ${Boost_LIBRARIES} )
 
 add_executable( sample_app sample_app.cc )
 target_link_libraries( sample_app tempus )
+
 install(TARGETS tempus DESTINATION lib)
