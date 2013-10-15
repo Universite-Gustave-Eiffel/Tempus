@@ -6,6 +6,7 @@
 #define TEMPUS_ROADMAP_HH
 
 #include <map>
+#include <boost/ptr_container/ptr_vector.hpp>
 
 #include "common.hh"
 #include "multimodal_graph.hh"
@@ -39,6 +40,8 @@ namespace Tempus
 	    std::string geometry_wkb;
 
 	    Step( StepType type ) : step_type( type ) {}
+
+            virtual Step* clone() const { return new Step(*this); }
 	};
 
 	///
@@ -74,6 +77,8 @@ namespace Tempus
 		YouAreArrived = 999
 	    };
 	    EndMovement end_movement;
+
+            virtual RoadStep* clone() const { return new RoadStep(*this); }
 	};
 
 	///
@@ -91,6 +96,8 @@ namespace Tempus
 	    PublicTransport::Edge section;
 
 	    db_id_t trip_id; ///< used to indicate the direction
+
+            virtual PublicTransportStep* clone() const { return new PublicTransportStep(*this); }
 	};
 
 	///
@@ -100,27 +107,27 @@ namespace Tempus
 	{
 	    GenericStep() : Step( Step::GenericStep ), Edge() {}
 	    GenericStep( const Multimodal::Edge& edge ) : Step( Step::GenericStep ), Edge( edge ) {}
+
+            virtual GenericStep* clone() const { return new GenericStep(*this); }
 	};
 
 	///
 	/// A Roadmap is a list of Step augmented with some total costs.
-	/// Ownership : pointers are allocated by the caller but freed on Roadmap destruction
-	typedef std::vector<Step*> StepList;
+	typedef boost::ptr_vector<Step> StepList;
 	StepList steps;
 	Costs total_costs;
-
-	virtual ~Roadmap()
-	{
-	    for ( StepList::iterator it = steps.begin(); it != steps.end(); it++ )
-	    {
-		delete *it;
-	    }
-	}
     };
 
     ///
     /// A Result is a list of Roadmap, ordered by relevance towards optimizing criteria
     typedef std::list<Roadmap> Result;
+
+    ///
+    /// Used internally by boost::ptr_vector when copying
+    inline Roadmap::Step* new_clone( const Roadmap::Step& step )
+    {
+        return step.clone();
+    }
 
 } // Tempus namespace
 
