@@ -148,6 +148,11 @@ class IfsttarRouting:
         # option desc
         self.options = None
 
+        self.currentRoadmap = None
+
+        # prevent reentrance when roadmap selection is in progress
+        self.selectionInProgress = False
+
         self.setStateText("DISCONNECTED")
 
     def initGui(self):
@@ -173,6 +178,8 @@ class IfsttarRouting:
 
         # click on a result radio button
         QObject.connect(ResultSelection.buttonGroup, SIGNAL("buttonClicked(int)"), self.onResultSelected )
+
+        QObject.connect( self.dlg.ui.roadmapTable, SIGNAL("itemSelectionChanged()"), self.onRoadmapSelectionChanged )
 
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
@@ -366,6 +373,9 @@ class IfsttarRouting:
 
         QgsMapLayerRegistry.instance().addMapLayers( [vl] )
         self.selectRoadmapLayer( lid )
+
+        # connect selection change signal
+        QObject.connect( vl, SIGNAL("selectionChanged()"), lambda layer=vl: self.onLayerSelectionChanged(layer) )
 
     #
     # Select the roadmap layer
@@ -647,6 +657,7 @@ class IfsttarRouting:
             if id == self.result_ids[i]:
                 self.displayRoadmapTab( self.results[i] )
                 self.selectRoadmapLayer( i+1 )
+                self.currentRoadmap = i
                 break
 
     #
@@ -721,6 +732,9 @@ class IfsttarRouting:
         # enable 'metrics' and 'roadmap' tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+        # clear the roadmap table
+        self.dlg.ui.roadmapTable.clear()
+        self.dlg.ui.roadmapTable.setRowCount(0)
 
         # save request state
         request = [ 'select', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
@@ -801,6 +815,63 @@ class IfsttarRouting:
         # switch historyFile
         self.historyFile = ZipHistoryFile( fname )
         self.loadHistory()
+
+    # when the user selects a row of the roadmap
+    def onRoadmapSelectionChanged( self ):
+        if self.selectionInProgress:
+            return
+
+        selected = self.dlg.ui.roadmapTable.selectedIndexes()
+        rows = []
+        for s in selected:
+            r = s.row()
+            if r not in rows: rows.append( r )
+
+        roadmap = self.results[ self.currentRoadmap ]
+
+        # find layer
+        layer = None
+        lname = "%s%d" % (ROADMAP_LAYER_NAME, self.currentRoadmap)
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        for k,v in maps.items():
+            if v.name()[0:len(ROADMAP_LAYER_NAME)] == ROADMAP_LAYER_NAME:
+                layer = v
+                break
+        # the layer may have been deleted
+        if not layer:
+            return
+
+        self.selectionInProgress = True
+        layer.selectAll()
+        layer.invertSelection() # no deselectAll ??
+        for row in rows:
+            # row numbers start at 0 and ID starts at 1
+            layer.select( row + 1)
+        self.selectionInProgress = False
+
+    # when selection on the itinerary layer changes
+    def onLayerSelectionChanged( self, layer ):
+        if self.selectionInProgress:
+            return
+
+        n = len(ROADMAP_LAYER_NAME)
+        if len(layer.name()) <= n:
+            return
+        layerid = int(layer.name()[n:])-1
+        self.currentRoadmap = layerid
+
+        # in case the layer still exists, but not the underlying result
+        if len(self.results) <= layerid:
+            return
+
+        # block signals to prevent infinite loop
+        self.selectionInProgress = True
+        self.displayRoadmapTab( self.results[layerid-1] )
+
+        selected = [ feature.id() for feature in layer.selectedFeatures() ]
+        for fid in selected:
+            self.dlg.ui.roadmapTable.selectRow( fid-1 )
+        self.selectionInProgress = False
 
     def unload(self):
         # Remove the plugin menu item and icon
