@@ -412,8 +412,13 @@ namespace Tempus
 		    //
 		    // retrieval of the step's geometry
                     {
-                        std::string q = (boost::format("SELECT st_asbinary(geom) FROM tempus.road_section WHERE id=%1%") %
-                                         road_graph[step->road_section].db_id ).str();
+                        // reverse the geometry if needed
+                        std::string q = (boost::format("SELECT CASE WHEN node_from=%1%"
+                                                       " THEN ST_AsBinary(geom)"
+                                                       " ELSE ST_AsBinary(ST_Reverse(geom)) END"
+                                                       " FROM tempus.road_section WHERE id=%2%") %
+                                         road_graph[step->vertex_from].db_id %
+                                         road_graph[step->road_section].db_id).str();
                         Db::Result res = db_.exec(q);
                         std::string wkb = res[0][0].as<std::string>();
                         // get rid of the heading '\x'

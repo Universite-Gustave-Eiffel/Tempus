@@ -54,8 +54,8 @@ namespace Tempus
 	    /// The road section where to start from
 	    Road::Edge road_section;
 	    ///
-	    /// The road section where to go in the direction of
-	    Road::Edge road_direction;
+	    /// The first road vertex of the section (in order to get the section orientation - road sections are not oriented)
+	    Road::Vertex vertex_from;
 	    ///
 	    /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
 	    ///
