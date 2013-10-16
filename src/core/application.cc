@@ -27,6 +27,7 @@ namespace Tempus
 	    if ( main_get_instance == &get_application_instance_ )
 	    {
 		instance_ = new Application();
+                instance_->state_ = Started;
 	    }
 	    else
 	    {
@@ -34,8 +35,8 @@ namespace Tempus
 	    }
 #else
 	    instance_ = new Application();
-#endif
             instance_->state_ = Started;
+#endif
 	}
 	return instance_;
     }

@@ -10,7 +10,6 @@
 #include "utils/graph_db_link.hh"
 #include <boost/timer/timer.hpp>
 
-using namespace std;
 using namespace Tempus;
 
 //
@@ -28,6 +27,7 @@ namespace WPS
 	if ( a_state < state )
 	{
 	    std::string state_str = to_string(a_state);
+            std::cerr << "instance adress " << Application::instance() <<"\n";
 	    throw std::invalid_argument( "Invalid application state: " + state_str );
 	}
     }
@@ -66,7 +66,7 @@ namespace WPS
                     XML::new_prop( option_node, "type",
                                    to_string( it->second.type ) );
                     XML::new_prop( option_node, "description", it->second.description );
-                    XML::new_prop( option_node, "default_value", it->second.default_value.to_string() );
+                    XML::new_prop( option_node, "default_value", Plugin::to_string( it->second.default_value ));
                     XML::add_child( node, option_node );
                 }
 		XML::add_child( root_node, node );
@@ -152,7 +152,7 @@ namespace WPS
 	//
 	// Call to the stored procedure
 	//
-	string q = (boost::format( "SELECT tempus.road_node_id_from_coordinates(%1%, %2%)") % x % y).str();
+	std::string q = (boost::format( "SELECT tempus.road_node_id_from_coordinates(%1%, %2%)") % x % y).str();
 	Db::Result res = db.exec( q );
 	if ( res.size() == 0 )
 	    return 0;
@@ -206,13 +206,13 @@ namespace WPS
 
             // if "vertex" attribute is present, use it
             if ( has_vertex ) {
-                string v_str = XML::get_prop( node, "vertex" );
+                std::string v_str = XML::get_prop( node, "vertex" );
                 id = lexical_cast<Tempus::db_id_t>( v_str );
             }
             else {
                 // should have "x" and "y" attributes
-                string x_str = XML::get_prop( node, "x" );
-                string y_str = XML::get_prop( node, "y" );
+                std::string x_str = XML::get_prop( node, "x" );
+                std::string y_str = XML::get_prop( node, "y" );
 
                 x = lexical_cast<double>( x_str );
                 y = lexical_cast<double>( y_str );
@@ -329,7 +329,7 @@ namespace WPS
                     parse_constraint( subfield, request.steps.back().constraint );
             
                     // private_vehicule_at_destination
-                    string val = XML::get_prop( field, "private_vehicule_at_destination" );
+                    std::string val = XML::get_prop( field, "private_vehicule_at_destination" );
                     request.steps.back().private_vehicule_at_destination = ( val == "true" );
             
                     // next step
@@ -394,7 +394,7 @@ namespace WPS
                         Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
                         step_node = XML::new_node( "road_step" );
 
-                        string road_name = "Unknown road";
+                        std::string road_name = "Unknown road";
                         road_name = road_graph[ step->road_section].road_name;
                         XML::set_prop( step_node, "road", road_name );
                         XML::set_prop( step_node, "end_movement", to_string( step->end_movement ) );
@@ -413,11 +413,11 @@ namespace WPS
                         
                         XML::set_prop( step_node, "network", graph_.network_map[ step->network_id ].name );
                         
-                        string departure_str;
+                        std::string departure_str;
                         PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
                         PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
                         departure_str = pt_graph[ v1 ].name;
-                        string arrival_str = pt_graph[ v2 ].name;
+                        std::string arrival_str = pt_graph[ v2 ].name;
                         XML::set_prop( step_node, "departure_stop", departure_str );
                         XML::set_prop( step_node, "arrival_stop", arrival_str);
                         XML::set_prop( step_node, "trip", to_string( step->trip_id ) );

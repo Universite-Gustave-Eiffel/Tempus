@@ -69,13 +69,20 @@ namespace Tempus
 	    static const OptionType type;
 	};
 
+        typedef boost::any OptionValue;
+        /*
         class OptionValue : public boost::any
         {
         public:
             OptionValue() : boost::any() {}
-            template <typename T> OptionValue( const T& v ) : boost::any(v) {}
+            template <typename T> OptionValue( T v ) : boost::any(v) { }
+            OptionValue( const OptionValue & v ): boost::any(v), counter(v.counter+1)  { assert(counter < 10);}
+     
             std::string to_string( ) const;
         };
+        */
+        static std::string to_string( const OptionValue & );
+
 
 	typedef std::map<std::string, OptionValue> OptionValueList;
 
@@ -97,7 +104,7 @@ namespace Tempus
         {
             (*this)[nname].type = OptionTypeFrom<T>::type;
             (*this)[nname].description = description;
-            (*this)[nname].default_value = default_value;
+            (*this)[nname].default_value = OptionValue(default_value);
         }
         void set_options_default_value( Plugin * plugin )
         {

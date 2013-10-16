@@ -166,6 +166,8 @@ int main( int argc, char*argv[] )
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "buiding the graph...\n";
         Tempus::Application::instance()->build_graph();
+        std::cout << "application state" << Tempus::Application::instance()->state() << "\n";
+        std::cerr << "instance adress " << Tempus::Application::instance() <<"\n";
         // load plugins
         for ( size_t i=0; i< plugins.size(); i++ )
         {
