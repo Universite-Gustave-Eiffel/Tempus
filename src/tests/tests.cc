@@ -1,3 +1,4 @@
+#include <boost/test/unit_test.hpp>
 #include "db.hh"
 #include "pgsql_importer.hh"
 #include "multimodal_graph.hh"
@@ -8,14 +9,12 @@
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-#include <boost/test/unit_test.hpp>
+std::string g_db_options = getenv("TEMPUS_DB_OPTIONS") ? getenv("TEMPUS_DB_OPTIONS") : "";
 
 using namespace boost::unit_test ;
 using namespace Tempus;
 
 #define DB_TEST_NAME "tempus_test_db"
-
-std::string g_db_options;
 
 BOOST_AUTO_TEST_SUITE( tempus_core_Db )
 

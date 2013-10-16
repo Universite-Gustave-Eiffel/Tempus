@@ -39,4 +39,6 @@ target_link_libraries( tempus ${PQ_LIBS} ${Boost_LIBRARIES} )
 
 add_executable( sample_app sample_app.cc )
 target_link_libraries( sample_app tempus )
+
 install(TARGETS tempus DESTINATION lib)
+install(FILES plugin.hh multimodal_graph.hh request.hh roadmap.hh db.hh application.hh DESTINATION include)

@@ -142,7 +142,7 @@ int main( int argc, char*argv[] )
 		std::cerr << "\t-t num_threads\tnumber of request-processing threads" << endl;
 		std::cerr << "\t-l plugin_name\tload plugin" << endl;
 		std::cerr << "\t-d dbstring\tstring used to connect to pgsql" << endl;
-		return 1;
+		return (arg == "-h") ? EXIT_SUCCESS : EXIT_FAILURE;
 	    }
 	}
     }
@@ -152,16 +152,34 @@ int main( int argc, char*argv[] )
         if( chdir( chdir_str.c_str() ) )
         {
             std::cerr << "cannot change directory to " << chdir_str << std::endl;
-            return 1;
+            return EXIT_FAILURE;
         }
     }
     
     FCGX_Init();
 
     // initialise connection and graph
-    Tempus::Application::instance()->connect( dbstring );
-    Tempus::Application::instance()->pre_build_graph();
-    Tempus::Application::instance()->build_graph();
+    try
+    {
+        std::cout << "connecting to database :" << dbstring << "\n";
+        Tempus::Application::instance()->connect( dbstring );
+        Tempus::Application::instance()->pre_build_graph();
+        std::cout << "buiding the graph...\n";
+        Tempus::Application::instance()->build_graph();
+        std::cout << "application state" << Tempus::Application::instance()->state() << "\n";
+        std::cerr << "instance adress " << Tempus::Application::instance() <<"\n";
+        // load plugins
+        for ( size_t i=0; i< plugins.size(); i++ )
+        {
+            using namespace Tempus;
+            PluginFactory::instance.load( plugins[i] );
+        }
+    }
+    catch ( std::exception & e )
+    {
+            std::cerr << "cannot create application: " << e.what() << std::endl;
+            return EXIT_FAILURE;
+    }
 
     std::cout << "ready !\n";
 
@@ -177,20 +195,12 @@ int main( int argc, char*argv[] )
     }
 
     try{
-        // load plugins
-        for ( size_t i=0; i< plugins.size(); i++ )
-        {
-            using namespace Tempus;
-            PluginFactory::instance.load( plugins[i] );
-        }
-
         boost::thread_group pool; 
         for (size_t i=0; i<num_threads-1; i++) 
             pool.add_thread( new boost::thread( RequestThread( listen_socket ) ) );
 
         RequestThread mainThread(listen_socket); // so we use the main
         mainThread();
-
         pool.join_all();
     }
     catch ( std::exception& e )

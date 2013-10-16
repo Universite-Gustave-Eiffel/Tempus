@@ -6,6 +6,11 @@
 
 #include "tempus_config.hh"
 
+#ifdef _WIN32
+#  define NOMINMAX
+#  include <windows.h>
+#endif
+
 Tempus::Application* get_application_instance_()
 {
     return Tempus::Application::instance();
@@ -27,6 +32,7 @@ namespace Tempus
 	    if ( main_get_instance == &get_application_instance_ )
 	    {
 		instance_ = new Application();
+                instance_->state_ = Started;
 	    }
 	    else
 	    {
@@ -34,8 +40,8 @@ namespace Tempus
 	    }
 #else
 	    instance_ = new Application();
-#endif
             instance_->state_ = Started;
+#endif
 	}
 	return instance_;
     }

@@ -7,9 +7,41 @@
 #include "plugin.hh"
 #include "utils/graph_db_link.hh"
 
+#ifdef _WIN32
+#include <strsafe.h>
+#endif
 
 namespace Tempus
 {
+#ifdef _WIN32
+    std::string win_error() 
+    { 
+        // Retrieve the system error message for the last-error code
+        struct RAII {LPVOID ptr; RAII( LPVOID p ):ptr(p){}; ~RAII(){LocalFree(ptr);}};
+        LPVOID lpMsgBuf;
+        DWORD dw = GetLastError(); 
+        FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+            FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            dw,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPTSTR) &lpMsgBuf,
+            0, NULL );
+        RAII lpMsgBufRAII(lpMsgBuf);
+
+
+        // Display the error message and exit the process
+
+        LPVOID lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, 
+            (lstrlen((LPCTSTR)lpMsgBuf) + 40) * sizeof(TCHAR));
+        RAII lpDisplayBufRAII(lpDisplayBuf);
+        StringCchPrintf((LPTSTR)lpDisplayBuf, 
+            LocalSize(lpDisplayBuf) / sizeof(TCHAR), TEXT("failed with error %d: %s"), dw, lpMsgBuf); 
+        return std::string((const char*)lpDisplayBuf);
+    }
+#endif
 
     PluginFactory::~PluginFactory()
     {
@@ -34,55 +66,40 @@ namespace Tempus
         const std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
         COUT << "Loading " << complete_dll_name << std::endl;
 #ifdef _WIN32
-        HMODULE h = LoadLibrary( complete_dll_name.c_str() );
-        if ( h == NULL )
-        {
-            throw std::runtime_error("DLL loading problem: "+to_string(GetLastError()));
-        }
-        Dll::PluginCreationFct createFct = (Dll::PluginCreationFct) GetProcAddress( h, "createPlugin" );
-        if ( createFct == NULL )
-        {
-            throw std::runtime_error("GetProcAddress problem: "+to_string(GetLastError()));
-            FreeLibrary( h );
-        }
-        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) GetProcAddress( h, "optionDescriptions" );
-        if ( optDescFct == NULL )
-        {
-            throw std::runtime_error("GetProcAddress problem: "+to_string(GetLastError()));
-            FreeLibrary( h );
-        }
-        Dll::PluginNameFct nameFct = (Dll::PluginNameFct) GetProcAddress( h, "plugin_name" );
-        if ( nameFct == NULL )
-        {
-            throw std::runtime_error("GetProcAddress problem: "+to_string(GetLastError()));
-            FreeLibrary( h );
-        }
+#   define DLCLOSE FreeLibrary
+#   define DLSYM GetProcAddress
+#   define THROW_DLERROR( msg )  throw std::runtime_error( std::string( msg ) + "(" + win_error() + ")")
 #else
-        HMODULE h = dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL );
-        if ( !h )
-        {
-            throw std::runtime_error( dlerror() );
-        }
-        Dll::PluginCreationFct createFct = (Dll::PluginCreationFct)dlsym( h, "createPlugin" );
-        if ( createFct == 0 )
-        {
-            dlclose( h );
-            throw std::runtime_error( dlerror() );
-        }
-        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct)dlsym( h, "optionDescriptions" );
-        if ( optDescFct == 0 )
-        {
-            dlclose( h );
-            throw std::runtime_error( dlerror() );
-        }
-        Dll::PluginNameFct nameFct = (Dll::PluginNameFct)dlsym( h, "pluginName" );
-        if ( nameFct == 0 )
-        {
-            dlclose( h );
-            throw std::runtime_error( dlerror() );
-        }
+#   define DLCLOSE dlclose
+#   define DLSYM dlsym
+#   define THROW_DLERROR( msg ) throw std::runtime_error( std::string( msg ) + "(" + std::string( dlerror() ) + ")" );
 #endif
-        Dll dll = { h, createFct, optDescFct };
+        struct RAII { 
+            RAII( HMODULE h ):h_(h){}; 
+            ~RAII(){ if (h_) DLCLOSE( h_ );}
+            HMODULE get(){return h_;}
+            HMODULE release(){ HMODULE p = NULL; std::swap(p,h_); return p;}
+        private:
+            HMODULE h_; 
+        };
+
+        RAII hRAII(
+#ifdef _WIN32
+            LoadLibrary( complete_dll_name.c_str() )
+#else
+            dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL )
+#endif
+            );
+        if ( !hRAII.get() ) THROW_DLERROR( "cannot load " + complete_dll_name );
+        Dll::PluginCreationFct createFct = (Dll::PluginCreationFct) DLSYM( hRAII.get(), "createPlugin" );
+        if ( !createFct ) THROW_DLERROR( "no function createPlugin in " + complete_dll_name );
+        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) DLSYM( hRAII.get(), "optionDescriptions" );
+        if ( !optDescFct ) THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name  );
+        (*optDescFct)();
+        Dll::PluginNameFct nameFct = (Dll::PluginNameFct) DLSYM( hRAII.get(), "pluginName" );
+        if ( nameFct == NULL ) THROW_DLERROR( "no function pluginName in " + complete_dll_name  );
+
+        Dll dll = { hRAII.release(), createFct, optDescFct };
         const std::string pluginName = (*nameFct)();
         dll_.insert( std::make_pair( pluginName, dll ) );
         COUT << "loaded " << pluginName << " from " << dll_name << "\n";
@@ -158,20 +175,20 @@ namespace Tempus
     template void Plugin::get_option<double>( const std::string&, double& );
     template void Plugin::get_option<std::string>( const std::string&, std::string& );
 
-    std::string Plugin::OptionValue::to_string() const
+    std::string Plugin::to_string( const Plugin::OptionValue & v )
     {
         std::ostringstream ostr;
-        if ( type() == typeid(bool) ) {
-            ostr << (boost::any_cast<bool>( *this ) ? "true" : "false");
+        if ( v.type() == typeid(bool) ) {
+            ostr << (boost::any_cast<bool>( v ) ? "true" : "false");
         }
-        else if ( type() == typeid(int) ) {
-            ostr << boost::any_cast<int>( *this );
+        else if ( v.type() == typeid(int) ) {
+            ostr << boost::any_cast<int>( v );
         }
-        else if ( type() == typeid(double) ) {
-            ostr << boost::any_cast<double>( *this );
+        else if ( v.type() == typeid(double) ) {
+            ostr << boost::any_cast<double>( v );
         }
-        else if ( type() == typeid(std::string) ) {
-            ostr << boost::any_cast<std::string>( *this );
+        else if ( v.type() == typeid(std::string) ) {
+            ostr << boost::any_cast<std::string>( v );
         }
         return ostr.str();
     }
@@ -187,7 +204,7 @@ namespace Tempus
             switch (t)
             {
             case BoolOption:
-                options_[nname] = value == "true" ? true : false;
+                options_[nname] = value == "true" ;
                 break;
             case IntOption:
                 options_[nname] = lexical_cast<int>( value );
