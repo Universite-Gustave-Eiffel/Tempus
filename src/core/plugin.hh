@@ -19,16 +19,16 @@
 #include "application.hh"
 
 #ifdef _WIN32
-  #define NOMINMAX
-  #include <windows.h>
-  #define EXPORT __declspec(dllexport)
-  #define DLL_SUFFIX ".dll"
-  #define DLL_PREFIX ""
+#   define NOMINMAX
+#   include <windows.h>
+#   define EXPORT __declspec(dllexport)
+#   define DLL_SUFFIX ".dll"
+#   define DLL_PREFIX ""
 #else
-  #include <dlfcn.h>
-  #define EXPORT
-  #define DLL_SUFFIX ".so"
-  #define DLL_PREFIX "./lib"
+#   include <dlfcn.h>
+#   define EXPORT
+#   define DLL_SUFFIX ".so"
+#   define DLL_PREFIX "./lib"
 #endif
 
 // this is the type of pointer to dll

@@ -6,6 +6,11 @@
 
 #include "tempus_config.hh"
 
+#ifdef _WIN32
+#  define NOMINMAX
+#  include <windows.h>
+#endif
+
 Tempus::Application* get_application_instance_()
 {
     return Tempus::Application::instance();

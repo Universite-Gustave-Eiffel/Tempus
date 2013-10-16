@@ -7,7 +7,6 @@
 #include <string>
 
 #include "multimodal_graph.hh"
-#include "plugin.hh"
 #include "db.hh"
 
 namespace Tempus
@@ -57,12 +56,6 @@ namespace Tempus
 	///
 	/// Database connection accessors. @relates Db::Connection
 	const std::string& db_options() const { return db_options_; }
-
-	///
-	/// Plugin loading
-	/// @param[in] name Name of the plugin to load
-	Plugin* load_plugin( const std::string& name );
-	void unload_plugin( Plugin* plugin );
 
 	///
 	/// Method to call to pre build the graph in memory
