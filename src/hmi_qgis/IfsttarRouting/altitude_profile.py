@@ -44,7 +44,9 @@ class AltitudeProfileScene(QGraphicsScene):
         # width of the scale bar
         fm = QFontMetrics(QFont())
         # width = size of "100.0" with the default font + 10%
-        self.barWidth = fm.width("100.0") * 1.10
+        self.barWidth = fm.width("Z (m) ") * 1.10
+        self.xOffset = self.barWidth
+        self.yOffset = fm.height() * 2
 
         # altitude marker
         self.marker = AltitudeMarker( self )
@@ -52,8 +54,6 @@ class AltitudeProfileScene(QGraphicsScene):
         # define the transformation between distance, altitude and scene coordinates
         self.xRatio = 1.0
         self.yRatio = 1.0
-        self.xOffset = 0.0
-        self.yOffset = 0.0
 
         self.clear()
 
@@ -73,26 +73,22 @@ class AltitudeProfileScene(QGraphicsScene):
         QGraphicsScene.setSceneRect( self, rect )
         w = rect.width() - self.barWidth
         self.xRatio = w / self.xMax
-        dh = rect.height() * 0.3
-        h = rect.height() - dh
+        h = rect.height() - self.yOffset * 2
         self.yRatio = h / (self.yMax-self.yMin)
-        self.yOffset = dh/2
-        # some offset for printing altitude scale
-        self.xOffset = self.barWidth
 
     # convert distance to scene coordinate
     def xToScene( self, x ):
         return x * self.xRatio + self.xOffset
     # convert altitude to scene coordinate
     def yToScene( self, y ):
-        return self.sceneRect().height() *0.7 - (y * self.yRatio) + self.yOffset
+        return self.sceneRect().height() - ((y - self.yMin)* self.yRatio + self.yOffset)
 
     def addElevation( self, distance, z0, z1, section ):
-        self.xMax = self.x
         self.alts.append( (self.x, self.x+distance, z0, z1, section) )
         self.yMin = min(self.yMin, z0)
         self.yMax = max(self.yMax, z1)
         self.x += distance
+        self.xMax = self.x
 
     def displayElevations( self ):
         QGraphicsScene.clear( self )
@@ -134,6 +130,10 @@ class AltitudeProfileScene(QGraphicsScene):
         t1.setPos( 0, self.yToScene(self.yMin)-fm.ascent())
         t2 = self.addText( "%.1f" % self.yMax )
         t2.setPos( 0, self.yToScene(self.yMax)-fm.ascent())
+
+        # Z(m)
+        t3 = self.addText( "Z (m)" )
+        t3.setPos( 0, 0 )
 
     # called to add a circle on top of the current altitude profile
     # point : QPointF of the mouse position (in scene coordinates)
