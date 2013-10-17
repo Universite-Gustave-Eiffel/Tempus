@@ -136,12 +136,13 @@ int main( int argc, char*argv[] )
 	    }
 	    else
 	    {
-		std::cerr << "Options: " << endl;
-		std::cerr << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl;
-		std::cerr << "\t-c dir\tchange directory to dir before execution" << endl;
-		std::cerr << "\t-t num_threads\tnumber of request-processing threads" << endl;
-		std::cerr << "\t-l plugin_name\tload plugin" << endl;
-		std::cerr << "\t-d dbstring\tstring used to connect to pgsql" << endl;
+		std::cout << "Options: " << endl
+		    << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl
+		    << "\t-c dir\tchange directory to dir before execution" << endl
+		    << "\t-t num_threads\tnumber of request-processing threads" << endl
+		    << "\t-l plugin_name\tload plugin" << endl
+		    << "\t-d dbstring\tstring used to connect to pgsql" << endl
+		    ;
 		return (arg == "-h") ? EXIT_SUCCESS : EXIT_FAILURE;
 	    }
 	}
@@ -161,18 +162,17 @@ int main( int argc, char*argv[] )
     // initialise connection and graph
     try
     {
-        std::cout << "connecting to database :" << dbstring << "\n";
+        std::cout << "connecting to database: " << dbstring << "\n";
         Tempus::Application::instance()->connect( dbstring );
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "buiding the graph...\n";
         Tempus::Application::instance()->build_graph();
-        std::cout << "application state" << Tempus::Application::instance()->state() << "\n";
-        std::cerr << "instance adress " << Tempus::Application::instance() <<"\n";
         // load plugins
         for ( size_t i=0; i< plugins.size(); i++ )
         {
             using namespace Tempus;
-            PluginFactory::instance.load( plugins[i] );
+			std::cerr << "loading " << plugins[i] << "\n";
+            PluginFactory::instance()->load( plugins[i] );
         }
     }
     catch ( std::exception & e )

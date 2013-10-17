@@ -384,8 +384,10 @@ namespace Tempus
          */
         void load( const std::string& dll_name );
 
-        static PluginFactory instance;
+        static PluginFactory * instance();
+
     private:
+		PluginFactory(){}
 
         struct Dll 
         {
@@ -417,4 +419,9 @@ namespace Tempus
     extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList* optionDescriptions( ) { return new Tempus::Plugin::OptionDescriptionList(type::option_descriptions()); } \
     extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; }
 
+#endif
+
+#ifdef _WIN32
+/// The global instance accessor must be callable as a C function under Windows
+extern "C" __declspec(dllexport) Tempus::PluginFactory * get_plugin_factory_instance_();
 #endif

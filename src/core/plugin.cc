@@ -11,8 +11,35 @@
 #include <strsafe.h>
 #endif
 
+Tempus::PluginFactory * get_plugin_factory_instance_()
+{
+    return Tempus::PluginFactory::instance();
+}
+
 namespace Tempus
 {
+
+
+PluginFactory * PluginFactory::instance()
+{
+    // On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
+    // DLL have still access to the main EXE memory ...
+    static PluginFactory * instance_ = 0;
+    if ( 0 == instance_ )
+    {
+#ifdef _WIN32
+	// We test if we are in the main module (EXE) or not. If it is the case, a new Application is allocated.
+	// It will also be returned by modules.
+	PluginFactory * (*main_get_instance)() = (PluginFactory* (*)())GetProcAddress(GetModuleHandle(NULL), "get_plugin_factory_instance_");
+	instance_ = (main_get_instance == &get_plugin_factory_instance_)  ? new PluginFactory : main_get_instance();
+#else
+	instance_ = new PluginFactory();
+#endif
+    }
+    return instance_;
+}
+
+
 #ifdef _WIN32
     std::string win_error() 
     { 
@@ -57,8 +84,6 @@ namespace Tempus
 #endif
         }
     }
-
-    PluginFactory PluginFactory::instance;
 
     void PluginFactory::load( const std::string& dll_name )
     {
@@ -151,7 +176,7 @@ namespace Tempus
     template <class T>
     void Plugin::get_option( const std::string& nname, T& value )
     {
-        const OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
+        const OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
         OptionDescriptionList::const_iterator descIt = desc.find( nname );
         if ( descIt == desc.end() )
         {
@@ -195,7 +220,7 @@ namespace Tempus
 
     void Plugin::set_option_from_string( const std::string& nname, const std::string& value)
     {
-        const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
+        const Plugin::OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
         Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
 	if ( descIt == desc.end() )
 	    return;
@@ -226,7 +251,7 @@ namespace Tempus
 
     std::string Plugin::option_to_string( const std::string& nname )
     {
-        const Plugin::OptionDescriptionList desc = PluginFactory::instance.option_descriptions( name_ );
+        const Plugin::OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
         Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
 	if ( descIt == desc.end() )
 	{

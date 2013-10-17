@@ -91,15 +91,9 @@ namespace WPS {
 
 	    // The root XML element must be the name of the operation	
 	    string line;
-	    string doc = "";
-	    while ( !ins_.eof() )
-	    {
-		char c;
-		ins_.get(c);
-		if (ins_.eof())
-		    break;
-		doc.push_back(c);
-	    }
+	    std::stringstream ss;
+	    ss << ins_.rdbuf();
+	    const string doc(ss.str());
 	    CERR << doc << endl;
 	
 	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), getParam( "REQUEST_URI" ), NULL, XML_PARSE_NOERROR );

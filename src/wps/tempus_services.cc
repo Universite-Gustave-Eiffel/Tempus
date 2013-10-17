@@ -49,7 +49,7 @@ namespace WPS
             ParameterMap output_parameters;
 	    
 	    xmlNode* root_node = XML::new_node( "plugins" );
-	    std::vector<std::string> names( PluginFactory::instance.plugin_list() );
+	    std::vector<std::string> names( PluginFactory::instance()->plugin_list() );
 	    for ( size_t i=0; i<names.size(); i++ )
 	    {
 		xmlNode* node = XML::new_node( "plugin" );
@@ -57,7 +57,7 @@ namespace WPS
 			       "name",
 			       names[i] );
 
-                Plugin::OptionDescriptionList options = PluginFactory::instance.option_descriptions( names[i] );
+                Plugin::OptionDescriptionList options = PluginFactory::instance()->option_descriptions( names[i] );
                 Plugin::OptionDescriptionList::iterator it;
                 for ( it = options.begin(); it != options.end(); it++ )
                 {
@@ -248,7 +248,7 @@ namespace WPS
             const xmlNode* plugin_node = input_parameter_map.find("plugin")->second;
             const std::string plugin_str = XML::get_prop( plugin_node, "name" );
             TIMING
-            std::auto_ptr<Plugin> plugin( PluginFactory::instance.createPlugin( plugin_str ));
+            std::auto_ptr<Plugin> plugin( PluginFactory::instance()->createPlugin( plugin_str ));
             TIMING
 
             Tempus::Request request;
