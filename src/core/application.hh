@@ -11,7 +11,7 @@
 
 namespace Tempus
 {
-    class Plugin;
+    struct PluginFactory;
 
     ///
     /// Class used to represent the global state of the current application
