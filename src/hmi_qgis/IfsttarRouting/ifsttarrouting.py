@@ -533,7 +533,7 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
 
-#        profile.autoFit()
+        profile.scene().displayElevations()
 
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
