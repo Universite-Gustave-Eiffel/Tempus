@@ -205,6 +205,7 @@ namespace Tempus
                         step = new Roadmap::RoadStep();
                         roadmap.steps.push_back( step );
                         step->road_section = e;
+                        step->vertex_from = previous;
                         current_road = e;
                     }
                     step->costs[CostDistance] += road_graph[e].length;

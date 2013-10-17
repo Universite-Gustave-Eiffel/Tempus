@@ -26,6 +26,8 @@ import config
 import binascii
 import pickle
 import os
+import struct
+import math
 from datetime import datetime
 
 # Import the PyQt and QGIS libraries
@@ -47,8 +49,8 @@ from ifsttarroutingdock import IfsttarRoutingDock
 from ui_splash_screen import Ui_SplashScreen
 
 from history_file import ZipHistoryFile
-
 from result_selection import ResultSelection
+from altitude_profile import AltitudeProfile
 
 import pickle
 
@@ -58,6 +60,44 @@ ROADMAP_LAYER_NAME = "Roadmap_"
 
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)
+
+class WKB:
+
+    def __init__( self, wkb ):
+        self.wkb = wkb
+        # prefix for unpack : little or big endian
+        self.prefix = '<' if wkb[1] == '1' else '>'
+        self.type = struct.unpack(self.prefix+'h', self.wkb[1*2:3*2].decode('hex'))[0]
+
+    # convert a LineStringZ to a 2D LineString
+    def force2d( self ):
+        if self.type != 1002: # LineStringZ
+            return
+        nwkb = self.wkb[0:2] + '0200' + self.wkb[3*2:9*2]
+        npts = struct.unpack(self.prefix+'h', self.wkb[5*2:7*2].decode('hex'))[0]
+        for i in range(0,npts):
+            p = 9+i*3*8
+            xs = self.wkb[p*2:(p+8)*2]
+            ys = self.wkb[(p+8)*2:(p+16)*2]
+            nwkb += xs + ys
+        return nwkb
+
+    # get an array of (x,y,z) from a LineStringZ
+    def dumpPoints( self ):
+        if self.type != 1002:
+            return []
+        ret = []
+        npts = struct.unpack(self.prefix+'h', self.wkb[5*2:7*2].decode('hex'))[0]
+        for i in range(0,npts):
+            p = 9+i*3*8
+            xs = self.wkb[p*2:(p+8)*2]
+            ys = self.wkb[(p+8)*2:(p+16)*2]
+            zs = self.wkb[(p+16)*2:(p+24)*2]
+            x = struct.unpack(self.prefix+'d', xs.decode('hex'))[0]
+            y = struct.unpack(self.prefix+'d', ys.decode('hex'))[0]
+            z = struct.unpack(self.prefix+'d', zs.decode('hex'))[0]
+            ret.append( (x,y,z) )
+        return ret
 
 def format_cost( cost ):
     cost_value = float(cost.attrib['value'])
@@ -148,6 +188,11 @@ class IfsttarRouting:
         # option desc
         self.options = None
 
+        self.currentRoadmap = None
+
+        # prevent reentrance when roadmap selection is in progress
+        self.selectionInProgress = False
+
         self.setStateText("DISCONNECTED")
 
     def initGui(self):
@@ -173,6 +218,8 @@ class IfsttarRouting:
 
         # click on a result radio button
         QObject.connect(ResultSelection.buttonGroup, SIGNAL("buttonClicked(int)"), self.onResultSelected )
+
+        QObject.connect( self.dlg.ui.roadmapTable, SIGNAL("itemSelectionChanged()"), self.onRoadmapSelectionChanged )
 
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
@@ -332,9 +379,12 @@ class IfsttarRouting:
             pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
 
         # browse steps
-        for step in steps[:-1]:
+        for step in steps:
+            if step.tag == 'cost':
+                continue
             # find wkb geometry
-            wkb = step.attrib['wkb']
+            wkb = WKB(step.attrib['wkb'])
+            wkb = wkb.force2d()
 
             fet = QgsFeature()
             geo = QgsGeometry()
@@ -365,6 +415,9 @@ class IfsttarRouting:
         QgsMapLayerRegistry.instance().addMapLayers( [vl] )
         self.selectRoadmapLayer( lid )
 
+        # connect selection change signal
+        QObject.connect( vl, SIGNAL("selectionChanged()"), lambda layer=vl: self.onLayerSelectionChanged(layer) )
+
     #
     # Select the roadmap layer
     #
@@ -390,10 +443,35 @@ class IfsttarRouting:
         self.dlg.ui.roadmapTable.setRowCount(0)
         self.dlg.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
 
+        # array of altitudes (distance, elevation)
+
+        # get or create the graphics scene
+        w = self.dlg.ui.resultSelectionLayout
+        lastWidget = w.itemAt( w.count() - 1 ).widget()
+        if isinstance(lastWidget, AltitudeProfile):
+            profile = lastWidget
+        else:
+            profile = AltitudeProfile( self.dlg )
+            self.dlg.ui.resultSelectionLayout.addWidget( profile )
+
+        # mousevent even when no button is clicked
+
+        profile.scene().clear()
+
         for step in roadmap:
             text = ''
             icon_text = ''
             cost_text = ''
+
+            if step.attrib.has_key('wkb'):
+                wkb = WKB(step.attrib['wkb'])
+                pts = wkb.dumpPoints()
+                prev = pts[0]
+                for p in pts[1:]:
+                    dist = math.sqrt((p[0]-prev[0])**2 + (p[1]-prev[1])**2)
+                    profile.addElevation( dist, prev[2], p[2] )
+                    prev = p
+
             if step.tag == 'road_step':
                 road_name = step.attrib['road']
                 movement = int(step.attrib['end_movement'])
@@ -454,6 +532,8 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.setCellWidget( row, 2, costText )
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
+
+#        profile.autoFit()
 
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
@@ -645,6 +725,7 @@ class IfsttarRouting:
             if id == self.result_ids[i]:
                 self.displayRoadmapTab( self.results[i] )
                 self.selectRoadmapLayer( i+1 )
+                self.currentRoadmap = i
                 break
 
     #
@@ -687,7 +768,7 @@ class IfsttarRouting:
         n = len(constraints)
         for i in range(1, n):
             pvad = 'false'
-            if pvads[i] == True:
+            if pvads[i-1] == True:
                 pvad = 'true'
             r.append( ['step',
                        { 'private_vehicule_at_destination': pvad },
@@ -719,6 +800,9 @@ class IfsttarRouting:
         # enable 'metrics' and 'roadmap' tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+        # clear the roadmap table
+        self.dlg.ui.roadmapTable.clear()
+        self.dlg.ui.roadmapTable.setRowCount(0)
 
         # save request state
         request = [ 'select', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
@@ -799,6 +883,63 @@ class IfsttarRouting:
         # switch historyFile
         self.historyFile = ZipHistoryFile( fname )
         self.loadHistory()
+
+    # when the user selects a row of the roadmap
+    def onRoadmapSelectionChanged( self ):
+        if self.selectionInProgress:
+            return
+
+        selected = self.dlg.ui.roadmapTable.selectedIndexes()
+        rows = []
+        for s in selected:
+            r = s.row()
+            if r not in rows: rows.append( r )
+
+        roadmap = self.results[ self.currentRoadmap ]
+
+        # find layer
+        layer = None
+        lname = "%s%d" % (ROADMAP_LAYER_NAME, self.currentRoadmap)
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        for k,v in maps.items():
+            if v.name()[0:len(ROADMAP_LAYER_NAME)] == ROADMAP_LAYER_NAME:
+                layer = v
+                break
+        # the layer may have been deleted
+        if not layer:
+            return
+
+        self.selectionInProgress = True
+        layer.selectAll()
+        layer.invertSelection() # no deselectAll ??
+        for row in rows:
+            # row numbers start at 0 and ID starts at 1
+            layer.select( row + 1)
+        self.selectionInProgress = False
+
+    # when selection on the itinerary layer changes
+    def onLayerSelectionChanged( self, layer ):
+        if self.selectionInProgress:
+            return
+
+        n = len(ROADMAP_LAYER_NAME)
+        if len(layer.name()) <= n:
+            return
+        layerid = int(layer.name()[n:])-1
+        self.currentRoadmap = layerid
+
+        # in case the layer still exists, but not the underlying result
+        if len(self.results) <= layerid:
+            return
+
+        # block signals to prevent infinite loop
+        self.selectionInProgress = True
+        self.displayRoadmapTab( self.results[layerid-1] )
+
+        selected = [ feature.id() for feature in layer.selectedFeatures() ]
+        for fid in selected:
+            self.dlg.ui.roadmapTable.selectRow( fid-1 )
+        self.selectionInProgress = False
 
     def unload(self):
         # Remove the plugin menu item and icon

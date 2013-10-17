@@ -387,11 +387,11 @@ namespace WPS
                 for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ )
                 {
                     xmlNode* step_node = 0;
-                    Roadmap::Step* gstep = *sit;
+                    const Roadmap::Step* gstep = &*sit;
                     
-                    if ( (*sit)->step_type == Roadmap::Step::RoadStep )
+                    if ( sit->step_type == Roadmap::Step::RoadStep )
                     {
-                        Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( *sit );
+                        const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                         step_node = XML::new_node( "road_step" );
 
                         std::string road_name = "Unknown road";
@@ -399,9 +399,9 @@ namespace WPS
                         XML::set_prop( step_node, "road", road_name );
                         XML::set_prop( step_node, "end_movement", to_string( step->end_movement ) );
                     }
-                    else if ( (*sit)->step_type == Roadmap::Step::PublicTransportStep )
+                    else if ( sit->step_type == Roadmap::Step::PublicTransportStep )
                     {
-                        Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( *sit );
+                        const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
                         
                         if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() )
                         {
@@ -422,10 +422,10 @@ namespace WPS
                         XML::set_prop( step_node, "arrival_stop", arrival_str);
                         XML::set_prop( step_node, "trip", to_string( step->trip_id ) );
                     }
-                    else if ( (*sit)->step_type == Roadmap::Step::GenericStep )
+                    else if ( sit->step_type == Roadmap::Step::GenericStep )
                     {
-                        Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( *sit );
-                        Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
+                        const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );
+                        const Multimodal::Edge* edge = static_cast<const Multimodal::Edge*>( step );
                         
                         const Road::Graph* lroad_graph = 0;
                         const PublicTransport::Graph* pt_graph = 0;
@@ -460,7 +460,7 @@ namespace WPS
                         XML::set_prop( step_node, "stop", stop_name );
                     }
                     
-                    for ( Tempus::Costs::iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
+                    for ( Tempus::Costs::const_iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ )
                     {
                         xmlNode* cost_node = XML::new_node( "cost" );
                         XML::new_prop( cost_node,
@@ -472,7 +472,7 @@ namespace WPS
                         XML::add_child( step_node, cost_node );
                     }
 
-                    XML::set_prop( step_node, "wkb", (*sit)->geometry_wkb );
+                    XML::set_prop( step_node, "wkb", sit->geometry_wkb );
 
                     XML::add_child( result_node, step_node );
                 }

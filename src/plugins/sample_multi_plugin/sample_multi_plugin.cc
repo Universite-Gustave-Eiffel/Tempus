@@ -63,7 +63,7 @@ namespace Tempus
 	    Db::Result res = db_.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
 	    for ( size_t i = 0; i < res.size(); ++i ) {
 		db_id_t stop_from, stop_to;
-		double length;
+		double length = 0.0;
 		res[i][0] >> stop_from;
 		res[i][1] >> stop_to;
 		res[i][2] >> length;
@@ -206,6 +206,7 @@ namespace Tempus
 			continue;
 		    }
 		    step->road_section = e;
+                    step->vertex_from = previous->road_vertex;
 		}
 		
 		else if ( previous->type == Multimodal::Vertex::PublicTransport && it->type == Multimodal::Vertex::PublicTransport ) {
