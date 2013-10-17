@@ -449,14 +449,14 @@ class IfsttarRouting:
         w = self.dlg.ui.resultSelectionLayout
         lastWidget = w.itemAt( w.count() - 1 ).widget()
         if isinstance(lastWidget, AltitudeProfile):
-            profile = lastWidget
+            self.profile = lastWidget
         else:
-            profile = AltitudeProfile( self.dlg )
-            self.dlg.ui.resultSelectionLayout.addWidget( profile )
+            self.profile = AltitudeProfile( self.dlg )
+            self.dlg.ui.resultSelectionLayout.addWidget( self.profile )
 
         # mousevent even when no button is clicked
 
-        profile.scene().clear()
+        self.profile.clear()
 
         for step in roadmap:
             text = ''
@@ -469,7 +469,7 @@ class IfsttarRouting:
                 prev = pts[0]
                 for p in pts[1:]:
                     dist = math.sqrt((p[0]-prev[0])**2 + (p[1]-prev[1])**2)
-                    profile.addElevation( dist, prev[2], p[2] )
+                    self.profile.addElevation( dist, prev[2], p[2], row )
                     prev = p
 
             if step.tag == 'road_step':
@@ -533,7 +533,7 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
 
-        profile.scene().displayElevations()
+        self.profile.displayElevations()
 
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
@@ -915,6 +915,9 @@ class IfsttarRouting:
         for row in rows:
             # row numbers start at 0 and ID starts at 1
             layer.select( row + 1)
+
+        # highlight selection on the elevation profile
+        self.profile.highlightSelection( rows )
         self.selectionInProgress = False
 
     # when selection on the itinerary layer changes
@@ -936,9 +939,10 @@ class IfsttarRouting:
         self.selectionInProgress = True
         self.displayRoadmapTab( self.results[layerid-1] )
 
-        selected = [ feature.id() for feature in layer.selectedFeatures() ]
+        selected = [ feature.id()-1 for feature in layer.selectedFeatures() ]
         for fid in selected:
-            self.dlg.ui.roadmapTable.selectRow( fid-1 )
+            self.dlg.ui.roadmapTable.selectRow( fid )
+        self.profile.highlightSelection( selected )
         self.selectionInProgress = False
 
     def unload(self):

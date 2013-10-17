@@ -12,14 +12,11 @@ class AltitudeProfile(QGraphicsView):
         self.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
         self.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
 
-    def autoFit( self ):
-        r = self.scene().sceneRect()
-        # add 10% of height
-        h = r.height() * 0.2
-        self.fitInView( QRectF(r.left(),r.top()+h/2,r.width(), r.height()*2) )
+    def clear( self ):
+        self.scene().clear()
 
-    def addElevation( self, distance, z0, z1 ):
-        self.scene().addElevation( distance, z0, z1 )
+    def addElevation( self, distance, z0, z1, section ):
+        self.scene().addElevation( distance, z0, z1, section )
 
     # sceneRect is always set to the resize event size
     # this way, 1 pixel in the scene is 1 pixel on screen
@@ -27,7 +24,13 @@ class AltitudeProfile(QGraphicsView):
         QGraphicsView.resizeEvent( self, event )
         r = self.scene().sceneRect()
         self.scene().setSceneRect( QRectF( 0, 0, event.size().width(), event.size().height() ) )
+        self.displayElevations()
+
+    def displayElevations( self ):
         self.scene().displayElevations()
+
+    def highlightSelection( self, section ):
+        self.scene().highlightSelection( section )
 
     def mouseMoveEvent( self, event ):
         (x,y) = (event.x(), event.y())
@@ -38,8 +41,11 @@ class AltitudeProfileScene(QGraphicsScene):
 
     def __init__( self, parent ):
         QGraphicsScene.__init__( self, parent )
-        self.x = 0
-        self.alts = []
+        # width of the scale bar
+        fm = QFontMetrics(QFont())
+        # width = size of "100.0" with the default font + 10%
+        self.barWidth = fm.width("100.0") * 1.10
+
         # altitude marker
         self.marker = AltitudeMarker( self )
 
@@ -49,23 +55,24 @@ class AltitudeProfileScene(QGraphicsScene):
         self.xOffset = 0.0
         self.yOffset = 0.0
 
+        self.clear()
+
+    def clear( self ):
+        QGraphicsScene.clear( self )
+        self.x = 0
+        self.alts = []
+
         # define the altitude profile rect
         self.yMin = 10000.0
         self.yMax = 0.0
         self.xMax = 0.0
 
-        # width of the scale bar
-        fm = QFontMetrics(QFont())
-        # width = size of "100.0" with the default font + 10%
-        self.barWidth = fm.width("100.0") * 1.10
-
-    def clear( self ):
-        QGraphicsScene.clear( self )
-        self.alts = []
+        self.selection = []
 
     def setSceneRect( self, rect ):
         QGraphicsScene.setSceneRect( self, rect )
-        self.xRatio = rect.width() / self.xMax
+        w = rect.width() - self.barWidth
+        self.xRatio = w / self.xMax
         dh = rect.height() * 0.3
         h = rect.height() - dh
         self.yRatio = h / (self.yMax-self.yMin)
@@ -80,9 +87,9 @@ class AltitudeProfileScene(QGraphicsScene):
     def yToScene( self, y ):
         return self.sceneRect().height() *0.7 - (y * self.yRatio) + self.yOffset
 
-    def addElevation( self, distance, z0, z1 ):
+    def addElevation( self, distance, z0, z1, section ):
         self.xMax = self.x
-        self.alts.append( (self.x, self.x+distance, z0, z1) )
+        self.alts.append( (self.x, self.x+distance, z0, z1, section) )
         self.yMin = min(self.yMin, z0)
         self.yMax = max(self.yMax, z1)
         self.x += distance
@@ -90,6 +97,7 @@ class AltitudeProfileScene(QGraphicsScene):
     def displayElevations( self ):
         QGraphicsScene.clear( self )
         self.marker.clear()
+        self.selection = []
         r = self.sceneRect();
 
         # display lines fitting in sceneRect
@@ -97,7 +105,7 @@ class AltitudeProfileScene(QGraphicsScene):
         x1 = self.alts[0][0]
         y1 = self.alts[0][2]
         poly.append( QPointF(self.xToScene(x1), self.yToScene(y1)) )
-        for (x1,x2,y1,y2) in self.alts:
+        for (x1,x2,y1,y2, section) in self.alts:
             poly.append( QPointF(self.xToScene(x2), self.yToScene(y2)) )
         # close the polygon
         x2 = self.xToScene( self.xMax )
@@ -114,10 +122,8 @@ class AltitudeProfileScene(QGraphicsScene):
         self.addPolygon( poly, pen, brush )
 
         # horizontal line on ymin and ymax
-        pen2 = QPen()
-        pen2.setStyle( Qt.DotLine )
-        self.addLine( self.barWidth, self.yToScene(self.yMin), self.xToScene(self.xMax), self.yToScene(self.yMin), pen2 );
-        self.addLine( self.barWidth, self.yToScene(self.yMax), self.xToScene(self.xMax), self.yToScene(self.yMax), pen2 );
+        self.addLine( self.barWidth-5, self.yToScene(self.yMin), self.barWidth+5, self.yToScene(self.yMin) );
+        self.addLine( self.barWidth-5, self.yToScene(self.yMax), self.barWidth+5, self.yToScene(self.yMax) );
 
         # display scale
         self.addLine( self.barWidth, 0, self.barWidth, self.sceneRect().height() )
@@ -136,7 +142,7 @@ class AltitudeProfileScene(QGraphicsScene):
         x = point.x()
 
         # look for altitude
-        for (ax1, ax2, az1, az2) in self.alts:
+        for (ax1, ax2, az1, az2, section) in self.alts:
             ax1 = self.xToScene( ax1 )
             ax2 = self.xToScene( ax2 )
             if ax1 <= x < ax2:
@@ -145,6 +151,24 @@ class AltitudeProfileScene(QGraphicsScene):
                 self.marker.setText( "%.1f" % z )
                 self.marker.moveTo( x, y )
                 break
+
+    # highlight a given section number
+    def highlightSelection( self, section ):
+        for s in self.selection:
+            self.removeItem(s)
+        self.selection = []
+
+        for s in section:
+            for alt in self.alts:
+                x1 = alt[0]
+                x2 = alt[1]
+                ss = alt[4]
+                if ss == s:
+                    w = self.xToScene(x2)-self.xToScene(x1)
+                    brush = QBrush( QColor(120,120,120,120))
+                    pen = QPen()
+                    pen.setStyle( Qt.NoPen )
+                    self.selection.append(self.addRect(QRectF(self.xToScene(x1),0,w,self.sceneRect().height()),pen,brush))
 
 # graphics items that are displayed on mouse move on the altitude curve
 class AltitudeMarker:
@@ -155,10 +179,13 @@ class AltitudeMarker:
         self.text = None
         # the graphics scene
         self.scene = scene
+        # a line
+        self.line = None
 
     def clear( self ):
         self.circle = None
         self.text = None
+        self.line = None
 
     def setText( self, text ):
         if not self.text:
@@ -171,8 +198,13 @@ class AltitudeMarker:
         if not self.circle:
             brush = QBrush( QColor( 0, 0, 200 ) ) # blue brush
             self.circle = self.scene.addEllipse( 0,0,4,4,QPen(),brush)
+        if not self.line:
+            pen = QPen()
+            pen.setStyle( Qt.DashLine )
+            self.line = self.scene.addLine( 0,0,0,0,pen)
 
         self.circle.setRect( x-4, y-4, 8, 8 )
+        self.line.setLine( x, 0, x, self.scene.sceneRect().height() )
         if self.text:
             self.text.setPos( x, y )
 
