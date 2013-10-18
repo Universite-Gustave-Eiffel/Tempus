@@ -155,6 +155,9 @@ class IfsttarRouting:
         # prevent reentrance when roadmap selection is in progress
         self.selectionInProgress = False
 
+        # profile widget
+        self.profile = None
+
         self.setStateText("DISCONNECTED")
 
     def initGui(self):
@@ -183,6 +186,9 @@ class IfsttarRouting:
 
         QObject.connect( self.dlg.ui.roadmapTable, SIGNAL("itemSelectionChanged()"), self.onRoadmapSelectionChanged )
 
+        # show elevations button
+        QObject.connect( self.dlg.ui.showElevationsBtn, SIGNAL("clicked()"), self.onShowElevations )
+
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
 
@@ -190,13 +196,24 @@ class IfsttarRouting:
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu(u"&Compute route", self.action)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )
 
         # init the history
         self.loadHistory()
+
+        self.clear()
+
+    # reset widgets contents and visibility
+    # as if it was just started
+    def clear( self ):
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )        
+        self.dlg.ui.showElevationsBtn.hide()
+        clearLayout( self.dlg.ui.resultLayout )
+        self.dlg.ui.roadmapTable.clear()
+        self.dlg.ui.roadmapTable.setRowCount(0)
+        self.dlg.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
@@ -414,6 +431,7 @@ class IfsttarRouting:
             self.profile = lastWidget
         else:
             self.profile = AltitudeProfile( self.dlg )
+            self.profile.hide()
             self.dlg.ui.resultSelectionLayout.addWidget( self.profile )
 
         # mousevent even when no button is clicked
@@ -495,8 +513,6 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
 
-        self.profile.displayElevations()
-
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 0, w )
@@ -505,6 +521,8 @@ class IfsttarRouting:
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(2)
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 2, w )
         self.dlg.ui.roadmapTable.horizontalHeader().setStretchLastSection( True )
+
+        self.profile.displayElevations()
 
     #
     # Take a XML tree from the WPS 'metrics' operation
@@ -682,12 +700,14 @@ class IfsttarRouting:
             self.displayRoadmapLayer( result, k )
             k += 1
 
+
     def onResultSelected( self, id ):
         for i in range(0, len(self.result_ids)):
             if id == self.result_ids[i]:
                 self.displayRoadmapTab( self.results[i] )
                 self.selectRoadmapLayer( i+1 )
                 self.currentRoadmap = i
+                self.dlg.ui.showElevationsBtn.show()
                 break
 
     #
@@ -806,6 +826,9 @@ class IfsttarRouting:
         for child in tree:
             loaded[ child.tag ] = child
 
+        # reset
+        self.clear()
+
         # update UI
         self.dlg.loadFromXML( loaded['select'][1] )
         self.displayMetrics( loaded['select'][4] )
@@ -906,6 +929,16 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.selectRow( fid )
         self.profile.highlightSelection( selected )
         self.selectionInProgress = False
+
+    def onShowElevations( self ):
+        if not self.profile:
+            return
+        if self.profile.isVisible():
+            self.profile.hide()
+            self.dlg.ui.showElevationsBtn.setText("Show elevations")
+        else:
+            self.profile.show()
+            self.dlg.ui.showElevationsBtn.setText("Hide elevations")
 
     def unload(self):
         # Remove the plugin menu item and icon

@@ -223,6 +223,30 @@
          <layout class="QVBoxLayout" name="resultSelectionLayout"/>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QPushButton" name="showElevationsBtn">
+            <property name="text">
+             <string>Show elevations</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="QTableWidget" name="roadmapTable">
           <property name="alternatingRowColors">
            <bool>true</bool>
