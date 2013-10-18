@@ -4,8 +4,6 @@
 #include "common.hh"
 #include "pgsql_importer.hh"
 
-#include "tempus_config.hh"
-
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h>
@@ -72,6 +70,12 @@ namespace Tempus
 
     const std::string Application::data_directory() const
     {
-        return TEMPUS_DATA_DIRECTORY;
+	const char * data_dir = getenv("TEMPUS_DATA_DIRECTORY");
+	if (!data_dir)
+	{
+	    CERR << "environment variable TEMPUS_DATA_DIRECTORY is not defined\n";
+	    throw::std::runtime_error("environment variable TEMPUS_DATA_DIRECTORY is not defined");
+	}
+        return data_dir;
     }
 }

@@ -1,3 +1,0 @@
-// File hh.in used by CMake
-
-#define TEMPUS_DATA_DIRECTORY "${TEMPUS_DATA_DIRECTORY}"

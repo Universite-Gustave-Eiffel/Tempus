@@ -1,6 +1,3 @@
-# config file generation
-configure_file( tempus_config.hh.in tempus_config.hh )
-include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # Core source files
 set( SOURCE_FILES 
