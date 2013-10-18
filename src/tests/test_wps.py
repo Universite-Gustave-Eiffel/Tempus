@@ -5,7 +5,7 @@ import re
 import unittest
 
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-wps_path = os.path.abspath( script_path + '/../wps/client' )
+wps_path = os.path.abspath( script_path + '/../python' )
 sys.path.insert(0, wps_path)
 from wps_client import *
 
