@@ -4,10 +4,10 @@
     <xs:attribute name="id" type="xs:long"/>
     <xs:attribute name="parent_id" type="xs:long"/>
     <xs:attribute name="name" type="xs:string"/>
-    <xs:attribute name="need_parking" type="xs:int"/>
-    <xs:attribute name="need_station" type="xs:int"/>
-    <xs:attribute name="need_return" type="xs:int"/>
-    <xs:attribute name="need_network" type="xs:int"/>
+    <xs:attribute name="need_parking" type="xs:boolean"/>
+    <xs:attribute name="need_station" type="xs:boolean"/>
+    <xs:attribute name="need_return" type="xs:boolean"/>
+    <xs:attribute name="need_network" type="xs:boolean"/>
   </xs:complexType>
   <xs:complexType name="TransportTypes">
     <xs:sequence>

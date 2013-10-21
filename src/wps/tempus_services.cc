@@ -63,10 +63,29 @@ namespace WPS
                 {
                     xmlNode* option_node = XML::new_node( "option" );
                     XML::new_prop( option_node, "name", it->first );
-                    XML::new_prop( option_node, "type",
-                                   to_string( it->second.type ) );
                     XML::new_prop( option_node, "description", it->second.description );
-                    XML::new_prop( option_node, "default_value", Plugin::to_string( it->second.default_value ));
+                    xmlNode *default_value_node = XML::new_node( "default_value" );
+                    xmlNode *value_node = 0;
+                    switch ( it->second.type() ) {
+                    case Plugin::BoolOption:
+                        value_node = XML::new_node( "bool_value" );
+                        break;
+                    case Plugin::IntOption:
+                        value_node = XML::new_node( "int_value" );
+                        break;
+                    case Plugin::FloatOption:
+                        value_node = XML::new_node( "float_value" );
+                        break;
+                    case Plugin::StringOption:
+                        value_node = XML::new_node( "string_value" );
+                        break;
+                    default:
+                        throw std::invalid_argument( "Plugin " + names[i] + ": unknown type for option " + it->first );
+                    }
+                    XML::new_prop( value_node, "value", it->second.default_value.str() );
+                    XML::add_child( default_value_node, value_node );
+                    XML::add_child( option_node, default_value_node );
+
                     XML::add_child( node, option_node );
                 }
 		XML::add_child( root_node, node );
@@ -260,10 +279,25 @@ namespace WPS
                 while ( field && !xmlStrcmp( field->name, (const xmlChar*)"option" ) )
                 {
                     std::string name = XML::get_prop( field, "name" );
-                    std::string value = XML::get_prop( field, "value" );
 
-                    plugin->set_option_from_string( name, value );
-                    field = XML::get_next_nontext( field->next );       
+                    const xmlNode* value_node = XML::get_next_nontext( field->children );
+                    Tempus::Plugin::OptionType t;
+                    if ( !xmlStrcmp( value_node->name, (const xmlChar*)"bool_value" ) ) {
+                        t = Tempus::Plugin::BoolOption;
+                    }
+                    else if ( !xmlStrcmp( value_node->name, (const xmlChar*)"int_value" ) ) {
+                        t = Tempus::Plugin::IntOption;
+                    }
+                    else if ( !xmlStrcmp( value_node->name, (const xmlChar*)"float_value" ) ) {
+                        t = Tempus::Plugin::FloatOption;
+                    }
+                    else if ( !xmlStrcmp( value_node->name, (const xmlChar*)"string_value" ) ) {
+                        t = Tempus::Plugin::StringOption;
+                    }
+                    const std::string value = XML::get_prop( value_node, "value" );
+
+                    plugin->set_option_from_string( name, value, t );
+                    field = XML::get_next_nontext( field->next );
                 }
             }
             TIMING

@@ -21,12 +21,10 @@
 """
 import re
 from wps_client import *
-from tempus_request import *
 import config
 import binascii
 import pickle
 import os
-import struct
 import math
 from datetime import datetime
 
@@ -38,7 +36,7 @@ from qgis.gui import *
 #import PyQt4.QtCore
 #import PyQt4.QtGui
 
-#from xml.etree import ElementTree as ET
+from xml.etree import ElementTree as etree
 from lxml import etree as ET
 
 # Initialize Qt resources from file resources.py
@@ -51,6 +49,8 @@ from ui_splash_screen import Ui_SplashScreen
 from history_file import ZipHistoryFile
 from result_selection import ResultSelection
 from altitude_profile import AltitudeProfile
+from wkb import WKB
+import tempus_request as Tempus
 
 import pickle
 
@@ -60,49 +60,6 @@ ROADMAP_LAYER_NAME = "Roadmap_"
 
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)
-
-class WKB:
-
-    def __init__( self, wkb ):
-        self.wkb = wkb
-        # prefix for unpack : little or big endian
-        self.prefix = '<' if wkb[1] == '1' else '>'
-        self.type = struct.unpack(self.prefix+'h', self.wkb[1*2:3*2].decode('hex'))[0]
-
-    # convert a LineStringZ to a 2D LineString
-    def force2d( self ):
-        if self.type != 1002: # LineStringZ
-            return
-        nwkb = self.wkb[0:2] + '0200' + self.wkb[3*2:9*2]
-        npts = struct.unpack(self.prefix+'h', self.wkb[5*2:7*2].decode('hex'))[0]
-        for i in range(0,npts):
-            p = 9+i*3*8
-            xs = self.wkb[p*2:(p+8)*2]
-            ys = self.wkb[(p+8)*2:(p+16)*2]
-            nwkb += xs + ys
-        return nwkb
-
-    # get an array of (x,y,z) from a LineStringZ
-    def dumpPoints( self ):
-        if self.type != 1002:
-            return []
-        ret = []
-        npts = struct.unpack(self.prefix+'h', self.wkb[5*2:7*2].decode('hex'))[0]
-        for i in range(0,npts):
-            p = 9+i*3*8
-            xs = self.wkb[p*2:(p+8)*2]
-            ys = self.wkb[(p+8)*2:(p+16)*2]
-            zs = self.wkb[(p+16)*2:(p+24)*2]
-            x = struct.unpack(self.prefix+'d', xs.decode('hex'))[0]
-            y = struct.unpack(self.prefix+'d', ys.decode('hex'))[0]
-            z = struct.unpack(self.prefix+'d', zs.decode('hex'))[0]
-            ret.append( (x,y,z) )
-        return ret
-
-def format_cost( cost ):
-    cost_value = float(cost.attrib['value'])
-    id = int(cost.attrib['type'])
-    return "%s: %.1f %s" % (CostName[id], cost_value, CostUnit[id])
 
 #
 # clears a FormLayout
@@ -173,25 +130,29 @@ class IfsttarRouting:
 
         self.wps = None
         self.historyFile = ZipHistoryFile( HISTORY_FILE )
+        self.dlg.ui.historyFileLbl.setText( HISTORY_FILE )
 
         # list of transport types
-        self.transport_types = {}
-        #list of public networks
-        self.networks = {}
+        # array of Tempus.TransportType
+        self.transport_types = []
+        # list of public networks
+        # array of Tempus.TransportNetwork
+        self.networks = []
 
-        # list of things to save onto history
-        self.save = {}
-
+        # plugin descriptions
+        # dict plugin_name =>  Tempus.Plugin
+        self.plugins = {}
         # where to store plugin options
+        # dict plugin_name => Tempus.OptionValue
         self.plugin_options = {}
-
-        # option desc
-        self.options = None
 
         self.currentRoadmap = None
 
         # prevent reentrance when roadmap selection is in progress
         self.selectionInProgress = False
+
+        # profile widget
+        self.profile = None
 
         self.setStateText("DISCONNECTED")
 
@@ -221,6 +182,9 @@ class IfsttarRouting:
 
         QObject.connect( self.dlg.ui.roadmapTable, SIGNAL("itemSelectionChanged()"), self.onRoadmapSelectionChanged )
 
+        # show elevations button
+        QObject.connect( self.dlg.ui.showElevationsBtn, SIGNAL("clicked()"), self.onShowElevations )
+
         self.originPoint = QgsPoint()
         self.destinationPoint = QgsPoint()
 
@@ -228,59 +192,92 @@ class IfsttarRouting:
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu(u"&Compute route", self.action)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )
 
         # init the history
         self.loadHistory()
+
+        self.clear()
+
+    # reset widgets contents and visibility
+    # as if it was just started
+    def clear( self ):
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, False )
+        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, False )        
+        self.dlg.ui.showElevationsBtn.hide()
+        clearLayout( self.dlg.ui.resultLayout )
+        self.dlg.ui.roadmapTable.clear()
+        self.dlg.ui.roadmapTable.setRowCount(0)
+        self.dlg.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
 
     # when the 'connect' button gets clicked
     def onConnect( self ):
-        # get the wps url
-        g = re.search( 'http://([^/]+)(.*)', str(self.dlg.ui.wpsUrlText.text()) )
-        host = g.group(1)
-        path = g.group(2)
-        connection = HttpCgiConnection( host, path )
-        self.wps = WPSClient(connection)
+        self.wps = Tempus.TempusRequest( self.dlg.ui.wpsUrlText.text() )
 
         self.getPluginList()
+        if len(self.plugins) == 0:
+            QMessageBox.warning( self.dlg, "Warning", "No plugin loaded server side, no computation could be done" )
+        else:
+            # initialize plugin option values
+            self.initPluginOptions()
+            self.displayPlugins( self.plugins )
+
+            self.getConstants()
         
-        self.dlg.ui.pluginCombo.setEnabled( True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
-        self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
-        self.dlg.ui.computeBtn.setEnabled( True )
-        self.setStateText("connected")
+            self.dlg.ui.pluginCombo.setEnabled( True )
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
+            self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+            self.dlg.ui.computeBtn.setEnabled( True )
+            self.setStateText("connected")
 
         # restore the history to HISTORY_FILE, if needed (after import)
         if self.historyFile.filename != HISTORY_FILE:
             self.historyFile = ZipHistoryFile( HISTORY_FILE )
+            self.dlg.ui.historyFileLbl.setText( HISTORY_FILE )
             self.loadHistory()
 
     def getPluginList( self ):
         # get plugin list
         try:
-            outputs = self.wps.execute( 'plugin_list', {} )
+            plugins = self.wps.plugin_list()
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", e.args[1] )
             return
+        self.plugins.clear()
+        for plugin in plugins:
+            self.plugins[plugin.name] = plugin
 
-        self.displayPlugins( outputs['plugins'], 0 )
-        self.save['plugins'] = to_pson(outputs['plugins'])
+    def initPluginOptions( self ):
+        self.plugin_options.clear()
+        for name, plugin in self.plugins.iteritems():
+            optval = {}
+            for k,v in plugin.options.iteritems():
+                optval[k] = v.default_value.value
+            self.plugin_options[name] = optval
+
+    def getConstants( self ):
+        if self.wps is None:
+            return
+        try:
+            (road_types, transport_types, transport_networks) = self.wps.constant_list()
+        except RuntimeError as e:
+            QMessageBox.warning( self.dlg, "Error", repr(e.args) )
+            return
+        self.transport_types = transport_types
+        self.networks = transport_networks
 
     def update_plugin_options( self, plugin_idx ):
-        if self.dlg.ui.verticalTabWidget.currentIndex() != 1:
+        if plugin_idx == -1:
             return
 
         plugin_name = str(self.dlg.ui.pluginCombo.currentText())
-        options_desc = self.options[plugin_name]
-        self.displayPluginOptions( plugin_name, options_desc, self.plugin_options[plugin_name] )
+        self.displayPluginOptions( plugin_name )
 
     def onTabChanged( self, tab ):
         # Plugin tab
@@ -289,18 +286,7 @@ class IfsttarRouting:
 
         # 'Query' tab
         elif tab == 2:
-            if self.wps is None:
-                return
-            try:
-                outputs = self.wps.execute( 'constant_list', {} )
-            except RuntimeError as e:
-                QMessageBox.warning( self.dlg, "Error", e.args[1] )
-                return
-
-            self.save['road_types'] = to_pson(outputs['road_types'])
-            self.save['transport_types'] = to_pson(outputs['transport_types'])
-            self.save['transport_networks'] = to_pson(outputs['transport_networks'])
-            self.displayTransportAndNetworks( outputs['transport_types'], outputs['transport_networks'] )
+            self.displayTransportAndNetworks()
 
     def loadHistory( self ):
         #
@@ -380,18 +366,18 @@ class IfsttarRouting:
 
         # browse steps
         for step in steps:
-            if step.tag == 'cost':
+            if step.wkb == '':
                 continue
             # find wkb geometry
-            wkb = WKB(step.attrib['wkb'])
+            wkb = WKB(step.wkb)
             wkb = wkb.force2d()
 
             fet = QgsFeature()
             geo = QgsGeometry()
             geo.fromWkb( binascii.unhexlify(wkb) )
-            if step.tag == 'road_step':
+            if isinstance(step, Tempus.RoadStep):
                 transport_type = 1
-            elif step.tag == 'public_transport_step':
+            elif isinstance( step, Tempus.PublicTransportStep ):
                 transport_type = 2
             else:
                 transport_type = 3
@@ -452,6 +438,7 @@ class IfsttarRouting:
             self.profile = lastWidget
         else:
             self.profile = AltitudeProfile( self.dlg )
+            self.profile.hide()
             self.dlg.ui.resultSelectionLayout.addWidget( self.profile )
 
         # mousevent even when no button is clicked
@@ -463,8 +450,8 @@ class IfsttarRouting:
             icon_text = ''
             cost_text = ''
 
-            if step.attrib.has_key('wkb'):
-                wkb = WKB(step.attrib['wkb'])
+            if step.wkb and step.wkb != '':
+                wkb = WKB(step.wkb)
                 pts = wkb.dumpPoints()
                 prev = pts[0]
                 for p in pts[1:]:
@@ -472,47 +459,38 @@ class IfsttarRouting:
                     self.profile.addElevation( dist, prev[2], p[2], row )
                     prev = p
 
-            if step.tag == 'road_step':
-                road_name = step.attrib['road']
-                movement = int(step.attrib['end_movement'])
-                costs = step
+            if isinstance(step, Tempus.RoadStep):
+                road_name = step.road
+                movement = step.end_movement
                 text += "<p>"
                 action_txt = 'Walk on '
-                if last_movement == 1:
+                if last_movement == Tempus.EndMovement.TurnLeft:
                     icon_text += "<img src=\"%s/turn_left.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                     action_txt = "Turn left on "
-                elif last_movement == 2:
+                elif last_movement == Tempus.EndMovement.TurnRight:
                     icon_text += "<img src=\"%s/turn_right.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                     action_txt = "Turn right on "
-                elif last_movement >= 4 and last_movement < 999:
+                elif last_movement >= Tempus.EndMovement.RoundAboutEnter and last_movement < Tempus.EndMovement.YouAreArrived:
                     icon_text += "<img src=\"%s/roundabout.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                 text += action_txt + road_name + "<br/>\n"
                 text += "</p>"
                 last_movement = movement
 
-            elif step.tag == 'public_transport_step':
-                network = step.attrib['network']
-                departure = step.attrib['departure_stop']
-                arrival = step.attrib['arrival_stop']
+            elif isintance(step, Tempus.PublicTransportStep ):
                 trip = step.attrib['trip']
-                costs = step
                 # set network text as icon
-                icon_text = network
-                text = "Take the trip %s from '%s' to '%s'" % (trip, departure, arrival)
+                icon_text = step.network
+                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure_stop, trip.arrival_stop)
 
-            elif step.tag == 'road_transport_step':
-                stype = int(step.attrib['type'])
-                road = step.attrib['road']
-                icon_text = step.attrib['network']
-                stop = step.attrib['stop']
-                costs = step
-                if stype == 2:
-                    text = "Go to the '%s' station from %s" % (stop, road)
+            elif isinstance(step, Tempus.RoadTransportStep ):
+                icon_text = step.network
+                if step.type == 2:
+                    text = "Go to the '%s' station from %s" % (step.stop, step.road)
                 else:
-                    text = "Leave the '%s' station to %s" % (stop, road)
+                    text = "Leave the '%s' station to %s" % (step.stop, step.road)
 
-            for cost in costs:
-                cost_text += format_cost( cost ) + "<br/>\n"
+            for k,v in step.costs.iteritems():
+                cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
                 
             self.dlg.ui.roadmapTable.insertRow( row )
             descLbl = QLabel()
@@ -533,8 +511,6 @@ class IfsttarRouting:
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
 
-        self.profile.displayElevations()
-
         # Adjust column widths
         w = self.dlg.ui.roadmapTable.sizeHintForColumn(0)
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 0, w )
@@ -544,6 +520,11 @@ class IfsttarRouting:
         self.dlg.ui.roadmapTable.horizontalHeader().resizeSection( 2, w )
         self.dlg.ui.roadmapTable.horizontalHeader().setStretchLastSection( True )
 
+        if not self.profile.empty():
+            self.dlg.ui.showElevationsBtn.setEnabled(True)
+            self.profile.displayElevations()
+        else:
+            self.dlg.ui.showElevationsBtn.setEnabled(False)
     #
     # Take a XML tree from the WPS 'metrics' operation
     # and fill the 'Metrics' tab
@@ -552,13 +533,13 @@ class IfsttarRouting:
         row = 0
         clearLayout( self.dlg.ui.resultLayout )
 
-        for metric in metrics:
+        for name, metric in metrics.iteritems():
             lay = self.dlg.ui.resultLayout
             lbl = QLabel( self.dlg )
-            lbl.setText( metric.attrib['name'] + '' )
+            lbl.setText( name )
             lay.setWidget( row, QFormLayout.LabelRole, lbl )
             widget = QLineEdit( self.dlg )
-            widget.setText( metric.attrib['value'] + '' )
+            widget.setText( str(metric) )
             widget.setEnabled( False )
             lay.setWidget( row, QFormLayout.FieldRole, widget )
             row += 1
@@ -567,57 +548,42 @@ class IfsttarRouting:
     # Take XML trees of 'plugins' and an index of selection
     # and fill the 'plugin' tab
     #
-    def displayPlugins( self, plugins, selection ):
+    def displayPlugins( self, plugins ):
         self.dlg.ui.pluginCombo.clear()
-        self.options = {}
-        for plugin in plugins:
-            plugin_name = plugin.attrib['name']
-
-            # save option description
-            self.options[plugin_name] = plugin
-
-            # initialize options
-            opt_values = {}
-            for option in plugin:
-                k = option.attrib['name']
-                opt_values[k] = option.attrib['default_value']
-            self.plugin_options[plugin_name] = opt_values
-
-            self.dlg.ui.pluginCombo.insertItem(0, plugin_name )
-        self.dlg.ui.pluginCombo.setCurrentIndex( selection )
+        self.options_desc = {}
+        for name, plugin in plugins.iteritems():
+            self.dlg.ui.pluginCombo.insertItem(0, name )
 
     #
     # Take XML tree of 'options' and a dict 'option_values'
     # and fill the options part of the 'plugin' tab
     #
-    def displayPluginOptions( self, plugin_name, options_desc, options_value ):
+    def displayPluginOptions( self, plugin_name ):
         lay = self.dlg.ui.optionsLayout
         clearLayout( lay )
 
         row = 0
-        for option in options_desc:
+        for name, option in self.plugins[plugin_name].options.iteritems():
             lbl = QLabel( self.dlg )
-            name = option.attrib['name'] + ''
-            lbl.setText( option.attrib['description'] )
+            lbl.setText( option.description )
             lay.setWidget( row, QFormLayout.LabelRole, lbl )
             
-            t = int(option.attrib['type'])
+            t = option.type()
             
-            val = options_value[name]
-            # bool type
-            if t == 0:
+            val = self.plugin_options[plugin_name][name]
+            if t == Tempus.OptionType.Bool:
                 widget = QCheckBox( self.dlg )
-                if val == 'true':
+                if val == True:
                     widget.setCheckState( Qt.Checked )
                 else:
                     widget.setCheckState( Qt.Unchecked )
                 QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, checked ) )
             else:
                 widget = QLineEdit( self.dlg )
-                if t == 1:
+                if t == Tempus.OptionType.Int:
                     valid = QIntValidator( widget )
                     widget.setValidator( valid )
-                if t == 2:
+                if t == Tempus.OptionType.Float:
                     valid = QDoubleValidator( widget )
                     widget.setValidator( valid )
                 widget.setText( val )
@@ -629,60 +595,46 @@ class IfsttarRouting:
     #
     # Take an XML trees from 'constant_list'
     # load them and display them
-    def displayTransportAndNetworks( self, xmlTransportTypes, xmlTransportNetworks ):
-            #
-            # add each transport type to the list
-            #
+    def displayTransportAndNetworks( self ):
 
-            # retrieve the list of transport types
-            self.transport_types = []
-            for transport_type in xmlTransportTypes:
-                self.transport_types.append(transport_type.attrib)
+        listModel = QStandardItemModel()
+        for ttype in self.transport_types:
+            idt = ttype.id
+            has_network = False
+            if ttype.need_network:
+                # look for networks that provide this kind of transport
+                for network in self.networks:
+                    ptt = network.provided_transport_types
+                    if ptt & ttype.id:
+                        has_network = True
+                        break
 
-            # retrieve the network list
-            self.networks = []
-            for network in xmlTransportNetworks:
-                self.networks.append(network.attrib)
-
-            listModel = QStandardItemModel()
-            for ttype in self.transport_types:
-                need_network = int(ttype['need_network'])
-                idt = int(ttype['id'])
-                has_network = False
-                if need_network:
-                    # look for networks that provide this kind of transport
-                    for network in self.networks:
-                        ptt = int(network['provided_transport_types'])
-                        if ptt & idt:
-                            has_network = True
-                            break
-
-                item = QStandardItem( ttype['name'] )
-                if need_network and not has_network:
-                    item.setFlags(Qt.ItemIsUserCheckable)
-                    item.setData( Qt.Unchecked, Qt.CheckStateRole)
-                else:
-                    item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                    item.setData( Qt.Checked, Qt.CheckStateRole)
-                listModel.appendRow(item)
-            self.dlg.ui.transportList.setModel( listModel )
-
-            networkListModel = QStandardItemModel()
-            for network in self.networks:
-                title = network['name']
-
-                # look for provided transport types
-                tlist = []
-                ptt = int( network['provided_transport_types'] )
-                for ttype in self.transport_types:
-                    if ptt & int(ttype['id']):
-                        tlist.append( ttype['name'] )
-
-                item = QStandardItem( network['name'] + ' (' + ', '.join(tlist) + ')')
+            item = QStandardItem( ttype.name )
+            if ttype.need_network and not has_network:
+                item.setFlags(Qt.ItemIsUserCheckable)
+                item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            else:
                 item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                 item.setData( Qt.Checked, Qt.CheckStateRole)
-                networkListModel.appendRow(item)
-            self.dlg.ui.networkList.setModel( networkListModel )
+            listModel.appendRow(item)
+        self.dlg.ui.transportList.setModel( listModel )
+
+        networkListModel = QStandardItemModel()
+        for network in self.networks:
+            title = network.name
+
+            # look for provided transport types
+            tlist = []
+            ptt = network.provided_transport_types
+            for ttype in self.transport_types:
+                if ptt & ttype.id:
+                    tlist.append( ttype.name )
+
+            item = QStandardItem( network.name + ' (' + ', '.join(tlist) + ')')
+            item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            item.setData( Qt.Checked, Qt.CheckStateRole)
+            networkListModel.appendRow(item)
+        self.dlg.ui.networkList.setModel( networkListModel )
 
     #
     # Take an XML tree from the WPS 'results'
@@ -698,11 +650,8 @@ class IfsttarRouting:
             name = "%s%d" % (ROADMAP_LAYER_NAME,k)
             rselect = ResultSelection()
             rselect.setText( name )
-            for r in result:
-                if r.tag == 'cost':
-                    # get the roadmap
-                    id = int(r.attrib['type'])
-                    rselect.addCost(CostName[id], "%.1f%s" % (float(r.attrib['value']), CostUnit[id]))
+            for k,v in result.costs.iteritems():
+                rselect.addCost(Tempus.CostName[k], "%.1f%s" % (v, Tempus.CostUnit[k]))
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
@@ -717,15 +666,17 @@ class IfsttarRouting:
         # then display each layer
         k = 1
         for result in results:
-            self.displayRoadmapLayer( result, k )
+            self.displayRoadmapLayer( result.steps, k )
             k += 1
+
 
     def onResultSelected( self, id ):
         for i in range(0, len(self.result_ids)):
             if id == self.result_ids[i]:
-                self.displayRoadmapTab( self.results[i] )
+                self.displayRoadmapTab( self.results[i].steps )
                 self.selectRoadmapLayer( i+1 )
                 self.currentRoadmap = i
+                self.dlg.ui.showElevationsBtn.show()
                 break
 
     #
@@ -742,60 +693,38 @@ class IfsttarRouting:
         constraints = self.dlg.get_constraints()
         parking = self.dlg.get_parking()
         pvads = self.dlg.get_pvads()
-        networks = [ self.networks[x] for x in self.dlg.selected_networks() ]
-        transports = [ self.transport_types[x] for x in self.dlg.selected_transports() ]
+        networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
+        transports = sum([ self.transport_types[x].id for x in self.dlg.selected_transports() ])
 
         # build the request
-
-        allowed_transports = 0
-        for x in transports:
-            allowed_transports += int(x['id'])
-
-        r = [ 'request',
-              { 'allowed_transport_types': allowed_transports },
-              ['origin', {'x': str(ox), 'y': str(oy) } ],
-              ['departure_constraint', { 'type': constraints[0][0], 'date_time': constraints[0][1] } ]]
-
-        if parking != []:
-            r.append(['parking_location', {'x': parking[0], 'y': parking[1]} ])
-
-        for criterion in criteria:
-            r.append(['optimizing_criterion', criterion])
-
-        for n in networks:
-            r.append( ['allowed_network', int(n['id']) ] )
-
-        n = len(constraints)
-        for i in range(1, n):
-            pvad = 'false'
-            if pvads[i-1] == True:
-                pvad = 'true'
-            r.append( ['step',
-                       { 'private_vehicule_at_destination': pvad },
-                       [ 'destination', {'x': str(coords[i][0]), 'y': str(coords[i][1])} ],
-                       [ 'constraint', { 'type' : constraints[i][0], 'date_time': constraints[i][1] } ],
-                       ] )
-
-        currentPluginIdx = self.dlg.ui.pluginCombo.currentIndex()
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
-        plugin_arg = { 'plugin' : ['plugin', {'name' : currentPlugin } ] }
 
-        args = plugin_arg
-        args['request'] = r
-
-        # plugin options processing
-        options = [ [ 'option', { 'name':k, 'value':str(v)}] for k,v in self.plugin_options[currentPlugin].iteritems() ]
-        options.insert( 0, 'options' )
-        args['options'] = options
+        steps = []
+        for i in range(1, len(constraints)):
+            steps.append( Tempus.RequestStep( private_vehicule_at_destination = pvads[i-1],
+                                destination = Tempus.Point( coords[i][0], coords[i][1] ),
+                                constraint = Tempus.Constraint( type = constraints[i][0], date_time = constraints[i][1] )
+                                )
+                          )
 
         try:
-            outputs = self.wps.execute( 'select', args )
+            select_xml = self.wps.request( plugin_name = currentPlugin,
+                                           plugin_options = self.plugin_options[currentPlugin],
+                                           origin = Tempus.Point(ox, oy),
+                                           departure_constraint = Tempus.Constraint( type = constraints[0][0],
+                                                                                     date_time = constraints[0][1] ),
+                                           allowed_transport_types = transports,
+                                           parking_location = None if parking == [] else Tempus.Point(parking[0], parking[1]),
+                                           criteria = criteria,
+                                           networks = networks,
+                                           steps = steps
+                                           )
         except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
 
-        self.displayResults( outputs['results'] )
-        self.displayMetrics( outputs['metrics'] )
+        self.displayResults( self.wps.results )
+        self.displayMetrics( self.wps.metrics )
 
         # enable 'metrics' and 'roadmap' tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
@@ -804,16 +733,15 @@ class IfsttarRouting:
         self.dlg.ui.roadmapTable.clear()
         self.dlg.ui.roadmapTable.setRowCount(0)
 
-        # save request state
-        request = [ 'select', args['plugin'], args['request'], args['options'], to_pson(outputs['results']), to_pson(outputs['metrics']) ]
-
-        # save server state (in self.save)
-        server_state = [ 'server_state', self.save['plugins'], self.save['road_types'], 
-                         self.save['transport_types'], self.save['transport_networks'] ]
-        pson = [ 'record', request, server_state ]
-
-        str_record = to_xml(pson)
-        self.historyFile.addRecord( str_record )
+        # save the request and the server state
+        xml_record = '<record>' + select_xml
+        server_state = to_xml([ 'server_state',
+                                etree.tostring(self.wps.save['plugins']),
+                                etree.tostring(self.wps.save['road_types']), 
+                                etree.tostring(self.wps.save['transport_types']),
+                                etree.tostring(self.wps.save['transport_networks']) ] )
+        xml_record += server_state + '</record>'
+        self.historyFile.addRecord( xml_record )
 
     def onHistoryItemSelect( self, item ):
         msgBox = QMessageBox()
@@ -844,25 +772,34 @@ class IfsttarRouting:
         for child in tree:
             loaded[ child.tag ] = child
 
+        # reset
+        self.clear()
+
         # update UI
         self.dlg.loadFromXML( loaded['select'][1] )
-        self.displayMetrics( loaded['select'][4] )
-        self.displayResults( loaded['select'][3] )
+        self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
+        self.displayResults( Tempus.parse_results(loaded['select'][3]) )
 
-        self.displayPlugins( loaded['server_state'][0], 0);
-        
-        # get current plugin option
+        self.plugins.clear()
+        plugins = Tempus.parse_plugins(loaded['server_state'][0])
+        for plugin in plugins:
+            self.plugins[plugin.name] = plugin
+        self.initPluginOptions()
+        self.displayPlugins( self.plugins )
+
+        # get current plugin option values
         currentPlugin = loaded['select'][0].attrib['name']
-        plugin_options = self.plugin_options[currentPlugin]
-        options = loaded['select'][2]
-        for option in options:
-            k = option.attrib['name']
-            v = option.attrib['value']
-            plugin_options[k] = v
+        myoptions = Tempus.parse_plugin_options( loaded['select'][2] )
+        for k, v in myoptions.iteritems():
+            self.plugin_options[currentPlugin][k] = v.value
+        # select currendt plugin
+        idx = self.dlg.ui.pluginCombo.findText( currentPlugin )
+        self.dlg.ui.pluginCombo.setCurrentIndex( idx )
 
-        self.transport_types = loaded['server_state'][2]
-        self.networks = loaded['server_state'][3]
-        self.displayTransportAndNetworks( self.transport_types, self.networks )
+        self.transport_types = Tempus.parse_transport_types( loaded['server_state'][2] )
+        self.networks = Tempus.parse_transport_networks( loaded['server_state'][3] )
+
+        self.displayTransportAndNetworks()
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -882,6 +819,7 @@ class IfsttarRouting:
 
         # switch historyFile
         self.historyFile = ZipHistoryFile( fname )
+        self.dlg.ui.historyFileLbl.setText( fname )
         self.loadHistory()
 
     # when the user selects a row of the roadmap
@@ -937,13 +875,23 @@ class IfsttarRouting:
 
         # block signals to prevent infinite loop
         self.selectionInProgress = True
-        self.displayRoadmapTab( self.results[layerid-1] )
+        self.displayRoadmapTab( self.results[layerid-1].steps )
 
         selected = [ feature.id()-1 for feature in layer.selectedFeatures() ]
         for fid in selected:
             self.dlg.ui.roadmapTable.selectRow( fid )
         self.profile.highlightSelection( selected )
         self.selectionInProgress = False
+
+    def onShowElevations( self ):
+        if not self.profile:
+            return
+        if self.profile.isVisible():
+            self.profile.hide()
+            self.dlg.ui.showElevationsBtn.setText("Show elevations")
+        else:
+            self.profile.show()
+            self.dlg.ui.showElevationsBtn.setText("Hide elevations")
 
     def unload(self):
         # Remove the plugin menu item and icon
