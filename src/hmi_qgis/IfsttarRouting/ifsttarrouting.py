@@ -657,7 +657,6 @@ class IfsttarRouting:
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
-        self.results = results
 
         # delete pre existing roadmap layers
         maps = QgsMapLayerRegistry.instance().mapLayers()
@@ -725,7 +724,8 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
 
-        self.displayResults( self.wps.results )
+        self.results = self.wps.results
+        self.displayResults( self.results )
         self.displayMetrics( self.wps.metrics )
 
         # enable 'metrics' and 'roadmap' tabs
@@ -782,7 +782,8 @@ class IfsttarRouting:
         # update UI
         self.dlg.loadFromXML( loaded['select'][1] )
         self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
-        self.displayResults( Tempus.parse_results(loaded['select'][3]) )
+        self.results = Tempus.parse_results(loaded['select'][3])
+        self.displayResults( self.results )
 
         self.plugins.clear()
         plugins = Tempus.parse_plugins(loaded['server_state'][0])
