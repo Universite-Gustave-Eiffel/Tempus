@@ -23,7 +23,6 @@ import re
 from wps_client import *
 import config
 import binascii
-import pickle
 import os
 import math
 from datetime import datetime
@@ -37,7 +36,11 @@ from qgis.gui import *
 #import PyQt4.QtGui
 
 from xml.etree import ElementTree as etree
-from lxml import etree as ET
+XML_SCHEMA_VALIDATION = True
+try:
+        from lxml import etree as ET
+except ImportError:
+        XML_SCHEMA_VALIDATION = False
 
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -51,8 +54,6 @@ from result_selection import ResultSelection
 from altitude_profile import AltitudeProfile
 from wkb import WKB
 import tempus_request as Tempus
-
-import pickle
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
@@ -757,17 +758,19 @@ class IfsttarRouting:
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
 
-        # validate entry
-        schema_root = ET.parse( config.TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" )
-        schema = ET.XMLSchema(schema_root)
-        parser = ET.XMLParser(schema = schema)
-        try:
-            tree = ET.fromstring( xmlStr, parser)
-        except ET.XMLSyntaxError as e:
-            QMessageBox.warning( self.dlg, "XML parsing error", e.msg )
-            return
+        if XML_SCHEMA_VALIDATION:
+                # validate entry
+                schema_root = ET.parse( config.TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" )
+                schema = ET.XMLSchema(schema_root)
+                parser = ET.XMLParser(schema = schema)
+                try:
+                        tree = ET.fromstring( xmlStr, parser)
+                except ET.XMLSyntaxError as e:
+                        QMessageBox.warning( self.dlg, "XML parsing error", e.msg )
+                        return
 
-#        tree = ET.XML(xmlStr)
+        else:
+                tree = etree.XML(xmlStr)
         loaded = {}
         for child in tree:
             loaded[ child.tag ] = child
