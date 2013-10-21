@@ -130,6 +130,7 @@ class IfsttarRouting:
 
         self.wps = None
         self.historyFile = ZipHistoryFile( HISTORY_FILE )
+        self.dlg.ui.historyFileLbl.setText( HISTORY_FILE )
 
         # list of transport types
         # array of Tempus.TransportType
@@ -238,6 +239,7 @@ class IfsttarRouting:
         # restore the history to HISTORY_FILE, if needed (after import)
         if self.historyFile.filename != HISTORY_FILE:
             self.historyFile = ZipHistoryFile( HISTORY_FILE )
+            self.dlg.ui.historyFileLbl.setText( HISTORY_FILE )
             self.loadHistory()
 
     def getPluginList( self ):
@@ -817,6 +819,7 @@ class IfsttarRouting:
 
         # switch historyFile
         self.historyFile = ZipHistoryFile( fname )
+        self.dlg.ui.historyFileLbl.setText( fname )
         self.loadHistory()
 
     # when the user selects a row of the roadmap
