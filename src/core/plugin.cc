@@ -169,9 +169,27 @@ PluginFactory * PluginFactory::instance()
 	db_(db_options) // create another connection
     {
 	// default metrics
-	metrics_[ "time_s" ] = (float)0.0;
+	metrics_[ "time_s" ] = (double)0.0;
 	metrics_[ "iterations" ] = (int)0;
     }
+
+    Plugin::OptionValue::OptionValue( bool b ) : type_(BoolOption)
+    {
+        str_ = b ? "true" : "false";
+    }
+    Plugin::OptionValue::OptionValue( int i ) : type_(IntOption)
+    {
+        std::ostringstream ostr;
+        ostr << i;
+        str_ = ostr.str();
+    }
+    Plugin::OptionValue::OptionValue( double i ) : type_(FloatOption)
+    {
+        std::ostringstream ostr;
+        ostr << i;
+        str_ = ostr.str();
+    }
+    Plugin::OptionValue::OptionValue( const std::string& s, OptionType t ) : type_(t), str_(s) {}
 
     template <class T>
     void Plugin::get_option( const std::string& nname, T& value )
@@ -185,14 +203,10 @@ PluginFactory * PluginFactory::instance()
         if ( options_.find( nname ) == options_.end() )
         {
             // return default value
-            value = boost::any_cast<T>( descIt->second.default_value );
+            value = descIt->second.default_value.as<T>();
             return;
         }
-        boost::any v = options_[nname];
-        if ( !v.empty() )
-        {
-            value = boost::any_cast<T>(options_[nname]);
-        }
+        value = options_[nname].as<T>();
     }
     // template instanciations
     template void Plugin::get_option<bool>( const std::string&, bool& );
@@ -200,53 +214,20 @@ PluginFactory * PluginFactory::instance()
     template void Plugin::get_option<double>( const std::string&, double& );
     template void Plugin::get_option<std::string>( const std::string&, std::string& );
 
-    std::string Plugin::to_string( const Plugin::OptionValue & v )
-    {
-        std::ostringstream ostr;
-        if ( v.type() == typeid(bool) ) {
-            ostr << (boost::any_cast<bool>( v ) ? "true" : "false");
-        }
-        else if ( v.type() == typeid(int) ) {
-            ostr << boost::any_cast<int>( v );
-        }
-        else if ( v.type() == typeid(double) ) {
-            ostr << boost::any_cast<double>( v );
-        }
-        else if ( v.type() == typeid(std::string) ) {
-            ostr << boost::any_cast<std::string>( v );
-        }
-        return ostr.str();
-    }
-
-    void Plugin::set_option_from_string( const std::string& nname, const std::string& value)
+    void Plugin::set_option_from_string( const std::string& nname, const std::string& value, Plugin::OptionType type )
     {
         const Plugin::OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
         Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
 	if ( descIt == desc.end() )
 	    return;
-	const OptionType t = descIt->second.type;
-        try {
-            switch (t)
-            {
-            case BoolOption:
-                options_[nname] = value == "true" ;
-                break;
-            case IntOption:
-                options_[nname] = lexical_cast<int>( value );
-                break;
-            case FloatOption:
-                options_[nname] = lexical_cast<float>( value );
-                break;
-            case StringOption:
-                options_[nname] = value;
-                break;
-            default:
-                throw std::runtime_error( "Unknown type" );
-            }
+	const OptionType t = descIt->second.type();
+        if ( t != type ) {
+            throw std::invalid_argument( (boost::format( "Requested type %1% for option %2% is different from the declared type %3%")
+                                          % type
+                                          % nname
+                                          % t ).str() );
         }
-        catch ( Tempus::bad_lexical_cast& ) {
-            options_[nname] = descIt->second.default_value;
-        }
+        options_[nname] = OptionValue( value, t );
     }
 
     std::string Plugin::option_to_string( const std::string& nname )
@@ -257,26 +238,8 @@ PluginFactory * PluginFactory::instance()
 	{
 	    throw std::invalid_argument( "Cannot find option " + nname );
 	}
-	OptionType t = descIt->second.type;
-	boost::any value = options_[nname];
-	if ( value.empty() )
-	    return "";
-
-	switch (t)
-	{
-	case BoolOption:
-	    return boost::any_cast<bool>(value) ? "true" : "false";
-	case IntOption:
-	    return to_string( boost::any_cast<int>(value) );
-	case FloatOption:
-	    return to_string( boost::any_cast<float>(value) );
-	case StringOption:
-	    return boost::any_cast<std::string>(value);
-	default:
-	    throw std::runtime_error( "Unknown type" );
-	}
-	// never happens
-	return "";
+	OptionValue value = options_[nname];
+        return value.str();
     }
 
     std::string Plugin::metric_to_string( const std::string& nname )
@@ -285,29 +248,8 @@ PluginFactory * PluginFactory::instance()
 	{
 	    throw std::invalid_argument( "Cannot find metric " + nname );
 	}
-	boost::any v = metrics_[nname];
-	if ( v.empty() )
-	    return "";
-
-	if ( v.type() == typeid( bool ) )
-	{
-	    return to_string( boost::any_cast<bool>( v ) ? 1 : 0 );
-	}
-	else if ( v.type() == typeid( int ) )
-	{
-	    return to_string( boost::any_cast<int>( v ) );
-	}
-	else if ( v.type() == typeid( float ) )
-	{
-	    return to_string( boost::any_cast<float>( v ) );
-	}
-	else if ( v.type() == typeid( std::string ) )
-	{
-	    return boost::any_cast<std::string>( v );
-	}
-	throw std::invalid_argument( "No known conversion for metric " + nname );
-	// never happens
-	return "";
+	MetricValue v = metrics_[nname];
+        return v.str();
     }
 
     void Plugin::post_build()
