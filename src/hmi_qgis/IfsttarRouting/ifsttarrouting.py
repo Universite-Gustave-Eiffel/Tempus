@@ -454,11 +454,12 @@ class IfsttarRouting:
             if step.wkb and step.wkb != '':
                 wkb = WKB(step.wkb)
                 pts = wkb.dumpPoints()
-                prev = pts[0]
-                for p in pts[1:]:
-                    dist = math.sqrt((p[0]-prev[0])**2 + (p[1]-prev[1])**2)
-                    self.profile.addElevation( dist, prev[2], p[2], row )
-                    prev = p
+                if len(pts) > 0: # if 3D points ...
+                        prev = pts[0]
+                        for p in pts[1:]:
+                                dist = math.sqrt((p[0]-prev[0])**2 + (p[1]-prev[1])**2)
+                                self.profile.addElevation( dist, prev[2], p[2], row )
+                                prev = p
 
             if isinstance(step, Tempus.RoadStep):
                 road_name = step.road
