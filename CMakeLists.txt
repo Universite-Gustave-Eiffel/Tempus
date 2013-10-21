@@ -86,7 +86,7 @@ if (WIN32)
                   DESTINATION bin)
 endif()
 
-install(DIRECTORY data/wps_schemas DESTINATION data)
+install(DIRECTORY data DESTINATION .)
 
 add_subdirectory(src)
 add_subdirectory(doc)
