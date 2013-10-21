@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
         # the actual request
         req_xml = tempus.request( plugin_name = "sample_road_plugin",
-                                  plugin_options = { 'prepare_result' : 1 },
+                                  plugin_options = { 'prepare_result' : True },
                                   origin = dep,
                                   steps = [RequestStep(destination = arr)] )
 

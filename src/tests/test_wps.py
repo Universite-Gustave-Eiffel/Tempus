@@ -8,6 +8,7 @@ script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
 wps_path = os.path.abspath( script_path + '/../python' )
 sys.path.insert(0, wps_path)
 from wps_client import *
+from tempus_request import *
 
 WPS_HOST = '127.0.0.1'
 WPS_PATH = '/wps'
@@ -148,41 +149,26 @@ class TestWPS(unittest.TestCase):
             is_ex=True
         self.assertEqual( is_ex, True )
 
-        plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_road_plugin' } ] }
-
         # route that passes near a public transport line (Nantes data)
         ox = 356241.225231
         oy = 6688158.053382
         dx = 355763.149926
         dy = 6688721.876838
 
-        args = dict(plugin_arg.items())
-        args['request'] = ['request',
-                           {'allowed_transport_types': 11 },
-                           ['origin', { 'x': str(ox), 'y': str(oy) }],
-                           ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                           ['optimizing_criterion', 1 ], 
-                           ['step',
-                            { 'private_vehicule_at_destination': 'true' },
-                            [ 'destination', {'x': str(dx), 'y': str(dy) } ],
-                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                           ]
-                           ]
-                           
-        args['options'] = [ 'options', [ 'option', { 'name' : 'trace_vertex', 'value' : '1' } ] ]
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
 
-        outputs = self.wps.execute( 'select', args )
-        n = 0
-        for step in outputs['results'][0]:
-            if step.tag != 'cost':
-                n += 1
-        self.assertEqual( n, 12 )
+        tempus.request( plugin_name = 'sample_road_plugin',
+                        plugin_options = { 'trace_vertex' : True },
+                        origin = Point( ox, oy ),
+                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+        self.assertEqual( len(tempus.results[0].steps), 12 )
 
         # run without options
-        args['options'] = [ 'options']
         is_ex = False
         try:
-            self.wps.execute( 'select', args )
+            tempus.request( plugin_name = 'sample_road_plugin',
+                            origin = Point( ox, oy ),
+                            steps = [ RequestStep(destination = Point(dx, dy)) ] )
         except RuntimeError as e:
             is_ex=True
         self.assertEqual( is_ex, False )
@@ -192,7 +178,6 @@ class TestWPS(unittest.TestCase):
         outputs = self.wps.execute( 'constant_list', {} )
 
     def test_multi_plugin( self ):
-        plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_multi_plugin' } ] }
 
         # two road nodes that are linked to a public transport stop
         ox = 355349.238904
@@ -200,58 +185,24 @@ class TestWPS(unittest.TestCase):
         dx = 356132.718582
         dy = 6687761.706782
 
-        args = dict(plugin_arg.items())
-        args['request'] = ['request',
-                           {'allowed_transport_types': 11 },
-                           ['origin', { 'x': str(ox), 'y': str(oy) }],
-                           ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                           ['optimizing_criterion', 1 ], 
-                           ['step',
-                            { 'private_vehicule_at_destination': 'true' },
-                            [ 'destination', {'x': str(dx), 'y': str(dy)} ],
-                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                            ]
-                           ]
-
-        args['options'] = [ 'options' ]
-
-        outputs = self.wps.execute( 'select', args )
-
-        n = 0
-        for step in outputs['results'][0]:
-            if step.tag != 'cost':
-                n += 1
-        self.assertEqual( n, 16 )
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+        tempus.request( plugin_name = 'sample_multi_plugin',
+                        origin = Point( ox, oy ),
+                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+        self.assertEqual( len(tempus.results[0].steps), 16 )
 
     def test_pt_plugin( self ):
-        plugin_arg = { 'plugin': ['plugin', {'name' : 'sample_pt_plugin' } ] }
-
         # two road nodes that are linked to a public transport stop
         ox = 356118.752929
         oy = 6687853.943756
         dx = 355385.975128
         dy = 6689324.323148
 
-        args = dict(plugin_arg.items())
-        args['request'] = ['request',
-                           {'allowed_transport_types': 11 },
-                           ['origin', { 'x': str(ox), 'y': str(oy) }],
-                           ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                           ['optimizing_criterion', 1 ], 
-                           ['step',
-                            { 'private_vehicule_at_destination': 'true' },
-                            [ 'destination', {'x': str(dx), 'y': str(dy)} ],
-                            [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ]
-                            ]
-                           ]
-        args['options'] = [ 'options' ]
-
-        outputs = self.wps.execute( 'select', args )
-        n = 0
-        for step in outputs['results'][0]:
-            if step.tag != 'cost':
-                n += 1
-        self.assertEqual( n, 5 )
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+        tempus.request( plugin_name = 'sample_pt_plugin',
+                        origin = Point( ox, oy ),
+                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+        self.assertEqual( len(tempus.results[0].steps), 5 )
 
 if __name__ == '__main__':
     unittest.main()

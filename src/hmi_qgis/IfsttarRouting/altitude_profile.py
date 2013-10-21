@@ -37,6 +37,9 @@ class AltitudeProfile(QGraphicsView):
         pt = self.mapToScene( x, y )
         self.scene().onMouseOver( pt )
 
+    def empty( self ):
+        return len(self.scene().alts) == 0
+
 class AltitudeProfileScene(QGraphicsScene):
 
     def __init__( self, parent ):
