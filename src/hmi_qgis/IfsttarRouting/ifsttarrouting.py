@@ -883,8 +883,18 @@ class IfsttarRouting:
         self.displayRoadmapTab( self.results[layerid-1].steps )
 
         selected = [ feature.id()-1 for feature in layer.selectedFeatures() ]
-        for fid in selected:
-            self.dlg.ui.roadmapTable.selectRow( fid )
+        k = 0
+        if len(selected) > 0:
+                for fid in selected:
+                        self.dlg.ui.roadmapTable.selectRow( fid )
+                        if k == 0:
+                                selectionModel = self.dlg.ui.roadmapTable.selectionModel()
+                                selectionItem = selectionModel.selection()
+                                k += 1
+                        else:
+                                selectionItem.merge( selectionModel.selection(), QItemSelectionModel.Select )
+                selectionModel.select( selectionItem, QItemSelectionModel.Select )
+
         self.profile.highlightSelection( selected )
         self.selectionInProgress = False
 
