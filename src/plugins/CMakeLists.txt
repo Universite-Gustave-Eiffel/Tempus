@@ -13,4 +13,4 @@ add_library( forbidden_movements_plugin MODULE forbidden_movements_plugin/forbid
 target_link_libraries( forbidden_movements_plugin tempus )
 
 
-install( TARGETS sample_multi_plugin sample_road_plugin sample_pt_plugin forbidden_movements_plugin DESTINATION lib )
+install( TARGETS sample_multi_plugin sample_road_plugin sample_pt_plugin forbidden_movements_plugin DESTINATION bin )

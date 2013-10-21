@@ -7,8 +7,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set( CMAKE_BUILD_TYPE RELWITHDEBINFO )
 
 # FIXME use installation directory on install
-set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data")
-
+#set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if (WIN32)
 	set( PQ_INCLUDE_DIR "C:/Program Files(x86)/PostgreSQL/9.3/include" CACHE PATH "libpq include directory" )
 	set( PQ_LIBS_DIR "C:/Program Files (x86)/PostgreSQL/9.3/lib" CACHE PATH "libpq lib directory" )
@@ -34,6 +33,9 @@ if(MSVC)
 	else()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" CACHE STRING "compile flags" FORCE)
 	endif()
+	set (CMAKE_EXE_LINKER_FLAGS "/ALLOWBIND")
+	
+	
 	# Disable verbose warnings
 	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290" )
 	
@@ -52,7 +54,39 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "tempus - manipulate transport graphs")
 set(CPACK_PACKAGE_VERSION "1.0.0")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus_1_0_0")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
+set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
+set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C++ Headers")
+set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Applications")
+if (WIN32)
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+   !include 'winmessages.nsh'
+   WriteRegExpandStr HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY $INSTDIR\\\\data
+   SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 'STR:Environment' /TIMEOUT=5000
+"
+)
+set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+   DeleteRegValue HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY
+")
+#Push `TEMPUS_DATA_DIRECTORY`
+#Push $INSTDIR\\\\data
+#Call ConditionalAddToRegisty
+
+set(CPACK_NSIS_MODIFY_PATH ON)
+endif()
 include(CPack)
+
+if (WIN32)
+
+	install(FILES setenv.bat
+                  ${PQ_LIBS_DIR}/libpq.dll 
+                  ${PQ_LIBS_DIR}/../bin/zlib1.dll 
+                  ${PQ_LIBS_DIR}/../bin/libeay32.dll
+                  ${PQ_LIBS_DIR}/../bin/ssleay32.dll
+                  ${PQ_LIBS_DIR}/../bin/libintl.dll                 
+                  DESTINATION bin)
+endif()
+
+install(DIRECTORY data/wps_schemas DESTINATION data)
 
 add_subdirectory(src)
 add_subdirectory(doc)
