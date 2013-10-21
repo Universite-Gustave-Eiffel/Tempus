@@ -21,7 +21,7 @@ else (WIN32)
 	set (LIBTEMPUS tempus )
 endif (WIN32)
 
-find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread)
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread filesystem)
 
 include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
 link_directories( ${PQ_LIBS_DIR} ${Boost_LIBRARY_DIRS} )
