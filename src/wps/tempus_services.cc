@@ -281,7 +281,7 @@ namespace WPS
                     std::string name = XML::get_prop( field, "name" );
 
                     const xmlNode* value_node = XML::get_next_nontext( field->children );
-                    Tempus::Plugin::OptionType t;
+                    Tempus::Plugin::OptionType t = Tempus::Plugin::IntOption;
                     if ( !xmlStrcmp( value_node->name, (const xmlChar*)"bool_value" ) ) {
                         t = Tempus::Plugin::BoolOption;
                     }
