@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include "application.hh"
 #include "common.hh"
 #include "pgsql_importer.hh"
@@ -82,13 +81,6 @@ namespace Tempus
 	// defined in visual studio has that space wich screws up concatenation)
 	std::string dir( data_dir );
 	dir.erase(dir.find_last_not_of(" ")+1);
-	boost::filesystem::path path( dir );
-	if (!boost::filesystem::exists(path))
-	{
-	    const std::string msg = "directory from environment variable TEMPUS_DATA_DIRECTORY '" + std::string(data_dir) + "' does not exist\n";
-	    CERR << msg << "\n";
-	    throw std::runtime_error(msg);
-	}
-        return path.generic_string();
+        return dir;
     }
 }
