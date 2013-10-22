@@ -82,15 +82,15 @@ namespace Tempus
     protected:
 	bool check_consistency_()
 	{
-	    EXPECT( steps.size() >= 1 );
-	    EXPECT( optimizing_criteria.size() >= 1 );
+	    REQUIRE( steps.size() >= 1 );
+	    REQUIRE( optimizing_criteria.size() >= 1 );
 
 	    //
 	    // For each step, check correct timing causalities on constraints
 	    TimeConstraint last = departure_constraint;
 	    for ( StepList::const_iterator it = steps.begin(); it != steps.end(); it++ )
 	    {
-		EXPECT( it->constraint.date_time >= last.date_time );
+		REQUIRE( it->constraint.date_time >= last.date_time );
 	    }
 	    return true;
 	}

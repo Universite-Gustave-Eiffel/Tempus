@@ -86,9 +86,9 @@ namespace Tempus
 
             bool ok;
             boost::tie( e1, ok ) = boost::add_edge( v1, v2, automaton_ );
-            BOOST_ASSERT( ok );
+            REQUIRE( ok );
             boost::tie( e2, ok ) = boost::add_edge( v2, v3, automaton_ );
-            BOOST_ASSERT( ok );
+            REQUIRE( ok );
 
             // forbidden edges (on tempus_test_db)
             automaton_[ e1 ].source = vertex_from_id( 21556, road_graph );
@@ -98,7 +98,7 @@ namespace Tempus
             automaton_[ e2 ].target = vertex_from_id( 21617, road_graph );
 	}
 
-	virtual void pre_process( Request& /* request */ ) throw (std::invalid_argument)
+	virtual void pre_process( Request& /* request */ ) 
 	{
             // request is ignored for now
 	    result_.clear();

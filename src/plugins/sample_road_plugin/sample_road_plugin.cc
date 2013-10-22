@@ -59,7 +59,7 @@ namespace Tempus
 	{
 	}
 
-	virtual void pre_process( Request& request ) throw (std::invalid_argument)
+	virtual void pre_process( Request& request )
 	{
 	    REQUIRE( request.check_consistency() );
 
@@ -173,8 +173,7 @@ namespace Tempus
 	    metrics_[ "time_s" ] = time_s;
 
             if ( !path_found ) {
-                CERR << "No path found !" << endl;
-                return;
+                throw std::runtime_error( "No path found !" );
             }
 
 	    result_.push_back( Roadmap() );

@@ -233,7 +233,7 @@ namespace Tempus
 	/// Pre-process the user request.
 	/// \param[in] request The request to preprocess.
 	/// \throw std::invalid_argument Throws an instance of std::invalid_argument if the request cannot be processed by the current plugin.
-	virtual void pre_process( Request& request ) throw (std::invalid_argument);
+	virtual void pre_process( Request& request );
 
 	///
 	/// Process the last preprocessed user request.

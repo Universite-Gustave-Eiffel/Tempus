@@ -186,7 +186,7 @@ namespace Tempus
 	protected:
 	    bool check_consistency_()
 	    {
-		EXPECT( service != 0 );
+		REQUIRE( service != 0 );
 		return true;
 	    }
 	};
@@ -220,7 +220,7 @@ namespace Tempus
 	protected:
 	    bool check_consistency_()
 	    {
-		EXPECT( (route_type >= TypeTram) && (route_type <= TypeFunicular) );
+		REQUIRE( (route_type >= TypeTram) && (route_type <= TypeFunicular) );
 		return true;
 	    }
 	};
@@ -259,7 +259,7 @@ namespace Tempus
 	protected:
 	    bool check_consistency_()
 	    {
-		EXPECT( ((transfers >= NoTransferAllowed) && (transfers <= TwoTransfersAllowed)) || (transfers == -1) );
+		REQUIRE( ((transfers >= NoTransferAllowed) && (transfers <= TwoTransfersAllowed)) || (transfers == -1) );
 		return true;
 	    }
 
@@ -292,8 +292,8 @@ namespace Tempus
 	protected:
 	    bool check_consistency_()
 	    {
-		EXPECT( (transfer_type >= NormalTransfer) && (transfer_type <= ImpossibleTransfer) );
-		EXPECT( min_transfer_time > 0 );
+		REQUIRE( (transfer_type >= NormalTransfer) && (transfer_type <= ImpossibleTransfer) );
+		REQUIRE( min_transfer_time > 0 );
 		return true;
 	    }
 	};

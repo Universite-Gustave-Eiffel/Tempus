@@ -279,8 +279,7 @@ namespace WPS {
 	    }
 	    catch (std::runtime_error& e)
 	    {
-		COUT << "Runtime error " << e.what() << endl;
-		return print_error_status( 400, e.what() );
+		return print_exception( WPS_NO_APPLICABLE_CODE, e.what() );
 	    }
 	}
 	else

@@ -267,7 +267,7 @@ PluginFactory * PluginFactory::instance()
 	COUT << "[plugin_base]: cycle" << std::endl;
     }
 
-    void Plugin::pre_process( Request& request ) throw (std::invalid_argument)
+    void Plugin::pre_process( Request& request )
     {
 	COUT << "[plugin_base]: pre_process" << std::endl;
 	request_ = request;
