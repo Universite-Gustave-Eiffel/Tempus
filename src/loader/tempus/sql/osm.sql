@@ -27,6 +27,9 @@ from (
 		_tempus_import.highway
 ) as nodes;
 
+create index idx_road_node on tempus.road_node using gist(geom);
+
+
 -- indexing
 drop index if exists idx_road_node_geom;
 create index idx_road_node_geom on tempus.road_node using gist(geom);
@@ -114,11 +117,11 @@ from
 join
 	tempus.road_node as nf
 on
-	st_equals(st_transform(st_startpoint(hw.geom), 2154), nf.geom)
+	st_intersects(st_transform(st_startpoint(hw.geom), 2154), nf.geom)
 join
 	tempus.road_node as nt
 on
-	st_equals(st_transform(st_endpoint(hw.geom), 2154), nt.geom)
+	st_intersects(st_transform(st_endpoint(hw.geom), 2154), nt.geom)
 where
 	hw."type" not in ('footway')
 ;
@@ -139,5 +142,4 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 
 -- INDEXES
 create index idx_road_section_geom on tempus.road_section using gist(geom);
-create index idx_road_node on tempus.road_node using gist(geom);
 -- FIXME : other indexes needed ?
