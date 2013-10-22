@@ -15,10 +15,6 @@
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
 
-#ifndef _DEBUG
-#define _DEBUG
-#endif
-
 /// 
 /// @brief Macro for mutex protected cerr and cout
 /// @detailled Macro creates a temporary responsible
@@ -125,7 +121,7 @@ namespace Tempus
 	/// When the debug mode is disabled, it does nothing.
 	bool check_consistency()
 	{
-#ifdef _DEBUG
+#ifndef NDEBUG
 	    return check_consistency_();
 #else
 	    return true;
@@ -137,7 +133,7 @@ namespace Tempus
 	virtual bool check_consistency_() { return true; }
     };
 
-#ifdef _DEBUG
+#ifdef NDEBUG
     ///
     /// Assertion, will abort if the condition is false
     #define REQUIRE( expr ) {if (!(expr)) { std::stringstream ss; ss << __FILE__ << ":" << __LINE__ << ": Assertion " << #expr << " failed"; throw std::invalid_argument( ss.str() ); }}
