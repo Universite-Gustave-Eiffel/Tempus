@@ -19,6 +19,7 @@ class OSMImporter(ShpImporter):
     # SQL files to execute before loading shapefiles
     PRELOADSQL = ["reset_import_schema.sql", "tempus.sql"]
     # SQL files to execute after loading shapefiles 
-    POSTLOADSQL = ["osm.sql"]
+    POSTLOADSQL = ["osm.sql", "osm_processing.sql"]
+
 
 
