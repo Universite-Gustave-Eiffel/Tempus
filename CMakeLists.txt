@@ -58,27 +58,38 @@ set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C++ Headers")
 set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Applications")
 if (WIN32)
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+  ; **** SET TEMPUS_DATA_DIRECTORY IN REGISTRY ***
    !include 'winmessages.nsh'
    WriteRegExpandStr HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY $INSTDIR\\\\data
    SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 'STR:Environment' /TIMEOUT=5000
+  ; **** INSTALL POSTGRESQL ***
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
     ExecWait postgresql-9.3.1-1-windows.exe
     Goto endPostgres
   endPostgres:
+  ; *** INSTALL NGINX ***
   MessageBox MB_YESNO 'Install nginx web srever ?' /SD IDYES IDNO endNginx
     ExecWait nginx-1.5.6.exe
     ExecWait `..\\\\nginx\\\\nginx_service.exe install`
     ExecWait `net start nginx`
     Goto endNginx   
   endNginx:
+  ; CREATE THE TEST DB ----------------------------------
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -f data\\\\tempus_test_db.sql`     
+  ; *** INSTALL AND START WPS SERVICE ***
   ExecWait `wps_service.exe install`
   ExecWait `net start wps`
 "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
-   DeleteRegValue HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY
+  DeleteRegValue HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY
+  ExecWait `net stop wps`
+  ExecWait `\\\$INSTDIR\\\\wps_service.exe uninstall`
+  Delete \\\$INSTDIR\\\\wps_service.err.log
+  Delete \\\$INSTDIR\\\\wps_service.out.log
+  Delete \\\$INSTDIR\\\\wps_service.wrapper.log
+  RMDir \\\$INSTDIR
 ")
 #Push `TEMPUS_DATA_DIRECTORY`
 #Push $INSTDIR\\\\data
