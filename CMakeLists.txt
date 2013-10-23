@@ -52,7 +52,7 @@ set(CPACK_PACKAGE_NAME "tempus")
 set(CPACK_PACKAGE_VENDOR "ifstar")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "tempus - manipulate transport graphs")
 set(CPACK_PACKAGE_VERSION "1.0.0")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus_1_0_0")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus-${CPACK_PACKAGE_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
 set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C++ Headers")
@@ -62,6 +62,20 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    !include 'winmessages.nsh'
    WriteRegExpandStr HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY $INSTDIR\\\\data
    SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 'STR:Environment' /TIMEOUT=5000
+  MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
+    NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
+    ExecWait postgresql-9.3.1-1-windows.exe
+    Goto endPostgres
+  endPostgres:
+  MessageBox MB_YESNO 'Install nginx web srever ?' /SD IDYES IDNO endNginx
+    ExecWait nginx-1.5.6.exe
+    ExecWait `..\\\\nginx\\\\nginx_service.exe install`
+    ExecWait `net start nginx`
+    Goto endNginx   
+  endNginx:
+  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -f data\\\\tempus_test_db.sql`     
+  ExecWait `wps_service.exe install`
+  ExecWait `net start wps`
 "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
@@ -70,20 +84,12 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
 #Push `TEMPUS_DATA_DIRECTORY`
 #Push $INSTDIR\\\\data
 #Call ConditionalAddToRegisty
-
-set(CPACK_NSIS_MODIFY_PATH ON)
+#set(CPACK_NSIS_MODIFY_PATH ON)
 endif()
 include(CPack)
 
 if (WIN32)
-
-	install(FILES setenv.bat
-                  ${PQ_LIBS_DIR}/libpq.dll 
-                  ${PQ_LIBS_DIR}/../bin/zlib1.dll 
-                  ${PQ_LIBS_DIR}/../bin/libeay32.dll
-                  ${PQ_LIBS_DIR}/../bin/ssleay32.dll
-                  ${PQ_LIBS_DIR}/../bin/libintl.dll                 
-                  DESTINATION bin)
+   install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml DESTINATION .)
 endif()
 
 install(DIRECTORY data DESTINATION .)

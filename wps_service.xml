@@ -1,0 +1,19 @@
+<service>
+<id>wps</id>
+<name>wps</name>
+<description>wps itinerary serveur</description>
+<executable>"c:\Program Files (x86)\tempus-1.0.0\bin\wps.exe"</executable>
+<workingdirectory>"c:\Program Files (x86)\tempus-1.0.0\lib"</workingdirectory>
+<env name="PATH" value="c:\Program Files (x86)\PostgreSQL\9.3\bin;%PATH%" />
+<env name="TEMPUS_DATA_DIRECTORY" value="c:\Program Files (x86)\tempus-1.0.0\data" />
+<startargument>-p</startargument>
+<startargument>9000</startargument>
+<startargument>-l</startargument>
+<startargument>sample_pt_plugin</startargument>
+<startargument>-l</startargument>
+<startargument>sample_road_plugin</startargument>
+<startargument>-l</startargument>
+<startargument>sample_multi_plugin</startargument>
+<startargument>-d</startargument>
+<startargument>"host=127.0.0.1 user=postgres dbname=tempus_test_db"</startargument>
+</service>
