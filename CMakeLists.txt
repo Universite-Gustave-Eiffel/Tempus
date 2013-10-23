@@ -4,7 +4,6 @@ enable_testing()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set( CMAKE_BUILD_TYPE RELWITHDEBINFO )
 
 # FIXME use installation directory on install
 #set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data")
@@ -49,7 +48,7 @@ elseif(CMAKE_CXX_COMPILER MATCHES ".*clang")
 endif()
 
 set(CPACK_PACKAGE_NAME "tempus")
-set(CPACK_PACKAGE_VENDOR "ifstar")
+set(CPACK_PACKAGE_VENDOR "IFSTTAR")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "tempus - manipulate transport graphs")
 set(CPACK_PACKAGE_VERSION "1.0.0")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus-${CPACK_PACKAGE_VERSION}")
@@ -92,7 +91,12 @@ if (WIN32)
    install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml DESTINATION .)
 endif()
 
-install(DIRECTORY data DESTINATION .)
+if (WIN32)
+  set(TEMPUS_INSTALL_DATA_DIRECTORY .)
+else()
+  set(TEMPUS_INSTALL_DATA_DIRECTORY "share/${CMAKE_PROJECT_NAME}")
+endif()
+install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
 add_subdirectory(src)
 add_subdirectory(doc)

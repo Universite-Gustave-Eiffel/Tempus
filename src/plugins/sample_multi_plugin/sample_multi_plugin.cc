@@ -70,7 +70,7 @@ namespace Tempus
 
 		pt_lengths[std::make_pair(stop_from, stop_to)] = length;
 	    }
-	    BOOST_ASSERT( pt_lengths.size() == res.size() );
+	    REQUIRE( pt_lengths.size() == res.size() );
 	    
 	    Multimodal::EdgeIterator ei, ei_end;
 	    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
@@ -145,10 +145,10 @@ namespace Tempus
 		}
 		}
 	    }
-	    BOOST_ASSERT( distances.size() == num_edges( graph_ ) );
+	    REQUIRE( distances.size() == num_edges( graph_ ) );
 	}
 
-	virtual void pre_process( Request& request ) throw (std::invalid_argument)
+	virtual void pre_process( Request& request )
 	{
 	    request_ = request;
 	    for ( size_t i = 0; i < request.optimizing_criteria.size(); ++i ) {
@@ -202,8 +202,7 @@ namespace Tempus
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->road_vertex, it->road_vertex, *it->road_graph );
 		    if ( !found ) {
-			CERR << "Can't find the road edge!!!" << std::endl;
-			continue;
+			throw std::runtime_error( "Can't find the road edge !" );
 		    }
 		    step->road_section = e;
                     step->vertex_from = previous->road_vertex;
@@ -216,8 +215,7 @@ namespace Tempus
 		    bool found = false;
 		    boost::tie( e, found ) = edge( previous->pt_vertex, it->pt_vertex, *it->pt_graph );
 		    if ( !found ) {
-			CERR << "Can't find the pt edge!!!" << std::endl;
-			continue;
+			throw std::runtime_error( "Can't find the pt edge !" );
 		    }
 		    step->section = e;
 		    // Set the trip ID
@@ -337,7 +335,9 @@ namespace Tempus
 		    bool found;
 		    found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], path );
 		    if ( !found ) {
-			CERR << "Cannot find a path between " << vorigin << " and " << vdestination << std::endl;
+                        std::stringstream err;
+                        err << "Cannot find a path between " << vorigin << " and " << vdestination;
+                        throw std::runtime_error( err.str() );
 		    }
 		}
 		// convert the path to a roadmap

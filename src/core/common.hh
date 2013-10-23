@@ -15,10 +15,6 @@
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
 
-#ifndef _DEBUG
-#define _DEBUG
-#endif
-
 /// 
 /// @brief Macro for mutex protected cerr and cout
 /// @detailled Macro creates a temporary responsible
@@ -69,14 +65,32 @@ namespace Tempus
     {
         bad_lexical_cast( const std::string& msg ) : std::exception(), msg_(msg) {}
         virtual const char* what() const throw() { return msg_.c_str(); }
+        virtual ~bad_lexical_cast() throw() {}
         std::string msg_;
     };
     template <typename TOUT>
+    struct lexical_cast_aux_
+    {
+        TOUT operator()(const std::string & in)
+        {
+            TOUT out;
+            if( !(std::istringstream(in) >> out) ) throw bad_lexical_cast("cannot cast " + in + " to " + typeid(TOUT).name());
+            return out;
+        }
+    };
+    template <>
+    struct lexical_cast_aux_<std::string>
+    {
+        std::string operator()(const std::string & in)
+        {
+            return in;
+        }
+    };
+
+    template <typename TOUT>
     TOUT lexical_cast(const std::string & in)
     {
-        TOUT out;
-        if( !(std::istringstream(in) >> out) ) throw bad_lexical_cast("cannot cast " + in + " to " + typeid(TOUT).name());
-        return out;
+        return lexical_cast_aux_<TOUT>()( in );
     }
 
     template <typename TOUT>
@@ -107,7 +121,7 @@ namespace Tempus
 	/// When the debug mode is disabled, it does nothing.
 	bool check_consistency()
 	{
-#ifdef _DEBUG
+#ifndef NDEBUG
 	    return check_consistency_();
 #else
 	    return true;
@@ -119,20 +133,12 @@ namespace Tempus
 	virtual bool check_consistency_() { return true; }
     };
 
-#ifdef _DEBUG
+#ifdef NDEBUG
     ///
-    /// EXPECT is used in check_consistency_() methods
-    #define EXPECT( expr ) {if (!(expr)) { CERR << __FILE__ << ":" << __LINE__ << " Assertion " #expr " failed" << std::endl; return false; }}
-    ///
-    /// Pre conditions, will abort if the condition is false
-    #define REQUIRE( expr ) {if (!(expr)) { std::string e_; e_ += __FILE__; e_ += ":"; e_ += __LINE__; e_ += " Precondition " #expr " is false"; throw std::runtime_error( e_ ); }}
-    ///
-    /// Post conditions, will abort if the condition is false
-    #define ENSURE( expr ) {if (!(expr)) { std::string e_; e_ += __FILE__; e_ += ":"; e_ += __LINE__; e_ += " Postcondition " #expr " is false"; throw std::runtime_error( e_ ); }}
+    /// Assertion, will abort if the condition is false
+    #define REQUIRE( expr ) {if (!(expr)) { std::stringstream ss; ss << __FILE__ << ":" << __LINE__ << ": Assertion " << #expr << " failed"; throw std::invalid_argument( ss.str() ); }}
 #else
-#define EXPECT( expr ) ((void)0)
-#define REQUIRE( expr ) ((void)0)
-#define ENSURE( expr ) ((void)0)
+    #define REQUIRE( expr ) ((void)0)
 #endif
 
     struct Base : public ConsistentClass
@@ -195,8 +201,8 @@ namespace Tempus
 	{
 	    ///
 	    /// x is a power of two if (x & (x - 1)) is 0
-	    EXPECT( (db_id != 0) && !(db_id & (db_id - 1)) );
-	    EXPECT( (parent_id != 0) && !(parent_id & (parent_id - 1)) );
+	    REQUIRE( (db_id != 0) && !(db_id & (db_id - 1)) );
+	    REQUIRE( (parent_id != 0) && !(parent_id & (parent_id - 1)) );
 	    return true;
 	}
     };

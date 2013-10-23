@@ -11,6 +11,7 @@
 
 #define WPS_INVALID_PARAMETER_VALUE "InvalidParameterValue"
 #define WPS_OPERATION_NOT_SUPPORTED "OperationNotSupported"
+#define WPS_NO_APPLICABLE_CODE      "NoApplicableCode"
 
 namespace WPS
 {

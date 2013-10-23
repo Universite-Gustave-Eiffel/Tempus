@@ -11,7 +11,7 @@ class WKB:
     # convert a LineStringZ to a 2D LineString
     def force2d( self ):
         if self.type != 1002: # LineStringZ
-            return
+            return self.wkb
         nwkb = self.wkb[0:2] + '0200' + self.wkb[3*2:9*2]
         npts = struct.unpack(self.prefix+'h', self.wkb[5*2:7*2].decode('hex'))[0]
         for i in range(0,npts):

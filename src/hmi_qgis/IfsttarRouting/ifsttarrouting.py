@@ -23,7 +23,6 @@ import re
 from wps_client import *
 import config
 import binascii
-import pickle
 import os
 import math
 from datetime import datetime
@@ -37,7 +36,11 @@ from qgis.gui import *
 #import PyQt4.QtGui
 
 from xml.etree import ElementTree as etree
-from lxml import etree as ET
+XML_SCHEMA_VALIDATION = True
+try:
+        from lxml import etree as ET
+except ImportError:
+        XML_SCHEMA_VALIDATION = False
 
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -51,8 +54,6 @@ from result_selection import ResultSelection
 from altitude_profile import AltitudeProfile
 from wkb import WKB
 import tempus_request as Tempus
-
-import pickle
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
@@ -453,11 +454,12 @@ class IfsttarRouting:
             if step.wkb and step.wkb != '':
                 wkb = WKB(step.wkb)
                 pts = wkb.dumpPoints()
-                prev = pts[0]
-                for p in pts[1:]:
-                    dist = math.sqrt((p[0]-prev[0])**2 + (p[1]-prev[1])**2)
-                    self.profile.addElevation( dist, prev[2], p[2], row )
-                    prev = p
+                if len(pts) > 0: # if 3D points ...
+                        prev = pts[0]
+                        for p in pts[1:]:
+                                dist = math.sqrt((p[0]-prev[0])**2 + (p[1]-prev[1])**2)
+                                self.profile.addElevation( dist, prev[2], p[2], row )
+                                prev = p
 
             if isinstance(step, Tempus.RoadStep):
                 road_name = step.road
@@ -655,7 +657,6 @@ class IfsttarRouting:
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
-        self.results = results
 
         # delete pre existing roadmap layers
         maps = QgsMapLayerRegistry.instance().mapLayers()
@@ -723,7 +724,8 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
 
-        self.displayResults( self.wps.results )
+        self.results = self.wps.results
+        self.displayResults( self.results )
         self.displayMetrics( self.wps.metrics )
 
         # enable 'metrics' and 'roadmap' tabs
@@ -757,17 +759,19 @@ class IfsttarRouting:
         # load from db
         (id, date, xmlStr) = self.historyFile.getRecord( id )
 
-        # validate entry
-        schema_root = ET.parse( config.TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" )
-        schema = ET.XMLSchema(schema_root)
-        parser = ET.XMLParser(schema = schema)
-        try:
-            tree = ET.fromstring( xmlStr, parser)
-        except ET.XMLSyntaxError as e:
-            QMessageBox.warning( self.dlg, "XML parsing error", e.msg )
-            return
+        if XML_SCHEMA_VALIDATION:
+                # validate entry
+                schema_root = ET.parse( config.TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" )
+                schema = ET.XMLSchema(schema_root)
+                parser = ET.XMLParser(schema = schema)
+                try:
+                        tree = ET.fromstring( xmlStr, parser)
+                except ET.XMLSyntaxError as e:
+                        QMessageBox.warning( self.dlg, "XML parsing error", e.msg )
+                        return
 
-#        tree = ET.XML(xmlStr)
+        else:
+                tree = etree.XML(xmlStr)
         loaded = {}
         for child in tree:
             loaded[ child.tag ] = child
@@ -778,7 +782,8 @@ class IfsttarRouting:
         # update UI
         self.dlg.loadFromXML( loaded['select'][1] )
         self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
-        self.displayResults( Tempus.parse_results(loaded['select'][3]) )
+        self.results = Tempus.parse_results(loaded['select'][3])
+        self.displayResults( self.results )
 
         self.plugins.clear()
         plugins = Tempus.parse_plugins(loaded['server_state'][0])
@@ -878,8 +883,18 @@ class IfsttarRouting:
         self.displayRoadmapTab( self.results[layerid-1].steps )
 
         selected = [ feature.id()-1 for feature in layer.selectedFeatures() ]
-        for fid in selected:
-            self.dlg.ui.roadmapTable.selectRow( fid )
+        k = 0
+        if len(selected) > 0:
+                for fid in selected:
+                        self.dlg.ui.roadmapTable.selectRow( fid )
+                        if k == 0:
+                                selectionModel = self.dlg.ui.roadmapTable.selectionModel()
+                                selectionItem = selectionModel.selection()
+                                k += 1
+                        else:
+                                selectionItem.merge( selectionModel.selection(), QItemSelectionModel.Select )
+                selectionModel.select( selectionItem, QItemSelectionModel.Select )
+
         self.profile.highlightSelection( selected )
         self.selectionInProgress = False
 

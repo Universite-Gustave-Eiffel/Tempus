@@ -90,12 +90,16 @@ namespace WPS {
 	    }
 
 	    // The root XML element must be the name of the operation	
-	    string line;
-	    std::stringstream ss;
-	    ss << ins_.rdbuf();
-	    const string doc(ss.str());
+            string doc;
+            while ( !ins_.eof() )
+            {
+                char c;
+                ins_.get(c);
+                if (ins_.eof())
+                    break;
+                doc.push_back(c);
+            }
 	    CERR << doc << endl;
-	
 	    xml_doc = xmlReadMemory( doc.c_str(), doc.size(), getParam( "REQUEST_URI" ), NULL, XML_PARSE_NOERROR );
 	    if ( xml_doc.get() == NULL )
 	    {
@@ -279,8 +283,7 @@ namespace WPS {
 	    }
 	    catch (std::runtime_error& e)
 	    {
-		COUT << "Runtime error " << e.what() << endl;
-		return print_error_status( 400, e.what() );
+		return print_exception( WPS_NO_APPLICABLE_CODE, e.what() );
 	    }
 	}
 	else

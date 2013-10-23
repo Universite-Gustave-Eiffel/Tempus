@@ -46,7 +46,7 @@ namespace Tempus
 	}
 
     public:
-	virtual void pre_process( Request& request ) throw (std::invalid_argument)
+	virtual void pre_process( Request& request )
 	{
 	    REQUIRE( graph_.public_transports.size() >= 1 );
 	    REQUIRE( request.check_consistency() );
@@ -91,8 +91,7 @@ namespace Tempus
 					       "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1") % road_graph[node].db_id ).str();
 		Db::Result res = db_.exec(q);
 		if ( res.size() < 1 ) {
-			CERR << "Cannot find node " << node << std::endl;
-			return;
+                    throw std::runtime_error( (boost::format("Cannot find node %1%") % node).str() );
 		}
 		db_id_t vid = res[0][0].as<db_id_t>();
 		found_vertex = vertex_from_id( vid, pt_graph );
@@ -150,8 +149,7 @@ namespace Tempus
                 }
                 if ( !found )
                 {
-                    CERR << "No path found" << endl;
-                    return;
+                    throw std::runtime_error( "No path found" );
                 }
                 path.push_front( departure );
             }
