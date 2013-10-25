@@ -26,5 +26,5 @@ target_link_libraries( wps ${LIBXML2_LIBRARIES} ${ICONV_LIBS} ${FCGI_LIBS} ${LIB
 install( TARGETS wps DESTINATION bin )
 
 if (WIN32)
-    install(FILES  ${LIBXML2_INCLUDE_DIR}/../bin/libxml2.dll ${ICONV_BIN_DIRS}/iconv.dll ${FCGI_LIBRARY_DIRS}/libfcgi.dll DESTINATION lib)
+    install(FILES  ${LIBXML2_INCLUDE_DIR}/../bin/libxml2.dll ${ICONV_BIN_DIRS}/iconv.dll ${FCGI_LIBRARY_DIRS}/libfcgi.dll DESTINATION bin)
 endif()

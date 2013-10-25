@@ -57,6 +57,7 @@ set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
 set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C++ Headers")
 set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Applications")
 if (WIN32)
+#set(CPACK_NSIS_MODIFY_PATH ON)
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ; **** SET TEMPUS_DATA_DIRECTORY IN REGISTRY ***
    !include 'winmessages.nsh'
@@ -66,20 +67,35 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
     ExecWait postgresql-9.3.1-1-windows.exe
+    ;Delete postgresql-9.3.1-1-windows.exe
     Goto endPostgres
   endPostgres:
+  ; **** INSTALL QGIS ***
+  MessageBox MB_YESNO 'Install QGIS ?' /SD IDYES IDNO endQGIS
+    NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+    ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+    ; QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+    Goto endQGIS
+  endQGIS:
   ; *** INSTALL NGINX ***
-  MessageBox MB_YESNO 'Install nginx web srever ?' /SD IDYES IDNO endNginx
+  MessageBox MB_YESNO 'Install nginx web server ?' /SD IDYES IDNO endNginx
     ExecWait nginx-1.5.6.exe
     ExecWait `..\\\\nginx\\\\nginx_service.exe install`
     ExecWait `net start nginx`
     Goto endNginx   
   endNginx:
-  ; CREATE THE TEST DB ----------------------------------
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -f data\\\\tempus_test_db.sql`     
+
+  ; *** CREATE THE TEST DB ***
+  CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
+  CopyFiles /SILENT  `data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data`
+  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\dropdb.exe -U postgres  tempus_test_db`     
+  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\createdb.exe -U postgres  tempus_test_db`     
+  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\create_extension_postgis.sql`     
+  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
   ; *** INSTALL AND START WPS SERVICE ***
   ExecWait `wps_service.exe install`
   ExecWait `net start wps`
+
 "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
@@ -94,12 +110,18 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
 #Push `TEMPUS_DATA_DIRECTORY`
 #Push $INSTDIR\\\\data
 #Call ConditionalAddToRegisty
-#set(CPACK_NSIS_MODIFY_PATH ON)
 endif()
 include(CPack)
 
 if (WIN32)
    install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml DESTINATION .)
+   install(FILES 
+      ${PQ_LIBS_DIR}/libpq.dll 
+      ${PQ_LIBS_DIR}/../bin/zlib1.dll 
+      ${PQ_LIBS_DIR}/../bin/libeay32.dll
+      ${PQ_LIBS_DIR}/../bin/ssleay32.dll
+      ${PQ_LIBS_DIR}/../bin/libintl.dll                 
+      DESTINATION bin)
 endif()
 
 if (WIN32)

@@ -12,5 +12,8 @@ target_link_libraries( sample_pt_plugin tempus )
 add_library( forbidden_movements_plugin MODULE forbidden_movements_plugin/forbidden_movements_plugin.cc ${DLL_SOURCES} )
 target_link_libraries( forbidden_movements_plugin tempus )
 
-
+if (WIN32)
+install( TARGETS sample_multi_plugin sample_road_plugin sample_pt_plugin forbidden_movements_plugin DESTINATION bin )
+else()
 install( TARGETS sample_multi_plugin sample_road_plugin sample_pt_plugin forbidden_movements_plugin DESTINATION lib )
+endif()
