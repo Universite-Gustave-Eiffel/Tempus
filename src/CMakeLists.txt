@@ -29,3 +29,8 @@ endif(BUILD_QGIS_PLUGIN)
 if(BUILD_INTRALYS_PLUGIN)
   add_subdirectory( intralys )
 endif(BUILD_INTRALYS_PLUGIN)
+
+if(WIN32)
+install(DIRECTORY python DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
+endif()
+
