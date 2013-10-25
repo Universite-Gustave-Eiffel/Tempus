@@ -63,20 +63,23 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    !include 'winmessages.nsh'
    WriteRegExpandStr HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY $INSTDIR\\\\data
    SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 'STR:Environment' /TIMEOUT=5000
+   
   ; **** INSTALL POSTGRESQL ***
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
     ExecWait postgresql-9.3.1-1-windows.exe
-    ;Delete postgresql-9.3.1-1-windows.exe
+    Delete postgresql-9.3.1-1-windows.exe
     Goto endPostgres
   endPostgres:
+  
   ; **** INSTALL QGIS ***
-  MessageBox MB_YESNO 'Install QGIS ?' /SD IDYES IDNO endQGIS
+  MessageBox MB_YESNO 'Install QGIS 2.0 ?' /SD IDYES IDNO endQGIS
     NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
     ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    ; QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+    Delete QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
     Goto endQGIS
   endQGIS:
+  
   ; *** INSTALL NGINX ***
   MessageBox MB_YESNO 'Install nginx web server ?' /SD IDYES IDNO endNginx
     ExecWait nginx-1.5.6.exe
@@ -85,13 +88,22 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
     Goto endNginx   
   endNginx:
 
-  ; *** CREATE THE TEST DB ***
+  ; **** INSTALL PYTHON ***
+  MessageBox MB_YESNO 'Install Python 2.7 ?' /SD IDYES IDNO endPython
+     NSISdl::download http://www.python.org/ftp/python/2.7.5/python-2.7.5.msi python-2.7.5.msi
+     ExecWait python-2.7.5.msi
+     Delete python-2.7.5.msi
+     Goto endPython
+  endPython:
+  
+  ; *** INSTALL TEST DB ***
   CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
   CopyFiles /SILENT  `data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data`
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\dropdb.exe -U postgres  tempus_test_db`     
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\createdb.exe -U postgres  tempus_test_db`     
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\create_extension_postgis.sql`     
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
+
   ; *** INSTALL AND START WPS SERVICE ***
   ExecWait `wps_service.exe install`
   ExecWait `net start wps`
