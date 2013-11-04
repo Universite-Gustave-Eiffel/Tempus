@@ -1,0 +1,8 @@
+<service>
+<id>wps</id>
+<name>wps</name>
+<description>wps</description>
+<executable>"c:\Program Files (x86)\tempus-1.0.0\bin\wps.exe"</executable>
+<workingdirectory>"c:\Program Files (x86)\tempus-1.0.0\lib</workingdirectory>
+<arguments>-p 9000 -l sample_pt_plugin -l sample_road_plugin -l sample_multi_plugin -d "host=127.0.0.1 user=postgres dbname=tempus_test_db"</arguments>
+</service>
