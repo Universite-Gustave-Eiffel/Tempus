@@ -105,9 +105,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
   ExecWait `mkdir \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-  ExecWait `xcopy python\\\\plugins\\\\IfsttarRoutin \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-  ExecWait `xcopy python\\\\plugins\\\\intralys \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-
+  ExecWait `xcopy /Y /S /I python\\\\plugins \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
 "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
