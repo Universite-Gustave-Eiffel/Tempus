@@ -17,7 +17,7 @@ else (WIN32)
   set( FCGI_LIBS fcgi fcgi++ )
 endif (WIN32)
 
-link_directories(  ${ICONV_LIBRARY_DIRS} ${FCGI_LIBRARY_DIRS} ${CMAKE_CURRENt_BUILD_DIR} )
+link_directories(  ${ICONV_LIBRARY_DIRS} ${FCGI_LIBRARY_DIRS})
 include_directories( ${LIBXML2_INCLUDE_DIR} ${ICONV_INCLUDE_DIR} ${FCGI_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../core )
 
 add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
