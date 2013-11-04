@@ -87,15 +87,10 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
     ExecWait `net start nginx`
     Goto endNginx   
   endNginx:
-
-  ; **** INSTALL PYTHON ***
-  MessageBox MB_YESNO 'Install Python 2.7 ?' /SD IDYES IDNO endPython
-     NSISdl::download http://www.python.org/ftp/python/2.7.5/python-2.7.5.msi python-2.7.5.msi
-     ExecWait python-2.7.5.msi
-     Delete python-2.7.5.msi
-     Goto endPython
-  endPython:
-  
+ 
+  ; *** INSTALL MSVC REDISTRIBUTABLES ***
+  ExecWait `vcredist_x86.exe`
+ 
   ; *** INSTALL TEST DB ***
   CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
   CopyFiles /SILENT  `data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data`
@@ -107,6 +102,11 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ; *** INSTALL AND START WPS SERVICE ***
   ExecWait `wps_service.exe install`
   ExecWait `net start wps`
+  
+  ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
+  ExecWait `mkdir \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
+  ExecWait `xcopy python\\\\plugins\\\\IfsttarRoutin \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
+  ExecWait `xcopy python\\\\plugins\\\\intralys \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
 
 "
 )
@@ -126,7 +126,7 @@ endif()
 include(CPack)
 
 if (WIN32)
-   install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml DESTINATION .)
+   install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml vcredist_x86.exe DESTINATION .)
    install(FILES 
       ${PQ_LIBS_DIR}/libpq.dll 
       ${PQ_LIBS_DIR}/../bin/zlib1.dll 
@@ -148,5 +148,5 @@ add_subdirectory(doc)
 
  #cmake -DBUILD_INTRALYS_PLUGIN=ON -DBUILD_QGIS_PLUGIN=ON -DBUILD_TESTS=ON -DLIBXML2_INCLUDE_DIR="C:\Program Files (x86)\libxml2-2.7.8.win32\include" -DLIBXML2_LIBRARIES="C:\Program Files (x86)\libxml2-2.7.8.win32\lib\libxml2.lib" -DPQ_INCLUDE_DIR="C:/Program Files (x86)/PostgreSQL/9.3/include" -DPQ_LIBS_DIR="C:/Program Files (x86)/PostgreSQL/9.3/lib" -DBUILD_WPS=ON ..
  #set path=Path=C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\BIN;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\Tools;C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Windows\Microsoft.NET\Framework\v3.5;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\VCPackages;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin;C:\Python27\Lib\site-packages\PyQt4;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\CMake 2.8\bin;C:\Program Files (x86)\Git\cmd;c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin;C:\Program Files (x86)\libxml2-2.7.8.win32\bin;C:\Users\oslandia\iconv-1.9.2.win32\bin;C:\Program Files (x86)\PostgreSQL\9.3\bin;C:\Users\oslandia\fcgi-2.4.1\libfcgi\Release;C:\Users\oslandia;C:\Users\oslandia\tempus\build\lib\Debug
- 
+ #set pythonpath=c:\OSGeo4W\apps\Python27\Lib;c:\OSGeo4W\apps\Python27\DLLs
  
