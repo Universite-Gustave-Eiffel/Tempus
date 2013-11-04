@@ -1,4 +1,4 @@
-include( ../PyQt4Macros.cmake )
+include( PyQt4Macros )
 
 if (WIN32)
 	set( HOME $ENV{USERPROFILE} )

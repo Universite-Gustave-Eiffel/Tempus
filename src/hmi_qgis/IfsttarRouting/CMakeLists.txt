@@ -1,3 +1,5 @@
+include( PyQt4Macros )
+
 if (WIN32)
 	set( HOME $ENV{USERPROFILE} )
 else (WIN32)
