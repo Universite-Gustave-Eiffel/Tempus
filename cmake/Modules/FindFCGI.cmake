@@ -14,25 +14,17 @@
 find_path(FCGI_INCLUDE_DIR NAME fcgio.h
    PATHS
    $ENV{FCGI_ROOT}
-   /usr/local/include
-   /usr/include
-   C:/
    )
 
 find_library(FCGI_LIBRARIES NAMES fcgi fcgi++ libfcgi 
    PATHS
    $ENV{FCGI_ROOT}
-   /usr/local/lib
-   /usr/lib
-   C:/
    )
 
 if (UNIX)
     find_library(FCGI_CPP_LIBRARIES NAMES fcgi++ 
         PATHS
         $ENV{FCGI_ROOT}
-        /usr/local/lib
-        /usr/lib
         )
 else()
     set(FCGI_CPP_LIBRARIES "")
@@ -41,9 +33,9 @@ endif()
 if (FCGI_INCLUDE_DIR AND FCGI_LIBRARIES AND FCGI_CPP_LIBRARIES)
     set(FCGI_LIBRARIES ${FCGI_LIBRARIES} ${FCGI_CPP_LIBRARIES})
     set(FCGI_FOUND 1)
-    message( STATUS "found fcgi" )
+    message( STATUS "Found fcgi: " ${FCGI_LIBRARIES} )
 else()
-    if (REQUIRED)
+    if (_FIND_REQUIRED)
         message( FATAL_ERROR "fcgi not found" )
     else()
         message( ERROR "fcgi not found" )
