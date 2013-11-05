@@ -144,7 +144,7 @@ namespace Tempus
             typedef void adjacency_iterator;
             typedef void in_edge_iterator;
 
-            static inline vertex_descriptor null_vertex();
+	    static inline vertex_descriptor null_vertex(){return vertex_descriptor();} // depending on boost version, this can be useless
 
 	    ///
 	    /// The road graph
