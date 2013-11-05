@@ -15,12 +15,15 @@
 
 #include <stdio.h>
 #include <shapefil.h>
-#include <unistd.h>
+#ifdef WIN32
+#   define strcasecmp _stricmp 
+#else
+#   include <unistd.h>
+#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <getopt.h>
 
 #include <glib.h>
 
@@ -67,9 +70,9 @@ void truncate_utf8(char *string, int maxbytes)
 void die(const char *fmt, ...)
 {
     char *cpy;
+    va_list ap;
     cpy = (char *) malloc(strlen(fmt) + 2);
     sprintf(cpy, "%s\n", fmt);
-    va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, cpy, ap);
     va_end(ap);
@@ -78,9 +81,9 @@ void die(const char *fmt, ...)
 void warn(const char *fmt, ...)
 {
     char *cpy;
+    va_list ap;
     cpy = (char *) malloc(strlen(fmt) + 2);
     sprintf(cpy, "%s\n", fmt);
-    va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, cpy, ap);
     va_end(ap);
@@ -92,10 +95,11 @@ void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
 {
     va_list ap;
     int i;
-
+    struct sf *shape;
+    char *filepath;
     assert(slot < MAX_SHAPEFILES);
-    struct sf *shape = &(shapefiles[slot]);
-    char *filepath = (char *) malloc(strlen(outdir)+2+strlen(filename));
+    shape = &(shapefiles[slot]);
+    filepath = (char *) malloc(strlen(outdir)+2+strlen(filename));
     sprintf(filepath, "%s/%s", outdir, filename);
     shape->shph = SHPCreate(filepath, filetype);
     if (shape->shph<=0) die("cannot create shapefile '%s'", filepath);
@@ -132,7 +136,6 @@ void shapefile_add_dbf(int slot, int entity, gboolean way, va_list ap)
 {
     struct sf *shape = &(shapefiles[slot]);
     int i;
-    char *x;
     for (i=0; i<shape->num_fields; i++)
     {
         switch (shape->fieldtype[i])
@@ -181,8 +184,8 @@ void shapefile_add_node(int slot, ...)
     struct sf *shape = &(shapefiles[slot]);
     SHPObject *o;
     va_list ap;
-    va_start(ap, slot);
     int entity;
+    va_start(ap, slot);
     o = SHPCreateSimpleObject(SHPT_POINT, 1, current_latlon+1, current_latlon, NULL);
     entity = SHPWriteObject(shape->shph, -1, o);
     SHPDestroyObject(o);
@@ -197,11 +200,11 @@ void shapefile_add_way(int slot, ...)
     int i;
     SHPObject *o;
     va_list ap;
-    va_start(ap, slot);
     int entity;
+    int j = 0;
+    va_start(ap, slot);
 
     if (current_node_count < 2) return;
-    int j = 0;
     for (i=0; i<current_node_count; i++)
     {
         //printf("lookup node %d\n", *(current_nodes+i));
@@ -231,8 +234,8 @@ void shapefile_add_polygon(int slot, ...)
     int i;
     SHPObject *o;
     va_list ap;
-    va_start(ap, slot);
     int entity;
+    va_start(ap, slot);
 
     if (current_node_count < 3) return;
     for (i=0; i<current_node_count; i++)
@@ -281,8 +284,7 @@ void save_osm_node()
 
 void open_element(xmlTextReaderPtr reader, const xmlChar *name)
 {
-    xmlChar *xid, *xlat, *xlon, *xfrom, *xto, *xk, *xv, *xts;
-    char *k;
+    xmlChar *xid, *xlat, *xlon, *xk, *xv, *xts;
 
     if (xmlStrEqual(name, "node")) 
     {
@@ -301,12 +303,14 @@ void open_element(xmlTextReaderPtr reader, const xmlChar *name)
     } 
     else if (xmlStrEqual(name, "tag")) 
     {
+	char *k;
+	char *v;
         xk = xmlTextReaderGetAttribute(reader, "k");
         assert(xk);
         xv = xmlTextReaderGetAttribute(reader, "v");
         assert(xv);
-        char *k  = (char *)xmlStrdup(xk);
-        char *v  = (char *)xmlStrdup(xv);
+        k  = (char *)xmlStrdup(xk);
+        v  = (char *)xmlStrdup(xv);
         g_hash_table_insert(current_tags, k, v);
         xmlFree(xv);
         xmlFree(xk);
@@ -437,35 +441,31 @@ int main(int argc, char *argv[])
 
     node_storage = g_hash_table_new(g_int_hash, node_equal);
 
-    while (1) 
+    for (i=0; i<argc; i++)
     {
-        int c, option_index = 0;
-        static struct option long_options[] = {
-            {"verbose",  0, 0, 'v'},
-            {"destination",  1, 0, 'd'},
-            {"help",     0, 0, 'h'},
-            {0, 0, 0, 0}
-        };
-
-        c = getopt_long (argc, argv, "hvd:", long_options, &option_index);
-        if (c == -1)
-            break;
-
-        switch (c) {
-            case 'v': verbose=1;  break;
-            case 'd': outdir=optarg; break;
-            case 'h':
-            case '?':
-            default:
+	if      ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
+	{
+	    verbose=1;
+	}
+	else if ( strcmp("--destination",argv[i]) == 0 || strcmp("-d",argv[i]) == 0 )
+	{
+	    i++;
+	    if (i==argc)
+	    {
                 usage();
                 exit(EXIT_FAILURE);
-        }
-    }
-
-    if (optind >= argc)
-    {
-        usage();
-        exit(EXIT_FAILURE);
+	    }
+	    outdir=argv[i];
+	}
+	else if ( i == (argc-1) )
+	{
+	    streamFile(argv[i]);
+	}
+	else
+	{
+	    usage();
+	    return ( strcmp("--help",argv[i]) == 0 || strcmp("-h",argv[i]) == 0 ) ? EXIT_SUCCESS : EXIT_FAILURE;
+	}
     }
 
     current_tags = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
@@ -476,11 +476,6 @@ int main(int argc, char *argv[])
     }
 
     setup_shapefiles();
-
-    while (optind < argc) 
-    {
-        streamFile(argv[optind++]);
-    }
 
     xmlCleanupParser();
 

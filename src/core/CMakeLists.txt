@@ -24,7 +24,7 @@ else ()
     add_library( tempus SHARED ${SOURCE_FILES} )
 endif ()
 
-target_link_libraries( tempus ${PQ_LIBS} ${Boost_LIBRARIES} )
+target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} )
 
 add_executable( sample_app sample_app.cc )
 target_link_libraries( sample_app tempus )

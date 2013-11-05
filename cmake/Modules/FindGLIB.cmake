@@ -16,22 +16,22 @@ find_path(GLIB_INCLUDE_DIR NAME glib.h
    $ENV{GLIB_ROOT}/include
    PATH_SUFFIXES glib-2.0
    )
+#message(STATUS "glib include: " ${GLIB_INCLUDE_DIR})
 
-if (UNIX)
-    find_path(GLIB_INCLUDE_CONFIG_DIR NAME glibconfig.h
-        PATHS
-        /usr/lib/x86_64-linux-gnu/glib-2.0/include
-        )
-endif()
-
+find_path(GLIB_INCLUDE_CONFIG_DIR NAME glibconfig.h
+    PATHS
+    /usr/lib/x86_64-linux-gnu/glib-2.0/include
+    $ENV{GLIB_ROOT}/lib/glib-2.0/include
+    )
+#message(STATUS "glib config include: " ${GLIB_INCLUDE_CONFIG_DIR})
 
 find_library(GLIB_LIBRARIES NAMES glib-2.0
    PATHS
    $ENV{GLIB_ROOT}/lib
    )
+#message(STATUS "glib lib: " ${GLIB_LIBRARIES})
 
-
-if (GLIB_INCLUDE_DIR AND GLIB_LIBRARIES AND ((NOT UNIX) OR GLIB_INCLUDE_CONFIG_DIR))
+if (GLIB_INCLUDE_DIR AND GLIB_LIBRARIES AND GLIB_INCLUDE_CONFIG_DIR)
     set(GLIB_INCLUDE_DIR ${GLIB_INCLUDE_DIR} ${GLIB_INCLUDE_CONFIG_DIR})
     set(GLIB_FOUND 1)
     message( STATUS "Found glib: " ${GLIB_LIBRARIES} )

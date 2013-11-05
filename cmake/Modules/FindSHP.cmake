@@ -16,7 +16,7 @@ find_path(SHP_INCLUDE_DIR NAME shapefil.h
    $ENV{SHP_ROOT}/include
    )
 
-find_library(SHP_LIBRARIES NAMES shp   
+find_library(SHP_LIBRARIES NAMES shp shapelib_i
    PATHS
    $ENV{SHP_ROOT}/lib
    )
