@@ -98,6 +98,7 @@ CREATE TABLE tempus.road_section
 CREATE TABLE tempus.road_road
 (
 	id bigint PRIMARY KEY,
+        transport_types integer NOT NULL,
 	road_section bigint[] NOT NULL,
 	road_cost double precision NOT NULL -- -1 mean infinite cost (i.e forbidden)
 );
