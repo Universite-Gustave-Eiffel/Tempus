@@ -440,10 +440,11 @@ int main(int argc, char *argv[])
     int i;
 
     node_storage = g_hash_table_new(g_int_hash, node_equal);
+    assert(node_storage);
 
-    for (i=0; i<argc; i++)
+    for (i=1; i<argc; i++)
     {
-	if      ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
+	if ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
 	{
 	    verbose=1;
 	}
@@ -458,7 +459,7 @@ int main(int argc, char *argv[])
 	    outdir=argv[i];
 	}
 	else if ( i == (argc-1) )
-	{
+	{     
 	    streamFile(argv[i]);
 	}
 	else
@@ -469,6 +470,7 @@ int main(int argc, char *argv[])
     }
 
     current_tags = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
+    assert(current_tags);
 
     for (i=0; i<MAX_SHAPEFILES; i++)
     {
