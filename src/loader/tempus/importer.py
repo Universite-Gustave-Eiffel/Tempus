@@ -160,24 +160,31 @@ class ShpImporter(DataImporter):
                 # if only one prefix found, use it !
                 if len(prefixes) > 1:
                     sys.stderr.write("Cannot determine prefix, multiple found : %s \n" % ",".join(prefixes))
+                elif len(prefixes) == 1:
+                    return prefixes[0]
                 else:
-                    myprefix = prefixes[0]
+                    return ''
         return myprefix
 
     def get_shapefiles(self):
         self.shapefiles = []
         notfound = []
+
+        baseDir = os.path.realpath(self.source)
+        ls = os.listdir( baseDir )
         for shp in self.SHAPEFILES:
-            filename = os.path.join(os.path.realpath(self.source), self.prefix + shp + ".shp")
-            if os.path.isfile(filename):
-                self.shapefiles.append(filename)
+            filenameShp = self.prefix + shp + ".shp"
+            filenameDbf = self.prefix + shp + ".dbf"
+            lsLower = [ x.lower() for x in ls ]
+            if filenameShp in lsLower:
+                i = lsLower.index( filenameShp )
+                self.shapefiles.append( os.path.join( baseDir, ls[i] ) )
+            elif filenameDbf in lsLower:
+                i = lsLower.index( filenameDbf )
+                self.shapefiles.append( os.path.join( baseDir, ls[i] ) )
             else:
-                filename = os.path.join(os.path.realpath(self.source), self.prefix + shp + ".dbf")
-                if os.path.isfile(filename):
-                    self.shapefiles.append(filename)
-                else:
-                    notfound.append(shp)
-                    sys.stderr.write("Warning : file for table %s not found.\n"\
-                            "%s/shp not found\n" % (shp, filename) )
+                notfound.append( filenameDbf )
+                sys.stderr.write("Warning : file for table %s not found.\n"\
+                                     "%s/shp not found\n" % (shp, filename) )            
         return notfound
 
