@@ -22,7 +22,7 @@ if (WIN32)
     set (Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread)
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options)
 find_package(PostgreSQL REQUIRED)
 include_directories( ${PostgreSQL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
 link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
