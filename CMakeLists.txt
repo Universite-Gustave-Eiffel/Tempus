@@ -1,4 +1,15 @@
 project( tempus )
+
+# the following environment variables must be defined in windows for cmake to find the libraries
+# 
+# set FCGI_ROOT=c:\Users\oslandia\fcgi-2.4.1
+# set BOOST_ROOT=c:\Program Files (x86)\boost_1_54_0
+# set GLIB_ROOT=c:\Program Files (x86)\glib-dev_2.28.8-1_win32
+# set LIBXML2_ROOT=c:\OSGeo4W
+# set PostgreSQL_ROOT=c:\Program Files (x86)\PostgreSQL\9.3
+# set SHP_ROOT=c:\OSGeo4W
+# set TEMPUS_DATA_DIRECTORY=C:\Program Files (x86)\tempus-1.0.0\data
+
 cmake_minimum_required(VERSION 2.6)
 enable_testing()
 
@@ -7,26 +18,14 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
-
-# FIXME use installation directory on install
-#set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if (WIN32)
-	set( PQ_INCLUDE_DIR "C:/Program Files(x86)/PostgreSQL/9.3/include" CACHE PATH "libpq include directory" )
-	set( PQ_LIBS_DIR "C:/Program Files (x86)/PostgreSQL/9.3/lib" CACHE PATH "libpq lib directory" )
-	set( PQ_LIBS libpq )
     set (Boost_USE_STATIC_LIBS ON)
-	set( LIBTEMPUS tempus )
-else (WIN32)
-	set( PQ_INCLUDE_DIR "/usr/include/postgresql" CACHE PATH "libpq include directory" )
-	set( PQ_LIBS_DIR "/usr/lib" CACHE PATH "libpq lib directory" )
-	set( PQ_LIBS pq dl boost_program_options )
-	set (LIBTEMPUS tempus )
-endif (WIN32)
+endif()
 
-find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread)
-
-include_directories( ${PQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
-link_directories( ${PQ_LIBS_DIR} ${Boost_LIBRARY_DIRS} )
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options)
+find_package(PostgreSQL REQUIRED)
+include_directories( ${PostgreSQL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
+link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
 
 if(MSVC)
 	# Force to always compile with W4
@@ -129,11 +128,11 @@ include(CPack)
 if (WIN32)
    install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml vcredist_x86.exe DESTINATION .)
    install(FILES 
-      ${PQ_LIBS_DIR}/libpq.dll 
-      ${PQ_LIBS_DIR}/../bin/zlib1.dll 
-      ${PQ_LIBS_DIR}/../bin/libeay32.dll
-      ${PQ_LIBS_DIR}/../bin/ssleay32.dll
-      ${PQ_LIBS_DIR}/../bin/libintl.dll                 
+      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl.dll                 
       DESTINATION bin)
 endif()
 
@@ -147,7 +146,9 @@ install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 add_subdirectory(src)
 add_subdirectory(doc)
 
+
+
  #cmake -DBUILD_INTRALYS_PLUGIN=ON -DBUILD_QGIS_PLUGIN=ON -DBUILD_TESTS=ON -DLIBXML2_INCLUDE_DIR="C:\Program Files (x86)\libxml2-2.7.8.win32\include" -DLIBXML2_LIBRARIES="C:\Program Files (x86)\libxml2-2.7.8.win32\lib\libxml2.lib" -DPQ_INCLUDE_DIR="C:/Program Files (x86)/PostgreSQL/9.3/include" -DPQ_LIBS_DIR="C:/Program Files (x86)/PostgreSQL/9.3/lib" -DBUILD_WPS=ON ..
  #set path=Path=C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\BIN;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\Tools;C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Windows\Microsoft.NET\Framework\v3.5;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\VCPackages;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin;C:\Python27\Lib\site-packages\PyQt4;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\CMake 2.8\bin;C:\Program Files (x86)\Git\cmd;c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin;C:\Program Files (x86)\libxml2-2.7.8.win32\bin;C:\Users\oslandia\iconv-1.9.2.win32\bin;C:\Program Files (x86)\PostgreSQL\9.3\bin;C:\Users\oslandia\fcgi-2.4.1\libfcgi\Release;C:\Users\oslandia;C:\Users\oslandia\tempus\build\lib\Debug
  #set pythonpath=c:\OSGeo4W\apps\Python27\Lib;c:\OSGeo4W\apps\Python27\DLLs
- 
+
