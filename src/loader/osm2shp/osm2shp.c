@@ -195,7 +195,6 @@ void shapefile_add_node(int slot, ...)
 void shapefile_add_way(int slot, ...)
 {
     struct sf *shape = &(shapefiles[slot]);
-    assert(shape);
     double lat[MAX_NODES_PER_WAY];
     double lon[MAX_NODES_PER_WAY];
     int i;
