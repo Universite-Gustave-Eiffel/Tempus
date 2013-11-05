@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(testQueries)
 }
 BOOST_AUTO_TEST_SUITE_END()
 
-/*
+
 BOOST_AUTO_TEST_SUITE(tempus_core_PgImporter)
 
 std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " DB_TEST_NAME ));
@@ -137,12 +137,12 @@ BOOST_AUTO_TEST_CASE(testConsistency)
     }
 }
 
-Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& graph )
+Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& lgraph )
 {
     Multimodal::VertexIterator vi, vi_end;
-    for ( boost::tie( vi, vi_end ) = vertices( graph ); vi != vi_end; vi++ )
+    for ( boost::tie( vi, vi_end ) = vertices( lgraph ); vi != vi_end; vi++ )
     {
-	if ( vi->type == Multimodal::Vertex::Road && graph.road[ vi->road_vertex ].db_id == id )
+	if ( vi->type == Multimodal::Vertex::Road && lgraph.road[ vi->road_vertex ].db_id == id )
 	{
 	    return *vi;
 	}
@@ -407,6 +407,29 @@ BOOST_AUTO_TEST_CASE(testMultimodal)
 	}
     }
 }
+
+BOOST_AUTO_TEST_CASE(testRestrictions)
+{
+    importer->import_constants( graph );
+    importer->import_graph( graph );
+
+    // restriction nodes
+    db_id_t expected_nodes[][4] = { { 22587, 22510, 22451, 0 },
+                                    { 21801, 21652, 21712, 21691 } };
+    
+    Road::Restrictions restrictions( importer->import_turn_restrictions( graph.road ) );
+
+    Road::Restrictions::RestrictionSequence::const_iterator it;
+    int i = 0;
+    for ( it = restrictions.restrictions.begin(); it != restrictions.restrictions.end(); ++it, i++ ) {
+        Road::Road::VertexSequence seq( it->to_vertex_sequence( graph.road ) );
+        int j = 0;
+        for ( Road::Road::VertexSequence::const_iterator itt = seq.begin(); itt != seq.end(); ++itt, j++ ) {
+            BOOST_CHECK_EQUAL( graph.road[ *itt ].db_id, expected_nodes[i][j] );
+        }
+    }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
-*/
+
