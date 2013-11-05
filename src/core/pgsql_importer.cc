@@ -157,7 +157,7 @@ namespace Tempus
                 Road::Vertex v_from = road_nodes_map[ node_from_id ];
                 Road::Vertex v_to = road_nodes_map[ node_to_id ];
                 if ( v_from == v_to ) {
-                        COUT << "Cannot add a road cycle from " << v_from << " to " << v_to << endl;
+                        CERR << "Cannot add a road cycle from " << v_from << " to " << v_to << endl;
                         continue;
                 }
 
@@ -166,7 +166,7 @@ namespace Tempus
                 boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
                 if ( found )
                 {
-                    COUT << "Edge " << e << " already exists" << endl;
+                    CERR << "Edge " << e << " already exists" << endl;
                     continue;
                 }
                 boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
@@ -229,7 +229,7 @@ namespace Tempus
                 BOOST_ASSERT( road_section > 0 );
                 if ( road_sections_map.find( road_section ) == road_sections_map.end() )
                 {
-                    COUT << "Cannot find road_section of ID " << road_section << ", pt node " << stop.db_id << " rejected" << endl;
+                    CERR << "Cannot find road_section of ID " << road_section << ", pt node " << stop.db_id << " rejected" << endl;
                     continue;
                 }
                 stop.road_section = road_sections_map[ road_section ];
@@ -281,12 +281,12 @@ namespace Tempus
 
                 if ( pt_nodes_map[network_id].find( stop_from_id ) == pt_nodes_map[network_id].end() )
                 {
-                    COUT << "Cannot find 'from' node of ID " << stop_from_id << endl;
+                    CERR << "Cannot find 'from' node of ID " << stop_from_id << endl;
                     continue;
                 }
                 if ( pt_nodes_map[network_id].find( stop_to_id ) == pt_nodes_map[network_id].end() )
                 {
-                    COUT << "Cannot find 'to' node of ID " << stop_to_id << endl;
+                    CERR << "Cannot find 'to' node of ID " << stop_to_id << endl;
                     continue;
                 }
                 PublicTransport::Vertex stop_from = pt_nodes_map[network_id][ stop_from_id ];
@@ -323,7 +323,7 @@ namespace Tempus
                 BOOST_ASSERT( road_section_id > 0 );
                 if ( road_sections_map.find( road_section_id ) == road_sections_map.end() )
                 {
-                    COUT << "Cannot find road_section of ID " << road_section_id << ", poi " << poi.db_id << " rejected" << endl;
+                    CERR << "Cannot find road_section of ID " << road_section_id << ", poi " << poi.db_id << " rejected" << endl;
                     continue;
                 }
                 poi.road_section = road_sections_map[ road_section_id ];
@@ -350,4 +350,61 @@ namespace Tempus
 
     }
 
+    Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& graph )
+    {
+        Road::Restrictions restrictions;
+        restrictions.road_graph = &graph;
+
+        Db::Result res(connection_.exec( "SELECT id, road_section, road_cost, transport_types FROM tempus.road_road" ) );
+
+	std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
+        Road::EdgeIterator it, it_end;
+        boost::tie(it, it_end) = boost::edges( graph );
+        for ( ; it != it_end; ++it ) {
+            road_sections_map[ graph[ *it ].db_id ] = *it;
+        }
+        
+
+        for ( size_t i = 0; i < res.size(); i++ )
+        {
+            Road::Road road_road;
+
+            res[i][0] >> road_road.db_id;
+            BOOST_ASSERT( road_road.db_id > 0 );
+
+            std::string array_str;
+            res[i][1] >> array_str;
+            // array: {a,b,c}
+
+            // trim '{}'
+            std::istringstream array_sub( array_str.substr(1, array_str.size()-2) );
+
+            // parse each array element
+            std::string n_str;
+            bool invalid = false;
+            while ( std::getline( array_sub, n_str, ',' ) ) {
+                std::istringstream n_stream(n_str);
+                db_id_t id;
+                n_stream >> id;
+                if ( road_sections_map.find( id ) == road_sections_map.end() )
+                {
+                    CERR << "Cannot find road_section of ID " << id << ", road_road of ID " << road_road.db_id << " rejected" << endl;
+                    invalid = true;
+                    break;
+                }
+                
+                road_road.road_sections.push_back( road_sections_map[id] );
+            }
+            if ( invalid ) {
+                continue;
+            }
+
+            res[i][2] >> road_road.cost;
+
+            res[i][2] >> road_road.transport_types;
+
+            restrictions.restrictions.push_back( road_road );
+        }
+        return restrictions;
+    }
 }

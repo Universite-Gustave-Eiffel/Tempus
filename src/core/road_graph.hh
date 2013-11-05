@@ -101,16 +101,38 @@ namespace Tempus
 
 	///
 	/// refers to the 'road_road' DB's table
+        /// This structure reflects turn restrictions on the road network
 	struct Road : public Base
 	{
 	    ///
 	    /// Array of road sections
-	    std::vector<Edge> road_section;
+	    std::vector<Edge> road_sections;
 	    
 	    ///
 	    /// -1 means infinite cost
 	    double cost;
+
+            ///
+            /// Transport types associated with this restrictions
+            int transport_types;
+
+            ///
+            /// Function to convert sequences of edges into sequences of nodes
+            typedef std::list<Vertex> VertexSequence;
+            VertexSequence to_vertex_sequence( const Graph& ) const;
 	};
+
+        struct Restrictions
+        {
+            ///
+            /// List of restrictions
+            typedef std::list<Road> RestrictionSequence;
+            RestrictionSequence restrictions;
+
+            ///
+            /// Pointer to the underlying road graph
+            const Graph* road_graph;
+        };
     }  // Road namespace
 
     ///

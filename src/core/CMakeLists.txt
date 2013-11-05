@@ -1,5 +1,7 @@
 set( HEADER_FILES
     common.hh 
+    road_graph.hh
+    public_transport_graph.hh
     multimodal_graph.hh 
     application.hh plugin.hh 
     pgsql_importer.hh 
@@ -10,6 +12,7 @@ set( HEADER_FILES
 
 set( SOURCE_FILES 
     common.cc 
+    road_graph.cc
     multimodal_graph.cc 
     application.cc plugin.cc 
     pgsql_importer.cc 

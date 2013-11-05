@@ -151,7 +151,8 @@ CREATE TABLE tempus.pt_network
 -- GTFS Stops
 CREATE TABLE tempus.pt_stop
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar, -- optional ID given by data provider
 	psname varchar NOT NULL,
 	location_type boolean, -- As in GTFS: 0 mean stop, 1 mean station
 	parent_station integer REFERENCES tempus.pt_stop (id),
@@ -165,7 +166,8 @@ CREATE TABLE tempus.pt_stop
 -- GTFS Routes (and subgraph link)
 CREATE TABLE tempus.pt_route
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar, 
 	network_id integer REFERENCES tempus.pt_network,
 	short_name varchar NOT NULL,
 	long_name varchar NOT NULL,
@@ -192,7 +194,8 @@ CREATE TABLE tempus.pt_section
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar,
 	monday boolean NOT NULL,
 	tuesday boolean NOT NULL,
 	wednesday boolean NOT NULL,
@@ -208,7 +211,8 @@ CREATE TABLE tempus.pt_calendar
 -- GTFS Trip
 CREATE TABLE tempus.pt_trip
 (
-	id bigint PRIMARY KEY, 
+	id serial PRIMARY KEY, 
+        vendor_id varchar,
 	route_id integer REFERENCES tempus.pt_route NOT NULL,
 	service_id integer REFERENCES tempus.pt_calendar NOT NULL,
 	short_name varchar
@@ -252,7 +256,8 @@ CREATE TABLE tempus.pt_stop_time
 -- GTFS Fare Attribute
 CREATE TABLE tempus.pt_fare_attribute
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar,
 	price double precision NOT NULL,
 	currency_type char(3) DEFAULT 'EUR' NOT NULL, -- ISO 4217 codes
 	transfers integer NOT NULL CHECK(transfers >= -1 AND transfers <= 2), 	

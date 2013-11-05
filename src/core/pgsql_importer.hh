@@ -38,6 +38,10 @@ namespace Tempus
 	/// Access to underlying connection object
 	Db::Connection& get_connection() { return connection_; }
 
+        ///
+        /// Import turn restrictions
+        Road::Restrictions import_turn_restrictions( const Road::Graph& graph );
+
     protected:
 	Db::Connection connection_;
     };
