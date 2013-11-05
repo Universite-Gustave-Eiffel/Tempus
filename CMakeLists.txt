@@ -4,6 +4,9 @@ enable_testing()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 # FIXME use installation directory on install
 #set(TEMPUS_DATA_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data")
@@ -105,9 +108,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
   ExecWait `mkdir \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-  ExecWait `xcopy python\\\\plugins\\\\IfsttarRoutin \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-  ExecWait `xcopy python\\\\plugins\\\\intralys \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-
+  ExecWait `xcopy /Y /S /I python\\\\plugins \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
 "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
