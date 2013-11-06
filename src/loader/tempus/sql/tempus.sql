@@ -65,8 +65,8 @@ INSERT INTO tempus.road_type VALUES (7, 'Pedestrial only');
 CREATE TABLE tempus.road_node
 (
 	id bigint PRIMARY KEY,
-	junction boolean,
-	bifurcation boolean
+	junction boolean, -- properties of the section are different before and after this node
+	bifurcation boolean -- total number of incident edges are > 2
 	-- NOTA: geometry column added NOT NULL
 );
 ALTER TABLE tempus.road_node ADD CONSTRAINT road_node_type CHECK(NOT(junction and bifurcation));
