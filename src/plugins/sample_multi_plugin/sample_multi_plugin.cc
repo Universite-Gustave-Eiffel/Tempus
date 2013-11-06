@@ -26,6 +26,11 @@ using namespace std;
 
 namespace Tempus
 {
+    // length (in meters) of each section
+    static std::map< Multimodal::Edge, double > distances;
+    // duration of each section (for an average pedestrian)
+    static std::map< Multimodal::Edge, double > durations;
+
     class MultiPlugin : public Plugin
     {
     public:
@@ -41,26 +46,21 @@ namespace Tempus
 	}
 
     private:
-	// length (in meters) of each section
-	std::map< Multimodal::Edge, double > distances;
-	// duration of each section (for an average pedestrian)
-	std::map< Multimodal::Edge, double > durations;
 
     public:
 
 	///
 	/// In the post_build, we pre-compute a table of distances for each edge
 	///
-	virtual void post_build()
+	static void post_build()
 	{
-	    durations.clear();
-	    distances.clear();
-
 	    // retrieve the length of each pt section
 	    COUT << "Computing the length of each section..." << std::endl;
 	    typedef std::map< std::pair<db_id_t, db_id_t>, double > PtLength;
 	    PtLength pt_lengths;
-	    Db::Result res = db_.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
+            
+            Db::Connection db(Application::instance()->db_options());
+	    Db::Result res = db.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
 	    for ( size_t i = 0; i < res.size(); ++i ) {
 		db_id_t stop_from, stop_to;
 		double length = 0.0;
@@ -73,14 +73,14 @@ namespace Tempus
 	    REQUIRE( pt_lengths.size() == res.size() );
 	    
 	    Multimodal::EdgeIterator ei, ei_end;
-	    for ( boost::tie( ei, ei_end ) = edges( graph_ ); ei != ei_end; ei++ )
+	    for ( boost::tie( ei, ei_end ) = edges( Application::instance()->graph() ); ei != ei_end; ei++ )
 	    {
 		switch (ei->connection_type()) {
 		case Multimodal::Edge::Road2Road: {
 		    Road::Edge e;
 		    bool found;
 		    boost::tie( e, found ) = road_edge( *ei );
-		    distances[*ei] = graph_.road[e].length;
+		    distances[*ei] = Application::instance()->graph().road[e].length;
 		    // average pedestrian walk : 5000 m / h
 		    durations[*ei] = distances[*ei] / 5000.0 * 60.0;
 		} break;

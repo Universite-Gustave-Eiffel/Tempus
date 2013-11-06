@@ -191,7 +191,7 @@ namespace Tempus
 	
 	///
 	/// Called after graphs have been built in memory.
-	virtual void post_build();
+	//virtual void post_build();
 	
 	///
 	/// Called in order to validate the in-memory structure.
@@ -438,7 +438,8 @@ namespace Tempus
     extern "C" EXPORT Tempus::Plugin* createPlugin( const std::string & db_options ) { return new type( name, db_options ); } \
     extern "C" EXPORT const char *    pluginName() { return name; } \
     extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList* optionDescriptions( ) { return new Tempus::Plugin::OptionDescriptionList(type::option_descriptions()); } \
-    extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; }
+    extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; } \
+    extern "C" EXPORT void post_build(){type::post_build();}
 
 #endif
 

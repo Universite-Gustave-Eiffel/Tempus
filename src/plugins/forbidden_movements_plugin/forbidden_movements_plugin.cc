@@ -40,6 +40,8 @@ namespace Tempus
                                    AutomatonNode,
                                    AutomatonEdge> Automaton;
 
+    static Automaton automaton;
+
     class ForbiddenMovementPlugin : public Plugin
     {
     public:
@@ -63,39 +65,36 @@ namespace Tempus
 
 
     private:
-        Automaton automaton_;
 
         Road::Vertex source_, destination_;
 
     public:
 
-	virtual void post_build()
+	static void post_build()
 	{
-            Road::Graph& road_graph = graph_.road;
-
-            automaton_.clear();
+            Road::Graph& road_graph = Application::instance()->graph().road;
 
             Automaton::vertex_descriptor v1, v2, v3;
             Automaton::edge_descriptor e1, e2;
-            v1 = boost::add_vertex( automaton_ );
-            automaton_[ v1 ].penalty = 0.0;
-            v2 = boost::add_vertex( automaton_ );
-            automaton_[ v2 ].penalty = 0.0;
-            v3 = boost::add_vertex( automaton_ );
-            automaton_[ v3 ].penalty = 100000.0;
+            v1 = boost::add_vertex( automaton );
+            automaton[ v1 ].penalty = 0.0;
+            v2 = boost::add_vertex( automaton );
+            automaton[ v2 ].penalty = 0.0;
+            v3 = boost::add_vertex( automaton );
+            automaton[ v3 ].penalty = 100000.0;
 
             bool ok;
-            boost::tie( e1, ok ) = boost::add_edge( v1, v2, automaton_ );
+            boost::tie( e1, ok ) = boost::add_edge( v1, v2, automaton );
             REQUIRE( ok );
-            boost::tie( e2, ok ) = boost::add_edge( v2, v3, automaton_ );
+            boost::tie( e2, ok ) = boost::add_edge( v2, v3, automaton );
             REQUIRE( ok );
 
             // forbidden edges (on tempus_test_db)
-            automaton_[ e1 ].source = vertex_from_id( 21556, road_graph );
-            automaton_[ e1 ].target = vertex_from_id( 21652, road_graph );
+            automaton[ e1 ].source = vertex_from_id( 21556, road_graph );
+            automaton[ e1 ].target = vertex_from_id( 21652, road_graph );
 
-            automaton_[ e2 ].source = vertex_from_id( 21652, road_graph );
-            automaton_[ e2 ].target = vertex_from_id( 21617, road_graph );
+            automaton[ e2 ].source = vertex_from_id( 21652, road_graph );
+            automaton[ e2 ].target = vertex_from_id( 21617, road_graph );
 	}
 
 	virtual void pre_process( Request& /* request */ ) 
@@ -116,6 +115,7 @@ namespace Tempus
 
 	virtual void process()
 	{
+            // copy the automaton
 	    Road::Graph& road_graph = graph_.road;
 
             // The Label type which is a pair of (graph vertex, automaton state)
@@ -139,7 +139,7 @@ namespace Tempus
 
             // the penalty of a state is handled by the AutomatonNode::penalty property
 	    typedef FieldPropertyAccessor<Automaton, boost::vertex_property_tag, double, double AutomatonNode::*> PenaltyMap;
-            PenaltyMap penalty_map( automaton_, &AutomatonNode::penalty );
+            PenaltyMap penalty_map( automaton, &AutomatonNode::penalty );
 
             Road::Vertex start_vertex = source_;
             Road::Vertex target_vertex = destination_;
@@ -148,7 +148,7 @@ namespace Tempus
             get_option( "approach", approach );
             if ( approach == 0 ) {
                 combined_dijkstra( road_graph,
-                                   automaton_,
+                                   automaton,
                                    penalty_map,
                                    start_vertex,
                                    target_vertex,
@@ -160,14 +160,14 @@ namespace Tempus
                 
                 // the combined graph type
                 typedef CombinedGraphAdaptor<Road::Graph, Automaton> CGraph;
-                CGraph cgraph( road_graph, automaton_ );
-                
+                CGraph cgraph( road_graph, automaton );
+               
                 // the combined weight map made of a weight map on the road graph and a penalty map
                 typedef CombinedWeightMap< CGraph, WeightMap, PenaltyMap > CombinedWeightMap;
                 CombinedWeightMap wmap( cgraph, weight_map, penalty_map );
                 
                 // manually set the distance of the start_vertex to 0.0 (no init here)
-                Automaton::vertex_descriptor q0 = *( vertices( automaton_ ).first );
+                Automaton::vertex_descriptor q0 = *( vertices( automaton ).first );
                 put( distance_pmap, std::make_pair( start_vertex, q0 ), 0.0 );
                 
                 // we call the _no_init variant here,
