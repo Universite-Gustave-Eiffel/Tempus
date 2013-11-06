@@ -29,8 +29,9 @@ $$ LANGUAGE plpgsql;
 -- TABLE road_node 
 INSERT INTO tempus.road_node
 	SELECT DISTINCT id FROM 
-		(SELECT ref_in_id AS id  FROM _tempus_import.street)  AS a
-		 UNION (SELECT ref_in_id AS id FROM _tempus_import.street);
+		(SELECT ref_in_id AS id  FROM _tempus_import.streets
+		 UNION
+                 SELECT nref_in_id AS id FROM _tempus_import.streets) as t;
 
 
 -- TABLE road_section 
@@ -55,7 +56,7 @@ SELECT
 		WHEN '3' THEN 2
                 WHEN '4' THEN 3 
                 WHEN '5' THEN 4 
-		ELSE NULL 
+		ELSE 5 -- others
 	END AS road_type,
 
 	ref_in_id AS node_from,
@@ -67,7 +68,7 @@ SELECT
 	ST_Length(geom) AS length,
 	fr_spd_lim AS car_speed_limit,
 
-	CASE speed_cat
+	CASE speed_cat::integer
 		WHEN 1 THEN 130 
 		WHEN 2 THEN 115
 		WHEN 3 THEN 95
@@ -81,7 +82,7 @@ SELECT
 
 	st_name AS road_name,
 
-	CASE lane_cat
+	CASE lane_cat::integer
 		WHEN 0 THEN NULL
 		WHEN 1 THEN 1
 		WHEN 2 THEN 2
@@ -99,7 +100,7 @@ SELECT
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
 	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 
-FROM _tempus_import.street AS st;
+FROM _tempus_import.streets AS st;
 
 -- Restore constraints and index
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
@@ -121,25 +122,58 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 
 -- TABLE road_road
 INSERT INTO tempus.road_road
+select
+	mcond_id as id,
+	case when ar_auto = 'Y' then 1 else 0 end
+	+ case when ar_bus = 'Y' then 8 else 0 end
+	--+ case when ar_taxis = 'Y' then ?? else 0 end
+	+ case when ar_carpool = 'Y' then 256 else 0 end
+	+ case when ar_pedstrn = 'Y' then 2 else 0 end
+	--+ case when ar_trucks = 'Y' then ?? else 0 end
+	as transport_types,
+	array_agg(link order by mseq_number) as road_section,
+        -1 as road_cost
+from
+(
 
-        SELECT  t.id,
-                t.road_section,
-                (SELECT SUM(ST_Length(geom)) FROM _tempus_import.street AS s WHERE s.link_id = ANY (t.road_section)) AS cost
-  
-        FROM (
-        SELECT   cond_id::integer AS id,
-                 array(
-                        SELECT r.man_linkid::integer
-                        FROM _tempus_import.rdms AS r
-                        WHERE rd.cond_id::integer=r.cond_id::integer
-                        ORDER BY r.seq_number
-                        ) as road_section
+-- select first link id of the sequence
+select
+	*,
+	cdms.cond_id::bigint as mcond_id,
+	rdms.link_id::bigint as link,
+	0 as mseq_number -- first item of the sequence
+from
+	_tempus_import.cdms as cdms
+join
+	_tempus_import.rdms as rdms
+on
+	cdms.cond_id = rdms.cond_id
+where
+	cond_type = 7
+union
 
-        FROM _tempus_import.rdms AS rd
-        WHERE rd.man_linkid IN (SELECT s.link_id FROM _tempus_import.street AS s) AND seq_number > 1
-        GROUP BY cond_id ) AS t;
-
-
+-- union with remaining link ids
+select
+	*,
+	cdms.cond_id::bigint as mcond_id,
+	man_linkid::bigint as link,
+	seq_number as mseq_number -- here seq_number >= 1
+from
+	_tempus_import.cdms as cdms
+join
+	_tempus_import.rdms as rdms
+on
+	cdms.cond_id = rdms.cond_id
+where
+	cond_type = 7
+) as t
+group by
+	mcond_id,
+	ar_auto,
+	ar_bus,
+	ar_carpool,
+	ar_pedstrn
+;
        
 
 -- Remove import function (direction type)
