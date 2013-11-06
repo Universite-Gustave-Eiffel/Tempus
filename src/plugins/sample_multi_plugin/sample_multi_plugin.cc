@@ -145,7 +145,7 @@ namespace Tempus
 		}
 		}
 	    }
-	    REQUIRE( distances.size() == num_edges( graph_ ) );
+	    REQUIRE( distances.size() == num_edges( Application::instance()->graph() ) );
 	}
 
 	virtual void pre_process( Request& request )
