@@ -155,7 +155,8 @@ class ShpImporter(DataImporter):
                         basename, ext = os.path.splitext(os.path.basename(filename))
                         if ext.lower() in ['.dbf', '.shp'] and basename[-len(shp):] == shp:
                             curprefix = basename[:-len(shp)]
-                            if curprefix not in prefixes:
+                            # only consider prefixes with "_"
+                            if '_' in curprefix and curprefix not in prefixes:
                                 prefixes.append(curprefix)
                 # if only one prefix found, use it !
                 if len(prefixes) > 1:
