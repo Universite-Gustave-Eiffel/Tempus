@@ -28,10 +28,30 @@ $$ LANGUAGE plpgsql;
 
 -- TABLE road_node 
 INSERT INTO tempus.road_node
-	SELECT DISTINCT id FROM 
+	SELECT
+                DISTINCT id,
+                false as junction,
+                false as bifurcation
+        FROM 
 		(SELECT ref_in_id AS id  FROM _tempus_import.streets
 		 UNION
                  SELECT nref_in_id AS id FROM _tempus_import.streets) as t;
+
+update tempus.road_node
+set
+        geom = ST_Force3DZ(ST_SetSRID(ST_StartPoint(st.geom),2154))
+from
+        _tempus_import.streets as st
+where
+        id = ref_in_id;
+
+update tempus.road_node
+set
+        geom = ST_Force3DZ(ST_SetSRID(ST_EndPoint(st.geom),2154))
+from
+        _tempus_import.streets as st
+where
+        id = nref_in_id;
 
 
 -- TABLE road_section 
