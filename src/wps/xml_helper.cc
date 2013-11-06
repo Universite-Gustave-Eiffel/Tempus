@@ -1,6 +1,7 @@
 #include <stdexcept>
 
 #include "xml_helper.hh"
+#include <boost/thread.hpp>
 
 using namespace std;
 
@@ -160,8 +161,11 @@ std::string Schema::to_string( bool with_header ) const
     return schema_str_;
 }
 
+boost::mutex xml_mutex; // because libxml2 doc should not be shared between threads
+
 void Schema::ensure_validity( const xmlNode* node )
 {
+    boost::lock_guard<boost::mutex> lock( xml_mutex ) ;
     if ( valid_ctxt_ == 0 ) {
         return;
     }

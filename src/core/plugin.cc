@@ -120,13 +120,17 @@ PluginFactory * PluginFactory::instance()
         if ( !createFct ) THROW_DLERROR( "no function createPlugin in " + complete_dll_name );
         Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) DLSYM( hRAII.get(), "optionDescriptions" );
         if ( !optDescFct ) THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name  );
-        (*optDescFct)();
         Dll::PluginNameFct nameFct = (Dll::PluginNameFct) DLSYM( hRAII.get(), "pluginName" );
         if ( nameFct == NULL ) THROW_DLERROR( "no function pluginName in " + complete_dll_name  );
+        typedef void (*PluginPostBuildFct)();
+        PluginPostBuildFct postBuildFct = (PluginPostBuildFct) DLSYM( hRAII.get(), "post_build" );
+        if ( nameFct == NULL ) THROW_DLERROR( "no function post_build in " + complete_dll_name  );
 
         Dll dll = { hRAII.release(), createFct, optDescFct };
         const std::string pluginName = (*nameFct)();
         dll_.insert( std::make_pair( pluginName, dll ) );
+        if (Application::instance()->state() < Application::GraphBuilt) throw std::runtime_error("trying to load plugin (post_build graph) while the graph has not been build");
+        postBuildFct();
         COUT << "loaded " << pluginName << " from " << dll_name << "\n";
     }
 
@@ -146,7 +150,6 @@ PluginFactory * PluginFactory::instance()
         DllMap::const_iterator dll = dll_.find(dll_name);
         if ( dll == dll_.end() ) throw std::runtime_error(dll_name + " is not loaded (loaded:" + loaded+")");
         std::auto_ptr<Plugin> p( dll->second.create( Application::instance()->db_options() ) );
-        p->post_build();
         p->validate();
         return p.release();
     }
@@ -250,11 +253,6 @@ PluginFactory * PluginFactory::instance()
 	}
 	MetricValue v = metrics_[nname];
         return v.str();
-    }
-
-    void Plugin::post_build()
-    {
-	COUT << "[plugin_base]: post_build" << std::endl;
     }
 
     void Plugin::validate()

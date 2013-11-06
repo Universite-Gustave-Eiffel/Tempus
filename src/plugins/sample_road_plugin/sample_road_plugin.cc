@@ -55,9 +55,7 @@ namespace Tempus
         Road::Vertex destination_;
 
     public:
-	virtual void post_build()
-	{
-	}
+	static void post_build() { }
 
 	virtual void pre_process( Request& request )
 	{
