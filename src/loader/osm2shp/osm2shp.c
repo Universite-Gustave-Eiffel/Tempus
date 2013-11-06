@@ -195,6 +195,7 @@ void shapefile_add_node(int slot, ...)
 void shapefile_add_way(int slot, ...)
 {
     struct sf *shape = &(shapefiles[slot]);
+    assert(shape);
     double lat[MAX_NODES_PER_WAY];
     double lon[MAX_NODES_PER_WAY];
     int i;
@@ -278,6 +279,7 @@ void save_osm_node()
 {
     double *save = malloc(2 * sizeof(double));
     memcpy (save, current_latlon, 2 * sizeof(double));
+    assert(node_storage);
     g_hash_table_insert(node_storage, &current_id, save);
     //printf("added node %d\n", current_id);
 }
@@ -311,6 +313,7 @@ void open_element(xmlTextReaderPtr reader, const xmlChar *name)
         assert(xv);
         k  = (char *)xmlStrdup(xk);
         v  = (char *)xmlStrdup(xv);
+        assert(current_tags);
         g_hash_table_insert(current_tags, k, v);
         xmlFree(xv);
         xmlFree(xk);
@@ -348,6 +351,7 @@ void close_element(const xmlChar *name)
     {
         save_osm_node();
         process_osm_node();
+        assert(current_tags);
         g_hash_table_remove_all(current_tags);
         if (current_timestamp)
         {
@@ -360,6 +364,7 @@ void close_element(const xmlChar *name)
         process_osm_way();
         current_node_count = 0;
         too_many_nodes_warning_issued = FALSE;
+        assert(current_tags);
         g_hash_table_remove_all(current_tags);
         if (current_timestamp)
         {
@@ -438,12 +443,18 @@ int main(int argc, char *argv[])
 {
     int verbose=0;
     int i;
+    int first_file_arg = argc;
 
     node_storage = g_hash_table_new(g_int_hash, node_equal);
+    assert(node_storage);
 
-    for (i=0; i<argc; i++)
+    current_tags = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
+    assert(current_tags);
+
+
+    for (i=1; i<argc; i++)
     {
-	if      ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
+	if ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
 	{
 	    verbose=1;
 	}
@@ -457,9 +468,10 @@ int main(int argc, char *argv[])
 	    }
 	    outdir=argv[i];
 	}
-	else if ( i == (argc-1) )
+	else if ( argv[i][0] != '-' )
 	{
-	    streamFile(argv[i]);
+            first_file_arg = i;
+            break;
 	}
 	else
 	{
@@ -468,14 +480,21 @@ int main(int argc, char *argv[])
 	}
     }
 
-    current_tags = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
-
     for (i=0; i<MAX_SHAPEFILES; i++)
     {
         shapefiles[i].shph = 0;
     }
 
     setup_shapefiles();
+
+    for (i=first_file_arg; i<argc; i++)
+    {
+        if ( streamFile(argv[i]) )
+        {
+            printf("error while parsing '%s'\n",argv[i] );
+            return EXIT_FAILURE;
+        }
+    }
 
     xmlCleanupParser();
 
