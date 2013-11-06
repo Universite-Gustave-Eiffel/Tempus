@@ -46,7 +46,7 @@ where
 
 update tempus.road_node
 set
-        geom = ST_Force3DZ(ST_SetSRID(ST_EndPoint(st.geom),2154))
+        geom = ST_Force3DZ(ST_Transform(ST_EndPoint(st.geom),2154))
 from
         _tempus_import.streets as st
 where
@@ -115,9 +115,8 @@ SELECT
 	ramp = 'Y' AS ramp,
 	tollway = 'Y' AS tollway,
 
-	ST_SetSRID(ST_Force_3DZ(ST_LineMerge(geom)), 2154) AS geom
+	ST_Transform(ST_Force_3DZ(ST_LineMerge(geom)), 2154) AS geom
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
-	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 
 FROM _tempus_import.streets AS st;
 
