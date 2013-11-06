@@ -2,7 +2,6 @@
 -- Licence MIT
 -- Copyright Oslandia 2012
 
-
 -- Handle direction type
 CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(text, text, boolean)
 RETURNS integer AS $$

@@ -54,11 +54,11 @@ class PsqlLoader:
     def load(self):
         """Load SQL file into the DB."""
         res = False
-        is_file = True
+        filename = ''
         if os.path.isfile(self.sqlfile):
-            is_file = True
-        else:
-            is_file = False
+            filename = self.sqlfile
+            f = open( filename, 'r' )
+            self.sqlfile = f.read()
 
         # call psql with sqlfile
         command = [PSQL]
@@ -68,8 +68,6 @@ class PsqlLoader:
             command.append("--username=%s" % self.dbparams['user'])
         if self.dbparams.has_key('port'):
             command.append("--port=%s" % self.dbparams['port'])
-        if is_file:
-            command.append("--file=%s" % self.sqlfile)
         if self.dbparams.has_key('dbname'):
             command.append("--dbname=%s" % self.dbparams['dbname'])
         if self.logfile:
@@ -83,12 +81,11 @@ class PsqlLoader:
             err = sys.stderr
         retcode = 0
         try:
-            if is_file:
-                retcode = subprocess.call(command, stdout = out, stderr = err)
-            else:
-                p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
-                p.communicate( self.sqlfile )
-                retcode = p.returncode
+            out.write("\n======= Executing SQL %s\n" % os.path.basename(filename) )
+            p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
+            self.sqlfile = "set client_min_messages=ERROR;\n" + self.sqlfile
+            p.communicate( self.sqlfile )
+            retcode = p.returncode
         except OSError as (errno, strerror):
             sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
         if self.logfile:
