@@ -204,6 +204,8 @@ namespace Tempus
 	    // nothing special to clean up
 	}
 
+        static void post_build(){}
+
     };
 }
 DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin )

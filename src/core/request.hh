@@ -87,7 +87,7 @@ namespace Tempus
 
 	    //
 	    // For each step, check correct timing causalities on constraints
-	    TimeConstraint last = departure_constraint;
+	    TimeConstraint last = departure_constraint; (void)last;
 	    for ( StepList::const_iterator it = steps.begin(); it != steps.end(); it++ )
 	    {
 		REQUIRE( it->constraint.date_time >= last.date_time );
