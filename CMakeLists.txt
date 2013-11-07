@@ -9,6 +9,7 @@ project( tempus )
 # set PostgreSQL_ROOT=c:\Program Files (x86)\PostgreSQL\9.3
 # set SHP_ROOT=c:\OSGeo4W
 # set TEMPUS_DATA_DIRECTORY=C:\Program Files (x86)\tempus-1.0.0\data
+# set ICONV_ROOT=c:\OSGeo4W
 
 cmake_minimum_required(VERSION 2.6)
 enable_testing()
@@ -132,7 +133,11 @@ if (WIN32)
       ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl.dll                 
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl.dll
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
+      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
+#hack
+      c:/OSGeo4W/bin/msvcr71.dll
       DESTINATION bin)
 endif()
 

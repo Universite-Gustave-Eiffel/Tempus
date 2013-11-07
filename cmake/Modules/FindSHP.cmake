@@ -4,6 +4,7 @@
 #  SHP_FOUND - System has shp lib
 #  SHP_INCLUDE_DIR - The shp include directory
 #  SHP_LIBRARIES - The libraries needed to use shp
+#  SHP_DLL - runtime necessary for installation
 #
 # You can define the environment variable SHP_ROOT to specify custom install directory
 
@@ -23,6 +24,9 @@ find_library(SHP_LIBRARIES NAMES shp shapelib_i
 
 if (SHP_INCLUDE_DIR AND SHP_LIBRARIES)
     set(SHP_FOUND 1)
+    if (WIN32)
+        set( SHP_DLL "${SHP_INCLUDE_DIR}/../bin/shapelib.dll")
+    endif()
     message( STATUS "Found shp: " ${SHP_LIBRARIES} )
 else()
     if (SHP_FIND_REQUIRED)

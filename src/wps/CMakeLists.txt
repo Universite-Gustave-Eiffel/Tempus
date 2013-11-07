@@ -9,5 +9,6 @@ target_link_libraries( wps tempus ${LIBXML2_LIBRARIES} ${FCGI_LIBRARIES})
 install( TARGETS wps DESTINATION bin )
 
 if (WIN32)
-    install(FILES  ${LIBXML2_LIBRARIES} ${FCGI_LIBRARIES} DESTINATION bin)
+    message( "will install " ${LIBXML2_DLL} ${FGCI_DLL})
+    install(FILES ${LIBXML2_DLL} ${FGCI_DLL} DESTINATION bin)
 endif()

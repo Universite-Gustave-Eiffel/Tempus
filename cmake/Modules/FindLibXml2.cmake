@@ -7,6 +7,7 @@
 #  LIBXML2_DEFINITIONS - Compiler switches required for using LibXml2
 #  LIBXML2_XMLLINT_EXECUTABLE - The XML checking tool xmllint coming with LibXml2
 #  LIBXML2_VERSION_STRING - the version of LibXml2 found (since CMake 2.8.8)
+#  LIBXML2_DLLS - runtime for windows installation
 
 # you can define LIBXML2_ROOT and ICONV_ROOT to specify custom installation directories
 
@@ -47,18 +48,9 @@ find_library(LIBXML2_LIBRARIES NAMES xml2 libxml2
    ${PC_LIBXML_LIBRARY_DIRS}
    )
 
+#hack
 if (WIN32)
-    find_library(ICONV_LIBRARIES NAME iconv
-        PATHS
-        $ENV{ICONV_ROOT}/lib
-        )
-    if (LIBXML2_LIBRARIES AND ICONV_LIBRARIES)
-        set( LIBXML2_LIBRARIES ${LIBXML2_LIBRARIES} ${ICONV_LIBRARIES} )
-    else()
-        if (LIBXML2_LIBRARIES AND LIBXML2_FIND_REQUIRED)
-            message( FATAL_ERROR "cannot find iconv" )
-        endif()
-    endif()
+    set( LIBXML2_DLL "${LIBXML2_INCLUDE_DIR}/../bin/libxml2.dll;${LIBXML2_INCLUDE_DIR}/../bin/zlib_osgeo.dll;${LIBXML2_INCLUDE_DIR}/../bin/iconv.dll")
 endif()
 
 find_program(LIBXML2_XMLLINT_EXECUTABLE xmllint)

@@ -4,6 +4,7 @@
 #  FCGI_FOUND - System has fcgi
 #  FCGI_INCLUDE_DIR - The fcgi include directory
 #  FCGI_LIBRARIES - The libraries needed to use fcgi
+#  FCGI_DLL - The windows runtime needed to install
 #
 # You can define the environment variable FCGI_ROOT to specify custom install directory
 
@@ -25,6 +26,7 @@ if (UNIX)
     find_library(FCGI_CPP_LIBRARIES NAMES fcgi++ )
 endif()
 
+
 if (FCGI_INCLUDE_DIR AND FCGI_LIBRARIES AND ((NOT UNIX) OR FCGI_CPP_LIBRARIES))
     set(FCGI_LIBRARIES ${FCGI_LIBRARIES} ${FCGI_CPP_LIBRARIES})
     set(FCGI_FOUND 1)
@@ -35,4 +37,8 @@ else()
     else()
         message( WARNING "fcgi not found" )
     endif()
+endif()
+
+if (WIN32)
+    string(REGEX REPLACE "\\.lib\$" ".dll" FGCI_DLL ${FCGI_LIBRARIES})
 endif()
