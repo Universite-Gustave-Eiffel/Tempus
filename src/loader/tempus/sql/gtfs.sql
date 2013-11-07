@@ -107,8 +107,6 @@ alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
 alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_pkey;
 
-
--- insert data
 insert into
 	tempus.pt_stop
 select 
@@ -116,7 +114,7 @@ select
         stop_id as vendor_id
 	, stop_name as psname
 	, location_type::boolean as location_type
-	, parent_station::integer as parent_station
+        , (select id from _tempus_import.pt_stop_idmap where vendor_id=parent_station) as parent_station
 	, road_section_id::bigint as road_section_id
 	, zone_id::integer as zone_id
 	-- abscissa_road_section is a float between 0 and 1
@@ -140,7 +138,7 @@ select
 	on
 		-- only consider road sections within xx meters
 		-- stops further than this distance will not be included
-		st_dwithin(stops_geom.geom, rs.geom, 30)
+		st_dwithin(stops_geom.geom, rs.geom, 100)
 	window
 		-- select the nearest road geometry for each stop
 		nearest as (partition by stops.stop_id order by st_distance(stops_geom.geom, rs.geom))
@@ -272,13 +270,29 @@ from
 
 -- restore constraints
 
+-- convert GTFS time to regular time
+-- GTFS time may be greater than 24
+-- we apply here a modulo 24
+-- when arrival is < departure, it means the arrival occurs the next day
+CREATE OR REPLACE FUNCTION _tempus_import.format_gtfs_time(text)
+RETURNS time without time zone AS $$
+BEGIN
+        IF substr($1,1,2)::integer > 23 THEN
+           RETURN ((substr($1,1,2)::integer % 24) || substr($1,3,6))::time without time zone;
+        ELSE
+           RETURN $1::time without time zone;
+        END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
 insert into
 	tempus.pt_stop_time (trip_id, arrival_time, departure_time, stop_id, stop_sequence, stop_headsign
 	, pickup_type, drop_off_type, shape_dist_traveled)
 select
 	(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id) as trip_id
-	, arrival_time::time without time zone as arrival_time
-	, departure_time::time without time zone as departure_time
+	, _tempus_import.format_gtfs_time(arrival_time) as arrival_time
+	, _tempus_import.format_gtfs_time(departure_time) as departure_time
 	, (select id from _tempus_import.pt_stop_idmap where vendor_id=stop_id) as stop_id
 	, stop_sequence::integer as stop_sequence
 	, stop_headsign
@@ -307,8 +321,8 @@ insert into
 	tempus.pt_frequency (trip_id, start_time, end_time, headway_secs)
 select
 	(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id) as trip_id
-	, start_time::time without time zone as start_time
-	, end_time::time without time zone as end_time
+	, _tempus_import.format_gtfs_time(start_time) as start_time
+	, _tempus_import.format_gtfs_time(end_time) as end_time
 	, headway_secs::integer as headway_secs
 from
 	_tempus_import.frequencies;
