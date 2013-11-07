@@ -136,6 +136,10 @@ if (WIN32)
       DESTINATION bin)
 endif()
 
+if (UNIX)
+    install(FILES script/wps DESTINATION /etc/init.d)
+endif()
+
 if (WIN32)
   set(TEMPUS_INSTALL_DATA_DIRECTORY .)
 else()
