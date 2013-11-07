@@ -318,7 +318,7 @@ CREATE TABLE tempus.pt_transfer
 SELECT AddGeometryColumn('tempus', 'road_section', 'geom', 2154, 'LINESTRING', 3);
 SELECT AddGeometryColumn('tempus', 'road_node', 'geom', 2154, 'POINT', 3);
 SELECT AddGeometryColumn('tempus', 'poi', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 2);
+SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 3);
 SELECT AddGeometryColumn('tempus', 'pt_route', 'geom', 2154, 'LINESTRING', 3);
 SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', 2154, 'LINESTRING', 3);
 -- TODO Check not empty geom
