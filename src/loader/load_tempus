@@ -78,6 +78,8 @@ if __name__ == "__main__":
         shape_options['D'] = True
     if args.encoding:
         shape_options['W'] = args.encoding
+    else:
+        args.encoding = 'UTF8'
     # default shp2pgsql options
     shape_options['I'] = True
     shape_options['g'] = 'geom'
