@@ -190,7 +190,7 @@ select
 	mp.id::bigint as id,
 	1+4+8+128+256 as transport_types,
 	array_agg(trpelid::bigint order by seqnr) as road_section,
-	-1 as cost
+	'Infinity'::float as cost
 from
 	_tempus_import.mp as mp
 left join

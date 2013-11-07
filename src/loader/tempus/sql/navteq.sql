@@ -171,7 +171,7 @@ select
 	--+ case when ar_trucks = 'Y' then ?? else 0 end
 	as transport_types,
 	array_agg(link order by mseq_number) as road_section,
-        -1 as road_cost
+        'Infinity'::float as road_cost
 from
 (
 
