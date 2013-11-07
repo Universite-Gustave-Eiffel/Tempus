@@ -1,3 +1,12 @@
+create table node_idmap
+(
+        id serial
+        vendor_id varchar,
+);
+create index node_idmap_idx1 on node_idmap(id);
+create index node_idmap_idx2 on node_idmap(vendor_id);
+
+
 /* ==== PT network ==== */
 insert into
 	tempus.pt_network (pnname, provided_transport_types)

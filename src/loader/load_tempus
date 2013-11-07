@@ -16,7 +16,7 @@ def import_tomtom(args, shape_options):
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode, not args.noclean)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean)
     gtfsi.load()
 
 def import_navteq(args, shape_options):
