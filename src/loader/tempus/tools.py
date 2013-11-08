@@ -129,6 +129,8 @@ class ShpLoader:
             else:
                 outerr = sys.stderr
 
+            outerr.write("\n======= SHP2PGSL %s\n" % os.path.basename(self.shapefile))
+
             rescode = -1
             try:
                 rescode = subprocess.call(command, stdout = tmpfile, stderr = outerr) 

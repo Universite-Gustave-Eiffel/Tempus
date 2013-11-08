@@ -31,7 +31,7 @@ class GTFSImporter(DataImporter):
     # SQL files to execute after loading GTFS data 
     POSTLOADSQL = ["gtfs.sql"]
 
-    def __init__(self, source = "", dbstring = "", logfile = None, copymode = True, doclean = True):
+    def __init__(self, source = "", dbstring = "", logfile = None, encoding = 'UTF8', copymode = True, doclean = True):
         """Create a new GTFS data loader. Arguments are :
         source : a Zip file containing GTFS data
         schema_out : the destination schema in the database
@@ -42,6 +42,7 @@ class GTFSImporter(DataImporter):
         self.sqlfile = ""
         self.copymode = copymode
         self.doclean = doclean
+        self.encoding = encoding
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""
@@ -72,7 +73,7 @@ class GTFSImporter(DataImporter):
             fd, sqlfile = tempfile.mkstemp()
             tmpfile = os.fdopen(fd, "w")
             # begin a transaction in SQL file
-            tmpfile.write("SET CLIENT_ENCODING TO UTF8;\n")
+            tmpfile.write("SET CLIENT_ENCODING TO %s;\n" % self.encoding)
             tmpfile.write("SET STANDARD_CONFORMING_STRINGS TO ON;\n")
             tmpfile.write("BEGIN;\n")
 

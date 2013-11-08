@@ -16,7 +16,7 @@ def import_tomtom(args, shape_options):
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode, not args.noclean)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean)
     gtfsi.load()
 
 def import_navteq(args, shape_options):
@@ -78,6 +78,8 @@ if __name__ == "__main__":
         shape_options['D'] = True
     if args.encoding:
         shape_options['W'] = args.encoding
+    else:
+        args.encoding = 'UTF8'
     # default shp2pgsql options
     shape_options['I'] = True
     shape_options['g'] = 'geom'

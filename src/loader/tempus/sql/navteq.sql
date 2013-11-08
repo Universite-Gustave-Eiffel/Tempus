@@ -2,7 +2,6 @@
 -- Licence MIT
 -- Copyright Oslandia 2012
 
-
 -- Handle direction type
 CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(text, text, boolean)
 RETURNS integer AS $$
@@ -30,7 +29,7 @@ $$ LANGUAGE plpgsql;
 INSERT INTO tempus.road_node
 	SELECT
                 DISTINCT id,
-                false as junction,
+                true as junction,
                 false as bifurcation
         FROM 
 		(SELECT ref_in_id AS id  FROM _tempus_import.streets
@@ -47,7 +46,7 @@ where
 
 update tempus.road_node
 set
-        geom = ST_Force3DZ(ST_SetSRID(ST_EndPoint(st.geom),2154))
+        geom = ST_Force3DZ(ST_Transform(ST_EndPoint(st.geom),2154))
 from
         _tempus_import.streets as st
 where
@@ -116,9 +115,8 @@ SELECT
 	ramp = 'Y' AS ramp,
 	tollway = 'Y' AS tollway,
 
-	ST_SetSRID(ST_Force_3DZ(ST_LineMerge(geom)), 2154) AS geom
+	ST_Transform(ST_Force_3DZ(ST_LineMerge(geom)), 2154) AS geom
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
-	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 
 FROM _tempus_import.streets AS st;
 
@@ -139,6 +137,27 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 
 
+-- Set bifurcation flag
+update tempus.road_node
+set
+        bifurcation = true,
+        junction = false
+where id in 
+(
+        select
+                rn.id as id
+        from
+                tempus.road_node as rn,
+                tempus.road_section as rs
+        where
+                rs.node_from = rn.id
+        or
+                rs.node_to = rn.id
+        group by
+	        rn.id
+        having count(*) > 2
+);
+
 
 -- TABLE road_road
 INSERT INTO tempus.road_road
@@ -152,7 +171,7 @@ select
 	--+ case when ar_trucks = 'Y' then ?? else 0 end
 	as transport_types,
 	array_agg(link order by mseq_number) as road_section,
-        -1 as road_cost
+        'Infinity'::float as road_cost
 from
 (
 

@@ -65,8 +65,8 @@ INSERT INTO tempus.road_type VALUES (7, 'Pedestrial only');
 CREATE TABLE tempus.road_node
 (
 	id bigint PRIMARY KEY,
-	junction boolean,
-	bifurcation boolean
+	junction boolean, -- properties of the section are different before and after this node
+	bifurcation boolean -- total number of incident edges are > 2
 	-- NOTA: geometry column added NOT NULL
 );
 ALTER TABLE tempus.road_node ADD CONSTRAINT road_node_type CHECK(NOT(junction and bifurcation));
@@ -100,7 +100,7 @@ CREATE TABLE tempus.road_road
 	id bigint PRIMARY KEY,
         transport_types integer NOT NULL,
 	road_section bigint[] NOT NULL,
-	road_cost double precision NOT NULL -- -1 mean infinite cost (i.e forbidden)
+	road_cost double precision NOT NULL
 );
 
 
@@ -318,7 +318,7 @@ CREATE TABLE tempus.pt_transfer
 SELECT AddGeometryColumn('tempus', 'road_section', 'geom', 2154, 'LINESTRING', 3);
 SELECT AddGeometryColumn('tempus', 'road_node', 'geom', 2154, 'POINT', 3);
 SELECT AddGeometryColumn('tempus', 'poi', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 2);
+SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 3);
 SELECT AddGeometryColumn('tempus', 'pt_route', 'geom', 2154, 'LINESTRING', 3);
 SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', 2154, 'LINESTRING', 3);
 -- TODO Check not empty geom
