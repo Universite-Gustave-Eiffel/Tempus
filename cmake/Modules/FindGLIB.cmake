@@ -21,6 +21,7 @@ find_path(GLIB_INCLUDE_DIR NAME glib.h
 find_path(GLIB_INCLUDE_CONFIG_DIR NAME glibconfig.h
     PATHS
     /usr/lib/x86_64-linux-gnu/glib-2.0/include
+    /usr/lib/i386-linux-gnu/glib-2.0/include
     $ENV{GLIB_ROOT}/lib/glib-2.0/include
     )
 #message(STATUS "glib config include: " ${GLIB_INCLUDE_CONFIG_DIR})
