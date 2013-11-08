@@ -1,9 +1,9 @@
 #! /bin/sh -e
 
 DAEMON="/usr/local/bin/wps" #ligne de commande du programme
-DEAMON_OPT="-c /usr/local/lib -p 9000 -l forbidden_movements_plugin -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin"  #argument à utiliser par le programme
+DAEMON_OPT="-c /usr/local/lib -p 9000 -l forbidden_movements_plugin -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin"  #argument à utiliser par le programme
 DAEMONUSER="daemon" #utilisateur du programme
-DEAMON_NAME="wps" #Nom du programme (doit être identique à l'exécutable)
+DAEMON_NAME="wps" #Nom du programme (doit être identique à l'exécutable)
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
 
@@ -12,15 +12,16 @@ test -x $DAEMON || exit 0
 . /lib/lsb/init-functions
 
 d_start () {
-        log_daemon_msg "Starting system $DEAMON_NAME Daemon"
-	start-stop-daemon  --name $DEAMON_NAME --start --quiet --chuid $DAEMONUSER --exec $DAEMON -- $DEAMON_OPT
+        log_daemon_msg "Starting system $DAEMON_NAME Daemon"
+        start-stop-daemon --background --name $DAEMON_NAME --start --quiet --chuid $DAEMONUSER --exec $DAEMON -- $DAEMON_OPT
         log_end_msg $?
 }
 
 d_stop () {
-        log_daemon_msg "Stopping system $DEAMON_NAME Daemon"
-        start-stop-daemon --name $DEAMON_NAME --stop --retry 5 --quiet --name $DEAMON_NAME
-	log_end_msg $?
+        log_daemon_msg "Stopping system $DAEMON_NAME Daemon"
+        #start-stop-daemon --name $DAEMON_NAME --stop --retry 5 --quiet --user $DAEMONUSER
+        killall --user $DAEMONUSER $DAEMON_NAME
+        log_end_msg $?
 }
 
 case "$1" in
@@ -30,22 +31,22 @@ case "$1" in
                 ;;
 
         restart|reload|force-reload)
-                        d_stop
-                        d_start
+                d_stop 
+                d_start
                 ;;
 
         force-stop)
-               d_stop
-                killall -q $DEAMON_NAME || true
+                d_stop
+                killall -q $DAEMON_NAME || true
                 sleep 2
-                killall -q -9 $DEAMON_NAME || true
+                killall -q -9 $DAEMON_NAME || true
                 ;;
 
         status)
-                status_of_proc "$DEAMON_NAME" "$DAEMON" "system-wide $DEAMON_NAME" && exit 0 || exit $?
+                status_of_proc "$DAEMON_NAME" "$DAEMON" "system-wide $DAEMON_NAME" && exit 0 || exit $?
                 ;;
         *)
-                echo "Usage: /etc/init.d/$DEAMON_NAME {start|stop|force-stop|restart|reload|force-reload|status}"
+                echo "Usage: /etc/init.d/$DAEMON_NAME {start|stop|force-stop|restart|reload|force-reload|status}"
                 exit 1
                 ;;
 esac
