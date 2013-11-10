@@ -1,7 +1,7 @@
-sudo apt-get install nginx postgresql libpq-dev g++ libboost-all-dev libglib2.0-dev libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool
+sudo apt-get install nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev libglib2.0-dev libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
 
 TEMPUS_DATA_DIRECTORY=/usr/local/share/tempus/data
-
+TEMPUS=tempus-0.9.0
 die()
 {
     echo $1 1>&2
@@ -10,9 +10,9 @@ die()
 
 echo "downloading, compiling and installing tempus"
     #wget http://tempus.ifsttar.fr/tempus-0.9.0.tar.gz && # TODO: uncomment and give proper adress
-    tar -xvzf tempus-0.9.0.tgz &&
-    mkdir tempus-0.9.0/build &&
-    cd tempus-0.9.0/build &&
+    tar -xvzf $TEMPUS.tgz &&
+    mkdir $TEMPUS/build &&
+    cd $TEMPUS/build &&
     cmake .. && make  && sudo make install || die "cannot install tempus"
     cd ../..
     sudo ldconfig 
@@ -43,19 +43,10 @@ echo "configuring test database"
 echo "test database configured"
 
 echo "installing tempus wps service"
-    # service is ran as user daemon, we need     
-    # to define TEMPUS_DATA_DIRECTORY for everyone
-    if [ -z $(grep TEMPUS_DATA_DIRECTORY /etc/environment) ]; 
-    then 
-        echo "echo TEMPUS_DATA_DIRECTORY=$TEMPUS_DATA_DIRECTORY >> /etc/environment " | sudo sh ; 
-    else 
-        echo "found $(grep TEMPUS_DATA_DIRECTORY /etc/environment)"; 
-    fi
-
     # install wps service and start it
-    sudo chmod a+x /etc/init.d/wps
+    sudo cp $TEMPUS/script/wps /etc/init.d/wps &&
     sudo update-rc.d wps defaults 80 
-    sudo /etc/init.d/wps start || die "cannot start wps service"
+    sudo /etc/init.d/wps restart || die "cannot start wps service"
 echo "tempus wps service has been successfully installed"
 
 echo "configuring nginx web server for wps service on 127.0.0.1/wps"

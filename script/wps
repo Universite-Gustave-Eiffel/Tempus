@@ -1,53 +1,59 @@
 #! /bin/sh -e
 
-DAEMON="/usr/local/bin/wps" #ligne de commande du programme
-DAEMON_OPT="-c /usr/local/lib -p 9000 -l forbidden_movements_plugin -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin"  #argument à utiliser par le programme
-DAEMONUSER="daemon" #utilisateur du programme
-DAEMON_NAME="wps" #Nom du programme (doit être identique à l'exécutable)
+test -x /usr/local/bin/wps || exit 0
 
-PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
-
-test -x $DAEMON || exit 0
-
-. /lib/lsb/init-functions
-
-d_start () {
-        log_daemon_msg "Starting system $DAEMON_NAME Daemon"
-        start-stop-daemon --background --name $DAEMON_NAME --start --quiet --chuid $DAEMONUSER --exec $DAEMON -- $DAEMON_OPT
-        log_end_msg $?
+status () {
+        if [ -z "$(ps h -C /usr/local/bin/wps -U daemon)" ];
+        then
+            echo "wps is not running"
+        else
+            echo "wps is running"
+        fi
 }
 
-d_stop () {
-        log_daemon_msg "Stopping system $DAEMON_NAME Daemon"
-        #start-stop-daemon --name $DAEMON_NAME --stop --retry 5 --quiet --user $DAEMONUSER
-        killall --user $DAEMONUSER $DAEMON_NAME
-        log_end_msg $?
+start () {
+        if [ -z "$(ps h -C /usr/local/bin/wps -U daemon)" ];
+        then
+            echo "Starting wps Daemon"
+            su daemon -c "TEMPUS_DATA_DIRECTORY=/usr/local/share/tempus/data /usr/local/bin/wps -D -c /usr/local/lib -p 9000 -l forbidden_movements_plugin -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4"
+        else
+            echo "wps is already running"
+        fi
+}
+
+stop () {
+        if [ -z "$(ps h -C /usr/local/bin/wps -U daemon)" ];
+        then
+            echo "wps is not running"
+        else
+            echo "Stopping wps Daemon"
+            killall --user daemon wps
+        fi
 }
 
 case "$1" in
+    start|stop)
+        ${1}
+        ;;
 
-        start|stop)
-                d_${1}
-                ;;
+    restart|reload|force-reload)
+        stop 
+        start
+        ;;
 
-        restart|reload|force-reload)
-                d_stop 
-                d_start
-                ;;
+    force-stop)
+        stop
+        killall -q wps || true
+        sleep 2
+        killall -q -9 wps || true
+        ;;
 
-        force-stop)
-                d_stop
-                killall -q $DAEMON_NAME || true
-                sleep 2
-                killall -q -9 $DAEMON_NAME || true
-                ;;
-
-        status)
-                status_of_proc "$DAEMON_NAME" "$DAEMON" "system-wide $DAEMON_NAME" && exit 0 || exit $?
-                ;;
-        *)
-                echo "Usage: /etc/init.d/$DAEMON_NAME {start|stop|force-stop|restart|reload|force-reload|status}"
-                exit 1
-                ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: /etc/init.d/$DAEMON_NAME {start|stop|force-stop|restart|reload|force-reload|status}"
+        exit 1
+        ;;
 esac
 exit 0
