@@ -46,6 +46,8 @@ echo "installing tempus wps service"
     # install wps service and start it
     sudo cp $TEMPUS/script/wps /etc/init.d/wps &&
     sudo update-rc.d wps defaults 80 
+    sudo mkdir /var/log/wps
+    sudo chown daemon /var/log/wps
     sudo /etc/init.d/wps restart || die "cannot start wps service"
 echo "tempus wps service has been successfully installed"
 
