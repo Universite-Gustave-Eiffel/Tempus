@@ -125,7 +125,9 @@ CREATE TABLE _tempus_import.stops (
     zone_id character varying,
     stop_url character varying,
     location_type integer,
-    parent_station character varying
+    parent_station character varying,
+    stop_timezone character varying,
+    wheelchair_boarding integer
 --    ,geom geometry
 );
 
