@@ -147,6 +147,23 @@ where
 	-- only take one rattachement
 	nth = 1;
 
+-- set parent_station to null when the parent_station is not present (out of road network scope ?)
+update tempus.pt_stop
+set parent_station=null
+where id in
+      (
+      select
+        s1.id
+      from
+        tempus.pt_stop as s1
+      left join
+        tempus.pt_stop as s2
+      on s1.parent_station = s2.id
+      where
+        s1.parent_station is not null
+        and s2.id is null
+);
+
 -- restore constraints on pt_stop
 alter table tempus.pt_stop add CONSTRAINT pt_stop_pkey PRIMARY KEY (id);
 alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
