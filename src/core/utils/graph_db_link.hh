@@ -16,16 +16,16 @@ namespace Tempus
     /// Get a vertex descriptor from its database's id.
     /// This is templated in a way that it is compliant with Road::Vertex, PublicTransport::Vertex
     template <class G>
-    typename boost::graph_traits<G>::vertex_descriptor vertex_from_id( Tempus::db_id_t db_id, G& graph)
+    std::pair<typename boost::graph_traits<G>::vertex_descriptor, bool> vertex_from_id( Tempus::db_id_t db_id, G& graph)
     {
-    	typename boost::graph_traits<G>::vertex_iterator vi, vi_end;
-    	for ( boost::tie( vi, vi_end ) = vertices( graph ); vi != vi_end; vi++ )
-    	{
-    	    if ( graph[*vi].db_id == db_id )
-    		return *vi;
-    	}
+        typename boost::graph_traits<G>::vertex_iterator vi, vi_end;
+        for ( boost::tie( vi, vi_end ) = vertices( graph ); vi != vi_end; vi++ )
+        {
+            if ( graph[*vi].db_id == db_id )
+                return std::make_pair( *vi, true );
+        }
     	// null element
-    	return typename boost::graph_traits<G>::vertex_descriptor();
+        return std::make_pair( typename boost::graph_traits<G>::vertex_descriptor(), false );
     }
 
     ///
@@ -33,16 +33,16 @@ namespace Tempus
     /// This is templated in a way that it is compliant with Road::Edge
     /// A PublicTransport::Edge has no unique id associated.
     template <class G>
-    typename boost::graph_traits<G>::edge_descriptor edge_from_id( Tempus::db_id_t db_id, G& graph)
+    std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id( Tempus::db_id_t db_id, G& graph)
     {
-    	typename boost::graph_traits<G>::edge_iterator vi, vi_end;
-    	for ( boost::tie( vi, vi_end ) = edges( graph ); vi != vi_end; vi++ )
-    	{
-    	    if ( graph[*vi].db_id == db_id )
-    		return *vi;
-    	}
-    	// null element
-    	return typename boost::graph_traits<G>::edge_descriptor();
+        typename boost::graph_traits<G>::edge_iterator vi, vi_end;
+        for ( boost::tie( vi, vi_end ) = edges( graph ); vi != vi_end; vi++ )
+        {
+            if ( graph[*vi].db_id == db_id )
+                return std::make_pair( *vi, true );
+        }
+        // null element
+        return std::make_pair( typename boost::graph_traits<G>::edge_descriptor(), false );
     }
 
     ///

@@ -90,11 +90,12 @@ namespace Tempus
             REQUIRE( ok );
 
             // forbidden edges (on tempus_test_db)
-            automaton[ e1 ].source = vertex_from_id( 21556, road_graph );
-            automaton[ e1 ].target = vertex_from_id( 21652, road_graph );
+            bool found;
+            boost::tie(automaton[ e1 ].source, found) = vertex_from_id( 21556, road_graph );
+            boost::tie(automaton[ e1 ].target, found) = vertex_from_id( 21652, road_graph );
 
-            automaton[ e2 ].source = vertex_from_id( 21652, road_graph );
-            automaton[ e2 ].target = vertex_from_id( 21617, road_graph );
+            boost::tie(automaton[ e2 ].source, found) = vertex_from_id( 21652, road_graph );
+            boost::tie(automaton[ e2 ].target, found) = vertex_from_id( 21617, road_graph );
 	}
 
 	virtual void pre_process( Request& /* request */ ) 
@@ -106,8 +107,9 @@ namespace Tempus
             // target node : 21422
 
             Road::Graph& road_graph = graph_.road;
-            source_ = vertex_from_id( 21687, road_graph );
-            destination_ = vertex_from_id( 21422, road_graph );
+            bool found;
+            boost::tie(source_, found) = vertex_from_id( 21687, road_graph );
+            boost::tie(destination_, found) = vertex_from_id( 21422, road_graph );
 
             COUT << "source: " << source_ << std::endl;
             COUT << "destination: " << destination_ << std::endl;
