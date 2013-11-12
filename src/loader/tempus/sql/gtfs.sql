@@ -46,9 +46,12 @@ create table _tempus_import.pt_calendar_idmap
         vendor_id varchar
 );
 select setval('_tempus_import.pt_calendar_idmap_id_seq',
-       (select case when max(id) is null then 1 else max(id) end from tempus.pt_calendar));
+       (select case when max(id) is null then 1 else max(id) end from tempus.pt_service));
 insert into _tempus_import.pt_calendar_idmap (vendor_id) 
-       select service_id from _tempus_import.calendar;
+       select service_id from _tempus_import.calendar
+       -- add service ids from calendar_dates.txt
+       union
+       select service_id from _tempus_import.calendar_dates;       
 create index pt_calendar_idmap_vendor_idx on _tempus_import.pt_calendar_idmap(vendor_id);
 
 -- pt_fare_id_map
@@ -246,11 +249,18 @@ on
 -- restore constraints
 
 /* ==== GTFS calendar ==== */
+
+insert into
+       tempus.pt_service(id, vendor_id)
+select
+       id, vendor_id
+from
+        _tempus_import.pt_calendar_idmap;
+
 insert into
 	tempus.pt_calendar
 select
-	(select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id) as id
-        , service_id as vendor_id
+	(select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id) as service_id
 	, monday::boolean as monday
 	, tuesday::boolean as tuesday
 	, wednesday::boolean as wednesday
@@ -264,12 +274,12 @@ from
 	_tempus_import.calendar;
 
 insert into 
-	tempus.pt_trip
+	tempus.pt_trip(id, vendor_id, route_id, service_id, short_name)
 select
-	(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id) as id
-        , trip_id as vendor_id
-	, (select id from _tempus_import.pt_route_idmap where vendor_id=route_id) as route_id
-	, (select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id) as service_id
+	(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id)
+        , trip_id
+	, (select id from _tempus_import.pt_route_idmap where vendor_id=route_id)
+	, (select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id)
 	, trip_short_name
 from
 	_tempus_import.trips;
@@ -277,7 +287,7 @@ from
 -- restore constraints
 
 insert into
-	tempus.pt_calendar_date
+	tempus.pt_calendar_date(service_id, calendar_date, exception_type)
 select
         (select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id) as service_id
 	, "date"::date as calendar_date

@@ -192,11 +192,18 @@ CREATE TABLE tempus.pt_section
 );
 
 
+-- Service definition
+-- A service is defined by pt_calendar OR pt_calendar_date (or both)
+CREATE TABLE tempus.pt_service
+(
+        id serial PRIMARY KEY,
+        vendor_id varchar
+);
+
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar
 (
-	id serial PRIMARY KEY,
-        vendor_id varchar,
+	service_id bigint REFERENCES tempus.pt_service(id),
 	monday boolean NOT NULL,
 	tuesday boolean NOT NULL,
 	wednesday boolean NOT NULL,
@@ -205,9 +212,19 @@ CREATE TABLE tempus.pt_calendar
 	saturday boolean NOT NULL,
 	sunday boolean NOT NULL,
 	start_date date NOT NULL,
-	end_date date NOT NULL
+	end_date date NOT NULL,
+	PRIMARY KEY (service_id)
 );
 
+-- GTFS Calendar Date
+CREATE TABLE tempus.pt_calendar_date
+(
+	service_id bigint REFERENCES tempus.pt_service(id),
+	calendar_date date NOT NULL,
+	exception_type integer NOT NULL,-- As in GTFS: 1 service has been added,
+					--             2 service has been removed
+	PRIMARY KEY (service_id, calendar_date, exception_type)
+);
 
 -- GTFS Trip
 CREATE TABLE tempus.pt_trip
@@ -215,22 +232,10 @@ CREATE TABLE tempus.pt_trip
 	id serial PRIMARY KEY, 
         vendor_id varchar,
 	route_id integer REFERENCES tempus.pt_route NOT NULL,
-	service_id integer REFERENCES tempus.pt_calendar NOT NULL,
+	service_id integer REFERENCES tempus.pt_service NOT NULL,
 	short_name varchar
 	-- NOTA: shape_dist_traveled (if present) is stored as M dimension into geom
 );
-
-
--- GTFS Calendar Date
-CREATE TABLE tempus.pt_calendar_date
-(
-	service_id bigint REFERENCES tempus.pt_calendar,
-	calendar_date date NOT NULL,
-	exception_type integer NOT NULL,-- As in GTFS: 1 service has been added,
-					--             2 service has been removed
-	PRIMARY KEY (service_id, calendar_date, exception_type)
-);
-
 
 -- GTFS Stop Time
 CREATE TABLE tempus.pt_stop_time
