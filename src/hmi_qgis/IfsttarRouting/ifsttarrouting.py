@@ -322,11 +322,21 @@ class IfsttarRouting:
         self.loadHistory()
 
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
-        # bool
-        if option_type == 0:
-            val = 'true' if val else 0
-
-        self.plugin_options[plugin_name][option_name] = val
+            if option_type == Tempus.OptionType.Bool:
+                    val = 'true' if val else 0
+            elif option_type == Tempus.OptionType.Int:
+                    # int
+                    if val:
+                            val = int(val)
+                    else:
+                            val = 0
+            elif option_type == Tempus.OptionType.Float:
+                    # float
+                    if val:
+                            val = float(val)
+                    else:
+                            val = 0.0
+            self.plugin_options[plugin_name][option_name] = val
 
     #
     # Take a XML tree from the WPS 'result' operation
@@ -588,7 +598,7 @@ class IfsttarRouting:
                 if t == Tempus.OptionType.Float:
                     valid = QDoubleValidator( widget )
                     widget.setValidator( valid )
-                widget.setText( val )
+                widget.setText( str(val) )
                 QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, text ) )
             lay.setWidget( row, QFormLayout.FieldRole, widget )
             
