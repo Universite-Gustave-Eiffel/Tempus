@@ -192,16 +192,13 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( len(tempus.results[0].steps), 16 )
 
     def test_pt_plugin( self ):
-        # two road nodes that are linked to a public transport stop
-        ox = 356118.752929
-        oy = 6687853.943756
-        dx = 355385.975128
-        dy = 6689324.323148
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
         tempus.request( plugin_name = 'sample_pt_plugin',
-                        origin = Point( ox, oy ),
-                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+                        plugin_options = { 'origin_pt_stop' : 2442,
+                                           'destination_pt_stop' : 1551 },
+                        origin = Point( vertex = 0 ),
+                        steps = [ RequestStep(destination = Point( vertex = 0 )) ] )
         self.assertEqual( len(tempus.results[0].steps), 5 )
 
 if __name__ == '__main__':
