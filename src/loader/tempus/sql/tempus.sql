@@ -170,7 +170,7 @@ CREATE TABLE tempus.pt_route
 	id serial PRIMARY KEY,
         vendor_id varchar, 
 	network_id integer REFERENCES tempus.pt_network,
-	short_name varchar NOT NULL,
+	short_name varchar,
 	long_name varchar NOT NULL,
 	route_type  integer CHECK (route_type >= 0 AND route_type <= 7)
  	-- As in GTFS: 
