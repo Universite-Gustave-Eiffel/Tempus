@@ -32,7 +32,7 @@ namespace Db
     long long Value::as<long long>()
     {
 	long long v;
- 	sscanf( value_, "%Ld", &v );
+ 	sscanf( value_, "%lld", &v );
 	return v;
     }
     template <>

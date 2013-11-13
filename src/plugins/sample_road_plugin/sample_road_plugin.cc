@@ -61,11 +61,8 @@ namespace Tempus
 	{
 	    REQUIRE( request.check_consistency() );
 
-	    Road::Vertex origin = request.origin;
-	    Road::Vertex destination = request.destination();
-	    Road::Graph& road_graph = graph_.road;
-	    REQUIRE( vertex_exists( origin, road_graph ) );
-	    REQUIRE( vertex_exists( destination, road_graph ) );
+	    REQUIRE( vertex_exists( request.origin, graph_.road ) );
+	    REQUIRE( vertex_exists( request.destination(), graph_.road ) );
 
 	    if ( (request.optimizing_criteria[0] != CostDistance) )
 	    {

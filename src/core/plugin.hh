@@ -388,7 +388,6 @@ namespace Tempus
          * list loaded plugins
          */
         std::vector<std::string> plugin_list() const;
-
         
         const Plugin::OptionDescriptionList option_descriptions( const std::string & dll_name ) const;
 
@@ -408,7 +407,7 @@ namespace Tempus
         static PluginFactory * instance();
 
     private:
-		PluginFactory(){}
+        PluginFactory(){}
 
         struct Dll 
         {

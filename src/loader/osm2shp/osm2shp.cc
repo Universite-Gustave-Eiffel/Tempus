@@ -103,7 +103,7 @@ void warn(const char *fmt, ...)
 }
 
 
-void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
+void shapefile_new(int slot, int filetype, const char *filename, int num_fields, ...)
 {
     va_list ap;
     int i;
@@ -112,9 +112,9 @@ void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
     shape = &(shapefiles[slot]);
     const std::string filepath = outdir+"/"+filename;
     shape->shph = SHPCreate(filepath.c_str(), filetype);
-    if (shape->shph<=0) die("cannot create shapefile '%s'", filepath.c_str());
+    if (shape->shph==0) die("cannot create shapefile '%s'", filepath.c_str());
     shape->dbfh = DBFCreate(filepath.c_str());
-    if (shape->dbfh<=0) die("cannot create dbf file '%s'", filepath.c_str());
+    if (shape->dbfh==0) die("cannot create dbf file '%s'", filepath.c_str());
     shape->num_fields = num_fields;
     va_start(ap, num_fields);
     for (i=0; i<num_fields; i++)
@@ -141,7 +141,7 @@ void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
     va_end(ap);
 }
 
-void shapefile_add_dbf(int slot, int entity, bool way, va_list ap)
+void shapefile_add_dbf(int slot, int entity, bool, va_list ap)
 {
     struct sf *shape = &(shapefiles[slot]);
     int i;
@@ -518,17 +518,19 @@ void usage()
 
 int main(int argc, char *argv[])
 {
-    int verbose=0;
+    // never used int verbose=0;
     int i;
     int first_file_arg = argc;
 
     for (i=1; i<argc; i++)
     {
+        /*
 	if ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
 	{
 	    verbose=1;
 	}
-	else if ( strcmp("--destination",argv[i]) == 0 || strcmp("-d",argv[i]) == 0 )
+        
+	else */ if ( strcmp("--destination",argv[i]) == 0 || strcmp("-d",argv[i]) == 0 )
 	{
 	    i++;
 	    if (i==argc)
