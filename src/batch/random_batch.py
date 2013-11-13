@@ -72,10 +72,18 @@ if __name__ == "__main__":
         start_time = time.time()
 
         # the actual request
-        req_xml = tempus.request( plugin_name = "sample_road_plugin",
-                                  plugin_options = { 'prepare_result' : True },
-                                  origin = dep,
-                                  steps = [RequestStep(destination = arr)] )
+        try:
+            req_xml = tempus.request( plugin_name = "sample_road_plugin",
+                                      plugin_options = { 'prepare_result' : True },
+                                      origin = dep,
+                                      steps = [RequestStep(destination = arr)] )
+        except RuntimeError as e:
+            if e[1].find('No path found') > -1:
+                # ignore error when no path has been found
+                pass
+            else:
+                print e[1]
+                exit(1)
 
         # time spend by the algorithm
         t = float(tempus.metrics['time_s'])
