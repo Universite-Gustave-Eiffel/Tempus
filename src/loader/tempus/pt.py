@@ -50,7 +50,7 @@ class GTFSImporter(DataImporter):
         if zipfile.is_zipfile(self.source):
             res = True
             with zipfile.ZipFile(self.source) as zipf:
-                filelist = zipf.namelist()
+                filelist = [ os.path.basename(x) for x in zipf.namelist() ]
                 for f, mandatory in GTFSImporter.GTFSFILES:
                     if res and "%s.txt" % f not in filelist:
                         if mandatory:
@@ -80,22 +80,40 @@ class GTFSImporter(DataImporter):
 
             # open zip file
             with zipfile.ZipFile(self.source) as zipf:
+
+                # map of text file => (mandatory, zip_path)
+                gFiles = {}
                 for f, mandatory in GTFSImporter.GTFSFILES:
-                    # try to read the current GTFS txt file with CSV
-                    try:
-                        # get rid of Unicode BOM (U+FEFF)
-                        def csv_cleaner( f ):
-                            for line in f:
-                                yield line.replace('\xef\xbb\xbf', '')
-                        reader = csv.reader(csv_cleaner(zipf.open("%s.txt" % f)),
-                                delimiter = ',',
-                                quotechar = '"')
-                    # If we can't read and it's a mandatory file, error
-                    except KeyError:
-                        if mandatory:
-                            raise ValueError, "Missing file in GTFS archive : %s" % f
-                        else:
-                            continue
+                    gFiles[f] = (mandatory, '')
+
+                for zfile in zipf.namelist():
+                    bn = os.path.basename( zfile )
+                    for f, m in GTFSImporter.GTFSFILES:
+                        if f + '.txt' == bn:
+                            mandatory, p = gFiles[f]
+                            gFiles[f] = ( mandatory, zfile )
+
+                for f, v in gFiles.iteritems():
+                    mandatory, f = v
+                    if mandatory and f == '':
+                        raise ValueError, "Missing file in GTFS archive : %s" % f
+
+                for f, v in gFiles.iteritems():
+                    mandatory, zpath = v
+                    if zpath == '':
+                        continue
+
+                    out.write( "== Loading %s\n" % zpath )
+
+                    # get rid of Unicode BOM (U+FEFF)
+                    def csv_cleaner( f ):
+                        for line in f:
+                            yield line.replace('\xef\xbb\xbf', '')
+
+                    reader = csv.reader(csv_cleaner(zipf.open( zpath )),
+                                        delimiter = ',',
+                                        quotechar = '"')
+
                     # Write SQL for each beginning of table
                     tmpfile.write("-- Inserting values for table %s\n\n" % f)
                     # first row is field names
