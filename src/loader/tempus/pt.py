@@ -9,6 +9,7 @@ import os
 import zipfile
 import tempfile
 import csv
+import sys
 from tools import is_numeric
 from importer import DataImporter
 from config import *
@@ -67,6 +68,12 @@ class GTFSImporter(DataImporter):
 
     def generate_sql(self):
         """Generate a SQL file from GTFS feed."""
+
+        if self.logfile:
+            out = open(self.logfile, "a")
+        else:
+            out = sys.stdout
+
         sqlfile = ""
         if zipfile.is_zipfile(self.source):
             # create temp file for SQL output

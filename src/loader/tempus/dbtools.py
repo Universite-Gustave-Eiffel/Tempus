@@ -81,10 +81,12 @@ class PsqlLoader:
             err = sys.stderr
         retcode = 0
         try:
-            out.write("\n======= Executing SQL %s\n" % os.path.basename(filename) )
+            out.write("======= Executing SQL %s\n" % os.path.basename(filename) )
+            out.flush()
             p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
             self.sqlfile = "set client_min_messages=ERROR;\n" + self.sqlfile
             p.communicate( self.sqlfile )
+            out.write("\n")
             retcode = p.returncode
         except OSError as (errno, strerror):
             sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
