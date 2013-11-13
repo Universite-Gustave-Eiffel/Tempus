@@ -138,7 +138,7 @@ select
 	on
 		-- only consider road sections within xx meters
 		-- stops further than this distance will not be included
-		st_dwithin(stops_geom.geom, rs.geom, 100)
+		st_dwithin(stops_geom.geom, rs.geom, 500)
 	window
 		-- select the nearest road geometry for each stop
 		nearest as (partition by stops.stop_id order by st_distance(stops_geom.geom, rs.geom))
