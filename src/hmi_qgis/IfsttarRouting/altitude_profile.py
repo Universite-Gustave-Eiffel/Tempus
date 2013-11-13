@@ -77,7 +77,10 @@ class AltitudeProfileScene(QGraphicsScene):
         w = rect.width() - self.barWidth
         self.xRatio = w / self.xMax
         h = rect.height() - self.yOffset * 2
-        self.yRatio = h / (self.yMax-self.yMin)
+        if self.yMax != self.yMin:
+            self.yRatio = h / (self.yMax-self.yMin)
+        else:
+            self.yRatio = 1.0
 
     # convert distance to scene coordinate
     def xToScene( self, x ):
