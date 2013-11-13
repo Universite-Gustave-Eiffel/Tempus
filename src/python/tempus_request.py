@@ -109,6 +109,15 @@ class PublicTransportStep:
         self.costs = costs
         self.wkb = wkb
 
+class ConnectionType:
+    Unknown = 0
+    Road2Road = 1
+    Road2Transport = 2
+    Transport2Road = 3
+    Transport2Transport = 4
+    Road2Poi = 5
+    Poi2Road = 6
+
 class RoadTransportStep:
     def __init__( self, type = 0, road = '', network = '', stop = '', costs = {}, wkb = ''):
         self.type = type
@@ -264,7 +273,7 @@ def parse_results( results ):
                 road = child.attrib['road']
                 network = child.attrib['network']
                 stop = child.attrib['stop']
-                type = child.attrib['type']
+                type = int(child.attrib['type'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])

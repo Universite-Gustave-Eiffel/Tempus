@@ -488,18 +488,19 @@ class IfsttarRouting:
                 text += "</p>"
                 last_movement = movement
 
-            elif isintance(step, Tempus.PublicTransportStep ):
-                trip = step.attrib['trip']
+            elif isinstance(step, Tempus.PublicTransportStep ):
                 # set network text as icon
                 icon_text = step.network
-                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure_stop, trip.arrival_stop)
+                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure, step.arrival)
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network
-                if step.type == 2:
+                if step.type == Tempus.ConnectionType.Road2Transport:
                     text = "Go to the '%s' station from %s" % (step.stop, step.road)
-                else:
+                elif step.type == Tempus.ConnectionType.Transport2Road:
                     text = "Leave the '%s' station to %s" % (step.stop, step.road)
+                else:
+                    text = "Connection between '%s' and '%s'" % (step.stop, step.road)
 
             for k,v in step.costs.iteritems():
                 cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
