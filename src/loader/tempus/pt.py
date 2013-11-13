@@ -83,7 +83,11 @@ class GTFSImporter(DataImporter):
                 for f, mandatory in GTFSImporter.GTFSFILES:
                     # try to read the current GTFS txt file with CSV
                     try:
-                        reader = csv.reader(zipf.open("%s.txt" % f),
+                        # get rid of Unicode BOM (U+FEFF)
+                        def csv_cleaner( f ):
+                            for line in f:
+                                yield line.replace('\xef\xbb\xbf', '')
+                        reader = csv.reader(csv_cleaner(zipf.open("%s.txt" % f)),
                                 delimiter = ',',
                                 quotechar = '"')
                     # If we can't read and it's a mandatory file, error
