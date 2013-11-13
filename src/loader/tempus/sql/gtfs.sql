@@ -100,9 +100,6 @@ create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 -- remove constraint on tempus stops and dependencies
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey;
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
-alter table tempus.pt_stop drop CONSTRAINT enforce_dims_geom;
-alter table tempus.pt_stop drop CONSTRAINT enforce_geotype_geom;
-alter table tempus.pt_stop drop CONSTRAINT enforce_srid_geom;
 alter table tempus.pt_section drop constraint pt_section_stop_from_fkey;
 alter table tempus.pt_section drop constraint pt_section_stop_to_fkey;
 alter table tempus.pt_transfer drop constraint pt_transfer_from_stop_id_fkey;
@@ -171,9 +168,8 @@ where id in
 alter table tempus.pt_stop add CONSTRAINT pt_stop_pkey PRIMARY KEY (id);
 alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
 	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-alter table tempus.pt_stop add CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 3);
-alter table tempus.pt_stop add CONSTRAINT enforce_geotype_geom CHECK (geometrytype(geom) = 'POINT'::text OR geom IS NULL);
-alter table tempus.pt_stop add CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 2154);
+alter table tempus.pt_stop add CONSTRAINT pt_stop_road_section_id_fkey FOREIGN KEY (road_section_id)
+      REFERENCES tempus.road_section (id);
 
 /* ==== /stops ==== */
 
@@ -245,8 +241,11 @@ join
 on
 	stop_to = g2.id;
 
--- TODO
 -- restore constraints
+alter table tempus.pt_section add constraint pt_section_stop_from_fkey FOREIGN KEY (stop_from)
+      REFERENCES tempus.pt_stop(id);
+alter table tempus.pt_section add constraint pt_section_stop_to_fkey FOREIGN KEY (stop_to)
+      REFERENCES tempus.pt_stop(id);
 
 /* ==== GTFS calendar ==== */
 
@@ -375,3 +374,10 @@ select
 	, min_transfer_time::integer as min_transfer_time
 from
 	_tempus_import.transfers;
+
+alter table tempus.pt_transfer add constraint pt_transfer_from_stop_id_fkey FOREIGN KEY (from_stop_id)
+      REFERENCES tempus.pt_stop (id);
+alter table tempus.pt_transfer add constraint pt_transfer_to_stop_id_fkey FOREIGN KEY (to_stop_id)
+      REFERENCES tempus.pt_stop (id);
+alter table tempus.pt_stop_time add constraint pt_stop_time_stop_id_fkey FOREIGN KEY (stop_id)
+      REFERENCES tempus.pt_stop (id);
