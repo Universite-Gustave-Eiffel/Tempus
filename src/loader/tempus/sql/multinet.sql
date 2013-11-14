@@ -1,6 +1,4 @@
 -- Tempus - Multinet SQL import Wrapper
--- Licence MIT
--- Copyright Oslandia 2012
 
 -- TABLE road_node 
 INSERT INTO tempus.road_node
