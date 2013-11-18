@@ -1,10 +1,4 @@
-h1. Tempus Loader
-
-This directory contains the data loader for use with the Tempus framework.
-
-h2. Usage
-
-Some usage examples :
+Some usage examples of the data loader:
 
 ./load_tempus -s ../../data/multinet -t tomtom -S 27572 -d "host=localhost dbname=tempus user=postgres port=5433" -l /tmp/tempus.log
 
@@ -16,7 +10,8 @@ Some usage examples :
 
 ./load_tempus -s ../../data/multinet -t osm -d "host=localhost dbname=tempus user=postgres port=5433" -l /tmp/tempus.load
 
-h2. Public transportation data
+Public transportation data
+--------------------------
 
 The loader is able to import GTFS data and connect it to the road network.
 
@@ -38,3 +33,36 @@ The GTFS loader must have underlying "road" nodes and sections to attach public 
 
 Every ID found in a GTFS dataset are remapped to database IDs. The original id is kept within the 'vendor_id' field.
 This remapping allows to append many GTFS datasets on a road networks.
+
+Example
+-------
+
+Example of data loading on the city of Nantes (road network from OSM and public transport GTFS),
+this is how the test database tempus_test_db is built :
+
+It consists of :
+- an import of Open Street Map on the area of Nantes, CC-BY-SA license.
+
+(extract from CloudMade shapefiles Europe/France/"pays_de_la_loire")
+./load_tempus -t osm -s /xxxx/ -p nantes_ -d "dbname=tempus_test_db"
+
+- the Z coordinate on road nodes and sections come from DEM data from SRTM
+
+raster2pgsql -I -t 20x20 -s 2154 ~/data/dem/srtm_36_03_2154.tif | psql tempus_test_db
+(see src/loader/tempus/sql/dem_elevation.sql)
+
+- an import of GTFS data from TAN provided by Nantes open data ("Arrêts, horaires et circuits TAN"), OdBL license
+
+./load_tempus -t gtfs -s /xxxx/ARRETS_HORAIRES_CIRCUITS_TAN_GTFS.zip -d "dbname=tempus_test_db"
+
+- an import of shared cycles points (Bicloo) provided by Nantes open data ("Liste des équipements publics (thème Mobilité)"), OdBL license
+
+./load_tempus -t poi -y 4 -v name:NOM_COMPLE "filter:LIBTYPE='Bicloo'" parking_transport_type:128 -s /xxxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+
+- two dummy turn restrictions on the road network (see the tempus.road_road table)
+
+tempus_test_db=# select * from tempus.road_road;
+ id | transport_types |    road_section     | road_cost 
+----+-----------------+---------------------+-----------
+  1 |            1031 | {45588,45053}       |        -1
+  2 |            1031 | {44884,14023,44942} |        -1
