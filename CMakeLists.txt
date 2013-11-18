@@ -85,14 +85,14 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   
   ; *** INSTALL NGINX ***
   MessageBox MB_YESNO 'Install nginx web server ?' /SD IDYES IDNO endNginx
-    ExecWait nginx-1.5.6.exe
+    ExecWait win32\\\nginx-1.5.6.exe
     ExecWait `..\\\\nginx\\\\nginx_service.exe install`
     ExecWait `net start nginx`
     Goto endNginx   
   endNginx:
  
   ; *** INSTALL MSVC REDISTRIBUTABLES ***
-  ExecWait `vcredist_x86.exe`
+  ExecWait `win32\\\vcredist_x86.exe`
  
   ; *** INSTALL TEST DB ***
   CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
@@ -103,7 +103,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
 
   ; *** INSTALL AND START WPS SERVICE ***
-  ExecWait `wps_service.exe install`
+  ExecWait `win32\\\wps_service.exe install`
   ExecWait `net start wps`
   
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
@@ -143,8 +143,10 @@ endif()
 
 if (WIN32)
   set(TEMPUS_INSTALL_DATA_DIRECTORY .)
+  set(TEMPUS_INSTALL_DOC_DIRECTORY doc)
 else()
   set(TEMPUS_INSTALL_DATA_DIRECTORY "share/${CMAKE_PROJECT_NAME}")
+  set(TEMPUS_INSTALL_DOC_DIRECTORY "share/doc/${CMAKE_PROJECT_NAME}")
 endif()
 install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
