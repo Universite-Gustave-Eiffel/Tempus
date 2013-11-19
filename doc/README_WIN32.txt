@@ -65,13 +65,3 @@ XML_INCLUDE_DIR:PATH=E:/libs/libxml2-2.7.8.win32/include
 XML_LIBRARY_DIRS:PATH=E:/libs/libxml2-2.7.8.win32/lib 
 
 - Now type "nmake" to build the project
-
-QGIS Plugin installation
-========================
-
-See README
-
-WPS, FCGI and webserver configuration
-=====================================
-
-See README

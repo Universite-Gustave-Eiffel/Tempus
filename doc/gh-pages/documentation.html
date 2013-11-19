@@ -41,7 +41,7 @@
 
 <p>These graphs are filled up with data coming from a PostgreSQL/PostGIS database. Please refer to the Db namespace to see available functions. Especially have a look at the <a href="../src/core/pgsql_importer.hh">Tempus::PQImporter</a> class.</p>
 
-<p>The Tempus SQL schema can be found in <a href="../src/loader/tempus/sql/tempus.sql"><tt>tempus.sql</tt></a></p>
+<p>The Tempus SQL schema can be found in <a href="../src/loader/tempus/sql/tempus.sql"><code>tempus.sql</code></a></p>
 
 <p>Path planning algorithms are designed to be written as user plugins. The <a href="../src/core/plugin.hh">Plugin base class</a> gives access to some callbacks. Please have a look at the three different sample plugins shipped with TempusV2: <a href="../src/plugins/sample_road_plugin/sample_road_plugin.cc">Tempus::RoadPlugin</a>, <a href="../src/plugins/sample_pt_plugin/sample_pt_plugin.cc">Tempus::PtPlugin</a> and <a href="../src/plugins/sample_multi_plugin/sample_multi_plugin.cc">Tempus::MultiPlugin</a>.  </p>
 
@@ -103,7 +103,7 @@
 
 <p>Plugin developers can access user-defined metrics through the 'Performances' tab.</p>
 
-<p>Every path planning request is saved on disk and can be accessed later on, with the last tab. It also allows to import requests stored on user history files (the sample batch script <tt>random_batch.py</tt> creates such a file).</p>
+<p>Every path planning request is saved on disk and can be accessed later on, with the last tab. It also allows to import requests stored on user history files (the sample batch script <code>random_batch.py</code> creates such a file).</p>
 
 <img src="images/qgis_6.png"/>
 
@@ -119,7 +119,9 @@
 <li>GTFS</li>
 </ul>
 
-<p>You can refer to <a href="README_data.txt">this document</a> that describes how the test database is built.</p>
+<p>For OpenStreetMap, importing from raw .osm files is possible in two steps: convert the .osm file to a .shp and then use the loader. Conversion from .osm to .shp can be done with the <code>osm2shp++</code> tool provided by Tempus.</p>
+
+<p>You can refer to <a href="README_data.txt">this document</a> that describes how the loader is used to build the test database.</p>
       </section>
     </div>
 
