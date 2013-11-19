@@ -70,17 +70,25 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ; **** INSTALL POSTGRESQL ***
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
-    ExecWait postgresql-9.3.1-1-windows.exe
-    Delete postgresql-9.3.1-1-windows.exe
-    Goto endPostgres
+    IfFileExists postgresql-9.3.1-1-windows.exe PostgresExists PostgresMissing
+    PostgresExists:
+       ExecWait postgresql-9.3.1-1-windows.exe
+       Delete postgresql-9.3.1-1-windows.exe
+       Goto endPostgres
+    PostgresMissing:
+       MessageBox MB_OK 'Unable to download PostgreSQL 9.3' 
   endPostgres:
   
   ; **** INSTALL QGIS ***
   MessageBox MB_YESNO 'Install QGIS 2.0 ?' /SD IDYES IDNO endQGIS
     NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    Delete QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    Goto endQGIS
+    IfFileExists QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe QgisExists QgisMissing
+    QgisExists:
+       ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+       Delete QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+       Goto endQGIS
+    QgisMissing:
+       MessageBox MB_OK 'Unable to download QGIS 2.0' 
   endQGIS:
   
   ; *** INSTALL NGINX ***
