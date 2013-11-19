@@ -1,22 +1,31 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 /***************************************************************************
  IfsttarRouting
                                  A QGIS plugin
  Get routing informations with various algorithms
                               -------------------
         begin                : 2012-04-12
-        copyright            : (C) 2012 by Oslandia
+        copyright            : (C) 2012-2013 by Oslandia
         email                : hugo.mercier@oslandia.com
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
  ***************************************************************************/
 """
 import re
@@ -322,11 +331,21 @@ class IfsttarRouting:
         self.loadHistory()
 
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
-        # bool
-        if option_type == 0:
-            val = 'true' if val else 0
-
-        self.plugin_options[plugin_name][option_name] = val
+            if option_type == Tempus.OptionType.Bool:
+                    val = 'true' if val else 0
+            elif option_type == Tempus.OptionType.Int:
+                    # int
+                    if val:
+                            val = int(val)
+                    else:
+                            val = 0
+            elif option_type == Tempus.OptionType.Float:
+                    # float
+                    if val:
+                            val = float(val)
+                    else:
+                            val = 0.0
+            self.plugin_options[plugin_name][option_name] = val
 
     #
     # Take a XML tree from the WPS 'result' operation
@@ -478,18 +497,19 @@ class IfsttarRouting:
                 text += "</p>"
                 last_movement = movement
 
-            elif isintance(step, Tempus.PublicTransportStep ):
-                trip = step.attrib['trip']
+            elif isinstance(step, Tempus.PublicTransportStep ):
                 # set network text as icon
                 icon_text = step.network
-                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure_stop, trip.arrival_stop)
+                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure, step.arrival)
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network
-                if step.type == 2:
+                if step.type == Tempus.ConnectionType.Road2Transport:
                     text = "Go to the '%s' station from %s" % (step.stop, step.road)
-                else:
+                elif step.type == Tempus.ConnectionType.Transport2Road:
                     text = "Leave the '%s' station to %s" % (step.stop, step.road)
+                else:
+                    text = "Connection between '%s' and '%s'" % (step.stop, step.road)
 
             for k,v in step.costs.iteritems():
                 cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
@@ -588,7 +608,7 @@ class IfsttarRouting:
                 if t == Tempus.OptionType.Float:
                     valid = QDoubleValidator( widget )
                     widget.setValidator( valid )
-                widget.setText( val )
+                widget.setText( str(val) )
                 QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, text ) )
             lay.setWidget( row, QFormLayout.FieldRole, widget )
             

@@ -1,3 +1,20 @@
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <string>
 #include <iostream>
 #include <memory>
@@ -6,7 +23,6 @@
 
 #include "plugin.hh"
 #include "utils/graph_db_link.hh"
-
 #ifdef _WIN32
 #include <strsafe.h>
 #endif
@@ -57,7 +73,6 @@ PluginFactory * PluginFactory::instance()
             (LPTSTR) &lpMsgBuf,
             0, NULL );
         RAII lpMsgBufRAII(lpMsgBuf);
-
 
         // Display the error message and exit the process
 
@@ -114,22 +129,30 @@ PluginFactory * PluginFactory::instance()
 #else
             dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL )
 #endif
-            );
+        );
         if ( !hRAII.get() ) THROW_DLERROR( "cannot load " + complete_dll_name );
-        Dll::PluginCreationFct createFct = (Dll::PluginCreationFct) DLSYM( hRAII.get(), "createPlugin" );
+        Dll::PluginCreationFct createFct;
+        // this cryptic syntax is here to avoid a warning when converting
+        // a pointer-to-function to a pointer-to-object
+        *reinterpret_cast<void**>(&createFct) = DLSYM( hRAII.get(), "createPlugin" );
         if ( !createFct ) THROW_DLERROR( "no function createPlugin in " + complete_dll_name );
-        Dll::PluginOptionDescriptionFct optDescFct = (Dll::PluginOptionDescriptionFct) DLSYM( hRAII.get(), "optionDescriptions" );
+        Dll::PluginOptionDescriptionFct optDescFct;
+        *reinterpret_cast<void**>(&optDescFct) = DLSYM( hRAII.get(), "optionDescriptions" );
         if ( !optDescFct ) THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name  );
-        Dll::PluginNameFct nameFct = (Dll::PluginNameFct) DLSYM( hRAII.get(), "pluginName" );
+        Dll::PluginNameFct nameFct;
+        *reinterpret_cast<void**>(&nameFct) = DLSYM( hRAII.get(), "pluginName" );
         if ( nameFct == NULL ) THROW_DLERROR( "no function pluginName in " + complete_dll_name  );
         typedef void (*PluginPostBuildFct)();
-        PluginPostBuildFct postBuildFct = (PluginPostBuildFct) DLSYM( hRAII.get(), "post_build" );
+        PluginPostBuildFct postBuildFct;
+        *reinterpret_cast<void**>(&postBuildFct) = DLSYM( hRAII.get(), "post_build" );
         if ( nameFct == NULL ) THROW_DLERROR( "no function post_build in " + complete_dll_name  );
 
         Dll dll = { hRAII.release(), createFct, optDescFct };
         const std::string pluginName = (*nameFct)();
         dll_.insert( std::make_pair( pluginName, dll ) );
-        if (Application::instance()->state() < Application::GraphBuilt) throw std::runtime_error("trying to load plugin (post_build graph) while the graph has not been build");
+        if (Application::instance()->state() < Application::GraphBuilt) {
+            throw std::runtime_error("trying to load plugin (post_build graph) while the graph has not been build");
+        }
         postBuildFct();
         COUT << "loaded " << pluginName << " from " << dll_name << "\n";
     }
@@ -293,20 +316,6 @@ PluginFactory * PluginFactory::instance()
 	    Roadmap& roadmap = *rit;
 	    Road::Graph& road_graph = graph_.road;
 
-#if DO_PRINT
-	    // display the global costs of the result
-	    for ( Costs::const_iterator it = roadmap.total_costs.begin(); it != roadmap.total_costs.end(); ++it ) {
-		COUT << "Total " << cost_name( it->first ) << ": " << it->second << cost_unit( it->first ) << std::endl;
-	    }
-	    
-	    double distance = 0.0;
-	    // Counter for direction texts
-	    int direction_i = 1;
-#endif
-	    // road section at the beginning of the roundabout
-	    Tempus::db_id_t roundabout_enter;
-	    // road section at the end of the roundabout
-	    Tempus::db_id_t roundabout_leave;
 	    std::string road_name = "";
 	    Tempus::db_id_t previous_section = 0;
 	    bool on_roundabout = false;
@@ -329,11 +338,6 @@ PluginFactory * PluginFactory::instance()
 			const PublicTransport::Graph& pt_graph = *(edge->target.pt_graph);
 			road_id = rroad_graph[ edge->source.road_vertex ].db_id;
 			pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
-
-#if DO_PRINT
-			COUT << direction_i++ << " - Go to the station " << pt_graph[ edge->target.pt_vertex ].name << std::endl;
-#endif
-
 		    } break;
 		    case Multimodal::Edge::Transport2Road: {
 			is_road_pt = true;
@@ -341,11 +345,6 @@ PluginFactory * PluginFactory::instance()
 			const Road::Graph& rroad_graph = *(edge->target.road_graph);
 			pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
 			road_id = rroad_graph[ edge->target.road_vertex ].db_id;				 
-
-#if DO_PRINT
-			COUT << direction_i++ << " - Leave the station " << pt_graph[ edge->source.pt_vertex ].name << std::endl;
-#endif
-
 		    } break;
                     default: break;
 		    }
@@ -375,18 +374,7 @@ PluginFactory * PluginFactory::instance()
 		    std::string wkb = res[0][0].as<std::string>();
 		    // get rid of the heading '\x'
 		    step->geometry_wkb = wkb.substr(2);
-		    
-#if DO_PRINT
-		    PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
-		    PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
-		    COUT << direction_i++ << " - Take the trip #" << step->trip_id << " from '" << pt_graph[v1].name << "' to '" << pt_graph[v2].name << "' (";
-		    // display associated costs
-		    for ( Costs::const_iterator cit = step->costs.begin(); cit != step->costs.end(); ++cit ) {
-			COUT << cost_name( cit->first ) << ": " << cit->second << cost_unit( cit->first ) << " ";
-		    }
-		    COUT << ")" << std::endl;
-#endif
-		}
+                }
 		else if ( it->step_type == Roadmap::Step::RoadStep ) {
 		    
 		    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( &*it );
@@ -421,14 +409,12 @@ PluginFactory * PluginFactory::instance()
 		    if ( on_roundabout && !was_on_roundabout )
 		    {
 			// we enter a roundabout
-			roundabout_enter = road_graph[step->road_section].db_id;
 			movement = Roadmap::RoadStep::RoundAboutEnter;
 			action = true;
 		    }
 		    if ( !on_roundabout && was_on_roundabout )
 		    {
 			// we leave a roundabout
-			roundabout_leave = road_graph[step->road_section].db_id;
 			// FIXME : compute the exit number
 			movement = Roadmap::RoadStep::FirstExit;
 			action = true;
@@ -466,38 +452,6 @@ PluginFactory * PluginFactory::instance()
 			last_step->distance_km = -1.0;
 		    }
 		
-#if DO_PRINT
-		    distance = road_graph[step->road_section].length;
-		    switch ( movement )
-		    {
-		    case Roadmap::RoadStep::GoAhead:
-			COUT << direction_i++ << " - Walk on " << road_name << " for " << distance << cost_unit(CostDistance) << std::endl;
-			break;
-		    case Roadmap::RoadStep::TurnLeft:
-			COUT << direction_i++ << " - Turn left on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
-			break;
-		    case Roadmap::RoadStep::TurnRight:
-			COUT << direction_i++ << " - Turn right on " << road_name << " and walk for " << distance << cost_unit(CostDistance) << std::endl;
-			break;
-		    case Roadmap::RoadStep::RoundAboutEnter:
-			COUT << direction_i++ << " - Enter the roundabout on " << road_name << std::endl;
-			break;
-		    case Roadmap::RoadStep::FirstExit:
-		    case Roadmap::RoadStep::SecondExit:
-		    case Roadmap::RoadStep::ThirdExit:
-		    case Roadmap::RoadStep::FourthExit:
-		    case Roadmap::RoadStep::FifthExit:
-		    case Roadmap::RoadStep::SixthExit:
-			COUT << direction_i++ << " - Leave the roundabout on " << road_name << std::endl;
-			break;
-                    case Roadmap::RoadStep::UTurn:
-                        COUT << direction_i++ << " - Make a U-turn" << std::endl;
-                        break;
-                    case Roadmap::RoadStep::YouAreArrived:
-                        COUT << direction_i++ << " - You are arrived" << std::endl;
-                        break;
-		    }
-#endif
 		    previous_section = road_graph[step->road_section].db_id;
 		    was_on_roundabout = on_roundabout;
 		    last_step = step;

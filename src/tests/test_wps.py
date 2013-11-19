@@ -1,4 +1,24 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+"""
+
 import sys
 import os
 import re
@@ -192,16 +212,13 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( len(tempus.results[0].steps), 16 )
 
     def test_pt_plugin( self ):
-        # two road nodes that are linked to a public transport stop
-        ox = 356118.752929
-        oy = 6687853.943756
-        dx = 355385.975128
-        dy = 6689324.323148
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
         tempus.request( plugin_name = 'sample_pt_plugin',
-                        origin = Point( ox, oy ),
-                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+                        plugin_options = { 'origin_pt_stop' : 2442,
+                                           'destination_pt_stop' : 1551 },
+                        origin = Point( vertex = 0 ),
+                        steps = [ RequestStep(destination = Point( vertex = 0 )) ] )
         self.assertEqual( len(tempus.results[0].steps), 5 )
 
 if __name__ == '__main__':

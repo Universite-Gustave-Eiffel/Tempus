@@ -1,4 +1,24 @@
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+"""
+
 
 import datetime
 import os
@@ -108,6 +128,15 @@ class PublicTransportStep:
         self.trip = trip
         self.costs = costs
         self.wkb = wkb
+
+class ConnectionType:
+    Unknown = 0
+    Road2Road = 1
+    Road2Transport = 2
+    Transport2Road = 3
+    Transport2Transport = 4
+    Road2Poi = 5
+    Poi2Road = 6
 
 class RoadTransportStep:
     def __init__( self, type = 0, road = '', network = '', stop = '', costs = {}, wkb = ''):
@@ -264,7 +293,7 @@ def parse_results( results ):
                 road = child.attrib['road']
                 network = child.attrib['network']
                 stop = child.attrib['stop']
-                type = child.attrib['type']
+                type = int(child.attrib['type'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])

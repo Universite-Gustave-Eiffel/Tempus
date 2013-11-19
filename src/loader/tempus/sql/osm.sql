@@ -1,6 +1,4 @@
 -- Tempus - OSM SQL import
--- Licence MIT
--- Copyright Oslandia 2012
 
 -- TABLE road_node
 

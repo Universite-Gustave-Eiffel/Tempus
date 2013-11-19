@@ -1,5 +1,5 @@
-﻿drop sequence if exists seq_section;
-create temp sequence seq_section;
+drop sequence if exists seq_section;
+create sequence seq_section;
 select setval('seq_section', (select max(id)+1 from tempus.road_section), false);
 
 drop table if exists road_section_tmp;

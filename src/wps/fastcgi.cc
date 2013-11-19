@@ -1,6 +1,21 @@
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 // Tempus WPS server
-// (c) 2012 Oslandia
-// MIT License
 //
 // standard stream headers must be included first, to please VC++
 #include <iostream>
@@ -9,21 +24,25 @@
 #include <string>
 #include <boost/thread.hpp>
 
+
+#ifdef _WIN32
+#   include <direct.h>
+#   define chdir _chdir
+#   define environ _environ
+#else
+#   include <sys/types.h>// for umask
+#   include <sys/stat.h> // for umask
+#   define NO_FCGI_DEFINES
+#endif
+
 #include <fcgi_stdio.h>
 #include <fcgio.h>
-#ifdef _WIN32
-#include <direct.h>
-#endif
 
 #include "wps_service.hh"
 #include "wps_request.hh"
 #include "application.hh"
 #include "xml_helper.hh"
 
-#ifdef _WIN32
-#define chdir _chdir
-#define environ _environ
-#endif
 
 #define DEBUG_TRACE if(1) std::cout << " debug: "
 using namespace std;
@@ -86,13 +105,16 @@ private:
 int main( int argc, char*argv[] )
 {
     xmlInitParser();
-    bool standalone = false;
+    bool standalone = true;
     // the default TCP port to listen to
-    string port_str = ""; // ex 9000
+    string port_str = "9000"; // ex 9000
     string chdir_str = "";
     std::vector<string> plugins;
     size_t num_threads = 1;
     string dbstring = "dbname=tempus_test_db";
+#ifndef WIN32
+    bool daemon = false; (void)daemon;
+#endif
     if (argc > 1 )
     {
 	for ( int i = 1; i < argc; i++ )
@@ -100,7 +122,7 @@ int main( int argc, char*argv[] )
 	    string arg = argv[i];
 	    if ( arg == "-p" )
 	    {
-		standalone = true;
+		//standalone = true;
 		if ( argc > i+1 )
 		{
 		    port_str = argv[++i];
@@ -120,6 +142,12 @@ int main( int argc, char*argv[] )
 		    plugins.push_back( argv[++i] );
 		}
 	    }
+#ifndef WIN32
+	    else if ( arg == "-D" )
+	    {
+                daemon = true;
+	    }
+#endif
 	    else if ( arg == "-t" )
 	    {
 		if ( argc > i+1 )
@@ -142,11 +170,39 @@ int main( int argc, char*argv[] )
 		    << "\t-t num_threads\tnumber of request-processing threads" << endl
 		    << "\t-l plugin_name\tload plugin" << endl
 		    << "\t-d dbstring\tstring used to connect to pgsql" << endl
+#ifndef WIN32
+                    << "\t-D\trun as daemon" << endl
+#endif
 		    ;
 		return (arg == "-h") ? EXIT_SUCCESS : EXIT_FAILURE;
 	    }
 	}
     }
+#ifndef WIN32
+    if (daemon)
+    {
+        // Fork off the parent process
+        const pid_t pid = fork();
+        if (pid < 0) exit(EXIT_FAILURE);
+        // If we got a good PID, then we can exit the parent process.
+        if (pid > 0) exit(EXIT_SUCCESS);
+        // Change the file mode mask
+        umask(0);
+        // redirect error an output strem to log files
+        if (  !std::freopen( "/var/log/wps/err.log", "w", stderr )
+           || !std::freopen( "/var/log/wps/out.log", "w", stdout ) )
+        {
+            std::cerr << "error: cannot open /var/log/wps/err.log and /var/log/wps/out.log for writing\n";
+            exit(EXIT_FAILURE);
+        }
+        const pid_t sid = setsid();
+        if (sid < 0) 
+        {
+            std::cerr << "cannot setsid" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+#endif
     
     if ( chdir_str != "" )
     {
@@ -171,7 +227,7 @@ int main( int argc, char*argv[] )
         for ( size_t i=0; i< plugins.size(); i++ )
         {
             using namespace Tempus;
-			std::cerr << "loading " << plugins[i] << "\n";
+			std::cout << "loading " << plugins[i] << "\n";
             PluginFactory::instance()->load( plugins[i] );
         }
     }
@@ -181,7 +237,7 @@ int main( int argc, char*argv[] )
             return EXIT_FAILURE;
     }
 
-    std::cout << "ready !\n";
+    std::cout << "ready !" << std::endl;
 
     int listen_socket = 0;
     if ( standalone )

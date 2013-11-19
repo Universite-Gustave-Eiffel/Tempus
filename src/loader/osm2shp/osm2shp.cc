@@ -11,10 +11,28 @@
 // osmexport, with the minor difference that you will get a segfault 
 // if you do something wrong there.
 //
-// Written by Frederik Ramm <frederik@remote.org>, public domain
+// Originally written by Frederik Ramm <frederik@remote.org>, public domain
 
 // This was originally C, but has been converted to C++ to avoid dependency
 // on glib for hash
+
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 
 #include <stdio.h>
 #include <shapefil.h>
@@ -103,7 +121,7 @@ void warn(const char *fmt, ...)
 }
 
 
-void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
+void shapefile_new(int slot, int filetype, const char *filename, int num_fields, ...)
 {
     va_list ap;
     int i;
@@ -112,9 +130,9 @@ void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
     shape = &(shapefiles[slot]);
     const std::string filepath = outdir+"/"+filename;
     shape->shph = SHPCreate(filepath.c_str(), filetype);
-    if (shape->shph<=0) die("cannot create shapefile '%s'", filepath.c_str());
+    if (shape->shph==0) die("cannot create shapefile '%s'", filepath.c_str());
     shape->dbfh = DBFCreate(filepath.c_str());
-    if (shape->dbfh<=0) die("cannot create dbf file '%s'", filepath.c_str());
+    if (shape->dbfh==0) die("cannot create dbf file '%s'", filepath.c_str());
     shape->num_fields = num_fields;
     va_start(ap, num_fields);
     for (i=0; i<num_fields; i++)
@@ -141,7 +159,7 @@ void shapefile_new(int slot, int filetype, char *filename, int num_fields, ...)
     va_end(ap);
 }
 
-void shapefile_add_dbf(int slot, int entity, bool way, va_list ap)
+void shapefile_add_dbf(int slot, int entity, bool, va_list ap)
 {
     struct sf *shape = &(shapefiles[slot]);
     int i;
@@ -518,17 +536,19 @@ void usage()
 
 int main(int argc, char *argv[])
 {
-    int verbose=0;
+    // never used int verbose=0;
     int i;
     int first_file_arg = argc;
 
     for (i=1; i<argc; i++)
     {
+        /*
 	if ( strcmp("--verbose",argv[i]) == 0 || strcmp("-v",argv[i]) == 0 )
 	{
 	    verbose=1;
 	}
-	else if ( strcmp("--destination",argv[i]) == 0 || strcmp("-d",argv[i]) == 0 )
+        
+	else */ if ( strcmp("--destination",argv[i]) == 0 || strcmp("-d",argv[i]) == 0 )
 	{
 	    i++;
 	    if (i==argc)

@@ -8,6 +8,8 @@ find_path( OSM_TEST_FILE test_osm2shp.osm ${CMAKE_CURRENT_BINARY_DIR} )
 if (NOT OSM_TEST_FILE)
     set(OSM_TEST_FILE ${CMAKE_CURRENT_BINARY_DIR}/test_osm2shp.osm)
     file( DOWNLOAD "http://api.openstreetmap.org/api/0.6/map?bbox=11.5418,48.14,11.543,48.143" ${OSM_TEST_FILE} INACTIVITY_TIMEOUT .5 SHOW_PROGRESS )
+else()
+    set(OSM_TEST_FILE ${OSM_TEST_FILE}/test_osm2shp.osm)
 endif()
 
 if (GLIB_FOUND)

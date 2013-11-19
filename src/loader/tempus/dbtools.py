@@ -1,9 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+"""
+
 #
 # Tempus data loader
-# (c) 2012 Oslandia
-# MIT Licence
 
 import os
 import sys
@@ -54,11 +71,11 @@ class PsqlLoader:
     def load(self):
         """Load SQL file into the DB."""
         res = False
-        is_file = True
+        filename = ''
         if os.path.isfile(self.sqlfile):
-            is_file = True
-        else:
-            is_file = False
+            filename = self.sqlfile
+            f = open( filename, 'r' )
+            self.sqlfile = f.read()
 
         # call psql with sqlfile
         command = [PSQL]
@@ -68,8 +85,6 @@ class PsqlLoader:
             command.append("--username=%s" % self.dbparams['user'])
         if self.dbparams.has_key('port'):
             command.append("--port=%s" % self.dbparams['port'])
-        if is_file:
-            command.append("--file=%s" % self.sqlfile)
         if self.dbparams.has_key('dbname'):
             command.append("--dbname=%s" % self.dbparams['dbname'])
         if self.logfile:
@@ -83,12 +98,13 @@ class PsqlLoader:
             err = sys.stderr
         retcode = 0
         try:
-            if is_file:
-                retcode = subprocess.call(command, stdout = out, stderr = err)
-            else:
-                p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
-                p.communicate( self.sqlfile )
-                retcode = p.returncode
+            out.write("======= Executing SQL %s\n" % os.path.basename(filename) )
+            out.flush()
+            p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
+            self.sqlfile = "set client_min_messages=ERROR;\n" + self.sqlfile
+            p.communicate( self.sqlfile )
+            out.write("\n")
+            retcode = p.returncode
         except OSError as (errno, strerror):
             sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
         if self.logfile:

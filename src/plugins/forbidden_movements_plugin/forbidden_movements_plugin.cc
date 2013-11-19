@@ -1,6 +1,19 @@
-// Plugin sample on a road graph
-// (c) 2012 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
-// MIT License
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <boost/format.hpp>
 #include <boost/graph/iteration_macros.hpp>
@@ -90,11 +103,12 @@ namespace Tempus
             REQUIRE( ok );
 
             // forbidden edges (on tempus_test_db)
-            automaton[ e1 ].source = vertex_from_id( 21556, road_graph );
-            automaton[ e1 ].target = vertex_from_id( 21652, road_graph );
+            bool found;
+            boost::tie(automaton[ e1 ].source, found) = vertex_from_id( 21556, road_graph );
+            boost::tie(automaton[ e1 ].target, found) = vertex_from_id( 21652, road_graph );
 
-            automaton[ e2 ].source = vertex_from_id( 21652, road_graph );
-            automaton[ e2 ].target = vertex_from_id( 21617, road_graph );
+            boost::tie(automaton[ e2 ].source, found) = vertex_from_id( 21652, road_graph );
+            boost::tie(automaton[ e2 ].target, found) = vertex_from_id( 21617, road_graph );
 	}
 
 	virtual void pre_process( Request& /* request */ ) 
@@ -106,8 +120,9 @@ namespace Tempus
             // target node : 21422
 
             Road::Graph& road_graph = graph_.road;
-            source_ = vertex_from_id( 21687, road_graph );
-            destination_ = vertex_from_id( 21422, road_graph );
+            bool found;
+            boost::tie(source_, found) = vertex_from_id( 21687, road_graph );
+            boost::tie(destination_, found) = vertex_from_id( 21422, road_graph );
 
             COUT << "source: " << source_ << std::endl;
             COUT << "destination: " << destination_ << std::endl;

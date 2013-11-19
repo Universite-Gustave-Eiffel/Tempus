@@ -1,14 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+"""
+
 #
 # Tempus data loader
-# (c) 2012 Oslandia
-# MIT Licence
 
 import os
 import zipfile
 import tempfile
 import csv
+import sys
 from tools import is_numeric
 from importer import DataImporter
 from config import *
@@ -31,7 +49,7 @@ class GTFSImporter(DataImporter):
     # SQL files to execute after loading GTFS data 
     POSTLOADSQL = ["gtfs.sql"]
 
-    def __init__(self, source = "", dbstring = "", logfile = None, copymode = True, doclean = True):
+    def __init__(self, source = "", dbstring = "", logfile = None, encoding = 'UTF8', copymode = True, doclean = True):
         """Create a new GTFS data loader. Arguments are :
         source : a Zip file containing GTFS data
         schema_out : the destination schema in the database
@@ -42,6 +60,7 @@ class GTFSImporter(DataImporter):
         self.sqlfile = ""
         self.copymode = copymode
         self.doclean = doclean
+        self.encoding = encoding
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""
@@ -49,7 +68,7 @@ class GTFSImporter(DataImporter):
         if zipfile.is_zipfile(self.source):
             res = True
             with zipfile.ZipFile(self.source) as zipf:
-                filelist = zipf.namelist()
+                filelist = [ os.path.basename(x) for x in zipf.namelist() ]
                 for f, mandatory in GTFSImporter.GTFSFILES:
                     if res and "%s.txt" % f not in filelist:
                         if mandatory:
@@ -66,31 +85,59 @@ class GTFSImporter(DataImporter):
 
     def generate_sql(self):
         """Generate a SQL file from GTFS feed."""
+
+        if self.logfile:
+            out = open(self.logfile, "a")
+        else:
+            out = sys.stdout
+
         sqlfile = ""
         if zipfile.is_zipfile(self.source):
             # create temp file for SQL output
             fd, sqlfile = tempfile.mkstemp()
             tmpfile = os.fdopen(fd, "w")
             # begin a transaction in SQL file
-            tmpfile.write("SET CLIENT_ENCODING TO UTF8;\n")
+            tmpfile.write("SET CLIENT_ENCODING TO %s;\n" % self.encoding)
             tmpfile.write("SET STANDARD_CONFORMING_STRINGS TO ON;\n")
             tmpfile.write("BEGIN;\n")
 
 
             # open zip file
             with zipfile.ZipFile(self.source) as zipf:
+
+                # map of text file => (mandatory, zip_path)
+                gFiles = {}
                 for f, mandatory in GTFSImporter.GTFSFILES:
-                    # try to read the current GTFS txt file with CSV
-                    try:
-                        reader = csv.reader(zipf.open("%s.txt" % f),
-                                delimiter = ',',
-                                quotechar = '"')
-                    # If we can't read and it's a mandatory file, error
-                    except KeyError:
-                        if mandatory:
-                            raise ValueError, "Missing file in GTFS archive : %s" % f
-                        else:
-                            continue
+                    gFiles[f] = (mandatory, '')
+
+                for zfile in zipf.namelist():
+                    bn = os.path.basename( zfile )
+                    for f, m in GTFSImporter.GTFSFILES:
+                        if f + '.txt' == bn:
+                            mandatory, p = gFiles[f]
+                            gFiles[f] = ( mandatory, zfile )
+
+                for f, v in gFiles.iteritems():
+                    mandatory, f = v
+                    if mandatory and f == '':
+                        raise ValueError, "Missing file in GTFS archive : %s" % f
+
+                for f, v in gFiles.iteritems():
+                    mandatory, zpath = v
+                    if zpath == '':
+                        continue
+
+                    out.write( "== Loading %s\n" % zpath )
+
+                    # get rid of Unicode BOM (U+FEFF)
+                    def csv_cleaner( f ):
+                        for line in f:
+                            yield line.replace('\xef\xbb\xbf', '')
+
+                    reader = csv.reader(csv_cleaner(zipf.open( zpath )),
+                                        delimiter = ',',
+                                        quotechar = '"')
+
                     # Write SQL for each beginning of table
                     tmpfile.write("-- Inserting values for table %s\n\n" % f)
                     # first row is field names

@@ -3,8 +3,10 @@
 POIs import
 
 POI import needs the following templated fields :
-name : poi name
-parking_transport_type for parkings
+poi_type: integer, type of the POI (1 - car park, 4 - shared cycle point, etc.), default to 5 (user POI)
+name : string, field containing the name of each POI, default to 'pname'
+parking_transport_type : integer, type of parking, default: computed if poi_type is given
+filter: string, WHERE clause of the import, default to 'true' (no filter)
 
 */
 
@@ -41,6 +43,8 @@ from (
 		-- only consider road sections within xx meters
 		-- poi further than this distance will not be included
         st_dwithin(poi.geom, rs.geom, 30)
+     where
+        %(filter)s
     window
         -- nearest row geometry for each poi
         nearest as (partition by poi.gid order by st_distance(poi.geom, rs.geom))

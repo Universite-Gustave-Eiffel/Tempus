@@ -1,3 +1,20 @@
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <iostream>
 #include <iomanip>
 #include <boost/format.hpp>
@@ -242,7 +259,8 @@ namespace WPS
                     throw std::invalid_argument( (boost::format("Cannot find vertex id from %1%, %2%") % x % y).str() );
                 }
             }
-            vertex = vertex_from_id( id, road_graph );
+            bool found;
+            boost::tie( vertex, found ) = vertex_from_id( id, road_graph );
             return vertex;
     }
         
@@ -439,7 +457,7 @@ namespace WPS
                         
                         if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() )
                         {
-                            // can't find the pt network
+                            throw std::runtime_error( (boost::format("Can't find PT network ID %1%") % step->network_id ).str() );
                         }
                         PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id ];
                         
@@ -448,8 +466,16 @@ namespace WPS
                         XML::set_prop( step_node, "network", graph_.network_map[ step->network_id ].name );
                         
                         std::string departure_str;
-                        PublicTransport::Vertex v1 = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
-                        PublicTransport::Vertex v2 = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
+                        PublicTransport::Vertex v1, v2;
+                        bool found;
+                        boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
+                        if ( ! found ) {
+                            throw std::runtime_error( (boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_from ).str() );
+                        }
+                        boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
+                        if ( ! found ) {
+                            throw std::runtime_error( (boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_to ).str() );
+                        }
                         departure_str = pt_graph[ v1 ].name;
                         std::string arrival_str = pt_graph[ v2 ].name;
                         XML::set_prop( step_node, "departure_stop", departure_str );

@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 #
 # Tempus data loader
-# (c) 2012 Oslandia
-# MIT Licence
 
 import argparse
 import tempus
@@ -16,7 +14,7 @@ def import_tomtom(args, shape_options):
 
 def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.copymode, not args.noclean)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean)
     gtfsi.load()
 
 def import_navteq(args, shape_options):
@@ -60,12 +58,12 @@ if __name__ == "__main__":
     parser.add_argument('-y', '--poitype', required=False,
             default = 5, help = "Poi type (1: Car park, 2: shared car, 3: Cycle, 4:Shared cycle, 5:user)")
     parser.add_argument('-v', '--substitution', required=False, nargs='+',
-            default = '', help = "List of column name substitution (comma separated) name=value. Only used for POI import (name and parking_transport_type)")
+            default = '', help = "List of column name substitution name:value. Only used for POI import (see poi.sql)")
     args = parser.parse_args()
 
     substitutions = {}
     for v in args.substitution:
-        [var, value] = v.split('=')
+        [var, value] = v.split(':')
         substitutions[var] = value
         
     if args.type in ['tomtom', 'navteq', 'poi', 'osm']:
@@ -78,6 +76,8 @@ if __name__ == "__main__":
         shape_options['D'] = True
     if args.encoding:
         shape_options['W'] = args.encoding
+    else:
+        args.encoding = 'UTF8'
     # default shp2pgsql options
     shape_options['I'] = True
     shape_options['g'] = 'geom'
