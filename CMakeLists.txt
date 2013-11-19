@@ -85,14 +85,14 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   
   ; *** INSTALL NGINX ***
   MessageBox MB_YESNO 'Install nginx web server ?' /SD IDYES IDNO endNginx
-    ExecWait win32\\\nginx-1.5.6.exe
+    ExecWait `nginx-1.5.6.exe`
     ExecWait `..\\\\nginx\\\\nginx_service.exe install`
     ExecWait `net start nginx`
     Goto endNginx   
   endNginx:
  
   ; *** INSTALL MSVC REDISTRIBUTABLES ***
-  ExecWait `win32\\\vcredist_x86.exe`
+  ExecWait `vcredist_x86.exe`
  
   ; *** INSTALL TEST DB ***
   CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
@@ -103,7 +103,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
 
   ; *** INSTALL AND START WPS SERVICE ***
-  ExecWait `win32\\\wps_service.exe install`
+  ExecWait `wps_service.exe install`
   ExecWait `net start wps`
   
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
@@ -127,17 +127,27 @@ endif()
 include(CPack)
 
 if (WIN32)
-   install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml vcredist_x86.exe DESTINATION .)
+   find_file( MSVCR71 NAME msvcr71.dll
+     PATHS
+     $ENV{OSGEO4W_ROOT}/bin
+	 $ENV{MSVCR71_DLL}
+   )
+   if (MSVCR71)
+   else()
+        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
+	endif()
+   
+   file(GLOB intldll ${PostgreSQL_LIBRARY_DIR}/../bin "libintl*.dll")
+   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/wps_service.xml win32/vcredist_x86.exe DESTINATION .)
    install(FILES 
       ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl.dll
+      ${intdll}
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
-#hack
-      c:/OSGeo4W/bin/msvcr71.dll
+      ${MSVCR71}
       DESTINATION bin)
 endif()
 
