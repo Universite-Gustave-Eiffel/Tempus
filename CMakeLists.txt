@@ -53,7 +53,7 @@ endif()
 set(CPACK_PACKAGE_NAME "tempus")
 set(CPACK_PACKAGE_VENDOR "IFSTTAR")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tempus - manipulate transport graphs")
-set(CPACK_PACKAGE_VERSION "0.9")
+set(CPACK_PACKAGE_VERSION "1.0-rc")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus-${CPACK_PACKAGE_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
@@ -111,6 +111,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
 
   ; *** INSTALL AND START WPS SERVICE ***
+  ExecWait `gen_xml.bat`
   ExecWait `wps_service.exe install`
   ExecWait `net start wps`
   
@@ -145,14 +146,14 @@ if (WIN32)
         message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
 	endif()
    
-   file(GLOB intldll ${PostgreSQL_LIBRARY_DIR}/../bin "libintl*.dll")
-   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/wps_service.xml win32/vcredist_x86.exe DESTINATION .)
+   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
+   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_xml.bat win32/vcredist_x86.exe DESTINATION .)
    install(FILES 
       ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
-      ${intdll}
+      ${intldll}
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
       ${MSVCR71}
