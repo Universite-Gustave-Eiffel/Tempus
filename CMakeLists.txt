@@ -106,7 +106,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ExecWait `reset_tempus_test_db.bat`
 
   ; *** INSTALL AND START WPS SERVICE ***
-  ExecWait `gen_xml.bat`
+  ExecWait `gen_wps_service_xml.bat`
   ExecWait `wps_service.exe install`
   ExecWait `net start wps`
   
@@ -141,7 +141,7 @@ if (WIN32)
 	endif()
    
    file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
-   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat DESTINATION .)
+   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_wps_service_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat DESTINATION .)
    install(FILES 
       ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
