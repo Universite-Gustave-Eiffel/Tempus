@@ -1,0 +1,10 @@
+import os
+DATA_DIR = "${QGIS_PLUGIN_DIR}"
+TEMPUS_DATA_DIR = "${CMAKE_INSTALL_PREFIX}/${TEMPUS_INSTALL_DATA_DIRECTORY}/data"
+if not os.path.exists( TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" ):
+   if not os.environ.has_key("TEMPUS_DATA_DIRECTORY"):
+      raise RuntimeError( "Can't find the Tempus data directory, please define the TEMPUS_DATA_DIRECTORY environment variable" )
+   if not os.path.exists( os.environ["TEMPUS_DATA_DIRECTORY"] + "/wps_schemas/record.xsd" ):
+      raise RuntimeError( "Can't find the Tempus data directory in %s" % os.environ["TEMPUS_DATA_DIRECTORY"])
+   TEMPUS_DATA_DIR = os.environ["TEMPUS_DATA_DIRECTORY"]
+

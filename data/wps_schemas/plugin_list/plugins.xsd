@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:include schemaLocation="../option_value.xsd"/>
+  <xs:complexType name="OptionDesc">
+    <xs:sequence>
+      <xs:element name="default_value" type="OptionValue" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="description" type="xs:string"/>
+  </xs:complexType>
+  <xs:complexType name="LoadedPlugin">
+    <xs:sequence>
+      <xs:element name="option" type="OptionDesc" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string"/>
+  </xs:complexType>
+  <xs:complexType name="Plugins">
+    <xs:sequence>
+      <xs:element name="plugin" type="LoadedPlugin" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="plugins" type="Plugins"/>
+</xs:schema>
+

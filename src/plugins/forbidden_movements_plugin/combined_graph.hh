@@ -1,16 +1,30 @@
-// (c) 2013 Oslandia - Hugo Mercier <hugo.mercier@oslandia.com>
-// MIT License
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 
 template <class GVertex, class Automaton>
 std::pair<typename Automaton::vertex_descriptor, bool> find_transition_( const Automaton& automaton,
-                                                                         typename Automaton::vertex_descriptor q,
-                                                                         GVertex u,
-                                                                         GVertex v )
+        typename Automaton::vertex_descriptor q,
+        GVertex u,
+        GVertex v )
 {
     BGL_FORALL_OUTEDGES_T( q, edge, automaton, Automaton ) {
         if ( automaton[ edge ].source == u &&
-             automaton[ edge ].target == v ) {
+                automaton[ edge ].target == v ) {
             return std::make_pair( target( edge, automaton ), true );
         }
     }
@@ -23,22 +37,24 @@ std::pair<typename Automaton::vertex_descriptor, bool> find_transition_( const A
 // look for a transition from q to qp given by (u,v) in the automaton
 template <class GVertex, class Automaton>
 typename Automaton::vertex_descriptor find_transition( const Automaton& automaton,
-                                                       typename Automaton::vertex_descriptor q,
-                                                       GVertex u,
-                                                       GVertex v )
+        typename Automaton::vertex_descriptor q,
+        GVertex u,
+        GVertex v )
 {
     typedef typename Automaton::vertex_descriptor AVertex;
 
-    AVertex q0 = *(vertices( automaton ).first);
+    AVertex q0 = *( vertices( automaton ).first );
     AVertex qp = q0;
     // look for transition
     bool transition_found = false;
     boost::tie( qp, transition_found ) = find_transition_( automaton, q, u, v );
+
     if ( ! transition_found ) {
         // no transition found on q, trying on q0
         transition_found = false;
         boost::tie( qp, transition_found ) = find_transition_( automaton, q0, u, v );
     }
+
     return qp;
 }
 
@@ -53,9 +69,8 @@ typename Automaton::vertex_descriptor find_transition( const Automaton& automato
 // - its edges must have a 'source' and a 'target' fields that are vertex descriptors of the (road) graph
 //
 template <class Graph,
-          class Automaton>
-class CombinedGraphAdaptor
-{
+         class Automaton>
+class CombinedGraphAdaptor {
 public:
 
     typedef Graph graph_type;
@@ -86,73 +101,69 @@ public:
 
     class out_edge_iterator :
         public boost::iterator_facade< out_edge_iterator,
-                                       edge_descriptor,
-                                       boost::forward_traversal_tag,
-                                       /*Reference*/ edge_descriptor>
-    {
+        edge_descriptor,
+        boost::forward_traversal_tag,
+    /*Reference*/ edge_descriptor> {
     public:
         out_edge_iterator() :
-            graph_(0),
-            automaton_(0),
-            u(0),
-            q(0)
+            graph_( 0 ),
+            automaton_( 0 ),
+            u( 0 ),
+            q( 0 )
         {}
         out_edge_iterator( const Graph& graph, const Automaton& automaton, vertex_descriptor source ) :
-            graph_(&graph),
-            automaton_(&automaton),
-            u(source.first),
-            q(source.second)
-        {
+            graph_( &graph ),
+            automaton_( &automaton ),
+            q( source.second ),
+            u( source.first ) {
             boost::tie( out_edge, out_edge_end ) = out_edges( u, *graph_ );
             update_edge();
         }
 
-        edge_descriptor dereference() const
-        {
+        edge_descriptor dereference() const {
             return edge_;
         }
 
-        void update_edge()
-        {
+        void update_edge() {
             GVertex v = target( *out_edge, *graph_ );
             AVertex qp = find_transition( *automaton_, q, u, v );
             edge_ = std::make_pair( std::make_pair( u, q ), std::make_pair( v, qp ) );
         }
 
-        void increment()
-        {
+        void increment() {
             if ( out_edge == out_edge_end ) {
                 return;
             }
 
             out_edge++;
+
             if ( out_edge == out_edge_end ) {
                 return;
             }
+
             update_edge();
         }
-        bool equal( const out_edge_iterator& v ) const
-        {
-            if ( (graph_ != v.graph_) || (automaton_ != v.automaton_ ) ) {
+        bool equal( const out_edge_iterator& v ) const {
+            if ( ( graph_ != v.graph_ ) || ( automaton_ != v.automaton_ ) ) {
                 return false;
             }
+
             return q == v.q && u == v.u && out_edge == v.out_edge;
         }
-        void to_end()
-        {
+        void to_end() {
             out_edge = out_edge_end;
         }
     private:
         const Graph* graph_;
         const Automaton* automaton_;
-        
+
         AVertex q;
         GVertex u;
         GEdgeIterator out_edge, out_edge_end;
         edge_descriptor edge_;
     };
 
-    CombinedGraphAdaptor( Graph& graph, Automaton& automaton ) :graph_(graph), automaton_(automaton) {}
+    CombinedGraphAdaptor( Graph& graph, Automaton& automaton ) :graph_( graph ), automaton_( automaton ) {}
 
     Graph graph_;
     Automaton automaton_;
@@ -160,8 +171,8 @@ public:
 
 template <class G, class A>
 std::pair<typename CombinedGraphAdaptor<G,A>::out_edge_iterator,
-          typename CombinedGraphAdaptor<G,A>::out_edge_iterator>
-out_edges( const typename CombinedGraphAdaptor<G,A>::vertex_descriptor& v, const CombinedGraphAdaptor<G,A>& g )
+    typename CombinedGraphAdaptor<G,A>::out_edge_iterator>
+    out_edges( const typename CombinedGraphAdaptor<G,A>::vertex_descriptor& v, const CombinedGraphAdaptor<G,A>& g )
 {
     typedef typename CombinedGraphAdaptor<G,A>::out_edge_iterator oe_iterator;
     oe_iterator it( g.graph_, g.automaton_, v );
@@ -175,21 +186,20 @@ out_edges( const typename CombinedGraphAdaptor<G,A>::vertex_descriptor& v, const
 //
 // Requirements on the CombinedGraph : the underlying Graph and Automaton must have a 'vertex_index' property
 template <class CombinedGraph>
-struct CombinedIndexMap
-{
+struct CombinedIndexMap {
     typedef typename CombinedGraph::vertex_descriptor key_type;
     typedef unsigned long value_type;
     typedef value_type& reference;
     typedef boost::readable_property_map_tag category;
 
-    CombinedIndexMap( const CombinedGraph& graph ) : graph_(graph) {}
+    CombinedIndexMap( const CombinedGraph& graph ) : graph_( graph ) {}
 
     const CombinedGraph& graph_;
 };
 
 template <class CombinedGraph>
 typename CombinedIndexMap<CombinedGraph>::value_type get( const CombinedIndexMap<CombinedGraph>& cmap,
-                                                          const typename CombinedIndexMap<CombinedGraph>::key_type& k )
+        const typename CombinedIndexMap<CombinedGraph>::key_type& k )
 {
     unsigned long graph_idx = get( get( boost::vertex_index, cmap.graph_.graph_ ), k.first );
     unsigned long nvertices = num_vertices( cmap.graph_.automaton_ );
@@ -210,8 +220,7 @@ CombinedIndexMap< CombinedGraphAdaptor<G,A> > get( boost::vertex_index_t, const 
 // like a weight map where the key is a pair of ( graph vertex, automaton state )
 //
 template <class CombinedGraph, class WeightMap, class PenaltyMap>
-struct CombinedWeightMap
-{
+struct CombinedWeightMap {
     typedef typename boost::graph_traits<typename CombinedGraph::graph_type>::edge_descriptor GEdge;
     typedef typename CombinedGraph::edge_descriptor key_type;
     typedef typename WeightMap::value_type value_type;
@@ -219,13 +228,12 @@ struct CombinedWeightMap
     typedef boost::readable_property_map_tag category;
 
     CombinedWeightMap( const CombinedGraph& graph, WeightMap& wmap, PenaltyMap& pmap ) :
-        graph_(graph),
-        wmap_(wmap),
-        pmap_(pmap)
+        graph_( graph ),
+        wmap_( wmap ),
+        pmap_( pmap )
     {}
 
-    value_type get( const key_type& k ) const
-    {
+    value_type get( const key_type& k ) const {
         typedef typename CombinedGraph::vertex_descriptor Vertex;
         Vertex v1 = k.first;
         Vertex v2 = k.second;
@@ -235,7 +243,7 @@ struct CombinedWeightMap
         BOOST_ASSERT( ok );
         double w = boost::get( wmap_, e );
         double p = boost::get( pmap_, v1.second );
-        //        std::cout << "weight " << e << " state= " << v2.second << " = " << w << " +" << p << std::endl;
+        //        COUT << "weight " << e << " state= " << v2.second << " = " << w << " +" << p << std::endl;
         return w + p;
     }
 private:

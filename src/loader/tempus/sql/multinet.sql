@@ -1,6 +1,4 @@
 -- Tempus - Multinet SQL import Wrapper
--- Licence MIT
--- Copyright Oslandia 2012
 
 -- TABLE road_node 
 INSERT INTO tempus.road_node
@@ -10,7 +8,6 @@ SELECT DISTINCT
 	jc.jncttyp = 0 AS junction,
 	jc.jncttyp = 2 AS bifurcation,
 	ST_Force_3DZ(st_transform(geom, 2154)) AS geom
-	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 FROM _tempus_import.jc AS jc
 WHERE jc.feattyp = 4120;
 
@@ -122,7 +119,6 @@ SELECT
 
 	ST_Transform(ST_Force_3DZ(ST_LineMerge(nw.geom)), 2154) AS geom
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
-	-- FIXME change ST_SetSRID to ST_Transform as soon as loader will handle mandatory srid
 
 FROM 
 	_tempus_import.nw AS nw
@@ -140,6 +136,37 @@ on
 WHERE 
 	nw.feattyp = 4110;
 
+-- cleanup border lines
+
+-- delete every section with an unknown node_from
+delete from tempus.road_section
+where id in
+(select
+	rs.id
+from
+	tempus.road_section as rs
+left join
+	tempus.road_node as rn
+on
+	rs.node_from = rn.id
+where
+	rn.id is null
+);
+-- delete every section with an unknown node_to
+delete from tempus.road_section
+where id in
+(select
+	rs.id
+from
+	tempus.road_section as rs
+left join
+	tempus.road_node as rn
+on
+	rs.node_to = rn.id
+where
+	rn.id is null
+);
+
 -- Restore constraints and index
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 	PRIMARY KEY (id);
@@ -156,18 +183,22 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 
 
 -- TABLE road_road
-INSERT INTO tempus.road_road
-        SELECT  t.id,
-                t.road_section,
-                (SELECT SUM(ST_Length(geom)) FROM _tempus_import.nw AS nw WHERE nw.id = ANY (t.road_section)) AS cost
-
-        FROM (
-        	SELECT   id,
-                 array(
-			SELECT trpelid FROM _tempus_import.mp AS a
-                      	WHERE mp.id=a.id AND trpeltyp=4110 ORDER BY seqnr
-                        ) as road_section
-
-        FROM _tempus_import.mp AS mp
-        WHERE mp.trpelid IN (SELECT nw.id FROM _tempus_import.nw AS nw) AND seqnr > 1
-        GROUP BY id ) AS t;
+insert into tempus.road_road
+select
+	mp.id::bigint as id,
+	1+4+8+128+256 as transport_types,
+	array_agg(trpelid::bigint order by seqnr) as road_section,
+	'Infinity'::float as cost
+from
+	_tempus_import.mp as mp
+left join
+	_tempus_import.mn as mn
+on
+	mn.id = mp.id
+where
+	mn.feattyp in (2101,2103)
+and
+	mp.trpeltyp = 4110
+and
+	mn.promantyp = 0
+group by mp.id;

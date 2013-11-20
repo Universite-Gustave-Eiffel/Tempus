@@ -1,9 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+"""
+
 #
 # Tempus data loader
-# (c) 2012 Oslandia
-# MIT Licence
 
 import os
 import sys
@@ -155,29 +172,37 @@ class ShpImporter(DataImporter):
                         basename, ext = os.path.splitext(os.path.basename(filename))
                         if ext.lower() in ['.dbf', '.shp'] and basename[-len(shp):] == shp:
                             curprefix = basename[:-len(shp)]
-                            if curprefix not in prefixes:
+                            # only consider prefixes with "_"
+                            if '_' in curprefix and curprefix not in prefixes:
                                 prefixes.append(curprefix)
                 # if only one prefix found, use it !
                 if len(prefixes) > 1:
                     sys.stderr.write("Cannot determine prefix, multiple found : %s \n" % ",".join(prefixes))
+                elif len(prefixes) == 1:
+                    return prefixes[0]
                 else:
-                    myprefix = prefixes[0]
+                    return ''
         return myprefix
 
     def get_shapefiles(self):
         self.shapefiles = []
         notfound = []
+
+        baseDir = os.path.realpath(self.source)
+        ls = os.listdir( baseDir )
         for shp in self.SHAPEFILES:
-            filename = os.path.join(os.path.realpath(self.source), self.prefix + shp + ".shp")
-            if os.path.isfile(filename):
-                self.shapefiles.append(filename)
+            filenameShp = self.prefix + shp + ".shp"
+            filenameDbf = self.prefix + shp + ".dbf"
+            lsLower = [ x.lower() for x in ls ]
+            if filenameShp in lsLower:
+                i = lsLower.index( filenameShp )
+                self.shapefiles.append( os.path.join( baseDir, ls[i] ) )
+            elif filenameDbf in lsLower:
+                i = lsLower.index( filenameDbf )
+                self.shapefiles.append( os.path.join( baseDir, ls[i] ) )
             else:
-                filename = os.path.join(os.path.realpath(self.source), self.prefix + shp + ".dbf")
-                if os.path.isfile(filename):
-                    self.shapefiles.append(filename)
-                else:
-                    notfound.append(shp)
-                    sys.stderr.write("Warning : file for table %s not found.\n"\
-                            "%s/shp not found\n" % (shp, filename) )
+                notfound.append( filenameDbf )
+                sys.stderr.write("Warning : file for table %s not found.\n"\
+                                     "%s/shp not found\n" % (shp, filename) )            
         return notfound
 

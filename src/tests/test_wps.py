@@ -1,20 +1,38 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+/**
+ *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
+ *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *   
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+"""
+
 import sys
 import os
 import re
 import unittest
 
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-wps_path = os.path.abspath( script_path + '/../wps/client' )
+wps_path = os.path.abspath( script_path + '/../python' )
 sys.path.insert(0, wps_path)
 from wps_client import *
+from tempus_request import *
 
 WPS_HOST = '127.0.0.1'
 WPS_PATH = '/wps'
-DB_OPTIONS = ""
-DB_NAME = "tempus_test_db"
 
-db_options = "%s dbname=%s" % (DB_OPTIONS, DB_NAME)
 
 class TestWPS(unittest.TestCase):
 
@@ -86,7 +104,7 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( status, 200 )
         
     def test_describe_process(self):
-        [status, msg] = self.wps.describe_process( "pre_process" )
+        [status, msg] = self.wps.describe_process( "select" )
         self.assertEqual( status, 200 )
         # TODO : test errors
         [status, msg] = self.wps.describe_process( "I do not exist" )
@@ -110,28 +128,18 @@ class TestWPS(unittest.TestCase):
         is_ex = False
         code = 0
         try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'arg1' : [True, ''], 'arg2' : [True, 4] } )
+            # get_options_descriptions takes 1 argument
+            outputs = self.wps.execute( "get_option_descriptions", { 'arg1' : ['arg1'], 'arg2' : ['arg2'] } )
         except RuntimeError as e:
             [ is_ex, code ] = get_wps_exception( e.args[1] )
         self.assertEqual( is_ex, True )
         self.assertEqual( code, 'InvalidParameterValue' )
-
+            
         # TODO: test bad input argument name
         is_ex = False
         code = 0
         try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'db_optios' : [True, [ 'db_options', db_options] ] } )
-        except RuntimeError as e:
-            [ is_ex, code ] = get_wps_exception( e.args[1] )
-        self.assertEqual( is_ex, True )
-        self.assertEqual( code, 'InvalidParameterValue' )
-        is_ex = False
-        code = 0
-        try:
-            # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'db_options' : [True, [ 'db_optis', db_options] ] } )
+            outputs = self.wps.execute( "get_option_descriptions", { 'plugi' : [ 'plugi'] } )
         except RuntimeError as e:
             [ is_ex, code ] = get_wps_exception( e.args[1] )
         self.assertEqual( is_ex, True )
@@ -142,31 +150,17 @@ class TestWPS(unittest.TestCase):
         code = 0
         try:
             # connect only takes 1 argument
-            outputs = self.wps.execute( "connect", { 'db_options' : [True, [ 'db_options', {}, [ 'toto', 'ok'] ] ] } )
+            outputs = self.wps.execute( "get_option_descriptions", { 'plugin' : [ 'plugin', {'nam' : ''} ] } )
         except RuntimeError as e:
             [ is_ex, code ] = get_wps_exception( e.args[1] )
         self.assertEqual( is_ex, True )
         self.assertEqual( code, 'InvalidParameterValue' )
-        pass
-
-    def assert_min_state( self, state ):
-        outputs = self.wps.execute( 'state', {} )
-        self.assertEqual( int(outputs['state'].text), state )
 
     def test_execution_cycle(self):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
-
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
-
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
-
         self.wps.execute( 'plugin_list', {} )
 
         # non existing plugin
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'I dont exist_plugin' } ] ] }
+        plugin_arg = { 'plugin': ['plugin', {'name' : 'I dont exist_plugin' } ] }
         is_ex = False
         try:
             self.wps.execute( 'get_option_descriptions', plugin_arg )
@@ -175,63 +169,35 @@ class TestWPS(unittest.TestCase):
             is_ex=True
         self.assertEqual( is_ex, True )
 
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_road_plugin' } ] ] }
-        self.wps.execute( 'get_option_descriptions', plugin_arg )
-
         # route that passes near a public transport line (Nantes data)
         ox = 356241.225231
         oy = 6688158.053382
         dx = 355763.149926
         dy = 6688721.876838
 
-        args = dict(plugin_arg.items())
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', 1 ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
-                            ]
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
 
-        outputs = self.wps.execute( 'pre_process', args )
+        tempus.request( plugin_name = 'sample_road_plugin',
+                        plugin_options = { 'trace_vertex' : True },
+                        origin = Point( ox, oy ),
+                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+        self.assertEqual( len(tempus.results[0].steps), 12 )
 
-        outputs = self.wps.execute( 'process', plugin_arg )
+        # run without options
+        is_ex = False
+        try:
+            tempus.request( plugin_name = 'sample_road_plugin',
+                            origin = Point( ox, oy ),
+                            steps = [ RequestStep(destination = Point(dx, dy)) ] )
+        except RuntimeError as e:
+            is_ex=True
+        self.assertEqual( is_ex, False )
 
-        outputs = self.wps.execute( 'result', plugin_arg )
-        n = 0
-        for step in outputs['results'][0]:
-            if step.tag != 'cost':
-                n += 1
-        self.assertEqual( n, 12 )
 
     def test_constants( self ):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
-
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
-
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
-
         outputs = self.wps.execute( 'constant_list', {} )
 
     def test_multi_plugin( self ):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
-
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
-
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
-
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_multi_plugin' } ] ] }
 
         # two road nodes that are linked to a public transport stop
         ox = 355349.238904
@@ -239,73 +205,21 @@ class TestWPS(unittest.TestCase):
         dx = 356132.718582
         dy = 6687761.706782
 
-        args = dict(plugin_arg.items())
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', 1 ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
-                            ]
-
-        outputs = self.wps.execute( 'pre_process', args )
-
-        outputs = self.wps.execute( 'process', plugin_arg )
-
-        outputs = self.wps.execute( 'result', plugin_arg )
-        n = 0
-        for step in outputs['results'][0]:
-            if step.tag != 'cost':
-                n += 1
-        self.assertEqual( n, 16 )
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+        tempus.request( plugin_name = 'sample_multi_plugin',
+                        origin = Point( ox, oy ),
+                        steps = [ RequestStep(destination = Point(dx, dy)) ] )
+        self.assertEqual( len(tempus.results[0].steps), 16 )
 
     def test_pt_plugin( self ):
-        self.wps.execute( 'connect', { 'db_options' : [True, ['db_options', db_options ] ] } )
-        self.assert_min_state( 1 )
 
-        self.wps.execute( 'pre_build', {} )
-        self.assert_min_state( 2 )
-
-        self.wps.execute( 'build', {} )
-        self.assert_min_state( 3 )
-
-        plugin_arg = { 'plugin': [ True, ['plugin', {'name' : 'sample_pt_plugin' } ] ] }
-
-        # two road nodes that are linked to a public transport stop
-        ox = 356118.752929
-        oy = 6687853.943756
-        dx = 355385.975128
-        dy = 6689324.323148
-
-        args = dict(plugin_arg.items())
-        args['request'] = [ True, ['request', 
-                                   ['origin', ['x', str(ox)], ['y', str(oy)] ],
-                                   ['departure_constraint', { 'type': 0, 'date_time': '2012-03-14T11:05:34' } ],
-                                   ['optimizing_criterion', 1 ], 
-                                   ['allowed_transport_types', 11 ],
-                                   ['step',
-                                    [ 'destination', ['x', str(dx)], ['y', str(dy)] ],
-                                    [ 'constraint', { 'type' : 0, 'date_time':'2012-04-23T00:00:00' } ],
-                                    [ 'private_vehicule_at_destination', 'true' ]
-                                    ]
-                                   ]
-                            ]
-
-        outputs = self.wps.execute( 'pre_process', args )
-
-        outputs = self.wps.execute( 'process', plugin_arg )
-
-        outputs = self.wps.execute( 'result', plugin_arg )
-        n = 0
-        for step in outputs['results'][0]:
-            if step.tag != 'cost':
-                n += 1
-        self.assertEqual( n, 5 )
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+        tempus.request( plugin_name = 'sample_pt_plugin',
+                        plugin_options = { 'origin_pt_stop' : 2442,
+                                           'destination_pt_stop' : 1551 },
+                        origin = Point( vertex = 0 ),
+                        steps = [ RequestStep(destination = Point( vertex = 0 )) ] )
+        self.assertEqual( len(tempus.results[0].steps), 5 )
 
 if __name__ == '__main__':
     unittest.main()

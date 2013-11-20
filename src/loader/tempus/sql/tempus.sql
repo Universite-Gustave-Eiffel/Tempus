@@ -1,7 +1,5 @@
 -- Tempus Database schema: version 1.0
 --
--- Copyright <Olivier Courtin - 2012>
--- Licence MIT.
 
 --
 -- DROP and clean if needed
@@ -65,8 +63,8 @@ INSERT INTO tempus.road_type VALUES (7, 'Pedestrial only');
 CREATE TABLE tempus.road_node
 (
 	id bigint PRIMARY KEY,
-	junction boolean,
-	bifurcation boolean
+	junction boolean, -- properties of the section are different before and after this node
+	bifurcation boolean -- total number of incident edges are > 2
 	-- NOTA: geometry column added NOT NULL
 );
 ALTER TABLE tempus.road_node ADD CONSTRAINT road_node_type CHECK(NOT(junction and bifurcation));
@@ -98,8 +96,9 @@ CREATE TABLE tempus.road_section
 CREATE TABLE tempus.road_road
 (
 	id bigint PRIMARY KEY,
+        transport_types integer NOT NULL,
 	road_section bigint[] NOT NULL,
-	road_cost double precision NOT NULL -- -1 mean infinite cost (i.e forbidden)
+	road_cost double precision NOT NULL
 );
 
 
@@ -151,7 +150,8 @@ CREATE TABLE tempus.pt_network
 -- GTFS Stops
 CREATE TABLE tempus.pt_stop
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar, -- optional ID given by data provider
 	psname varchar NOT NULL,
 	location_type boolean, -- As in GTFS: 0 mean stop, 1 mean station
 	parent_station integer REFERENCES tempus.pt_stop (id),
@@ -165,9 +165,10 @@ CREATE TABLE tempus.pt_stop
 -- GTFS Routes (and subgraph link)
 CREATE TABLE tempus.pt_route
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar, 
 	network_id integer REFERENCES tempus.pt_network,
-	short_name varchar NOT NULL,
+	short_name varchar,
 	long_name varchar NOT NULL,
 	route_type  integer CHECK (route_type >= 0 AND route_type <= 7)
  	-- As in GTFS: 
@@ -189,10 +190,18 @@ CREATE TABLE tempus.pt_section
 );
 
 
+-- Service definition
+-- A service is defined by pt_calendar OR pt_calendar_date (or both)
+CREATE TABLE tempus.pt_service
+(
+        id serial PRIMARY KEY,
+        vendor_id varchar
+);
+
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar
 (
-	id integer PRIMARY KEY,
+	service_id bigint REFERENCES tempus.pt_service(id),
 	monday boolean NOT NULL,
 	tuesday boolean NOT NULL,
 	wednesday boolean NOT NULL,
@@ -201,31 +210,30 @@ CREATE TABLE tempus.pt_calendar
 	saturday boolean NOT NULL,
 	sunday boolean NOT NULL,
 	start_date date NOT NULL,
-	end_date date NOT NULL
+	end_date date NOT NULL,
+	PRIMARY KEY (service_id)
 );
-
-
--- GTFS Trip
-CREATE TABLE tempus.pt_trip
-(
-	id bigint PRIMARY KEY, 
-	route_id integer REFERENCES tempus.pt_route NOT NULL,
-	service_id integer REFERENCES tempus.pt_calendar NOT NULL,
-	short_name varchar
-	-- NOTA: shape_dist_traveled (if present) is stored as M dimension into geom
-);
-
 
 -- GTFS Calendar Date
 CREATE TABLE tempus.pt_calendar_date
 (
-	service_id bigint REFERENCES tempus.pt_calendar,
+	service_id bigint REFERENCES tempus.pt_service(id),
 	calendar_date date NOT NULL,
 	exception_type integer NOT NULL,-- As in GTFS: 1 service has been added,
 					--             2 service has been removed
 	PRIMARY KEY (service_id, calendar_date, exception_type)
 );
 
+-- GTFS Trip
+CREATE TABLE tempus.pt_trip
+(
+	id serial PRIMARY KEY, 
+        vendor_id varchar,
+	route_id integer REFERENCES tempus.pt_route NOT NULL,
+	service_id integer REFERENCES tempus.pt_service NOT NULL,
+	short_name varchar
+	-- NOTA: shape_dist_traveled (if present) is stored as M dimension into geom
+);
 
 -- GTFS Stop Time
 CREATE TABLE tempus.pt_stop_time
@@ -252,7 +260,8 @@ CREATE TABLE tempus.pt_stop_time
 -- GTFS Fare Attribute
 CREATE TABLE tempus.pt_fare_attribute
 (
-	id integer PRIMARY KEY,
+	id serial PRIMARY KEY,
+        vendor_id varchar,
 	price double precision NOT NULL,
 	currency_type char(3) DEFAULT 'EUR' NOT NULL, -- ISO 4217 codes
 	transfers integer NOT NULL CHECK(transfers >= -1 AND transfers <= 2), 	
@@ -307,6 +316,19 @@ CREATE TABLE tempus.pt_transfer
 
 
 --
+-- PostGIS geometry 
+--
+SELECT AddGeometryColumn('tempus', 'road_section', 'geom', 2154, 'LINESTRING', 3);
+SELECT AddGeometryColumn('tempus', 'road_node', 'geom', 2154, 'POINT', 3);
+SELECT AddGeometryColumn('tempus', 'poi', 'geom', 2154, 'POINT', 3);
+SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 3);
+SELECT AddGeometryColumn('tempus', 'pt_route', 'geom', 2154, 'LINESTRING', 3);
+SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', 2154, 'LINESTRING', 3);
+-- TODO Check not empty geom
+-- TODO Check valid geom
+-- NOTA: EPSG:2154 means Lambert 93
+
+--
 -- Utilitary functions
 --
 
@@ -316,15 +338,3 @@ as '
 select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) order by st_distance( geom, st_setsrid(st_point($1, $2), 2154)) asc limit 1
 '
 language 'SQL';
---
--- PostGIS geometry 
---
-SELECT AddGeometryColumn('tempus', 'road_section', 'geom', 2154, 'LINESTRING', 3);
-SELECT AddGeometryColumn('tempus', 'road_node', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'poi', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 2);
-SELECT AddGeometryColumn('tempus', 'pt_route', 'geom', 2154, 'LINESTRING', 3);
-SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', 2154, 'LINESTRING', 3);
--- TODO Check not empty geom
--- TODO Check valid geom
--- NOTA: EPSG:2154 means Lambert 93

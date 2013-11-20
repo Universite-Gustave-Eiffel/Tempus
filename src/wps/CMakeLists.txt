@@ -1,29 +1,14 @@
-set( XML_INCLUDE_DIR "" CACHE PATH "libxml2 includes directory")
-set( XML_LIBRARY_DIRS "" CACHE PATH "libxml2 libraries directory")
-if (WIN32)
-  set( XML_LIBS libxml2 )
-else (WIN32)
-  set( XML_LIBS xml2 )
-endif (WIN32)
+find_package(LibXml2 REQUIRED) # our cmake module finds iconv on windows
+find_package(FCGI REQUIRED)
 
-set( ICONV_INCLUDE_DIR "" CACHE PATH "libiconv includes directory")
-set( ICONV_LIBRARY_DIRS "" CACHE PATH "libiconv libraries directory")
-if (WIN32)
-  set( ICONV_LIBS iconv )
-else (WIN32)
-  set (ICONV_LIBS )
-endif (WIN32)
-
-set( FCGI_INCLUDE_DIR "" CACHE PATH "fastcgi includes directory")
-set( FCGI_LIBRARY_DIRS "" CACHE PATH "fastcgi libraries directory")
-if (WIN32)
-  set( FCGI_LIBS libfcgi )
-else (WIN32)
-  set( FCGI_LIBS fcgi fcgi++ )
-endif (WIN32)
-
-link_directories( ${XML_LIBRARY_DIRS} ${ICONV_LIBRARY_DIRS} ${FCGI_LIBRARY_DIRS} ${CMAKE_CURRENt_BUILD_DIR} )
-include_directories( ${XML_INCLUDE_DIR} ${ICONV_INCLUDE_DIR} ${FCGI_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../core )
+include_directories( ${LIBXML2_INCLUDE_DIR} ${FCGI_INCLUDE_DIR} ../core )
 
 add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
-target_link_libraries( wps ${XML_LIBS} ${ICONV_LIBS} ${FCGI_LIBS} ${LIBTEMPUS} )
+target_link_libraries( wps tempus ${LIBXML2_LIBRARIES} ${FCGI_LIBRARIES})
+
+install( TARGETS wps DESTINATION bin )
+
+if (WIN32)
+    message( "will install " ${LIBXML2_DLL} ${FGCI_DLL})
+    install(FILES ${LIBXML2_DLL} ${FGCI_DLL} DESTINATION bin)
+endif()
