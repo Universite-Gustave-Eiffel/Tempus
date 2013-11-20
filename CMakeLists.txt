@@ -121,6 +121,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
   Delete \\\$INSTDIR\\\\wps_service.err.log
   Delete \\\$INSTDIR\\\\wps_service.out.log
   Delete \\\$INSTDIR\\\\wps_service.wrapper.log
+  Delete \\\$INSTDIR\\\\wps_service.xml
   RMDir \\\$INSTDIR
 ")
 #Push `TEMPUS_DATA_DIRECTORY`
