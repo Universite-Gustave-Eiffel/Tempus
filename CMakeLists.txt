@@ -103,12 +103,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ExecWait `vcredist_x86.exe`
  
   ; *** INSTALL TEST DB ***
-  CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
-  CopyFiles /SILENT  `data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data`
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\dropdb.exe -U postgres  tempus_test_db`     
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\createdb.exe -U postgres  tempus_test_db`     
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\create_extension_postgis.sql`     
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
+  ExecWait `reset_tempus_test_db.bat`
 
   ; *** INSTALL AND START WPS SERVICE ***
   ExecWait `gen_xml.bat`
@@ -147,7 +142,7 @@ if (WIN32)
 	endif()
    
    file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
-   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_xml.bat win32/vcredist_x86.exe DESTINATION .)
+   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat DESTINATION .)
    install(FILES 
       ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
