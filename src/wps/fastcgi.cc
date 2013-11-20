@@ -221,7 +221,7 @@ int main( int argc, char*argv[] )
         std::cout << "connecting to database: " << dbstring << "\n";
         Tempus::Application::instance()->connect( dbstring );
         Tempus::Application::instance()->pre_build_graph();
-        std::cout << "buiding the graph...\n";
+        std::cout << "building the graph...\n";
         Tempus::Application::instance()->build_graph();
         // load plugins
         for ( size_t i=0; i< plugins.size(); i++ )

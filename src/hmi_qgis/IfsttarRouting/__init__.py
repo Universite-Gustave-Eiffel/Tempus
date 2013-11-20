@@ -31,11 +31,11 @@
  This script initializes the plugin, making it known to QGIS.
 """
 def name():
-    return "Ifsttar routing plugin"
+    return "IFSTTAR routing plugin"
 def description():
     return "Get routing informations with various algorithms"
 def version():
-    return "Version 0.1"
+    return "Version 1.0"
 def icon():
     return "icon.png"
 def qgisMinimumVersion():

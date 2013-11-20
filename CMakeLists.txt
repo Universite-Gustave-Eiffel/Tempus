@@ -53,7 +53,7 @@ endif()
 set(CPACK_PACKAGE_NAME "tempus")
 set(CPACK_PACKAGE_VENDOR "IFSTTAR")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tempus - manipulate transport graphs")
-set(CPACK_PACKAGE_VERSION "0.9")
+set(CPACK_PACKAGE_VERSION "1.0-rc")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus-${CPACK_PACKAGE_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
@@ -70,45 +70,48 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ; **** INSTALL POSTGRESQL ***
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
-    ExecWait postgresql-9.3.1-1-windows.exe
-    Delete postgresql-9.3.1-1-windows.exe
-    Goto endPostgres
+    IfFileExists postgresql-9.3.1-1-windows.exe PostgresExists PostgresMissing
+    PostgresExists:
+       ExecWait postgresql-9.3.1-1-windows.exe
+       Delete postgresql-9.3.1-1-windows.exe
+       Goto endPostgres
+    PostgresMissing:
+       MessageBox MB_OK 'Unable to download PostgreSQL 9.3' 
   endPostgres:
   
   ; **** INSTALL QGIS ***
   MessageBox MB_YESNO 'Install QGIS 2.0 ?' /SD IDYES IDNO endQGIS
     NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    Delete QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    Goto endQGIS
+    IfFileExists QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe QgisExists QgisMissing
+    QgisExists:
+       ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+       Delete QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+       Goto endQGIS
+    QgisMissing:
+       MessageBox MB_OK 'Unable to download QGIS 2.0' 
   endQGIS:
   
   ; *** INSTALL NGINX ***
   MessageBox MB_YESNO 'Install nginx web server ?' /SD IDYES IDNO endNginx
-    ExecWait win32\\\nginx-1.5.6.exe
+    ExecWait `nginx-1.5.6.exe`
     ExecWait `..\\\\nginx\\\\nginx_service.exe install`
     ExecWait `net start nginx`
     Goto endNginx   
   endNginx:
  
   ; *** INSTALL MSVC REDISTRIBUTABLES ***
-  ExecWait `win32\\\vcredist_x86.exe`
+  ExecWait `vcredist_x86.exe /q`
  
   ; *** INSTALL TEST DB ***
-  CopyFiles /SILENT  `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data\\\\pg_hba.conf.back`
-  CopyFiles /SILENT  `data\\\\pg_hba.conf` `..\\\\PostgreSQL\\\\9.3\\\\data`
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\dropdb.exe -U postgres  tempus_test_db`     
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\createdb.exe -U postgres  tempus_test_db`     
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\create_extension_postgis.sql`     
-  ExecWait `..\\\\PostgreSQL\\\\9.3\\\\bin\\\\psql.exe -U postgres -d tempus_test_db -f data\\\\tempus_test_db.sql`     
+  ExecWait `reset_tempus_test_db.bat`
 
   ; *** INSTALL AND START WPS SERVICE ***
-  ExecWait `win32\\\wps_service.exe install`
+  ExecWait `gen_xml.bat`
+  ExecWait `wps_service.exe install`
   ExecWait `net start wps`
   
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
-  ExecWait `mkdir \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
-  ExecWait `xcopy /Y /S /I python\\\\plugins \\\$PROFILE\\\\.qgis2\\\\python\\\\plugins`
+  ExecWait `install_qgis_plugins.bat`
 "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
@@ -127,17 +130,27 @@ endif()
 include(CPack)
 
 if (WIN32)
-   install(FILES nginx-1.5.6.exe wps_service.exe wps_service.xml vcredist_x86.exe DESTINATION .)
+   find_file( MSVCR71 NAME msvcr71.dll
+     PATHS
+     $ENV{OSGEO4W_ROOT}/bin
+	 $ENV{MSVCR71_DLL}
+   )
+   if (MSVCR71)
+   else()
+        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
+	endif()
+   
+   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
+   install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat DESTINATION .)
    install(FILES 
       ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
       ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl.dll
+      ${intldll}
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
-#hack
-      c:/OSGeo4W/bin/msvcr71.dll
+      ${MSVCR71}
       DESTINATION bin)
 endif()
 
