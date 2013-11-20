@@ -39,13 +39,13 @@
     <li>Tempus::Multimodal::Graph which is a wrapper around a road graph, public transport graphs and POIs</li>
 </ul>
 
-<p>These graphs are filled up with data coming from a PostgreSQL/PostGIS database. Please refer to the Db namespace to see available functions. Especially have a look at the <a href="../src/core/pgsql_importer.hh">Tempus::PQImporter</a> class.</p>
+<p>These graphs are filled up with data coming from a PostgreSQL/PostGIS database. Please refer to the Db namespace to see available functions. Especially have a look at the Tempus::PQImporter class (<code>src/core/pgsql_importer.hh</code>).</p>
 
-<p>The Tempus SQL schema can be found in <a href="../src/loader/tempus/sql/tempus.sql"><code>tempus.sql</code></a></p>
+<p>The Tempus SQL schema can be found in <code>src/loader/tempus/sql/tempus.sql</code></p>
 
-<p>Path planning algorithms are designed to be written as user plugins. The <a href="../src/core/plugin.hh">Plugin base class</a> gives access to some callbacks. Please have a look at the three different sample plugins shipped with TempusV2: <a href="../src/plugins/sample_road_plugin/sample_road_plugin.cc">Tempus::RoadPlugin</a>, <a href="../src/plugins/sample_pt_plugin/sample_pt_plugin.cc">Tempus::PtPlugin</a> and <a href="../src/plugins/sample_multi_plugin/sample_multi_plugin.cc">Tempus::MultiPlugin</a>.  </p>
+<p>Path planning algorithms are designed to be written as user plugins. The Plugin base class (<code>src/core/plugin.hh</code>) gives access to some callbacks. Please have a look at the three different sample plugins shipped with TempusV2: Tempus::RoadPlugin (<code>src/plugins/sample_road_plugin</code>), Tempus::PtPlugin (<code>src/plugins/sample_pt_plugin</code>) and Tempus::MultiPlugin (<code>src/plugins/sample_multi_plugin/</code>).  </p>
 
-<p>User plugins respond to path planning requests stored in the <a href="../src/core/request.hh">Request</a> class and should return one or more <a href="../src/core/roadmap.hh">roadmaps</a>.
+<p>User plugins respond to path planning requests stored in the Request (<code>src/core/request.hh</code>)class and should return one or more roadmaps (<code>src/core/roadmap.hh</code>).
 
 <p>The internal API is exposed to other programs and languages through a WPS server.</p>
 
@@ -65,9 +65,9 @@
 
 <h5>Python generated requests</h5>
 
-<p>Communication with the WPS server can be done through the <a href="../src/python/tempus_request.py">Tempus Python module</a>. These are convenience functions on top of WPS HTTP communication and XML parsing.</p>
+<p>Communication with the WPS server can be done through the Tempus Python module (<code>src/python/tempus_request.py</code>). These are convenience functions on top of WPS HTTP communication and XML parsing.</p>
 
-<p>An example of such scripts can be found in <a href="../src/batch/random_batch.py">random_batch.py</a></p>
+<p>An example of such scripts can be found in <code>src/batch/random_patch.py</code></p>
 
 <p>The core of this script is a call to TempusRequest.request, where plugin and query options can be set. For instance :</p>
 <pre>
