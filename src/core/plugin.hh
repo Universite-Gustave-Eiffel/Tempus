@@ -6,7 +6,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -50,392 +50,376 @@
 #endif
 
 namespace {
-    template <typename T>
-    struct OptionValueCast
-    {
-        T operator()( const std::string& str ) { return Tempus::lexical_cast<T>(str); }
-    };
-    template <>
-    struct OptionValueCast<bool>
-    {
-        bool operator()( const std::string& str ) { return str == "true"; }
-    };
+template <typename T>
+struct OptionValueCast {
+    T operator()( const std::string& str ) {
+        return Tempus::lexical_cast<T>( str );
+    }
+};
+template <>
+struct OptionValueCast<bool> {
+    bool operator()( const std::string& str ) {
+        return str == "true";
+    }
+};
 }
 
-namespace Tempus
-{
-    /**
-       Base class that has to be derived in plugins
+namespace Tempus {
+/**
+   Base class that has to be derived in plugins
 
-       A Tempus plugin is made of :
-       - some user-defined options
-       - some callback functions called when user requests are processed
-       - some performance metrics
-    */
-    class Plugin
-    {
-    public:
-
-	///
-	/// Plugin option type
-        enum OptionType
-        {
-            BoolOption,
-            IntOption,
-            FloatOption, // stored as a double
-            StringOption
-        };
-
-        ///
-        /// class OptionValue
-        /// Used to store plugin option values and metric values
-        class OptionValue
-        {
-        public:
-            OptionValue( bool b );
-            OptionValue( int i = 0 );
-            OptionValue( double f );
-            OptionValue( const std::string& s, OptionType = StringOption );
-
-            std::string str() const { return str_; }
-            OptionType type() const { return type_; }
-
-            template <typename T>
-            T as() const { return OptionValueCast<T>()( str_ ); }
-        private:
-            OptionType type_;
-            // string representation of the value
-            std::string str_;
-        };
-
-        ///
-        /// List of option values
-	typedef std::map<std::string, OptionValue> OptionValueList;
-
-	///
-	/// Plugin option description
-	struct OptionDescription
-	{
-	    std::string description;
-	    OptionValue default_value;
-            OptionType type() const
-            {
-                return default_value.type();
-            }
-	};
-
-        struct OptionDescriptionList: std::map<std::string, OptionDescription>
-        {
-            ///
-            /// Method used by a plugin to declare an option
-            template <class T>
-            void declare_option( const std::string& nname, const std::string& description, T default_value )
-            {
-                (*this)[nname].description = description;
-                (*this)[nname].default_value = OptionValue(default_value);
-            }
-            void set_options_default_value( Plugin * plugin )
-            {
-                for (iterator i=begin(); i!=end(); i++) plugin->set_option( i->first, i->second.default_value );
-            }
-        };
-
-        ///
-        /// Access to the list of option values
-	OptionValueList& options() { return options_; }
-	
-	///
-	/// Method used to set an option value
-	template <class T>
-	void set_option( const std::string& nname, const T& value )
-	{
-	    options_[nname] = value;
-	}
-
-	///
-	/// Method used to set an option value from a string. Conversions are made, based on the option description
-	void set_option_from_string( const std::string& name, const std::string& value, Plugin::OptionType t );
-	///
-	/// Method used to get a string from an option value
-	std::string option_to_string( const std::string& name );
-
-	///
-	/// Method used to get an option value
-	template <class T>
-	void get_option( const std::string& name, T& value);
-
-	///
-	/// Method used to get an option value, alternative signature.
-	template <class T>
-	T get_option( const std::string& nname )
-	{
-	    T v;
-	    get_option( nname, v );
-	    return v;
-	}
-
-	///
-	/// A metric is also an OptionValue
-        typedef OptionValue MetricValue;
-	///
-	/// Metric name -> value
-	typedef std::map<std::string, MetricValue> MetricValueList;
-	
-	///
-	/// Access to metric list
-	MetricValueList& metrics() { return metrics_; }
-	///
-	/// Converts a metric value to a string
-	std::string metric_to_string( const std::string& name );
-	
-	///
-	/// Name accessor
-	std::string name() const { return name_; }
-
-	///
-	/// Ctor
-	Plugin( const std::string& name, const std::string & db_options );
-	
-	///
-	/// Called when the plugin is unloaded from memory (uninstall)
-	virtual ~Plugin()
-	{
-	}
-	
-	///
-	/// Called after graphs have been built in memory.
-	//virtual void post_build();
-	
-	///
-	/// Called in order to validate the in-memory structure.
-	virtual void validate();
-	
-	enum AccessType
-	{
-	    InitAccess,
-	    DiscoverAccess,
-	    ExamineAccess,
-	    EdgeRelaxedAccess,
-	    EdgeNotRelaxedAccess,
-	    EdgeMinimizedAccess,
-	    EdgeNotMinimizedAccess,
-	    TreeEdgeAccess,
-	    NonTreeEdgeAccess,
-	    BackEdgeAccess,
-	    ForwardOrCrossEdgeAccess,
-	    StartAccess,
-	    FinishAccess,
-	    GrayTargetAccess,
-	    BlackTargetAccess
-	};
-	///
-	/// Acessors methods. They can be called on graph traversals.
-	/// A Plugin is made compatible with a boost::visitor by means of a PluginGraphVisitor
-	virtual void road_vertex_accessor( Road::Vertex, int /*access_type*/ ) {}
-	virtual void road_edge_accessor( Road::Edge, int /*access_type*/ ) {}
-	virtual void pt_vertex_accessor( PublicTransport::Vertex, int /*access_type*/ ) {}
-	virtual void pt_edge_accessor( PublicTransport::Edge, int /*access_type*/ ) {}
-	virtual void vertex_accessor( Multimodal::Vertex, int /*access_type*/ ) {}
-	virtual void edge_accessor( Multimodal::Edge, int /*access_type*/ ) {}
-
-	///
-	/// Cycle
-	virtual void cycle();
-
-	///
-	/// Pre-process the user request.
-	/// \param[in] request The request to preprocess.
-	/// \throw std::invalid_argument Throws an instance of std::invalid_argument if the request cannot be processed by the current plugin.
-	virtual void pre_process( Request& request );
-
-	///
-	/// Process the last preprocessed user request.
-	/// Must populates the 'result_' object.
-	virtual void process();
-
-	///
-	/// Post-process the user request.
-	virtual void post_process();
-
-	///
-	/// Result formatting
-	virtual Result& result();
-
-	///
-	/// Cleanup method.
-	virtual void cleanup();
-
-    protected:
-	///
-	/// Graph extracted from the database
-	Multimodal::Graph & graph_;
-	///
-	/// User request
-	Request request_;
-	///
-	/// Result
-	Result result_;
-
-	/// Name of the dll this plugin comes from
-	std::string name_;
-
-	/// Db connection
-	Db::Connection db_; // each plugin has it's own connection
-	
-	/// Plugin option management
-	OptionValueList options_;
-
-	MetricValueList metrics_;
-    };
-
-    /*
-    template <>
-    struct Plugin::OptionTypeFrom<bool> { static const Plugin::OptionType type = Plugin::BoolOption; };
-    template <>
-    struct Plugin::OptionTypeFrom<int> { static const Plugin::OptionType type = Plugin::IntOption; };
-    template <>
-    struct Plugin::OptionTypeFrom<double> { static const Plugin::OptionType type = Plugin::FloatOption; };
-    template <>
-    struct Plugin::OptionTypeFrom<std::string> { static const Plugin::OptionType type = Plugin::StringOption; };
-    */
-    
+   A Tempus plugin is made of :
+   - some user-defined options
+   - some callback functions called when user requests are processed
+   - some performance metrics
+*/
+class Plugin {
+public:
 
     ///
-    /// Class used as a boost::visitor.
-    /// This is a proxy to Plugin::xxx_accessor methods. It may be used as implementation of any kind of boost::graph visitors
-    /// (BFS, DFS, Dijkstra, A*, Bellman-Ford)
-    template <class Graph,
-	      void (Plugin::*VertexAccessorFunction)(typename boost::graph_traits<Graph>::vertex_descriptor, int),
-	      void (Plugin::*EdgeAccessorFunction)(typename boost::graph_traits<Graph>::edge_descriptor, int)
-	      >	      
-    class PluginGraphVisitorHelper
-    {
-    public:
-	PluginGraphVisitorHelper( Plugin* plugin ) : plugin_(plugin) {}
-	typedef typename boost::graph_traits<Graph>::vertex_descriptor VDescriptor;
-	typedef typename boost::graph_traits<Graph>::edge_descriptor EDescriptor;
-	
-	void initialize_vertex( VDescriptor v, const Graph& )
-	{
-	    (plugin_->*VertexAccessorFunction)( v, Plugin::InitAccess );
-	}
-	void examine_vertex( VDescriptor v, const Graph& )
-	{
-	    (plugin_->*VertexAccessorFunction)( v, Plugin::ExamineAccess );
-	}
-	void discover_vertex( VDescriptor v, const Graph& )
-	{
-	    (plugin_->*VertexAccessorFunction)( v, Plugin::DiscoverAccess );
-	}
-	void start_vertex( VDescriptor v, const Graph& )
-	{
-	    (plugin_->*VertexAccessorFunction)( v, Plugin::StartAccess );
-	}
-	void finish_vertex( VDescriptor v, const Graph& )
-	{
-	    (plugin_->*VertexAccessorFunction)( v, Plugin::FinishAccess );
-	}
-
-	void examine_edge( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::ExamineAccess );
-	}
-	void tree_edge( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::TreeEdgeAccess );
-	}
-	void non_tree_edge( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::NonTreeEdgeAccess );
-	}
-	void back_edge( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::BackEdgeAccess );
-	}
-	void gray_target( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::GrayTargetAccess );
-	}
-	void black_target( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::BlackTargetAccess );
-	}
-	void forward_or_cross_edge( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::ForwardOrCrossEdgeAccess );
-	}
-	void edge_relaxed( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeRelaxedAccess );
-	}
-	void edge_not_relaxed( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeNotRelaxedAccess );
-	}
-	void edge_minimized( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeMinimizedAccess );
-	}
-	void edge_not_minimized( EDescriptor e, const Graph& )
-	{
-	    (plugin_->*EdgeAccessorFunction)( e, Plugin::EdgeNotMinimizedAccess );
-	}
-
-    protected:
-	Plugin *plugin_;
+    /// Plugin option type
+    enum OptionType {
+        BoolOption,
+        IntOption,
+        FloatOption, // stored as a double
+        StringOption
     };
 
-    typedef PluginGraphVisitorHelper< Road::Graph, &Plugin::road_vertex_accessor, &Plugin::road_edge_accessor > PluginRoadGraphVisitor;
-    typedef PluginGraphVisitorHelper< PublicTransport::Graph, &Plugin::pt_vertex_accessor, &Plugin::pt_edge_accessor > PluginPtGraphVisitor;
-    typedef PluginGraphVisitorHelper< Multimodal::Graph, &Plugin::vertex_accessor, &Plugin::edge_accessor > PluginGraphVisitor;
+    ///
+    /// class OptionValue
+    /// Used to store plugin option values and metric values
+    class OptionValue {
+    public:
+        OptionValue( bool b );
+        OptionValue( int i = 0 );
+        OptionValue( double f );
+        OptionValue( const std::string& s, OptionType = StringOption );
+
+        std::string str() const {
+            return str_;
+        }
+        OptionType type() const {
+            return type_;
+        }
+
+        template <typename T>
+        T as() const {
+            return OptionValueCast<T>()( str_ );
+        }
+    private:
+        OptionType type_;
+        // string representation of the value
+        std::string str_;
+    };
+
+    ///
+    /// List of option values
+    typedef std::map<std::string, OptionValue> OptionValueList;
+
+    ///
+    /// Plugin option description
+    struct OptionDescription {
+        std::string description;
+        OptionValue default_value;
+        OptionType type() const {
+            return default_value.type();
+        }
+    };
+
+    struct OptionDescriptionList: std::map<std::string, OptionDescription> {
+        ///
+        /// Method used by a plugin to declare an option
+        template <class T>
+        void declare_option( const std::string& nname, const std::string& description, T default_value ) {
+            ( *this )[nname].description = description;
+            ( *this )[nname].default_value = OptionValue( default_value );
+        }
+        void set_options_default_value( Plugin* plugin ) {
+            for ( iterator i=begin(); i!=end(); i++ ) {
+                plugin->set_option( i->first, i->second.default_value );
+            }
+        }
+    };
+
+    ///
+    /// Access to the list of option values
+    OptionValueList& options() {
+        return options_;
+    }
+
+    ///
+    /// Method used to set an option value
+    template <class T>
+    void set_option( const std::string& nname, const T& value ) {
+        options_[nname] = value;
+    }
+
+    ///
+    /// Method used to set an option value from a string. Conversions are made, based on the option description
+    void set_option_from_string( const std::string& name, const std::string& value, Plugin::OptionType t );
+    ///
+    /// Method used to get a string from an option value
+    std::string option_to_string( const std::string& name );
+
+    ///
+    /// Method used to get an option value
+    template <class T>
+    void get_option( const std::string& name, T& value );
+
+    ///
+    /// Method used to get an option value, alternative signature.
+    template <class T>
+    T get_option( const std::string& nname ) {
+        T v;
+        get_option( nname, v );
+        return v;
+    }
+
+    ///
+    /// A metric is also an OptionValue
+    typedef OptionValue MetricValue;
+    ///
+    /// Metric name -> value
+    typedef std::map<std::string, MetricValue> MetricValueList;
+
+    ///
+    /// Access to metric list
+    MetricValueList& metrics() {
+        return metrics_;
+    }
+    ///
+    /// Converts a metric value to a string
+    std::string metric_to_string( const std::string& name );
+
+    ///
+    /// Name accessor
+    std::string name() const {
+        return name_;
+    }
+
+    ///
+    /// Ctor
+    Plugin( const std::string& name, const std::string& db_options );
+
+    ///
+    /// Called when the plugin is unloaded from memory (uninstall)
+    virtual ~Plugin() {
+    }
+
+    ///
+    /// Called after graphs have been built in memory.
+    //virtual void post_build();
+
+    ///
+    /// Called in order to validate the in-memory structure.
+    virtual void validate();
+
+    enum AccessType {
+        InitAccess,
+        DiscoverAccess,
+        ExamineAccess,
+        EdgeRelaxedAccess,
+        EdgeNotRelaxedAccess,
+        EdgeMinimizedAccess,
+        EdgeNotMinimizedAccess,
+        TreeEdgeAccess,
+        NonTreeEdgeAccess,
+        BackEdgeAccess,
+        ForwardOrCrossEdgeAccess,
+        StartAccess,
+        FinishAccess,
+        GrayTargetAccess,
+        BlackTargetAccess
+    };
+    ///
+    /// Acessors methods. They can be called on graph traversals.
+    /// A Plugin is made compatible with a boost::visitor by means of a PluginGraphVisitor
+    virtual void road_vertex_accessor( Road::Vertex, int /*access_type*/ ) {}
+    virtual void road_edge_accessor( Road::Edge, int /*access_type*/ ) {}
+    virtual void pt_vertex_accessor( PublicTransport::Vertex, int /*access_type*/ ) {}
+    virtual void pt_edge_accessor( PublicTransport::Edge, int /*access_type*/ ) {}
+    virtual void vertex_accessor( Multimodal::Vertex, int /*access_type*/ ) {}
+    virtual void edge_accessor( Multimodal::Edge, int /*access_type*/ ) {}
+
+    ///
+    /// Cycle
+    virtual void cycle();
+
+    ///
+    /// Pre-process the user request.
+    /// \param[in] request The request to preprocess.
+    /// \throw std::invalid_argument Throws an instance of std::invalid_argument if the request cannot be processed by the current plugin.
+    virtual void pre_process( Request& request );
+
+    ///
+    /// Process the last preprocessed user request.
+    /// Must populates the 'result_' object.
+    virtual void process();
+
+    ///
+    /// Post-process the user request.
+    virtual void post_process();
+
+    ///
+    /// Result formatting
+    virtual Result& result();
+
+    ///
+    /// Cleanup method.
+    virtual void cleanup();
+
+protected:
+    ///
+    /// Graph extracted from the database
+    Multimodal::Graph& graph_;
+    ///
+    /// User request
+    Request request_;
+    ///
+    /// Result
+    Result result_;
+
+    /// Name of the dll this plugin comes from
+    std::string name_;
+
+    /// Db connection
+    Db::Connection db_; // each plugin has it's own connection
+
+    /// Plugin option management
+    OptionValueList options_;
+
+    MetricValueList metrics_;
+};
+
+/*
+template <>
+struct Plugin::OptionTypeFrom<bool> { static const Plugin::OptionType type = Plugin::BoolOption; };
+template <>
+struct Plugin::OptionTypeFrom<int> { static const Plugin::OptionType type = Plugin::IntOption; };
+template <>
+struct Plugin::OptionTypeFrom<double> { static const Plugin::OptionType type = Plugin::FloatOption; };
+template <>
+struct Plugin::OptionTypeFrom<std::string> { static const Plugin::OptionType type = Plugin::StringOption; };
+*/
+
+
+///
+/// Class used as a boost::visitor.
+/// This is a proxy to Plugin::xxx_accessor methods. It may be used as implementation of any kind of boost::graph visitors
+/// (BFS, DFS, Dijkstra, A*, Bellman-Ford)
+template <class Graph,
+         void ( Plugin::*VertexAccessorFunction )( typename boost::graph_traits<Graph>::vertex_descriptor, int ),
+         void ( Plugin::*EdgeAccessorFunction )( typename boost::graph_traits<Graph>::edge_descriptor, int )
+         >
+class PluginGraphVisitorHelper {
+public:
+    PluginGraphVisitorHelper( Plugin* plugin ) : plugin_( plugin ) {}
+    typedef typename boost::graph_traits<Graph>::vertex_descriptor VDescriptor;
+    typedef typename boost::graph_traits<Graph>::edge_descriptor EDescriptor;
+
+    void initialize_vertex( VDescriptor v, const Graph& ) {
+        ( plugin_->*VertexAccessorFunction )( v, Plugin::InitAccess );
+    }
+    void examine_vertex( VDescriptor v, const Graph& ) {
+        ( plugin_->*VertexAccessorFunction )( v, Plugin::ExamineAccess );
+    }
+    void discover_vertex( VDescriptor v, const Graph& ) {
+        ( plugin_->*VertexAccessorFunction )( v, Plugin::DiscoverAccess );
+    }
+    void start_vertex( VDescriptor v, const Graph& ) {
+        ( plugin_->*VertexAccessorFunction )( v, Plugin::StartAccess );
+    }
+    void finish_vertex( VDescriptor v, const Graph& ) {
+        ( plugin_->*VertexAccessorFunction )( v, Plugin::FinishAccess );
+    }
+
+    void examine_edge( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::ExamineAccess );
+    }
+    void tree_edge( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::TreeEdgeAccess );
+    }
+    void non_tree_edge( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::NonTreeEdgeAccess );
+    }
+    void back_edge( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::BackEdgeAccess );
+    }
+    void gray_target( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::GrayTargetAccess );
+    }
+    void black_target( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::BlackTargetAccess );
+    }
+    void forward_or_cross_edge( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::ForwardOrCrossEdgeAccess );
+    }
+    void edge_relaxed( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeRelaxedAccess );
+    }
+    void edge_not_relaxed( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeNotRelaxedAccess );
+    }
+    void edge_minimized( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeMinimizedAccess );
+    }
+    void edge_not_minimized( EDescriptor e, const Graph& ) {
+        ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeNotMinimizedAccess );
+    }
+
+protected:
+    Plugin* plugin_;
+};
+
+typedef PluginGraphVisitorHelper< Road::Graph, &Plugin::road_vertex_accessor, &Plugin::road_edge_accessor > PluginRoadGraphVisitor;
+typedef PluginGraphVisitorHelper< PublicTransport::Graph, &Plugin::pt_vertex_accessor, &Plugin::pt_edge_accessor > PluginPtGraphVisitor;
+typedef PluginGraphVisitorHelper< Multimodal::Graph, &Plugin::vertex_accessor, &Plugin::edge_accessor > PluginGraphVisitor;
+
+/**
+ * Handles dll so that they are only loaded once and unloaded
+ * at the program termination (static plugin_factory)
+ */
+struct PluginFactory: boost::noncopyable {
+    ~PluginFactory();
 
     /**
-     * Handles dll so that they are only loaded once and unloaded
-     * at the program termination (static plugin_factory)
+     * list loaded plugins
      */
-    struct PluginFactory: boost::noncopyable
-    {
-        ~PluginFactory();
+    std::vector<std::string> plugin_list() const;
 
-        /** 
-         * list loaded plugins
-         */
-        std::vector<std::string> plugin_list() const;
-        
-        const Plugin::OptionDescriptionList option_descriptions( const std::string & dll_name ) const;
+    const Plugin::OptionDescriptionList option_descriptions( const std::string& dll_name ) const;
 
-        /**
-         * create a Plugin from a given dll
-         * the caller takes ownership
-         * throws std::runtime_error if dll is not loaded
-         */
-        Plugin * createPlugin( const std::string & dll_name ) const;
+    /**
+     * create a Plugin from a given dll
+     * the caller takes ownership
+     * throws std::runtime_error if dll is not loaded
+     */
+    Plugin* createPlugin( const std::string& dll_name ) const;
 
-        /**
-         * throws std::runtime_error if dll cannot be found
-         * if dll is already loaded, well do nothing
-         */
-        void load( const std::string& dll_name );
+    /**
+     * throws std::runtime_error if dll cannot be found
+     * if dll is already loaded, well do nothing
+     */
+    void load( const std::string& dll_name );
 
-        static PluginFactory * instance();
+    static PluginFactory* instance();
 
-    private:
-        PluginFactory(){}
+private:
+    PluginFactory() {}
 
-        struct Dll 
-        {
-            typedef Plugin*                              (*PluginCreationFct)( const std::string & );
-            typedef const Plugin::OptionDescriptionList* (*PluginOptionDescriptionFct)();
-            typedef const char*                          (*PluginNameFct)();
-            HMODULE           handle_;
-            PluginCreationFct create;
-            PluginOptionDescriptionFct options_description;
-        };
-
-        typedef std::map<std::string, Dll > DllMap;
-        DllMap dll_;
+    struct Dll {
+        typedef Plugin*                              ( *PluginCreationFct )( const std::string& );
+        typedef const Plugin::OptionDescriptionList* ( *PluginOptionDescriptionFct )();
+        typedef const char*                          ( *PluginNameFct )();
+        HMODULE           handle_;
+        PluginCreationFct create;
+        PluginOptionDescriptionFct options_description;
     };
-    // use of volatile for shared resources is explaned here http://www.drdobbs.com/cpp/volatile-the-multithreaded-programmers-b/184403766
+
+    typedef std::map<std::string, Dll > DllMap;
+    DllMap dll_;
+};
+// use of volatile for shared resources is explaned here http://www.drdobbs.com/cpp/volatile-the-multithreaded-programmers-b/184403766
 
 
 } // Tempus namespace
@@ -457,5 +441,5 @@ namespace Tempus
 
 #ifdef _WIN32
 /// The global instance accessor must be callable as a C function under Windows
-extern "C" __declspec(dllexport) Tempus::PluginFactory * get_plugin_factory_instance_();
+extern "C" __declspec( dllexport ) Tempus::PluginFactory* get_plugin_factory_instance_();
 #endif

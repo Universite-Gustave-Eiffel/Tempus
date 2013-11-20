@@ -6,7 +6,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -23,8 +23,7 @@
 // This way, there is no need to fill a distance_map with +inf on each node
 // +inf could be considered as the default value
 template <class UniquePairAssociativeContainer>
-class associative_property_map_default_value
-{
+class associative_property_map_default_value {
     typedef UniquePairAssociativeContainer C;
 public:
     typedef typename C::key_type key_type;
@@ -33,25 +32,25 @@ public:
     typedef boost::read_write_property_map_tag category;
 
     associative_property_map_default_value( const value_type& defaultv ) :
-        c_(0),
-        default_(defaultv)
+        c_( 0 ),
+        default_( defaultv )
     {}
     associative_property_map_default_value( C& c, const value_type& defaultv ) :
-        c_(&c),
-        default_(defaultv)
+        c_( &c ),
+        default_( defaultv )
     {}
 
-    value_type get( const key_type& k ) const
-    {
+    value_type get( const key_type& k ) const {
         typename C::const_iterator it = c_->find( k );
+
         if ( it == c_->end() ) {
             return default_;
         }
+
         return it->second;
     }
-    void put( const key_type& k, const value_type& v )
-    {
-        (*c_)[k] = v;
+    void put( const key_type& k, const value_type& v ) {
+        ( *c_ )[k] = v;
     }
 private:
     C* c_;

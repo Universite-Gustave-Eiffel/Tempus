@@ -6,7 +6,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -15,34 +15,31 @@
  *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Tempus
-{
-    ///
-    /// A FieldPropertyAccessor implements a Readable Property Map concept and gives read access
-    /// to the member of a vertex or edge
-    template <class Graph, class Tag, class T, class Member>
-    struct FieldPropertyAccessor
-    {
-	typedef T value_type;
-	typedef T& reference;
-	typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
-	typedef boost::readable_property_map_tag category;
+namespace Tempus {
+///
+/// A FieldPropertyAccessor implements a Readable Property Map concept and gives read access
+/// to the member of a vertex or edge
+template <class Graph, class Tag, class T, class Member>
+struct FieldPropertyAccessor {
+    typedef T value_type;
+    typedef T& reference;
+    typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
+    typedef boost::readable_property_map_tag category;
 
-	FieldPropertyAccessor( Graph& graph, Member mem ) : graph_(graph), mem_(mem) {}
-	Graph& graph_;
-	Member mem_;
-    };
+    FieldPropertyAccessor( Graph& graph, Member mem ) : graph_( graph ), mem_( mem ) {}
+    Graph& graph_;
+    Member mem_;
+};
 }
 
-namespace boost
+namespace boost {
+///
+/// Implementation of FieldPropertyAccessor
+template <class Graph, class Tag, class T, class Member>
+T get( Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
 {
-    ///
-    /// Implementation of FieldPropertyAccessor
-    template <class Graph, class Tag, class T, class Member>
-    T get( Tempus::FieldPropertyAccessor<Graph, Tag, T, Member> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
-    {
-	return pmap.graph_[e].*(pmap.mem_);
-    }
+    return pmap.graph_[e].*( pmap.mem_ );
+}
 }
 
 
