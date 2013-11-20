@@ -9,11 +9,11 @@
 
 
 [general]
-name=Ifsttar routing plugin
+name=IFSTTAR routing plugin
 qgisMinimumVersion=1.8
 qgisMaximumVersion=2.9
 description=Get routing informations with various algorithms
-version=0.1
+version=1.0
 
 # end of mandatory metadata
 
@@ -30,7 +30,7 @@ tracker=
 repository=
 icon=icon.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version
 deprecated=False

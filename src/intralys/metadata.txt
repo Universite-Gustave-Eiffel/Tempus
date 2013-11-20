@@ -13,7 +13,7 @@ name=Intralys display plugin
 qgisMinimumVersion=1.8
 qgisMaximumVersion=2.9
 description=Allows automatic refresh of the canvas
-version=0.1
+version=1.0
 
 # end of mandatory metadata
 

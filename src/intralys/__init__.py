@@ -34,7 +34,7 @@ def name():
 def description():
     return "Allows automatic refresh of the canvas"
 def version():
-    return "Version 0.1"
+    return "Version 1.0"
 def icon():
     return "icon.png"
 def qgisMinimumVersion():
