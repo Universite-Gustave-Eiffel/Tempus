@@ -155,6 +155,8 @@ if (WIN32)
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
       ${MSVCR71}
       DESTINATION bin)
+else()
+  install(FILES script/install-qgis-plugins.sh DESTINATION share/tempus)
 endif()
 
 if (WIN32)

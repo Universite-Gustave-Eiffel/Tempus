@@ -27,6 +27,9 @@ ADD_CUSTOM_TARGET(ifsttarRouting ALL DEPENDS ${PYUI_FILES} ${PYRC_FILES} )
 
 SET(INSTALLER_FILES ${INSTALLER_FILES} ${PYUI_FILES} ${PYRC_FILES})
 
+# TODO install in QGIS global python directory
 if (WIN32)
 INSTALL(FILES ${INSTALLER_FILES} DESTINATION python/plugins/IfsttarRouting)
+else(WIN32)
+INSTALL(FILES ${INSTALLER_FILES} DESTINATION share/tempus/IfsttarRouting)
 endif(WIN32)
