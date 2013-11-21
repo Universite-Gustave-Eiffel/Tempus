@@ -29,16 +29,99 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
-<h3>Installation</h3>
+<h4>Dependencies</h4>
 
+<p>Tempus depends on the following third party libraries: </p>
+<ul>
+<li><a href="http://www.boost.org">boost</a>: timer, system, unit_test_framework, thread and program_options. Version 1.49 works OK on a recent Ubuntu box, consider using version 1.53 for Windows compilation with Visual Studio 2008</li>
+<li><a href="http://www.postgresql.org">PostgreSQL</a></li>
+<li><a href="http://postgis.refrections.net">PostGIS</a> 2.x</li>
+<li><a href="http://www.xmlsoft.org">LibXML2</a> for the WPS server</li>
+<li><a href="http://www.gnu.org/software/libiconv/">iconv</a></li>
+<li><a href="http://shapelib.maptools.org/">shapelib</a> for osm2shp</li>
+<li><a href="http://www.fastcgi.com">FastCGI</a> for the WPS server</li>
+<li><a href="http://www.qgis.org">QGIS</a> 2.x</li>
+<li><a href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQT</a> for QGIS plugins</li>
+</ul>
+
+<h4>On Ubuntu</h4>
+
+<p>On an Ubuntu system, dependencies correspond to the following packages :</p>
+<code>nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev libglib2.0-dev libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev</code>
+<p>PostGIS 2.x is not yet packaged for Ubuntu, so you would have to download, compile and install it.</p>
 
 <h4>Compilation</h4>
 
-<p>In the root directory, create a <code>build</code> directory and enter it</p>
-<pre>
-cmake .. && make </pre>
+<p>In the root directory, create a <code>build</code> directory and enter it. Then use a CMake configuration interface (ccmake for instance or cmake-gui on Windows)</p>
+
+<pre>ccmake ..</pre>
 
 <p>You can launch <code>make install</code> (usually as root, with 'sudo' under Ubuntu) to install everything.</p>
+
+<p>Another step is needed if you choose to build QGIS plugins and want them to be installed for the current user. Run <code>script/install-qgis-plugins.sh</code> on Linux and <code>install_qgis_plugins.bat</code> on Windows.</p>
+
+<p>Have a look at <code>script/install-tempus-ubuntu.sh</code> for the installation process on an Ubuntu system.</p>
+
+<h5>Build options (cmake options)</h5>
+
+<table> 
+    <tr>
+        <th align=center>Option Name</th> 
+        <th align=center>Default</th> 
+        <th align=center>Description</th>
+    </tr>
+    <tr>
+        <td>CMAKE_INSTALL_PREFIX</td> 
+        <td>/usr/local</td> 
+        <td>Specifies where Tempus will be installed when <code>make install</code> is invoked</td>
+    </tr>
+    <tr>
+        <td>CMAKE_BUILD_TYPE</td> 
+        <td></td> 
+        <td>Switches between a <code>Release</code> build, specially crafted for speed efficiency and a <code>Debug</code> build, specifically crafted for development.</td> 
+    </tr>
+    <tr>
+      <td>BUILD_CORE</td>
+      <td>ON</td>
+      <td>Whether to build the core or not (needed)</td>
+    </tr>
+    <tr>
+      <td>BUILD_INTRALYS_PLUGIN</td>
+      <td>ON</td>
+      <td>Whether to build the Intralys QGIS plugin</td>
+    </tr>
+    <tr>
+      <td>BUILD_QGIS_PLUGIN</td>
+      <td>ON</td>
+      <td>Whether to build the routing QGIS plugin or not</td>
+    </tr>
+    <tr>
+      <td>BUILD_TEMPUS_PLUGINS</td>
+      <td>ON</td>
+      <td>Whether to build the sample routing plugins or not</td>
+    </tr>
+    <tr>
+      <td>BUILD_TESTS</td>
+      <td>ON</td>
+      <td>Set to <code>ON</code> to compile unit tests</td>
+    </tr>
+    <tr>
+      <td>BUILD_WPS</td>
+      <td>ON</td>
+      <td>Set to <code>ON</code> to compile the WPS server.</td>
+    </tr>
+</table>
+
+
+<h4>On Windows</h4>
+
+<p>A Windows installer is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.</p>
+
+<img src="images/windows_install_animation.gif"/>
+
+<p>(<a href="images/windows_install_steps.zip">Source images</a> of the animation)</p>
+
+<p>If you want to compile Tempus from sources and setup a build environment on Windows, refer to <a href="../README_WIN32.txt">this README file</a>.</p>
 
 <h4>Test database creation</h4>
 
@@ -79,7 +162,7 @@ This will create a listening socket on port 9000 and start a WPS server.
 This way, you can see debugging outputs.
 </p>
 
-<p>The WPS server also has a "daemon" mode. Refer to the file <code>script/wps</code> for an example of use.</p>
+<p>The WPS server also has a "daemon" mode. Refer to the file <code>script/wps_daemon</code> for an example of use on Linux. The Windows installer comes with a service wrapper.</p>
 
 <h5>Apache configuration</h5>
 
@@ -108,14 +191,6 @@ location /wps {
 </pre>
 		
 <p>nginx has normally to be launched only once.</p>
-
-<h4>Windows</h4>
-
-<p>A Windows installer is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.</p>
-
-<img src="images/windows_install_animation.gif"/>
-
-<p>(<a href="images/windows_install_steps.zip">Source images</a> of the animation)</p>
 
 <h4>Unit tests</h4>
 

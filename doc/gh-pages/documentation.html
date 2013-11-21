@@ -31,13 +31,15 @@
 
 <h3>Documentation</h3>
 
-<p>Tempus is designed around a core, whose documentation is detailed here. Main classes processed by TempusV2 are:</p>
+<p>Tempus is designed around a core set of C++ classes based on boost::graph. Main classes processed by TempusV2 are:</p>
 <ul>
     <li>Tempus::Road::Graph representing the road graph</li>
     <li>Tempus::PublicTransport::Graph representing a public transport graph</li>
     <li>Tempus::POI representing points of interest on the road graph</li>
     <li>Tempus::Multimodal::Graph which is a wrapper around a road graph, public transport graphs and POIs</li>
 </ul>
+
+<p>The three graph types (road, public transport and multimodal) model boost::graph concepts of graphs.</p>
 
 <p>These graphs are filled up with data coming from a PostgreSQL/PostGIS database. Please refer to the Db namespace to see available functions. Especially have a look at the Tempus::PQImporter class (<code>src/core/pgsql_importer.hh</code>).</p>
 
@@ -121,7 +123,7 @@
 
 <p>For OpenStreetMap, importing from raw .osm files is possible in two steps: convert the .osm file to a .shp and then use the loader. Conversion from .osm to .shp can be done with the <code>osm2shp++</code> tool provided by Tempus.</p>
 
-<p>You can refer to <a href="README_data.txt">this document</a> that describes how the loader is used to build the test database.</p>
+<p>You can refer to <a href="../README_loader.txt">this document</a> that describes how the loader is used to build the test database.</p>
       </section>
     </div>
 

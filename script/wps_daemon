@@ -1,4 +1,6 @@
 #! /bin/sh -e
+# Sample script for a WPS as a daemon
+# Warning: it makes some assumption on the installation directory (/usr/local)
 
 test -x /usr/local/bin/wps || exit 0
 

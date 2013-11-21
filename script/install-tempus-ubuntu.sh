@@ -1,3 +1,5 @@
+# This is a sample installation script for Ubuntu 
+
 sudo apt-get install nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev libglib2.0-dev libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
 
 TEMPUS_DATA_DIRECTORY=/usr/local/share/tempus/data
@@ -19,6 +21,7 @@ echo "downloading, compiling and installing tempus"
 echo "tempus has been successfully installed"
 
 echo "downloading, compiling and installing postgis"
+   # PostGIS 2.x is not currently shipped on Ubuntu repositories
    wget http://download.osgeo.org/postgis/source/postgis-2.1.0.tar.gz &&
    tar -xvzf postgis-2.1.0.tar.gz &&
    cd postgis-2.1.0 &&
@@ -35,6 +38,7 @@ echo "configuring test database"
         psql tempus_test_db < $TEMPUS_DATA_DIRECTORY/tempus_test_db.sql
     "
     # wps is run as deamon, so we need to create a role for user 'daemon' in the test database
+    # Warning: you may also want to UPDATE/INSERT into the database
     sudo su - postgres -c "
         psql tempus_test_db -c 'CREATE USER daemon'
         psql tempus_test_db -c 'GRANT USAGE ON SCHEMA public,tempus TO daemon'
@@ -60,8 +64,7 @@ echo "configuring nginx web server for wps service on 127.0.0.1/wps"
 echo "nginx web server has been configured"
 
 echo "installing qgis plugins for current user"
-    mkdir -p ~/.qgis2/python/plugins 
-    cp -r $(find tempus-0.9.0/src -name metadata.txt -printf "%h ") ~/.qgis2/python/plugins || die "cannot install plugins for current user" 
+sh install-qgis-plugins.sh || die "cannot install plugins for current user" 
 echo "qgis plugins have been installed for current user"
 
 exit 0
