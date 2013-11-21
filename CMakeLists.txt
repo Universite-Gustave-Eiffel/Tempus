@@ -142,6 +142,7 @@ if (WIN32)
 	endif()
    
    file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
+   file(GLOB iconvdll ${PostgreSQL_LIBRARY_DIRS}/../bin/*iconv*.dll)
    install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_wps_service_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat DESTINATION .)
    install(FILES 
       ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
@@ -149,6 +150,7 @@ if (WIN32)
       ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
       ${intldll}
+	  ${iconvdll}
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
       ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
       ${MSVCR71}
