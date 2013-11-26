@@ -34,6 +34,7 @@
 #include "plugin.hh"
 #include "pgsql_importer.hh"
 #include "db.hh"
+#include "utils/timer.hh"
 
 using namespace std;
 
@@ -373,6 +374,8 @@ public:
             Multimodal::Vertex vorigin, vdestination;
             vorigin = Multimodal::Vertex( &graph_.road, request_.origin );
 
+            Timer timer;
+
             for ( size_t j = 0; j < request_.steps.size(); ++j ) {
                 if ( j > 0 ) {
                     vorigin = Multimodal::Vertex( &graph_.road, request_.steps[j - 1].destination );
@@ -384,12 +387,16 @@ public:
                 bool found;
                 found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], path );
 
+                metrics_[ "time_s" ] = timer.elapsed();
+
                 if ( !found ) {
                     std::stringstream err;
                     err << "Cannot find a path between " << vorigin << " and " << vdestination;
                     throw std::runtime_error( err.str() );
                 }
             }
+
+            metrics_[ "time_s" ] = timer.elapsed();
 
             // convert the path to a roadmap
             add_roadmap( path );
