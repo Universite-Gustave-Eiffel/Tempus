@@ -66,7 +66,7 @@ import tempus_request as Tempus
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
-ROADMAP_LAYER_NAME = "Roadmap_"
+ROADMAP_LAYER_NAME = "Tempus_Roadmap_"
 
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)

@@ -28,9 +28,11 @@ import config
 
 class StepSelector( QFrame ):
 
-    def __init__( self, parent, name = "Origin", coordinates_only = False ):
+    def __init__( self, parent, name = "Origin", coordinates_only = False, dock = None, updateCall = None ):
         QFrame.__init__( self )
         self.parent = parent
+        self.updateCallback = updateCall
+        self.dock = dock
 
         self.layout = QVBoxLayout( self )
         self.layout.setMargin( 0 )
@@ -138,7 +140,7 @@ class StepSelector( QFrame ):
 
     def onAdd( self ):
         # we assume the parent widget is a QLayout
-        s = StepSelector( self.parent, "Step" )
+        s = StepSelector( self.parent, "Step", False, self.dock, self.updateCallback )
         s.set_canvas( self.canvas )
 
         # remove the last one
@@ -152,6 +154,10 @@ class StepSelector( QFrame ):
         self.parent.removeWidget( self )
         self.close()
 
+        # update pin points layer
+        if self.updateCallback:
+            self.updateCallback( self.dock )
+
     def onSelect( self ):
         QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
         self.canvas.setMapTool(self.clickTool)
@@ -163,4 +169,6 @@ class StepSelector( QFrame ):
         self.set_coordinates( [p.x(), p.y()] )
         QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
 
+        if self.updateCallback:
+            self.updateCallback( self.dock )
 

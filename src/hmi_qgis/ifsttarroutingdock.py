@@ -34,6 +34,7 @@ from stepselector import StepSelector
 
 import os
 import pickle
+import config
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -42,7 +43,56 @@ from ui_ifsttarrouting import Ui_IfsttarRoutingDock
 
 from wps_client import *
 
+from qgis.core import *
+
 PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
+
+def display_pinpoints( coords, start_letter, style_file, layer_name, canvas ):
+    maps = QgsMapLayerRegistry.instance().mapLayers()
+    vl = None
+    features = {}
+    for k,v in maps.items():
+        if v.name()[0:len(layer_name)] == layer_name:
+            vl = v
+            # remove all features
+            iter = vl.getFeatures()
+            ids = [ f.id() for f in iter ]
+            vl.dataProvider().deleteFeatures( ids )
+            break
+
+    if vl is None:
+        vl = QgsVectorLayer("Point?crs=epsg:2154", layer_name, "memory")
+        pr = vl.dataProvider()
+        vl.startEditing()
+        vl.addAttribute( QgsField( "tag", QVariant.String ) )
+        vl.commitChanges()
+        vl.updateExtents()
+        vl.loadNamedStyle( config.DATA_DIR + "/" + style_file )
+        QgsMapLayerRegistry.instance().addMapLayers( [vl] )
+
+    pr = vl.dataProvider()
+    i = 0
+    for coord in coords:
+        fet = QgsFeature()
+        pt = QgsPoint( coord[0], coord[1] )
+        geo = QgsGeometry.fromPoint( pt )
+        fet.setGeometry( geo )
+        tag = chr(ord( start_letter )+i)
+        fet.setAttributes( [tag] )
+        pr.addFeatures( [fet] )
+        i = i + 1
+
+    # refresh canvas
+    canvas.updateFullExtent()
+
+def update_pinpoints( dock ):
+    display_pinpoints( dock.get_coordinates(), 'A', 'style_pinpoints.qml', 'Tempus_pin_points', dock.canvas )
+
+def update_parking( dock ):
+    c = dock.get_parking()
+    if c == []:
+        return
+    display_pinpoints( [ c ], 'P', 'style_parking.qml', 'Tempus_private_parking', dock.canvas )
 
 # create the dialog for route queries
 class IfsttarRoutingDock(QDockWidget):
@@ -143,14 +193,22 @@ class IfsttarRoutingDock(QDockWidget):
 
         # add the Destination chooser
         self.ui.origin.set_canvas( self.canvas )
-        dest = StepSelector( self.ui.stepBox, "Destination" )
+        dest = StepSelector( self.ui.stepBox, "Destination", False, self, update_pinpoints)
         dest.set_canvas( self.canvas )
         self.ui.stepBox.addWidget( dest )
+
+        # set pin points updater
+        self.ui.origin.updateCallback = update_pinpoints
+        self.ui.origin.dock = self
 
         # add the private parking chooser
         self.parkingChooser = StepSelector( self.ui.queryPage, "Private parking location", True )
         self.parkingChooser.set_canvas( self.canvas )
         self.ui.parkingLayout.addWidget( self.parkingChooser )
+
+        # set parking location updater
+        self.parkingChooser.updateCallback = update_parking
+        self.parkingChooser.dock = self
 
         # preferences is an object used to store user preferences
         if os.path.exists( PREFS_FILE ):
@@ -159,6 +217,10 @@ class IfsttarRoutingDock(QDockWidget):
             self.loadState( self.prefs )
         else:
             self.prefs = {}
+
+        # set the pin points layer
+        update_pinpoints( self )
+        update_parking( self )
 
     def closeEvent( self, event ):
         self.prefs = self.saveState()
@@ -294,3 +356,4 @@ class IfsttarRoutingDock(QDockWidget):
         
         for i in range(0, nsteps-1):
             self.ui.stepBox.itemAt(0).widget().onAdd()
+
