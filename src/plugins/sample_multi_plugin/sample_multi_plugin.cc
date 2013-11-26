@@ -65,7 +65,7 @@ public:
     ///
     static void post_build() {
         // retrieve the length of each pt section
-        COUT << "Computing the length of each section..." << std::endl;
+        std::cout << "Computing the length of each section..." << std::endl;
         typedef std::map< std::pair<db_id_t, db_id_t>, double > PtLength;
         PtLength pt_lengths;
 
@@ -268,6 +268,20 @@ public:
         }
     }
 
+    // the exception to throw to short cut dijkstra
+    struct PathFound {};
+
+    // current destination
+    Multimodal::Vertex destination_;
+
+    void vertex_accessor( Multimodal::Vertex v, int access_type ) {
+        if ( access_type == Plugin::ExamineAccess ) {
+            if ( v == destination_ ) {
+                throw PathFound();
+            }
+        }
+    }
+
     ///
     /// Try to find the shortest path between origin and destination, optimizing the passed criterion
     /// The given path is not cleared
@@ -281,35 +295,43 @@ public:
 
         Multimodal::VertexIndexProperty vertex_index = get( boost::vertex_index, graph_ );
 
-        if ( optimizing_criterion == CostDistance ) {
-            boost::dijkstra_shortest_paths( graph_,
-                                            origin,
-                                            boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                                            boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
-                                            boost::make_assoc_property_map( distances ),
-                                            vertex_index,
-                                            std::less<double>(),
-                                            boost::closed_plus<double>(),
-                                            std::numeric_limits<double>::max(),
-                                            0.0,
-                                            boost::dijkstra_visitor<boost::null_visitor>(),
-                                            boost::make_iterator_property_map( color_map.begin(), vertex_index )
-                                          );
+        Tempus::PluginGraphVisitor vis( this );
+        destination_ = destination;
+
+        try {
+            if ( optimizing_criterion == CostDistance ) {
+                boost::dijkstra_shortest_paths( graph_,
+                                                origin,
+                                                boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                                boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
+                                                boost::make_assoc_property_map( distances ),
+                                                vertex_index,
+                                                std::less<double>(),
+                                                boost::closed_plus<double>(),
+                                                std::numeric_limits<double>::max(),
+                                                0.0,
+                                                vis,
+                                                boost::make_iterator_property_map( color_map.begin(), vertex_index )
+                                                );
+            }
+            else if ( optimizing_criterion == CostDuration ) {
+                boost::dijkstra_shortest_paths( graph_,
+                                                origin,
+                                                boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                                boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
+                                                boost::make_assoc_property_map( durations ),
+                                                vertex_index,
+                                                std::less<double>(),
+                                                boost::closed_plus<double>(),
+                                                std::numeric_limits<double>::max(),
+                                                0.0,
+                                                vis,
+                                                boost::make_iterator_property_map( color_map.begin(), vertex_index )
+                                                );
+            }
         }
-        else if ( optimizing_criterion == CostDuration ) {
-            boost::dijkstra_shortest_paths( graph_,
-                                            origin,
-                                            boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                                            boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
-                                            boost::make_assoc_property_map( durations ),
-                                            vertex_index,
-                                            std::less<double>(),
-                                            boost::closed_plus<double>(),
-                                            std::numeric_limits<double>::max(),
-                                            0.0,
-                                            boost::dijkstra_visitor<boost::null_visitor>(),
-                                            boost::make_iterator_property_map( color_map.begin(), vertex_index )
-                                          );
+        catch ( PathFound& ) {
+            // Do nothing, dijkstra has just been aborted
         }
 
         COUT << "Dijkstra OK" << endl;
