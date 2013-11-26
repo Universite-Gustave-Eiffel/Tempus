@@ -66,7 +66,7 @@ import tempus_request as Tempus
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
-ROADMAP_LAYER_NAME = "Roadmap_"
+ROADMAP_LAYER_NAME = "Tempus_Roadmap_"
 
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)
@@ -359,23 +359,6 @@ class IfsttarRouting:
         # create a new vector layer
         vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
 
-        # road steps are red
-        # public transport steps are blue
-        # others are yellow
-        root_rule = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'} ))
-        rule1 = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,0,0'}),
-                                             0,
-                                             0,
-                                             "transport_type=1" )
-        rule2 = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '0,0,255'}),
-                                             0,
-                                             0,
-                                             "transport_type=2" )
-        root_rule.appendChild( rule1 )
-        root_rule.appendChild( rule2 )
-        renderer = QgsRuleBasedRendererV2( root_rule );
-        vl.setRendererV2( renderer )
-
         pr = vl.dataProvider()
 
         if NEW_API:
@@ -383,6 +366,9 @@ class IfsttarRouting:
             vl.addAttribute( QgsField( "transport_type", QVariant.Int ) )
         else:
             pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
+
+        # set layer's style
+        vl.loadNamedStyle( config.DATA_DIR + "/style_roadmap.qml" )
 
         # browse steps
         for step in steps:

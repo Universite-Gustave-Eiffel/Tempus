@@ -34,6 +34,7 @@
 #include "plugin.hh"
 #include "pgsql_importer.hh"
 #include "db.hh"
+#include "utils/timer.hh"
 
 using namespace std;
 
@@ -65,7 +66,7 @@ public:
     ///
     static void post_build() {
         // retrieve the length of each pt section
-        COUT << "Computing the length of each section..." << std::endl;
+        std::cout << "Computing the length of each section..." << std::endl;
         typedef std::map< std::pair<db_id_t, db_id_t>, double > PtLength;
         PtLength pt_lengths;
 
@@ -202,17 +203,10 @@ public:
         roadmap.total_costs[CostDistance] = 0.0;
         roadmap.total_costs[CostDuration] = 0.0;
         std::list<Multimodal::Vertex>::const_iterator previous = path.begin();
-        COUT << "first: " << *previous << std::endl;
         std::list<Multimodal::Vertex>::const_iterator it = ++previous;
         --previous;
 
         for ( ; it != path.end(); ++it ) {
-            Multimodal::Edge me;
-            {
-                bool found;
-                boost::tie( me, found ) = edge( *previous, *it, graph_ );
-            }
-
             Roadmap::Step* mstep = 0;
 
             if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
@@ -259,12 +253,31 @@ public:
             }
 
             roadmap.steps.push_back( mstep );
+
+            // build the multimodal edge to find corresponding costs
+            // we don't use edge() since it will loop over the whole graph each time
+            // we assume the edge exists in these maps
+            Multimodal::Edge me( *previous, *it );
             mstep->costs[CostDistance] = distances[me];
             mstep->costs[CostDuration] = durations[me];
             roadmap.total_costs[CostDistance] += distances[me];
             roadmap.total_costs[CostDuration] += durations[me];
 
             previous = it;
+        }
+    }
+
+    // the exception to throw to short cut dijkstra
+    struct PathFound {};
+
+    // current destination
+    Multimodal::Vertex destination_;
+
+    void vertex_accessor( Multimodal::Vertex v, int access_type ) {
+        if ( access_type == Plugin::ExamineAccess ) {
+            if ( v == destination_ ) {
+                throw PathFound();
+            }
         }
     }
 
@@ -281,35 +294,42 @@ public:
 
         Multimodal::VertexIndexProperty vertex_index = get( boost::vertex_index, graph_ );
 
-        if ( optimizing_criterion == CostDistance ) {
-            boost::dijkstra_shortest_paths( graph_,
-                                            origin,
-                                            boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                                            boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
-                                            boost::make_assoc_property_map( distances ),
-                                            vertex_index,
-                                            std::less<double>(),
-                                            boost::closed_plus<double>(),
-                                            std::numeric_limits<double>::max(),
-                                            0.0,
-                                            boost::dijkstra_visitor<boost::null_visitor>(),
-                                            boost::make_iterator_property_map( color_map.begin(), vertex_index )
-                                          );
+        Tempus::PluginGraphVisitor vis( this );
+        destination_ = destination;
+        try {
+            if ( optimizing_criterion == CostDistance ) {
+                boost::dijkstra_shortest_paths( graph_,
+                                                origin,
+                                                boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                                boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
+                                                boost::make_assoc_property_map( distances ),
+                                                vertex_index,
+                                                std::less<double>(),
+                                                boost::closed_plus<double>(),
+                                                std::numeric_limits<double>::max(),
+                                                0.0,
+                                                vis,
+                                                boost::make_iterator_property_map( color_map.begin(), vertex_index )
+                                                );
+            }
+            else if ( optimizing_criterion == CostDuration ) {
+                boost::dijkstra_shortest_paths( graph_,
+                                                origin,
+                                                boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                                boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
+                                                boost::make_assoc_property_map( durations ),
+                                                vertex_index,
+                                                std::less<double>(),
+                                                boost::closed_plus<double>(),
+                                                std::numeric_limits<double>::max(),
+                                                0.0,
+                                                vis,
+                                                boost::make_iterator_property_map( color_map.begin(), vertex_index )
+                                                );
+            }
         }
-        else if ( optimizing_criterion == CostDuration ) {
-            boost::dijkstra_shortest_paths( graph_,
-                                            origin,
-                                            boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                                            boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
-                                            boost::make_assoc_property_map( durations ),
-                                            vertex_index,
-                                            std::less<double>(),
-                                            boost::closed_plus<double>(),
-                                            std::numeric_limits<double>::max(),
-                                            0.0,
-                                            boost::dijkstra_visitor<boost::null_visitor>(),
-                                            boost::make_iterator_property_map( color_map.begin(), vertex_index )
-                                          );
+        catch ( PathFound& ) {
+            // Do nothing, dijkstra has just been aborted
         }
 
         COUT << "Dijkstra OK" << endl;
@@ -333,7 +353,6 @@ public:
             return false;
         }
 
-        path.push_front( origin );
         return true;
     }
 
@@ -346,28 +365,41 @@ public:
             //
             // Run for each intermiadry steps
 
-            Path path;
-
             Multimodal::Vertex vorigin, vdestination;
             vorigin = Multimodal::Vertex( &graph_.road, request_.origin );
 
+            Timer timer;
+
+            // global path
+            Path path;
             for ( size_t j = 0; j < request_.steps.size(); ++j ) {
+                // path of this step
+                Path lpath;
+
                 if ( j > 0 ) {
                     vorigin = Multimodal::Vertex( &graph_.road, request_.steps[j - 1].destination );
                 }
 
                 vdestination = Multimodal::Vertex( &graph_.road, request_.steps[j].destination );
-                COUT << "Resolving from " << vorigin << " to " << vdestination << std::endl;
 
                 bool found;
-                found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], path );
+                found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], lpath );
+
+                metrics_[ "time_s" ] = timer.elapsed();
 
                 if ( !found ) {
                     std::stringstream err;
                     err << "Cannot find a path between " << vorigin << " and " << vdestination;
                     throw std::runtime_error( err.str() );
                 }
+
+                // copy step path to global path
+                std::copy( lpath.begin(), lpath.end(), std::back_inserter(path) );
             }
+            // add origin back
+            path.push_front( Multimodal::Vertex( &graph_.road, request_.origin ) );
+
+            metrics_[ "time_s" ] = timer.elapsed();
 
             // convert the path to a roadmap
             add_roadmap( path );

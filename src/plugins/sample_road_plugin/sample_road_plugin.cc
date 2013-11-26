@@ -22,19 +22,12 @@
    The plugin finds a route between an origin and a destination via Dijkstra.
  */
 
-#include <sys/timeb.h>
-#include <time.h>
-
-#ifdef _WIN32
-#define ftime(x) _ftime(x)
-#define timeb _timeb
-#endif
-
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "plugin.hh"
 #include "pgsql_importer.hh"
+#include "utils/timer.hh"
 
 using namespace std;
 
@@ -99,8 +92,7 @@ public:
     virtual void process() {
         Road::Graph& road_graph = graph_.road;
 
-        timeb t_start, t_stop;
-        ftime( &t_start );
+        Timer timer;
 
         std::vector<Road::Vertex> pred_map( boost::num_vertices( road_graph ) );
         std::vector<double> distance_map( boost::num_vertices( road_graph ) );
@@ -170,11 +162,7 @@ public:
 
         path.push_front( origin );
 
-        ftime( &t_stop );
-        long long sstart = t_start.time * 1000L + t_start.millitm;
-        long long sstop = t_stop.time * 1000L + t_stop.millitm;
-        float time_s = float( ( sstop - sstart ) / 1000.0 );
-        metrics_[ "time_s" ] = time_s;
+        metrics_[ "time_s" ] = timer.elapsed();
 
         if ( !path_found ) {
             throw std::runtime_error( "No path found !" );

@@ -37,6 +37,6 @@ endif()
 
 if(WIN32)
     install(DIRECTORY python DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
-    install(FILES src/random_batch.py DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
+    install(FILES batch/random_batch.py DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 endif()
 
