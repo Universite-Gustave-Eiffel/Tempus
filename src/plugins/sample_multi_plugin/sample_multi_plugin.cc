@@ -203,17 +203,10 @@ public:
         roadmap.total_costs[CostDistance] = 0.0;
         roadmap.total_costs[CostDuration] = 0.0;
         std::list<Multimodal::Vertex>::const_iterator previous = path.begin();
-        COUT << "first: " << *previous << std::endl;
         std::list<Multimodal::Vertex>::const_iterator it = ++previous;
         --previous;
 
         for ( ; it != path.end(); ++it ) {
-            Multimodal::Edge me;
-            {
-                bool found;
-                boost::tie( me, found ) = edge( *previous, *it, graph_ );
-            }
-
             Roadmap::Step* mstep = 0;
 
             if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
@@ -260,6 +253,11 @@ public:
             }
 
             roadmap.steps.push_back( mstep );
+
+            // build the multimodal edge to find corresponding costs
+            // we don't use edge() since it will loop over the whole graph each time
+            // we assume the edge exists in these maps
+            Multimodal::Edge me( *previous, *it );
             mstep->costs[CostDistance] = distances[me];
             mstep->costs[CostDuration] = durations[me];
             roadmap.total_costs[CostDistance] += distances[me];
@@ -298,7 +296,6 @@ public:
 
         Tempus::PluginGraphVisitor vis( this );
         destination_ = destination;
-
         try {
             if ( optimizing_criterion == CostDistance ) {
                 boost::dijkstra_shortest_paths( graph_,
@@ -356,7 +353,6 @@ public:
             return false;
         }
 
-        path.push_front( origin );
         return true;
     }
 
@@ -369,23 +365,25 @@ public:
             //
             // Run for each intermiadry steps
 
-            Path path;
-
             Multimodal::Vertex vorigin, vdestination;
             vorigin = Multimodal::Vertex( &graph_.road, request_.origin );
 
             Timer timer;
 
+            // global path
+            Path path;
             for ( size_t j = 0; j < request_.steps.size(); ++j ) {
+                // path of this step
+                Path lpath;
+
                 if ( j > 0 ) {
                     vorigin = Multimodal::Vertex( &graph_.road, request_.steps[j - 1].destination );
                 }
 
                 vdestination = Multimodal::Vertex( &graph_.road, request_.steps[j].destination );
-                COUT << "Resolving from " << vorigin << " to " << vdestination << std::endl;
 
                 bool found;
-                found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], path );
+                found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], lpath );
 
                 metrics_[ "time_s" ] = timer.elapsed();
 
@@ -394,7 +392,12 @@ public:
                     err << "Cannot find a path between " << vorigin << " and " << vdestination;
                     throw std::runtime_error( err.str() );
                 }
+
+                // copy step path to global path
+                std::copy( lpath.begin(), lpath.end(), std::back_inserter(path) );
             }
+            // add origin back
+            path.push_front( Multimodal::Vertex( &graph_.road, request_.origin ) );
 
             metrics_[ "time_s" ] = timer.elapsed();
 
