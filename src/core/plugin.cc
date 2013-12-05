@@ -382,7 +382,6 @@ Result& Plugin::result()
         Roadmap& roadmap = *rit;
         Road::Graph& road_graph = graph_.road;
 
-        std::string road_name = "";
         Tempus::db_id_t previous_section = 0;
         bool on_roundabout = false;
         bool was_on_roundabout = false;
@@ -457,7 +456,7 @@ Result& Plugin::result()
                                                      " THEN ST_AsBinary(geom)"
                                                      " ELSE ST_AsBinary(ST_Reverse(geom)) END"
                                                      " FROM tempus.road_section WHERE id=%2%" ) %
-                                      road_graph[step->vertex_from].db_id %
+                                      road_graph[ source(road_graph[step->road_section].edge, road_graph) ].db_id %
                                       road_graph[step->road_section].db_id ).str();
                     Db::Result res = db_.exec( q );
                     std::string wkb = res[0][0].as<std::string>();
@@ -517,8 +516,6 @@ Result& Plugin::result()
                         movement = Roadmap::RoadStep::TurnLeft;
                     }
                 }
-
-                road_name = road_graph[step->road_section].road_name;
 
                 if ( last_step ) {
                     last_step->end_movement = movement;
