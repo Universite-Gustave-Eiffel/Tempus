@@ -48,13 +48,13 @@ typedef boost::vecS EdgeListType;
 /// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
 typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 /// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::undirected_tag, Vertex> Edge;
+typedef boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
 
 struct Node;
 struct Section;
 ///
 /// The final road graph type
-typedef boost::adjacency_list<VertexListType, EdgeListType, boost::undirectedS, Node, Section > Graph;
+typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;
 
 ///
 /// Used as Vertex.
