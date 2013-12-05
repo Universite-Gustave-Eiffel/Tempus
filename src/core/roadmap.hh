@@ -65,6 +65,10 @@ public:
         Road::Edge road_section;
 
         ///
+        /// The road name (field not present in a Road::Section, so copied from the DB here)
+        std::string road_name;
+
+        ///
         /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
         ///
         double distance_km;
@@ -113,9 +117,14 @@ public:
     ///
     /// A generic step from a vertex to another
     /// Inherits from Step as well as from Multimodal::Edge
+    /// This is used to represent a step from a mode to another (road, public transport, poi, etc)
     struct GenericStep : public Step, public Multimodal::Edge {
         GenericStep() : Step( Step::GenericStep ), Edge() {}
         GenericStep( const Multimodal::Edge& edge ) : Step( Step::GenericStep ), Edge( edge ) {}
+
+        ///
+        /// Road name, if relevant
+        std::string road_name;
 
         virtual GenericStep* clone() const {
             return new GenericStep( *this );

@@ -85,9 +85,6 @@ struct Section : public Base {
     double        car_speed_limit;
     double        car_average_speed;
     double        bus_average_speed;
-    std::string   road_name;
-    std::string   address_left_side;
-    std::string   address_right_side;
     int           lane;
     bool          is_roundabout;
     bool          is_bridge;

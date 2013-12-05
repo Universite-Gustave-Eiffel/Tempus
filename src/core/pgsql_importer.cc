@@ -157,7 +157,6 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             res[i][j++] >> section.length;
             res[i][j++] >> section.car_speed_limit;
             res[i][j++] >> section.car_average_speed;
-            res[i][j++] >> section.road_name;
             res[i][j++] >> section.lane;
             res[i][j++] >> section.is_roundabout;
             res[i][j++] >> section.is_bridge;
