@@ -151,8 +151,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( node_to_id > 0 );
 
             int j = 4;
-            res[i][j++] >> section.transport_type_ft;
-            res[i][j++] >> section.transport_type_tf;
+            int transport_type_ft, transport_type_tf;
+            res[i][j++] >> transport_type_ft;
+            res[i][j++] >> transport_type_tf;
             res[i][j++] >> section.length;
             res[i][j++] >> section.car_speed_limit;
             res[i][j++] >> section.car_average_speed;
@@ -177,19 +178,36 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            Road::Edge e;
-            bool is_added, found;
-            boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+            if ( transport_type_ft > 0 ) {
+                Road::Edge e;
+                bool is_added, found;
+                boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+                if ( found ) {
+                    CERR << "Edge " << e << " already exists" << endl;
+                    continue;
+                }
 
-            if ( found ) {
-                CERR << "Edge " << e << " already exists" << endl;
-                continue;
+                section.transport_type = transport_type_ft;
+                boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
+                BOOST_ASSERT( is_added );
+                road_graph[e].edge = e;
+                // link the road_section to this edge
+                road_sections_map[ section.db_id ] = e;
             }
+            if ( transport_type_tf > 0 ) {
+                Road::Edge e;
+                bool is_added, found;
+                boost::tie( e, found ) = boost::edge( v_to, v_from, road_graph );
+                if ( found ) {
+                    CERR << "Reverse edge " << e << " already exists" << endl;
+                    continue;
+                }
 
-            boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
-            BOOST_ASSERT( is_added );
-            road_graph[e].edge = e;
-            road_sections_map[ section.db_id ] = e;
+                section.transport_type = transport_type_tf;
+                boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section, road_graph );
+                BOOST_ASSERT( is_added );
+                road_graph[e].edge = e;
+            }
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
         }
