@@ -491,7 +491,6 @@ public:
                     const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );
                     const Multimodal::Edge* edge = static_cast<const Multimodal::Edge*>( step );
 
-                    const Road::Graph* lroad_graph = 0;
                     const PublicTransport::Graph* pt_graph = 0;
                     db_id_t network_id = 0;
                     std::string stop_name, road_name;
@@ -499,12 +498,10 @@ public:
 
                     road_name = step->road_name;
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
-                        lroad_graph = edge->source.road_graph;
                         pt_graph = edge->target.pt_graph;
                         stop_name = ( *pt_graph )[edge->target.pt_vertex].name;
                     }
                     else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
-                        lroad_graph = edge->target.road_graph;
                         pt_graph = edge->source.pt_graph;
                         stop_name = ( *pt_graph )[edge->source.pt_vertex].name;
                     }
