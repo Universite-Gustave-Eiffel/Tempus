@@ -338,3 +338,13 @@ as '
 select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) order by st_distance( geom, st_setsrid(st_point($1, $2), 2154)) asc limit 1
 '
 language 'SQL';
+
+DROP VIEW IF EXISTS tempus.forbidden_movements;
+CREATE OR REPLACE VIEW tempus.forbidden_movements AS
+SELECT
+	road_road.id,
+	road_road.road_section as sections,
+	st_union(road_section.geom) AS geom
+FROM tempus.road_section, tempus.road_road
+WHERE road_section.id = ANY (road_road.road_section)
+GROUP BY road_road.id;
