@@ -13,9 +13,9 @@ BEGIN
 	END IF; 
 
 	IF     $2 IS NULL 					THEN RETURN tt;
-	ELSIF  $2 = 'B'						THEN RETURN 2 + 512;
+	ELSIF  $2 = 'B'						THEN RETURN tt;
 	ELSIF ($2 = 'F' AND $3) OR ($2 = 'T' AND NOT $3) 	THEN RETURN tt;
-	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 2;
+	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 2; -- oneway: pedestrians only
 	END IF;
 
 	RETURN NULL;
