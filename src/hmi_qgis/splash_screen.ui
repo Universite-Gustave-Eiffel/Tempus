@@ -54,7 +54,7 @@
     <string/>
    </property>
    <property name="pixmap">
-    <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/Logo-TEMPUS.jpg</pixmap>
+    <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/logo_tempus_ng.jpg</pixmap>
    </property>
   </widget>
  </widget>
