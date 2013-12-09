@@ -385,7 +385,7 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
 
 
     for ( size_t i = 0; i < res.size(); i++ ) {
-        Road::Road road_restriction;
+        Road::Restriction road_restriction;
 
         res[i][0] >> road_restriction.db_id;
         BOOST_ASSERT( road_restriction.db_id > 0 );

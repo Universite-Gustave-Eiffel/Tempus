@@ -447,10 +447,10 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
     int i = 0;
 
     for ( it = restrictions.restrictions.begin(); it != restrictions.restrictions.end(); ++it, i++ ) {
-        Road::Road::VertexSequence seq( it->to_vertex_sequence( graph.road ) );
+        Road::Restriction::VertexSequence seq( it->to_vertex_sequence( graph.road ) );
         int j = 0;
 
-        for ( Road::Road::VertexSequence::const_iterator itt = seq.begin(); itt != seq.end(); ++itt, j++ ) {
+        for ( Road::Restriction::VertexSequence::const_iterator itt = seq.begin(); itt != seq.end(); ++itt, j++ ) {
             BOOST_CHECK_EQUAL( graph.road[ *itt ].db_id, expected_nodes[i][j] );
         }
     }

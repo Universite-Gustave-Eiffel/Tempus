@@ -108,9 +108,9 @@ typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 
 ///
-/// refers to the 'road_road' DB's table
+/// refers to the 'road_restriction' DB's table
 /// This structure reflects turn restrictions on the road network
-struct Road : public Base {
+struct Restriction : public Base {
     ///
     /// Array of road sections
     std::vector<Edge> road_sections;
@@ -132,7 +132,7 @@ struct Road : public Base {
 struct Restrictions {
     ///
     /// List of restrictions
-    typedef std::list<Road> RestrictionSequence;
+    typedef std::list<Restriction> RestrictionSequence;
     RestrictionSequence restrictions;
 
     ///
