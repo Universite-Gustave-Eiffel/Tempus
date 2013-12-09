@@ -34,3 +34,4 @@ target_link_libraries( sample_app tempus )
 
 install(TARGETS tempus DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include)
+

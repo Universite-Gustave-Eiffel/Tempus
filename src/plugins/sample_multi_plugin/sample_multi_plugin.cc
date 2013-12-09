@@ -221,7 +221,6 @@ public:
                 }
 
                 step->road_section = e;
-                step->vertex_from = previous->road_vertex;
             }
 
             else if ( previous->type == Multimodal::Vertex::PublicTransport && it->type == Multimodal::Vertex::PublicTransport ) {

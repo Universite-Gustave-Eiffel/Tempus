@@ -129,14 +129,91 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         }
     }
 
+    //
+    // check road section consistency
     {
-        const std::string qquery = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
-                                   "car_average_speed, road_name, lane, "
-                                   "roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section";
+        // look for sections where 'from' or 'to' road ids do not exist
+        const std::string q = "SELECT COUNT(*) "
+            "FROM "
+            "tempus.road_section AS rs "
+            "LEFT JOIN tempus.road_node AS rn1 "
+            "ON rs.node_from = rn1.id "
+            "LEFT JOIN tempus.road_node AS rn2 "
+            "ON rs.node_to = rn2.id "
+            "WHERE "
+            "rn1.id IS NULL "
+            "OR "
+            "rn2.id IS NULL";
+
+        Db::Result res( connection_.exec( q ) );
+        size_t count = 0;
+        res[0][0] >> count;
+        if ( count ) {
+            CERR << "[WARNING]: there are " << count << " road sections with inexistent node_from or node_to" << std::endl;
+        }
+    }
+    {
+        // look for cycles
+        const std::string q = "SELECT count(*) FROM tempus.road_section WHERE node_from = node_to";
+        Db::Result res( connection_.exec( q ) );
+        size_t count = 0;
+        res[0][0] >> count;
+        if ( count ) {
+            CERR << "[WARNING]: there are " << count << " road sections with cycles" << std::endl;
+        }
+    }
+
+    {
+        // look for duplicated road sections that do not serve as
+        // attachment for any PT stop or POI
+        const std::string q = "SELECT COUNT(rs.id) FROM "
+            "( "
+            "SELECT "
+            "	rs1.id "
+            "FROM "
+            "	tempus.road_section as rs1, "
+            "	tempus.road_section as rs2 "
+            "WHERE "
+            "	rs1.node_from = rs2.node_from "
+            "AND "
+            "	rs1.node_to = rs2.node_to "
+            "AND rs1.id != rs2.id "
+            ") AS rs "
+            "LEFT JOIN tempus.pt_stop AS pt "
+            "ON rs.id = pt.road_section_id "
+            "LEFT JOIN tempus.poi AS poi "
+            "ON rs.id = poi.road_section_id "
+            "WHERE "
+            "pt.id IS NULL "
+            "and "
+            "poi.id IS NULL";
+
+        Db::Result res( connection_.exec( q ) );
+        size_t count = 0;
+        res[0][0] >> count;
+        if ( count ) {
+            CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
+        }
+    }
+
+    {
+        //
+        // Get a road section and its opposite, if present
+        const std::string qquery = "SELECT "
+            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.transport_type_ft, "
+            "rs1.transport_type_tf, rs1.length, rs1.car_speed_limit, rs1.car_average_speed, rs1.lane, "
+            "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
+            "rs2.id, rs2.road_type, "
+            "rs2.transport_type_ft, rs2.length, rs2.car_speed_limit, rs2.car_average_speed, rs2.lane, "
+            "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
+            "FROM tempus.road_section AS rs1 "
+            "LEFT JOIN tempus.road_section AS rs2 "
+            "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from ";
         Db::Result res( connection_.exec( qquery ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             Road::Section section;
+            Road::Section section2;
 
             res[i][0] >> section.db_id;
             BOOST_ASSERT( section.db_id > 0 );
@@ -151,12 +228,13 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( node_to_id > 0 );
 
             int j = 4;
-            res[i][j++] >> section.transport_type_ft;
-            res[i][j++] >> section.transport_type_tf;
+            int transport_type_ft, transport_type_tf;
+            res[i][j++] >> transport_type_ft;
+            res[i][j++] >> transport_type_tf;
+            section.transport_type = transport_type_ft;
             res[i][j++] >> section.length;
             res[i][j++] >> section.car_speed_limit;
             res[i][j++] >> section.car_average_speed;
-            res[i][j++] >> section.road_name;
             res[i][j++] >> section.lane;
             res[i][j++] >> section.is_roundabout;
             res[i][j++] >> section.is_bridge;
@@ -164,6 +242,28 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             res[i][j++] >> section.is_ramp;
             res[i][j++] >> section.is_tollway;
 
+            if ( ! res[i][j].is_null() ) {
+                //
+                // If the opposite section exists, take it
+                res[i][j++] >> section2.db_id;
+                res[i][j++] >> section2.road_type;
+                // overwrite transport_type_tf here
+                res[i][j++] >> transport_type_tf;
+                res[i][j++] >> section2.length;
+                res[i][j++] >> section2.car_speed_limit;
+                res[i][j++] >> section2.car_average_speed;
+                res[i][j++] >> section2.lane;
+                res[i][j++] >> section2.is_roundabout;
+                res[i][j++] >> section2.is_bridge;
+                res[i][j++] >> section2.is_tunnel;
+                res[i][j++] >> section2.is_ramp;
+                res[i][j++] >> section2.is_tollway;
+            }
+            else {
+                // else create an opposite section from this one
+                section2 = section;
+                section2.transport_type = transport_type_tf;
+            }
             // Assert that corresponding nodes exist
             BOOST_ASSERT_MSG( road_nodes_map.find( node_from_id ) != road_nodes_map.end(),
                               ( boost::format( "Non existing node_from %1% on road_section %2%" ) % node_from_id % section.db_id ).str().c_str() );
@@ -177,19 +277,32 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            Road::Edge e;
-            bool is_added, found;
-            boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+            if ( transport_type_ft > 0 ) {
+                Road::Edge e;
+                bool is_added, found;
+                boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+                if ( found ) {
+                    continue;
+                }
 
-            if ( found ) {
-                CERR << "Edge " << e << " already exists" << endl;
-                continue;
+                boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
+                BOOST_ASSERT( is_added );
+                road_graph[e].edge = e;
+                // link the road_section to this edge
+                road_sections_map[ section.db_id ] = e;
             }
+            if ( transport_type_tf > 0 ) {
+                Road::Edge e;
+                bool is_added, found;
+                boost::tie( e, found ) = boost::edge( v_to, v_from, road_graph );
+                if ( found ) {
+                    continue;
+                }
 
-            boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
-            BOOST_ASSERT( is_added );
-            road_graph[e].edge = e;
-            road_sections_map[ section.db_id ] = e;
+                boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, road_graph );
+                BOOST_ASSERT( is_added );
+                road_graph[e].edge = e;
+            }
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
         }
