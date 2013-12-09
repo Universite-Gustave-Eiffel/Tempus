@@ -187,6 +187,8 @@ on
 	cdms.cond_id = rdms.cond_id
 where
 	cond_type = 7
+and
+        seq_number = 1 -- only select the first item of the sequence
 union
 
 -- union with remaining link ids
