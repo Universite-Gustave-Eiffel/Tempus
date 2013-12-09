@@ -116,12 +116,11 @@ struct Restriction : public Base {
     std::vector<Edge> road_sections;
 
     ///
-    /// -1 means infinite cost
-    double cost;
-
-    ///
-    /// Transport types associated with this restrictions
-    int transport_types;
+    /// Map of cost associated for each transport type
+    /// the key is here a bitfield (refer to TraansportType)
+    /// the value is a cost, as double (including infinity)
+    typedef std::map<int, double> CostPerTransport;
+    CostPerTransport cost_per_transport;
 
     ///
     /// Function to convert sequences of edges into sequences of nodes

@@ -96,11 +96,20 @@ CREATE TABLE tempus.road_section
 CREATE TABLE tempus.road_restriction
 (
 	id bigint PRIMARY KEY,
-        transport_types integer NOT NULL,
-	sections bigint[] NOT NULL, -- id of road_section involved in the restriction
-	cost double precision NOT NULL
+	sections bigint[] NOT NULL -- id of road_section involved in the restriction
 );
 
+--
+-- cost of restriction per transport type
+-- one row may refer to many transport types with the same cost (since transport_types is a bitfield)
+-- there must not be two rows with the same transport type cost set
+CREATE TABLE tempus.road_restriction_cost
+(
+	id bigint PRIMARY KEY,
+        restriction_id bigint REFERENCES tempus.road_restriction NOT NULL,
+        transport_types integer NOT NULL, -- this is a bitfield here
+	cost double precision NOT NULL
+);
 
 
 --

@@ -161,15 +161,7 @@ where id in
 INSERT INTO tempus.road_restriction
 select
 	mcond_id as id,
-	case when ar_auto = 'Y' then 1 else 0 end
-	+ case when ar_bus = 'Y' then 8 else 0 end
-	--+ case when ar_taxis = 'Y' then ?? else 0 end
-	+ case when ar_carpool = 'Y' then 256 else 0 end
-	+ case when ar_pedstrn = 'Y' then 2 else 0 end
-	--+ case when ar_trucks = 'Y' then ?? else 0 end
-	as transport_types,
-	array_agg(link order by mseq_number) as road_section,
-        'Infinity'::float as road_cost
+	array_agg(link order by mseq_number) as sections
 from
 (
 
@@ -207,13 +199,28 @@ where
 	cond_type = 7
 ) as t
 group by
-	mcond_id,
-	ar_auto,
-	ar_bus,
-	ar_carpool,
-	ar_pedstrn
+	mcond_id
 ;
-       
+
+--
+-- TABLE tempus.road_restriction_cost 
+INSERT INTO tempus.road_restriction_cost
+SELECT
+	cond_id::bigint as id,
+        cond_id::bigint as restriction_id,
+	case when ar_auto = 'Y' then 1 else 0 end
+	+ case when ar_bus = 'Y' then 8 else 0 end
+	--+ case when ar_taxis = 'Y' then ?? else 0 end
+	+ case when ar_carpool = 'Y' then 256 else 0 end
+	+ case when ar_pedstrn = 'Y' then 2 else 0 end
+	--+ case when ar_trucks = 'Y' then ?? else 0 end
+	as transport_types,
+        'Infinity'::float as cost
+FROM
+	_tempus_import.cdms as cdms
+WHERE
+        cond_type = 7;
+
 
 -- Remove import function (direction type)
 DROP FUNCTION _tempus_import.navteq_transport_direction(text, text, boolean);

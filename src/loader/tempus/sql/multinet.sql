@@ -186,9 +186,7 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 insert into tempus.road_restriction
 select
 	mp.id::bigint as id,
-	1+4+8+128+256 as transport_types,
-	array_agg(trpelid::bigint order by seqnr) as road_section,
-	'Infinity'::float as cost
+	array_agg(trpelid::bigint order by seqnr) as road_section
 from
 	_tempus_import.mp as mp
 left join
@@ -202,3 +200,12 @@ and
 and
 	mn.promantyp = 0
 group by mp.id;
+
+insert into tempus.road_restriction_cost
+select
+	id,
+	id as restriction_id,
+	1+4+8+128+256 as transport_types,
+	'Infinity'::float as cost
+from
+	tempus.road_restriction;

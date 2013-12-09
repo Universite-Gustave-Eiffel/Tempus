@@ -373,59 +373,89 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     Road::Restrictions restrictions;
     restrictions.road_graph = &graph;
 
-    Db::Result res( connection_.exec( "SELECT id, sections, cost, transport_types FROM tempus.road_restriction" ) );
+    // temp restriction storage
+    typedef std::map<db_id_t, Road::Restriction> RestrictionMap;
+    RestrictionMap restriction_map;
 
-    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
-    Road::EdgeIterator it, it_end;
-    boost::tie( it, it_end ) = boost::edges( graph );
+    {
+        Db::Result res( connection_.exec( "SELECT id, sections FROM tempus.road_restriction" ) );
 
-    for ( ; it != it_end; ++it ) {
-        road_sections_map[ graph[ *it ].db_id ] = *it;
-    }
+        std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
+        Road::EdgeIterator it, it_end;
+        boost::tie( it, it_end ) = boost::edges( graph );
 
+        for ( ; it != it_end; ++it ) {
+            road_sections_map[ graph[ *it ].db_id ] = *it;
+        }
 
-    for ( size_t i = 0; i < res.size(); i++ ) {
-        Road::Restriction road_restriction;
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            Road::Restriction road_restriction;
 
-        res[i][0] >> road_restriction.db_id;
-        BOOST_ASSERT( road_restriction.db_id > 0 );
+            res[i][0] >> road_restriction.db_id;
+            BOOST_ASSERT( road_restriction.db_id > 0 );
 
-        std::string array_str;
-        res[i][1] >> array_str;
-        // array: {a,b,c}
+            std::string array_str;
+            res[i][1] >> array_str;
+            // array: {a,b,c}
 
-        // trim '{}'
-        std::istringstream array_sub( array_str.substr( 1, array_str.size()-2 ) );
+            // trim '{}'
+            std::istringstream array_sub( array_str.substr( 1, array_str.size()-2 ) );
 
-        // parse each array element
-        std::string n_str;
-        bool invalid = false;
+            // parse each array element
+            std::string n_str;
+            bool invalid = false;
 
-        while ( std::getline( array_sub, n_str, ',' ) ) {
-            std::istringstream n_stream( n_str );
-            db_id_t id;
-            n_stream >> id;
+            while ( std::getline( array_sub, n_str, ',' ) ) {
+                std::istringstream n_stream( n_str );
+                db_id_t id;
+                n_stream >> id;
 
-            if ( road_sections_map.find( id ) == road_sections_map.end() ) {
-                CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << road_restriction.db_id << " rejected" << endl;
-                invalid = true;
-                break;
+                if ( road_sections_map.find( id ) == road_sections_map.end() ) {
+                    CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << road_restriction.db_id << " rejected" << endl;
+                    invalid = true;
+                    break;
+                }
+
+                road_restriction.road_sections.push_back( road_sections_map[id] );
             }
 
-            road_restriction.road_sections.push_back( road_sections_map[id] );
+            if ( invalid ) {
+                continue;
+            }
+
+            // store the current road_restriction
+            restriction_map[ road_restriction.db_id ] = road_restriction;
         }
-
-        if ( invalid ) {
-            continue;
-        }
-
-        res[i][2] >> road_restriction.cost;
-
-        res[i][2] >> road_restriction.transport_types;
-
-        restrictions.restrictions.push_back( road_restriction );
     }
 
+    // get restriction costs
+    {
+        Db::Result res( connection_.exec( "SELECT id, restriction_id, transport_types, cost FROM tempus.road_restriction_cost" ) );
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            db_id_t id, restr_id;
+            int transports;
+            double cost;
+
+            res[i][0] >> id;
+            res[i][1] >> restr_id;
+            res[i][2] >> transports;
+            res[i][3] >> cost;
+
+            if ( restriction_map.find( restr_id ) == restriction_map.end() ) {
+                CERR << "Cannot find road_restriction of ID " << restr_id << " for restriction_cost of ID " << id << endl;
+                continue;
+            }
+            // add cost to the map
+            restriction_map[ restr_id ].cost_per_transport[ transports ] = cost;
+        }
+    }
+
+    // get entries from the map and store them into the real structure
+    RestrictionMap::iterator it;
+    while ( ( it = restriction_map.begin() ) != restriction_map.end() ) {
+        restrictions.restrictions.push_back( it->second );
+        restriction_map.erase( it );
+    }
     return restrictions;
 }
 }
