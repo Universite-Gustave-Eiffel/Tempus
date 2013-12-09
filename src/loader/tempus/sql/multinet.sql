@@ -182,8 +182,8 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 
 
--- TABLE road_road
-insert into tempus.road_road
+-- TABLE road_restriction
+insert into tempus.road_restriction
 select
 	mp.id::bigint as id,
 	1+4+8+128+256 as transport_types,

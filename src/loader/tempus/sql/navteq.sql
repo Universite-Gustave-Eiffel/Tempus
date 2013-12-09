@@ -157,8 +157,8 @@ where id in
 );
 
 
--- TABLE road_road
-INSERT INTO tempus.road_road
+-- TABLE road_restriction
+INSERT INTO tempus.road_restriction
 select
 	mcond_id as id,
 	case when ar_auto = 'Y' then 1 else 0 end

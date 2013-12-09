@@ -93,12 +93,12 @@ CREATE TABLE tempus.road_section
 -- TODO Add a CHECK on transport_type_* bitfields value
 
 
-CREATE TABLE tempus.road_road
+CREATE TABLE tempus.road_restriction
 (
 	id bigint PRIMARY KEY,
         transport_types integer NOT NULL,
-	road_section bigint[] NOT NULL,
-	road_cost double precision NOT NULL
+	sections bigint[] NOT NULL, -- id of road_section involved in the restriction
+	cost double precision NOT NULL
 );
 
 
@@ -342,9 +342,9 @@ language 'SQL';
 DROP VIEW IF EXISTS tempus.forbidden_movements;
 CREATE OR REPLACE VIEW tempus.forbidden_movements AS
 SELECT
-	road_road.id,
-	road_road.road_section as sections,
+	road_restriction.id,
+	road_restriction.sections,
 	st_union(road_section.geom) AS geom
-FROM tempus.road_section, tempus.road_road
-WHERE road_section.id = ANY (road_road.road_section)
-GROUP BY road_road.id;
+FROM tempus.road_section, tempus.road_restriction
+WHERE road_section.id = ANY (road_restriction.sections)
+GROUP BY road_restriction.id;

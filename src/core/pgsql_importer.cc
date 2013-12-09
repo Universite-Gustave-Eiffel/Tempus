@@ -373,7 +373,7 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     Road::Restrictions restrictions;
     restrictions.road_graph = &graph;
 
-    Db::Result res( connection_.exec( "SELECT id, road_section, road_cost, transport_types FROM tempus.road_road" ) );
+    Db::Result res( connection_.exec( "SELECT id, sections, cost, transport_types FROM tempus.road_restriction" ) );
 
     std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
     Road::EdgeIterator it, it_end;
@@ -385,10 +385,10 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
 
 
     for ( size_t i = 0; i < res.size(); i++ ) {
-        Road::Road road_road;
+        Road::Road road_restriction;
 
-        res[i][0] >> road_road.db_id;
-        BOOST_ASSERT( road_road.db_id > 0 );
+        res[i][0] >> road_restriction.db_id;
+        BOOST_ASSERT( road_restriction.db_id > 0 );
 
         std::string array_str;
         res[i][1] >> array_str;
@@ -407,23 +407,23 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             n_stream >> id;
 
             if ( road_sections_map.find( id ) == road_sections_map.end() ) {
-                CERR << "Cannot find road_section of ID " << id << ", road_road of ID " << road_road.db_id << " rejected" << endl;
+                CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << road_restriction.db_id << " rejected" << endl;
                 invalid = true;
                 break;
             }
 
-            road_road.road_sections.push_back( road_sections_map[id] );
+            road_restriction.road_sections.push_back( road_sections_map[id] );
         }
 
         if ( invalid ) {
             continue;
         }
 
-        res[i][2] >> road_road.cost;
+        res[i][2] >> road_restriction.cost;
 
-        res[i][2] >> road_road.transport_types;
+        res[i][2] >> road_restriction.transport_types;
 
-        restrictions.restrictions.push_back( road_road );
+        restrictions.restrictions.push_back( road_restriction );
     }
 
     return restrictions;
