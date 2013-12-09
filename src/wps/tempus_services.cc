@@ -423,7 +423,6 @@ public:
         Tempus::Result& result = plugin->result();
 
         Multimodal::Graph& graph_ = Application::instance()->graph();
-        Tempus::Road::Graph& road_graph = graph_.road;
 
         xmlNode* root_node = XML::new_node( "results" );
 
