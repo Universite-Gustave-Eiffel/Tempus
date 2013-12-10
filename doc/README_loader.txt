@@ -46,6 +46,8 @@ It consists of :
 (extract from CloudMade shapefiles Europe/France/"pays_de_la_loire")
 ./load_tempus -t osm -s /xxxx/ -p nantes_ -d "dbname=tempus_test_db"
 
+- a cleanup of the road network (see src/loader/tempus/sql/road_cleaning.sql)
+
 - the Z coordinate on road nodes and sections come from DEM data from SRTM
 
 raster2pgsql -I -t 20x20 -s 2154 ~/data/dem/srtm_36_03_2154.tif | psql tempus_test_db
@@ -61,8 +63,7 @@ raster2pgsql -I -t 20x20 -s 2154 ~/data/dem/srtm_36_03_2154.tif | psql tempus_te
 
 - two dummy turn restrictions on the road network (see the tempus.road_road table)
 
-tempus_test_db=# select * from tempus.road_road;
- id | transport_types |    road_section     | road_cost 
-----+-----------------+---------------------+-----------
-  1 |            1031 | {45588,45053}       |        -1
-  2 |            1031 | {44884,14023,44942} |        -1
+insert into tempus.road_restriction values (1, array[45588,45053] );
+insert into tempus.road_restriction values (2, array[44884,14023,44942] );
+insert into tempus.road_restriction_cost values (1, 1, 1031, 'Infinity'::float);
+insert into tempus.road_restriction_cost values (2, 2, 1031, 'Infinity'::float);
