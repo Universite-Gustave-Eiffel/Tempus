@@ -315,10 +315,10 @@ void OutEdgeIterator::to_end()
 {
     pt_it_ = pt_it_end_;
     road_it_ = road_it_end_;
-    stop2road_connection_ = 2;
+    stop2road_connection_ = 1;
     road2stop_connection_ = -1;
     road2poi_connection_ = -1;
-    poi2road_connection_ = 2;
+    poi2road_connection_ = 1;
 }
 
 Multimodal::Edge OutEdgeIterator::dereference() const
@@ -352,9 +352,6 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         PublicTransport::Vertex r_source = source_.pt_vertex;
 
         if ( stop2road_connection_ == 0 ) {
-            mm_target = Multimodal::Vertex( &graph_->road, boost::source( ( *pt_graph )[ r_source ].road_section, graph_->road ) );
-        }
-        else if ( stop2road_connection_ == 1 ) {
             mm_target = Multimodal::Vertex( &graph_->road, boost::target( ( *pt_graph )[ r_source ].road_section, graph_->road ) );
         }
         else {
@@ -364,9 +361,6 @@ Multimodal::Edge OutEdgeIterator::dereference() const
     }
     else if ( source_.type == Vertex::Poi ) {
         if ( poi2road_connection_ == 0 ) {
-            mm_target = Multimodal::Vertex( &graph_->road, boost::source( source_.poi->road_section, graph_->road ) );
-        }
-        else if ( poi2road_connection_ == 1 ) {
             mm_target = Multimodal::Vertex( &graph_->road, boost::target( source_.poi->road_section, graph_->road ) );
         }
     }
@@ -393,7 +387,7 @@ void OutEdgeIterator::increment()
         }
     }
     else if ( source_.type == Vertex::PublicTransport ) {
-        if ( stop2road_connection_ < 2 ) {
+        if ( stop2road_connection_ < 1 ) {
             stop2road_connection_ ++;
         }
         else {
@@ -405,7 +399,7 @@ void OutEdgeIterator::increment()
         }
     }
     else if ( source_.type == Vertex::Poi ) {
-        if ( poi2road_connection_ < 2 ) {
+        if ( poi2road_connection_ < 1 ) {
             poi2road_connection_ ++;
         }
     }
@@ -514,19 +508,19 @@ size_t num_edges( const Graph& graph )
 {
     //
     // The number of edges of a Multimodal::Graph is:
-    // num_edges of the road_graph * 2 ( a Multimodal::Graph is oriented but not the Road::Graph )
+    // num_edges of the road_graph
     // + 1 for each edge of each pt graph
-    // + 4 for each stop of each pt graph (each stop gives access to 2 road nodes, in both directions)
-    // + 4 for each POI (again 2 road nodes for each POI)
+    // + 2 for each stop of each pt graph (each stop gives access to 1 road node, in both directions)
+    // + 2 for each POI (idem)
     size_t n = 0;
     Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
 
     for ( it = graph.public_transports.subset_begin(); it != graph.public_transports.subset_end(); it++ ) {
         n += num_edges( it->second );
-        n += num_vertices( it->second ) * 4;
+        n += num_vertices( it->second ) * 2;
     }
 
-    return n + num_edges( graph.road ) * 2 + graph.pois.size() * 4;
+    return n + num_edges( graph.road ) + graph.pois.size() * 2;
 }
 Vertex source( const Edge& e, const Graph& )
 {
@@ -575,12 +569,12 @@ size_t out_degree( const Vertex& v, const Graph& graph )
     }
     else if ( v.type == Vertex::PublicTransport ) {
         //
-        // For a PublicTransport::Vertex, we have access to 2 additional nodes (the road nodes)
-        return out_degree( v.pt_vertex, *v.pt_graph ) + 2;
+        // For a PublicTransport::Vertex, we have access to 1 additional node (the road node)
+        return out_degree( v.pt_vertex, *v.pt_graph ) + 1;
     }
 
-    // else (Poi), 2 road nodes are reachable
-    return 2;
+    // else (Poi), 1 road node is reachable
+    return 1;
 }
 
 std::pair< Edge, bool> edge( const Vertex& u, const Vertex& v, const Graph& graph )

@@ -19,9 +19,9 @@
 
 namespace Tempus {
 namespace Road {
-Road::VertexSequence Road::to_vertex_sequence( const Graph& graph ) const
+Restriction::VertexSequence Restriction::to_vertex_sequence( const Graph& graph ) const
 {
-    Road::VertexSequence seq;
+    Restriction::VertexSequence seq;
 
     if ( road_sections.size() == 0 ) {
         return seq;

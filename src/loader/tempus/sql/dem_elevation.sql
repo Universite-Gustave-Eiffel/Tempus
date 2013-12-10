@@ -12,7 +12,7 @@ join
 on
 	st_intersects( rast, geom )
 ) t
-where t.id = road_node.id
+where t.id = road_node.id;
 
 -- example of query used to elevate road sections
 update tempus.road_section
@@ -41,4 +41,4 @@ on
 group by
 	id
 ) t
-where t.id = road_section.id
+where t.id = road_section.id;

@@ -218,7 +218,8 @@ class IfsttarRoutingDock(QDockWidget):
         else:
             self.prefs = {}
 
-        # set the pin points layer
+    def updateLayers( self ):
+        "Update pinpoints and parking layers"
         update_pinpoints( self )
         update_parking( self )
 

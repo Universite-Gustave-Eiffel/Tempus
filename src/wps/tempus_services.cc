@@ -423,7 +423,6 @@ public:
         Tempus::Result& result = plugin->result();
 
         Multimodal::Graph& graph_ = Application::instance()->graph();
-        Tempus::Road::Graph& road_graph = graph_.road;
 
         xmlNode* root_node = XML::new_node( "results" );
 
@@ -450,9 +449,7 @@ public:
                     const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                     step_node = XML::new_node( "road_step" );
 
-                    std::string road_name = "Unknown road";
-                    road_name = road_graph[ step->road_section].road_name;
-                    XML::set_prop( step_node, "road", road_name );
+                    XML::set_prop( step_node, "road", step->road_name );
                     XML::set_prop( step_node, "end_movement", to_string( step->end_movement ) );
                 }
                 else if ( sit->step_type == Roadmap::Step::PublicTransportStep ) {
@@ -493,23 +490,19 @@ public:
                     const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );
                     const Multimodal::Edge* edge = static_cast<const Multimodal::Edge*>( step );
 
-                    const Road::Graph* lroad_graph = 0;
                     const PublicTransport::Graph* pt_graph = 0;
                     db_id_t network_id = 0;
                     std::string stop_name, road_name;
                     std::string type_str = to_string( edge->connection_type() );
 
+                    road_name = step->road_name;
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
-                        lroad_graph = edge->source.road_graph;
                         pt_graph = edge->target.pt_graph;
                         stop_name = ( *pt_graph )[edge->target.pt_vertex].name;
-                        road_name = ( *lroad_graph )[ ( *pt_graph )[edge->target.pt_vertex].road_section].road_name;
                     }
                     else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
-                        lroad_graph = edge->target.road_graph;
                         pt_graph = edge->source.pt_graph;
                         stop_name = ( *pt_graph )[edge->source.pt_vertex].name;
-                        road_name = ( *lroad_graph )[ ( *pt_graph )[edge->source.pt_vertex].road_section].road_name;
                     }
 
                     for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();

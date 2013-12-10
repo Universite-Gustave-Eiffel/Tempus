@@ -129,14 +129,91 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         }
     }
 
+    //
+    // check road section consistency
     {
-        const std::string qquery = "SELECT id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length, car_speed_limit, "
-                                   "car_average_speed, road_name, lane, "
-                                   "roundabout, bridge, tunnel, ramp, tollway FROM tempus.road_section";
+        // look for sections where 'from' or 'to' road ids do not exist
+        const std::string q = "SELECT COUNT(*) "
+            "FROM "
+            "tempus.road_section AS rs "
+            "LEFT JOIN tempus.road_node AS rn1 "
+            "ON rs.node_from = rn1.id "
+            "LEFT JOIN tempus.road_node AS rn2 "
+            "ON rs.node_to = rn2.id "
+            "WHERE "
+            "rn1.id IS NULL "
+            "OR "
+            "rn2.id IS NULL";
+
+        Db::Result res( connection_.exec( q ) );
+        size_t count = 0;
+        res[0][0] >> count;
+        if ( count ) {
+            CERR << "[WARNING]: there are " << count << " road sections with inexistent node_from or node_to" << std::endl;
+        }
+    }
+    {
+        // look for cycles
+        const std::string q = "SELECT count(*) FROM tempus.road_section WHERE node_from = node_to";
+        Db::Result res( connection_.exec( q ) );
+        size_t count = 0;
+        res[0][0] >> count;
+        if ( count ) {
+            CERR << "[WARNING]: there are " << count << " road sections with cycles" << std::endl;
+        }
+    }
+
+    {
+        // look for duplicated road sections that do not serve as
+        // attachment for any PT stop or POI
+        const std::string q = "SELECT COUNT(rs.id) FROM "
+            "( "
+            "SELECT "
+            "	rs1.id "
+            "FROM "
+            "	tempus.road_section as rs1, "
+            "	tempus.road_section as rs2 "
+            "WHERE "
+            "	rs1.node_from = rs2.node_from "
+            "AND "
+            "	rs1.node_to = rs2.node_to "
+            "AND rs1.id != rs2.id "
+            ") AS rs "
+            "LEFT JOIN tempus.pt_stop AS pt "
+            "ON rs.id = pt.road_section_id "
+            "LEFT JOIN tempus.poi AS poi "
+            "ON rs.id = poi.road_section_id "
+            "WHERE "
+            "pt.id IS NULL "
+            "and "
+            "poi.id IS NULL";
+
+        Db::Result res( connection_.exec( q ) );
+        size_t count = 0;
+        res[0][0] >> count;
+        if ( count ) {
+            CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
+        }
+    }
+
+    {
+        //
+        // Get a road section and its opposite, if present
+        const std::string qquery = "SELECT "
+            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.transport_type_ft, "
+            "rs1.transport_type_tf, rs1.length, rs1.car_speed_limit, rs1.car_average_speed, rs1.lane, "
+            "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
+            "rs2.id, rs2.road_type, "
+            "rs2.transport_type_ft, rs2.length, rs2.car_speed_limit, rs2.car_average_speed, rs2.lane, "
+            "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
+            "FROM tempus.road_section AS rs1 "
+            "LEFT JOIN tempus.road_section AS rs2 "
+            "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from ";
         Db::Result res( connection_.exec( qquery ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             Road::Section section;
+            Road::Section section2;
 
             res[i][0] >> section.db_id;
             BOOST_ASSERT( section.db_id > 0 );
@@ -151,12 +228,13 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( node_to_id > 0 );
 
             int j = 4;
-            res[i][j++] >> section.transport_type_ft;
-            res[i][j++] >> section.transport_type_tf;
+            int transport_type_ft, transport_type_tf;
+            res[i][j++] >> transport_type_ft;
+            res[i][j++] >> transport_type_tf;
+            section.transport_type = transport_type_ft;
             res[i][j++] >> section.length;
             res[i][j++] >> section.car_speed_limit;
             res[i][j++] >> section.car_average_speed;
-            res[i][j++] >> section.road_name;
             res[i][j++] >> section.lane;
             res[i][j++] >> section.is_roundabout;
             res[i][j++] >> section.is_bridge;
@@ -164,6 +242,28 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             res[i][j++] >> section.is_ramp;
             res[i][j++] >> section.is_tollway;
 
+            if ( ! res[i][j].is_null() ) {
+                //
+                // If the opposite section exists, take it
+                res[i][j++] >> section2.db_id;
+                res[i][j++] >> section2.road_type;
+                // overwrite transport_type_tf here
+                res[i][j++] >> transport_type_tf;
+                res[i][j++] >> section2.length;
+                res[i][j++] >> section2.car_speed_limit;
+                res[i][j++] >> section2.car_average_speed;
+                res[i][j++] >> section2.lane;
+                res[i][j++] >> section2.is_roundabout;
+                res[i][j++] >> section2.is_bridge;
+                res[i][j++] >> section2.is_tunnel;
+                res[i][j++] >> section2.is_ramp;
+                res[i][j++] >> section2.is_tollway;
+            }
+            else {
+                // else create an opposite section from this one
+                section2 = section;
+                section2.transport_type = transport_type_tf;
+            }
             // Assert that corresponding nodes exist
             BOOST_ASSERT_MSG( road_nodes_map.find( node_from_id ) != road_nodes_map.end(),
                               ( boost::format( "Non existing node_from %1% on road_section %2%" ) % node_from_id % section.db_id ).str().c_str() );
@@ -177,19 +277,32 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            Road::Edge e;
-            bool is_added, found;
-            boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+            if ( transport_type_ft > 0 ) {
+                Road::Edge e;
+                bool is_added, found;
+                boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+                if ( found ) {
+                    continue;
+                }
 
-            if ( found ) {
-                CERR << "Edge " << e << " already exists" << endl;
-                continue;
+                boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
+                BOOST_ASSERT( is_added );
+                road_graph[e].edge = e;
+                // link the road_section to this edge
+                road_sections_map[ section.db_id ] = e;
             }
+            if ( transport_type_tf > 0 ) {
+                Road::Edge e;
+                bool is_added, found;
+                boost::tie( e, found ) = boost::edge( v_to, v_from, road_graph );
+                if ( found ) {
+                    continue;
+                }
 
-            boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
-            BOOST_ASSERT( is_added );
-            road_graph[e].edge = e;
-            road_sections_map[ section.db_id ] = e;
+                boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, road_graph );
+                BOOST_ASSERT( is_added );
+                road_graph[e].edge = e;
+            }
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
         }
@@ -213,7 +326,11 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
     {
 
-        Db::Result res( connection_.exec( "SELECT DISTINCT s.network_id, n.id, n.psname, n.location_type, n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section FROM tempus.pt_stop as n JOIN tempus.pt_section as s ON s.stop_from = n.id OR s.stop_to = n.id ORDER by n.id" ) );
+        Db::Result res( connection_.exec( "select distinct on (n.id) "
+                                          "s.network_id, n.id, n.psname, n.location_type, "
+                                          "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
+                                          "from tempus.pt_stop as n, tempus.pt_section as s "
+                                          "where s.stop_from = n.id or s.stop_to = n.id" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             PublicTransport::Stop stop;
@@ -373,59 +490,89 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     Road::Restrictions restrictions;
     restrictions.road_graph = &graph;
 
-    Db::Result res( connection_.exec( "SELECT id, road_section, road_cost, transport_types FROM tempus.road_road" ) );
+    // temp restriction storage
+    typedef std::map<db_id_t, Road::Restriction> RestrictionMap;
+    RestrictionMap restriction_map;
 
-    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
-    Road::EdgeIterator it, it_end;
-    boost::tie( it, it_end ) = boost::edges( graph );
+    {
+        Db::Result res( connection_.exec( "SELECT id, sections FROM tempus.road_restriction" ) );
 
-    for ( ; it != it_end; ++it ) {
-        road_sections_map[ graph[ *it ].db_id ] = *it;
-    }
+        std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
+        Road::EdgeIterator it, it_end;
+        boost::tie( it, it_end ) = boost::edges( graph );
 
+        for ( ; it != it_end; ++it ) {
+            road_sections_map[ graph[ *it ].db_id ] = *it;
+        }
 
-    for ( size_t i = 0; i < res.size(); i++ ) {
-        Road::Road road_road;
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            Road::Restriction road_restriction;
 
-        res[i][0] >> road_road.db_id;
-        BOOST_ASSERT( road_road.db_id > 0 );
+            res[i][0] >> road_restriction.db_id;
+            BOOST_ASSERT( road_restriction.db_id > 0 );
 
-        std::string array_str;
-        res[i][1] >> array_str;
-        // array: {a,b,c}
+            std::string array_str;
+            res[i][1] >> array_str;
+            // array: {a,b,c}
 
-        // trim '{}'
-        std::istringstream array_sub( array_str.substr( 1, array_str.size()-2 ) );
+            // trim '{}'
+            std::istringstream array_sub( array_str.substr( 1, array_str.size()-2 ) );
 
-        // parse each array element
-        std::string n_str;
-        bool invalid = false;
+            // parse each array element
+            std::string n_str;
+            bool invalid = false;
 
-        while ( std::getline( array_sub, n_str, ',' ) ) {
-            std::istringstream n_stream( n_str );
-            db_id_t id;
-            n_stream >> id;
+            while ( std::getline( array_sub, n_str, ',' ) ) {
+                std::istringstream n_stream( n_str );
+                db_id_t id;
+                n_stream >> id;
 
-            if ( road_sections_map.find( id ) == road_sections_map.end() ) {
-                CERR << "Cannot find road_section of ID " << id << ", road_road of ID " << road_road.db_id << " rejected" << endl;
-                invalid = true;
-                break;
+                if ( road_sections_map.find( id ) == road_sections_map.end() ) {
+                    CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << road_restriction.db_id << " rejected" << endl;
+                    invalid = true;
+                    break;
+                }
+
+                road_restriction.road_sections.push_back( road_sections_map[id] );
             }
 
-            road_road.road_sections.push_back( road_sections_map[id] );
+            if ( invalid ) {
+                continue;
+            }
+
+            // store the current road_restriction
+            restriction_map[ road_restriction.db_id ] = road_restriction;
         }
-
-        if ( invalid ) {
-            continue;
-        }
-
-        res[i][2] >> road_road.cost;
-
-        res[i][2] >> road_road.transport_types;
-
-        restrictions.restrictions.push_back( road_road );
     }
 
+    // get restriction costs
+    {
+        Db::Result res( connection_.exec( "SELECT id, restriction_id, transport_types, cost FROM tempus.road_restriction_cost" ) );
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            db_id_t id, restr_id;
+            int transports;
+            double cost;
+
+            res[i][0] >> id;
+            res[i][1] >> restr_id;
+            res[i][2] >> transports;
+            res[i][3] >> cost;
+
+            if ( restriction_map.find( restr_id ) == restriction_map.end() ) {
+                CERR << "Cannot find road_restriction of ID " << restr_id << " for restriction_cost of ID " << id << endl;
+                continue;
+            }
+            // add cost to the map
+            restriction_map[ restr_id ].cost_per_transport[ transports ] = cost;
+        }
+    }
+
+    // get entries from the map and store them into the real structure
+    RestrictionMap::iterator it;
+    while ( ( it = restriction_map.begin() ) != restriction_map.end() ) {
+        restrictions.restrictions.push_back( it->second );
+        restriction_map.erase( it );
+    }
     return restrictions;
 }
 }

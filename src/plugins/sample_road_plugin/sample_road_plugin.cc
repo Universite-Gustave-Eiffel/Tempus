@@ -28,6 +28,7 @@
 #include "plugin.hh"
 #include "pgsql_importer.hh"
 #include "utils/timer.hh"
+#include "utils/function_property_accessor.hh"
 
 using namespace std;
 
@@ -90,6 +91,19 @@ public:
     }
 
     virtual void process() {
+        class WeightCalculator
+        {
+        public:
+            double operator() ( Road::Graph& graph, Road::Edge& e ) {
+                if ( (graph[e].transport_type & 1) == 0 ) {
+                    // allowed transport types do not include car
+                    // It is an oversimplification here : it must depends on allowed transport types selected by the user
+                    return std::numeric_limits<double>::infinity();
+                }
+                return graph[e].length;
+            }
+        };
+
         Road::Graph& road_graph = graph_.road;
 
         Timer timer;
@@ -100,7 +114,11 @@ public:
         /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
         /// which is the edge property of a Road::Graph
         //	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
-        boost::property_map<Road::Graph, double Road::Section::*>::type length_map( get( &Road::Section::length, road_graph ) );
+        WeightCalculator weight_calculator;
+        Tempus::FunctionPropertyAccessor<Road::Graph,
+                                 boost::edge_property_tag,
+                                 double,
+                                 WeightCalculator> weight_map( road_graph, weight_calculator );
 
         ///
         /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
@@ -128,7 +146,7 @@ public:
                                                 origin,
                                                 &pred_map[0],
                                                 &distance_map[0],
-                                                length_map,
+                                                weight_map,
                                                 boost::get( boost::vertex_index, road_graph ),
                                                 std::less<double>(),
                                                 boost::closed_plus<double>(),
@@ -201,7 +219,6 @@ public:
                     step = new Roadmap::RoadStep();
                     roadmap.steps.push_back( step );
                     step->road_section = e;
-                    step->vertex_from = previous;
                     current_road = e;
                 }
 

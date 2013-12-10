@@ -382,7 +382,6 @@ Result& Plugin::result()
         Roadmap& roadmap = *rit;
         Road::Graph& road_graph = graph_.road;
 
-        std::string road_name = "";
         Tempus::db_id_t previous_section = 0;
         bool on_roundabout = false;
         bool was_on_roundabout = false;
@@ -420,14 +419,19 @@ Result& Plugin::result()
                 }
 
                 if ( is_road_pt ) {
-                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                    // get as Linestring from A to B
+                    // also get the road_name where the pt stop is attached to
+                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), t2.road_name from "
                                                          "(select geom from tempus.road_node where id=%1%) as t1, "
-                                                         "(select geom from tempus.pt_stop where id=%2%) as t2" ) %
+                                                         "(select pt.geom, rs.road_name from tempus.pt_stop as pt, "
+                                                         "tempus.road_section as rs where rs.id = pt.road_section_id "
+                                                         "and pt.id=%2%) as t2" ) %
                                           road_id %
                                           pt_id ).str();
                     Db::Result res = db_.exec( query );
                     BOOST_ASSERT( res.size() > 0 );
                     std::string wkb = res[0][0].as<std::string>();
+                    step->road_name = res[0][1].as<std::string>();
                     // get rid of the heading '\x'
                     step->geometry_wkb = wkb.substr( 2 );
                 }
@@ -453,14 +457,16 @@ Result& Plugin::result()
                 // retrieval of the step's geometry
                 {
                     // reverse the geometry if needed
-                    std::string q = ( boost::format( "SELECT CASE WHEN node_from=%1%"
+                    // we also get the road_name here
+                    std::string q = ( boost::format( "SELECT road_name, CASE WHEN node_from=%1%"
                                                      " THEN ST_AsBinary(geom)"
                                                      " ELSE ST_AsBinary(ST_Reverse(geom)) END"
                                                      " FROM tempus.road_section WHERE id=%2%" ) %
-                                      road_graph[step->vertex_from].db_id %
+                                      road_graph[ source(road_graph[step->road_section].edge, road_graph) ].db_id %
                                       road_graph[step->road_section].db_id ).str();
                     Db::Result res = db_.exec( q );
-                    std::string wkb = res[0][0].as<std::string>();
+                    step->road_name = res[0][0].as<std::string>();
+                    std::string wkb = res[0][1].as<std::string>();
 
                     // get rid of the heading '\x'
                     if ( wkb.size() > 0 ) {
@@ -517,8 +523,6 @@ Result& Plugin::result()
                         movement = Roadmap::RoadStep::TurnLeft;
                     }
                 }
-
-                road_name = road_graph[step->road_section].road_name;
 
                 if ( last_step ) {
                     last_step->end_movement = movement;

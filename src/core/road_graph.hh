@@ -48,13 +48,13 @@ typedef boost::vecS EdgeListType;
 /// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
 typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 /// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::undirected_tag, Vertex> Edge;
+typedef boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
 
 struct Node;
 struct Section;
 ///
 /// The final road graph type
-typedef boost::adjacency_list<VertexListType, EdgeListType, boost::undirectedS, Node, Section > Graph;
+typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;
 
 ///
 /// Used as Vertex.
@@ -79,15 +79,12 @@ struct Section : public Base {
     Edge edge;
 
     db_id_t       road_type;
-    int           transport_type_ft; ///< bitfield of TransportTypeId
-    int           transport_type_tf; ///< bitfield of TransportTypeId
+    /// allowed transport types
+    int           transport_type; ///< bitfield of TransportTypeId
     double        length;
     double        car_speed_limit;
     double        car_average_speed;
     double        bus_average_speed;
-    std::string   road_name;
-    std::string   address_left_side;
-    std::string   address_right_side;
     int           lane;
     bool          is_roundabout;
     bool          is_bridge;
@@ -108,20 +105,19 @@ typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 
 ///
-/// refers to the 'road_road' DB's table
+/// refers to the 'road_restriction' DB's table
 /// This structure reflects turn restrictions on the road network
-struct Road : public Base {
+struct Restriction : public Base {
     ///
     /// Array of road sections
     std::vector<Edge> road_sections;
 
     ///
-    /// -1 means infinite cost
-    double cost;
-
-    ///
-    /// Transport types associated with this restrictions
-    int transport_types;
+    /// Map of cost associated for each transport type
+    /// the key is here a bitfield (refer to TraansportType)
+    /// the value is a cost, as double (including infinity)
+    typedef std::map<int, double> CostPerTransport;
+    CostPerTransport cost_per_transport;
 
     ///
     /// Function to convert sequences of edges into sequences of nodes
@@ -132,7 +128,7 @@ struct Road : public Base {
 struct Restrictions {
     ///
     /// List of restrictions
-    typedef std::list<Road> RestrictionSequence;
+    typedef std::list<Restriction> RestrictionSequence;
     RestrictionSequence restrictions;
 
     ///

@@ -817,6 +817,9 @@ class IfsttarRouting:
         self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 3, True )
         self.dlg.ui.verticalTabWidget.setTabEnabled( 4, True )
+
+        # update pinpoints layers
+        self.dlg.updateLayers()
         
         # simulate a disconnection
         self.wps = None

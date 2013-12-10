@@ -106,20 +106,38 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     importer->import_graph( graph );
 
     // get the number of vertices in the graph
-    long n_road_vertices, n_road_edges;
+    long n_road_vertices, n_road_edges, n_road_oriented_edges;
     {
         Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.road_node" ) );
-        BOOST_CHECK( res.size() == 1 );
+        BOOST_CHECK_EQUAL( res.size(), 1 );
         n_road_vertices = res[0][0].as<long>();
     }
+
+    // get the number of road edges in the DB
+    // and compute the number of edges in the graph
     {
         Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.road_section" ) );
-        BOOST_CHECK( res.size() == 1 );
+        BOOST_CHECK_EQUAL( res.size(), 1 );
         n_road_edges = res[0][0].as<long>();
     }
-    std::cout << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges << std::endl;
-    BOOST_CHECK( n_road_vertices = boost::num_vertices( graph.road ) );
-    BOOST_CHECK( n_road_edges = boost::num_edges( graph.road ) );
+    {
+        // get the number of edges with distinct (node_from, node_to), excluding cycles (first column)
+        // and number of oriented edges (second column)
+        Db::Result res( importer->query( "with subset as "
+                                         "(select distinct on (node_from, node_to) * from tempus.road_section "
+                                         "where node_from != node_to) "
+                                         "select (select count(*) from subset), "
+                                         "count(*) from subset as s1 left join subset as s2 "
+                                         "on s1.node_from = s2.node_to and s1.node_to = s2.node_from where s2.id is not null" ) );
+        BOOST_CHECK_EQUAL( res.size(), 1 );
+        n_road_edges = res[0][0].as<long>();
+        n_road_oriented_edges = res[0][1].as<long>();
+    }
+    std::cout << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges;
+    std::cout << " n_road_oriented_edges = " << n_road_oriented_edges << std::endl;
+    std::cout << "num_vertices = " << boost::num_vertices( graph.road ) << " num_edges = " << boost::num_edges( graph.road ) << std::endl;
+    BOOST_CHECK_EQUAL( n_road_vertices, boost::num_vertices( graph.road ) );
+    BOOST_CHECK_EQUAL( n_road_edges * 2 - n_road_oriented_edges, boost::num_edges( graph.road ) );
 
     // number of PT networks
     {
@@ -137,7 +155,12 @@ BOOST_AUTO_TEST_CASE( testConsistency )
 
         long n_pt_vertices, n_pt_edges;
         {
-            Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.pt_stop" ) );
+            // select PT stops that are involved in a pt section
+            Db::Result res( importer->query( "SELECT COUNT(*) FROM ("
+                                             "select distinct n.id from tempus.pt_stop as n, "
+                                             "tempus.pt_section as s "
+                                             "WHERE s.stop_from = n.id "
+                                             "OR s.stop_to = n.id) t" ) );
             BOOST_CHECK( res.size() == 1 );
             n_pt_vertices = res[0][0].as<long>();
         }
@@ -148,9 +171,9 @@ BOOST_AUTO_TEST_CASE( testConsistency )
             n_pt_edges = res[0][0].as<long>();
         }
         std::cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt_graph) = " << num_vertices( pt_graph ) << std::endl;
-        BOOST_CHECK( n_pt_vertices = boost::num_vertices( pt_graph ) );
+        BOOST_CHECK_EQUAL( n_pt_vertices, boost::num_vertices( pt_graph ) );
         std::cout << "n_pt_edges = " << n_pt_edges << " num_edges(pt_graph) = " << num_edges( pt_graph ) << std::endl;
-        BOOST_CHECK( n_pt_edges = boost::num_edges( pt_graph ) );
+        BOOST_CHECK_EQUAL( n_pt_edges, boost::num_edges( pt_graph ) );
     }
 }
 
@@ -447,13 +470,14 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
     int i = 0;
 
     for ( it = restrictions.restrictions.begin(); it != restrictions.restrictions.end(); ++it, i++ ) {
-        Road::Road::VertexSequence seq( it->to_vertex_sequence( graph.road ) );
+        Road::Restriction::VertexSequence seq( it->to_vertex_sequence( graph.road ) );
         int j = 0;
 
-        for ( Road::Road::VertexSequence::const_iterator itt = seq.begin(); itt != seq.end(); ++itt, j++ ) {
+        for ( Road::Restriction::VertexSequence::const_iterator itt = seq.begin(); itt != seq.end(); ++itt, j++ ) {
             BOOST_CHECK_EQUAL( graph.road[ *itt ].db_id, expected_nodes[i][j] );
         }
     }
+    BOOST_CHECK_EQUAL(i, 2);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

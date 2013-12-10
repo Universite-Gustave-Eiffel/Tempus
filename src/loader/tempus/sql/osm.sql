@@ -72,15 +72,15 @@ select
 	, nt.id as node_to
 	-- FIXME check conditions for transport_type
 	, case
-		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 1
-		when hw.oneway is null then 512 + 4 + 2 + 1
-		when oneway in ('true', 'yes') then 1
+		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 1 -- car only
+		when hw.oneway is null then 512 + 4 + 2 + 1 -- roller + cycle + pedestrian + car
+		when oneway in ('true', 'yes') then 512 + 4 + 2 + 1
 		else 519 -- 512 + 4 + 2 + 1
 	end as transport_type_ft
 	, case
 		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 1
 		when hw.oneway is null then 512 + 4 + 2 + 1
-		when oneway in ('true', 'yes') then 2
+		when oneway in ('true', 'yes') then 2 -- oneway: pedestrian only
 		else 519 -- 512 + 4 + 2 + 1
 	end as transport_type_tf
 	, st_length(st_transform(hw.geom, 2154)) as length

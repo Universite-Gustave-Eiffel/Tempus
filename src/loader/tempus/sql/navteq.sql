@@ -13,9 +13,9 @@ BEGIN
 	END IF; 
 
 	IF     $2 IS NULL 					THEN RETURN tt;
-	ELSIF  $2 = 'B'						THEN RETURN 2 + 512;
+	ELSIF  $2 = 'B'						THEN RETURN tt;
 	ELSIF ($2 = 'F' AND $3) OR ($2 = 'T' AND NOT $3) 	THEN RETURN tt;
-	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 2;
+	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 2; -- oneway: pedestrians only
 	END IF;
 
 	RETURN NULL;
@@ -157,19 +157,11 @@ where id in
 );
 
 
--- TABLE road_road
-INSERT INTO tempus.road_road
+-- TABLE road_restriction
+INSERT INTO tempus.road_restriction
 select
 	mcond_id as id,
-	case when ar_auto = 'Y' then 1 else 0 end
-	+ case when ar_bus = 'Y' then 8 else 0 end
-	--+ case when ar_taxis = 'Y' then ?? else 0 end
-	+ case when ar_carpool = 'Y' then 256 else 0 end
-	+ case when ar_pedstrn = 'Y' then 2 else 0 end
-	--+ case when ar_trucks = 'Y' then ?? else 0 end
-	as transport_types,
-	array_agg(link order by mseq_number) as road_section,
-        'Infinity'::float as road_cost
+	array_agg(link order by mseq_number) as sections
 from
 (
 
@@ -187,6 +179,8 @@ on
 	cdms.cond_id = rdms.cond_id
 where
 	cond_type = 7
+and
+        seq_number = 1 -- only select the first item of the sequence
 union
 
 -- union with remaining link ids
@@ -205,13 +199,28 @@ where
 	cond_type = 7
 ) as t
 group by
-	mcond_id,
-	ar_auto,
-	ar_bus,
-	ar_carpool,
-	ar_pedstrn
+	mcond_id
 ;
-       
+
+--
+-- TABLE tempus.road_restriction_cost 
+INSERT INTO tempus.road_restriction_cost
+SELECT
+	cond_id::bigint as id,
+        cond_id::bigint as restriction_id,
+	case when ar_auto = 'Y' then 1 else 0 end
+	+ case when ar_bus = 'Y' then 8 else 0 end
+	--+ case when ar_taxis = 'Y' then ?? else 0 end
+	+ case when ar_carpool = 'Y' then 256 else 0 end
+	+ case when ar_pedstrn = 'Y' then 2 else 0 end
+	--+ case when ar_trucks = 'Y' then ?? else 0 end
+	as transport_types,
+        'Infinity'::float as cost
+FROM
+	_tempus_import.cdms as cdms
+WHERE
+        cond_type = 7;
+
 
 -- Remove import function (direction type)
 DROP FUNCTION _tempus_import.navteq_transport_direction(text, text, boolean);

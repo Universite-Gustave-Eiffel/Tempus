@@ -93,14 +93,23 @@ CREATE TABLE tempus.road_section
 -- TODO Add a CHECK on transport_type_* bitfields value
 
 
-CREATE TABLE tempus.road_road
+CREATE TABLE tempus.road_restriction
 (
 	id bigint PRIMARY KEY,
-        transport_types integer NOT NULL,
-	road_section bigint[] NOT NULL,
-	road_cost double precision NOT NULL
+	sections bigint[] NOT NULL -- id of road_section involved in the restriction
 );
 
+--
+-- cost of restriction per transport type
+-- one row may refer to many transport types with the same cost (since transport_types is a bitfield)
+-- there must not be two rows with the same transport type cost set
+CREATE TABLE tempus.road_restriction_cost
+(
+	id bigint PRIMARY KEY,
+        restriction_id bigint REFERENCES tempus.road_restriction NOT NULL,
+        transport_types integer NOT NULL, -- this is a bitfield here
+	cost double precision NOT NULL
+);
 
 
 --
@@ -338,3 +347,13 @@ as '
 select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) order by st_distance( geom, st_setsrid(st_point($1, $2), 2154)) asc limit 1
 '
 language 'SQL';
+
+DROP VIEW IF EXISTS tempus.forbidden_movements;
+CREATE OR REPLACE VIEW tempus.forbidden_movements AS
+SELECT
+	road_restriction.id,
+	road_restriction.sections,
+	st_union(road_section.geom) AS geom
+FROM tempus.road_section, tempus.road_restriction
+WHERE road_section.id = ANY (road_restriction.sections)
+GROUP BY road_restriction.id;
