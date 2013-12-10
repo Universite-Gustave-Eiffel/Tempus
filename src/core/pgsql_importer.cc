@@ -326,7 +326,11 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
     {
 
-        Db::Result res( connection_.exec( "SELECT DISTINCT s.network_id, n.id, n.psname, n.location_type, n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section FROM tempus.pt_stop as n JOIN tempus.pt_section as s ON s.stop_from = n.id OR s.stop_to = n.id ORDER by n.id" ) );
+        Db::Result res( connection_.exec( "select distinct on (n.id) "
+                                          "s.network_id, n.id, n.psname, n.location_type, "
+                                          "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
+                                          "from tempus.pt_stop as n, tempus.pt_section as s "
+                                          "where s.stop_from = n.id or s.stop_to = n.id" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             PublicTransport::Stop stop;

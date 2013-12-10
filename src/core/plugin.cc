@@ -423,7 +423,7 @@ Result& Plugin::result()
                     // also get the road_name where the pt stop is attached to
                     std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), t2.road_name from "
                                                          "(select geom from tempus.road_node where id=%1%) as t1, "
-                                                         "(select geom, rs.road_name from tempus.pt_stop as pt, "
+                                                         "(select pt.geom, rs.road_name from tempus.pt_stop as pt, "
                                                          "tempus.road_section as rs where rs.id = pt.road_section_id "
                                                          "and pt.id=%2%) as t2" ) %
                                           road_id %
