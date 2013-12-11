@@ -461,7 +461,10 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
 
     // restriction nodes
     db_id_t expected_nodes[][4] = { { 22587, 22510, 22451, 0 },
-        { 21801, 21652, 21712, 21691 }
+                                    { 21801, 21652, 21712, 21691 },
+                                    // forbidden u-turn :
+                                    { 21934, 21906, 21934 },
+                                    { 21906, 21934, 21906 }
     };
 
     Road::Restrictions restrictions( importer->import_turn_restrictions( graph.road ) );
@@ -469,15 +472,21 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
     Road::Restrictions::RestrictionSequence::const_iterator it;
     int i = 0;
 
-    for ( it = restrictions.restrictions.begin(); it != restrictions.restrictions.end(); ++it, i++ ) {
-        Road::Restriction::VertexSequence seq( it->to_vertex_sequence( graph.road ) );
-        int j = 0;
+    for ( it = restrictions.restrictions().begin(); it != restrictions.restrictions().end(); ++it, i++ ) {
+        Road::Restriction::EdgeSequence seq( it->road_edges() );
 
-        for ( Road::Restriction::VertexSequence::const_iterator itt = seq.begin(); itt != seq.end(); ++itt, j++ ) {
-            BOOST_CHECK_EQUAL( graph.road[ *itt ].db_id, expected_nodes[i][j] );
+        for ( size_t j = 0; j < seq.size() + 1; ++j ) {
+            Road::Vertex v;
+            if ( j == 0 ) {
+                v = source ( seq[j], graph.road );
+            }
+            else {
+                v = target ( seq[j-1], graph.road );
+            }
+            BOOST_CHECK_EQUAL( graph.road[ v ].db_id, expected_nodes[i][j] );
         }
     }
-    BOOST_CHECK_EQUAL(i, 2);
+    BOOST_CHECK_EQUAL(i, 4);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -120,7 +120,7 @@ public:
                 const PublicTransport::Graph& pt_graph = *( ei->target.pt_graph );
                 const Road::Graph& road_graph = *( ei->source.road_graph );
                 double abscissa = pt_graph[ei->target.pt_vertex].abscissa_road_section;
-                Road::Edge e = pt_graph[ ei->target.pt_vertex ].road_section;
+                Road::Edge e = pt_graph[ ei->target.pt_vertex ].road_edge;
 
                 // if we are coming from the start point of the road
                 if ( source( e, road_graph ) == ei->source.road_vertex ) {
@@ -141,7 +141,7 @@ public:
                 const PublicTransport::Graph& pt_graph = *( ei->source.pt_graph );
                 const Road::Graph& road_graph = *( ei->target.road_graph );
                 double abscissa = pt_graph[ei->source.pt_vertex].abscissa_road_section;
-                Road::Edge e = pt_graph[ ei->source.pt_vertex ].road_section;
+                Road::Edge e = pt_graph[ ei->source.pt_vertex ].road_edge;
 
                 // if we are coming from the start point of the road
                 if ( source( e, road_graph ) == ei->target.road_vertex ) {
@@ -220,7 +220,7 @@ public:
                     throw std::runtime_error( "Can't find the road edge !" );
                 }
 
-                step->road_section = e;
+                step->road_edge = e;
             }
 
             else if ( previous->type == Multimodal::Vertex::PublicTransport && it->type == Multimodal::Vertex::PublicTransport ) {

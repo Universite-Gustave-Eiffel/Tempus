@@ -228,7 +228,7 @@ public:
 
             Roadmap::RoadStep* step = new Roadmap::RoadStep();
             roadmap.steps.push_back( step );
-            step->road_section = e;
+            step->road_edge = e;
             step->costs[CostDistance] += road_graph[e].length;
             roadmap.total_costs[CostDistance] += road_graph[e].length;
 

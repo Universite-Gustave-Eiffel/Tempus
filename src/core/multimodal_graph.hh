@@ -103,6 +103,10 @@ struct Edge {
     };
 
     ///
+    /// The road edge involved
+    Road::Edge road_edge;
+
+    ///
     /// Get the connection type of the edge
     ConnectionType connection_type() const;
 
@@ -363,7 +367,7 @@ protected:
 /// Number of vertices. Constant time
 size_t num_vertices( const Graph& graph );
 ///
-/// Number of edges. Constant time
+/// Number of edges. O(n) for n number of PT and POI edges
 size_t num_edges( const Graph& graph );
 ///
 /// Returns source vertex from an edge. Constant time (linear in number of PT networks)
@@ -381,6 +385,8 @@ std::pair<EdgeIterator, EdgeIterator> edges( const Graph& graph );
 ///
 /// Returns a range of EdgeIterator that allows to iterate on out edges of a vertex. Constant time
 std::pair<OutEdgeIterator, OutEdgeIterator> out_edges( const Vertex& v, const Graph& graph );
+///
+/// Number of out edges for a vertex.
 size_t out_degree( const Vertex& v, const Graph& graph );
 
 ///

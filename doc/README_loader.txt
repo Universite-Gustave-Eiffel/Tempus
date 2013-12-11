@@ -65,5 +65,7 @@ raster2pgsql -I -t 20x20 -s 2154 ~/data/dem/srtm_36_03_2154.tif | psql tempus_te
 
 insert into tempus.road_restriction values (1, array[45588,45053] );
 insert into tempus.road_restriction values (2, array[44884,14023,44942] );
+insert into tempus.road_restriction values (3, array[45049, 45049] );
 insert into tempus.road_restriction_cost values (1, 1, 1031, 'Infinity'::float);
 insert into tempus.road_restriction_cost values (2, 2, 1031, 'Infinity'::float);
+insert into tempus.road_restriction_cost values (3, 3, 1031, 'Infinity'::float);

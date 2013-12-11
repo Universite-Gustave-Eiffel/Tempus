@@ -107,33 +107,66 @@ typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 ///
 /// refers to the 'road_restriction' DB's table
 /// This structure reflects turn restrictions on the road network
-struct Restriction : public Base {
-    ///
-    /// Array of road sections
-    std::vector<Edge> road_sections;
-
+class Restriction : public Base {
+public:
     ///
     /// Map of cost associated for each transport type
-    /// the key is here a bitfield (refer to TraansportType)
+    /// the key is here a bitfield (refer to TransportType)
     /// the value is a cost, as double (including infinity)
     typedef std::map<int, double> CostPerTransport;
-    CostPerTransport cost_per_transport;
 
+    typedef std::vector<Edge> EdgeSequence;
+
+    Restriction( db_id_t id, const EdgeSequence& edge_seq, const CostPerTransport& cost = CostPerTransport() ) :
+        road_edges_( edge_seq ),
+        cost_per_transport_( cost )
+    {
+        db_id = id;
+    }
+
+    const EdgeSequence& road_edges() const {
+        return road_edges_;
+    }
+
+    const CostPerTransport& cost_per_transport() const {
+        return cost_per_transport_;
+    }
+    CostPerTransport& cost_per_transport() {
+        return cost_per_transport_;
+    }
+private:
     ///
-    /// Function to convert sequences of edges into sequences of nodes
-    typedef std::list<Vertex> VertexSequence;
-    VertexSequence to_vertex_sequence( const Graph& ) const;
+    /// Array of road edges
+    EdgeSequence road_edges_;
+
+    CostPerTransport cost_per_transport_;
 };
 
-struct Restrictions {
+class Restrictions {
+public:
+    Restrictions( const Graph& road_graph ) : road_graph_(&road_graph) {}
+
     ///
-    /// List of restrictions
+    /// List of restrictions (as edges)
     typedef std::list<Restriction> RestrictionSequence;
-    RestrictionSequence restrictions;
+
+    const RestrictionSequence& restrictions() const {
+        return restrictions_;
+    }
+
+    ///
+    /// Add a restriction
+    /// edges is a sequence of Edge, considered here as non-oriented (from the database)
+    void add_restriction( db_id_t id,
+                          const Restriction::EdgeSequence& edges,
+                          const Restriction::CostPerTransport& cost );
+
+private:
+    RestrictionSequence restrictions_;
 
     ///
     /// Pointer to the underlying road graph
-    const Graph* road_graph;
+    const Graph* road_graph_;
 };
 }  // Road namespace
 
@@ -153,9 +186,16 @@ struct POI : public Base {
     int parking_transport_type; ///< bitfield of TransportTypeId
 
     ///
-    /// Link to a road section.
-    /// Must not be null.
-    Road::Edge road_section;
+    /// Link to a road edge
+    Road::Edge road_edge;
+
+    ///
+    /// optional link to the opposite road edge
+    /// considered null if == to road_edge
+    Road::Edge opposite_road_edge;
+
+    ///
+    /// Number between 0 and 1 : position of the POI on the main road section
     double abscissa_road_section;
 };
 } // Tempus namespace
