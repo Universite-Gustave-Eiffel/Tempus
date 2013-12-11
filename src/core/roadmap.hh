@@ -62,7 +62,7 @@ public:
 
         ///
         /// The road section where to start from
-        Road::Edge road_section;
+        Road::Edge road_edge;
 
         ///
         /// The road name (field not present in a Road::Section, so copied from the DB here)

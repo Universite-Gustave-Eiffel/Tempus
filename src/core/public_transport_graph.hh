@@ -76,9 +76,16 @@ struct Stop : public Base {
     Vertex parent_station;
     bool has_parent;
 
-    /// link to a road section
-    /// must not be null
-    Road::Edge road_section;
+    /// link to a road edge
+    Road::Edge road_edge;
+
+    ///
+    /// optional link to the opposite road edge
+    /// considered null if == to road_edge
+    Road::Edge opposite_road_edge;
+
+    ///
+    /// Number between 0 and 1 : position of the stop on the main road section
     double abscissa_road_section;
 
     ///

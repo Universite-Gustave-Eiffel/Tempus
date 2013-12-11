@@ -352,7 +352,7 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         PublicTransport::Vertex r_source = source_.pt_vertex;
 
         if ( stop2road_connection_ == 0 ) {
-            mm_target = Multimodal::Vertex( &graph_->road, boost::target( ( *pt_graph )[ r_source ].road_section, graph_->road ) );
+            mm_target = Multimodal::Vertex( &graph_->road, boost::target( ( *pt_graph )[ r_source ].road_edge, graph_->road ) );
         }
         else {
             PublicTransport::Vertex r_target = boost::target( *pt_it_, *pt_graph );
@@ -361,7 +361,7 @@ Multimodal::Edge OutEdgeIterator::dereference() const
     }
     else if ( source_.type == Vertex::Poi ) {
         if ( poi2road_connection_ == 0 ) {
-            mm_target = Multimodal::Vertex( &graph_->road, boost::target( source_.poi->road_section, graph_->road ) );
+            mm_target = Multimodal::Vertex( &graph_->road, boost::target( source_.poi->road_edge, graph_->road ) );
         }
     }
 

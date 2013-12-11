@@ -153,9 +153,16 @@ struct POI : public Base {
     int parking_transport_type; ///< bitfield of TransportTypeId
 
     ///
-    /// Link to a road section.
-    /// Must not be null.
-    Road::Edge road_section;
+    /// Link to a road edge
+    Road::Edge road_edge;
+
+    ///
+    /// optional link to the opposite road edge
+    /// considered null if == to road_edge
+    Road::Edge opposite_road_edge;
+
+    ///
+    /// Number between 0 and 1 : position of the POI on the main road section
     double abscissa_road_section;
 };
 } // Tempus namespace

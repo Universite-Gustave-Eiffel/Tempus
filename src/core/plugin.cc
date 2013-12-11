@@ -462,8 +462,8 @@ Result& Plugin::result()
                                                      " THEN ST_AsBinary(geom)"
                                                      " ELSE ST_AsBinary(ST_Reverse(geom)) END"
                                                      " FROM tempus.road_section WHERE id=%2%" ) %
-                                      road_graph[ source(road_graph[step->road_section].edge, road_graph) ].db_id %
-                                      road_graph[step->road_section].db_id ).str();
+                                      road_graph[ source(step->road_edge, road_graph) ].db_id %
+                                      road_graph[step->road_edge].db_id ).str();
                     Db::Result res = db_.exec( q );
                     step->road_name = res[0][0].as<std::string>();
                     std::string wkb = res[0][1].as<std::string>();
@@ -482,7 +482,7 @@ Result& Plugin::result()
                 //
                 movement = Roadmap::RoadStep::GoAhead;
 
-                on_roundabout =  road_graph[step->road_section].is_roundabout;
+                on_roundabout =  road_graph[step->road_edge].is_roundabout;
 
                 bool action = false;
 
@@ -501,7 +501,7 @@ Result& Plugin::result()
 
                 if ( previous_section && !on_roundabout && !action ) {
                     std::string q1 = ( boost::format( "SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
-                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_section].db_id ).str();
+                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge].db_id ).str();
                     Db::Result res = db_.exec( q1 );
                     double pi = 3.14159265;
                     double z1 = res[0][0].as<double>() / pi * 180.0;
@@ -529,7 +529,7 @@ Result& Plugin::result()
                     last_step->distance_km = -1.0;
                 }
 
-                previous_section = road_graph[step->road_section].db_id;
+                previous_section = road_graph[step->road_edge].db_id;
                 was_on_roundabout = on_roundabout;
                 last_step = step;
             }

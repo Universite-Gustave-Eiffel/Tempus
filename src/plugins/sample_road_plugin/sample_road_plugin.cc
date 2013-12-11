@@ -218,7 +218,7 @@ public:
                 if ( step == 0 || e != current_road ) {
                     step = new Roadmap::RoadStep();
                     roadmap.steps.push_back( step );
-                    step->road_section = e;
+                    step->road_edge = e;
                     current_road = e;
                 }
 

@@ -366,7 +366,21 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            stop.road_section = road_sections_map[ road_section ];
+            stop.road_edge = road_sections_map[ road_section ];
+            // look for an opposite road edge
+            {
+                Road::Edge opposite_edge;
+                bool found;
+                boost::tie( opposite_edge, found ) = edge( target( stop.road_edge, graph.road ),
+                                                           source( stop.road_edge, graph.road ),
+                                                           graph.road );
+                if ( found ) {
+                    stop.opposite_road_edge = opposite_edge;
+                }
+                else {
+                    stop.opposite_road_edge = stop.road_edge;
+                }
+            }
 
             res[i][j++] >> stop.zone_id;
             res[i][j++] >> stop.abscissa_road_section;
@@ -389,7 +403,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         PublicTransport::VertexIterator vi, vi_end;
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
-            Road::Edge rs = g[ *vi ].road_section;
+            Road::Edge rs = g[ *vi ].road_edge;
             road_graph[ rs ].stops.push_back( &g[*vi] );
         }
     }
@@ -460,7 +474,21 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            poi.road_section = road_sections_map[ road_section_id ];
+            poi.road_edge = road_sections_map[ road_section_id ];
+            // look for an opposite road edge
+            {
+                Road::Edge opposite_edge;
+                bool found;
+                boost::tie( opposite_edge, found ) = edge( target( poi.road_edge, graph.road ),
+                                                           source( poi.road_edge, graph.road ),
+                                                           graph.road );
+                if ( found ) {
+                    poi.opposite_road_edge = opposite_edge;
+                }
+                else {
+                    poi.opposite_road_edge = poi.road_edge;
+                }
+            }
 
             res[i][5] >> poi.abscissa_road_section;
 
@@ -473,7 +501,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     Multimodal::Graph::PoiList::iterator pit;
 
     for ( pit = graph.pois.begin(); pit != graph.pois.end(); pit++ ) {
-        Road::Edge rs = pit->second.road_section;
+        Road::Edge rs = pit->second.road_edge;
         graph.road[ rs ].pois.push_back( &pit->second );
     }
 
