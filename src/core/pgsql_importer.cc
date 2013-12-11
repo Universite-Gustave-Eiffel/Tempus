@@ -515,12 +515,11 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
 Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& graph )
 {
-    Road::Restrictions restrictions;
-    restrictions.road_graph = &graph;
+    Road::Restrictions restrictions( graph );
 
     // temp restriction storage
-    typedef std::map<db_id_t, Road::Restriction> RestrictionMap;
-    RestrictionMap restriction_map;
+    typedef std::map<db_id_t, Road::Restriction::EdgeSequence> EdgesMap;
+    EdgesMap edges_map;
 
     {
         Db::Result res( connection_.exec( "SELECT id, sections FROM tempus.road_restriction" ) );
@@ -534,10 +533,10 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
         }
 
         for ( size_t i = 0; i < res.size(); i++ ) {
-            Road::Restriction road_restriction;
+            db_id_t db_id;
 
-            res[i][0] >> road_restriction.db_id;
-            BOOST_ASSERT( road_restriction.db_id > 0 );
+            res[i][0] >> db_id;
+            BOOST_ASSERT( db_id > 0 );
 
             std::string array_str;
             res[i][1] >> array_str;
@@ -550,18 +549,19 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             std::string n_str;
             bool invalid = false;
 
+            Road::Restriction::EdgeSequence edges;
             while ( std::getline( array_sub, n_str, ',' ) ) {
                 std::istringstream n_stream( n_str );
                 db_id_t id;
                 n_stream >> id;
 
                 if ( road_sections_map.find( id ) == road_sections_map.end() ) {
-                    CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << road_restriction.db_id << " rejected" << endl;
+                    CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << db_id << " rejected" << endl;
                     invalid = true;
                     break;
                 }
 
-                road_restriction.road_sections.push_back( road_sections_map[id] );
+                edges.push_back( road_sections_map[id] );
             }
 
             if ( invalid ) {
@@ -569,13 +569,14 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             }
 
             // store the current road_restriction
-            restriction_map[ road_restriction.db_id ] = road_restriction;
+            edges_map[ db_id ] = edges;
         }
     }
 
     // get restriction costs
     {
         Db::Result res( connection_.exec( "SELECT id, restriction_id, transport_types, cost FROM tempus.road_restriction_cost" ) );
+        std::map<db_id_t, Road::Restriction::CostPerTransport> costs;
         for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t id, restr_id;
             int transports;
@@ -586,20 +587,17 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             res[i][2] >> transports;
             res[i][3] >> cost;
 
-            if ( restriction_map.find( restr_id ) == restriction_map.end() ) {
+            if ( edges_map.find( restr_id ) == edges_map.end() ) {
                 CERR << "Cannot find road_restriction of ID " << restr_id << " for restriction_cost of ID " << id << endl;
                 continue;
             }
             // add cost to the map
-            restriction_map[ restr_id ].cost_per_transport[ transports ] = cost;
+            costs[restr_id][transports] = cost;
         }
-    }
-
-    // get entries from the map and store them into the real structure
-    RestrictionMap::iterator it;
-    while ( ( it = restriction_map.begin() ) != restriction_map.end() ) {
-        restrictions.restrictions.push_back( it->second );
-        restriction_map.erase( it );
+        for ( std::map<db_id_t, Road::Restriction::CostPerTransport>::const_iterator it = costs.begin();
+              it != costs.end(); ++it ) {
+            restrictions.add_restriction( it->first, edges_map[ it->first ], it->second );
+        }
     }
     return restrictions;
 }

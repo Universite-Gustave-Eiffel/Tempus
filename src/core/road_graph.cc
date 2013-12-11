@@ -19,48 +19,71 @@
 
 namespace Tempus {
 namespace Road {
-Restriction::VertexSequence Restriction::to_vertex_sequence( const Graph& graph ) const
+
+void Restrictions::add_restriction( db_id_t id,
+                                    const Restriction::EdgeSequence& edge_seq,
+                                    const Restriction::CostPerTransport& cost )
 {
-    Restriction::VertexSequence seq;
+    Restriction::EdgeSequence road_edges;
+    const Road::Graph& graph = *road_graph_;
 
-    if ( road_sections.size() == 0 ) {
-        return seq;
+    if ( edge_seq.size() == 0 ) {
+        return;
     }
 
-    if ( road_sections.size() == 1 ) {
+    if ( edge_seq.size() == 1 ) {
         // should not happen, push back in an arbitrary order
-        Edge edge( road_sections[0] );
-        seq.push_back( source( edge, graph ) );
-        seq.push_back( target( edge, graph ) );
-        return seq;
+        restrictions_.push_back( Restriction( id, edge_seq, cost ) );
+        return;
     }
 
-    Edge edge1( road_sections[0] );
-    Edge edge2( road_sections[1] );
+    Edge edge1( edge_seq[0] );
+    Edge edge2( edge_seq[1] );
 
-    if ( ( target( edge1, graph ) == source( edge2, graph ) ) ||
-            ( target( edge1, graph ) == target( edge2, graph ) ) ) {
-        seq.push_back( source( edge1, graph ) );
-        seq.push_back( target( edge1, graph ) );
+    // special case for u-turns : duplicate and reverse
+    if ( edge_seq.size() == 2 && edge1 == edge2 ) {
+        Restriction::EdgeSequence seq2;
+        edge2 = edge( target( edge1, graph ),
+                     source( edge1, graph ),
+                     graph ).first;
+        
+        seq2.push_back( edge1 );
+        seq2.push_back( edge2 );
+        restrictions_.push_back( Restriction( id, seq2, cost ) );
+
+        seq2.clear();
+        seq2.push_back( edge2 );
+        seq2.push_back( edge1 );
+        restrictions_.push_back( Restriction( id, seq2, cost ) );
+        return;
     }
-    else if ( ( source( edge1, graph ) == source( edge2, graph ) ) ||
-              ( source( edge1, graph ) == target( edge2, graph ) ) ) {
-        seq.push_back( target( edge1, graph ) );
-        seq.push_back( source( edge1, graph ) );
-    }
 
-    for ( size_t i = 1; i < road_sections.size(); ++i ) {
-        Edge edge( road_sections[i] );
+    for ( size_t i = 0; i < edge_seq.size() - 1; ++i ) {
+        edge1 = edge_seq[i];
+        edge2 = edge_seq[i+1];
 
-        if ( source( edge, graph ) == seq.back() ) {
-            seq.push_back( target( edge, graph ) );
+        if ( source( edge1, graph ) == source( edge2, graph ) ||
+             source( edge1, graph ) == target( edge2, graph ) ) {
+            edge1 = edge( target( edge1, graph ),
+                          source( edge1, graph ),
+                          graph ).first;
         }
-        else {
-            seq.push_back( source( edge, graph ) );
-        }
+        road_edges.push_back( edge1 );
     }
 
-    return seq;
+    if ( source( edge2, graph ) == target( edge1, graph ) ) {
+        road_edges.push_back( edge2 );
+    }
+    else {
+        edge2 = edge( target( edge2, graph ),
+                              source( edge2, graph ),
+                              graph ).first;
+        road_edges.push_back( edge2 );
+    }
+
+    restrictions_.push_back( Restriction( id, road_edges, cost ) );
 }
+
+
 }
 }
