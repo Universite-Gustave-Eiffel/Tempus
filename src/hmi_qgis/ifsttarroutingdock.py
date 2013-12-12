@@ -205,6 +205,9 @@ class IfsttarRoutingDock(QDockWidget):
         dest.set_canvas( self.canvas )
         self.ui.stepBox.addWidget( dest )
 
+        # set the minimum height of the scroll area to "one stepselector"
+        self.ui.scrollArea.setMinimumHeight( dest.sizeHint().height() )
+
         # set pin points updater
         self.ui.origin.updateCallback = update_pinpoints
         self.ui.origin.dock = self
