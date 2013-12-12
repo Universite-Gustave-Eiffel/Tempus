@@ -124,9 +124,10 @@
         <string>Query</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
+<!--        <item>
          <widget class="StepSelector" name="origin" native="true"/>
         </item>
+-->
         <item>
          <layout class="QVBoxLayout" name="stepBox"/>
         </item>

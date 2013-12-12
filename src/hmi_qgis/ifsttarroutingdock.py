@@ -191,9 +191,17 @@ class IfsttarRoutingDock(QDockWidget):
         self.ui.roadmapTable.setHorizontalHeader(QHeaderView(Qt.Horizontal))
         self.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
 
-        # add the Destination chooser
+        # add the origin chooser
+        self.ui.origin = StepSelector( self.ui.verticalLayout, "Origin",
+                                       dock = self )
+        self.ui.verticalLayout.insertWidget( 0, self.ui.origin )
         self.ui.origin.set_canvas( self.canvas )
-        dest = StepSelector( self.ui.stepBox, "Destination", False, self, update_pinpoints)
+
+        # add the Destination chooser
+        dest = StepSelector( self.ui.stepBox, "Destination",
+                             coordinates_only = False,
+                             dock = self,
+                             updateCall = update_pinpoints)
         dest.set_canvas( self.canvas )
         self.ui.stepBox.addWidget( dest )
 
@@ -202,7 +210,9 @@ class IfsttarRoutingDock(QDockWidget):
         self.ui.origin.dock = self
 
         # add the private parking chooser
-        self.parkingChooser = StepSelector( self.ui.queryPage, "Private parking location", True )
+        self.parkingChooser = StepSelector( self.ui.queryPage, "Private parking location",
+                                            coordinates_only = True,
+                                            dock = self )
         self.parkingChooser.set_canvas( self.canvas )
         self.ui.parkingLayout.addWidget( self.parkingChooser )
 
@@ -358,3 +368,22 @@ class IfsttarRoutingDock(QDockWidget):
         for i in range(0, nsteps-1):
             self.ui.stepBox.itemAt(0).widget().onAdd()
 
+    def reset( self ):
+        self.newQuery = True
+
+    def resetCoordinates( self ):
+        "called by StepSelector on coordinate modification"
+        if self.newQuery:
+            c = self.get_coordinates()
+            self.set_coordinates( [ [] for x in c ] )
+            self.set_parking( [] )
+            # remove layers
+            to_remove = ['Tempus_pin_points', 'Tempus_private_parking', 'Tempus_Roadmap_']
+            to_remove_ids = []
+            maps = QgsMapLayerRegistry.instance().mapLayers()
+            for k,v in maps.items():
+                for l in to_remove:
+                    if v.name()[0:len(l)] == l:
+                        to_remove_ids.append( v.id() )
+            QgsMapLayerRegistry.instance().removeMapLayers( to_remove_ids )
+            self.newQuery = False

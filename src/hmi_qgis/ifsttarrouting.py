@@ -296,7 +296,9 @@ class IfsttarRouting:
 
         # 'Query' tab
         elif tab == 2:
-            self.displayTransportAndNetworks()
+                # prepare for a new query
+                self.dlg.reset()
+                self.displayTransportAndNetworks()
 
     def loadHistory( self ):
         #
