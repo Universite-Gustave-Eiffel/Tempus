@@ -91,7 +91,7 @@ class StepSelector( QFrame ):
         if name != 'Origin':
             self.pvadCheck = QCheckBox( "Private vehicule at destination" )
             self.layout.addWidget( self.pvadCheck )
-            
+
     def set_canvas( self, canvas ):
         self.canvas = canvas
 
@@ -159,6 +159,8 @@ class StepSelector( QFrame ):
             self.updateCallback( self.dock )
 
     def onSelect( self ):
+        # will reset coordinates if needed
+        self.dock.resetCoordinates()
         QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
         self.canvas.setMapTool(self.clickTool)
 
