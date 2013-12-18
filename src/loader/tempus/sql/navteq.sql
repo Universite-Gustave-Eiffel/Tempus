@@ -36,7 +36,7 @@ INSERT INTO tempus.road_node
 
 update tempus.road_node
 set
-        geom = ST_Force_3DZ(ST_SetSRID(ST_StartPoint(st.geom),2154))
+        geom = ST_Force_3DZ(ST_Transform(ST_StartPoint(st.geom),2154))
 from
         _tempus_import.streets as st
 where
