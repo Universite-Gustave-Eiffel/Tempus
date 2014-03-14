@@ -458,12 +458,10 @@ struct vertex_or_edge {
 };
 template <class G>
 struct vertex_or_edge<G, boost::vertex_property_tag> {
-    typedef typename boost::vertex_bundle_type<G>::type property_type;
     typedef typename boost::graph_traits<G>::vertex_descriptor descriptor;
 };
 template <class G>
 struct vertex_or_edge<G, boost::edge_property_tag> {
-    typedef typename boost::edge_bundle_type<G>::type property_type;
     typedef typename boost::graph_traits<G>::edge_descriptor descriptor;
 };
 
