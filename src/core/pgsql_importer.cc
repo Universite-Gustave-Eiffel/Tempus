@@ -281,9 +281,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 Road::Edge e;
                 bool is_added, found;
                 boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
-                if ( found ) {
+                /*if ( found ) {
                     continue;
-                }
+                }*/
 
                 boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
                 BOOST_ASSERT( is_added );
@@ -295,9 +295,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 Road::Edge e;
                 bool is_added, found;
                 boost::tie( e, found ) = boost::edge( v_to, v_from, road_graph );
-                if ( found ) {
+                /*if ( found ) {
                     continue;
-                }
+                }*/
 
                 boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, road_graph );
                 BOOST_ASSERT( is_added );
