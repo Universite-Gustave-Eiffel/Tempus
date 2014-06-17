@@ -102,9 +102,14 @@ public:
     /// For a trip from station A to station C that passes through the station B,
     /// 2 steps are stored, each with the same trip_id.
     struct PublicTransportStep : public Step {
-        PublicTransportStep() : Step( Step::PublicTransportStep ) {}
+        PublicTransportStep() : Step( Step::PublicTransportStep ), wait(0.0) {}
 
         db_id_t network_id;
+
+        ///
+        /// Wait time at this step
+        double wait; 
+
         ///
         /// The public transport section part of the step
         PublicTransport::Edge section;
