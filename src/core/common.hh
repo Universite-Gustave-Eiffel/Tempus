@@ -233,7 +233,11 @@ enum CostId {
     CostCarbon,
     CostCalories,
     CostNumberOfChanges,
-    CostVariability
+    CostVariability,
+    CostPathComplexity,
+    CostElevation,
+    CostSecurity,
+    CostLandmark
 };
 
 ///

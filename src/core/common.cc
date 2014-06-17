@@ -73,6 +73,14 @@ std::string cost_name( int cost )
         return "number of changes";
     case CostVariability:
         return "variability";
+    case CostPathComplexity:
+        return "complexity";
+    case CostElevation:
+        return "elevation";
+    case CostSecurity:
+        return "security";
+    case CostLandmark:
+        return "landmark";
     }
 
     return "--";
@@ -91,6 +99,8 @@ std::string cost_unit( int cost )
         return "g/m^3";
     case CostCalories:
         return "kcal";
+    case CostElevation:
+        return "m";
     }
 
     return "";
