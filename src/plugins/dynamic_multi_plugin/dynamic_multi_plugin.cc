@@ -179,12 +179,11 @@ namespace Tempus {
             get_option( "car_parking_search_time", car_parking_search_time_ ); 
     	
             // If current date changed, reload timetable / frequency
-            std::cout << "current_day " << current_day_ << std::endl;
-            std::cout << "request day " << request_.steps[0].constraint.date_time.date() << std::endl;
             if ( current_day_ != request_.steps[0].constraint.date_time.date() )  {
         	current_day_ = request_.steps[0].constraint.date_time.date();
 
                 // cache graph id to descriptor
+                // FIXME - integrate the cache into the graphs ?
                 std::map<db_id_t, PublicTransport::Vertex> vertex_from_id_;
                 PublicTransport::Graph::vertex_iterator vit, vend;
                 for ( boost::tie( vit, vend ) = vertices( pt_graph ); vit != vend; ++vit ) {
