@@ -33,6 +33,20 @@
 using namespace std;
 
 namespace Tempus {
+
+    class WeightCalculator
+    {
+    public:
+        double operator() ( Road::Graph& graph, Road::Edge& e ) {
+            if ( (graph[e].transport_type & 1) == 0 ) {
+                // allowed transport types do not include car
+                // It is an oversimplification here : it must depends on allowed transport types selected by the user
+                return std::numeric_limits<double>::infinity();
+            }
+            return graph[e].length;
+        }
+    };
+
 class RoadPlugin : public Plugin {
 public:
     static const OptionDescriptionList option_descriptions() {
@@ -91,19 +105,6 @@ public:
     }
 
     virtual void process() {
-        class WeightCalculator
-        {
-        public:
-            double operator() ( Road::Graph& graph, Road::Edge& e ) {
-                if ( (graph[e].transport_type & 1) == 0 ) {
-                    // allowed transport types do not include car
-                    // It is an oversimplification here : it must depends on allowed transport types selected by the user
-                    return std::numeric_limits<double>::infinity();
-                }
-                return graph[e].length;
-            }
-        };
-
         Road::Graph& road_graph = graph_.road;
 
         Timer timer;
