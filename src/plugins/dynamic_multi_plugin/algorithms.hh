@@ -54,7 +54,8 @@ namespace Tempus {
         vertex_queue.push( source_object ); 
 		
         Object min_object = source_object; 
-		
+
+        std::cout << "request allowed modes" << request_allowed_modes << std::endl;
         while ( !vertex_queue.empty() ) {
             vertex_queue.pop(); 
 
@@ -95,8 +96,9 @@ namespace Tempus {
                                                                  initial_trip_id,
                                                                  final_trip_id,
                                                                  wait_time );
-                            if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) )
-                                cost += cost_calculator.penalty( automaton.automaton_graph_, s, mode_label ) ; 
+                            if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
+                                cost += cost_calculator.penalty( automaton.automaton_graph_, s, mode_label ) ;
+                            }
                         }
 						
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( min_pi + cost < new_pi ) ) {
@@ -105,18 +107,18 @@ namespace Tempus {
 
                             put( predecessor_map, new_object, min_object ); 
                             put( wait_map, min_object, wait_time ); 
-							
+
                             vertex_queue.push( new_object ); 
-							
+
                             //vis.edge_relaxed( current_edge, mode_label, graph ); 
                         }
                     }
-					
-                    //vis.finish_vertex( min_object, graph ); 
-					
-                    min_object = vertex_queue.top(); 					
                 }
             }
+
+            //vis.finish_vertex( min_object, graph ); 
+
+            min_object = vertex_queue.top();
         }
     }
 	

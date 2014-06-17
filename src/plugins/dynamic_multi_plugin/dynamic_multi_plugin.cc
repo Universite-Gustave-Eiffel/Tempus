@@ -88,7 +88,7 @@ namespace Tempus {
         }
 
         DynamicMultiPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
-            current_day_ = boost::gregorian::from_string("1970/1/1"); 
+            current_day_ = boost::gregorian::from_string("2013/11/12"); 
         }
 
         virtual ~DynamicMultiPlugin() {
@@ -179,8 +179,18 @@ namespace Tempus {
             get_option( "car_parking_search_time", car_parking_search_time_ ); 
     	
             // If current date changed, reload timetable / frequency
+            std::cout << "current_day " << current_day_ << std::endl;
+            std::cout << "request day " << request_.steps[0].constraint.date_time.date() << std::endl;
             if ( current_day_ != request_.steps[0].constraint.date_time.date() )  {
-        	current_day_ = request_.steps[0].constraint.date_time.date(); 
+        	current_day_ = request_.steps[0].constraint.date_time.date();
+
+                // cache graph id to descriptor
+                std::map<db_id_t, PublicTransport::Vertex> vertex_from_id_;
+                PublicTransport::Graph::vertex_iterator vit, vend;
+                for ( boost::tie( vit, vend ) = vertices( pt_graph ); vit != vend; ++vit ) {
+                    vertex_from_id_[ pt_graph[*vit].db_id ] = *vit;
+                }
+
         	if (timetable_frequency_ == 0) // timetable model 
         	{
                     // Charging necessary timetable data for request processing
@@ -211,14 +221,13 @@ namespace Tempus {
                     for ( size_t i = 0; i < res.size(); i++ ) {
                         PublicTransport::Vertex departure, arrival; 
                         PublicTransport::Edge e; 
-                        bool found; 
-                        boost::tie( departure, found ) = vertex_from_id( res[i][0].as<int>(), pt_graph );
-                        boost::tie( arrival, found ) = vertex_from_id( res[i][1].as<int>(), pt_graph ); 
+                        bool found;
+                        departure = vertex_from_id_[ res[i][0].as<db_id_t>() ];
+                        arrival = vertex_from_id_[ res[i][1].as<db_id_t>() ]; 
                         boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
                         TimetableData t; 
                         t.trip_id=res[i][2].as<int>(); 
                         t.arrival_time=res[i][4].as<double>(); 
-					
                         timetable_.insert( std::make_pair(e, map<double, TimetableData>() ) ); 
                         timetable_.at(e).insert( std::make_pair( res[i][3].as<double>(), t ) ) ; 				
                     }
@@ -255,8 +264,8 @@ namespace Tempus {
                         PublicTransport::Vertex departure, arrival; 
                         PublicTransport::Edge e; 
                         bool found; 
-                        boost::tie( departure,found ) = vertex_from_id( res[i][0].as<int>(), pt_graph );
-                        boost::tie( arrival, found ) = vertex_from_id( res[i][1].as<int>(), pt_graph ); 
+                        departure = vertex_from_id_[ res[i][0].as<db_id_t>() ];
+                        arrival = vertex_from_id_[ res[i][1].as<db_id_t>() ];
                         boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
                         FrequencyData f; 
                         f.trip_id=res[i][2].as<int>(); 
@@ -274,68 +283,67 @@ namespace Tempus {
             // Load vehicle positions
             for ( Multimodal::Graph::PoiList::const_iterator p = graph_.pois.begin(); p != graph_.pois.end(); p++ )
             {
-        	if (p->second.poi_type == POI::TypeSharedCarPoint) 
-                    available_vehicles_.at(Multimodal::Vertex(&p->second)) = 2 ; 
+        	if (p->second.poi_type == POI::TypeSharedCarPoint)
+                    available_vehicles_.at(Multimodal::Vertex(&p->second)) = 2;
         	else if (p->second.poi_type == POI::TypeSharedCyclePoint)
-                    available_vehicles_[Multimodal::Vertex(&p->second)] = 4; 
-            }
-        
+                    available_vehicles_[Multimodal::Vertex(&p->second)] = 4;
+            }        
                 
             // Update timer for preprocessing
-            time_+=timer.elapsed(); 
+            time_+=timer.elapsed();
         }
         
-        virtual void process() { 
+        virtual void process() {
             // Initialize timer for algo processing time
-            Timer timer; 
-        
+            Timer timer;
+
             // Get origin and destination nodes
             Multimodal::Vertex origin = Multimodal::Vertex( &graph_.road, request_.origin );
-            destination_ = Multimodal::Vertex( &graph_.road, request_.steps[0].destination ); 
-        
+            destination_ = Multimodal::Vertex( &graph_.road, request_.steps[0].destination );
+
             Triple origin_o;
             origin_o.vertex = origin;
-            origin_o.state = automaton_.initial_state_; 
-            origin_o.mode = 2; 
-        
+            origin_o.state = automaton_.initial_state_;
+            origin_o.mode = 2;
+
             // Initialize the potential map
-            associative_property_map_default_value< PotentialMap > potential_pmap( potential_map_, std::numeric_limits<double>::max() ); // adaptation to a property map : infinite default value 
+            associative_property_map_default_value< PotentialMap > potential_pmap( potential_map_, std::numeric_limits<double>::max() ); // adaptation to a property map : infinite default value
             put( potential_pmap, origin_o, request_.steps[0].constraint.date_time.time_of_day().total_seconds()/60 ) ; /// Potential of the source node is initialized to the departure time (requires dijkstra_shortest_paths_no_init to be used)
         
             // Initialize the predecessor map
             boost::associative_property_map< PredecessorMap > pred_pmap( pred_map_ );  // adaptation to a property map
-            put( pred_pmap, origin_o, origin_o ); 
-		
+            put( pred_pmap, origin_o, origin_o );
+
             // Initialize the trip map
-            boost::associative_property_map< TripMap > trip_pmap( trip_map_ ); 
-		
+            boost::associative_property_map< TripMap > trip_pmap( trip_map_ );
+
             // Initialize the wait map
-            boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ ); 
-				
+            boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
+
             // Define and initialize the cost calculator
-            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_transport_types, available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ ); 
-                
+            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_transport_types, available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
+
             Tempus::PluginGraphVisitor vis ( this ) ;
-            try {	
-                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_transport_types, vis );  
+            try {
+                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_transport_types, vis );
             }
             catch ( path_found_exception& ) {// Dijkstra has been short cut when the destination node is reached
             }
         
-            metrics_[ "iterations" ] = iterations_; 
+            metrics_[ "iterations" ] = iterations_;
 		
-            Triple destination_o; 
-            destination_o.vertex = destination_; 
-            destination_o.state = 0; 
-            destination_o.mode = 2; 
-		
-            Path path = reorder_path( origin_o, destination_o ); 
-            add_roadmap( path ); 
+            Triple destination_o;
+            destination_o.vertex = destination_;
+            destination_o.state = 0;
+            destination_o.mode = 2;
 
-            time_ += timer.elapsed(); 
-            time_algo_ += timer.elapsed(); 
-            metrics_[ "time_s" ] = time_; 
-            metrics_[ "time_algo_s" ] = time_algo_; 
+            Path path = reorder_path( origin_o, destination_o );
+            add_roadmap( path );
+
+            time_ += timer.elapsed();
+            time_algo_ += timer.elapsed();
+            metrics_[ "time_s" ] = time_;
+            metrics_[ "time_algo_s" ] = time_algo_;
         }
 
         /*virtual void vertex_accessor( Triple triple, int access_type ) {
