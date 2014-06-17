@@ -67,12 +67,16 @@ struct Node : public Base {
 
     bool is_junction;
     bool is_bifurcation;
+    
+    int parking_transport_type;  ///< bitfield of TransportTypeId
 };
 
 ///
 /// Used as Directed Edge.
 /// Refers to the 'road_section' DB's table
 struct Section : public Base {
+
+    Section() : transport_type(0), length(0.0), car_speed_limit(0.0), car_average_speed(0.0) {}
     /// This is a shortcut to the edge index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's edge from a Section.
     /// Can be null
@@ -80,11 +84,10 @@ struct Section : public Base {
 
     db_id_t       road_type;
     /// allowed transport types
-    int           transport_type; ///< bitfield of TransportTypeId
+    db_id_t       transport_type; ///< bitfield of TransportTypeId
     double        length;
     double        car_speed_limit;
     double        car_average_speed;
-    double        bus_average_speed;
     int           lane;
     bool          is_roundabout;
     bool          is_bridge;

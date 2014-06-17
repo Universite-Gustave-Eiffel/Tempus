@@ -121,6 +121,19 @@ Edge::ConnectionType Edge::connection_type() const
     return UnknownConnection;
 }
 
+db_id_t Edge::transport_type() const
+{
+    if ( connection_type() == Multimodal::Edge::Transport2Transport ) {
+        return 120; // All possible PT modes in current version 
+    }
+
+    Road::Edge r_edge;
+    bool found;
+    boost::tie( r_edge, found ) = edge( source.road_vertex, target.road_vertex, *( source.road_graph ) );
+    if ( found ) return (*source.road_graph)[r_edge].transport_type; 
+    return 0; 
+}
+
 VertexIterator::VertexIterator( const Multimodal::Graph& graph )
 {
     graph_ = &graph;

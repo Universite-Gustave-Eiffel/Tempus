@@ -64,6 +64,8 @@ public:
         /// The road section where to start from
         Road::Edge road_edge;
 
+        db_id_t transport_type; 
+
         ///
         /// The road name (field not present in a Road::Section, so copied from the DB here)
         std::string road_name;
