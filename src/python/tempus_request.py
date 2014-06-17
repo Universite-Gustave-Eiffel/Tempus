@@ -351,7 +351,7 @@ class TempusRequest:
                  departure_constraint = Constraint(),
                  steps = [RequestStep()],
                  allowed_transport_types = 255, # allowed transpoort types, bitfield
-                 criteria = [Cost.Distance], # list of optimizing criteria
+                 criteria = [Cost.Distance, Cost.Duration], # list of optimizing criteria
                  parking_location = None,
                  networks = [] # public transport network id
                  ):
