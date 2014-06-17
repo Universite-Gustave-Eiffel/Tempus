@@ -391,7 +391,7 @@ class TempusRequest:
             elif isinstance(v, float):
                 tag_name = "float_value"
             elif isinstance(v, str):
-                tag_name = "str_value"
+                tag_name = "string_value"
             else:
                 raise RuntimeError( "Unknown value type " + value )
 
