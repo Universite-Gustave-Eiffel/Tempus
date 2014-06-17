@@ -395,7 +395,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     }
 
     //
-    // For all public transport nodes, add a reference to it to the attached road section
+    // For all public transport nodes, add a reference to the attached road section
     Multimodal::Graph::PublicTransportGraphList::iterator it;
 
     for ( it = graph.public_transports.begin(); it != graph.public_transports.end(); it++ ) {
@@ -497,12 +497,12 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     }
 
     //
-    // For all POIs, add a reference to it to the attached road section
+    // For all POIs, add a reference to the attached road section
     Multimodal::Graph::PoiList::iterator pit;
 
     for ( pit = graph.pois.begin(); pit != graph.pois.end(); pit++ ) {
         Road::Edge rs = pit->second.road_edge;
-        graph.road[ rs ].pois.push_back( &pit->second );
+        graph.road[ rs ].pois.push_back( &pit->second ); 
     }
 
     //
