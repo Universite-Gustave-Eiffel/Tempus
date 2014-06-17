@@ -484,8 +484,8 @@ namespace Tempus {
     
     }; 
 
-    // Automaton<Road::Edge> DynamicMultiPlugin::automaton_ = Automaton<Road::Edge>(); 
-
+    Automaton<Road::Edge> DynamicMultiPlugin::automaton_;
+    map< Multimodal::Edge, unsigned int > DynamicMultiPlugin::allowed_modes_;
 }
 DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin )
 

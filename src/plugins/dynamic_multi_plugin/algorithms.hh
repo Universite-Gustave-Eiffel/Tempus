@@ -44,7 +44,7 @@ namespace Tempus {
                                        TripMap trip_map, 
                                        WaitMap wait_map, 
                                        unsigned int request_allowed_modes,
-                                       Visitor vis) 
+                                       Visitor) 
     {
         typedef boost::indirect_cmp< PotentialMap, std::greater<double> > Cmp; 
         Cmp cmp( potential_map ); 
