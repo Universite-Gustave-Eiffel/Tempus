@@ -334,7 +334,7 @@ class IfsttarRouting:
 
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
             if option_type == Tempus.OptionType.Bool:
-                    val = 'true' if val else 0
+                    val = True if val else False
             elif option_type == Tempus.OptionType.Int:
                     # int
                     if val:
