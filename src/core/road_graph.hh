@@ -163,6 +163,7 @@ public:
     void add_restriction( db_id_t id,
                           const Restriction::EdgeSequence& edges,
                           const Restriction::CostPerTransport& cost );
+    void add_restriction( Restriction restriction ); 
 
 private:
     RestrictionSequence restrictions_;

@@ -84,6 +84,10 @@ void Restrictions::add_restriction( db_id_t id,
     restrictions_.push_back( Restriction( id, road_edges, cost ) );
 }
 
+void Restrictions::add_restriction( Restriction r )
+{
+    restrictions_.push_back( r );
+}
 
 }
 }
