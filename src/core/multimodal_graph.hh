@@ -19,6 +19,7 @@
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
 #include "common.hh"
+#include "transport_types.hh"
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
 #include "sub_map.hh"

@@ -193,33 +193,6 @@ struct Point2D {
 typedef std::map<db_id_t, RoadType> RoadTypes;
 
 ///
-/// Refers to tempus.transport_type table
-struct TransportType : public Base {
-    // inherits from Base, the ID must be a power of 2.
-    db_id_t parent_id;
-
-    std::string name;
-
-    bool need_parking;
-    bool need_station;
-    bool need_return;
-    bool need_network;
-
-protected:
-    bool check_consistency_() {
-        ///
-        /// x is a power of two if (x & (x - 1)) is 0
-        REQUIRE( ( db_id != 0 ) && !( db_id & ( db_id - 1 ) ) );
-        REQUIRE( ( parent_id != 0 ) && !( parent_id & ( parent_id - 1 ) ) );
-        return true;
-    }
-};
-
-///
-/// Transport types constants.
-typedef std::map<db_id_t, TransportType> TransportTypes;
-
-///
 /// Type used to model costs. Either in a Step or as an optimizing criterion.
 /// This is a map to a double value and thus is user extensible.
 typedef std::map<int, double> Costs;
