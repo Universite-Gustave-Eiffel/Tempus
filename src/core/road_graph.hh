@@ -67,8 +67,11 @@ struct Node : public Base {
 
     bool is_junction;
     bool is_bifurcation;
-    
-    int parking_transport_type;  ///< bitfield of TransportTypeId
+
+    /// Type of parking available on this node
+    /// This is to be used for parking on the streets
+    /// Special parks are represented using a POI
+    db_id_t parking_transport_type;  ///< bitfield of TransportTypeId
 };
 
 ///
