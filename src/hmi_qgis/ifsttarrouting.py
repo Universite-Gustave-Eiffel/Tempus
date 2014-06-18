@@ -237,6 +237,7 @@ class IfsttarRouting:
             self.displayPlugins( self.plugins )
 
             self.getConstants()
+            self.displayTransportAndNetworks()
         
             self.dlg.ui.pluginCombo.setEnabled( True )
             self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -298,7 +299,7 @@ class IfsttarRouting:
         elif tab == 2:
                 # prepare for a new query
                 self.dlg.reset()
-                self.displayTransportAndNetworks()
+#                self.displayTransportAndNetworks()
 
     def loadHistory( self ):
         #
