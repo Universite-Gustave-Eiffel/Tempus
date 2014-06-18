@@ -306,8 +306,10 @@ namespace Tempus {
             origin_o.mode = 2;
 
             // Initialize the potential map
-            associative_property_map_default_value< PotentialMap > potential_pmap( potential_map_, std::numeric_limits<double>::max() ); // adaptation to a property map : infinite default value
-            put( potential_pmap, origin_o, request_.steps[0].constraint.date_time.time_of_day().total_seconds()/60 ) ; /// Potential of the source node is initialized to the departure time (requires dijkstra_shortest_paths_no_init to be used)
+            // adaptation to a property map : infinite default value
+            associative_property_map_default_value< PotentialMap > potential_pmap( potential_map_, std::numeric_limits<double>::max() );
+            /// Potential of the source node is initialized to the departure time (requires dijkstra_shortest_paths_no_init to be used)
+            put( potential_pmap, origin_o, request_.steps[0].constraint.date_time.time_of_day().total_seconds()/60 ) ;
         
             // Initialize the predecessor map
             boost::associative_property_map< PredecessorMap > pred_pmap( pred_map_ );  // adaptation to a property map
@@ -326,7 +328,8 @@ namespace Tempus {
             try {
                 combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_transport_types, vis );
             }
-            catch ( path_found_exception& ) {// Dijkstra has been short cut when the destination node is reached
+            catch ( path_found_exception& ) {
+                // Dijkstra has been short cut when the destination node is reached
             }
         
             metrics_[ "iterations" ] = iterations_;

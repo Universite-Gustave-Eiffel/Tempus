@@ -65,9 +65,10 @@ namespace Tempus {
 			
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
                 // for all modes
-                for ( int ai = 0; ai < 32; ai++ ) {
+                // FIXME : 9 is a magic constant here
+                for ( int ai = 0; ai < 9; ai++ ) {
                     db_id_t mode_label = 1 << ai;
-                    // if the mode is not allowed or not presend on the current edge, skip it
+                    // if the mode is not allowed or not present on the current edge, skip it
                     if ( ! (request_allowed_modes & current_edge.transport_type() & mode_label) ) {
                         continue;
                     }
@@ -88,9 +89,11 @@ namespace Tempus {
                     db_id_t final_trip_id ;
                     double wait_time;
 
+                    // compute the time needed to transfer from one mode to another
                     double cost = cost_calculator.transfer_time( graph, min_object.vertex, min_object.mode, mode_label );
                     if ( cost < std::numeric_limits<double>::max() )
                     {
+                        // will update final_trip_id and wait_time
                         cost += cost_calculator.travel_time( graph,
                                                              current_edge,
                                                              mode_label,
@@ -99,7 +102,8 @@ namespace Tempus {
                                                              final_trip_id,
                                                              wait_time );
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
-                            cost += cost_calculator.penalty( automaton.automaton_graph_, s, mode_label ) ;
+                            double penalty = cost_calculator.penalty( automaton.automaton_graph_, s, mode_label ) ;
+                            cost += penalty;
                         }
                     }
 

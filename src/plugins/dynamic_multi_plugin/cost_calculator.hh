@@ -181,7 +181,7 @@ namespace Tempus {
                     else transf_t = std::numeric_limits<double>::max(); 
                 }
             }
-			
+
             return transf_t; 
         }
 		
