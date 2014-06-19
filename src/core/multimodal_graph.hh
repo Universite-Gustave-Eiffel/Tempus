@@ -178,15 +178,34 @@ struct Graph: boost::noncopyable {
     ///
     /// Variables used to store constants.
     RoadTypes road_types;
-    TransportTypes transport_types;
+
+    /// prepare for constant (re)loading
+    void clear_constants();
+
+    /// register a new transport mode
+    void add_transport_mode( const TransportMode& tm );
+
+    const TransportModes& transport_modes() const { return transport_modes_; }
+
+    /// access to a transportmode, given its id
+    /// the second element of the pair tells if the mode exists
+    std::pair<TransportMode,bool> transport_mode( db_id_t id ) const;
+
+    /// access to a transportmode, given its name
+    /// the second element of the pair tells if the mode exists
+    std::pair<TransportMode,bool> transport_mode( const std::string& name ) const;
 
     typedef std::map<std::string, Tempus::db_id_t> NameToId;
     ///
     /// Associative array that maps a road type name to a road type id
     NameToId road_type_from_name;
+
+private:
+    TransportModes transport_modes_;
+
     ///
     /// Associative array that maps a transport type name to a transport type id
-    NameToId transport_type_from_name;
+    NameToId transport_mode_from_name_;
 };
 
 ///

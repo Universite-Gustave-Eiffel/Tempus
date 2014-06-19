@@ -82,31 +82,21 @@ class TransportMode : public Base
     DECLARE_RW_PROPERTY( is_public_transport, bool );
 
     /// does it need a parking ?
-    DECLARE_RO_PROPERTY( need_parking, bool );
-    /// Sets if it needs a parking. 
-    void need_parking( bool need );
+    DECLARE_RW_PROPERTY( need_parking, bool );
 
     /// is it shared
-    DECLARE_RO_PROPERTY( is_shared, bool );
-    /// Sets if it is shared
-    void is_shared( bool is_t );
+    DECLARE_RW_PROPERTY( is_shared, bool );
 
     /// is it shared and must be returned to its initial station ?
-    DECLARE_RO_PROPERTY( must_be_returned, bool );
-    /// Sets if it must be returned
-    void must_be_returned( bool is_t );
+    DECLARE_RW_PROPERTY( must_be_returned, bool );
 
-    DECLARE_RO_PROPERTY( traffic_rules, int );
-    void traffic_rules( int rules );
+    DECLARE_RW_PROPERTY( traffic_rules, int );
 
-    DECLARE_RO_PROPERTY( speed_rule, TransportModeSpeedRule );
-    void speed_rule( TransportModeSpeedRule rule );
+    DECLARE_RW_PROPERTY( speed_rule, TransportModeSpeedRule );
 
-    DECLARE_RO_PROPERTY( toll_rules, int );
-    void toll_rules( int rules );
+    DECLARE_RW_PROPERTY( toll_rules, int );
 
-    DECLARE_RO_PROPERTY( engine_type, TransportModeEngine );
-    void engine_type( TransportModeEngine engine );
+    DECLARE_RW_PROPERTY( engine_type, TransportModeEngine );
 };
 
 ///

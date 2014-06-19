@@ -147,17 +147,19 @@ public:
 
         {
             xmlNode* root_node = XML::new_node( "transport_types" );
-            Tempus::TransportTypes::iterator it;
+            Tempus::TransportModes::const_iterator it;
 
-            for ( it = graph.transport_types.begin(); it != graph.transport_types.end(); it++ ) {
+            for ( it = graph.transport_modes().begin(); it != graph.transport_modes().end(); it++ ) {
                 xmlNode* node = XML::new_node( "transport_type" );
                 XML::new_prop( node, "id", it->first );
-                XML::new_prop( node, "parent_id", it->second.parent_id );
-                XML::new_prop( node, "name", it->second.name );
-                XML::new_prop( node, "need_parking", it->second.need_parking );
-                XML::new_prop( node, "need_station", it->second.need_station );
-                XML::new_prop( node, "need_return", it->second.need_return );
-                XML::new_prop( node, "need_network", it->second.need_network );
+                XML::new_prop( node, "name", it->second.name() );
+                XML::new_prop( node, "need_parking", it->second.need_parking() );
+                XML::new_prop( node, "is_shared", it->second.is_shared() );
+                XML::new_prop( node, "must_be_returned", it->second.must_be_returned() );
+                XML::new_prop( node, "traffic_rules", it->second.traffic_rules() );
+                XML::new_prop( node, "speed_rule", it->second.speed_rule() );
+                XML::new_prop( node, "toll_rules", it->second.toll_rules() );
+                XML::new_prop( node, "engine_type", it->second.engine_type() );
                 XML::add_child( root_node, node );
             }
 

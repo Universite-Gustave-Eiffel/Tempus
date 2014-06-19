@@ -282,9 +282,9 @@ namespace Tempus {
             // Load vehicle positions
             for ( Multimodal::Graph::PoiList::const_iterator p = graph_.pois.begin(); p != graph_.pois.end(); p++ )
             {
-        	if (p->second.poi_type == POI::TypeSharedCarPoint)
+        	if (p->second.poi_type() == POI::TypeSharedCarPoint)
                     available_vehicles_.at(Multimodal::Vertex(&p->second)) = 2;
-        	else if (p->second.poi_type == POI::TypeSharedCyclePoint)
+        	else if (p->second.poi_type() == POI::TypeSharedCyclePoint)
                     available_vehicles_[Multimodal::Vertex(&p->second)] = 4;
             }        
                 

@@ -63,15 +63,19 @@ struct Node : public Base {
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    Vertex vertex;
+    DECLARE_RW_PROPERTY( vertex, Vertex );
 
-    bool is_junction;
-    bool is_bifurcation;
+    /// Total number of incident edges > 2
+    DECLARE_RW_PROPERTY( is_bifurcation, bool );
 
     /// Type of parking available on this node
     /// This is to be used for parking on the streets
     /// Special parks are represented using a POI
-    db_id_t parking_transport_type;  ///< bitfield of TransportTypeId
+    /// This is a bitfield value composeed of TransportModeTrafficRules
+    DECLARE_RW_PROPERTY( parking_traffic_rules, int );
+
+public:
+    Node() : is_bifurcation_(false), parking_traffic_rules_(0) {}
 };
 
 ///
@@ -187,23 +191,27 @@ struct POI : public Base {
         TypeSharedCyclePoint,
         TypeUserPOI
     };
-    int poi_type;
 
-    std::string name;
-    int parking_transport_type; ///< bitfield of TransportTypeId
+    DECLARE_RW_PROPERTY( poi_type, PoiType );
+    DECLARE_RW_PROPERTY( name, std::string );
+
+    ///
+    /// If not null: it is a parking for the given transport mode
+    DECLARE_RW_PROPERTY( parking_transport_mode, db_id_t );
 
     ///
     /// Link to a road edge
-    Road::Edge road_edge;
+    DECLARE_RW_PROPERTY( road_edge, Road::Edge );
 
     ///
     /// optional link to the opposite road edge
     /// considered null if == to road_edge
-    Road::Edge opposite_road_edge;
+    /// FIXME: is it really a property ?
+    DECLARE_RW_PROPERTY( opposite_road_edge, Road::Edge );
 
     ///
     /// Number between 0 and 1 : position of the POI on the main road section
-    double abscissa_road_section;
+    DECLARE_RW_PROPERTY( abscissa_road_section, double );
 };
 } // Tempus namespace
 

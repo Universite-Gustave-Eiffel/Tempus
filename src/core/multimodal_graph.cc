@@ -385,12 +385,12 @@ Multimodal::Edge OutEdgeIterator::dereference() const
     }
     else if ( source_.type == Vertex::Poi ) {
         if ( poi2road_connection_ == 0 ) {
-            edge.road_edge = source_.poi->road_edge;
+            edge.road_edge = source_.poi->road_edge();
         }
         // if there is an opposite road edge attached
         else if ( poi2road_connection_ == 1 &&
-                  source_.poi->opposite_road_edge != source_.poi->road_edge ) {
-            edge.road_edge = source_.poi->opposite_road_edge;
+                  source_.poi->opposite_road_edge() != source_.poi->road_edge() ) {
+            edge.road_edge = source_.poi->opposite_road_edge();
         }
         mm_target = Multimodal::Vertex( &graph_->road, boost::target( edge.road_edge, graph_->road ) );
     }
@@ -445,7 +445,7 @@ void OutEdgeIterator::increment()
     else if ( source_.type == Vertex::Poi ) {
         if ( poi2road_connection_ == 0 ) {
             // if there is an opposite edge
-            if ( source_.poi->road_edge != source_.poi->opposite_road_edge ) {
+            if ( source_.poi->road_edge() != source_.poi->opposite_road_edge() ) {
                 poi2road_connection_ ++;
             }
             else {
@@ -620,7 +620,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
     }
 
     // else (Poi), 1 road node is reachable
-    return (v.poi->road_edge != v.poi->opposite_road_edge) ? 2 : 1;
+    return (v.poi->road_edge() != v.poi->opposite_road_edge()) ? 2 : 1;
 }
 
 std::pair< Edge, bool> edge( const Vertex& u, const Vertex& v, const Graph& graph )
@@ -663,6 +663,40 @@ std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::
     boost::tie( ret_edge, found ) = edge( e.source.pt_vertex, e.target.pt_vertex, *( e.source.pt_graph ) );
     return std::make_pair( ret_edge, found );
 }
+
+void Graph::clear_constants()
+{
+    transport_modes_.clear();
+    road_type_from_name.clear();
+    transport_mode_from_name_.clear();
+}
+
+void Graph::add_transport_mode( const TransportMode& tm )
+{
+    // register the new transport mode
+    transport_modes_[tm.db_id()] = tm;
+    // link the name to its id
+    transport_mode_from_name_[ tm.name() ] = tm.db_id();
+}
+
+std::pair<TransportMode, bool> Graph::transport_mode( db_id_t id ) const
+{
+    TransportModes::const_iterator fit = transport_modes_.find( id );
+    if ( fit == transport_modes_.end() ) {
+        return std::make_pair( TransportMode(), false );
+    }
+    return std::make_pair( fit->second, true );
+}
+
+std::pair<TransportMode, bool> Graph::transport_mode( const std::string& name ) const
+{
+    NameToId::const_iterator fit = transport_mode_from_name_.find( name );
+    if ( fit == transport_mode_from_name_.end() ) {
+        return std::make_pair( TransportMode(), false );
+    }
+    return std::make_pair( transport_modes_.at(fit->second), true );
+}
+
 } // namespace Multimodal
 
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )

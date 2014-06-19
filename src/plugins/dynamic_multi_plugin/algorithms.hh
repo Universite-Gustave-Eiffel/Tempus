@@ -65,7 +65,7 @@ namespace Tempus {
 			
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
                 // for all modes
-                for ( TransportTypes::const_iterator tit = graph.transport_types.begin(); tit != graph.transport_types.end(); ++tit ) {
+                for ( TransportModes::const_iterator tit = graph.transport_modes().begin(); tit != graph.transport_modes().end(); ++tit ) {
                     db_id_t mode_label = tit->first;
                     // if the mode is not allowed or not present on the current edge, skip it
                     if ( ! (request_allowed_modes & current_edge.transport_type() & mode_label) ) {
