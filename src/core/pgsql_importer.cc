@@ -195,11 +195,11 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         //
         // Get a road section and its opposite, if present
         const std::string qquery = "SELECT "
-            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.transport_type_ft, "
-            "rs1.transport_type_tf, rs1.length, rs1.car_speed_limit, rs1.car_average_speed, rs1.lane, "
+            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rule_ft, "
+            "rs1.traffic_rule_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
             "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
             "rs2.id, rs2.road_type, "
-            "rs2.transport_type_ft, rs2.length, rs2.car_speed_limit, rs2.car_average_speed, rs2.lane, "
+            "rs2.traffic_rule_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
             "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
             "FROM tempus.road_section AS rs1 "
             "LEFT JOIN tempus.road_section AS rs2 "
@@ -214,7 +214,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( section.db_id() > 0 );
 
             if ( !res[i][1].is_null() ) {
-                section.road_type = res[i][1].as<db_id_t>();
+                section.road_type( res[i][1] );
             }
 
             db_id_t node_from_id = res[i][2].as<db_id_t>();
@@ -223,41 +223,38 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( node_to_id > 0 );
 
             int j = 4;
-            int transport_type_ft, transport_type_tf;
-            res[i][j++] >> transport_type_ft;
-            res[i][j++] >> transport_type_tf;
-            section.transport_type = transport_type_ft;
-            res[i][j++] >> section.length;
-            res[i][j++] >> section.car_speed_limit;
-            res[i][j++] >> section.car_average_speed;
-            res[i][j++] >> section.lane;
-            res[i][j++] >> section.is_roundabout;
-            res[i][j++] >> section.is_bridge;
-            res[i][j++] >> section.is_tunnel;
-            res[i][j++] >> section.is_ramp;
-            res[i][j++] >> section.is_tollway;
+            int traffic_rules_ft = res[i][j++];
+            int traffic_rules_tf = res[i][j++];
+            section.traffic_rules( traffic_rules_ft );
+            section.length( res[i][j++] );
+            section.car_speed_limit( res[i][j++] );
+            section.lane( res[i][j++] );
+            section.is_roundabout( res[i][j++] );
+            section.is_bridge( res[i][j++] );
+            section.is_tunnel( res[i][j++] );
+            section.is_ramp( res[i][j++] );
+            section.is_tollway( res[i][j++] );
 
             if ( ! res[i][j].is_null() ) {
                 //
                 // If the opposite section exists, take it
                 section2.db_id( res[i][j++].as<db_id_t>());
-                res[i][j++] >> section2.road_type;
+                section2.road_type( res[i][j++] );
                 // overwrite transport_type_tf here
-                res[i][j++] >> transport_type_tf;
-                res[i][j++] >> section2.length;
-                res[i][j++] >> section2.car_speed_limit;
-                res[i][j++] >> section2.car_average_speed;
-                res[i][j++] >> section2.lane;
-                res[i][j++] >> section2.is_roundabout;
-                res[i][j++] >> section2.is_bridge;
-                res[i][j++] >> section2.is_tunnel;
-                res[i][j++] >> section2.is_ramp;
-                res[i][j++] >> section2.is_tollway;
+                traffic_rules_tf = res[i][j++];
+                section.length( res[i][j++] );
+                section.car_speed_limit( res[i][j++] );
+                section.lane( res[i][j++] );
+                section.is_roundabout( res[i][j++] );
+                section.is_bridge( res[i][j++] );
+                section.is_tunnel( res[i][j++] );
+                section.is_ramp( res[i][j++] );
+                section.is_tollway( res[i][j++] );
             }
             else {
                 // else create an opposite section from this one
                 section2 = section;
-                section2.transport_type = transport_type_tf;
+                section2.traffic_rules( traffic_rules_tf );
             }
             // Assert that corresponding nodes exist
             BOOST_ASSERT_MSG( road_nodes_map.find( node_from_id ) != road_nodes_map.end(),
@@ -272,7 +269,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            if ( transport_type_ft > 0 ) {
+            if ( traffic_rules_ft > 0 ) {
                 Road::Edge e;
                 bool is_added, found;
                 boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
@@ -282,11 +279,11 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
                 boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
                 BOOST_ASSERT( is_added );
-                road_graph[e].edge = e;
+                road_graph[e].edge( e );
                 // link the road_section to this edge
                 road_sections_map[ section.db_id() ] = e;
             }
-            if ( transport_type_tf > 0 ) {
+            if ( traffic_rules_tf > 0 ) {
                 Road::Edge e;
                 bool is_added, found;
                 boost::tie( e, found ) = boost::edge( v_to, v_from, road_graph );
@@ -296,7 +293,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
                 boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, road_graph );
                 BOOST_ASSERT( is_added );
-                road_graph[e].edge = e;
+                road_graph[e].edge( e );
             }
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );

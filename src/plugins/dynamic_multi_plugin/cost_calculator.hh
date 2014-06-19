@@ -32,9 +32,10 @@ namespace Tempus {
             min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time )  { }; 
 		
         // Multimodal travel time function
-        double travel_time( Multimodal::Graph& graph, Multimodal::Edge& e, unsigned int mode, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
+        double travel_time( Multimodal::Graph& graph, Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
         {
-            if ( (allowed_transport_types_ & mode) != 0 ) 
+            const TransportMode& mode = graph.transport_modes().at( mode_id );
+            if ( (allowed_transport_types_ & mode_id) != 0 ) 
             {
                 switch ( e.connection_type() ) {  
                 case Multimodal::Edge::Road2Road: {
@@ -42,7 +43,7 @@ namespace Tempus {
                     bool found;
                     boost::tie( road_e, found ) = road_edge( e );
 										
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length, mode ); 
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length(), mode ); 
                 }
                     break;
 		
@@ -50,13 +51,13 @@ namespace Tempus {
                     // find the road section where the stop is attached to
                     const PublicTransport::Graph& pt_graph = *( e.target.pt_graph );
                     double abscissa = pt_graph[ e.target.pt_vertex ].abscissa_road_section; 
-                    Road::Edge road_e = pt_graph[ e.target.pt_vertex ].road_edge; 
+                    Road::Edge road_e = pt_graph[ e.target.pt_vertex ].road_edge;
 						
                     // if we are coming from the start point of the road
-                    if ( source( road_e, graph.road ) == e.source.road_vertex ) 
-                        return road_travel_time( graph.road, road_e, graph.road[ road_e ].length * abscissa, mode ) ;
+                    if ( source( road_e, graph.road ) == e.source.road_vertex )
+                        return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode ) ;
                     // otherwise, that is the opposite direction
-                    else return road_travel_time( graph.road, road_e, graph.road[ road_e ].length * (1 - abscissa), mode ) ; 
+                    else return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode ) ;
                 }
                     break; 
 					
@@ -68,9 +69,9 @@ namespace Tempus {
 						
                     // if we are coming from the start point of the road
                     if ( source( road_e, graph.road ) == e.source.road_vertex ) 
-                        return road_travel_time( graph.road, road_e, graph.road[ road_e ].length * abscissa, mode ) ;
+                        return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode ) ;
                     // otherwise, that is the opposite direction
-                    else return road_travel_time( graph.road, road_e, graph.road[ road_e ].length * (1 - abscissa), mode ) ; 
+                    else return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode ) ;
                 } 
                     break;
 					
@@ -132,17 +133,20 @@ namespace Tempus {
         }
 		
         // Road travel time function: called by the multimodal one - static version
-        double road_travel_time( Road::Graph& road_graph, Road::Edge& road_e, double length, unsigned int mode ) const
+        double road_travel_time( Road::Graph& road_graph, Road::Edge& road_e, double length, const TransportMode& mode ) const
         {
-            if ( (road_graph[ road_e ].transport_type & mode) == 0 ) // Not allowed mode 
+            if ( (road_graph[ road_e ].traffic_rules() & mode.traffic_rules()) == 0 ) // Not allowed mode 
                 return std::numeric_limits<double>::infinity() ;
-            else if ( mode == 1 || mode == 256 ) // Car
-                return length / (road_graph[ road_e ].car_average_speed * 1000) * 60 ; 
-            else if ( mode == 2 ) // Walking
+            else if ( mode.traffic_rules() & TrafficRuleCar )
+                // FIXME, we take the speed limit for now,
+                // but should take the speed profile
+                return length / (road_graph[ road_e ].car_speed_limit() * 1000) * 60 ;
+            else if ( mode.traffic_rules() & TrafficRulePedestrian ) // Walking
                 return length / (walking_speed_ * 1000) * 60 ; 
-            else if ( mode == 4 || mode == 128 ) // Bicycle
+            else if ( mode.traffic_rules() & TrafficRuleBicycle ) // Bicycle
                 return length / (cycling_speed_ * 1000) * 60 ; 
-            else return std::numeric_limits<double>::max() ;
+            else
+                return std::numeric_limits<double>::max() ;
         }
 		
         // Turning movement penalty function

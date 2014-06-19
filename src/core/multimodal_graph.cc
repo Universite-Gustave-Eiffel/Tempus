@@ -133,7 +133,8 @@ db_id_t Edge::transport_type() const
         return 120;
     }
 
-    return (*source.road_graph)[road_edge].transport_type;
+    // FIXME must return modes with compatible traffic rules
+    return (*source.road_graph)[road_edge].traffic_rules();
 }
 
 VertexIterator::VertexIterator( const Multimodal::Graph& graph )

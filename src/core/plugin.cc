@@ -482,7 +482,7 @@ Result& Plugin::result()
                 //
                 movement = Roadmap::RoadStep::GoAhead;
 
-                on_roundabout =  road_graph[step->road_edge].is_roundabout;
+                on_roundabout =  road_graph[step->road_edge].is_roundabout();
 
                 bool action = false;
 
