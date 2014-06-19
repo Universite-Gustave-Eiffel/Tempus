@@ -127,7 +127,7 @@ public:
         road_edges_( edge_seq ),
         cost_per_transport_( cost )
     {
-        db_id = id;
+        db_id( id );
     }
 
     const EdgeSequence& road_edges() const {

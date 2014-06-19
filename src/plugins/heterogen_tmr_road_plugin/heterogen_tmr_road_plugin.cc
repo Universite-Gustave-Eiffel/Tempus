@@ -155,7 +155,7 @@ public:
 		REQUIRE( vertex_exists( request.origin, graph_.road ) );
 		REQUIRE( vertex_exists( request.destination(), graph_.road ) );
 		
-		std::cout << "source: " << road_graph[source_].db_id << " target: " << road_graph[destination_].db_id << std::endl;
+		std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
 		
 		// Recording options 
 		get_option( "trace_vertex", trace_vertex_ );
@@ -292,22 +292,22 @@ public:
 #endif
 
         std::list<Road::Vertex> path;
-        std::cout << "source: " << road_graph[source_].db_id << " target: " << road_graph[destination_].db_id << std::endl;
+    std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
         
         if ( res.first ) // A path has been found, it will be now reconstructed from the predecessor maps 
         {
         	VertexLabel current_vertex_l = std::make_pair( destination_, res.second ); 
         	EdgeLabel current_edge_l ; 
         	bool current_vertex = true ; 
-			std::cout << road_graph[current_vertex_l.first].db_id << std::endl; 
+                std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
 
         	while ( current_vertex_l.first != source_ ) 
         	{
-    			std::cout << road_graph[current_vertex_l.first].db_id << std::endl; 
+                    std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
 
         		if ( current_vertex ) // From vertex
     			{
-    				std::cout << road_graph[current_vertex_l.first].db_id << std::endl; 
+                            std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
     				path.push_front( current_vertex_l.first ); 
 					// Find predecessor : vertex or edge 
 					if ( vv_predecessor_map.find(current_vertex_l) != vv_predecessor_map.end() ) // Vertex predecessor
@@ -323,7 +323,7 @@ public:
     			}
     			else // From edge 
     			{
-    				std::cout << road_graph[ source(current_edge_l.first, road_graph) ].db_id << std::endl; 
+                            std::cout << road_graph[ source(current_edge_l.first, road_graph) ].db_id() << std::endl; 
 					path.push_front( source(current_edge_l.first, road_graph) ); 
 					// Find predecessor : vertex or edge
 					if ( ev_predecessor_map.find(current_edge_l) != ev_predecessor_map.end() ) // Vertex predecessor

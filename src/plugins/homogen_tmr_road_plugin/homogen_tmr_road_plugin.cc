@@ -316,7 +316,7 @@ public:
 	virtual void road_vertex_accessor( Road::Vertex v, int access_type ) {
 		if ( access_type == Plugin::ExamineAccess ) {
 			if ( verbose_ ) {
-				cout << "Examining road vertex " << graph_.road[ v ].db_id << endl; 
+                            cout << "Examining road vertex " << graph_.road[ v ].db_id() << endl; 
 			}
 		}
 	} 

@@ -73,6 +73,13 @@ public:
     }
 
     ///
+    /// Casting operator
+    template <class T>
+    operator T () {
+        return as<T>();
+    }
+
+    ///
     /// Tests if the underlying object is null
     bool is_null() {
         return isnull_;

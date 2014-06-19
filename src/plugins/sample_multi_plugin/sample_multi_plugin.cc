@@ -182,7 +182,7 @@ public:
         Multimodal::VertexIterator vi, vi_end;
 
         for ( boost::tie( vi, vi_end ) = vertices( graph_ ); vi != vi_end; vi++ ) {
-            if ( vi->type == Multimodal::Vertex::Road && graph_.road[ vi->road_vertex ].db_id == id ) {
+            if ( vi->type == Multimodal::Vertex::Road && graph_.road[ vi->road_vertex ].db_id() == id ) {
                 return *vi;
             }
         }

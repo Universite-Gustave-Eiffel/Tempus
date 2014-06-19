@@ -166,7 +166,7 @@ namespace Tempus {
             if ( request.optimizing_criteria[0] != CostDuration ) 
                 throw std::invalid_argument( "Unsupported optimizing criterion" ); 
         
-            if ( verbose_ ) cout << "Road origin node ID = " << graph_.road[request_.origin].db_id << ", road destination node ID = " << graph_.road[request_.destination()].db_id << endl;
+            if ( verbose_ ) cout << "Road origin node ID = " << graph_.road[request_.origin].db_id() << ", road destination node ID = " << graph_.road[request_.destination()].db_id() << endl;
             result_.clear(); 
             	
             // Get plugin options 		
@@ -187,7 +187,7 @@ namespace Tempus {
                 std::map<db_id_t, PublicTransport::Vertex> vertex_from_id_;
                 PublicTransport::Graph::vertex_iterator vit, vend;
                 for ( boost::tie( vit, vend ) = vertices( pt_graph ); vit != vend; ++vit ) {
-                    vertex_from_id_[ pt_graph[*vit].db_id ] = *vit;
+                    vertex_from_id_[ pt_graph[*vit].db_id() ] = *vit;
                 }
 
         	if (timetable_frequency_ == 0) // timetable model 

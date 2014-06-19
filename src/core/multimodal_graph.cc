@@ -668,13 +668,13 @@ std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
 {
     if ( v.type == Multimodal::Vertex::Road ) {
-        out << "R" << ( *v.road_graph )[v.road_vertex].db_id;
+        out << "R" << ( *v.road_graph )[v.road_vertex].db_id();
     }
     else if ( v.type == Multimodal::Vertex::PublicTransport ) {
-        out << "PT" << ( *v.pt_graph )[v.pt_vertex].db_id;
+        out << "PT" << ( *v.pt_graph )[v.pt_vertex].db_id();
     }
     else if ( v.type == Multimodal::Vertex::Poi ) {
-        out << "POI" << v.poi->db_id;
+        out << "POI" << v.poi->db_id();
     }
 
     return out;

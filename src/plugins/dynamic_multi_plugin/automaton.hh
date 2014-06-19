@@ -61,7 +61,7 @@ namespace Tempus {
         public:
             ArcWriter( Graph& agraph, Tempus::Road::Graph& graph ) : agraph_(agraph), graph_(graph) {}
             void operator() ( std::ostream& ostr, const Edge& e) const {
-                ostr << "[label=\"" << graph_[agraph_[e].entity].db_id << " = " << agraph_[e].entity << "\"]"; 		
+                ostr << "[label=\"" << graph_[agraph_[e].entity].db_id() << " = " << agraph_[e].entity << "\"]"; 		
             }
         private:
             Graph& agraph_;

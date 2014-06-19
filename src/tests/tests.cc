@@ -182,7 +182,7 @@ Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph
     Multimodal::VertexIterator vi, vi_end;
 
     for ( boost::tie( vi, vi_end ) = vertices( lgraph ); vi != vi_end; vi++ ) {
-        if ( vi->type == Multimodal::Vertex::Road && lgraph.road[ vi->road_vertex ].db_id == id ) {
+        if ( vi->type == Multimodal::Vertex::Road && lgraph.road[ vi->road_vertex ].db_id() == id ) {
             return *vi;
         }
     }
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
             else {
                 v = target ( seq[j-1], graph.road );
             }
-            BOOST_CHECK_EQUAL( graph.road[ v ].db_id, expected_nodes[i][j] );
+            BOOST_CHECK_EQUAL( graph.road[ v ].db_id(), expected_nodes[i][j] );
         }
     }
     BOOST_CHECK_EQUAL(i, 4);

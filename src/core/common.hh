@@ -155,11 +155,36 @@ protected:
 #define REQUIRE( expr ) ((void)0)
 #endif
 
-struct Base : public ConsistentClass {
+///
+/// Macro used to declare a class property as well as its getter and setter
+#define DECLARE_RW_PROPERTY(NAME, TYPE)                \
+private:                                               \
+  TYPE NAME ## _;                                      \
+public:                                                \
+  TYPE NAME() const { return NAME ## _; }              \
+  void NAME( const TYPE& a ) { NAME ## _ = a; }
+
+///
+/// Macro used to declare a class property and its getter
+#define DECLARE_RO_PROPERTY(NAME, TYPE)                \
+private:                                               \
+  TYPE NAME ## _;                                      \
+public:                                                \
+  TYPE NAME() const { return NAME ## _; }
+
+
+class Base : public ConsistentClass {
+public:
+    Base() : db_id_(0) {}
+    Base( db_id_t id ) : db_id_(id) {}
+    db_id_t db_id() const { return db_id_; }
+    void    db_id( const db_id_t& id ) { db_id_ = id; }
+
+private:
     ///
     /// Persistant ID relative to the storage database.
     /// Common to many classes.
-    db_id_t db_id;
+    db_id_t db_id_;
 };
 
 ///

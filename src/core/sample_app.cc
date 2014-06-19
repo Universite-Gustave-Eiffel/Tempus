@@ -103,7 +103,7 @@ int main( int argc, char* argv[] )
         bool found_destination = false;
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
-            if ( road_graph[*vi].db_id == origin_id ) {
+            if ( road_graph[*vi].db_id() == origin_id ) {
                 req.origin = *vi;
                 found_origin = true;
                 break;
@@ -116,7 +116,7 @@ int main( int argc, char* argv[] )
         }
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
-            if ( road_graph[*vi].db_id == destination_id ) {
+            if ( road_graph[*vi].db_id() == destination_id ) {
                 step.destination = *vi;
                 found_destination = true;
                 break;

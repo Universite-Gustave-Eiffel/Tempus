@@ -78,7 +78,7 @@ public:
     virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
             PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-            CERR << "Examining vertex " << pt_graph[v].db_id << endl;
+            CERR << "Examining vertex " << pt_graph[v].db_id() << endl;
         }
     }
     virtual void process() {
@@ -110,7 +110,7 @@ public:
         else {
             // else use regular road nodes from the request
             Road::Graph& road_graph = graph_.road;
-            CERR << "origin = " << road_graph[request_.origin].db_id << " dest = " << road_graph[request_.destination()].db_id << endl;
+            CERR << "origin = " << road_graph[request_.origin].db_id() << " dest = " << road_graph[request_.destination()].db_id() << endl;
 
             // for each step in the request, find the corresponding public transport node
             for ( size_t i = 0; i < 2; i++ ) {
@@ -126,7 +126,7 @@ public:
                 PublicTransport::Vertex found_vertex;
 
                 std::string q = ( boost::format( "select s.id from tempus.road_node as n join tempus.pt_stop as s on st_dwithin( n.geom, s.geom, 100 ) "
-                                                 "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % road_graph[node].db_id ).str();
+                                                 "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % road_graph[node].db_id() ).str();
                 Db::Result res = db_.exec( q );
 
                 if ( res.size() < 1 ) {
@@ -144,7 +144,7 @@ public:
                         arrival = found_vertex;
                     }
 
-                    CERR << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id << std::endl;
+                    CERR << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id() << std::endl;
                 }
             }
         }
@@ -218,7 +218,7 @@ public:
         Road::Vertex previous = *path.begin();
 
         for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ ) {
-            CERR << "path " << pt_graph[ *it ].db_id << std::endl;
+            CERR << "path " << pt_graph[ *it ].db_id() << std::endl;
 
             if ( first_loop ) {
                 first_loop = false;
