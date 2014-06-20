@@ -171,7 +171,7 @@ namespace Tempus {
                 if ( initial_mode.need_parking() ) {
                     if ( ( ( v.type == Multimodal::Vertex::Road )  &&
                            ( (graph.road[ v.road_vertex ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
-                         || ( (v.type == Multimodal::Vertex::Poi ) && ( (v.poi)->parking_transport_mode() == initial_mode_id ) ) )
+                         || ( (v.type == Multimodal::Vertex::Poi ) && ( (v.poi)->parking_traffic_rules() & initial_mode.traffic_rules() ) ) )
                     {
                         // FIXME more complex than that
                         if (initial_mode.traffic_rules() & TrafficRuleCar ) 

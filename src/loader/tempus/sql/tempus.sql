@@ -260,7 +260,7 @@ CREATE TABLE tempus.poi
 	id integer PRIMARY KEY,
 	poi_type integer REFERENCES tempus.poi_type NOT NULL,
 	name varchar,
-	parking_transport_mode REFERENCES tempus.transport_mode,
+	parking_traffic_rules,
 	road_section_id bigint REFERENCES tempus.road_section NOT NULL,
 	abscissa_road_section double precision NOT NULL CHECK (abscissa_road_section >= 0 AND abscissa_road_section <= 1)
 	-- NOTA: geometry column added NOT NULL
@@ -355,7 +355,7 @@ CREATE TABLE tempus.pt_section
 (
 	stop_from integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
 	stop_to integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
-	transport_mode integer NOT NULL REFERENCES tempus.transport_mode, 
+	-- transport_mode integer NOT NULL REFERENCES tempus.transport_mode, 
 	network_id integer NOT NULL REFERENCES tempus.pt_network, 
 	PRIMARY KEY(stop_from, stop_to, transport_mode, network_id)
 	-- NOTA: geometry column added

@@ -114,24 +114,23 @@ typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 
 ///
-/// refers to the 'road_restriction' DB's table
+/// refers to the 'road_restriction_time_penalty' DB's table
 /// This structure reflects turn restrictions on the road network
 class Restriction : public Base {
 public:
     ///
     /// Map of cost associated for each transport type
-    /// the key is here a bitfield (refer to TransportType)
+    /// the key is here a binary combination of TransportTrafficRule
     /// the value is a cost, as double (including infinity)
     typedef std::map<int, double> CostPerTransport;
 
     typedef std::vector<Edge> EdgeSequence;
 
     Restriction( db_id_t id, const EdgeSequence& edge_seq, const CostPerTransport& cost = CostPerTransport() ) :
+        Base( id ),
         road_edges_( edge_seq ),
         cost_per_transport_( cost )
-    {
-        db_id( id );
-    }
+    {}
 
     const EdgeSequence& road_edges() const {
         return road_edges_;
@@ -195,8 +194,9 @@ struct POI : public Base {
     DECLARE_RW_PROPERTY( name, std::string );
 
     ///
-    /// If not null: it is a parking for the given transport mode
-    DECLARE_RW_PROPERTY( parking_transport_mode, db_id_t );
+    /// If not null: it is a parking for the transport modes with the given traffic rules
+    /// bitfield value
+    DECLARE_RW_PROPERTY( parking_traffic_rules, int );
 
     ///
     /// Link to a road edge

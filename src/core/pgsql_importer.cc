@@ -301,7 +301,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     }
 
     {
-        Db::Result res( connection_.exec( "SELECT id, pnname, FROM tempus.pt_network" ) );
+        Db::Result res( connection_.exec( "SELECT id, pnname FROM tempus.pt_network" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             PublicTransport::Network network;
@@ -319,7 +319,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     {
 
         Db::Result res( connection_.exec( "select distinct on (n.id) "
-                                          "s.network_id, n.id, n.psname, n.location_type, "
+                                          "s.network_id, n.id, n.name, n.location_type, "
                                           "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
                                           "from tempus.pt_stop as n, tempus.pt_section as s "
                                           "where s.stop_from = n.id or s.stop_to = n.id" ) );
@@ -439,7 +439,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     }
 
     {
-        Db::Result res( connection_.exec( "SELECT id, poi_type, pname, parking_transport_mode, road_section_id, abscissa_road_section FROM tempus.poi" ) );
+        Db::Result res( connection_.exec( "SELECT id, poi_type, name, parking_traffic_rules, road_section_id, abscissa_road_section FROM tempus.poi" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             POI poi;
@@ -449,7 +449,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
             poi.poi_type( static_cast<POI::PoiType>(res[i][1].as<int>()) );
             poi.name( res[i][2] );
-            poi.parking_transport_mode( res[i][3] );
+            poi.parking_traffic_rules( res[i][3] );
 
             db_id_t road_section_id;
             res[i][4] >> road_section_id;
@@ -561,20 +561,19 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
 
     // get restriction costs
     {
-        Db::Result res( connection_.exec( "SELECT id, restriction_id, transport_types, cost FROM tempus.road_restriction_cost" ) );
+        Db::Result res( connection_.exec( "SELECT restriction_id, traffic_rules, time_value FROM tempus.road_restriction_time_penalty" ) );
         std::map<db_id_t, Road::Restriction::CostPerTransport> costs;
         for ( size_t i = 0; i < res.size(); i++ ) {
-            db_id_t id, restr_id;
+            db_id_t restr_id;
             int transports;
             double cost;
 
-            res[i][0] >> id;
-            res[i][1] >> restr_id;
-            res[i][2] >> transports;
-            res[i][3] >> cost;
+            res[i][0] >> restr_id;
+            res[i][1] >> transports;
+            res[i][2] >> cost;
 
             if ( edges_map.find( restr_id ) == edges_map.end() ) {
-                CERR << "Cannot find road_restriction of ID " << restr_id << " for restriction_cost of ID " << id << endl;
+                CERR << "Cannot find road_restriction of ID " << restr_id << std::endl;
                 continue;
             }
             // add cost to the map
