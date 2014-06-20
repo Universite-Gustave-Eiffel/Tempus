@@ -155,6 +155,18 @@ protected:
 #define REQUIRE( expr ) ((void)0)
 #endif
 
+
+template <typename T>
+class remove_const
+{
+    typedef T type;
+};
+template <typename T>
+class remove_const<T const>
+{
+    typedef T type;
+};
+
 ///
 /// Macro used to declare a class property as well as its getter and setter
 #define DECLARE_RW_PROPERTY(NAME, TYPE)                \
@@ -162,7 +174,7 @@ private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
   TYPE NAME() const { return NAME ## _; }              \
-  void NAME( const TYPE& a ) { NAME ## _ = a; }
+  void NAME( const typename remove_const<TYPE>::type& a ) { NAME ## _ = a; }
 
 ///
 /// Macro used to declare a class property and its getter
@@ -194,7 +206,6 @@ private:
     db_id_t db_id_;
 };
 
-
 template <class T>
 class OrNull
 {
@@ -205,6 +216,7 @@ public:
     bool is_not_null() const { return ! is_null_; }
     operator T() const { return v_; }
     operator bool() const { return ! is_null(); }
+    T value() const { return v_; }
     void reset() { is_null_ = true; }
 private:
     bool is_null_;

@@ -65,13 +65,9 @@ typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, St
 /// Refers to the 'pt_stop' DB's table
 struct Stop : public Base {
 public:
-    Stop() : graph_(0) {}
-    explicit Stop( const Graph* g ) : Base(), graph_(g) {}
-private:
-    const Graph* graph_;
+    Stop() : Base(), graph_(0) {}
 
-public:
-    const Graph* graph() const { return graph_; }
+    DECLARE_RW_PROPERTY( graph, const Graph* );
 
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
@@ -105,18 +101,26 @@ public:
 ///
 /// used as an Edge in a PublicTransportGraph
 struct Section {
+public:
+    Section() : graph_(0) {}
+
+    DECLARE_RW_PROPERTY( graph, const Graph* );
+
     /// This is a shortcut to the edge index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's edge from a Section
     /// Can be null
-    Edge edge;
-    const Graph* graph;
+    DECLARE_RW_PROPERTY( edge, OrNull<Edge> );
 
     // A Section has no proper id, but a stop_from and a stop_to
-    db_id_t stop_from;
-    db_id_t stop_to;
+    db_id_t stop_from_id() const {
+        return (*graph_)[source( edge_.value(), *graph_ )].db_id();
+    }
+    db_id_t stop_to_id() const {
+        return (*graph_)[target( edge_.value(), *graph_ )].db_id();
+    }
 
     /// must not be null
-    db_id_t network_id;
+    DECLARE_RW_PROPERTY( network_id, db_id_t );
 };
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;

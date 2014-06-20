@@ -63,7 +63,7 @@ struct Node : public Base {
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    DECLARE_RW_PROPERTY( vertex, Vertex );
+    DECLARE_RW_PROPERTY( vertex, OrNull<Vertex> );
 
     /// Total number of incident edges > 2
     DECLARE_RW_PROPERTY( is_bifurcation, bool );

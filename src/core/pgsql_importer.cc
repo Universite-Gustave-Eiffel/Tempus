@@ -333,7 +333,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( graph.network_map.find( network_id ) != graph.network_map.end() );
             BOOST_ASSERT( graph.public_transports.find( network_id ) != graph.public_transports.end() );
             PublicTransport::Graph& pt_graph = graph.public_transports[network_id];
-            PublicTransport::Stop stop( &pt_graph );
+            PublicTransport::Stop stop;
 
             stop.db_id( res[i][j++] );
             BOOST_ASSERT( stop.db_id() > 0 );
@@ -378,6 +378,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             PublicTransport::Vertex v = boost::add_vertex( stop, pt_graph );
             pt_nodes_map[network_id][ stop.db_id() ] = v;
             pt_graph[v].vertex( v );
+            pt_graph[v].graph( &pt_graph );
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.5 ) );
         }
@@ -401,8 +402,6 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         Db::Result res( connection_.exec( "SELECT network_id, stop_from, stop_to FROM tempus.pt_section" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
-            PublicTransport::Section section;
-
             Tempus::db_id_t network_id;
             res[i][0] >> network_id;
             BOOST_ASSERT( network_id > 0 );
@@ -431,11 +430,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             bool is_added;
             boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );
             BOOST_ASSERT( is_added );
-            pt_graph[e].edge = e;
-            pt_graph[e].graph = &pt_graph;
-            pt_graph[e].network_id = network_id;
-            pt_graph[e].stop_from = stop_from_id;
-            pt_graph[e].stop_to = stop_to_id;
+            pt_graph[e].edge( e );
+            pt_graph[e].graph( &pt_graph );
+            pt_graph[e].network_id( network_id );
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.75 ) );
         }

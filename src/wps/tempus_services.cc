@@ -470,16 +470,16 @@ public:
                     std::string departure_str;
                     PublicTransport::Vertex v1, v2;
                     bool found;
-                    boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
+                    boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section].stop_from_id(), pt_graph );
 
                     if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_from ).str() );
+                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_from_id() ).str() );
                     }
 
-                    boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
+                    boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section].stop_to_id(), pt_graph );
 
                     if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_to ).str() );
+                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_to_id() ).str() );
                     }
 
                     departure_str = pt_graph[ v1 ].name();
