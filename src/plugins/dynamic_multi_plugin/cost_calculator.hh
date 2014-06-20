@@ -173,9 +173,9 @@ namespace Tempus {
                            ( (graph.road[ v.road_vertex ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
                          || ( (v.type == Multimodal::Vertex::Poi ) && ( (v.poi)->parking_transport_mode() == initial_mode_id ) ) )
                     {
-                        // FIXME
-                        //if (initial_mode == 1) 
-                        //    transf_t += car_parking_search_time_ ; // Personal car
+                        // FIXME more complex than that
+                        if (initial_mode.traffic_rules() & TrafficRuleCar ) 
+                            transf_t += car_parking_search_time_ ; // Personal car
                         // For bicycle, parking search time = 0
                     }
                     else
