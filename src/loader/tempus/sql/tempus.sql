@@ -321,7 +321,7 @@ CREATE TABLE tempus.pt_stop
 	name varchar NOT NULL,
 	location_type boolean, -- As in GTFS: false means stop, true means station
 	parent_station integer REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
-	transport_mode integer, -- bitfield giving transport types which pass through the stop
+	--transport_mode integer, -- bitfield giving transport types which pass through the stop
 	road_section_id bigint REFERENCES tempus.road_section,
 	zone_id integer, -- relative to fare zone
 	abscissa_road_section double precision -- curve length from start of road_section to the stop point

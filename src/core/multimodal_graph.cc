@@ -351,8 +351,8 @@ Multimodal::Edge OutEdgeIterator::dereference() const
 
         if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road[ *road_it_ ].stops.size() ) {
             size_t idx = road2stop_connection_;
-            const PublicTransport::Graph* pt_graph = graph_->road[ *road_it_ ].stops[ idx ]->graph;
-            PublicTransport::Vertex v = graph_->road[ *road_it_ ].stops[ idx ]->vertex;
+            const PublicTransport::Graph* pt_graph = graph_->road[ *road_it_ ].stops[ idx ]->graph();
+            PublicTransport::Vertex v = graph_->road[ *road_it_ ].stops[ idx ]->vertex();
             mm_target = Multimodal::Vertex( pt_graph, v );
         }
         else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road[ *road_it_ ].pois.size() ) {
@@ -370,16 +370,16 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         const PublicTransport::Stop *stop = &(*pt_graph)[r_source];
 
         if ( stop2road_connection_ == 0 ) {
-            edge.road_edge = stop->road_edge;
+            edge.road_edge = stop->road_edge();
             mm_target = Multimodal::Vertex( &graph_->road, boost::target( edge.road_edge, graph_->road ) );
         }
         // if there is an opposite road edge attached
-        else if ( stop2road_connection_ == 1 && stop->opposite_road_edge != stop->road_edge ) {
-            edge.road_edge = stop->opposite_road_edge;
+        else if ( stop2road_connection_ == 1 && stop->opposite_road_edge() ) {
+            edge.road_edge = stop->opposite_road_edge();
             mm_target = Multimodal::Vertex( &graph_->road, boost::target( edge.road_edge, graph_->road ) );
         }
         else {
-            edge.road_edge = stop->road_edge;
+            edge.road_edge = stop->road_edge();
             PublicTransport::Vertex r_target = boost::target( *pt_it_, *pt_graph );
             mm_target = Multimodal::Vertex( pt_graph, r_target );
         }
@@ -424,7 +424,7 @@ void OutEdgeIterator::increment()
 
         if ( stop2road_connection_ == 0 ) {
             // if there is an opposite edge
-            if ( stop->road_edge != stop->opposite_road_edge ) {
+            if ( stop->opposite_road_edge() ) {
                 stop2road_connection_ ++;
             }
             // else, step to 2
@@ -616,8 +616,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
         //
         // For a PublicTransport::Vertex, we have access to 1 or 2 additional node (the road node)
         return out_degree( v.pt_vertex, *v.pt_graph ) + 
-            (( (*v.pt_graph)[v.pt_vertex].road_edge != (*v.pt_graph)[v.pt_vertex].opposite_road_edge ) ?
-             2 : 1);
+            ( (*v.pt_graph)[v.pt_vertex].opposite_road_edge() ? 2 : 1);
     }
 
     // else (Poi), 1 road node is reachable

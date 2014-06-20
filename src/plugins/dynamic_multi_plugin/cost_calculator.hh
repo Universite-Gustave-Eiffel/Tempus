@@ -50,8 +50,8 @@ namespace Tempus {
                 case Multimodal::Edge::Road2Transport: {
                     // find the road section where the stop is attached to
                     const PublicTransport::Graph& pt_graph = *( e.target.pt_graph );
-                    double abscissa = pt_graph[ e.target.pt_vertex ].abscissa_road_section; 
-                    Road::Edge road_e = pt_graph[ e.target.pt_vertex ].road_edge;
+                    double abscissa = pt_graph[ e.target.pt_vertex ].abscissa_road_section();
+                    Road::Edge road_e = pt_graph[ e.target.pt_vertex ].road_edge();
 						
                     // if we are coming from the start point of the road
                     if ( source( road_e, graph.road ) == e.source.road_vertex )
@@ -64,8 +64,8 @@ namespace Tempus {
                 case Multimodal::Edge::Transport2Road: {
                     // find the road section where the stop is attached to
                     const PublicTransport::Graph& pt_graph = *( e.source.pt_graph );
-                    double abscissa = pt_graph[ e.source.pt_vertex ].abscissa_road_section; 
-                    Road::Edge road_e = pt_graph[ e.source.pt_vertex ].road_edge; 
+                    double abscissa = pt_graph[ e.source.pt_vertex ].abscissa_road_section();
+                    Road::Edge road_e = pt_graph[ e.source.pt_vertex ].road_edge();
 						
                     // if we are coming from the start point of the road
                     if ( source( road_e, graph.road ) == e.source.road_vertex ) 

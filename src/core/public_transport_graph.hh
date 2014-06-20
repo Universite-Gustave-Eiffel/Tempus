@@ -33,10 +33,12 @@ namespace Tempus {
 */
 namespace PublicTransport {
 struct Network : public Base {
-    std::string name;
+    DECLARE_RW_PROPERTY( name, std::string );
 
+public:
     /// Transport types provided by this network
     /// It is a ORed combination of TransportType IDs (power of two)
+    // FIXME to remove
     db_id_t provided_transport_types;
 };
 
@@ -62,35 +64,42 @@ typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, St
 /// Used as a vertex in a PublicTransportGraph.
 /// Refers to the 'pt_stop' DB's table
 struct Stop : public Base {
+public:
+    Stop() : graph_(0) {}
+    explicit Stop( const Graph* g ) : Base(), graph_(g) {}
+private:
+    const Graph* graph_;
+
+public:
+    const Graph* graph() const { return graph_; }
+
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    Vertex vertex;
-    const Graph* graph;
+    DECLARE_RW_PROPERTY( vertex, OrNull<Vertex> );
 
-    std::string name;
-    bool is_station;
+    DECLARE_RW_PROPERTY( name, std::string );
+    DECLARE_RW_PROPERTY( is_station, bool );
 
     ///
     /// link to a possible parent station, or null
-    Vertex parent_station;
-    bool has_parent;
+    DECLARE_RW_PROPERTY( parent_station, OrNull<Vertex> );
 
     /// link to a road edge
-    Road::Edge road_edge;
+    DECLARE_RW_PROPERTY( road_edge, Road::Edge );
 
     ///
     /// optional link to the opposite road edge
-    /// considered null if == to road_edge
-    Road::Edge opposite_road_edge;
+    /// Can be null
+    DECLARE_RW_PROPERTY( opposite_road_edge, OrNull<Road::Edge> );
 
     ///
     /// Number between 0 and 1 : position of the stop on the main road section
-    double abscissa_road_section;
+    DECLARE_RW_PROPERTY( abscissa_road_section, double );
 
     ///
     /// Fare zone ID of this stop
-    int zone_id;
+    DECLARE_RW_PROPERTY( zone_id, int );
 };
 
 ///

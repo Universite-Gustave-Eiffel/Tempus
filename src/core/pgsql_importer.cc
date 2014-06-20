@@ -40,7 +40,7 @@ Db::Result PQImporter::query( const std::string& query_str )
 void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression )
 {
     {
-        Db::Result res( connection_.exec( "SELECT id, name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle" ) );
+        Db::Result res( connection_.exec( "SELECT id, name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle FROM tempus.transport_mode" ) );
         graph.clear_constants();
 
         for ( size_t i = 0; i < res.size(); i++ ) {
@@ -195,11 +195,11 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         //
         // Get a road section and its opposite, if present
         const std::string qquery = "SELECT "
-            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rule_ft, "
-            "rs1.traffic_rule_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
+            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
+            "rs1.traffic_rules_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
             "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
             "rs2.id, rs2.road_type, "
-            "rs2.traffic_rule_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
+            "rs2.traffic_rules_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
             "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
             "FROM tempus.road_section AS rs1 "
             "LEFT JOIN tempus.road_section AS rs2 "
@@ -301,16 +301,16 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     }
 
     {
-        Db::Result res( connection_.exec( "SELECT id, pnname, provided_transport_types FROM tempus.pt_network" ) );
+        Db::Result res( connection_.exec( "SELECT id, pnname, FROM tempus.pt_network" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             PublicTransport::Network network;
 
             network.db_id( res[i][0] );
             BOOST_ASSERT( network.db_id() > 0 );
-            res[i][1] >> network.name;
-            res[i][2] >> network.provided_transport_types;
+            network.name( res[i][1] );
 
+            // FIXME
             graph.network_map[network.db_id()] = network;
             graph.public_transports[network.db_id()] = PublicTransport::Graph();
         }
@@ -325,7 +325,6 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                                           "where s.stop_from = n.id or s.stop_to = n.id" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
-            PublicTransport::Stop stop;
 
             int j = 0;
             Tempus::db_id_t network_id;
@@ -334,19 +333,21 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( graph.network_map.find( network_id ) != graph.network_map.end() );
             BOOST_ASSERT( graph.public_transports.find( network_id ) != graph.public_transports.end() );
             PublicTransport::Graph& pt_graph = graph.public_transports[network_id];
+            PublicTransport::Stop stop( &pt_graph );
 
             stop.db_id( res[i][j++] );
             BOOST_ASSERT( stop.db_id() > 0 );
-            res[i][j++] >> stop.name;
-            res[i][j++] >> stop.is_station;
+            stop.name( res[i][j++] );
+            stop.is_station( res[i][j++] );
 
-            stop.has_parent = false;
-            int parent_station = 0; // initilisation avoid warning
-            res[i][j++] >> parent_station;
-
-            if ( pt_nodes_map[network_id].find( parent_station ) != pt_nodes_map[network_id].end() ) {
-                stop.parent_station = pt_nodes_map[network_id][ parent_station ];
-                stop.has_parent = true;
+            {
+                Db::Value v(res[i][j++]);
+                if ( ! v.is_null() ) {
+                    Tempus::db_id_t p_id = v;
+                    if ( pt_nodes_map[network_id].find( p_id ) != pt_nodes_map[network_id].end() ) {
+                        stop.parent_station( pt_nodes_map[network_id][ p_id ] );
+                    }
+                }
             }
 
             Tempus::db_id_t road_section;
@@ -358,29 +359,25 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 continue;
             }
 
-            stop.road_edge = road_sections_map[ road_section ];
+            stop.road_edge( road_sections_map[ road_section ] );
             // look for an opposite road edge
             {
                 Road::Edge opposite_edge;
                 bool found;
-                boost::tie( opposite_edge, found ) = edge( target( stop.road_edge, graph.road ),
-                                                           source( stop.road_edge, graph.road ),
+                boost::tie( opposite_edge, found ) = edge( target( stop.road_edge(), graph.road ),
+                                                           source( stop.road_edge(), graph.road ),
                                                            graph.road );
                 if ( found ) {
-                    stop.opposite_road_edge = opposite_edge;
-                }
-                else {
-                    stop.opposite_road_edge = stop.road_edge;
+                    stop.opposite_road_edge( opposite_edge );
                 }
             }
 
-            res[i][j++] >> stop.zone_id;
-            res[i][j++] >> stop.abscissa_road_section;
+            stop.zone_id( res[i][j++] );
+            stop.abscissa_road_section( res[i][j++] );
 
             PublicTransport::Vertex v = boost::add_vertex( stop, pt_graph );
             pt_nodes_map[network_id][ stop.db_id() ] = v;
-            pt_graph[v].vertex = v;
-            pt_graph[v].graph = &pt_graph;
+            pt_graph[v].vertex( v );
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.5 ) );
         }
@@ -395,7 +392,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         PublicTransport::VertexIterator vi, vi_end;
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
-            Road::Edge rs = g[ *vi ].road_edge;
+            Road::Edge rs = g[ *vi ].road_edge();
             road_graph[ rs ].stops.push_back( &g[*vi] );
         }
     }

@@ -172,11 +172,18 @@ private:                                               \
 public:                                                \
   TYPE NAME() const { return NAME ## _; }
 
+///
+/// Macro used to declare a class property and its setter
+#define DECLARE_WO_PROPERTY(NAME, TYPE)                \
+private:                                               \
+  TYPE NAME ## _;                                      \
+public:                                                \
+  void NAME( const TYPE& a ) { NAME ## _ = a; }
 
 class Base : public ConsistentClass {
 public:
     Base() : db_id_(0) {}
-    Base( db_id_t id ) : db_id_(id) {}
+    explicit Base( db_id_t id ) : db_id_(id) {}
     db_id_t db_id() const { return db_id_; }
     void    db_id( const db_id_t& id ) { db_id_ = id; }
 
@@ -186,6 +193,24 @@ private:
     /// Common to many classes.
     db_id_t db_id_;
 };
+
+
+template <class T>
+class OrNull
+{
+public:
+    OrNull() : is_null_(true) {}
+    OrNull( const T& v ) : is_null_(false), v_(v) {}
+    bool is_null() const { return is_null_; }
+    bool is_not_null() const { return ! is_null_; }
+    operator T() const { return v_; }
+    operator bool() const { return ! is_null(); }
+    void reset() { is_null_ = true; }
+private:
+    bool is_null_;
+    T v_;
+};
+
 
 ///
 /// Time is the number of seconds since 00:00.

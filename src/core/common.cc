@@ -105,4 +105,5 @@ std::string cost_unit( int cost )
 
     return "";
 }
+
 }
