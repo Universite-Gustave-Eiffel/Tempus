@@ -74,6 +74,18 @@ enum TransportModeTollRule
     TollRuleMotorcycles          = 16
 };
 
+/// GTFS Route type (for public transport)
+enum TransportModeRouteType {
+    RouteTypeTram = 1,
+    RouteTypeSubway,
+    RouteTypeRail,
+    RouteTypeBus,
+    RouteTypeFerry,
+    RouteTypeCableCar,
+    RouteTypeSuspendedCar,
+    RouteTypeFunicular
+};
+
 class TransportMode : public Base
 {
     /// name of the transport mode
@@ -97,6 +109,8 @@ class TransportMode : public Base
     DECLARE_RW_PROPERTY( toll_rules, int );
 
     DECLARE_RW_PROPERTY( engine_type, TransportModeEngine );
+
+    DECLARE_RW_PROPERTY( route_type, TransportModeRouteType );
 };
 
 ///

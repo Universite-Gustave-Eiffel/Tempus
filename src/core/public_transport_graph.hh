@@ -32,14 +32,31 @@ namespace Tempus {
    PublicTransport::Stop and PublicTransport::Section classes are used to build a BGL public transport graph.
 */
 namespace PublicTransport {
+
+///
+/// Public transport agency
+class Agency : public Base
+{
+public:
+    DECLARE_RW_PROPERTY( name, std::string );
+};
+typedef std::vector<Agency> AgencyList;
+
+///
+/// Public transport networks. A network can be made of several agencies
 struct Network : public Base {
     DECLARE_RW_PROPERTY( name, std::string );
 
 public:
-    /// Transport types provided by this network
-    /// It is a ORed combination of TransportType IDs (power of two)
-    // FIXME to remove
-    db_id_t provided_transport_types;
+    ///
+    /// Get the list of agencies of this network
+    const AgencyList& agencies() const { return agencies_; }
+
+    ///
+    /// Add an agency to this network
+    void add_agency( const Agency& agency );
+private:
+    AgencyList agencies_;
 };
 
 ///
@@ -215,36 +232,28 @@ protected:
         return true;
     }
 };
+typedef std::vector<Trip> Trips;
 
 ///
 /// refers to the 'pt_route' DB's table
-struct Route : public Base {
+class Route : public Base {
+public:
+    DECLARE_RW_PROPERTY( short_name, std::string );
+    DECLARE_RW_PROPERTY( long_name, std::string );
+
     ///
-    /// public transport network
-    db_id_t network_id;
+    /// public transport agency
+    DECLARE_RW_PROPERTY( agency_id, db_id_t );
 
-    std::string short_name;
-    std::string long_name;
+    ///
+    /// Access to trips
+    const Trips& trips() const { return trips_; }
 
-    enum RouteType {
-        TypeTram = 0,
-        TypeSubway,
-        TypeRail,
-        TypeBus,
-        TypeFerry,
-        TypeCableCar,
-        TypeSuspendedCar,
-        TypeFunicular
-    };
-    int route_type;
-
-    std::vector<Trip> trips;
-
-protected:
-    bool check_consistency_() {
-        REQUIRE( ( route_type >= TypeTram ) && ( route_type <= TypeFunicular ) );
-        return true;
-    }
+    ///
+    /// Add a new trip
+    void add_trip( const Trip& trip );
+private:
+    Trips trips_;
 };
 
 ///

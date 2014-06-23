@@ -174,7 +174,7 @@ public:
                 xmlNode* node = XML::new_node( "transport_network" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
-                XML::new_prop( node, "provided_transport_types", it->second.provided_transport_types );
+                //                XML::new_prop( node, "provided_transport_types", it->second.provided_transport_types );
                 XML::add_child( root_node, node );
             }
 
