@@ -45,7 +45,7 @@
 #endif
 
 #define CERR if(1) (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cerr << TEMPUS_LOCATION )
-#define COUT if(0) (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cout << TEMPUS_LOCATION )
+#define COUT if(1) (boost::lock_guard<boost::mutex>( Tempus::iostream_mutex ), std::cout << TEMPUS_LOCATION )
 
 ///
 /// @mainpage TempusV2 API

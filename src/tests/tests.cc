@@ -16,6 +16,7 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <boost/format.hpp>
 #include "db.hh"
 #include "pgsql_importer.hh"
 #include "multimodal_graph.hh"
@@ -31,7 +32,20 @@ std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OP
 using namespace boost::unit_test ;
 using namespace Tempus;
 
-#define DB_TEST_NAME "tempus_test_db"
+std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";
+
+Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& lgraph )
+{
+    Multimodal::VertexIterator vi, vi_end;
+
+    for ( boost::tie( vi, vi_end ) = vertices( lgraph ); vi != vi_end; vi++ ) {
+        if ( vi->type == Multimodal::Vertex::Road && lgraph.road[ vi->road_vertex ].db_id() == id ) {
+            return *vi;
+        }
+    }
+
+    throw std::runtime_error( "bug: should not reach here" );
+}
 
 BOOST_AUTO_TEST_SUITE( tempus_core_Db )
 
@@ -48,13 +62,13 @@ BOOST_AUTO_TEST_CASE( testConnection )
     bool has_thrown = false;
 
     try {
-        connection.reset( new Db::Connection( g_db_options + " dbname = " DB_TEST_NAME ) );
+        connection.reset( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
     }
     catch ( std::runtime_error& ) {
         has_thrown = true;
     }
 
-    BOOST_CHECK_MESSAGE( !has_thrown, "Must not throw on an existing database, check that " DB_TEST_NAME " exists" );
+    BOOST_CHECK_MESSAGE( !has_thrown, "Must not throw on an existing database, check that " + g_db_name + " exists" );
 
     // Do not sigsegv ?
 }
@@ -62,7 +76,7 @@ BOOST_AUTO_TEST_CASE( testConnection )
 BOOST_AUTO_TEST_CASE( testQueries )
 {
     std::cout << "DbTest::testQueries()" << std::endl;
-    std::auto_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " DB_TEST_NAME ) );
+    std::auto_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
 
     // test bad query
     BOOST_CHECK_THROW( connection->exec( "SELZECT * PHROM zorglub" ),  std::runtime_error );
@@ -95,15 +109,16 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_PgImporter )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " DB_TEST_NAME ) );
+std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
 Multimodal::Graph graph;
 
 BOOST_AUTO_TEST_CASE( testConsistency )
 {
     std::cout << "PgImporterTest::testConsistency()" << std::endl;
-    importer->import_constants( graph );
-    importer->import_graph( graph );
+    TextProgression progression;
+    importer->import_constants( graph, progression );
+    importer->import_graph( graph, progression );
 
     // get the number of vertices in the graph
     long n_road_vertices, n_road_edges, n_road_oriented_edges;
@@ -156,17 +171,17 @@ BOOST_AUTO_TEST_CASE( testConsistency )
         long n_pt_vertices, n_pt_edges;
         {
             // select PT stops that are involved in a pt section
-            Db::Result res( importer->query( "SELECT COUNT(*) FROM ("
-                                             "select distinct n.id from tempus.pt_stop as n, "
-                                             "tempus.pt_section as s "
-                                             "WHERE s.stop_from = n.id "
-                                             "OR s.stop_to = n.id) t" ) );
+            Db::Result res( importer->query( (boost::format("SELECT COUNT(*) FROM ("
+                                                            "select distinct n.id from tempus.pt_stop as n, "
+                                                            "tempus.pt_section as s "
+                                                            "WHERE s.network_id = %1% AND (s.stop_from = n.id "
+                                                            "OR s.stop_to = n.id ) ) t" ) % it->first ).str() ) );
             BOOST_CHECK( res.size() == 1 );
             n_pt_vertices = res[0][0].as<long>();
         }
 
         {
-            Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.pt_section" ) );
+            Db::Result res( importer->query( (boost::format("SELECT COUNT(*) FROM tempus.pt_section WHERE network_id = %1%") % it->first).str() ));
             BOOST_CHECK( res.size() == 1 );
             n_pt_edges = res[0][0].as<long>();
         }
@@ -177,19 +192,14 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     }
 }
 
-Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& lgraph )
-{
-    Multimodal::VertexIterator vi, vi_end;
+BOOST_AUTO_TEST_SUITE_END()
 
-    for ( boost::tie( vi, vi_end ) = vertices( lgraph ); vi != vi_end; vi++ ) {
-        if ( vi->type == Multimodal::Vertex::Road && lgraph.road[ vi->road_vertex ].db_id() == id ) {
-            return *vi;
-        }
-    }
 
-    throw std::runtime_error( "bug: should not reach here" );
-}
+BOOST_AUTO_TEST_SUITE( tempus_plugin_multimodal )
 
+std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+
+Multimodal::Graph graph;
 
 BOOST_AUTO_TEST_CASE( testMultimodal )
 {
@@ -453,6 +463,15 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
         }
     }
 }
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
+BOOST_AUTO_TEST_SUITE( tempus_road_restrictions )
+
+std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+
+Multimodal::Graph graph;
 
 BOOST_AUTO_TEST_CASE( testRestrictions )
 {

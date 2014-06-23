@@ -124,6 +124,8 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         }
     }
 
+    // FIXME consistency check : to be put in post-import SQL scripts
+#if 0
     //
     // check road section consistency
     {
@@ -190,6 +192,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
         }
     }
+#endif
 
     {
         //

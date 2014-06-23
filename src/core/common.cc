@@ -31,26 +31,26 @@ void TextProgression::operator()( float percent, bool finished )
         return;
     }
 
-    if ( finished || ( old_N_ == -1 ) ) {
-        COUT << "\r";
-        COUT << "[";
+    /*if ( finished || ( old_N_ == -1 ) )*/ {
+        std::cout << "\r";
+        std::cout << "[";
 
         for ( int i = 0; i < new_N; i++ ) {
-            COUT << ".";
+            std::cout << ".";
         }
 
         for ( int i = new_N; i < N_; i++ ) {
-            COUT << " ";
+            std::cout << " ";
         }
 
-        COUT << "] ";
-        COUT << int( percent * 100 ) << "%";
+        std::cout << "] ";
+        std::cout << int( percent * 100 ) << "%";
 
         if ( finished ) {
-            COUT << std::endl;
+            std::cout << std::endl;
         }
 
-        COUT.flush();
+        std::cout.flush();
     }
 
     old_N_ = new_N;
