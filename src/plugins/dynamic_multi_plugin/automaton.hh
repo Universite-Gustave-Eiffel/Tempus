@@ -94,26 +94,26 @@ namespace Tempus {
 	
         void add_sequence( std::vector< Entity > entity_sequence, std::map< int, double > penaltyPerMode ) // corresponds to adding a sequence in the "goto" function
         {
-            Vertex current_state_ = initial_state_ ; 
+            Vertex current_state = initial_state_ ; 
 
             // Iterating over forbidden road sequences 
             for ( size_t j = 0; j < entity_sequence.size(); j++ ) {
-                std::pair< Vertex, bool > transition_result = find_transition( current_state_, entity_sequence[j] );
+                std::pair< Vertex, bool > transition_result = find_transition( current_state, entity_sequence[j] );
 				
                 if ( transition_result.second == true )  {// this state already exists
-                    current_state_ = transition_result.first;
+                    current_state = transition_result.first;
                 }
                 else { // this state needs to be inserted
                     Vertex s = boost::add_vertex( automaton_graph_ );
                     Edge e;
                     bool ok;
-                    boost::tie( e, ok ) = boost::add_edge( current_state_, s, automaton_graph_ );
+                    boost::tie( e, ok ) = boost::add_edge( current_state, s, automaton_graph_ );
                     BOOST_ASSERT( ok );
                     automaton_graph_[e].entity = entity_sequence[j];
                     if ( j == entity_sequence.size()-1 ) {
                         automaton_graph_[ s ].penaltyPerMode = penaltyPerMode;
                     }
-                    current_state_ = s; 
+                    current_state = s; 
                 } 
             }
         } 
@@ -159,9 +159,10 @@ namespace Tempus {
 		
         void build_shortcuts(const std::map < Vertex, Vertex >& failure_function_) // corresponds to building the "next" function
         {
-            std::list< Vertex > q; 
+            std::list< Vertex > q;
 			
             BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {
+                BOOST_ASSERT( edge.get_property() );
                 q.push_back( target( edge, automaton_graph_ ) );
             }
 
@@ -172,16 +173,17 @@ namespace Tempus {
 
                 Vertex f = initial_state_;
                 typename std::map<Vertex,Vertex>::const_iterator fit = failure_function_.find(r);
-                if ( fit != failure_function_.end() ) {
-                    f = fit->second;
-                }
+                BOOST_ASSERT( fit != failure_function_.end() );
+                f = fit->second;
                 if ( f != initial_state_ ) {
                     BGL_FORALL_OUTEDGES_T( f, edge, automaton_graph_, Graph ) {
+                        BOOST_ASSERT( edge.get_property() );
+                        Entity entity = automaton_graph_[edge].entity;
                         Edge e;
                         bool ok;
                         boost::tie( e, ok ) = boost::add_edge( r, target( edge, automaton_graph_ ), automaton_graph_ );
                         BOOST_ASSERT( ok );
-                        automaton_graph_[ e ].entity = automaton_graph_[edge].entity;
+                        automaton_graph_[ e ].entity = entity;
                     }
                 }
                 BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {
