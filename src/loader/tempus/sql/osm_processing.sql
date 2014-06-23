@@ -94,11 +94,10 @@ select
 	rs.road_type,
 	array_from[i] as node_from,
 	array_to[i] as node_to,
-	rs.transport_type_ft,
-	rs.transport_type_tf,
+	rs.traffic_rules_ft,
+	rs.traffic_rules_tf,
 	st_length(array_lines[i]) as length,
 	rs.car_speed_limit,
-	rs.car_average_speed,
 	rs.road_name,
 	rs.lane,
 	rs.roundabout,
@@ -126,8 +125,8 @@ delete from tempus.road_section where id in (select section_id from road_section
 insert into tempus.road_section
 select
 	-- all columns except section_id
-	id, road_type, node_from, node_to, transport_type_ft, transport_type_tf, length,
-	car_speed_limit, car_average_speed, road_name, lane, roundabout, bridge, tunnel, ramp, tollway, geom
+	id, road_type, node_from, node_to, traffic_rules_ft, traffic_rules_tf, length,
+	car_speed_limit, road_name, lane, roundabout, bridge, tunnel, ramp, tollway, geom
 from
 	road_section_tmp
 ;

@@ -10,7 +10,6 @@ insert into
 	tempus.road_node
 select
 	nextval('tempus.seq_road_node_id')::bigint as id
-	, true as junction
 	, false as bifurcation
 	, st_force_3DZ(nodes.gnode) as geom
 from (
@@ -70,19 +69,18 @@ select
 	end as road_type
 	, nf.id as node_from
 	, nt.id as node_to
-	-- FIXME check conditions for transport_type
 	, case
-		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 1 -- car only
-		when hw.oneway is null then 512 + 4 + 2 + 1 -- roller + cycle + pedestrian + car
-		when oneway in ('true', 'yes') then 512 + 4 + 2 + 1
-		else 519 -- 512 + 4 + 2 + 1
-	end as transport_type_ft
+		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
+		when hw.oneway is null then 2 + 1 -- pedestrian + cycle
+		when oneway in ('true', 'yes') then 32+16+8+2+1
+		else 32+16+8+4+2+1
+	end as traffic_rules_ft
 	, case
-		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 1
-		when hw.oneway is null then 512 + 4 + 2 + 1
-		when oneway in ('true', 'yes') then 2 -- oneway: pedestrian only
-		else 519 -- 512 + 4 + 2 + 1
-	end as transport_type_tf
+		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
+		when hw.oneway is null then 2 + 1 -- pedestrian + cycle
+		when oneway in ('true', 'yes') then 1 -- one way, pedestrian only
+		else 32+16+8+4+2+1
+	end as traffic_rules_tf
 	, st_length(st_transform(hw.geom, 2154)) as length
 	, case
 		-- FIXME : check type correspondance with
@@ -101,7 +99,6 @@ select
 		when hw."type" = 'unclassified' then 50
 		else 50
 	end as car_speed_limit	
-	, NULL as car_average_speed
 	, hw."name" as road_name
 	, hw.lanes as lane
 	, false as roundabout

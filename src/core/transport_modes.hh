@@ -48,7 +48,8 @@ enum TransportModeTrafficRule
     TrafficRuleBicycle    = 2,
     TrafficRuleCar        = 4,
     TrafficRuleTaxi       = 8,
-    TrafficRuleCarPool    = 16
+    TrafficRuleCarPool    = 16,
+    TrafficRuleTruck      = 32
 };
 
 ///

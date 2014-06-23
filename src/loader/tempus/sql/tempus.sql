@@ -260,7 +260,7 @@ CREATE TABLE tempus.poi
 	id integer PRIMARY KEY,
 	poi_type integer REFERENCES tempus.poi_type NOT NULL,
 	name varchar,
-	parking_traffic_rules,
+	parking_traffic_rules integer NOT NULL,
 	road_section_id bigint REFERENCES tempus.road_section NOT NULL,
 	abscissa_road_section double precision NOT NULL CHECK (abscissa_road_section >= 0 AND abscissa_road_section <= 1)
 	-- NOTA: geometry column added NOT NULL
@@ -282,13 +282,13 @@ CREATE TABLE tempus.pt_network
 	id serial PRIMARY KEY,
 	pnname varchar,
 	commercial_name varchar, 
-	provided_transport_modes integer NOT NULL,
+	--provided_transport_modes integer NOT NULL,
 	import_date timestamp not null default current_timestamp,
 	calendar_begin date, 
 	calendar_end date
 ); 
 COMMENT ON TABLE tempus.pt_network IS 'Public transport network : one for each import operation and mostly one for each public authority'; 
-COMMENT ON COLUMN tempus.pt_network.provided_transport_modes IS 'Transport modes available in the network => bitfield value'; 
+--COMMENT ON COLUMN tempus.pt_network.provided_transport_modes IS 'Transport modes available in the network => bitfield value'; 
 COMMENT ON COLUMN tempus.pt_network.import_date IS 'Time and date it was imported in the database'; 
 COMMENT ON COLUMN tempus.pt_network.calendar_begin IS 'First day of data available in the calendar of the network'; 
 COMMENT ON COLUMN tempus.pt_network.calendar_end IS 'Last day of data available in the calendar of the network'; 
@@ -357,12 +357,12 @@ CREATE TABLE tempus.pt_section
 	stop_to integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
 	-- transport_mode integer NOT NULL REFERENCES tempus.transport_mode, 
 	network_id integer NOT NULL REFERENCES tempus.pt_network, 
-	PRIMARY KEY(stop_from, stop_to, transport_mode, network_id)
+	PRIMARY KEY(stop_from, stop_to, network_id)
 	-- NOTA: geometry column added
 ); 
 COMMENT ON TABLE tempus.pt_section
   IS 'Public transport sections (between two subsequent stops) description';
-COMMENT ON COLUMN tempus.pt_section.transport_mode IS 'Transport mode allowed on the section'; 
+--COMMENT ON COLUMN tempus.pt_section.transport_mode IS 'Transport mode allowed on the section'; 
 
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar
