@@ -144,7 +144,7 @@ class IfsttarRouting:
 
         # list of transport types
         # array of Tempus.TransportType
-        self.transport_types = []
+        self.transport_modes = []
         # list of public networks
         # array of Tempus.TransportNetwork
         self.networks = []
@@ -276,11 +276,11 @@ class IfsttarRouting:
         if self.wps is None:
             return
         try:
-            (road_types, transport_types, transport_networks) = self.wps.constant_list()
+            (road_types, transport_modes, transport_networks) = self.wps.constant_list()
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
-        self.transport_types = transport_types
+        self.transport_modes = transport_modes
         self.networks = transport_networks
 
     def update_plugin_options( self, plugin_idx ):
@@ -609,7 +609,7 @@ class IfsttarRouting:
     def displayTransportAndNetworks( self ):
 
         listModel = QStandardItemModel()
-        for ttype in self.transport_types:
+        for ttype in self.transport_modes:
             item = QStandardItem( ttype.name )
             item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
             item.setData( Qt.Checked, Qt.CheckStateRole)
@@ -690,8 +690,8 @@ class IfsttarRouting:
         constraints = self.dlg.get_constraints()
         parking = self.dlg.get_parking()
         pvads = self.dlg.get_pvads()
-        networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
-        transports = sum([ self.transport_types[x].id for x in self.dlg.selected_transports() ])
+        #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
+        transports = sum([ self.transport_modes[x].id for x in self.dlg.selected_transports() ])
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
@@ -713,7 +713,6 @@ class IfsttarRouting:
                                            allowed_transport_types = transports,
                                            parking_location = None if parking == [] else Tempus.Point(parking[0], parking[1]),
                                            criteria = criteria,
-                                           networks = networks,
                                            steps = steps
                                            )
         except RuntimeError as e:
@@ -736,7 +735,7 @@ class IfsttarRouting:
         server_state = to_xml([ 'server_state',
                                 etree.tostring(self.wps.save['plugins']),
                                 etree.tostring(self.wps.save['road_types']), 
-                                etree.tostring(self.wps.save['transport_types']),
+                                etree.tostring(self.wps.save['transport_modes']),
                                 etree.tostring(self.wps.save['transport_networks']) ] )
         xml_record += server_state + '</record>'
         self.historyFile.addRecord( xml_record )
@@ -797,7 +796,7 @@ class IfsttarRouting:
         idx = self.dlg.ui.pluginCombo.findText( currentPlugin )
         self.dlg.ui.pluginCombo.setCurrentIndex( idx )
 
-        self.transport_types = Tempus.parse_transport_types( loaded['server_state'][2] )
+        self.transport_modes = Tempus.parse_transport_modes( loaded['server_state'][2] )
         self.networks = Tempus.parse_transport_networks( loaded['server_state'][3] )
 
         self.displayTransportAndNetworks()
