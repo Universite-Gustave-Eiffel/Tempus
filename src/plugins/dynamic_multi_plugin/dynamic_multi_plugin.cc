@@ -163,10 +163,10 @@ namespace Tempus {
             REQUIRE( vertex_exists( request.destination(), graph_ ) );
             request_ = request; 
 
-            if ( request.optimizing_criteria[0] != CostDuration ) 
+            if ( request.optimizing_criteria()[0] != CostDuration ) 
                 throw std::invalid_argument( "Unsupported optimizing criterion" ); 
         
-            if ( verbose_ ) cout << "Road origin node ID = " << graph_.road[request_.origin].db_id() << ", road destination node ID = " << graph_.road[request_.destination()].db_id() << endl;
+            if ( verbose_ ) cout << "Road origin node ID = " << graph_.road[request_.origin()].db_id() << ", road destination node ID = " << graph_.road[request_.destination()].db_id() << endl;
             result_.clear(); 
             	
             // Get plugin options 		
@@ -179,8 +179,8 @@ namespace Tempus {
             get_option( "car_parking_search_time", car_parking_search_time_ ); 
     	
             // If current date changed, reload timetable / frequency
-            if ( current_day_ != request_.steps[0].constraint.date_time.date() )  {
-        	current_day_ = request_.steps[0].constraint.date_time.date();
+            if ( current_day_ != request_.steps()[0].constraint().date_time().date() )  {
+        	current_day_ = request_.steps()[0].constraint().date_time().date();
 
                 // cache graph id to descriptor
                 // FIXME - integrate the cache into the graphs ?
@@ -297,8 +297,8 @@ namespace Tempus {
             Timer timer;
 
             // Get origin and destination nodes
-            Multimodal::Vertex origin = Multimodal::Vertex( &graph_.road, request_.origin );
-            destination_ = Multimodal::Vertex( &graph_.road, request_.steps[0].destination );
+            Multimodal::Vertex origin = Multimodal::Vertex( &graph_.road, request_.origin() );
+            destination_ = Multimodal::Vertex( &graph_.road, request_.destination() );
 
             Triple origin_o;
             origin_o.vertex = origin;
@@ -309,7 +309,7 @@ namespace Tempus {
             // adaptation to a property map : infinite default value
             associative_property_map_default_value< PotentialMap > potential_pmap( potential_map_, std::numeric_limits<double>::max() );
             /// Potential of the source node is initialized to the departure time (requires dijkstra_shortest_paths_no_init to be used)
-            put( potential_pmap, origin_o, request_.steps[0].constraint.date_time.time_of_day().total_seconds()/60 ) ;
+            put( potential_pmap, origin_o, request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60 ) ;
         
             // Initialize the predecessor map
             boost::associative_property_map< PredecessorMap > pred_pmap( pred_map_ );  // adaptation to a property map
@@ -322,11 +322,11 @@ namespace Tempus {
             boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
 
             // Define and initialize the cost calculator
-            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_transport_types, available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
+            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_transport_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
 
             Tempus::PluginGraphVisitor vis ( this ) ;
             try {
-                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_transport_types, vis );
+                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_transport_modes(), vis );
             }
             catch ( path_found_exception& ) {
                 // Dijkstra has been short cut when the destination node is reached

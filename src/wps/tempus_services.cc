@@ -215,14 +215,14 @@ public:
     }
 
     void parse_constraint( const xmlNode* node, Request::TimeConstraint& constraint ) const {
-        constraint.type = lexical_cast<int>( XML::get_prop( node, "type" ) );
+        constraint.type( lexical_cast<int>( XML::get_prop( node, "type" ) ) );
 
         std::string date_time = XML::get_prop( node, "date_time" );
         const char* date_time_str = date_time.c_str();
         int day, month, year, hour, min;
         sscanf( date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
-        constraint.date_time = boost::posix_time::ptime( boost::gregorian::date( year, month, day ),
-                               boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );
+        constraint.date_time( boost::posix_time::ptime( boost::gregorian::date( year, month, day ),
+                                                        boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) ) );
     }
 
     Road::Vertex get_road_vertex_from_point( const xmlNode* node, Db::Connection& db ) const {
@@ -330,65 +330,69 @@ public:
             // now extract actual data
             xmlNode* request_node = input_parameter_map.find( "request" )->second;
             // allowed transport types
-            request.allowed_transport_types = lexical_cast<int>( XML::get_prop( request_node, "allowed_transport_types" ) );
+            request.allowed_transport_modes( lexical_cast<int>( XML::get_prop( request_node, "allowed_transport_types" ) ) );
 
             const xmlNode* field = XML::get_next_nontext( request_node->children );
 
-            request.origin = get_road_vertex_from_point( field, db );
+            Request::Step origin;
+            origin.location( get_road_vertex_from_point( field, db ) ); 
 
             // departure_constraint
             field = XML::get_next_nontext( field->next );
-            parse_constraint( field, request.departure_constraint );
+            {
+                Request::TimeConstraint constraint;
+                parse_constraint( field, constraint );
+                origin.constraint( constraint );
+            }
+            request.origin( origin );
 
             // parking location id, optional
             const xmlNode* n = XML::get_next_nontext( field->next );
 
             if ( !xmlStrcmp( n->name, ( const xmlChar* )"parking_location" ) ) {
-                request.parking_location = get_road_vertex_from_point( n, db );
+                request.parking_location( get_road_vertex_from_point( n, db ) );
                 field = n;
             }
 
             // optimizing criteria
-            request.optimizing_criteria.clear();
             field = XML::get_next_nontext( field->next );
-            request.optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
+            request.optimizing_criterion( 0, lexical_cast<int>( field->children->content ) );
             field = XML::get_next_nontext( field->next );
 
+            unsigned idx = 1;
             while ( !xmlStrcmp( field->name, ( const xmlChar* )"optimizing_criterion" ) ) {
-                request.optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
+                request.optimizing_criterion( idx, lexical_cast<int>( field->children->content ) );
                 field = XML::get_next_nontext( field->next );
-            }
-
-            // allowed networks, 1 .. N
-            request.allowed_networks.clear();
-
-            while ( !xmlStrcmp( field->name, ( const xmlChar* )"allowed_network" ) ) {
-                Tempus::db_id_t network_id = lexical_cast<Tempus::db_id_t>( field->children->content );
-                request.allowed_networks.push_back( network_id );
-                field = XML::get_next_nontext( field->next );
+                idx++;
             }
 
             // steps, 1 .. N
-            request.steps.clear();
-
             while ( field ) {
-                request.steps.resize( request.steps.size() + 1 );
-
+                Request::Step step;
                 const xmlNode* subfield;
                 // destination id
                 subfield = XML::get_next_nontext( field->children );
-                request.steps.back().destination = get_road_vertex_from_point( subfield, db );
+                step.location( get_road_vertex_from_point( subfield, db ) );
 
                 // constraint
                 subfield = XML::get_next_nontext( subfield->next );
-                parse_constraint( subfield, request.steps.back().constraint );
+                Request::TimeConstraint constraint;
+                parse_constraint( subfield, constraint );
+                step.constraint( constraint );
 
                 // private_vehicule_at_destination
                 std::string val = XML::get_prop( field, "private_vehicule_at_destination" );
-                request.steps.back().private_vehicule_at_destination = ( val == "true" );
+                step.private_vehicule_at_destination( val == "true" );
 
                 // next step
                 field = XML::get_next_nontext( field->next );
+                if ( field ) {
+                    request.add_intermediary_step( step );
+                }
+                else {
+                    // destination
+                    request.destination( step );
+                }
             }
 
             // call cycle

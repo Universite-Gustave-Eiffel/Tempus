@@ -104,7 +104,7 @@ int main( int argc, char* argv[] )
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
             if ( road_graph[*vi].db_id() == origin_id ) {
-                req.origin = *vi;
+                req.origin( *vi );
                 found_origin = true;
                 break;
             }
@@ -117,7 +117,7 @@ int main( int argc, char* argv[] )
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
             if ( road_graph[*vi].db_id() == destination_id ) {
-                step.destination = *vi;
+                req.destination( *vi );
                 found_destination = true;
                 break;
             }
@@ -127,11 +127,6 @@ int main( int argc, char* argv[] )
             CERR << "Cannot find destination vertex ID " << destination_id << endl;
             return 1;
         }
-
-        req.steps.push_back( step );
-
-        // the only optimizing criterion
-        req.optimizing_criteria.push_back( CostDistance );
 
         COUT << endl << ">> pre_process" << endl;
 

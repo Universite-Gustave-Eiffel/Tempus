@@ -3,6 +3,7 @@ set( HEADER_FILES
     road_graph.hh
     public_transport_graph.hh
     multimodal_graph.hh 
+    request.hh
     application.hh plugin.hh 
     pgsql_importer.hh 
     plugin.hh 
@@ -14,6 +15,7 @@ set( SOURCE_FILES
     common.cc 
     road_graph.cc
     multimodal_graph.cc 
+    request.cc
     application.cc plugin.cc 
     pgsql_importer.cc 
     plugin.cc 

@@ -272,7 +272,9 @@ enum CostId {
     CostPathComplexity,
     CostElevation,
     CostSecurity,
-    CostLandmark
+    CostLandmark,
+    FirstValue = CostDistance,
+    LastValue = CostLandmark
 };
 
 ///
