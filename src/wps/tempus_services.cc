@@ -116,14 +116,14 @@ public:
 /// "constant_list" service, outputs list of constants contained in the database (road type, transport type, transport networks).
 ///
 /// Output var: road_types.
-/// Output var: transport_types.
+/// Output var: transport_modes.
 /// Output var: transport_networks.
 ///
 class ConstantListService : public Service {
 public:
     ConstantListService() : Service( "constant_list" ) {
         add_output_parameter( "road_types" );
-        add_output_parameter( "transport_types" );
+        add_output_parameter( "transport_modes" );
         add_output_parameter( "transport_networks" );
     };
     Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const {
@@ -146,11 +146,11 @@ public:
         }
 
         {
-            xmlNode* root_node = XML::new_node( "transport_types" );
+            xmlNode* root_node = XML::new_node( "transport_modes" );
             Tempus::TransportModes::const_iterator it;
 
             for ( it = graph.transport_modes().begin(); it != graph.transport_modes().end(); it++ ) {
-                xmlNode* node = XML::new_node( "transport_type" );
+                xmlNode* node = XML::new_node( "transport_mode" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
                 XML::new_prop( node, "need_parking", it->second.need_parking() );
@@ -163,7 +163,7 @@ public:
                 XML::add_child( root_node, node );
             }
 
-            output_parameters[ "transport_types" ] = root_node;
+            output_parameters[ "transport_modes" ] = root_node;
         }
 
         {
@@ -174,7 +174,6 @@ public:
                 xmlNode* node = XML::new_node( "transport_network" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
-                //                XML::new_prop( node, "provided_transport_types", it->second.provided_transport_types );
                 XML::add_child( root_node, node );
             }
 

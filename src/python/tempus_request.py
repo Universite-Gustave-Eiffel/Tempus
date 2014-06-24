@@ -183,21 +183,22 @@ class RoadType:
         self.name = name
         self.id = id
 
-class TransportType:
-    def __init__( self, id = 0, parent_id = 0, name = '', need_parking = False, need_station = False, need_return = False, need_network = False ):
+class TransportMode:
+    def __init__( self, id = 0, name = '', need_parking = False, is_shared = False, must_be_returned = False, traffic_rules = 0, speed_rule = 0, toll_rules = 0, engine_type = 0 ):
         self.id = id
-        self.parent_id = parent_id
         self.name = name
         self.need_parking = need_parking
-        self.need_station = need_station
-        self.need_return = need_return
-        self.need_network = need_network
+        self.is_shared = is_shared
+        self.must_be_returned = must_be_returned
+        self.traffic_rules = traffic_rules
+        self.speed_rule = speed_rule
+        self.toll_rules = toll_rules
+        self.engine_type = engine_type
 
 class TransportNetwork:
-    def __init__( self, id = 0, name = '', provided_transport_types = 0 ):
+    def __init__( self, id = 0, name = '' ):
         self.id = id
         self.name = name
-        self.provided_transport_types = provided_transport_types
 
 def parse_option_value( opt ):
     optval = None
@@ -232,19 +233,20 @@ def parse_plugins( output ):
 def parse_road_types( output ):
     return [ RoadType(id = int(x.attrib['id']), name = x.attrib['name']) for x in output ]
 
-def parse_transport_types( output ):
-    return [ TransportType( id = int(x.attrib['id']),
-                            parent_id = int(x.attrib['parent_id']),
+def parse_transport_modes( output ):
+    return [ TransportMode( id = int(x.attrib['id']),
                             name = x.attrib['name'],
                             need_parking = x.attrib['need_parking'] == "true",
-                            need_station = x.attrib['need_station'] == "true",
-                            need_return = x.attrib['need_return'] == "true",
-                            need_network = x.attrib['need_network'] == "true" )
+                            is_shared = x.attrib['is_shared'] == "true",
+                            must_be_returned = x.attrib['must_be_returned'] == "true",
+                            traffic_rules = int(x.attrib['traffic_rules']),
+                            speed_rule = int(x.attrib['speed_rule']),
+                            toll_rules = int(x.attrib['toll_rules']),
+                            engine_type = int(x.attrib['engine_type']) )
              for x in output ]
 def parse_transport_networks( output ):
     return [ TransportNetwork( id = int(x.attrib['id']),
-                               name = x.attrib['name'],
-                               provided_transport_types = int(x.attrib['provided_transport_types']) )
+                               name = x.attrib['name'] )
              for x in output ]
 
 def parse_metrics( metrics ):
@@ -342,7 +344,7 @@ class TempusRequest:
         for k,v in outputs.iteritems():
             self.save[k] = v
         return ( parse_road_types(outputs['road_types']),
-                 parse_transport_types(outputs['transport_types']),
+                 parse_transport_modes(outputs['transport_modes']),
                  parse_transport_networks(outputs['transport_networks']) )
 
     def request( self, plugin_name = 'sample_road_plugin',
@@ -418,7 +420,7 @@ class TempusRequest:
 
         r = "<server_state>" + ET.tostring(self.save['plugins']) \
             + ET.tostring(self.save['road_types']) \
-            + ET.tostring(self.save['transport_types']) \
+            + ET.tostring(self.save['transport_modes']) \
             + ET.tostring(self.save['transport_networks']) \
             + "</server_state>"
         return r

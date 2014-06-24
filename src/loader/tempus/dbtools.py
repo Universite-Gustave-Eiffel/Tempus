@@ -47,8 +47,12 @@ class PsqlLoader:
 
     def fill_template(self, template, values):
         """Takes a template text file and replace every occurence of
-        "%key%" with the corresponding value in the given dictionnary."""
-        return template % values;
+        "%(key)" with the corresponding value in the given dictionnary."""
+        print "values", values
+        t = template
+        for k, v in values.iteritems():
+            t = t.replace( '%(' + k + ')', unicode(v) )
+        return t;
 
     def set_sqlfile(self, sqlfile):
         self.sqlfile = sqlfile
@@ -101,7 +105,7 @@ class PsqlLoader:
             out.write("======= Executing SQL %s\n" % os.path.basename(filename) )
             out.flush()
             p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
-            self.sqlfile = "set client_min_messages=ERROR;\n" + self.sqlfile
+            self.sqlfile = "set client_min_messages=NOTICE;\n" + self.sqlfile
             p.communicate( self.sqlfile )
             out.write("\n")
             retcode = p.returncode

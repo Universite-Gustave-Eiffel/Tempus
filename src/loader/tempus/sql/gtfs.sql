@@ -1,3 +1,7 @@
+do $$
+begin
+raise notice '==== Init ===';
+end$$;
 -- pt_stop_id_map
 drop table if exists _tempus_import.pt_stop_idmap;
 create table _tempus_import.pt_stop_idmap
@@ -71,10 +75,14 @@ insert into _tempus_import.pt_fare_idmap (vendor_id)
        select fare_id from _tempus_import.fare_attributes;
 create index pt_fare_idmap_vendor_idx on _tempus_import.pt_fare_idmap(vendor_id);
 
+do $$
+begin
+raise notice '==== PT network ====';
+end$$;
 /* ==== PT network ==== */
 -- insert a new network (with null name for now) FIXME get the name from the command line
 insert into tempus.pt_network(pnname) 
-select NULL; 
+select '%(network)'; 
 
 insert into
 	tempus.pt_agency (id, paname, network_id)
@@ -85,6 +93,10 @@ select
 from
 	_tempus_import.agency;
 	
+do $$
+begin
+raise notice '==== PT stops ====';
+end$$;
 /* ==== Stops ==== */
 
 -- add geometry index on stops import table
@@ -108,7 +120,6 @@ drop index if exists _tempus_import.idx_stops_geom_stop_id;
 create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 
 -- remove constraint on tempus stops and dependencies
-alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey;
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
 alter table tempus.pt_transfer drop constraint pt_transfer_from_stop_id_fkey;
 alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
@@ -183,9 +194,10 @@ alter table tempus.pt_stop add CONSTRAINT pt_stop_road_section_id_fkey FOREIGN K
 
 /* ==== /stops ==== */
 
-/* ==== GTFS routes ==== */
--- drop constraints 
-alter table tempus.pt_route drop CONSTRAINT pt_route_agency_id_fkey;
+do $$
+begin
+raise notice '==== Transport modes ====';
+end$$;
 
 CREATE TABLE _tempus_import.transport_mode
 (
@@ -197,10 +209,19 @@ CREATE TABLE _tempus_import.transport_mode
 
 INSERT INTO _tempus_import.transport_mode(name, public_transport, gtfs_route_type)
 SELECT
-	case when r.route_type = 0 then 'Tram' when r.route_type = 1 then 'Subway' when r.route_type = 2 then 'Train' when r.route_type = 3 then 'Bus' when r.route_type = 4 then 'Ferry' when r.route_type = 5 then 'Cable-car' when r.route_type = 6 then 'Suspended Cable-Car' when r.route_type=7 then 'Funicular' end, 
+	case
+        when r.route_type = 0 then 'Tram (%(network))'
+        when r.route_type = 1 then 'Subway (%(network))'
+        when r.route_type = 2 then 'Train (%(network))'
+        when r.route_type = 3 then 'Bus (%(network))'
+        when r.route_type = 4 then 'Ferry (%(network))'
+        when r.route_type = 5 then 'Cable-car (%(network))'
+        when r.route_type = 6 then 'Suspended Cable-Car (%(network))'
+        when r.route_type = 7 then 'Funicular (%(network))'
+        end, 
 	TRUE, 
 	r.route_type
-FROM (SELECT DISTINCT route_type FROM _tempus_import.routes EXCEPT (SELECT DISTINCT gtfs_route_type FROM tempus.transport_mode)) r
+FROM (SELECT DISTINCT route_type FROM _tempus_import.routes) r
 ;
 
 INSERT INTO tempus.transport_mode(id, name, public_transport, gtfs_route_type)
@@ -208,6 +229,14 @@ SELECT
 	(select max(id) from tempus.transport_mode) *2^id, 
 	name, public_transport, gtfs_route_type
 FROM _tempus_import.transport_mode; 
+
+do $$
+begin
+raise notice '==== PT routes ====';
+end$$;
+/* ==== GTFS routes ==== */
+-- drop constraints 
+alter table tempus.pt_route drop CONSTRAINT pt_route_agency_id_fkey;
 
 insert into tempus.pt_route( id, vendor_id, short_name, long_name, transport_mode, agency_id )
 select * from 
@@ -228,6 +257,10 @@ from
 alter table tempus.pt_route add CONSTRAINT pt_route_agency_id_fkey FOREIGN KEY (agency_id)
 	REFERENCES tempus.pt_agency (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 
+do $$
+begin
+raise notice '==== PT sections ====';
+end$$;
 /* ==== sections ==== */
 -- drop constraints
 alter table tempus.pt_section drop constraint if exists pt_section_network_id_fkey;;
@@ -300,6 +333,10 @@ alter table tempus.pt_section add constraint pt_section_network_id_fkey FOREIGN 
 
 /* ==== GTFS calendar ==== */
 
+do $$
+begin
+raise notice '==== PT calendar ====';
+end$$;
 insert into tempus.pt_calendar
 select
 	(select id from _tempus_import.pt_service_idmap where vendor_id=service_id) as service_id
@@ -316,6 +353,10 @@ from
 	_tempus_import.calendar;
 
 
+do $$
+begin
+raise notice '==== PT trips ====';
+end$$;
 -- drop constraints
 alter table tempus.pt_trip drop constraint if exists pt_trip_route_id_fkey;; 
 
@@ -336,6 +377,10 @@ insert into tempus.pt_trip(id, vendor_id, route_id, service_id, short_name)
 alter table tempus.pt_trip add constraint pt_trip_route_id_fkey FOREIGN KEY(route_id)
 	REFERENCES tempus.pt_route(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;; 
 
+do $$
+begin
+raise notice '==== PT calendar dates ====';
+end$$;
 
 insert into
 	tempus.pt_calendar_date(service_id, calendar_date, exception_type)
@@ -346,6 +391,11 @@ select
 from
 	_tempus_import.calendar_dates;
 
+
+do $$
+begin
+raise notice '==== PT stop times ====';
+end$$;
 
 -- convert GTFS time to regular time
 -- GTFS time may be greater than 24
@@ -385,6 +435,10 @@ where trip_id in (select id from tempus.pt_trip) and stop_id in (select id from 
 -- restore constraints
 
 
+do $$
+begin
+raise notice '==== Update PT networks ====';
+end$$;
 
 -- Update network begin and end calendar dates
 UPDATE tempus.pt_network
@@ -438,6 +492,11 @@ WHERE req.network_id = pt_network.id;
 --) reqB
 --WHERE pt_stop.id = reqB.stop_id ; 
 
+do $$
+begin
+raise notice '==== PT fare attribute ====';
+end$$;
+
 insert into
 	tempus.pt_fare_attribute
 select
@@ -451,6 +510,10 @@ select
 from
 	_tempus_import.fare_attributes;
 
+do $$
+begin
+raise notice '==== PT frequency ====';
+end$$;
 insert into
 	tempus.pt_frequency (trip_id, start_time, end_time, headway_secs)
 select
@@ -462,6 +525,10 @@ from
 	_tempus_import.frequencies;
 
 
+do $$
+begin
+raise notice '==== PT fare rule ====';
+end$$;
 insert into
 	tempus.pt_fare_rule (fare_id, route_id, origin_id, destination_id, contains_id)
 select
@@ -472,6 +539,11 @@ select
 	, (select id from _tempus_import.pt_stop_idmap where vendor_id=contains_id) as contains_id
 from
 	_tempus_import.fare_rules;
+
+do $$
+begin
+raise notice '==== PT transfer ====';
+end$$;
 
 insert into
 	tempus.pt_transfer

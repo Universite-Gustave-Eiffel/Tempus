@@ -610,42 +610,29 @@ class IfsttarRouting:
 
         listModel = QStandardItemModel()
         for ttype in self.transport_types:
-            idt = ttype.id
-            has_network = False
-            if ttype.need_network:
-                # look for networks that provide this kind of transport
-                for network in self.networks:
-                    ptt = network.provided_transport_types
-                    if ptt & ttype.id:
-                        has_network = True
-                        break
-
             item = QStandardItem( ttype.name )
-            if ttype.need_network and not has_network:
-                item.setFlags(Qt.ItemIsUserCheckable)
-                item.setData( Qt.Unchecked, Qt.CheckStateRole)
-            else:
-                item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                item.setData( Qt.Checked, Qt.CheckStateRole)
+            item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            item.setData( Qt.Checked, Qt.CheckStateRole)
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
 
-        networkListModel = QStandardItemModel()
-        for network in self.networks:
-            title = network.name
+        if False:
+                networkListModel = QStandardItemModel()
+                for network in self.networks:
+                    title = network.name
 
-            # look for provided transport types
-            tlist = []
-            ptt = network.provided_transport_types
-            for ttype in self.transport_types:
-                if ptt & ttype.id:
-                    tlist.append( ttype.name )
+                    # look for provided transport types
+                    tlist = []
+                    ptt = network.provided_transport_types
+                    for ttype in self.transport_types:
+                        if ptt & ttype.id:
+                            tlist.append( ttype.name )
 
-            item = QStandardItem( network.name + ' (' + ', '.join(tlist) + ')')
-            item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData( Qt.Checked, Qt.CheckStateRole)
-            networkListModel.appendRow(item)
-        self.dlg.ui.networkList.setModel( networkListModel )
+                    item = QStandardItem( network.name + ' (' + ', '.join(tlist) + ')')
+                    item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    item.setData( Qt.Checked, Qt.CheckStateRole)
+                    networkListModel.appendRow(item)
+                self.dlg.ui.networkList.setModel( networkListModel )
 
     #
     # Take an XML tree from the WPS 'results'

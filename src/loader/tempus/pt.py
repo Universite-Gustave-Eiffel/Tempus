@@ -47,9 +47,9 @@ class GTFSImporter(DataImporter):
     # SQL files to execute before loading GTFS data
     PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql"]
     # SQL files to execute after loading GTFS data 
-    POSTLOADSQL = ["gtfs.sql"]
+    POSTLOADSQL = []
 
-    def __init__(self, source = "", dbstring = "", logfile = None, encoding = 'UTF8', copymode = True, doclean = True):
+    def __init__(self, source = "", dbstring = "", logfile = None, encoding = 'UTF8', copymode = True, doclean = True, subs = {}):
         """Create a new GTFS data loader. Arguments are :
         source : a Zip file containing GTFS data
         schema_out : the destination schema in the database
@@ -61,6 +61,10 @@ class GTFSImporter(DataImporter):
         self.copymode = copymode
         self.doclean = doclean
         self.encoding = encoding
+
+        if not 'network' in subs.keys():
+            subs['network'] = "PT"
+        self.POSTLOADSQL = [("gtfs.sql", subs)]
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""

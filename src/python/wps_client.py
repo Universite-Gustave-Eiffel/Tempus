@@ -186,8 +186,12 @@ class WPSClient:
         if status != 200:
             raise RuntimeError( self, msg )
 
-#        print msg
-        xml = ET.XML( msg )
+        print msg
+        try:
+            xml = ET.XML( msg )
+        except ET.ParseError as e:
+            raise RuntimeError( self, repr(e) )
+
         outputs = xml[2] # ProcessOutputs
         outs = {}
         for output in outputs:

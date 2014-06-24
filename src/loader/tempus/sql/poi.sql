@@ -22,9 +22,9 @@ insert into
         )
 select
     gid as id
-    , %(poi_type)d::integer as poi_type
-    , %(name)s as pname
-    , %(parking_transport_type)s as parking_transport_type
+    , %(poi_type)::integer as poi_type
+    , '%(name)' as pname
+    , %(parking_transport_type) as parking_transport_type
     , road_section_id
     , st_line_locate_point(geom_road, pgeom)::double precision as abscissa_road_section
     , st_force_3dz(pgeom)
@@ -44,7 +44,7 @@ from (
 		-- poi further than this distance will not be included
         st_dwithin(poi.geom, rs.geom, 30)
      where
-        %(filter)s
+        %(filter)
     window
         -- nearest row geometry for each poi
         nearest as (partition by poi.gid order by st_distance(poi.geom, rs.geom))
