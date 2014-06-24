@@ -1,4 +1,3 @@
-
 -- pt_stop_id_map
 drop table if exists _tempus_import.pt_stop_idmap;
 create table _tempus_import.pt_stop_idmap
@@ -6,8 +5,8 @@ create table _tempus_import.pt_stop_idmap
         id serial primary key,
         vendor_id varchar
 );
-select setval('_tempus_import.pt_stop_idmap_id_seq',
-       (select case when max(id) is null then 1 else max(id) end from tempus.pt_stop));
+
+select setval('_tempus_import.pt_stop_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_stop), false);
 insert into _tempus_import.pt_stop_idmap (vendor_id) 
        select stop_id from _tempus_import.stops;
 create index pt_stop_idmap_vendor_idx on _tempus_import.pt_stop_idmap(vendor_id);
@@ -19,11 +18,22 @@ create table _tempus_import.pt_route_idmap
         id serial primary key,
         vendor_id varchar
 );
-select setval('_tempus_import.pt_route_idmap_id_seq',
-       (select case when max(id) is null then 1 else max(id) end from tempus.pt_route));
+select setval('_tempus_import.pt_route_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_route), false);
 insert into _tempus_import.pt_route_idmap (vendor_id) 
        select route_id from _tempus_import.routes;
 create index pt_route_idmap_vendor_idx on _tempus_import.pt_route_idmap(vendor_id);
+
+-- pt_agency_id_map
+drop table if exists _tempus_import.pt_agency_idmap; 
+create table _tempus_import.pt_agency_idmap
+(
+	id serial primary key, 
+	vendor_id varchar
+); 
+select setval('_tempus_import.pt_agency_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_agency), false); 
+insert into _tempus_import.pt_agency_idmap(vendor_id)
+	select agency_id from _tempus_import.agency; 
+	create index pt_agency_idmap_vendor_idx on _tempus_import.pt_agency_idmap(vendor_id); 
 
 -- pt_trip_id_map
 drop table if exists _tempus_import.pt_trip_idmap;
@@ -32,27 +42,22 @@ create table _tempus_import.pt_trip_idmap
         id serial primary key,
         vendor_id varchar
 );
-select setval('_tempus_import.pt_trip_idmap_id_seq',
-       (select case when max(id) is null then 1 else max(id) end from tempus.pt_trip));
+select setval('_tempus_import.pt_trip_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_trip), false);
 insert into _tempus_import.pt_trip_idmap (vendor_id) 
        select trip_id from _tempus_import.trips;
 create index pt_trip_idmap_vendor_idx on _tempus_import.pt_trip_idmap(vendor_id);
 
--- pt_calendar_id_map
-drop table if exists _tempus_import.pt_calendar_idmap;
-create table _tempus_import.pt_calendar_idmap
+-- pt_service_id_map
+drop table if exists _tempus_import.pt_service_idmap; 
+create table _tempus_import.pt_service_idmap
 (
-        id serial primary key,
-        vendor_id varchar
-);
-select setval('_tempus_import.pt_calendar_idmap_id_seq',
-       (select case when max(id) is null then 1 else max(id) end from tempus.pt_service));
-insert into _tempus_import.pt_calendar_idmap (vendor_id) 
-       select service_id from _tempus_import.calendar
-       -- add service ids from calendar_dates.txt
-       union
-       select service_id from _tempus_import.calendar_dates;       
-create index pt_calendar_idmap_vendor_idx on _tempus_import.pt_calendar_idmap(vendor_id);
+	id serial primary key, 
+	vendor_id varchar
+); 
+select setval('_tempus_import.pt_service_idmap_id_seq', (select case when max(service_id) is null then 1 else max(service_id)+1 end from ((select service_id from tempus.pt_calendar) union (select service_id from tempus.pt_calendar_date)) r ), false); 
+insert into _tempus_import.pt_service_idmap( vendor_id )
+	select service_id from _tempus_import.calendar union select service_id from _tempus_import.calendar_dates; 
+create index pt_service_idmap_vendor_idx on _tempus_import.pt_service_idmap(vendor_id);
 
 -- pt_fare_id_map
 drop table if exists _tempus_import.pt_fare_idmap;
@@ -61,18 +66,22 @@ create table _tempus_import.pt_fare_idmap
         id serial primary key,
         vendor_id varchar
 );
-select setval('_tempus_import.pt_fare_idmap_id_seq',
-       (select case when max(id) is null then 1 else max(id) end from tempus.pt_fare_attribute));
+select setval('_tempus_import.pt_fare_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_fare_attribute));
 insert into _tempus_import.pt_fare_idmap (vendor_id) 
        select fare_id from _tempus_import.fare_attributes;
 create index pt_fare_idmap_vendor_idx on _tempus_import.pt_fare_idmap(vendor_id);
 
 /* ==== PT network ==== */
+-- insert a new network (with null name for now) FIXME get the name from the command line
+insert into tempus.pt_network(pnname) 
+select NULL; 
+
 insert into
-	tempus.pt_network (pnname, provided_transport_types)
+	tempus.pt_agency (id, paname, network_id)
 select
-	agency_name as pnname,
-	56 as provided_transport_types -- bus + metro + tramway
+	(select id from _tempus_import.pt_agency_idmap where vendor_id=agency_id) as id,
+	agency_name, 
+	(select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
 from
 	_tempus_import.agency;
 	
@@ -82,6 +91,7 @@ from
 -- geometries should have been created in stops table 
 -- during importation with 2154 srid from x, y latlon fields
 -- st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), 2154)
+drop table if exists _tempus_import.stops_geom;
 create table 
 	_tempus_import.stops_geom as 
 select
@@ -100,11 +110,11 @@ create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 -- remove constraint on tempus stops and dependencies
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey;
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
-alter table tempus.pt_section drop constraint pt_section_stop_from_fkey;
-alter table tempus.pt_section drop constraint pt_section_stop_to_fkey;
 alter table tempus.pt_transfer drop constraint pt_transfer_from_stop_id_fkey;
 alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
 alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
+alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;; 
+alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;; 
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_pkey;
 
 insert into
@@ -167,7 +177,7 @@ where id in
 -- restore constraints on pt_stop
 alter table tempus.pt_stop add CONSTRAINT pt_stop_pkey PRIMARY KEY (id);
 alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
-	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 alter table tempus.pt_stop add CONSTRAINT pt_stop_road_section_id_fkey FOREIGN KEY (road_section_id)
       REFERENCES tempus.road_section (id);
 
@@ -175,91 +185,124 @@ alter table tempus.pt_stop add CONSTRAINT pt_stop_road_section_id_fkey FOREIGN K
 
 /* ==== GTFS routes ==== */
 -- drop constraints 
--- TODO
-insert into
-	tempus.pt_route
-select
+alter table tempus.pt_route drop CONSTRAINT pt_route_agency_id_fkey;
+
+CREATE TABLE _tempus_import.transport_mode
+(
+  id serial NOT NULL,
+  name character varying, -- Description of the mode
+  public_transport boolean NOT NULL,
+  gtfs_route_type integer -- Reference to the equivalent GTFS code (for PT only)
+); 
+
+INSERT INTO _tempus_import.transport_mode(name, public_transport, gtfs_route_type)
+SELECT
+	case when r.route_type = 0 then 'Tram' when r.route_type = 1 then 'Subway' when r.route_type = 2 then 'Train' when r.route_type = 3 then 'Bus' when r.route_type = 4 then 'Ferry' when r.route_type = 5 then 'Cable-car' when r.route_type = 6 then 'Suspended Cable-Car' when r.route_type=7 then 'Funicular' end, 
+	TRUE, 
+	r.route_type
+FROM (SELECT DISTINCT route_type FROM _tempus_import.routes EXCEPT (SELECT DISTINCT gtfs_route_type FROM tempus.transport_mode)) r
+;
+
+INSERT INTO tempus.transport_mode(id, name, public_transport, gtfs_route_type)
+SELECT 
+	(select max(id) from tempus.transport_mode) *2^id, 
+	name, public_transport, gtfs_route_type
+FROM _tempus_import.transport_mode; 
+
+insert into tempus.pt_route( id, vendor_id, short_name, long_name, transport_mode, agency_id )
+select * from 
+(select
 	(select id from _tempus_import.pt_route_idmap where vendor_id=route_id) as id
         , route_id as vendor_id
-	, (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
 	, route_short_name as short_name
 	, route_long_name as long_name
-	, route_type::integer as route_type
+	, transport_mode.id
+        -- use the agency_id if available, else set to the only one in agency.txt
+        , (select id from _tempus_import.pt_agency_idmap where vendor_id = (case when agency_id is null then (select agency_id from _tempus_import.agency) else agency_id end) ) as agency_id
 from
-	_tempus_import.routes;
+	_tempus_import.routes, tempus.transport_mode
+	where transport_mode.gtfs_route_type = routes.route_type::integer
+) q;
 
 -- restore constraints
+alter table tempus.pt_route add CONSTRAINT pt_route_agency_id_fkey FOREIGN KEY (agency_id)
+	REFERENCES tempus.pt_agency (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 
 /* ==== sections ==== */
 -- drop constraints
--- TODO
+alter table tempus.pt_section drop constraint if exists pt_section_network_id_fkey;;
 
 insert into tempus.pt_section (stop_from, stop_to, network_id, geom)
-with trips as (
-	select
-		trip_id
-		-- gtfs stop sequences can have holes
-		-- use the dense rank to have then continuous
-		, dense_rank() over win as stopseq
-		, stop_sequence
-		, stop_id
-	from
-		_tempus_import.stop_times
-	window win as (
-		partition by trip_id order by stop_sequence
-	)
+with pt_seq as (
+        select
+                trip_id
+                -- gtfs stop sequences can have holes
+                -- use the dense rank to have then continuous
+                , dense_rank() over win as stopseq
+                , stop_sequence
+                , stop_id
+        from
+                _tempus_import.stop_times
+        window win as (
+                partition by trip_id order by stop_sequence
+        )
 )
 select
-	stop_from
-	, stop_to
-	, (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
-	-- Geometry is a line between stops
-	-- FIXME : if we have a shape.txt, could be a full shape
-	, st_force_3DZ(st_setsrid(st_makeline(g1.geom, g2.geom), 2154)) as geom
+
+        foo.stop_from
+        , foo.stop_to
+        , (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
+        -- Geometry is a line between stops
+        -- FIXME : if we have a shape.txt, could be a full shape
+        , st_force_3DZ(st_setsrid(st_makeline(g1.geom, g2.geom), 2154)) as geom
 from (
-	select 
-		(select id from _tempus_import.pt_stop_idmap where vendor_id=t1.stop_id) as stop_from,
-		(select id from _tempus_import.pt_stop_idmap where vendor_id=t2.stop_id) as stop_to
-	from 
-		trips as t1
-	join 
-		trips as t2
-	on 
-		t1.trip_id = t2.trip_id 
-		and t1.stopseq = t2.stopseq - 1 
-	group by 
-		t1.stop_id, t2.stop_id
+        select
+                (select id from _tempus_import.pt_stop_idmap where vendor_id=t1.stop_id) as stop_from,
+                (select id from _tempus_import.pt_stop_idmap where vendor_id=t2.stop_id) as stop_to,
+                routes.route_type
+        from
+                pt_seq as t1
+        join
+                pt_seq as t2
+        on
+                t1.trip_id = t2.trip_id
+                and t1.stopseq = t2.stopseq - 1
+        join
+                _tempus_import.trips
+        on
+                t1.trip_id = trips.trip_id
+        join
+                _tempus_import.routes
+        on
+                trips.route_id = routes.route_id
+        group by
+            t1.stop_id, t2.stop_id, route_type
 ) as foo
 join
-	-- get the from stop geometry
-	tempus.pt_stop as g1
+        -- get the from stop geometry
+        tempus.pt_stop as g1
 on
-	stop_from = g1.id
+        stop_from = g1.id
 join
-	-- get the to stop geometry
-	tempus.pt_stop as g2
+        -- get the to stop geometry
+        tempus.pt_stop as g2
 on
-	stop_to = g2.id;
+        stop_to = g2.id ;
 
 -- restore constraints
 alter table tempus.pt_section add constraint pt_section_stop_from_fkey FOREIGN KEY (stop_from)
-      REFERENCES tempus.pt_stop(id);
+      REFERENCES tempus.pt_stop(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
 alter table tempus.pt_section add constraint pt_section_stop_to_fkey FOREIGN KEY (stop_to)
-      REFERENCES tempus.pt_stop(id);
+      REFERENCES tempus.pt_stop(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
+alter table tempus.pt_section add constraint pt_section_network_id_fkey FOREIGN KEY (network_id)
+      REFERENCES tempus.pt_network(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
+
 
 /* ==== GTFS calendar ==== */
 
-insert into
-       tempus.pt_service(id, vendor_id)
+insert into tempus.pt_calendar
 select
-       id, vendor_id
-from
-        _tempus_import.pt_calendar_idmap;
-
-insert into
-	tempus.pt_calendar
-select
-	(select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id) as service_id
+	(select id from _tempus_import.pt_service_idmap where vendor_id=service_id) as service_id
 	, monday::boolean as monday
 	, tuesday::boolean as tuesday
 	, wednesday::boolean as wednesday
@@ -272,29 +315,37 @@ select
 from
 	_tempus_import.calendar;
 
-insert into 
-	tempus.pt_trip(id, vendor_id, route_id, service_id, short_name)
-select
-	(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id)
-        , trip_id
-	, (select id from _tempus_import.pt_route_idmap where vendor_id=route_id)
-	, (select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id)
-	, trip_short_name
-from
-	_tempus_import.trips;
+
+-- drop constraints
+alter table tempus.pt_trip drop constraint if exists pt_trip_route_id_fkey;; 
+
+insert into tempus.pt_trip(id, vendor_id, route_id, service_id, short_name)
+	select * from
+	(
+	select
+		(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id)
+		, trip_id
+		, (select id from _tempus_import.pt_route_idmap where vendor_id=route_id) as rid
+		, (select id from _tempus_import.pt_service_idmap where vendor_id=service_id) as sid
+		, trip_short_name
+	from
+		_tempus_import.trips) q
+	where sid is not null and rid is not null;
 
 -- restore constraints
+alter table tempus.pt_trip add constraint pt_trip_route_id_fkey FOREIGN KEY(route_id)
+	REFERENCES tempus.pt_route(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;; 
+
 
 insert into
 	tempus.pt_calendar_date(service_id, calendar_date, exception_type)
 select
-        (select id from _tempus_import.pt_calendar_idmap where vendor_id=service_id) as service_id
+        (select id from _tempus_import.pt_service_idmap where vendor_id=service_id) as service_id
 	, "date"::date as calendar_date
 	, exception_type::integer as exception_type
 from
 	_tempus_import.calendar_dates;
 
--- restore constraints
 
 -- convert GTFS time to regular time
 -- GTFS time may be greater than 24
@@ -315,20 +366,77 @@ $$ LANGUAGE plpgsql;
 insert into
 	tempus.pt_stop_time (trip_id, arrival_time, departure_time, stop_id, stop_sequence, stop_headsign
 	, pickup_type, drop_off_type, shape_dist_traveled)
-select
-	(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id) as trip_id
-	, _tempus_import.format_gtfs_time(arrival_time) as arrival_time
-	, _tempus_import.format_gtfs_time(departure_time) as departure_time
-	, (select id from _tempus_import.pt_stop_idmap where vendor_id=stop_id) as stop_id
-	, stop_sequence::integer as stop_sequence
-	, stop_headsign
-	, pickup_type::integer as pickup_type
-	, drop_off_type::integer as drop_off_type
-	, shape_dist_traveled::double precision as shape_dist_traveled
-from
-	_tempus_import.stop_times;
+select * from
+(
+	select
+		(select id from _tempus_import.pt_trip_idmap where vendor_id=trip_id) as trip_id
+		, _tempus_import.format_gtfs_time(arrival_time) as arrival_time
+		, _tempus_import.format_gtfs_time(departure_time) as departure_time
+		, (select id from _tempus_import.pt_stop_idmap where vendor_id=stop_id) as stop_id
+		, stop_sequence::integer as stop_sequence
+		, stop_headsign
+		, pickup_type::integer as pickup_type
+		, drop_off_type::integer as drop_off_type
+		, shape_dist_traveled::double precision as shape_dist_traveled
+	from
+		_tempus_import.stop_times) q
+where trip_id in (select id from tempus.pt_trip) and stop_id in (select id from tempus.pt_stop);
 
 -- restore constraints
+
+
+
+-- Update network begin and end calendar dates
+UPDATE tempus.pt_network
+SET calendar_begin = req.min, calendar_end = req.max
+FROM 
+(
+	WITH req_min AS (
+	SELECT service_id, min(calendar_date)
+	FROM
+	(
+	SELECT service_id, start_date as calendar_date FROM tempus.pt_calendar
+	UNION
+	SELECT service_id, calendar_date FROM tempus.pt_calendar_date
+	) r
+	GROUP BY service_id
+	ORDER BY service_id
+	), 
+	req_max AS (
+	SELECT service_id, max(calendar_date)
+	FROM
+	(
+	SELECT service_id, start_date as calendar_date FROM tempus.pt_calendar
+	UNION
+	SELECT service_id, calendar_date FROM tempus.pt_calendar_date
+	) r
+	GROUP BY service_id
+	ORDER BY service_id
+	)
+	SELECT pt_agency.network_id, min(req_min.min), max(req_max.max)
+	  FROM tempus.pt_trip, tempus.pt_route, tempus.pt_agency, req_min, req_max
+	  WHERE pt_agency.id = pt_route.agency_id AND pt_route.id = pt_trip.route_id AND pt_trip.service_id = req_min.service_id AND pt_trip.service_id = req_max.service_id 
+	  GROUP BY pt_agency.network_id
+	  ORDER BY network_id
+) req
+WHERE req.network_id = pt_network.id; 
+
+
+-- Update transport modes desserving pt stops
+--UPDATE tempus.pt_stop
+--SET transport_mode = reqB.transport_mode
+--FROM 
+--(
+--SELECT stop_id, sum(transport_mode) AS transport_mode
+--FROM
+--(
+--SELECT distinct pt_stop_time.stop_id, pt_route.transport_mode
+--FROM tempus.pt_stop_time, tempus.pt_trip, tempus.pt_route
+--WHERE pt_stop_time.trip_id = pt_trip.id AND pt_trip.route_id = pt_route.id
+--) reqA
+--GROUP BY stop_id
+--) reqB
+--WHERE pt_stop.id = reqB.stop_id ; 
 
 insert into
 	tempus.pt_fare_attribute
@@ -376,8 +484,9 @@ from
 	_tempus_import.transfers;
 
 alter table tempus.pt_transfer add constraint pt_transfer_from_stop_id_fkey FOREIGN KEY (from_stop_id)
-      REFERENCES tempus.pt_stop (id);
+      REFERENCES tempus.pt_stop (id) ON UPDATE CASCADE ON DELETE CASCADE;
 alter table tempus.pt_transfer add constraint pt_transfer_to_stop_id_fkey FOREIGN KEY (to_stop_id)
-      REFERENCES tempus.pt_stop (id);
+      REFERENCES tempus.pt_stop (id)  ON UPDATE CASCADE ON DELETE CASCADE;
 alter table tempus.pt_stop_time add constraint pt_stop_time_stop_id_fkey FOREIGN KEY (stop_id)
-      REFERENCES tempus.pt_stop (id);
+      REFERENCES tempus.pt_stop (id)  ON UPDATE CASCADE ON DELETE CASCADE;
+

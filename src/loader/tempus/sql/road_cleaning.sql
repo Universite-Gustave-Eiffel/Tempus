@@ -36,4 +36,19 @@ where
         rs2.id is not null
 and
         rs1.id > rs2.id -- avoid to remove two times the same id
-);
+); 
+
+-- Delete turning restrictions not referenced in existing road_sections
+delete from tempus.road_restriction_time_penalty where restriction_id not in
+(
+SELECT road_restriction.id
+  FROM tempus.road_restriction, ( select array_agg(id) as id from tempus.road_section ) q
+  WHERE sections <@ q.id
+); 
+
+delete from tempus.road_restriction where id not in
+(
+SELECT road_restriction.id
+  FROM tempus.road_restriction, ( select array_agg(id) as id from tempus.road_section ) q
+  WHERE sections <@ q.id
+); 
