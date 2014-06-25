@@ -71,13 +71,13 @@ select
 	, nt.id as node_to
 	, case
 		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
-		when hw.oneway is null then 2 + 1 -- pedestrian + cycle
-		when oneway in ('true', 'yes') then 32+16+8+2+1
+		when hw.oneway is null then 32+16+8+4+2+1
+		when oneway in ('true', 'yes') then 32+16+8+4+2+1
 		else 32+16+8+4+2+1
 	end as traffic_rules_ft
 	, case
 		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
-		when hw.oneway is null then 2 + 1 -- pedestrian + cycle
+		when hw.oneway is null then 32+16+8+4+2+1
 		when oneway in ('true', 'yes') then 1 -- one way, pedestrian only
 		else 32+16+8+4+2+1
 	end as traffic_rules_tf
