@@ -69,7 +69,8 @@ namespace Tempus {
 class DestinationDetector
 {
 public:
-    DestinationDetector( const Road::Vertex& destination ) : destination_(destination) {}
+    DestinationDetector( const Road::Vertex& destination, bool verbose = false ) :
+        destination_(destination), verbose_(verbose) {}
 
     struct path_found_exception
     {
@@ -82,9 +83,13 @@ public:
         if ( t.vertex.type == Multimodal::Vertex::Road && t.vertex.road_vertex == destination_ ) {
             throw path_found_exception( t );
         }
+        if (verbose_) {
+            std::cout << "examine vertex " << t.vertex << std::endl;
+        }
     }
 private:
     Road::Vertex destination_;
+    bool verbose_;
 };
 
     typedef std::list<Triple> Path; 
@@ -347,7 +352,7 @@ private:
             CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
 
             //            Tempus::PluginGraphVisitor vis ( this ) ;
-            DestinationDetector vis( request_.destination() );
+            DestinationDetector vis( request_.destination(), verbose_ );
             Triple destination_o;
             bool path_found = false;
             try {
