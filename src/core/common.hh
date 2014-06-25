@@ -147,7 +147,7 @@ protected:
     }
 };
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 ///
 /// Assertion, will abort if the condition is false
 #define REQUIRE( expr ) {if (!(expr)) { std::stringstream ss; ss << __FILE__ << ":" << __LINE__ << ": Assertion " << #expr << " failed"; throw std::invalid_argument( ss.str() ); }}
