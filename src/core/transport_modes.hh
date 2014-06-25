@@ -44,12 +44,14 @@ enum TransportModeEngine
 /// Traffic rules for transport modes, this is a bitfield value
 enum TransportModeTrafficRule
 {
-    TrafficRulePedestrian = 1,
-    TrafficRuleBicycle    = 2,
-    TrafficRuleCar        = 4,
-    TrafficRuleTaxi       = 8,
-    TrafficRuleCarPool    = 16,
-    TrafficRuleTruck      = 32
+    TrafficRulePedestrian      = 1 << 0,
+    TrafficRuleBicycle         = 1 << 1,
+    TrafficRuleCar             = 1 << 2,
+    TrafficRuleTaxi            = 1 << 3,
+    TrafficRuleCarPool         = 1 << 4,
+    TrafficRuleTruck           = 1 << 5,
+    /// Special traffic rule for public transport
+    TrafficRulePublicTransport = 1 << 16
 };
 
 ///
@@ -103,11 +105,11 @@ class TransportMode : public Base
     /// is it shared and must be returned to its initial station ?
     DECLARE_RW_PROPERTY( must_be_returned, bool );
 
-    DECLARE_RW_PROPERTY( traffic_rules, int );
+    DECLARE_RW_PROPERTY( traffic_rules, unsigned );
 
     DECLARE_RW_PROPERTY( speed_rule, TransportModeSpeedRule );
 
-    DECLARE_RW_PROPERTY( toll_rules, int );
+    DECLARE_RW_PROPERTY( toll_rules, unsigned );
 
     DECLARE_RW_PROPERTY( engine_type, TransportModeEngine );
 
