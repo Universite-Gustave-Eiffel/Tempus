@@ -173,7 +173,7 @@ class remove_const<T const>
 private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
-  TYPE NAME() const { return NAME ## _; }              \
+  const typename remove_const<TYPE>::type& NAME() const { return NAME ## _; } \
   void NAME( const typename remove_const<TYPE>::type& a ) { NAME ## _ = a; }
 
 ///
@@ -182,7 +182,7 @@ public:                                                \
 private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
-  TYPE NAME() const { return NAME ## _; }
+  const typename remove_const<TYPE>::type& NAME() const { return NAME ## _; }
 
 ///
 /// Macro used to declare a class property and its setter
