@@ -121,6 +121,15 @@ public:
 
     /// Add a new criterion (with the lowest priority)
     void add_criterion( CostId criterion );
+
+    ///
+    /// Exception thrown when a request has inconsistent timing constraints
+    class BadRequestTiming : public std::out_of_range
+    {
+    public:
+        explicit BadRequestTiming() : std::out_of_range( "Bad request timing" ) {}
+    };
+
 private:
     /// check time causality
     bool check_timing_() const;
