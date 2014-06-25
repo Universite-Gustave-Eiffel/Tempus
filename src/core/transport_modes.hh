@@ -105,7 +105,10 @@ class TransportMode : public Base
     /// is it shared and must be returned to its initial station ?
     DECLARE_RW_PROPERTY( must_be_returned, bool );
 
-    DECLARE_RW_PROPERTY( traffic_rules, unsigned );
+    /// get traffic rules
+    unsigned traffic_rules() const;
+    /// set traffic rules
+    void traffic_rules( unsigned rules );
 
     DECLARE_RW_PROPERTY( speed_rule, TransportModeSpeedRule );
 
@@ -114,6 +117,8 @@ class TransportMode : public Base
     DECLARE_RW_PROPERTY( engine_type, TransportModeEngine );
 
     DECLARE_RW_PROPERTY( route_type, TransportModeRouteType );
+private:
+    unsigned traffic_rules_;
 };
 
 ///
