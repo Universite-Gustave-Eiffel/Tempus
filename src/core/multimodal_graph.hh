@@ -111,7 +111,9 @@ struct Edge {
     /// Get the connection type of the edge
     ConnectionType connection_type() const;
 
-    db_id_t transport_type() const; /// bitfield of TransportTypeId
+    ///
+    /// Allowed traffic rules
+    unsigned traffic_rules() const;
 
     Edge() {}
     Edge( Multimodal::Vertex s, Multimodal::Vertex t ) : source( s ), target( t ) {}

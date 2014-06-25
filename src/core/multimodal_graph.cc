@@ -121,19 +121,12 @@ Edge::ConnectionType Edge::connection_type() const
     return UnknownConnection;
 }
 
-db_id_t Edge::transport_type() const
+unsigned Edge::traffic_rules() const
 {
     if ( connection_type() == Multimodal::Edge::Transport2Transport ) {
-        // All possible PT modes in current version
-        // 8: Bus
-        // 16: Tramway
-        // 32: Metro
-        // 64: Train
-        // FIXME: use everything with need_network ?
-        return 120;
+        return TrafficRulePublicTransport;
     }
 
-    // FIXME must return modes with compatible traffic rules
     return (*source.road_graph)[road_edge].traffic_rules();
 }
 
