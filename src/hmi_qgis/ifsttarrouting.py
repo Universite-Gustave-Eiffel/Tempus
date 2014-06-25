@@ -612,7 +612,7 @@ class IfsttarRouting:
         for ttype in self.transport_modes:
             item = QStandardItem( ttype.name )
             item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData( Qt.Checked, Qt.CheckStateRole)
+            item.setData( Qt.Unchecked, Qt.CheckStateRole)
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
 
