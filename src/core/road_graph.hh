@@ -103,9 +103,11 @@ public:
     Section() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0) {}
     ///
     /// List of public transport stops, attached to this road section
+    /// FIXME turn into private
     std::vector< PublicTransport::Stop* > stops;
     ///
     /// List of Point Of Interests attached to this road section
+    /// FIXME turn into private
     std::vector<POI*> pois;
 };
 

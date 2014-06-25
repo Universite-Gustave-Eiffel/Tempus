@@ -187,6 +187,7 @@ struct Graph: boost::noncopyable {
     /// register a new transport mode
     void add_transport_mode( const TransportMode& tm );
 
+    /// access to registered transport modes
     const TransportModes& transport_modes() const { return transport_modes_; }
 
     /// access to a transportmode, given its id
