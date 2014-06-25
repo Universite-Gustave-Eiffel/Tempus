@@ -169,8 +169,12 @@ endif()
 install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
 add_subdirectory(src)
-add_subdirectory(doc)
 
+set( BUILD_DOC ON CACHE BOOL "Build documentation ?" )
+
+if(BUILD_DOC)
+  add_subdirectory( doc )
+endif()
 
 
  #cmake -DBUILD_INTRALYS_PLUGIN=ON -DBUILD_QGIS_PLUGIN=ON -DBUILD_TESTS=ON -DLIBXML2_INCLUDE_DIR="C:\Program Files (x86)\libxml2-2.7.8.win32\include" -DLIBXML2_LIBRARIES="C:\Program Files (x86)\libxml2-2.7.8.win32\lib\libxml2.lib" -DPQ_INCLUDE_DIR="C:/Program Files (x86)/PostgreSQL/9.3/include" -DPQ_LIBS_DIR="C:/Program Files (x86)/PostgreSQL/9.3/lib" -DBUILD_WPS=ON ..
