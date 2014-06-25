@@ -43,8 +43,8 @@ namespace Tempus {
                                        CostCalculator cost_calculator, 
                                        TripMap trip_map, 
                                        WaitMap wait_map, 
-                                       unsigned int request_allowed_modes,
-                                       Visitor) 
+                                       const std::vector<db_id_t>& request_allowed_modes,
+                                       Visitor vis) 
     {
         typedef boost::indirect_cmp< PotentialMap, std::greater<double> > Cmp; 
         Cmp cmp( potential_map ); 

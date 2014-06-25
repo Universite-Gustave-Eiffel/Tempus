@@ -132,7 +132,7 @@ class IfsttarRoutingDock(QDockWidget):
                 networks.append(int(child[1]))
             elif child[0] == 'step':
                 steps.append(child)
-        ttypes = pson[1]['allowed_transport_types']
+        ttypes = pson[1]['allowed_transport_modes']
 
         def readCoords( n ):
             if n[1].has_key('vertex'):

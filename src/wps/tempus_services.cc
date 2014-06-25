@@ -329,8 +329,6 @@ public:
 
             // now extract actual data
             xmlNode* request_node = input_parameter_map.find( "request" )->second;
-            // allowed transport types
-            request.allowed_transport_modes( lexical_cast<int>( XML::get_prop( request_node, "allowed_transport_types" ) ) );
 
             const xmlNode* field = XML::get_next_nontext( request_node->children );
 
@@ -359,15 +357,14 @@ public:
             request.optimizing_criterion( 0, lexical_cast<int>( field->children->content ) );
             field = XML::get_next_nontext( field->next );
 
-            unsigned idx = 1;
             while ( !xmlStrcmp( field->name, ( const xmlChar* )"optimizing_criterion" ) ) {
-                request.optimizing_criterion( idx, lexical_cast<int>( field->children->content ) );
+                request.add_criterion( static_cast<CostId>(lexical_cast<int>( field->children->content )) );
                 field = XML::get_next_nontext( field->next );
-                idx++;
             }
 
             // steps, 1 .. N
-            while ( field ) {
+            while ( field && !xmlStrcmp( field->name, (const xmlChar*)"step" ) ) {
+                std::cout << field->name << std::endl;
                 Request::Step step;
                 const xmlNode* subfield;
                 // destination id
@@ -386,13 +383,19 @@ public:
 
                 // next step
                 field = XML::get_next_nontext( field->next );
-                if ( field ) {
+                if ( field && !xmlStrcmp( field->name, (const xmlChar*)"step" ) ) {
                     request.add_intermediary_step( step );
                 }
                 else {
                     // destination
                     request.destination( step );
                 }
+            }
+
+            // allowed modes
+            while ( field && !xmlStrcmp( field->name, ( const xmlChar* )"allowed_mode" ) ) {
+                request.add_allowed_mode( lexical_cast<int>( field->children->content ) );
+                field = XML::get_next_nontext( field->next );
             }
 
             // call cycle

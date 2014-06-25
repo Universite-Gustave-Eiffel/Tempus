@@ -352,7 +352,7 @@ class TempusRequest:
                  origin = Point(),
                  departure_constraint = Constraint(),
                  steps = [RequestStep()],
-                 allowed_transport_types = 255, # allowed transpoort types, bitfield
+                 allowed_transport_modes = [],
                  criteria = [Cost.Distance, Cost.Duration], # list of optimizing criteria
                  parking_location = None,
                  networks = [] # public transport network id
@@ -361,7 +361,6 @@ class TempusRequest:
         args = {}
         args['plugin'] = ['plugin', {'name' : plugin_name } ]
         args['request'] = ['request',
-                           {'allowed_transport_types' : allowed_transport_types },
                            origin.to_pson( 'origin' ),
                            ['departure_constraint', { 'type': departure_constraint.type, 'date_time': str(departure_constraint.date_time) } ]
                            ]
@@ -379,6 +378,10 @@ class TempusRequest:
 
         for step in steps:
             args['request'].append( step.to_pson() )
+
+        # allowed modes
+        for mode in allowed_transport_modes:
+            args['request'].append( ['allowed_mode', mode] )
 
         # options
         opt_r = []

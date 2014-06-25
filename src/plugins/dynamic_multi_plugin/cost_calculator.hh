@@ -198,7 +198,7 @@ namespace Tempus {
     protected:
         TimetableMap& timetable_; 
         FrequencyMap& frequency_; 
-        unsigned int allowed_transport_types_; 
+        std::vector<db_id_t> allowed_transport_modes_;
         map< Multimodal::Vertex, unsigned int >& vehicle_nodes_; 
         double walking_speed_; 
         double cycling_speed_; 

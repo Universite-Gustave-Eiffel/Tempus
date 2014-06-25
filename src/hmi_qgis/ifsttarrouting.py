@@ -691,7 +691,7 @@ class IfsttarRouting:
         parking = self.dlg.get_parking()
         pvads = self.dlg.get_pvads()
         #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
-        transports = sum([ self.transport_modes[x].id for x in self.dlg.selected_transports() ])
+        transports = [ self.transport_modes[x].id for x in self.dlg.selected_transports() ]
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
@@ -710,7 +710,7 @@ class IfsttarRouting:
                                            origin = Tempus.Point(ox, oy),
                                            departure_constraint = Tempus.Constraint( type = constraints[0][0],
                                                                                      date_time = constraints[0][1] ),
-                                           allowed_transport_types = transports,
+                                           allowed_transport_modes = transports,
                                            parking_location = None if parking == [] else Tempus.Point(parking[0], parking[1]),
                                            criteria = criteria,
                                            steps = steps

@@ -93,8 +93,11 @@ public:
     void destination( const Step& );
 
     ///
-    /// Allowed transport types. It can be stored in an integer, since transport_type ID are powers of two.
-    DECLARE_RW_PROPERTY( allowed_transport_modes, unsigned );
+    /// Allowed transport modes (their ID)
+    DECLARE_RO_PROPERTY( allowed_modes, std::vector<db_id_t> );
+
+    /// Adds an allowed mode
+    void add_allowed_mode( db_id_t );
 
     ///
     /// Private vehicule option: parking location

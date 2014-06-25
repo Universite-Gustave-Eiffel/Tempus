@@ -157,10 +157,9 @@ namespace Tempus {
             PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
     	
             // Check request and clear result
-            REQUIRE( request.check_consistency() );
-            REQUIRE( request.steps.size() == 1 );
-            REQUIRE( vertex_exists( request.origin, graph_ ) );
-            REQUIRE( vertex_exists( request.destination(), graph_ ) );
+            REQUIRE( request.allowed_modes().size() >= 1 );
+            REQUIRE( vertex_exists( request.origin(), graph_.road ) );
+            REQUIRE( vertex_exists( request.destination(), graph_.road ) );
             request_ = request; 
 
             if ( request.optimizing_criteria()[0] != CostDuration ) 
@@ -303,7 +302,8 @@ namespace Tempus {
             Triple origin_o;
             origin_o.vertex = origin;
             origin_o.state = automaton_.initial_state_;
-            origin_o.mode = 2;
+            // take the first mode allowed
+            origin_o.mode = request_.allowed_modes()[0];
 
             // Initialize the potential map
             // adaptation to a property map : infinite default value
