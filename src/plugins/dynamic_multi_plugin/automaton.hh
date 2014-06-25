@@ -201,7 +201,7 @@ namespace Tempus {
                 }
             } 
             // If transition not found
-            return std::make_pair( 0, false ); 
+            return std::make_pair( q, false ); 
         }
     }; 
 	

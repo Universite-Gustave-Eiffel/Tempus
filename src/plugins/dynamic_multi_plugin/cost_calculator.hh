@@ -23,19 +23,19 @@ namespace Tempus {
     public: 
         // Constructor 
         CostCalculator( TimetableMap& timetable, FrequencyMap& frequency, 
-                        unsigned int allowed_transport_types, map<Multimodal::Vertex, unsigned int>& vehicle_nodes, 
+                        const std::vector<db_id_t>& allowed_transport_modes, map<Multimodal::Vertex, unsigned int>& vehicle_nodes, 
                         double walking_speed, double cycling_speed, 
                         double min_transfer_time, double car_parking_search_time ) : 
             timetable_( timetable ), frequency_( frequency ), 
-            allowed_transport_types_( allowed_transport_types ), vehicle_nodes_( vehicle_nodes ), 
+            allowed_transport_modes_( allowed_transport_modes ), vehicle_nodes_( vehicle_nodes ), 
             walking_speed_( walking_speed ), cycling_speed_( cycling_speed ), 
             min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time )  { }; 
 		
         // Multimodal travel time function
-        double travel_time( Multimodal::Graph& graph, Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
+        double travel_time( const Multimodal::Graph& graph, Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
         {
             const TransportMode& mode = graph.transport_modes().at( mode_id );
-            if ( (allowed_transport_types_ & mode_id) != 0 ) 
+            if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), mode_id) != allowed_transport_modes_.end() ) 
             {
                 switch ( e.connection_type() ) {  
                 case Multimodal::Edge::Road2Road: {
@@ -133,7 +133,7 @@ namespace Tempus {
         }
 		
         // Road travel time function: called by the multimodal one - static version
-        double road_travel_time( Road::Graph& road_graph, Road::Edge& road_e, double length, const TransportMode& mode ) const
+        double road_travel_time( const Road::Graph& road_graph, Road::Edge& road_e, double length, const TransportMode& mode ) const
         {
             if ( (road_graph[ road_e ].traffic_rules() & mode.traffic_rules()) == 0 ) // Not allowed mode 
                 return std::numeric_limits<double>::infinity() ;
@@ -151,11 +151,12 @@ namespace Tempus {
 		
         // Turning movement penalty function
         template <typename AutomatonGraph>
-        double penalty ( const AutomatonGraph& graph, typename boost::graph_traits< AutomatonGraph >::vertex_descriptor& v, unsigned int mode ) const
+        double penalty ( const AutomatonGraph& graph, typename boost::graph_traits< AutomatonGraph >::vertex_descriptor& v, unsigned traffic_rules ) const
         {
             for (std::map<int, double >::const_iterator penaltyIt = graph[v].penaltyPerMode.begin() ; penaltyIt != graph[v].penaltyPerMode.end() ; penaltyIt++ )
             {
-                if (mode & penaltyIt->first) return penaltyIt->second; 
+                // if the mode has a traffic rule in common with the penalty key
+                if (traffic_rules & penaltyIt->first) return penaltyIt->second; 
             }
             return 0; 
         }

@@ -64,7 +64,28 @@ namespace Tempus {
             }
             return vertex < other.vertex;
         }
-    } ; 
+    };
+
+class DestinationDetector
+{
+public:
+    DestinationDetector( const Road::Vertex& destination ) : destination_(destination) {}
+
+    struct path_found_exception
+    {
+        path_found_exception( const Triple& t ) : destination(t) {}
+        Triple destination;
+    };
+
+    void examine_vertex( const Triple& t, const Multimodal::Graph& )
+    {
+        if ( t.vertex.type == Multimodal::Vertex::Road && t.vertex.road_vertex == destination_ ) {
+            throw path_found_exception( t );
+        }
+    }
+private:
+    Road::Vertex destination_;
+};
 
     typedef std::list<Triple> Path; 
 
@@ -122,8 +143,6 @@ namespace Tempus {
         PotentialMap wait_map_; 
         TripMap trip_map_; 
 	
-        struct path_found_exception {};
-
     public: 
         static void post_build() { 
             Road::Graph& road_graph = Application::instance()->graph().road;
@@ -177,8 +196,10 @@ namespace Tempus {
             get_option( "cycling_speed", cycling_speed_ ); 
             get_option( "car_parking_search_time", car_parking_search_time_ ); 
     	
+#if 1
             // If current date changed, reload timetable / frequency
             if ( current_day_ != request_.steps()[0].constraint().date_time().date() )  {
+                std::cout << "load timetable" << std::endl;
         	current_day_ = request_.steps()[0].constraint().date_time().date();
 
                 // cache graph id to descriptor
@@ -276,6 +297,7 @@ namespace Tempus {
                     }
                 }
             }
+#endif
         
         
             // Load vehicle positions
@@ -322,30 +344,34 @@ namespace Tempus {
             boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
 
             // Define and initialize the cost calculator
-            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_transport_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
+            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
 
-            Tempus::PluginGraphVisitor vis ( this ) ;
+            //            Tempus::PluginGraphVisitor vis ( this ) ;
+            DestinationDetector vis( request_.destination() );
+            Triple destination_o;
+            bool path_found = false;
             try {
-                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_transport_modes(), vis );
+                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis );
             }
-            catch ( path_found_exception& ) {
+            catch ( DestinationDetector::path_found_exception& e ) {
                 // Dijkstra has been short cut when the destination node is reached
+                destination_o = e.destination;
+                path_found = true;
             }
         
             metrics_[ "iterations" ] = iterations_;
 		
-            Triple destination_o;
-            destination_o.vertex = destination_;
-            destination_o.state = 0;
-            destination_o.mode = 2;
-
-            Path path = reorder_path( origin_o, destination_o );
-            add_roadmap( path );
-
             time_ += timer.elapsed();
             time_algo_ += timer.elapsed();
             metrics_[ "time_s" ] = time_;
             metrics_[ "time_algo_s" ] = time_algo_;
+
+            if (!path_found) {
+                throw std::runtime_error( "No path found" );                
+            }
+
+            Path path = reorder_path( origin_o, destination_o );
+            add_roadmap( path );
         }
 
         /*virtual void vertex_accessor( Triple triple, int access_type ) {

@@ -21,7 +21,7 @@
 #include <boost/heap/d_ary_heap.hpp>
 #include <boost/heap/binomial_heap.hpp>
 
-namespace Tempus { 
+namespace Tempus {
 
     //
     // Implementation of the Dijkstra algorithm (label-setting) for a graph and an automaton
@@ -35,7 +35,7 @@ namespace Tempus {
                class WaitMap, 
                class Visitor >
     void combined_ls_algorithm_no_init(
-                                       NetworkGraph& graph,
+                                       const NetworkGraph& graph,
                                        const Automaton& automaton,
                                        Object source_object, 
                                        PredecessorMap predecessor_map, 
@@ -57,30 +57,37 @@ namespace Tempus {
 
         while ( !vertex_queue.empty() ) {
             min_object = vertex_queue.top();
-            vertex_queue.pop(); 
+            vis.examine_vertex( min_object, graph );
+            vertex_queue.pop();
 
             double min_pi = get( potential_map, min_object );
 			
             //vis.examine_vertex( min_object, graph );
 			
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
-                // for all modes
-                for ( TransportModes::const_iterator tit = graph.transport_modes().begin(); tit != graph.transport_modes().end(); ++tit ) {
-                    db_id_t mode_label = tit->first;
-                    // if the mode is not allowed or not present on the current edge, skip it
-                    if ( ! (request_allowed_modes & current_edge.transport_type() & mode_label) ) {
+                for ( size_t i = 0; i < request_allowed_modes.size(); i++ ) {
+                    db_id_t mode_id = request_allowed_modes[i];
+                    TransportMode mode;
+                    {
+                        bool found;
+                        boost::tie(mode, found) = graph.transport_mode(mode_id);
+                        BOOST_ASSERT( found );
+                    }
+
+                    // if this mode is not allowed on the current edge, skip it
+                    if ( ! (current_edge.traffic_rules() & mode.traffic_rules() ) ) {
                         continue;
                     }
 
-                    bool found;
                     typename Automaton::Vertex s = min_object.state;
-                    // #FIXME
-                    if ( current_edge.connection_type() != Multimodal::Edge::Transport2Transport ) {
+                    {
+                        bool found;
                         boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge );
+                        // if not found, s == min_object.state
                     }
                     Object new_object;
                     new_object.vertex = target(current_edge, graph);
-                    new_object.mode = mode_label;
+                    new_object.mode = mode_id;
                     new_object.state = s;
 
                     double new_pi = get( potential_map, new_object );
@@ -89,19 +96,20 @@ namespace Tempus {
                     double wait_time;
 
                     // compute the time needed to transfer from one mode to another
-                    double cost = cost_calculator.transfer_time( graph, min_object.vertex, min_object.mode, mode_label );
+                    double cost = cost_calculator.transfer_time( graph, min_object.vertex, min_object.mode, mode_id );
                     if ( cost < std::numeric_limits<double>::max() )
                     {
                         // will update final_trip_id and wait_time
-                        cost += cost_calculator.travel_time( graph,
+                        double travel_time = cost_calculator.travel_time( graph,
                                                              current_edge,
-                                                             mode_label,
+                                                             mode_id,
                                                              min_pi,
                                                              initial_trip_id,
                                                              final_trip_id,
                                                              wait_time );
+                        cost += travel_time;
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
-                            double penalty = cost_calculator.penalty( automaton.automaton_graph_, s, mode_label ) ;
+                            double penalty = cost_calculator.penalty( automaton.automaton_graph_, s, mode.traffic_rules() ) ;
                             cost += penalty;
                         }
                     }
@@ -110,7 +118,7 @@ namespace Tempus {
                         put( potential_map, new_object, min_pi + cost ); 
                         put( trip_map, new_object, final_trip_id ); 
 
-                        put( predecessor_map, new_object, min_object ); 
+                        put( predecessor_map, new_object, min_object );
                         put( wait_map, min_object, wait_time ); 
 
                         vertex_queue.push( new_object ); 
