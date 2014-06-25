@@ -134,22 +134,9 @@ public:
         cost_per_transport_( cost )
     {}
 
-    const EdgeSequence& road_edges() const {
-        return road_edges_;
-    }
+    DECLARE_RO_PROPERTY( road_edges, EdgeSequence );
 
-    const CostPerTransport& cost_per_transport() const {
-        return cost_per_transport_;
-    }
-    CostPerTransport& cost_per_transport() {
-        return cost_per_transport_;
-    }
-private:
-    ///
-    /// Array of road edges
-    EdgeSequence road_edges_;
-
-    CostPerTransport cost_per_transport_;
+    DECLARE_RW_PROPERTY( cost_per_transport, CostPerTransport );
 };
 
 class Restrictions {
@@ -160,9 +147,7 @@ public:
     /// List of restrictions (as edges)
     typedef std::list<Restriction> RestrictionSequence;
 
-    const RestrictionSequence& restrictions() const {
-        return restrictions_;
-    }
+    DECLARE_RO_PROPERTY( restrictions, RestrictionSequence );
 
     ///
     /// Add a restriction
@@ -173,8 +158,6 @@ public:
     void add_restriction( Restriction restriction ); 
 
 private:
-    RestrictionSequence restrictions_;
-
     ///
     /// Pointer to the underlying road graph
     const Graph* road_graph_;
