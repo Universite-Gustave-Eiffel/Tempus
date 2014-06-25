@@ -32,7 +32,7 @@ namespace Tempus {
             min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time )  { }; 
 		
         // Multimodal travel time function
-        double travel_time( const Multimodal::Graph& graph, Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
+        double travel_time( const Multimodal::Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
         {
             const TransportMode& mode = graph.transport_modes().at( mode_id );
             if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), mode_id) != allowed_transport_modes_.end() ) 
