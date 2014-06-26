@@ -157,12 +157,12 @@ protected:
 
 
 template <typename T>
-class remove_const
+struct remove_const
 {
     typedef T type;
 };
 template <typename T>
-class remove_const<T const>
+struct remove_const<T const>
 {
     typedef T type;
 };
@@ -173,8 +173,8 @@ class remove_const<T const>
 private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
-  const typename remove_const<TYPE>::type& NAME() const { return NAME ## _; } \
-  void NAME( const typename remove_const<TYPE>::type& a ) { NAME ## _ = a; }
+  const remove_const<TYPE>::type& NAME() const { return NAME ## _; } \
+  void NAME( const remove_const<TYPE>::type& a ) { NAME ## _ = a; }
 
 ///
 /// Macro used to declare a class property and its getter
@@ -182,7 +182,7 @@ public:                                                \
 private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
-  const typename remove_const<TYPE>::type& NAME() const { return NAME ## _; }
+  const remove_const<TYPE>::type& NAME() const { return NAME ## _; }
 
 ///
 /// Macro used to declare a class property and its setter

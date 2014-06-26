@@ -253,7 +253,7 @@ private:
                         t.trip_id=res[i][2].as<int>(); 
                         t.arrival_time=res[i][4].as<double>(); 
                         timetable_.insert( std::make_pair(e, map<double, TimetableData>() ) ); 
-                        timetable_.at(e).insert( std::make_pair( res[i][3].as<double>(), t ) ) ; 				
+                        timetable_[e].insert( std::make_pair( res[i][3].as<double>(), t ) ) ; 				
                     }
                 }
                 else if (timetable_frequency_ == 1) // frequency model
@@ -298,7 +298,7 @@ private:
                         f.travel_time=res[i][6].as<double>(); 
 					
                         frequency_.insert( std::make_pair(e, map<double, FrequencyData>() ) ); 
-                        frequency_.at(e).insert( std::make_pair( res[i][3].as<double>(), f ) ) ; 	
+                        frequency_[e].insert( std::make_pair( res[i][3].as<double>(), f ) ) ; 	
                     }
                 }
             }
@@ -309,7 +309,7 @@ private:
             for ( Multimodal::Graph::PoiList::const_iterator p = graph_.pois.begin(); p != graph_.pois.end(); p++ )
             {
         	if (p->second.poi_type() == POI::TypeSharedCarPoint)
-                    available_vehicles_.at(Multimodal::Vertex(&p->second)) = 2;
+                    available_vehicles_.find(Multimodal::Vertex(&p->second))->second = 2;
         	else if (p->second.poi_type() == POI::TypeSharedCyclePoint)
                     available_vehicles_[Multimodal::Vertex(&p->second)] = 4;
             }        

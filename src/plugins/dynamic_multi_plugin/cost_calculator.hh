@@ -34,7 +34,7 @@ namespace Tempus {
         // Multimodal travel time function
         double travel_time( const Multimodal::Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
         {
-            const TransportMode& mode = graph.transport_modes().at( mode_id );
+            const TransportMode& mode = graph.transport_modes().find( mode_id )->second;
             if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), mode_id) != allowed_transport_modes_.end() ) 
             {
                 switch ( e.connection_type() ) {  
@@ -82,16 +82,16 @@ namespace Tempus {
 						
                     // Timetable travel time calculation
                     if (timetable_.find( pt_e ) != timetable_.end() ) {
-                        std::map< double, TimetableData >::iterator it = timetable_.at( pt_e ).lower_bound( initial_time ) ;  
-                        if ( it != timetable_.at( pt_e ).end() ) { 								
+                        std::map< double, TimetableData >::iterator it = timetable_.find( pt_e )->second.lower_bound( initial_time ) ;  
+                        if ( it != timetable_.find( pt_e )->second.end() ) { 								
                             if (it->second.trip_id == initial_trip_id ) { 
                                 final_trip_id = it->second.trip_id; 
                                 wait_time = 0; 
                                 return it->second.arrival_time - initial_time ; 
                             } 
                             else { // No connection without transfer found
-                                it = timetable_.at( pt_e ).lower_bound( initial_time + min_transfer_time_ ); 
-                                if ( it != timetable_.at( pt_e ).end() ) {
+                                it = timetable_.find( pt_e )->second.lower_bound( initial_time + min_transfer_time_ ); 
+                                if ( it != timetable_.find( pt_e )->second.end() ) {
                                     final_trip_id = it->second.trip_id; 
                                     wait_time = it->first - initial_time ; 
                                     return it->second.arrival_time - initial_time ; 
@@ -100,8 +100,8 @@ namespace Tempus {
                         }
                     } 
                     else if (frequency_.find( pt_e ) != frequency_.end() ) {
-                        std::map<double, FrequencyData>::iterator it = frequency_.at( pt_e ).lower_bound( initial_time );
-                        if (it != frequency_.at( pt_e ).begin() ) {
+                        std::map<double, FrequencyData>::iterator it = frequency_.find( pt_e )->second.lower_bound( initial_time );
+                        if (it != frequency_.find( pt_e )->second.begin() ) {
                             it--; 
                             if (it->second.trip_id == initial_trip_id  && ( it->second.end_time >= initial_time ) ) { // Connection without transfer
                                 final_trip_id = it->second.trip_id; 
@@ -109,8 +109,8 @@ namespace Tempus {
                                 return it->second.travel_time ; 
                             } 
                             else { // No connection without transfer found
-                                it = frequency_.at( pt_e ).upper_bound( initial_time + min_transfer_time_ ); 
-                                if ( it != frequency_.at( pt_e ).begin() ) { 
+                                it = frequency_.find( pt_e )->second.upper_bound( initial_time + min_transfer_time_ ); 
+                                if ( it != frequency_.find( pt_e )->second.begin() ) { 
                                     it--; 
                                     if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
                                         final_trip_id = it->second.trip_id ; 
@@ -166,8 +166,8 @@ namespace Tempus {
         {
             double transf_t = 0;
             if (initial_mode_id != final_mode_id ) {
-                const TransportMode& initial_mode = graph.transport_modes().at( initial_mode_id );
-                const TransportMode& final_mode = graph.transport_modes().at( final_mode_id );
+                const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
+                const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
                 // Parking search time for initial mode
                 if ( initial_mode.need_parking() ) {
                     if ( ( ( v.type == Multimodal::Vertex::Road )  &&

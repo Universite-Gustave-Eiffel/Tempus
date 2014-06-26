@@ -687,7 +687,7 @@ std::pair<TransportMode, bool> Graph::transport_mode( const std::string& name ) 
     if ( fit == transport_mode_from_name_.end() ) {
         return std::make_pair( TransportMode(), false );
     }
-    return std::make_pair( transport_modes_.at(fit->second), true );
+    return std::make_pair( transport_modes_.find(fit->second)->second, true );
 }
 
 } // namespace Multimodal
