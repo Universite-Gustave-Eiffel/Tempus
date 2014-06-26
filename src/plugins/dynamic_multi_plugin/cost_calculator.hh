@@ -153,7 +153,7 @@ namespace Tempus {
         template <typename AutomatonGraph>
         double penalty ( const AutomatonGraph& graph, typename boost::graph_traits< AutomatonGraph >::vertex_descriptor& v, unsigned traffic_rules ) const
         {
-            for (std::map<int, double >::const_iterator penaltyIt = graph[v].penaltyPerMode.begin() ; penaltyIt != graph[v].penaltyPerMode.end() ; penaltyIt++ )
+            for (std::map<int, double >::const_iterator penaltyIt = graph[v].penalty_per_mode.begin() ; penaltyIt != graph[v].penalty_per_mode.end() ; penaltyIt++ )
             {
                 // if the mode has a traffic rule in common with the penalty key
                 if (traffic_rules & penaltyIt->first) return penaltyIt->second; 
