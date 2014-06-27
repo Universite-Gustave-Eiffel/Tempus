@@ -12,8 +12,10 @@ include_directories(../core)
 #add_library( homogen_tmr_road_plugin MODULE homogen_tmr_road_plugin/homogen_tmr_road_plugin.cc )
 #target_link_libraries( homogen_tmr_road_plugin tempus )
 
-#add_library( heterogen_tmr_road_plugin MODULE heterogen_tmr_road_plugin/heterogen_tmr_road_plugin.cc )
-#target_link_libraries( heterogen_tmr_road_plugin tempus )
+include_directories(.)
+
+add_library( heterogen_tmr_road_plugin MODULE heterogen_tmr_road_plugin/heterogen_tmr_road_plugin.cc )
+target_link_libraries( heterogen_tmr_road_plugin tempus )
 
 add_library( dynamic_multi_plugin MODULE dynamic_multi_plugin/dynamic_multi_plugin.cc )
 target_link_libraries( dynamic_multi_plugin tempus )

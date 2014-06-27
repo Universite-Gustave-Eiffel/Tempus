@@ -33,52 +33,56 @@
 #include "utils/field_property_accessor.hh"
 #include "utils/function_property_accessor.hh"
 
-#include "automaton.hh"
+#include "automaton_lib/automaton.hh"
+#include "automaton_lib/cost_calculator.hh"
 #include "combined_algorithms.hh"
-
-#define PEDEST_SPEED 1 // Pedestrian speed in m/sec
-#define CYCLE_SPEED 5 // Cycle speed in m/sec
 
 using namespace std;
 
 namespace Tempus {
 
-    // Travel time function of the road graph (in minutes) 
-    class TravelTimeCalculator
-    {
-    public:
-        TravelTimeCalculator( int mode ) : mode_(mode) {} // constructeur
+typedef Automaton<Road::Edge> MyAutomaton;
+
+// Travel time function of the road graph (in minutes) 
+class TravelTimeCalculator
+{
+public:
+    TravelTimeCalculator( TransportMode mode ) : mode_(mode) {}
         		
-        double operator() ( Road::Graph& graph, Road::Edge& e ) { 
-            if ( (graph[e].transport_type & mode_) == 0 )
-                return std::numeric_limits<double>::infinity();
-            else if ( mode_ == 1 || mode_ == 256 ) // Car
-                return graph[e].length /  (graph[e].car_average_speed / 0.06); 
-            else if ( mode_ == 2 ) // Pedestrial
-                return graph[e].length/(PEDEST_SPEED*60); 
-            else if ( mode_ == 4 || mode_ == 128 ) // Bicycle
-                return graph[e].length/(CYCLE_SPEED*60); 
-            else return std::numeric_limits<double>::infinity(); 
-        }
-    private:
-        unsigned int mode_; // transport mode
-    }; 
+    double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
+        return road_travel_time( graph, e, graph[e].length(), mode_ );
+    }
+private:
+    TransportMode mode_;
+}; 
         
-    class DistanceCalculator
-    {
-    public:
-        DistanceCalculator( int mode ) : mode_(mode) {} 
+class DistanceCalculator
+{
+public:
+    DistanceCalculator( TransportMode mode ) : mode_(mode) {} 
         	
-        double operator() ( Road::Graph& graph, Road::Edge& e ) {
-            if ( (graph[e].transport_type & mode_) == 0 ) {
-                return std::numeric_limits<double>::infinity();
-            }
-            return graph[e].length;
+    double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
+        if ( (graph[e].traffic_rules() & mode_.traffic_rules()) == 0 ) {
+            return std::numeric_limits<double>::infinity();
         }
-    private:
-        unsigned int mode_; // transport mode
-    };
+        return graph[e].length();
+    }
+private:
+    TransportMode mode_;
+};
     	
+class PenaltyCalculator
+{
+public:
+    PenaltyCalculator( TransportMode mode ) : mode_(mode) {} 
+        	
+    double operator() ( const MyAutomaton::Graph& graph, const MyAutomaton::State& s ) {
+        return penalty( graph, s, mode_.traffic_rules() );
+    }
+private:
+    TransportMode mode_;
+};
+
 class HeterogenTMRRoadPlugin : public Plugin {
 
 public:
@@ -104,7 +108,7 @@ protected:
     bool trace_vertex_;
     bool prepare_result_;
     short int sequence_description; 
-    static Automaton<Road::Edge> automaton_;
+    static MyAutomaton automaton_;
     static std::multimap<Road::Vertex, Road::Restriction> simple_restrictions_;
     
     // exception returned to shortcut Dijkstra
@@ -117,25 +121,29 @@ public:
     	Road::Graph& road_graph = Application::instance()->graph().road;
     	
     	// Building automaton 
-		PQImporter psql( Application::instance()->db_options() ); 
-		Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph );
-		std::cout << "turn restrictions imported" << std::endl; 
+        PQImporter psql( Application::instance()->db_options() ); 
+        Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph );
+        std::cout << "turn restrictions imported" << std::endl; 
 		
-		// Separating restrictions between simple (2 arcs) and complex (3 arcs or more) 
-	    Road::Restrictions complex_restrictions( road_graph ); 
-	    for ( std::list<Road::Restriction>::const_iterator it=restrictions.restrictions().begin() ; it!=restrictions.restrictions().end() ; it++ ) {
-			if ( it->road_edges().size() == 2 ) simple_restrictions_.insert(std::pair<Road::Vertex, Road::Restriction>(target(it->road_edges()[0], road_graph), *it ) ); 
-			else complex_restrictions.add_restriction( *it );
-		} 
+        // Separating restrictions between simple (2 arcs) and complex (3 arcs or more) 
+        Road::Restrictions complex_restrictions( road_graph ); 
+        for ( std::list<Road::Restriction>::const_iterator it=restrictions.restrictions().begin() ; it!=restrictions.restrictions().end() ; it++ ) {
+            if ( it->road_edges().size() == 2 ) {
+                simple_restrictions_.insert(std::pair<Road::Vertex, Road::Restriction>(target(it->road_edges()[0], road_graph), *it ) );
+            }
+            else {
+                complex_restrictions.add_restriction( *it );
+            }
+        } 
 		
-		automaton_.build_graph( complex_restrictions ) ;
-		std::cout << "automaton built" << std::endl; 
+        automaton_.build_graph( complex_restrictions ) ;
+        std::cout << "automaton built" << std::endl; 
 		
-		std::ofstream ofs("../out/complex_movements_edge_automaton.dot"); // output to graphviz
-		Automaton<Road::Edge>::NodeWriter nodeWriter( automaton_.automaton_graph_ );
-		Automaton<Road::Edge>::ArcWriter arcWriter( automaton_.automaton_graph_, road_graph );
-		boost::write_graphviz( ofs, automaton_.automaton_graph_, nodeWriter, arcWriter);
-		std::cout << "automaton exported to graphviz" << std::endl; 
+        std::ofstream ofs("complex_movements_edge_automaton.dot"); // output to graphviz
+        MyAutomaton::NodeWriter nodeWriter( automaton_.automaton_graph_ );
+        MyAutomaton::ArcWriter arcWriter( automaton_.automaton_graph_, road_graph );
+        boost::write_graphviz( ofs, automaton_.automaton_graph_, nodeWriter, arcWriter);
+        std::cout << "automaton exported to graphviz" << std::endl; 
     }
 
     virtual void pre_process( Request& request ) {   	    	
@@ -143,26 +151,25 @@ public:
     	Road::Graph& road_graph = Application::instance()->graph().road; 
     			
     	// Recording request
-		/*if ( ( request.optimizing_criteria[0] != CostDistance ) ) {
-		  throw std::invalid_argument( "Unsupported optimizing criterion" );
-		} */
+        /*if ( ( request.optimizing_criteria[0] != CostDistance ) ) {
+          throw std::invalid_argument( "Unsupported optimizing criterion" );
+          } */
 			
-		request_ = request;
-		source_ = request.origin;
-		destination_ = request.destination();
+        request_ = request;
+        source_ = request.origin();
+        destination_ = request.destination();
 				
-		REQUIRE( request.check_consistency() );
-		REQUIRE( vertex_exists( request.origin, graph_.road ) );
-		REQUIRE( vertex_exists( request.destination(), graph_.road ) );
+        REQUIRE( vertex_exists( request.origin(), graph_.road ) );
+        REQUIRE( vertex_exists( request.destination(), graph_.road ) );
 		
-		std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
+        std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
 		
-		// Recording options 
-		get_option( "trace_vertex", trace_vertex_ );
-		get_option( "prepare_result", prepare_result_ );
+        // Recording options 
+        get_option( "trace_vertex", trace_vertex_ );
+        get_option( "prepare_result", prepare_result_ );
 		
-		// Deleting result
-		result_.clear(); 
+        // Deleting result
+        result_.clear(); 
     }
     
     
@@ -173,8 +180,8 @@ public:
         Timer timer;
 
         // The Label type which is a pair of (graph vertex, automaton transition)
-        typedef std::pair< Road::Vertex, Automaton<Road::Edge>::Graph::vertex_descriptor > VertexLabel;
-        typedef std::pair< Road::Edge, Automaton<Road::Edge>::Graph::vertex_descriptor > EdgeLabel; 
+        typedef std::pair< Road::Vertex, MyAutomaton::Graph::vertex_descriptor > VertexLabel;
+        typedef std::pair< Road::Edge, MyAutomaton::Graph::vertex_descriptor > EdgeLabel; 
 
         // Predecessor map
         typedef std::map<VertexLabel, VertexLabel> VertexVertexPredecessorMap;
@@ -210,13 +217,14 @@ public:
         
         ///// Maps storing arc and node weights
         // Node penalty map
-        Automaton<Road::Edge>::PenaltyCalculator penalty_calculator(1); 
-        Tempus::FunctionPropertyAccessor< Automaton< Road::Edge >::Graph,
-                                   boost::vertex_property_tag,
-                                   double,
-                                   Automaton< Road::Edge >::PenaltyCalculator > vertex_penalty_pmap( automaton_.automaton_graph_, penalty_calculator ); 
+        TransportMode car_mode = graph_.transport_mode( TransportModePrivateCar ).first;
+        PenaltyCalculator penalty_calculator( car_mode );
+        Tempus::FunctionPropertyAccessor< MyAutomaton::Graph,
+                                          boost::vertex_property_tag,
+                                          double,
+                                          PenaltyCalculator > vertex_penalty_pmap( automaton_.automaton_graph_, penalty_calculator ); 
         // Arc travel time map
-        TravelTimeCalculator travel_time_calculator(1); 
+        TravelTimeCalculator travel_time_calculator( car_mode ); 
         Tempus::FunctionPropertyAccessor< Road::Graph,  
                                           boost::edge_property_tag, 
                                           double, 
@@ -224,170 +232,165 @@ public:
 
         
         // Arc distance map
-        DistanceCalculator distance_calculator(1); 
-		Tempus::FunctionPropertyAccessor< Road::Graph,  
-									boost::edge_property_tag, 
-									double, 
-									DistanceCalculator > edge_dist_pmap( road_graph, distance_calculator ); 
+        DistanceCalculator distance_calculator( car_mode );
+        Tempus::FunctionPropertyAccessor< Road::Graph,  
+                                          boost::edge_property_tag, 
+                                          double, 
+                                          DistanceCalculator > edge_dist_pmap( road_graph, distance_calculator ); 
 
         // Case of an automaton labeled with edges of the road graph 
-        typedef typename Automaton<Road::Edge>::Node AutomatonNode; 
-        
-        int combination_strategy;         
+        typedef typename MyAutomaton::Node AutomatonNode; 
+
+        int combination_strategy;
         get_option( "combination_strategy", combination_strategy );
 
-        std::pair<bool, Automaton<Road::Edge>::Vertex> res; 
+        std::pair<bool, MyAutomaton::State> res; 
         
         if ( combination_strategy == 0 ) {
         	
-        	std::cout << "combined dijkstra" << std::endl;
+            std::cout << "combined dijkstra" << std::endl;
 
-        	res = combined_ls_algorithm( road_graph, 
-        						   automaton_, 
-        						   source_, 
-        						   destination_, 
-								   vv_predecessor_pmap,
-								   ve_predecessor_pmap, 
-								   ee_predecessor_pmap, 
-								   ev_predecessor_pmap, 
-								   vertex_path_tt_pmap, 
-								   edge_path_tt_pmap, 
-        						   edge_tt_pmap, 
-        						   vertex_penalty_pmap, 
-        						   simple_restrictions_);  
+            res = combined_ls_algorithm( road_graph, 
+                                         automaton_, 
+                                         source_, 
+                                         destination_, 
+                                         vv_predecessor_pmap,
+                                         ve_predecessor_pmap, 
+                                         ee_predecessor_pmap, 
+                                         ev_predecessor_pmap, 
+                                         vertex_path_tt_pmap, 
+                                         edge_path_tt_pmap, 
+                                         edge_tt_pmap, 
+                                         vertex_penalty_pmap, 
+                                         simple_restrictions_);  
         }
         
         
 #if 0
         else if ( combination_strategy == 1 ) {
-        	// the combined graph type
-        	typedef CombinedGraphAdaptor<Road::Graph, typename Automaton<Road::Edge>::Graph > CGraph;
-        	CGraph cgraph( road_graph, automaton_.automaton_graph_ );
-        	// the combined weight map made of a weight map on the road graph and a penalty map
-			typedef CombinedWeightMap< CGraph, WeightMap, PenaltyMap > CombinedWeightMap;
-			CombinedWeightMap wmap( cgraph, weight_map, penalty_map );
+            // the combined graph type
+            typedef CombinedGraphAdaptor<Road::Graph, typename MyAutomaton::Graph > CGraph;
+            CGraph cgraph( road_graph, automaton_.automaton_graph_ );
+            // the combined weight map made of a weight map on the road graph and a penalty map
+            typedef CombinedWeightMap< CGraph, WeightMap, PenaltyMap > CombinedWeightMap;
+            CombinedWeightMap wmap( cgraph, weight_map, penalty_map );
         }
 
+        // manually set the distance of the source_ to 0.0 (no init here)
+        typename MyAutomaton::Vertex q0 = automaton_.initial_state_;
+        put( distance_pmap, std::make_pair( source_, q0 ), 0.0 );
 
-	  // manually set the distance of the source_ to 0.0 (no init here)
-	  typename Automaton<Road::Edge>::Vertex q0 = automaton_.initial_state_;
-	  put( distance_pmap, std::make_pair( source_, q0 ), 0.0 );
-
-	  // we call the _no_init variant here,
-	  // otherwise the potential_map (and predecessor_map) would be initialized on a potentially big
-	  // number of vertices
-	  boost::dijkstra_shortest_paths_no_color_map_no_init( cgraph,
-							       std::make_pair( source_, q0 ),
-							       predecessor_pmap,
-							       distance_pmap,
-							       wmap,
-							       get( boost::vertex_index, cgraph ),
-							       std::less<double>(),
-							       boost::closed_plus<double>(),
-							       std::numeric_limits<double>::max(),
-							       0.0,
-							       boost::dijkstra_visitor<boost::null_visitor>()
-                                   ); 
-        }
+        // we call the _no_init variant here,
+        // otherwise the potential_map (and predecessor_map) would be initialized on a potentially big
+        // number of vertices
+        boost::dijkstra_shortest_paths_no_color_map_no_init( cgraph,
+                                                             std::make_pair( source_, q0 ),
+                                                             predecessor_pmap,
+                                                             distance_pmap,
+                                                             wmap,
+                                                             get( boost::vertex_index, cgraph ),
+                                                             std::less<double>(),
+                                                             boost::closed_plus<double>(),
+                                                             std::numeric_limits<double>::max(),
+                                                             0.0,
+                                                             boost::dijkstra_visitor<boost::null_visitor>()
+                                                             ); 
 #endif
 
         std::list<Road::Vertex> path;
-    std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
+        std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
         
         if ( res.first ) // A path has been found, it will be now reconstructed from the predecessor maps 
         {
-        	VertexLabel current_vertex_l = std::make_pair( destination_, res.second ); 
-        	EdgeLabel current_edge_l ; 
-        	bool current_vertex = true ; 
+            VertexLabel current_vertex_l = std::make_pair( destination_, res.second ); 
+            EdgeLabel current_edge_l ; 
+            bool current_vertex = true ; 
+            std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
+
+            while ( current_vertex_l.first != source_ ) 
+            {
                 std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
 
-        	while ( current_vertex_l.first != source_ ) 
-        	{
+                if ( current_vertex ) // From vertex
+                {
                     std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
-
-        		if ( current_vertex ) // From vertex
-    			{
-                            std::cout << road_graph[current_vertex_l.first].db_id() << std::endl; 
-    				path.push_front( current_vertex_l.first ); 
-					// Find predecessor : vertex or edge 
-					if ( vv_predecessor_map.find(current_vertex_l) != vv_predecessor_map.end() ) // Vertex predecessor
-					{
-						current_vertex_l = vv_predecessor_map[ current_vertex_l ]; 
-						current_vertex = true; 
-					}
-					else if ( ve_predecessor_map.find(current_vertex_l) != ve_predecessor_map.end() ) // Edge predecessor
-					{
-						current_edge_l = ve_predecessor_map[ current_vertex_l ];
-						current_vertex = false; 
-					}
-    			}
-    			else // From edge 
-    			{
-                            std::cout << road_graph[ source(current_edge_l.first, road_graph) ].db_id() << std::endl; 
-					path.push_front( source(current_edge_l.first, road_graph) ); 
-					// Find predecessor : vertex or edge
-					if ( ev_predecessor_map.find(current_edge_l) != ev_predecessor_map.end() ) // Vertex predecessor
-					{
-						current_vertex_l = ev_predecessor_map[ current_edge_l ]; 
-						current_vertex = true; 
-					}
-					else if ( ee_predecessor_map.find(current_edge_l) != ee_predecessor_map.end() ) // Edge predecessor
-					{
-						current_edge_l = ee_predecessor_map[ current_edge_l ];
-						current_vertex = false; 
-					}
-    			} 
-        	}
-        	path.push_front( current_vertex_l.first ); // adding source node to the path 
+                    path.push_front( current_vertex_l.first ); 
+                    // Find predecessor : vertex or edge 
+                    if ( vv_predecessor_map.find(current_vertex_l) != vv_predecessor_map.end() ) // Vertex predecessor
+                    {
+                        current_vertex_l = vv_predecessor_map[ current_vertex_l ]; 
+                        current_vertex = true; 
+                    }
+                    else if ( ve_predecessor_map.find(current_vertex_l) != ve_predecessor_map.end() ) // Edge predecessor
+                    {
+                        current_edge_l = ve_predecessor_map[ current_vertex_l ];
+                        current_vertex = false; 
+                    }
+                }
+                else // From edge 
+                {
+                    std::cout << road_graph[ source(current_edge_l.first, road_graph) ].db_id() << std::endl; 
+                    path.push_front( source(current_edge_l.first, road_graph) ); 
+                    // Find predecessor : vertex or edge
+                    if ( ev_predecessor_map.find(current_edge_l) != ev_predecessor_map.end() ) // Vertex predecessor
+                    {
+                        current_vertex_l = ev_predecessor_map[ current_edge_l ]; 
+                        current_vertex = true; 
+                    }
+                    else if ( ee_predecessor_map.find(current_edge_l) != ee_predecessor_map.end() ) // Edge predecessor
+                    {
+                        current_edge_l = ee_predecessor_map[ current_edge_l ];
+                        current_vertex = false; 
+                    }
+                } 
+            }
+            path.push_front( current_vertex_l.first ); // adding source node to the path 
         	
-        	metrics_[ "time_s" ] = timer.elapsed();
+            metrics_[ "time_s" ] = timer.elapsed();
         	        	        
-			result_.push_back( Roadmap() );
-			Roadmap& roadmap = result_.back();
+            result_.push_back( Roadmap() );
+            Roadmap& roadmap = result_.back();
 
-			bool first_loop = true;
-			Road::Vertex previous;
+            bool first_loop = true;
+            Road::Vertex previous;
 
-			for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ ) {
-				Road::Vertex v = *it;
+            for ( std::list<Road::Vertex>::iterator it = path.begin(); it != path.end(); it++ ) {
+                Road::Vertex v = *it;
 
-				// User-oriented roadmap
-				if ( first_loop ) {
-					previous = v;
-					first_loop = false;
-					continue;
-				}
+                // User-oriented roadmap
+                if ( first_loop ) {
+                    previous = v;
+                    first_loop = false;
+                    continue;
+                }
 				
-				// Find an edge, based on a source and destination vertex
-				Road::Edge e;
-				bool found = false; 
-				boost::tie( e, found ) = boost::edge( previous, v, road_graph );
+                // Find an edge, based on a source and destination vertex
+                Road::Edge e;
+                bool found = false; 
+                boost::tie( e, found ) = boost::edge( previous, v, road_graph );
 
-				if ( !found ) {
-					continue;
-				}
+                if ( !found ) {
+                    continue;
+                }
 
-				Roadmap::RoadStep* step = new Roadmap::RoadStep();
-				roadmap.steps.push_back( step );
-				step->road_edge = e; 
+                Roadmap::RoadStep* step = new Roadmap::RoadStep();
+                roadmap.steps.push_back( step );
+                step->road_edge = e; 
 				
-				step->costs[CostDistance] += get(edge_dist_pmap, e);
-				step->costs[CostDuration] += get(edge_tt_pmap, e); 
-				roadmap.total_costs[CostDistance] += get(edge_dist_pmap, e);
-				roadmap.total_costs[CostDuration] += get(edge_tt_pmap, e); 
+                step->costs[CostDistance] += get(edge_dist_pmap, e);
+                step->costs[CostDuration] += get(edge_tt_pmap, e); 
+                roadmap.total_costs[CostDistance] += get(edge_dist_pmap, e);
+                roadmap.total_costs[CostDuration] += get(edge_tt_pmap, e); 
 				
-				previous = v;
-			} 
+                previous = v;
+            } 
         }
     }
 };
 
-Automaton<Road::Edge> HeterogenTMRRoadPlugin::automaton_ = Automaton<Road::Edge>();
+MyAutomaton HeterogenTMRRoadPlugin::automaton_ = MyAutomaton();
 std::multimap<Road::Vertex, Road::Restriction> HeterogenTMRRoadPlugin::simple_restrictions_ = std::multimap<Road::Vertex, Road::Restriction>(); 
 
 }
 
 DECLARE_TEMPUS_PLUGIN( "heterogen_tmr_road_plugin", Tempus::HeterogenTMRRoadPlugin )
-
-
-
