@@ -125,6 +125,16 @@ private:
 /// Transport types constants.
 typedef std::map<db_id_t, TransportMode> TransportModes;
 
+///
+/// Database id used for common transport modes
+enum TransportModeId
+{
+    TransportModeWalking = 1,
+    TransportModePrivateBicyle = 2,
+    TransportModePrivateCar = 4,
+    TransportModeTaxi = 8
+};
+
 }
 
 #endif

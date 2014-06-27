@@ -31,9 +31,9 @@
 #include "utils/associative_property_map_default_value.hh"
 
 
-#include "cost_calculator.hh"
+#include "automaton_lib/cost_calculator.hh"
+#include "automaton_lib/automaton.hh"
 #include "algorithms.hh"
-#include "automaton.hh"
 
 using namespace std;
 
@@ -159,7 +159,7 @@ private:
             automaton_.build_graph( restrictions ) ;
             std::cout << "Automaton built" << std::endl; 
 		
-            std::ofstream ofs("../out/all_movements_edge_automaton.dot"); // output to graphviz
+            std::ofstream ofs("all_movements_edge_automaton.dot"); // output to graphviz
             Automaton<Road::Edge>::NodeWriter nodeWriter( automaton_.automaton_graph_ );
             Automaton<Road::Edge>::ArcWriter arcWriter( automaton_.automaton_graph_, road_graph );
             boost::write_graphviz( ofs, automaton_.automaton_graph_, nodeWriter, arcWriter);

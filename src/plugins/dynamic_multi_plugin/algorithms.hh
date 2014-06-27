@@ -109,8 +109,7 @@ namespace Tempus {
                                                              wait_time );
                         cost += travel_time;
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
-                            double penalty = cost_calculator.penalty( automaton.automaton_graph_, s, mode.traffic_rules() ) ;
-                            cost += penalty;
+                            cost += penalty( automaton.automaton_graph_, s, mode.traffic_rules() ) ;
                         }
                     }
 

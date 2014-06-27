@@ -27,6 +27,11 @@
 /// The automaton is build upon sequences of forbidden movements and penalties
 /// The optimized graph (finite state machine) is constructed by following the Aho & Corasick algorithms
 
+#ifndef AUTOMATION_LIB_AUTOMATON_HH
+#define AUTOMATION_LIB_AUTOMATON_HH
+
+#include <boost/graph/graphviz.hpp>
+
 namespace Tempus {
 	
 template <class Symbol>	
@@ -73,7 +78,7 @@ public:
     class ArcWriter
     {
     public:
-        ArcWriter( const Graph& agraph, Tempus::Road::Graph& graph ) : agraph_(agraph), graph_(graph) {}
+        ArcWriter( const Graph& agraph, const Tempus::Road::Graph& graph ) : agraph_(agraph), graph_(graph) {}
         void operator() ( std::ostream& ostr, const Transition& e) const {
             ostr << "[label=\"" << graph_[agraph_[e].symbol].db_id() << " = " << agraph_[e].symbol << "\"]"; 		
         }
@@ -82,6 +87,17 @@ public:
         const Tempus::Road::Graph& graph_;
     }; 
 		
+    class MyArcWriter
+    {
+    public:
+        MyArcWriter( const Graph& agraph ) : agraph_(agraph) {}
+        void operator() ( std::ostream& ostr, const Transition& e) const {
+            ostr << "[label=\"" << agraph_[e].symbol << "\"]";
+        }
+    private:
+        const Graph& agraph_;
+    }; 
+
     // Attributes 	
     Graph automaton_graph_;
     State initial_state_; 
@@ -111,7 +127,6 @@ public:
     /// here represented as an automaton
     void add_sequence( const std::vector< Symbol >& symbol_sequence, const Road::Restriction::CostPerTransport& penalty_per_mode )
     {
-        std::cout << "add sequence" << std::endl;
         State current_state = initial_state_ ;
 
         // Iterating over forbidden road sequences 
@@ -123,18 +138,15 @@ public:
             }
             else { // this state needs to be inserted
                 State s = boost::add_vertex( automaton_graph_ );
-                Transition e;
-                bool ok;
-                boost::tie( e, ok ) = boost::add_edge( current_state, s, automaton_graph_ );
-                BOOST_ASSERT( ok );
-                automaton_graph_[e].symbol = symbol_sequence[j];
+
+                add_transition_( current_state, s, symbol_sequence[j], automaton_graph_ );
+
                 if ( j == symbol_sequence.size()-1 ) {
                     automaton_graph_[ s ].penalty_per_mode = penalty_per_mode;
                 }
                 current_state = s; 
             } 
         }
-        std::cout << "end add sequence" << std::endl;
     } 
 
     /// Build the failure function (see Aho & al.)
@@ -153,14 +165,14 @@ public:
         } 
 				
         // Iterating over the list of states which do not have failure state
-        State s, r, state;
+        State r, state;
         while ( ! q.empty() ) {
             r = q.front();
             q.pop_front();
             BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {
-                s = target( edge, automaton_graph_ );
-                q.push_back( s );
+                State s = target( edge, automaton_graph_ );
                 Symbol a = automaton_graph_[edge].symbol;
+                q.push_back( s );
                 state = failure_function_[ s ];
                 while ( find_transition( state, a ).second == false && state != initial_state_ ) {
                     state = failure_function_[ state ];
@@ -174,25 +186,44 @@ public:
                 }
             } 
         }
+        std::cout << "end of failure" << std::endl;
 
-        std::cout << "end failure" << std::endl;
         return failure_function_;
     }
 
     /// corresponds to building the "next" function
     void build_shortcuts(const std::map < State, State >& failure_function_)
     {
-        std::cout << "shortcurts" << std::endl;
         using namespace boost;
+#if 0
+        {
+            std::ofstream ofs("shortcuts.dot");
+            NodeWriter nodeWriter( automaton_graph_ );
+            MyArcWriter arcWriter( automaton_graph_ );
+            write_graphviz( ofs, automaton_graph_, nodeWriter, arcWriter );
+        }
+#endif
+
+        // copy vertices
+        Graph automaton_copy;
+        BGL_FORALL_VERTICES_T( v, automaton_graph_, Graph ) {
+            State s = add_vertex(automaton_copy);
+            automaton_copy[s].penalty_per_mode = automaton_graph_[s].penalty_per_mode;
+        }
+
         std::list< State > q;
-			
-        std::cout << "first push back" << std::endl;
+
         BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {
             BOOST_ASSERT( edge.get_property() );
-            q.push_back( target( edge, automaton_graph_ ) );
-        }
-        std::cout << "end first push back" << std::endl;
+            State s = target( edge, automaton_graph_ );
+            Symbol a = automaton_graph_[edge].symbol;
 
+            q.push_back( s );
+            add_transition_( initial_state_, s, a, automaton_copy );
+        }
+
+        std::cout << "build shortcuts" << std::endl;
+        std::map<State, State> next;
         State r; 
         while ( ! q.empty() ) {
             r = q.front();
@@ -205,35 +236,25 @@ public:
             if ( f != initial_state_ ) {
                 BOOST_ASSERT( f != r ); // f != r, unless the failure function is not built correctly
 
-                // We are going to modify the graph (add_edge, remove_edge)
-                // we cannot do it during an iteration over out edges
-                // (because we are using an adjacency_list with boost::vecS for edges)
-                // they then must be stored to avoid undefined behaviour
-                std::vector< std::pair< State, Symbol > > oedges;
                 BGL_FORALL_OUTEDGES_T( f, edge, automaton_graph_, Graph ) {
-                    oedges.push_back( std::make_pair( target( edge, automaton_graph_ ),
-                                                      automaton_graph_[edge].symbol ) );
-                }
-                for ( size_t i = 0; i < oedges.size(); i++ ) {
-                    const State& v = oedges[i].first;
-                    const Symbol& symbol = oedges[i].second;
-                    // if a transition from r with this symbol already exists, remove it
-                    std::pair<State, bool> t = find_transition( f, symbol );
-                    if ( t.second == true ) {
-                        // a transition already exists, first remove it
-                        remove_edge( f, t.first, automaton_graph_ );
-                    }
-                    Transition e;
-                    bool ok;
-                    tie( e, ok ) = add_edge( r, v, automaton_graph_ );
-                    BOOST_ASSERT( ok );
-                    automaton_graph_[ e ].symbol = symbol;
+                    State s = target( edge, automaton_graph_ );
+                    Symbol a = automaton_graph_[edge].symbol;
+
+                    // we add an edge from r to s in the copy
+                    // warning: it only works because vertices are stored as indices, not addresses (vecS)
+                    add_transition_( r, s, a, automaton_copy );
                 }
             }
             BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {
+                State s = target( edge, automaton_graph_ );
+                Symbol a = automaton_graph_[edge].symbol;
+
                 q.push_back( target( edge, automaton_graph_ ) );
+                add_transition_( r, s, a, automaton_copy );
             }
         }
+        // the new automaton is ready, replace
+        automaton_graph_ = automaton_copy;
         std::cout << "end shortcuts" << std::endl;
     }
 		
@@ -250,7 +271,19 @@ public:
         // If transition not found
         return std::make_pair( q, false );
     }
+
+private:
+    // helper function
+    void add_transition_( State r, State s, Symbol a, Graph& graph )
+    {
+        Transition e;
+        bool ok;
+        tie(e, ok) = add_edge( r, s, graph );
+        BOOST_ASSERT( ok );
+        graph[e].symbol = a;
+    }
 };
 
 } // namespace Tempus
 
+#endif
