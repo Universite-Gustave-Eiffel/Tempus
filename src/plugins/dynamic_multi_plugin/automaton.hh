@@ -19,17 +19,17 @@
 ///
 /// It is represented by a graph (even if a tree should be enough)
 /// Each node represents a automaton's state, each edge represents a possible transition.
-/// A transition from a state s to a state s' is possible only on the presence of a given
-/// road/multimodal vertex or edge, templated here as an 'Entity' and usually called a 'symbol'
+/// A transition from a state s to a state s' is possible only in the presence of a given
+/// road/multimodal vertex or edge, called a 'symbol'
 ///
-/// The 'output' part of the automaton serves to represent penalties in road sequences
+/// The 'output' part of the automaton serves to represent penalties of road sequences
 ///
 /// The automaton is build upon sequences of forbidden movements and penalties
 /// The optimized graph (finite state machine) is constructed by following the Aho & Corasick algorithms
 
 namespace Tempus {
 	
-template <class Entity>	
+template <class Symbol>	
 class Automaton {
 public:	
 		
@@ -38,8 +38,8 @@ public:
     };
 		
     struct Arc {
-        // Entity (vertex or edge of the main graph) associated with the automaton edge (or transition)
-        Entity entity;
+        // Symbol (vertex or edge of the main graph) associated with the automaton edge (or transition)
+        Symbol symbol;
     };
 		
     typedef boost::adjacency_list< boost::vecS,
@@ -49,15 +49,15 @@ public:
                                    Arc > Graph;
 	
     /// Vertex of the graph, i.e. state of the automaton
-    typedef typename Graph::vertex_descriptor Vertex;
+    typedef typename Graph::vertex_descriptor State;
     /// Edge of the graph, i.e. transition
-    typedef typename Graph::edge_descriptor Edge; 
+    typedef typename Graph::edge_descriptor Transition;
 	
     class NodeWriter
     {
     public:
         NodeWriter( const Graph& agraph ) : agraph_(agraph) {}
-        void operator() ( std::ostream& ostr, const Vertex& v) const {
+        void operator() ( std::ostream& ostr, const State& v) const {
             ostr << "[label=\"" << v << " " ;
             for (Road::Restriction::CostPerTransport::const_iterator penaltyIt = agraph_[v].penalty_per_mode.begin();
                  penaltyIt != agraph_[v].penalty_per_mode.end() ;
@@ -74,8 +74,8 @@ public:
     {
     public:
         ArcWriter( const Graph& agraph, Tempus::Road::Graph& graph ) : agraph_(agraph), graph_(graph) {}
-        void operator() ( std::ostream& ostr, const Edge& e) const {
-            ostr << "[label=\"" << graph_[agraph_[e].entity].db_id() << " = " << agraph_[e].entity << "\"]"; 		
+        void operator() ( std::ostream& ostr, const Transition& e) const {
+            ostr << "[label=\"" << graph_[agraph_[e].symbol].db_id() << " = " << agraph_[e].symbol << "\"]"; 		
         }
     private:
         const Graph& agraph_;
@@ -84,7 +84,7 @@ public:
 		
     // Attributes 	
     Graph automaton_graph_;
-    Vertex initial_state_; 
+    State initial_state_; 
 	
     // Constructor
     Automaton() {}
@@ -109,26 +109,26 @@ public:
     ///
     /// Corresponds to the enter() function in Aho & al. paper, responsible for the creation of the "goto" function
     /// here represented as an automaton
-    void add_sequence( const std::vector< Entity >& entity_sequence, const Road::Restriction::CostPerTransport& penalty_per_mode )
+    void add_sequence( const std::vector< Symbol >& symbol_sequence, const Road::Restriction::CostPerTransport& penalty_per_mode )
     {
         std::cout << "add sequence" << std::endl;
-        Vertex current_state = initial_state_ ;
+        State current_state = initial_state_ ;
 
         // Iterating over forbidden road sequences 
-        for ( size_t j = 0; j < entity_sequence.size(); j++ ) {
-            std::pair< Vertex, bool > transition_result = find_transition( current_state, entity_sequence[j] );
+        for ( size_t j = 0; j < symbol_sequence.size(); j++ ) {
+            std::pair< State, bool > transition_result = find_transition( current_state, symbol_sequence[j] );
 				
             if ( transition_result.second == true )  {// this state already exists
                 current_state = transition_result.first;
             }
             else { // this state needs to be inserted
-                Vertex s = boost::add_vertex( automaton_graph_ );
-                Edge e;
+                State s = boost::add_vertex( automaton_graph_ );
+                Transition e;
                 bool ok;
                 boost::tie( e, ok ) = boost::add_edge( current_state, s, automaton_graph_ );
                 BOOST_ASSERT( ok );
-                automaton_graph_[e].entity = entity_sequence[j];
-                if ( j == entity_sequence.size()-1 ) {
+                automaton_graph_[e].symbol = symbol_sequence[j];
+                if ( j == symbol_sequence.size()-1 ) {
                     automaton_graph_[ s ].penalty_per_mode = penalty_per_mode;
                 }
                 current_state = s; 
@@ -138,34 +138,34 @@ public:
     } 
 
     /// Build the failure function (see Aho & al.)
-    std::map < Vertex, Vertex > build_failure_function()
+    std::map < State, State > build_failure_function()
     {
         std::cout << "failure function" << std::endl;
-        std::map< Vertex, Vertex > failure_function_; 
+        std::map< State, State > failure_function_; 
         failure_function_.clear(); 
-        std::list< Vertex > q; 
+        std::list< State > q; 
 				
         // All successors of the initial state return to initial state when failing
         BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {
-            const Vertex& s = target( edge, automaton_graph_ );
+            const State& s = target( edge, automaton_graph_ );
             q.push_back( s );
             failure_function_[ s ] = initial_state_;
         } 
 				
         // Iterating over the list of states which do not have failure state
-        Vertex s, r, state;
+        State s, r, state;
         while ( ! q.empty() ) {
             r = q.front();
             q.pop_front();
             BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {
                 s = target( edge, automaton_graph_ );
                 q.push_back( s );
-                Entity a = automaton_graph_[edge].entity;
+                Symbol a = automaton_graph_[edge].symbol;
                 state = failure_function_[ s ];
                 while ( find_transition( state, a ).second == false && state != initial_state_ ) {
                     state = failure_function_[ state ];
                 }
-                std::pair<Vertex,bool> t = find_transition( state, a );
+                std::pair<State,bool> t = find_transition( state, a );
                 if ( t.second == true ) {
                     failure_function_[ s ] = t.first;
                 }
@@ -180,11 +180,11 @@ public:
     }
 
     /// corresponds to building the "next" function
-    void build_shortcuts(const std::map < Vertex, Vertex >& failure_function_)
+    void build_shortcuts(const std::map < State, State >& failure_function_)
     {
         std::cout << "shortcurts" << std::endl;
         using namespace boost;
-        std::list< Vertex > q;
+        std::list< State > q;
 			
         std::cout << "first push back" << std::endl;
         BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {
@@ -193,13 +193,13 @@ public:
         }
         std::cout << "end first push back" << std::endl;
 
-        Vertex r; 
+        State r; 
         while ( ! q.empty() ) {
             r = q.front();
             q.pop_front();
 
-            Vertex f = initial_state_;
-            typename std::map<Vertex,Vertex>::const_iterator fit = failure_function_.find(r);
+            State f = initial_state_;
+            typename std::map<State,State>::const_iterator fit = failure_function_.find(r);
             BOOST_ASSERT( fit != failure_function_.end() );
             f = fit->second;
             if ( f != initial_state_ ) {
@@ -209,25 +209,25 @@ public:
                 // we cannot do it during an iteration over out edges
                 // (because we are using an adjacency_list with boost::vecS for edges)
                 // they then must be stored to avoid undefined behaviour
-                std::vector< std::pair< Vertex, Entity > > oedges;
+                std::vector< std::pair< State, Symbol > > oedges;
                 BGL_FORALL_OUTEDGES_T( f, edge, automaton_graph_, Graph ) {
                     oedges.push_back( std::make_pair( target( edge, automaton_graph_ ),
-                                                      automaton_graph_[edge].entity ) );
+                                                      automaton_graph_[edge].symbol ) );
                 }
                 for ( size_t i = 0; i < oedges.size(); i++ ) {
-                    const Vertex& v = oedges[i].first;
-                    const Entity& entity = oedges[i].second;
-                    // if a transition from r with this entity already exists, remove it
-                    std::pair<Vertex, bool> t = find_transition( f, entity );
+                    const State& v = oedges[i].first;
+                    const Symbol& symbol = oedges[i].second;
+                    // if a transition from r with this symbol already exists, remove it
+                    std::pair<State, bool> t = find_transition( f, symbol );
                     if ( t.second == true ) {
                         // a transition already exists, first remove it
                         remove_edge( f, t.first, automaton_graph_ );
                     }
-                    Edge e;
+                    Transition e;
                     bool ok;
                     tie( e, ok ) = add_edge( r, v, automaton_graph_ );
                     BOOST_ASSERT( ok );
-                    automaton_graph_[ e ].entity = entity;
+                    automaton_graph_[ e ].symbol = symbol;
                 }
             }
             BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {
@@ -239,11 +239,11 @@ public:
 		
     ///
     /// Look for a transition in the automaton from the state q
-    /// and involving an entity (vertex or edge) e
-    std::pair< Vertex, bool > find_transition( Vertex q, Entity e ) const
+    /// and involving an symbol (vertex or edge) e
+    std::pair< State, bool > find_transition( State q, Symbol e ) const
     {
         BGL_FORALL_OUTEDGES_T( q, edge, automaton_graph_, Graph ) {
-            if ( automaton_graph_[ edge ].entity == e ) {
+            if ( automaton_graph_[ edge ].symbol == e ) {
                 return std::make_pair( target( edge, automaton_graph_ ), true );
             }
         }

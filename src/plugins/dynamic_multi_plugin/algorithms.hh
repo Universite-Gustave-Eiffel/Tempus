@@ -79,7 +79,7 @@ namespace Tempus {
                         continue;
                     }
 
-                    typename Automaton::Vertex s = min_object.state;
+                    typename Automaton::State s = min_object.state;
                     {
                         bool found;
                         boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge );
