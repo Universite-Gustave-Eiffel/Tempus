@@ -8,6 +8,9 @@ namespace Tempus {
 // Cycle speed in m/sec
 #define DEFAULT_CYCLING_SPEED 5.0
 
+// Time penalty to add when walking in and out from/to a public transport station
+#define PT_STATION_PENALTY 0.1
+
 double road_travel_time( const Road::Graph& road_graph, const Road::Edge& road_e, double length, const TransportMode& mode,
                          double walking_speed = DEFAULT_WALKING_SPEED, double cycling_speed = DEFAULT_CYCLING_SPEED )
 {
@@ -89,12 +92,15 @@ public:
                 Road::Edge road_e = pt_graph[ e.target.pt_vertex ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex )
+                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) ;
+                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                }
                 // otherwise, that is the opposite direction
-                else return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
-                                              walking_speed_, cycling_speed_ ) ;
+                else {
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                }
             }
                 break; 
 					
@@ -105,12 +111,15 @@ public:
                 Road::Edge road_e = pt_graph[ e.source.pt_vertex ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex ) 
+                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) ;
+                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                }
                 // otherwise, that is the opposite direction
-                else return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
-                                              walking_speed_, cycling_speed_ ) ;
+                else {
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                }
             } 
                 break;
 					
