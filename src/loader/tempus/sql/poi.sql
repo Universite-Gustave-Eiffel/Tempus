@@ -5,17 +5,32 @@ POIs import
 POI import needs the following templated fields :
 poi_type: integer, type of the POI (1 - car park, 4 - shared cycle point, etc.), default to 5 (user POI)
 name : string, field containing the name of each POI, default to 'pname'
-parking_transport_type : integer, type of parking, default: computed if poi_type is given
+service_name : string, name of the service (Bicloo, Velov, Marguerite)
 filter: string, WHERE clause of the import, default to 'true' (no filter)
 
 */
+
+BEGIN;
+
+INSERT INTO tempus.transport_mode (name,public_transport,traffic_rules,shared_vehicle,return_shared_vehicle)
+   SELECT
+   CASE WHEN %(poi_type) = 2 THEN
+        'Shared car (%(service_name))'
+        WHEN %(poi_type) = 4 THEN
+        'Shared bike (%(service_name))'
+   END,
+   'f', -- public transport
+   CASE WHEN %(poi_type) = 2 THEN 4 ELSE 2 END, -- traffic_rules
+   't', -- shared_vehicule
+   't' -- return_shared_vehicle
+   WHERE %(poi_type) in (2,4);
 
 insert into
     tempus.poi (
             id
             , poi_type
-            , pname
-            , parking_transport_type
+            , name
+            , parking_transport_modes
             , road_section_id
             , abscissa_road_section
             , geom
@@ -23,11 +38,23 @@ insert into
 select
     gid as id
     , %(poi_type)::integer as poi_type
-    , '%(name)' as pname
-    , %(parking_transport_type) as parking_transport_type
+    , %(name) as name
+    , array[(select
+    case
+        when %(poi_type) = 1 -- car park
+             then 3 -- private car
+        when %(poi_type) = 2 -- shared car
+             then (select max(id) from tempus.transport_mode) -- last inserted transport mode
+        when %(poi_type) = 3 -- bike
+             then 2 -- private bike
+        when %(poi_type) = 4 -- shared bike
+             then (select max(id) from tempus.transport_mode) -- last inserted transport mode
+        else
+             null
+    end)]
     , road_section_id
-    , st_line_locate_point(geom_road, pgeom)::double precision as abscissa_road_section
-    , st_force_3dz(pgeom)
+    , st_LineLocatePoint(geom_road, pgeom)::double precision as abscissa_road_section
+    , st_Force3DZ(pgeom)
 from (
     select
         poi.*
@@ -54,3 +81,4 @@ where
     nth = 1
     ;
     
+COMMIT;

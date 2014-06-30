@@ -224,9 +224,8 @@ SELECT
 FROM (SELECT DISTINCT route_type FROM _tempus_import.routes) r
 ;
 
-INSERT INTO tempus.transport_mode(id, name, public_transport, gtfs_route_type)
+INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type)
 SELECT 
-	(select max(id) from tempus.transport_mode) *2^id, 
 	name, public_transport, gtfs_route_type
 FROM _tempus_import.transport_mode; 
 

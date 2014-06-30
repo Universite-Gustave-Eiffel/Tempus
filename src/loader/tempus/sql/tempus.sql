@@ -16,7 +16,7 @@ CREATE SCHEMA tempus;
 
 CREATE TABLE tempus.transport_mode
 (
-    id integer PRIMARY KEY,
+    id serial PRIMARY KEY,
     name varchar, -- Description of the mode
     public_transport boolean NOT NULL, 
     gtfs_route_type integer, -- Reference to the equivalent GTFS codification (for PT only)
@@ -42,10 +42,8 @@ COMMENT ON COLUMN tempus.transport_mode.return_shared_vehicle IS 'If vehicule is
 
 INSERT INTO tempus.transport_mode VALUES (1, 'Walking',         'f', NULL, 1,  1, NULL, NULL, 'f', 'f', 'f'); 
 INSERT INTO tempus.transport_mode VALUES (2, 'Private bicycle', 'f', NULL, 2,  2, NULL, NULL, 't', 'f', 'f'); 
-INSERT INTO tempus.transport_mode VALUES (4, 'Private car',     'f', NULL, 4,  5, 1,    1,    't', 'f', 'f'); 
-INSERT INTO tempus.transport_mode VALUES (8, 'Taxi',            'f', NULL, 12, 5, 1,    1,    'f', 'f', 'f'); 
---INSERT INTO tempus.transport_mode VALUES (16, 'Shared bicycle', 'f', NULL, 2,  2, NULL, NULL, 't', 't', 'f'); 
---INSERT INTO tempus.transport_mode VALUES (32, 'Shared car',     'f', NULL, 4,  5, NULL, NULL, 't', 't', 't'); 
+INSERT INTO tempus.transport_mode VALUES (3, 'Private car',     'f', NULL, 4,  5, 1,    1,    't', 'f', 'f'); 
+INSERT INTO tempus.transport_mode VALUES (4, 'Taxi',            'f', NULL, 12, 5, 1,    1,    'f', 'f', 'f'); 
 
 CREATE TABLE tempus.road_validity_period
 (
@@ -246,7 +244,7 @@ CREATE TABLE tempus.poi
 	id integer PRIMARY KEY,
 	poi_type integer,
 	name varchar,
-	parking_traffic_rules integer NOT NULL,
+        parking_transport_modes integer[] NOT NULL,
 	road_section_id bigint REFERENCES tempus.road_section NOT NULL,
 	abscissa_road_section double precision NOT NULL CHECK (abscissa_road_section >= 0 AND abscissa_road_section <= 1)
 	-- NOTA: geometry column added NOT NULL
@@ -268,13 +266,11 @@ CREATE TABLE tempus.pt_network
 	id serial PRIMARY KEY,
 	pnname varchar,
 	commercial_name varchar, 
-	--provided_transport_modes integer NOT NULL,
 	import_date timestamp not null default current_timestamp,
 	calendar_begin date, 
 	calendar_end date
 ); 
 COMMENT ON TABLE tempus.pt_network IS 'Public transport network : one for each import operation and mostly one for each public authority'; 
---COMMENT ON COLUMN tempus.pt_network.provided_transport_modes IS 'Transport modes available in the network => bitfield value'; 
 COMMENT ON COLUMN tempus.pt_network.import_date IS 'Time and date it was imported in the database'; 
 COMMENT ON COLUMN tempus.pt_network.calendar_begin IS 'First day of data available in the calendar of the network'; 
 COMMENT ON COLUMN tempus.pt_network.calendar_end IS 'Last day of data available in the calendar of the network'; 
@@ -307,7 +303,6 @@ CREATE TABLE tempus.pt_stop
 	name varchar NOT NULL,
 	location_type boolean, -- As in GTFS: false means stop, true means station
 	parent_station integer REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
-	--transport_mode integer, -- bitfield giving transport types which pass through the stop
 	road_section_id bigint REFERENCES tempus.road_section,
 	zone_id integer, -- relative to fare zone
 	abscissa_road_section double precision -- curve length from start of road_section to the stop point
@@ -341,14 +336,12 @@ CREATE TABLE tempus.pt_section
 (
 	stop_from integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
 	stop_to integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
-	-- transport_mode integer NOT NULL REFERENCES tempus.transport_mode, 
 	network_id integer NOT NULL REFERENCES tempus.pt_network, 
 	PRIMARY KEY(stop_from, stop_to, network_id)
 	-- NOTA: geometry column added
 ); 
 COMMENT ON TABLE tempus.pt_section
   IS 'Public transport sections (between two subsequent stops) description';
---COMMENT ON COLUMN tempus.pt_section.transport_mode IS 'Transport mode allowed on the section'; 
 
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar

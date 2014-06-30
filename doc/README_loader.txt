@@ -59,7 +59,12 @@ raster2pgsql -I -t 20x20 -s 2154 ~/data/dem/srtm_36_03_2154.tif | psql tempus_te
 
 - an import of shared cycles points (Bicloo) provided by Nantes open data ("Liste des équipements publics (thème Mobilité)"), OdBL license
 
-./load_tempus -t poi -y 4 -v name:NOM_COMPLE "filter:LIBTYPE='Bicloo'" parking_transport_type:128 -s /xxxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+Shared bikes
+./load_tempus -t poi -y 4 -v name:NOM_COMPLE service_name:Bicloo filter:type=100301 -s /xxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+Shared cars
+./load_tempus -t poi -y 2 -v name:NOM_COMPLE service_name:Marguerite filter:type=100302 -s /xxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+Car parkings
+/load_tempus -t poi -y 1 -v name:NOM_COMPLE filter:categorie=1001 -s /xxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
 
 - two dummy turn restrictions on the road network (see the tempus.road_road table)
 
