@@ -528,23 +528,11 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             res[i][0] >> db_id;
             BOOST_ASSERT( db_id > 0 );
 
-            std::string array_str;
-            res[i][1] >> array_str;
-            // array: {a,b,c}
-
-            // trim '{}'
-            std::istringstream array_sub( array_str.substr( 1, array_str.size()-2 ) );
-
-            // parse each array element
-            std::string n_str;
             bool invalid = false;
-
             Road::Restriction::EdgeSequence edges;
-            while ( std::getline( array_sub, n_str, ',' ) ) {
-                std::istringstream n_stream( n_str );
-                db_id_t id;
-                n_stream >> id;
-
+            std::vector<db_id_t> sections = res[i][1].as<std::vector<db_id_t> >();
+            for ( size_t j = 0; j < sections.size(); j++ ) {
+                db_id_t id = sections[j];
                 if ( road_sections_map.find( id ) == road_sections_map.end() ) {
                     CERR << "Cannot find road_section of ID " << id << ", road_restriction of ID " << db_id << " rejected" << endl;
                     invalid = true;
