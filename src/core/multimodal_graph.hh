@@ -22,6 +22,7 @@
 #include "transport_modes.hh"
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
+#include "poi.hh"
 #include "sub_map.hh"
 
 namespace Db {

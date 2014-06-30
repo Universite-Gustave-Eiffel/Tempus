@@ -3,6 +3,7 @@ set( HEADER_FILES
     abscissa.hh
     road_graph.hh
     public_transport_graph.hh
+    poi.hh
     transport_modes.hh
     multimodal_graph.hh 
     request.hh
@@ -18,6 +19,7 @@ set( SOURCE_FILES
     abscissa.cc
     road_graph.cc
     multimodal_graph.cc 
+    poi.cc
     transport_modes.cc
     request.cc
     application.cc plugin.cc 

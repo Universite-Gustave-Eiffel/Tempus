@@ -12,7 +12,7 @@ filter: string, WHERE clause of the import, default to 'true' (no filter)
 
 BEGIN;
 
-INSERT INTO tempus.transport_mode (name,public_transport,traffic_rules,shared_vehicle,return_shared_vehicle)
+INSERT INTO tempus.transport_mode (name,public_transport,traffic_rules,shared_vehicle,return_shared_vehicle,need_parking)
    SELECT
    CASE WHEN %(poi_type) = 2 THEN
         'Shared car (%(service_name))'
@@ -22,7 +22,8 @@ INSERT INTO tempus.transport_mode (name,public_transport,traffic_rules,shared_ve
    'f', -- public transport
    CASE WHEN %(poi_type) = 2 THEN 4 ELSE 2 END, -- traffic_rules
    't', -- shared_vehicule
-   't' -- return_shared_vehicle
+   't', -- return_shared_vehicle
+   't' -- need_parking
    WHERE %(poi_type) in (2,4);
 
 insert into

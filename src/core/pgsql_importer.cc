@@ -442,7 +442,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     }
 
     {
-        Db::Result res( connection_.exec( "SELECT id, poi_type, name, parking_traffic_rules, road_section_id, abscissa_road_section FROM tempus.poi" ) );
+        Db::Result res( connection_.exec( "SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section FROM tempus.poi" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             POI poi;
@@ -452,7 +452,8 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
             poi.poi_type( static_cast<POI::PoiType>(res[i][1].as<int>()) );
             poi.name( res[i][2] );
-            poi.parking_traffic_rules( res[i][3] );
+
+            poi.parking_transport_modes( res[i][3].as< std::vector<db_id_t> >() );
 
             db_id_t road_section_id;
             res[i][4] >> road_section_id;
