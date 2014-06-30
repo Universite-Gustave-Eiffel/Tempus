@@ -131,8 +131,8 @@ enum TransportModeId
 {
     TransportModeWalking = 1,
     TransportModePrivateBicyle = 2,
-    TransportModePrivateCar = 4,
-    TransportModeTaxi = 8
+    TransportModePrivateCar = 3,
+    TransportModeTaxi = 4
 };
 
 }

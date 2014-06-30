@@ -46,10 +46,10 @@ namespace Tempus {
 	unsigned int mode; 
 	
 	bool operator==( const Tempus::Triple& t ) const {
-            return vertex == t.vertex && state == t.state && mode == t.mode;
+            return (vertex == t.vertex) && (state == t.state) && (mode == t.mode);
 	}
 	bool operator!=( const Tempus::Triple& t ) const {
-            return vertex != t.vertex || state != t.state || mode != t.mode;
+            return (vertex != t.vertex) || (state != t.state) || (mode != t.mode);
 	}
         bool operator<( const Triple& other ) const
         {
@@ -304,15 +304,16 @@ private:
             }
 #endif
         
-        
+#if 0
             // Load vehicle positions
             for ( Multimodal::Graph::PoiList::const_iterator p = graph_.pois.begin(); p != graph_.pois.end(); p++ )
             {
         	if (p->second.poi_type() == POI::TypeSharedCarPoint)
-                    available_vehicles_.find(Multimodal::Vertex(&p->second))->second = 2;
+                    available_vehicles_[Multimodal::Vertex(&p->second)] = 2;
         	else if (p->second.poi_type() == POI::TypeSharedCyclePoint)
                     available_vehicles_[Multimodal::Vertex(&p->second)] = 4;
-            }        
+            }
+#endif
                 
             // Update timer for preprocessing
             time_+=timer.elapsed();
@@ -331,12 +332,14 @@ private:
             origin_o.state = automaton_.initial_state_;
             // take the first mode allowed
             origin_o.mode = request_.allowed_modes()[0];
+            std::cout << "vertex " << origin_o.vertex << " state " << origin_o.state << " mode " << origin_o.mode << std::endl;
 
             // Initialize the potential map
             // adaptation to a property map : infinite default value
             associative_property_map_default_value< PotentialMap > potential_pmap( potential_map_, std::numeric_limits<double>::max() );
+            double ts = request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60;
             /// Potential of the source node is initialized to the departure time (requires dijkstra_shortest_paths_no_init to be used)
-            put( potential_pmap, origin_o, request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60 ) ;
+            put( potential_pmap, origin_o, ts ) ;
         
             // Initialize the predecessor map
             boost::associative_property_map< PredecessorMap > pred_pmap( pred_map_ );  // adaptation to a property map
