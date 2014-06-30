@@ -1,5 +1,6 @@
 set( HEADER_FILES
     common.hh 
+    abscissa.hh
     road_graph.hh
     public_transport_graph.hh
     transport_modes.hh
@@ -14,6 +15,7 @@ set( HEADER_FILES
 
 set( SOURCE_FILES 
     common.cc 
+    abscissa.cc
     road_graph.cc
     multimodal_graph.cc 
     transport_modes.cc

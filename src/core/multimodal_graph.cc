@@ -383,7 +383,7 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         }
         // if there is an opposite road edge attached
         else if ( poi2road_connection_ == 1 &&
-                  source_.poi->opposite_road_edge() != source_.poi->road_edge() ) {
+                  source_.poi->opposite_road_edge() ) {
             edge.road_edge = source_.poi->opposite_road_edge();
         }
         mm_target = Multimodal::Vertex( &graph_->road, boost::target( edge.road_edge, graph_->road ) );
@@ -439,7 +439,7 @@ void OutEdgeIterator::increment()
     else if ( source_.type == Vertex::Poi ) {
         if ( poi2road_connection_ == 0 ) {
             // if there is an opposite edge
-            if ( source_.poi->road_edge() != source_.poi->opposite_road_edge() ) {
+            if ( source_.poi->opposite_road_edge() ) {
                 poi2road_connection_ ++;
             }
             else {
@@ -613,7 +613,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
     }
 
     // else (Poi), 1 road node is reachable
-    return (v.poi->road_edge() != v.poi->opposite_road_edge()) ? 2 : 1;
+    return v.poi->opposite_road_edge() ? 2 : 1;
 }
 
 std::pair< Edge, bool> edge( const Vertex& u, const Vertex& v, const Graph& graph )

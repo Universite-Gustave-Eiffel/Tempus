@@ -240,25 +240,11 @@ COMMENT ON COLUMN tempus.road_restriction_toll.toll_value IS 'In €, can be NUL
 --
 -- POI
 --
-CREATE TABLE tempus.poi_type
-(
-	id integer PRIMARY KEY,
-	name varchar
-);
-COMMENT ON TABLE tempus.poi_type IS 'Points of Interest types'; 
-
--- Some default values
-INSERT INTO tempus.poi_type VALUES (1, 'Car Park');
-INSERT INTO tempus.poi_type VALUES (2, 'Shared Car Station');
-INSERT INTO tempus.poi_type VALUES (3, 'Cycle Park');
-INSERT INTO tempus.poi_type VALUES (4, 'Shared Cycle Station');
-INSERT INTO tempus.poi_type VALUES (5, 'User-added POI');
-
 
 CREATE TABLE tempus.poi
 (
 	id integer PRIMARY KEY,
-	poi_type integer REFERENCES tempus.poi_type NOT NULL,
+	poi_type integer,
 	name varchar,
 	parking_traffic_rules integer NOT NULL,
 	road_section_id bigint REFERENCES tempus.road_section NOT NULL,

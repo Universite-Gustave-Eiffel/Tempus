@@ -19,6 +19,7 @@
 #define TEMPUS_ROAD_GRAPH_HH
 
 #include "common.hh"
+#include "abscissa.hh"
 #include <boost/graph/adjacency_list.hpp>
 
 namespace Tempus {
@@ -189,13 +190,11 @@ struct POI : public Base {
 
     ///
     /// optional link to the opposite road edge
-    /// considered null if == to road_edge
-    /// FIXME: is it really a property ?
-    DECLARE_RW_PROPERTY( opposite_road_edge, Road::Edge );
+    DECLARE_RW_PROPERTY( opposite_road_edge, OrNull<Road::Edge> );
 
     ///
     /// Number between 0 and 1 : position of the POI on the main road section
-    DECLARE_RW_PROPERTY( abscissa_road_section, double );
+    DECLARE_RW_PROPERTY( abscissa_road_section, Abscissa );
 };
 } // Tempus namespace
 
