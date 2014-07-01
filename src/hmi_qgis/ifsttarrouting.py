@@ -642,24 +642,6 @@ class IfsttarRouting:
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
 
-        if False:
-                networkListModel = QStandardItemModel()
-                for network in self.networks:
-                    title = network.name
-
-                    # look for provided transport types
-                    tlist = []
-                    ptt = network.provided_transport_types
-                    for ttype in self.transport_types:
-                        if ptt & ttype.id:
-                            tlist.append( ttype.name )
-
-                    item = QStandardItem( network.name + ' (' + ', '.join(tlist) + ')')
-                    item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                    item.setData( Qt.Checked, Qt.CheckStateRole)
-                    networkListModel.appendRow(item)
-                self.dlg.ui.networkList.setModel( networkListModel )
-
     #
     # Take an XML tree from the WPS 'results'
     # and load/display them
