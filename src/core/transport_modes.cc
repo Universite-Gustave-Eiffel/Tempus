@@ -25,7 +25,7 @@ unsigned TransportMode::traffic_rules() const
     return is_public_transport_ ? static_cast<unsigned>(TrafficRulePublicTransport) : traffic_rules_;
 }
 
-void TransportMode::traffic_rules( unsigned rules )
+void TransportMode::set_traffic_rules( unsigned rules )
 {
     traffic_rules_ = rules;
 }

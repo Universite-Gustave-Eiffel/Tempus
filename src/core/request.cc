@@ -60,12 +60,12 @@ Road::Vertex Request::origin() const
     return steps_.front().location();
 }
 
-void Request::origin( const Road::Vertex& v )
+void Request::set_origin( const Road::Vertex& v )
 {
-    steps_[0].location( v );
+    steps_[0].set_location( v );
 }
 
-void Request::origin( const Step& s )
+void Request::set_origin( const Step& s )
 {
     steps_[0] = s;
 }
@@ -75,26 +75,26 @@ Road::Vertex Request::destination() const
     return steps_.back().location();
 }
 
-void Request::destination( const Road::Vertex& v )
+void Request::set_destination( const Road::Vertex& v )
 {
-    steps_.back().location( v );
+    steps_.back().set_location( v );
 }
 
-void Request::destination( const Step& s )
+void Request::set_destination( const Step& s )
 {
     steps_.back() = s;
 }
 
-void Request::optimizing_criterion( unsigned idx, const CostId& c )
+void Request::set_optimizing_criterion( unsigned idx, const CostId& c )
 {
     BOOST_ASSERT( idx < optimizing_criteria_.size() );
     optimizing_criteria_[idx] = c;
 }
 
-void Request::optimizing_criterion( unsigned idx, int cost )
+void Request::set_optimizing_criterion( unsigned idx, int cost )
 {
     BOOST_ASSERT( cost >= FirstValue && cost <= LastValue );
-    optimizing_criterion( idx, static_cast<CostId>(cost) );
+    set_optimizing_criterion( idx, static_cast<CostId>(cost) );
 }
 
 void Request::add_criterion( CostId criterion )

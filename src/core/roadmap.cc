@@ -27,7 +27,7 @@ double Roadmap::Step::cost( CostId id ) const
     return it->second;
 }
 
-void Roadmap::Step::cost( CostId id, double c )
+void Roadmap::Step::set_cost( CostId id, double c )
 {
     costs_[id] = c;
 }
@@ -39,7 +39,7 @@ double Roadmap::total_cost( CostId id ) const
     return it->second;
 }
 
-void Roadmap::total_cost( CostId id, double c )
+void Roadmap::set_total_cost( CostId id, double c )
 {
     total_costs_[id] = c;
 }

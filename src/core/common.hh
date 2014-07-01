@@ -174,7 +174,7 @@ private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
   const remove_const<TYPE>::type& NAME() const { return NAME ## _; } \
-  void NAME( const remove_const<TYPE>::type& a ) { NAME ## _ = a; }
+  void set_##NAME( const remove_const<TYPE>::type& a ) { NAME ## _ = a; }
 
 ///
 /// Macro used to declare a class property and its getter
@@ -190,14 +190,14 @@ public:                                                \
 private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
-  void NAME( const TYPE& a ) { NAME ## _ = a; }
+  void set_##NAME( const TYPE& a ) { NAME ## _ = a; }
 
 class Base : public ConsistentClass {
 public:
     Base() : db_id_(0) {}
     explicit Base( db_id_t id ) : db_id_(id) {}
     db_id_t db_id() const { return db_id_; }
-    void    db_id( const db_id_t& id ) { db_id_ = id; }
+    void    set_db_id( const db_id_t& id ) { db_id_ = id; }
 
 private:
     ///

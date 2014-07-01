@@ -108,7 +108,7 @@ class TransportMode : public Base
     /// get traffic rules
     unsigned traffic_rules() const;
     /// set traffic rules
-    void traffic_rules( unsigned rules );
+    void set_traffic_rules( unsigned rules );
 
     DECLARE_RW_PROPERTY( speed_rule, TransportModeSpeedRule );
 

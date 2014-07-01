@@ -445,9 +445,9 @@ Result& Plugin::result()
                     Db::Result res = db_.exec( query );
                     BOOST_ASSERT( res.size() > 0 );
                     std::string wkb = res[0][0].as<std::string>();
-                    step->road_name( res[0][1].as<std::string>() );
+                    step->set_road_name( res[0][1].as<std::string>() );
                     // get rid of the heading '\x'
-                    step->geometry_wkb( wkb.substr( 2 ) );
+                    step->set_geometry_wkb( wkb.substr( 2 ) );
                 }
                 if ( is_road_poi ) {
                     // get as Linestring from A to B
@@ -462,9 +462,9 @@ Result& Plugin::result()
                     Db::Result res = db_.exec( query );
                     BOOST_ASSERT( res.size() > 0 );
                     std::string wkb = res[0][0].as<std::string>();
-                    step->road_name( res[0][1].as<std::string>() );
+                    step->set_road_name( res[0][1].as<std::string>() );
                     // get rid of the heading '\x'
-                    step->geometry_wkb( wkb.substr( 2 ) );
+                    step->set_geometry_wkb( wkb.substr( 2 ) );
                 }
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
@@ -478,7 +478,7 @@ Result& Plugin::result()
                 Db::Result res = db_.exec( q );
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
-                step->geometry_wkb( wkb.substr( 2 ) );
+                step->set_geometry_wkb( wkb.substr( 2 ) );
             }
             else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 
@@ -496,15 +496,15 @@ Result& Plugin::result()
                                       road_graph[ source(step->road_edge(), road_graph) ].db_id() %
                                       road_graph[step->road_edge()].db_id() ).str();
                     Db::Result res = db_.exec( q );
-                    step->road_name( res[0][0].as<std::string>() );
+                    step->set_road_name( res[0][0].as<std::string>() );
                     std::string wkb = res[0][1].as<std::string>();
 
                     // get rid of the heading '\x'
                     if ( wkb.size() > 0 ) {
-                        step->geometry_wkb( wkb.substr( 2 ) );
+                        step->set_geometry_wkb( wkb.substr( 2 ) );
                     }
                     else {
-                        step->geometry_wkb( "" );
+                        step->set_geometry_wkb( "" );
                     }
                 }
 
@@ -556,8 +556,8 @@ Result& Plugin::result()
                 }
 
                 if ( last_step ) {
-                    last_step->end_movement( movement );
-                    last_step->distance_km( -1.0 );
+                    last_step->set_end_movement( movement );
+                    last_step->set_distance_km( -1.0 );
                 }
 
                 previous_section = road_graph[step->road_edge()].db_id();
@@ -567,8 +567,8 @@ Result& Plugin::result()
         }
 
         if ( last_step ) {
-            last_step->end_movement( Roadmap::RoadStep::YouAreArrived );
-            last_step->distance_km( -1.0 );
+            last_step->set_end_movement( Roadmap::RoadStep::YouAreArrived );
+            last_step->set_distance_km( -1.0 );
         }
     }
 

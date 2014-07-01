@@ -205,7 +205,7 @@ public:
         const char* date_time_str = date_time.c_str();
         int day, month, year, hour, min;
         sscanf( date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
-        constraint.date_time( boost::posix_time::ptime( boost::gregorian::date( year, month, day ),
+        constraint.set_date_time( boost::posix_time::ptime( boost::gregorian::date( year, month, day ),
                                                         boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) ) );
     }
 
@@ -317,28 +317,28 @@ public:
             const xmlNode* field = XML::get_next_nontext( request_node->children );
 
             Request::Step origin;
-            origin.location( get_road_vertex_from_point( field, db ) ); 
+            origin.set_location( get_road_vertex_from_point( field, db ) ); 
 
             // departure_constraint
             field = XML::get_next_nontext( field->next );
             {
                 Request::TimeConstraint constraint;
                 parse_constraint( field, constraint );
-                origin.constraint( constraint );
+                origin.set_constraint( constraint );
             }
-            request.origin( origin );
+            request.set_origin( origin );
 
             // parking location id, optional
             const xmlNode* n = XML::get_next_nontext( field->next );
 
             if ( !xmlStrcmp( n->name, ( const xmlChar* )"parking_location" ) ) {
-                request.parking_location( get_road_vertex_from_point( n, db ) );
+                request.set_parking_location( get_road_vertex_from_point( n, db ) );
                 field = n;
             }
 
             // optimizing criteria
             field = XML::get_next_nontext( field->next );
-            request.optimizing_criterion( 0, lexical_cast<int>( field->children->content ) );
+            request.set_optimizing_criterion( 0, lexical_cast<int>( field->children->content ) );
             field = XML::get_next_nontext( field->next );
 
             while ( !xmlStrcmp( field->name, ( const xmlChar* )"optimizing_criterion" ) ) {
@@ -353,17 +353,17 @@ public:
                 const xmlNode* subfield;
                 // destination id
                 subfield = XML::get_next_nontext( field->children );
-                step.location( get_road_vertex_from_point( subfield, db ) );
+                step.set_location( get_road_vertex_from_point( subfield, db ) );
 
                 // constraint
                 subfield = XML::get_next_nontext( subfield->next );
                 Request::TimeConstraint constraint;
                 parse_constraint( subfield, constraint );
-                step.constraint( constraint );
+                step.set_constraint( constraint );
 
                 // private_vehicule_at_destination
                 std::string val = XML::get_prop( field, "private_vehicule_at_destination" );
-                step.private_vehicule_at_destination( val == "true" );
+                step.set_private_vehicule_at_destination( val == "true" );
 
                 // next step
                 field = XML::get_next_nontext( field->next );
@@ -372,7 +372,7 @@ public:
                 }
                 else {
                     // destination
-                    request.destination( step );
+                    request.set_destination( step );
                 }
             }
 

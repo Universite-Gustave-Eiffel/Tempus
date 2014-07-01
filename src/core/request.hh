@@ -79,18 +79,18 @@ public:
     Road::Vertex origin() const;
 
     /// Get write access to the origin vertex
-    void origin( const Road::Vertex& );
+    void set_origin( const Road::Vertex& );
     /// Get write access to the origin
-    void origin( const Step& );
+    void set_origin( const Step& );
 
     ///
     /// Get access to the destination vertex
     Road::Vertex destination() const;
 
     /// Get write access to the destination vertex
-    void destination( const Road::Vertex& );
+    void set_destination( const Road::Vertex& );
     /// Get write access to the destination
-    void destination( const Step& );
+    void set_destination( const Step& );
 
     ///
     /// Allowed transport modes (their ID)
@@ -112,12 +112,12 @@ public:
     /// Write access to a particular criterion
     /// @param idx Index of the criterion (sorted by priority) must be >= 0. The first criterion is always available
     /// @param cost The CostId
-    void optimizing_criterion( unsigned idx, const CostId& cost );
+    void set_optimizing_criterion( unsigned idx, const CostId& cost );
 
     /// Write access to a particular criterion
     /// @param idx Index of the criterion (sorted by priority) must be >= 0. The first criterion is always available
     /// @param cost The cost, as an int
-    void optimizing_criterion( unsigned idx, int cost );
+    void set_optimizing_criterion( unsigned idx, int cost );
 
     /// Add a new criterion (with the lowest priority)
     void add_criterion( CostId criterion );

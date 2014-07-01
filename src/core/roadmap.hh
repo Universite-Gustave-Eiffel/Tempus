@@ -47,7 +47,7 @@ public:
         /// Gets a cost
         double cost( CostId id ) const;
         /// Sets a cost
-        void cost( CostId id, double c );
+        void set_cost( CostId id, double c );
 
         /// (Initial) transport mode id
         DECLARE_RW_PROPERTY( transport_mode, db_id_t );
@@ -159,7 +159,7 @@ public:
     /// Get a particular cost
     double total_cost( CostId id ) const;
     /// Set a total cost
-    void total_cost( CostId id, double c );
+    void set_total_cost( CostId id, double c );
 };
 
 ///
