@@ -24,6 +24,7 @@
     <xs:attribute name="road" type="xs:string"/>
     <xs:attribute name="network" type="xs:string"/>
     <xs:attribute name="stop" type="xs:string"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
   <xs:complexType name="PublicTransportStep">
@@ -34,6 +35,7 @@
     <xs:attribute name="departure_stop" type="xs:string"/>
     <xs:attribute name="arrival_stop" type="xs:string"/>
     <xs:attribute name="trip" type="xs:string"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
   <xs:complexType name="TransferStep">
@@ -43,7 +45,7 @@
     <xs:attribute name="type" type="xs:int"/>
     <xs:attribute name="road" type="xs:string"/>
     <xs:attribute name="poi" type="xs:string"/>
-    <xs:attribute name="initial_mode" type="xs:int"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
     <xs:attribute name="final_mode" type="xs:int"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>

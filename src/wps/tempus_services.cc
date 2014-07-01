@@ -547,9 +547,11 @@ public:
                         XML::set_prop( step_node, "type", type_str );
                         XML::set_prop( step_node, "road", road_name );
                         XML::set_prop( step_node, "poi", poi_name );
-                        XML::set_prop( step_node, "initial_mode", to_string( step->transport_mode() ) );
                         XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
                     }
+
+                    // transport_mode
+                    XML::new_prop( step_node, "transport_mode", to_string(sit->transport_mode()) );
                 }
 
                 for ( Tempus::Costs::const_iterator cit = gstep->costs().begin(); cit != gstep->costs().end(); cit++ ) {

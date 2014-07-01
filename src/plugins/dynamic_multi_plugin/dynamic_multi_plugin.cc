@@ -146,8 +146,7 @@ private:
         Multimodal::Vertex destination_; // Current request destination 
         static Date current_day_; // Day for which timetable or frequency data are loaded
         static Automaton<Road::Edge> automaton_; 
-        map< Multimodal::Vertex, unsigned int > available_vehicles_; 
-        static map< Multimodal::Edge, unsigned int > allowed_modes_; 
+        map< Multimodal::Vertex, db_id_t > available_vehicles_; 
         PotentialMap potential_map_;     
         PredecessorMap pred_map_; 
         PotentialMap wait_map_; 
@@ -538,7 +537,6 @@ private:
     }; 
 
     Automaton<Road::Edge> DynamicMultiPlugin::automaton_;
-    map< Multimodal::Edge, unsigned int > DynamicMultiPlugin::allowed_modes_;
     Date DynamicMultiPlugin::current_day_ = boost::gregorian::from_string("2013/11/12");
 }
 DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin )

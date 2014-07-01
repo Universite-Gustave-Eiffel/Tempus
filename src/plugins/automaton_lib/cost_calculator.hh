@@ -238,35 +238,37 @@ public:
                 }
             }
 
-            if ( final_mode.is_shared() ) {
+            if ( ( transf_t < std::numeric_limits<double>::max() ) && final_mode.is_shared() ) {
                 if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( final_mode.db_id() ) )) {
                     // FIXME replace 1 by time to take a shared vehicle
-                    transf_t = 1;
+                    transf_t += 1;
                 }
                 else {
                     transf_t = std::numeric_limits<double>::max();
                 }
             }
 
-            if ( initial_mode.must_be_returned() ) {
+            if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
                 if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( initial_mode.db_id() ) )) {
                     // FIXME replace 1 by time to park a shared vehicle
-                    transf_t = 1;
+                    transf_t += 1;
                 }
                 else {
                     transf_t = std::numeric_limits<double>::max();
                 }                
             }
 
-#if 0
-            // FIXME
             // Taking vehicle time for final mode 
+            // FIXME add private parking location test
             if ( ( transf_t < std::numeric_limits<double>::max() ) && ( final_mode.need_parking() ) ) {
-                if ( ( vehicle_nodes_.find( v ) != vehicle_nodes_.end() ) && ( (vehicle_nodes_[v] & final_mode) > 0 ) )
-                    transf_t += 1; 
-                else transf_t = std::numeric_limits<double>::max(); 
+                if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( final_mode.db_id() ) )) {
+                    // vehicles parked on a POI
+                    transf_t += 1;
+                }
+                else {
+                    transf_t = std::numeric_limits<double>::max();
+                }
             }
-#endif
         }
 
         return transf_t; 

@@ -118,16 +118,17 @@ class RoadStep:
         self.road = road
         self.end_movement = end_movement
         self.costs = costs
+        self.mode = mode
         self.wkb = wkb
-        self.mode = 0
 
 class PublicTransportStep:
-    def __init__( self, network = '', departure = '', arrival = '', trip = '', costs = {}, wkb = '' ):
+    def __init__( self, network = '', departure = '', arrival = '', trip = '', costs = {}, mode = 0, wkb = '' ):
         self.network = network
         self.departure = departure
         self.arrival = arrival
         self.trip = trip
         self.costs = costs
+        self.mode = mode
         self.wkb = wkb
 
 class ConnectionType:
@@ -146,17 +147,17 @@ class RoadTransportStep:
         self.network = network
         self.stop = stop
         self.costs = costs
+        self.mode = mode
         self.wkb = wkb
-        self.mode = 0
 
 class TransferStep:
-    def __init__( self, type = 0, road = '', poi = '', initial_mode = 0, final_mode = 0, costs = {}, wkb= '' ):
+    def __init__( self, type = 0, road = '', poi = '', mode = 0, final_mode = 0, costs = {}, wkb= '' ):
         self.type = type
         self.road = road
         self.poi = poi
-        self.initial_mode = initial_mode
         self.final_mode = final_mode
         self.costs = costs
+        self.mode = mode
         self.wkb = wkb
 
 class Result:
@@ -277,6 +278,7 @@ def parse_results( results ):
                 costs = {}
                 road = child.attrib['road']
                 movement = int(child.attrib['end_movement'])
+                transport_mode = int(child.attrib['transport_mode'])
                 wkb = child.attrib['wkb']
                 for p in child:
                     if p.tag == 'cost':
@@ -284,6 +286,7 @@ def parse_results( results ):
                 steps.append( RoadStep( road = road,
                                         end_movement = movement,
                                         costs = costs,
+                                        mode = transport_mode,
                                         wkb = wkb) )
             if child.tag == 'public_transport_step':
                 costs = {}
@@ -292,6 +295,7 @@ def parse_results( results ):
                 arrival = child.attrib['arrival_stop']
                 trip = child.attrib['trip']
                 network = child.attrib['network']
+                transport_mode = int(child.attrib['transport_mode'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])
@@ -300,6 +304,7 @@ def parse_results( results ):
                                                    arrival = arrival,
                                                    trip = trip,
                                                    costs = costs,
+                                                   mode = transport_mode,
                                                    wkb = wkb) )
             if child.tag == 'road_transport_step':
                 costs = {}
@@ -308,6 +313,7 @@ def parse_results( results ):
                 network = child.attrib['network']
                 stop = child.attrib['stop']
                 type = int(child.attrib['type'])
+                transport_mode = int(child.attrib['transport_mode'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])
@@ -316,6 +322,7 @@ def parse_results( results ):
                                                  road = road,
                                                  stop = stop,
                                                  costs = costs,
+                                                 mode = transport_mode,
                                                  wkb = wkb) )
             if child.tag == 'transfer_step':
                 costs = {}
@@ -323,7 +330,7 @@ def parse_results( results ):
                 road = child.attrib['road']
                 poi = child.attrib['poi']
                 type = int(child.attrib['type'])
-                initial_mode = int(child.attrib['initial_mode'])
+                transport_mode = int(child.attrib['transport_mode'])
                 final_mode = int(child.attrib['final_mode'])
                 for p in child:
                     if p.tag == 'cost':
@@ -332,7 +339,7 @@ def parse_results( results ):
                                                     road = road,
                                                     poi = poi,
                                                     costs = costs,
-                                                    initial_mode = initial_mode,
+                                                    mode = transport_mode,
                                                     final_mode = final_mode,
                                                     wkb = wkb) )
             elif child.tag == 'cost':

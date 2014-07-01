@@ -459,8 +459,14 @@ class IfsttarRouting:
 
         self.profile.clear()
 
+        first = True
+
         for step in roadmap:
-            text = ''
+            if first:
+                    text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
+                    first = False
+            else:
+                    text = ''
             icon_text = ''
             cost_text = ''
 
@@ -494,21 +500,21 @@ class IfsttarRouting:
             elif isinstance(step, Tempus.PublicTransportStep ):
                 # set network text as icon
                 icon_text = step.network
-                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure, step.arrival)
+                text += "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure, step.arrival)
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network
                 if step.type == Tempus.ConnectionType.Road2Transport:
-                    text = "Go to the '%s' station from %s" % (step.stop, step.road)
+                    text += "Go to the '%s' station from %s" % (step.stop, step.road)
                 elif step.type == Tempus.ConnectionType.Transport2Road:
-                    text = "Leave the '%s' station to %s" % (step.stop, step.road)
+                    text += "Leave the '%s' station to %s" % (step.stop, step.road)
                 else:
-                    text = "Connection between '%s' and '%s'" % (step.stop, step.road)
+                    text += "Connection between '%s' and '%s'" % (step.stop, step.road)
 
             elif isinstance(step, Tempus.TransferStep ):
-                    text = "On %s,<br/>At %s:<br/>\n" % (step.road, step.poi)
-                    if step.initial_mode != step.final_mode:
-                            imode = self.transport_modes_dict[step.initial_mode]
+                    text += "On %s,<br/>At %s:<br/>\n" % (step.road, step.poi)
+                    if step.mode != step.final_mode:
+                            imode = self.transport_modes_dict[step.mode]
                             fmode = self.transport_modes_dict[step.final_mode]
                             print imode.name, fmode.name, imode.need_parking, fmode.need_parking
                             add_t = []
