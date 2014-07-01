@@ -9,7 +9,6 @@
 
   <xs:include schemaLocation="plugin_list/plugins.xsd"/>
 
-  <xs:include schemaLocation="constant_list/road_types.xsd"/>
   <xs:include schemaLocation="constant_list/transport_modes.xsd"/>
   <xs:include schemaLocation="constant_list/transport_networks.xsd"/>
 

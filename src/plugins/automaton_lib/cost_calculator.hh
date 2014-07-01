@@ -61,7 +61,7 @@ class CostCalculator {
 public: 
     // Constructor 
     CostCalculator( TimetableMap& timetable, FrequencyMap& frequency, 
-                    const std::vector<db_id_t>& allowed_transport_modes, std::map<Multimodal::Vertex, unsigned int>& vehicle_nodes, 
+                    const std::vector<db_id_t>& allowed_transport_modes, std::map<Multimodal::Vertex, db_id_t>& vehicle_nodes, 
                     double walking_speed, double cycling_speed, 
                     double min_transfer_time, double car_parking_search_time ) : 
         timetable_( timetable ), frequency_( frequency ), 
@@ -278,7 +278,7 @@ protected:
     TimetableMap& timetable_; 
     FrequencyMap& frequency_; 
     std::vector<db_id_t> allowed_transport_modes_;
-    std::map< Multimodal::Vertex, unsigned int >& vehicle_nodes_; 
+    std::map< Multimodal::Vertex, db_id_t >& vehicle_nodes_; 
     double walking_speed_; 
     double cycling_speed_; 
     double min_transfer_time_; 

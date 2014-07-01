@@ -133,22 +133,6 @@ COMMENT ON TABLE tempus.holidays IS 'Holidays description';
 --       and 
 --       "Description des bases de donnees vectorielles routieres" DREAL NPdC
 
-CREATE TABLE tempus.road_type
-(
-    id integer PRIMARY KEY,
-    name varchar
-);
-COMMENT ON TABLE tempus.road_type IS 'Type of road section : defines a graph hierarchy';
-
-INSERT INTO tempus.road_type VALUES (1, 'Motorway and assimilated'); -- including peripheric 
-INSERT INTO tempus.road_type VALUES (2, 'Primary roads');
-INSERT INTO tempus.road_type VALUES (3, 'Secondary roads');
-INSERT INTO tempus.road_type VALUES (4, 'Streets');
-INSERT INTO tempus.road_type VALUES (5, 'Others'); -- still usable with car
-INSERT INTO tempus.road_type VALUES (6, 'Cycle way');
-INSERT INTO tempus.road_type VALUES (7, 'Pedestrial only');
-
-
 CREATE TABLE tempus.road_node
 (
     id bigint PRIMARY KEY, 
@@ -162,7 +146,7 @@ COMMENT ON COLUMN tempus.road_node.bifurcation IS 'If true, total number of inci
 CREATE TABLE tempus.road_section
 (
     id bigint PRIMARY KEY,
-    road_type integer NOT NULL REFERENCES tempus.road_type ON DELETE CASCADE ON UPDATE CASCADE,
+    road_type integer NOT NULL,
     node_from bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE,
     node_to bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE,
     traffic_rules_ft integer NOT NULL, -- References tempus.road_traffic_rule => bitfield value

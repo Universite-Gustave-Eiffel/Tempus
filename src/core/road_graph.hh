@@ -56,6 +56,18 @@ struct Section;
 /// The final road graph type
 typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;
 
+/// Road types
+enum RoadType
+{
+    RoadMotorway = 1,
+    RoadPrimary = 2,
+    RoadSecondary = 3,      
+    RoadStreet = 4,
+    RoadOther = 5,
+    RoadCycleWay = 6,       //FIXME redundant with traffic rules ?
+    RoadPedestrianOnly = 7  //FIXME redundant with traffic rules ?
+};
+
 ///
 /// Used as Vertex.
 /// Refers to the 'road_node' DB's table
@@ -87,7 +99,7 @@ struct Section : public Base {
     /// Can be null
     DECLARE_RW_PROPERTY( edge, Edge );
 
-    DECLARE_RW_PROPERTY( road_type, db_id_t );
+    DECLARE_RW_PROPERTY( road_type, RoadType );
 
     DECLARE_RW_PROPERTY( traffic_rules, int );
     DECLARE_RW_PROPERTY( length, double );

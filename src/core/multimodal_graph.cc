@@ -660,7 +660,6 @@ std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::
 void Graph::clear_constants()
 {
     transport_modes_.clear();
-    road_type_from_name.clear();
     transport_mode_from_name_.clear();
 }
 

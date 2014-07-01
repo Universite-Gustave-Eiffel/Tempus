@@ -66,27 +66,6 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
             progression( static_cast<float>( ( i + 0. ) / res.size() / 2.0 ) );
         }
     }
-
-#if 0 // no need for stored road types anymore ??
-    {
-
-        Db::Result res( connection_.exec( "SELECT id, rtname FROM tempus.road_type" ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
-            db_id_t db_id=0; // avoid warning "may be used uninitialized"
-            res[i][0] >> db_id;
-            BOOST_ASSERT( db_id > 0 );
-            // populate the global variable
-            RoadType& t = graph.road_types[ db_id ];
-            t.db_id( db_id );
-            res[i][1] >> t.name;
-            // assign the name <-> id map
-            graph.road_type_from_name[ t.name ] = t.db_id();
-
-            progression( static_cast<float>( ( ( i + 0. ) / res.size() / 2.0 ) + 0.5 ) );
-        }
-    }
-#endif
 }
 
 ///
@@ -217,7 +196,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( section.db_id() > 0 );
 
             if ( !res[i][1].is_null() ) {
-                section.road_type( res[i][1] );
+                section.road_type( static_cast<Road::RoadType>(res[i][1].as<int>()) );
             }
 
             db_id_t node_from_id = res[i][2].as<db_id_t>();
@@ -242,7 +221,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 //
                 // If the opposite section exists, take it
                 section2.db_id( res[i][j++].as<db_id_t>());
-                section2.road_type( res[i][j++] );
+                section2.road_type( static_cast<Road::RoadType>(res[i][j++].as<int>()) );
                 // overwrite transport_type_tf here
                 traffic_rules_tf = res[i][j++];
                 section.length( res[i][j++] );

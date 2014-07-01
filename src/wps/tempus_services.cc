@@ -115,14 +115,12 @@ public:
 ///
 /// "constant_list" service, outputs list of constants contained in the database (road type, transport type, transport networks).
 ///
-/// Output var: road_types.
 /// Output var: transport_modes.
 /// Output var: transport_networks.
 ///
 class ConstantListService : public Service {
 public:
     ConstantListService() : Service( "constant_list" ) {
-        add_output_parameter( "road_types" );
         add_output_parameter( "transport_modes" );
         add_output_parameter( "transport_networks" );
     };
@@ -130,20 +128,6 @@ public:
         ParameterMap output_parameters;
 
         Tempus::Multimodal::Graph& graph = Application::instance()->graph();
-
-        {
-            xmlNode* root_node = XML::new_node( "road_types" );
-            Tempus::RoadTypes::iterator it;
-
-            for ( it = graph.road_types.begin(); it != graph.road_types.end(); it++ ) {
-                xmlNode* node = XML::new_node( "road_type" );
-                XML::new_prop( node, "id", it->first );
-                XML::new_prop( node, "name", it->second.name );
-                XML::add_child( root_node, node );
-            }
-
-            output_parameters[ "road_types" ] = root_node;
-        }
 
         {
             xmlNode* root_node = XML::new_node( "transport_modes" );

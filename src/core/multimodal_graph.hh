@@ -178,10 +178,6 @@ struct Graph: boost::noncopyable {
     typedef std::map<db_id_t, POI> PoiList;
     PoiList pois;
 
-    ///
-    /// Variables used to store constants.
-    RoadTypes road_types;
-
     /// prepare for constant (re)loading
     void clear_constants();
 
@@ -199,14 +195,10 @@ struct Graph: boost::noncopyable {
     /// the second element of the pair tells if the mode exists
     std::pair<TransportMode,bool> transport_mode( const std::string& name ) const;
 
-    typedef std::map<std::string, Tempus::db_id_t> NameToId;
-    ///
-    /// Associative array that maps a road type name to a road type id
-    NameToId road_type_from_name;
-
 private:
     TransportModes transport_modes_;
 
+    typedef std::map<std::string, Tempus::db_id_t> NameToId;
     ///
     /// Associative array that maps a transport type name to a transport type id
     NameToId transport_mode_from_name_;
