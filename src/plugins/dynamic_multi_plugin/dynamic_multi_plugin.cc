@@ -120,7 +120,6 @@ private:
         }
 
         DynamicMultiPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
-            current_day_ = boost::gregorian::from_string("2013/11/12"); 
         }
 
         virtual ~DynamicMultiPlugin() {
@@ -145,7 +144,7 @@ private:
         TimetableMap timetable_; // Timetable data for the current request
         FrequencyMap frequency_; // Frequency data for the current request
         Multimodal::Vertex destination_; // Current request destination 
-        Date current_day_; // Day for which timetable or frequency data are loaded
+        static Date current_day_; // Day for which timetable or frequency data are loaded
         static Automaton<Road::Edge> automaton_; 
         map< Multimodal::Vertex, unsigned int > available_vehicles_; 
         static map< Multimodal::Edge, unsigned int > allowed_modes_; 
@@ -540,6 +539,7 @@ private:
 
     Automaton<Road::Edge> DynamicMultiPlugin::automaton_;
     map< Multimodal::Edge, unsigned int > DynamicMultiPlugin::allowed_modes_;
+    Date DynamicMultiPlugin::current_day_ = boost::gregorian::from_string("2013/11/12");
 }
 DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin )
 
