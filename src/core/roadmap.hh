@@ -109,19 +109,19 @@ public:
     /// For a trip from station A to station C that passes through the station B,
     /// 2 steps are stored, each with the same trip_id.
     struct PublicTransportStep : public Step {
-        PublicTransportStep() : Step( Step::PublicTransportStep ), wait(0.0) {}
+        PublicTransportStep() : Step( Step::PublicTransportStep ), wait_(0.0) {}
 
-        db_id_t network_id;
+        DECLARE_RW_PROPERTY( network_id, db_id_t );
 
         ///
-        /// Wait time at this step
-        double wait; 
+        /// Wait time at this step (in min)
+        DECLARE_RW_PROPERTY( wait, double );
 
         ///
         /// The public transport section part of the step
-        PublicTransport::Edge section;
+        DECLARE_RW_PROPERTY( section, PublicTransport::Edge );
 
-        db_id_t trip_id; ///< used to indicate the direction
+        DECLARE_RW_PROPERTY( trip_id, db_id_t ); ///< used to indicate the direction
 
         virtual PublicTransportStep* clone() const {
             return new PublicTransportStep( *this );

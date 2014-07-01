@@ -448,36 +448,36 @@ public:
                 else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
                     const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
 
-                    if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() ) {
-                        throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id ).str() );
+                    if ( graph_.public_transports.find( step->network_id() ) == graph_.public_transports.end() ) {
+                        throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
                     }
 
-                    PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id ];
+                    PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id() ];
 
                     step_node = XML::new_node( "public_transport_step" );
 
-                    XML::set_prop( step_node, "network", graph_.network_map[ step->network_id ].name() );
+                    XML::set_prop( step_node, "network", graph_.network_map[ step->network_id() ].name() );
 
                     std::string departure_str;
                     PublicTransport::Vertex v1, v2;
                     bool found;
-                    boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section].stop_from_id(), pt_graph );
+                    boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section()].stop_from_id(), pt_graph );
 
                     if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_from_id() ).str() );
+                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section()].stop_from_id() ).str() );
                     }
 
-                    boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section].stop_to_id(), pt_graph );
+                    boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section()].stop_to_id(), pt_graph );
 
                     if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_to_id() ).str() );
+                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section()].stop_to_id() ).str() );
                     }
 
                     departure_str = pt_graph[ v1 ].name();
                     std::string arrival_str = pt_graph[ v2 ].name();
                     XML::set_prop( step_node, "departure_stop", departure_str );
                     XML::set_prop( step_node, "arrival_stop", arrival_str );
-                    XML::set_prop( step_node, "trip", to_string( step->trip_id ) );
+                    XML::set_prop( step_node, "trip", to_string( step->trip_id() ) );
                 }
                 else if ( sit->step_type() == Roadmap::Step::GenericStep ) {
                     const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );

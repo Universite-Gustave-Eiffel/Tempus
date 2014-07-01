@@ -494,18 +494,18 @@ private:
                     if ( !found ) 
                         throw std::runtime_error( "Can't find the pt edge !" ); 
 				
-                    step->section = e; 
-                    step->trip_id = trip_map_[ *it ]; 
-                    step->wait = wait_map_[ *it ]; 
+                    step->set_section(e);
+                    step->set_trip_id(trip_map_[ *it ]);
+                    step->set_wait(wait_map_[ *it ]);
 				
                     // find the network_id
                     for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {
                         if ( it->vertex.pt_graph == &nit->second ) {
-                            step->network_id = nit->first;
+                            step->set_network_id(nit->first);
                             break;
                         }
                     }
-                    step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] - step->wait );
+                    step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] - step->wait() );
                 }
                 else {
                     // Make a multimodal edge and copy it into the roadmap as a 'generic' step

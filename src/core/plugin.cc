@@ -469,12 +469,12 @@ Result& Plugin::result()
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-                PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id];
+                PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id()];
 
                 //
                 // retrieval of the step's geometry
                 std::string q = ( boost::format( "SELECT st_asbinary(geom) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%" ) %
-                                  pt_graph[step->section].stop_from_id() % pt_graph[step->section].stop_to_id() ).str();
+                                  pt_graph[step->section()].stop_from_id() % pt_graph[step->section()].stop_to_id() ).str();
                 Db::Result res = db_.exec( q );
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
