@@ -375,12 +375,12 @@ public:
 
                 Roadmap::RoadStep* step = new Roadmap::RoadStep();
                 roadmap.steps.push_back( step );
-                step->road_edge = e; 
+                step->road_edge( e ); 
 				
-                step->costs[CostDistance] += get(edge_dist_pmap, e);
-                step->costs[CostDuration] += get(edge_tt_pmap, e); 
-                roadmap.total_costs[CostDistance] += get(edge_dist_pmap, e);
-                roadmap.total_costs[CostDuration] += get(edge_tt_pmap, e); 
+                step->cost(CostDistance, step->cost(CostDistance) + get(edge_dist_pmap, e) );
+                step->cost(CostDuration, step->cost(CostDuration) + get(edge_tt_pmap, e) ); 
+                roadmap.total_cost(CostDistance, roadmap.total_cost(CostDistance) + get(edge_dist_pmap, e) );
+                roadmap.total_cost(CostDuration, roadmap.total_cost(CostDistance) + get(edge_tt_pmap, e) );
 				
                 previous = v;
             } 

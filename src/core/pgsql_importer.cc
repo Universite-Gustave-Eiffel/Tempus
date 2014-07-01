@@ -475,9 +475,6 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
                 if ( found ) {
                     poi.opposite_road_edge( opposite_edge );
                 }
-                else {
-                    poi.opposite_road_edge( poi.road_edge() );
-                }
             }
 
             poi.abscissa_road_section( res[i][5] );

@@ -34,21 +34,29 @@ public:
     ///
     /// A Step is a part of a route, where the transport type is constant
     /// This a generic class
-    struct Step {
+    class Step {
+    public:
         enum StepType {
             RoadStep,
             PublicTransportStep,
             GenericStep
         };
-        StepType step_type;
+        DECLARE_RW_PROPERTY( step_type, StepType );
 
-        Costs costs;
+        DECLARE_RO_PROPERTY( costs, Costs );
+        /// Gets a cost
+        double cost( CostId id ) const;
+        /// Sets a cost
+        void cost( CostId id, double c );
+
+        /// (Initial) transport mode id
+        DECLARE_RW_PROPERTY( transport_mode, db_id_t );
 
         /// Geometry of the step, described as a WKB, for visualization purpose
         /// May be empty.
-        std::string geometry_wkb;
+        DECLARE_RW_PROPERTY( geometry_wkb, std::string );
 
-        Step( StepType type ) : step_type( type ) {}
+        Step( StepType type ) : step_type_( type ) {}
 
         virtual Step* clone() const {
             return new Step( *this );
@@ -62,18 +70,17 @@ public:
 
         ///
         /// The road section where to start from
-        Road::Edge road_edge;
-
-        db_id_t transport_type; 
+        DECLARE_RW_PROPERTY( road_edge, Road::Edge );
 
         ///
         /// The road name (field not present in a Road::Section, so copied from the DB here)
-        std::string road_name;
+        DECLARE_RW_PROPERTY( road_name, std::string );
 
         ///
         /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
         ///
-        double distance_km;
+        DECLARE_RW_PROPERTY( distance_km, double );
+
         /// The movement that is to be done at the end of the section
         enum EndMovement {
             GoAhead,
@@ -89,7 +96,7 @@ public:
             SixthExit,
             YouAreArrived = 999
         };
-        EndMovement end_movement;
+        DECLARE_RW_PROPERTY( end_movement, EndMovement );
 
         virtual RoadStep* clone() const {
             return new RoadStep( *this );
@@ -131,7 +138,10 @@ public:
 
         ///
         /// Road name, if relevant
-        std::string road_name;
+        DECLARE_RW_PROPERTY( road_name, std::string );
+
+        /// Final transport mode id
+        DECLARE_RW_PROPERTY( final_mode, db_id_t );
 
         virtual GenericStep* clone() const {
             return new GenericStep( *this );
@@ -142,7 +152,14 @@ public:
     /// A Roadmap is a list of Step augmented with some total costs.
     typedef boost::ptr_vector<Step> StepList;
     StepList steps;
-    Costs total_costs;
+
+    // FIXME replace by a compute-only method ?
+    DECLARE_RO_PROPERTY( total_costs, Costs );
+
+    /// Get a particular cost
+    double total_cost( CostId id ) const;
+    /// Set a total cost
+    void total_cost( CostId id, double c );
 };
 
 ///

@@ -114,11 +114,12 @@ class EndMovement:
     YouAreArrived = 999
 
 class RoadStep:
-    def __init__( self, road='', end_movement=0, costs={}, wkb='' ):
+    def __init__( self, road='', end_movement=0, costs={}, mode=0, wkb='' ):
         self.road = road
         self.end_movement = end_movement
         self.costs = costs
         self.wkb = wkb
+        self.mode = 0
 
 class PublicTransportStep:
     def __init__( self, network = '', departure = '', arrival = '', trip = '', costs = {}, wkb = '' ):
@@ -139,11 +140,22 @@ class ConnectionType:
     Poi2Road = 6
 
 class RoadTransportStep:
-    def __init__( self, type = 0, road = '', network = '', stop = '', costs = {}, wkb = ''):
+    def __init__( self, type = 0, road = '', network = '', stop = '', costs = {}, mode = 0, wkb = ''):
         self.type = type
         self.road = road
         self.network = network
         self.stop = stop
+        self.costs = costs
+        self.wkb = wkb
+        self.mode = 0
+
+class TransferStep:
+    def __init__( self, type = 0, road = '', poi = '', initial_mode = 0, final_mode = 0, costs = {}, wkb= '' ):
+        self.type = type
+        self.road = road
+        self.poi = poi
+        self.initial_mode = initial_mode
+        self.final_mode = final_mode
         self.costs = costs
         self.wkb = wkb
 
@@ -236,9 +248,9 @@ def parse_road_types( output ):
 def parse_transport_modes( output ):
     return [ TransportMode( id = int(x.attrib['id']),
                             name = x.attrib['name'],
-                            need_parking = x.attrib['need_parking'] == "true",
-                            is_shared = x.attrib['is_shared'] == "true",
-                            must_be_returned = x.attrib['must_be_returned'] == "true",
+                            need_parking = x.attrib['need_parking'] == "1",
+                            is_shared = x.attrib['is_shared'] == "1",
+                            must_be_returned = x.attrib['must_be_returned'] == "1",
                             traffic_rules = int(x.attrib['traffic_rules']),
                             speed_rule = int(x.attrib['speed_rule']),
                             toll_rules = int(x.attrib['toll_rules']),
@@ -305,6 +317,24 @@ def parse_results( results ):
                                                  stop = stop,
                                                  costs = costs,
                                                  wkb = wkb) )
+            if child.tag == 'transfer_step':
+                costs = {}
+                wkb = child.attrib['wkb']
+                road = child.attrib['road']
+                poi = child.attrib['poi']
+                type = int(child.attrib['type'])
+                initial_mode = int(child.attrib['initial_mode'])
+                final_mode = int(child.attrib['final_mode'])
+                for p in child:
+                    if p.tag == 'cost':
+                        costs[int(p.attrib['type'])] = float(p.attrib['value'])
+                        steps.append( TransferStep( type = type,
+                                                    road = road,
+                                                    poi = poi,
+                                                    costs = costs,
+                                                    initial_mode = initial_mode,
+                                                    final_mode = final_mode,
+                                                    wkb = wkb) )
             elif child.tag == 'cost':
                 gcosts[int(child.attrib['type'])] = float(child.attrib['value'])
         r.append( Result( steps = steps, costs = gcosts ) )

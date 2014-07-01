@@ -453,14 +453,15 @@ public:
                 xmlNode* step_node = 0;
                 const Roadmap::Step* gstep = &*sit;
 
-                if ( sit->step_type == Roadmap::Step::RoadStep ) {
+                if ( sit->step_type() == Roadmap::Step::RoadStep ) {
                     const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                     step_node = XML::new_node( "road_step" );
 
-                    XML::set_prop( step_node, "road", step->road_name );
-                    XML::set_prop( step_node, "end_movement", to_string( step->end_movement ) );
+                    XML::set_prop( step_node, "road", step->road_name() );
+                    XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
+                    XML::set_prop( step_node, "transport_mode", to_string( step->transport_mode() ) );
                 }
-                else if ( sit->step_type == Roadmap::Step::PublicTransportStep ) {
+                else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
                     const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
 
                     if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() ) {
@@ -494,43 +495,64 @@ public:
                     XML::set_prop( step_node, "arrival_stop", arrival_str );
                     XML::set_prop( step_node, "trip", to_string( step->trip_id ) );
                 }
-                else if ( sit->step_type == Roadmap::Step::GenericStep ) {
+                else if ( sit->step_type() == Roadmap::Step::GenericStep ) {
                     const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );
                     const Multimodal::Edge* edge = static_cast<const Multimodal::Edge*>( step );
 
-                    const PublicTransport::Graph* pt_graph = 0;
-                    db_id_t network_id = 0;
-                    std::string stop_name, road_name;
+                    std::string road_name, stop_name;
                     std::string type_str = to_string( edge->connection_type() );
 
-                    road_name = step->road_name;
+                    const PublicTransport::Graph* pt_graph = 0;
+                    bool road_transport = false;
+                    road_name = step->road_name();
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
                         pt_graph = edge->target.pt_graph;
                         stop_name = ( *pt_graph )[edge->target.pt_vertex].name();
+                        road_transport = true;
                     }
                     else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
                         pt_graph = edge->source.pt_graph;
                         stop_name = ( *pt_graph )[edge->source.pt_vertex].name();
+                        road_transport = true;
                     }
 
-                    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();
-                            nit != graph_.public_transports.end();
-                            ++nit ) {
-                        if ( &nit->second == pt_graph ) {
-                            network_id = nit->first;
-                            break;
+                    if ( road_transport ) {
+                        db_id_t network_id = 0;
+
+                        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();
+                              nit != graph_.public_transports.end();
+                              ++nit ) {
+                            if ( &nit->second == pt_graph ) {
+                                network_id = nit->first;
+                                break;
+                            }
                         }
+
+                        step_node = XML::new_node( "road_transport_step" );
+
+                        XML::set_prop( step_node, "type", type_str );
+                        XML::set_prop( step_node, "road", road_name );
+                        XML::set_prop( step_node, "network", graph_.network_map[ network_id ].name() );
+                        XML::set_prop( step_node, "stop", stop_name );
                     }
-
-                    step_node = XML::new_node( "road_transport_step" );
-
-                    XML::set_prop( step_node, "type", type_str );
-                    XML::set_prop( step_node, "road", road_name );
-                    XML::set_prop( step_node, "network", graph_.network_map[ network_id ].name() );
-                    XML::set_prop( step_node, "stop", stop_name );
+                    else {
+                        std::string poi_name = "";
+                        step_node = XML::new_node( "transfer_step" );
+                        if ( edge->connection_type() == Multimodal::Edge::Road2Poi ) {
+                            poi_name = edge->target.poi->name();
+                        }
+                        else if ( edge->connection_type() == Multimodal::Edge::Poi2Road ) {
+                            poi_name = edge->source.poi->name();
+                        }
+                        XML::set_prop( step_node, "type", type_str );
+                        XML::set_prop( step_node, "road", road_name );
+                        XML::set_prop( step_node, "poi", poi_name );
+                        XML::set_prop( step_node, "initial_mode", to_string( step->transport_mode() ) );
+                        XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
+                    }
                 }
 
-                for ( Tempus::Costs::const_iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ ) {
+                for ( Tempus::Costs::const_iterator cit = gstep->costs().begin(); cit != gstep->costs().end(); cit++ ) {
                     xmlNode* cost_node = XML::new_node( "cost" );
                     XML::new_prop( cost_node,
                                    "type",
@@ -541,7 +563,7 @@ public:
                     XML::add_child( step_node, cost_node );
                 }
 
-                XML::set_prop( step_node, "wkb", sit->geometry_wkb );
+                XML::set_prop( step_node, "wkb", sit->geometry_wkb() );
 
                 XML::add_child( result_node, step_node );
             }
@@ -550,7 +572,7 @@ public:
 
             // total costs
 
-            for ( Tempus::Costs::const_iterator cit = roadmap.total_costs.begin(); cit != roadmap.total_costs.end(); cit++ ) {
+                for ( Tempus::Costs::const_iterator cit = roadmap.total_costs().begin(); cit != roadmap.total_costs().end(); cit++ ) {
                 xmlNode* cost_node = XML::new_node( "cost" );
                 XML::new_prop( cost_node,
                                "type",

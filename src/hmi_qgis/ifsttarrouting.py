@@ -145,6 +145,7 @@ class IfsttarRouting:
         # list of transport types
         # array of Tempus.TransportType
         self.transport_modes = []
+        self.transport_modes_dict = {}
         # list of public networks
         # array of Tempus.TransportNetwork
         self.networks = []
@@ -281,6 +282,10 @@ class IfsttarRouting:
             QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
         self.transport_modes = transport_modes
+        self.transport_modes_dict = {}
+        for t in self.transport_modes:
+                self.transport_modes_dict[t.id] = t
+
         self.networks = transport_networks
 
     def update_plugin_options( self, plugin_idx ):
@@ -473,7 +478,7 @@ class IfsttarRouting:
                 road_name = step.road
                 movement = step.end_movement
                 text += "<p>"
-                action_txt = 'Walk on '
+                action_txt = 'Continue on '
                 if last_movement == Tempus.EndMovement.TurnLeft:
                     icon_text += "<img src=\"%s/turn_left.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                     action_txt = "Turn left on "
@@ -499,6 +504,21 @@ class IfsttarRouting:
                     text = "Leave the '%s' station to %s" % (step.stop, step.road)
                 else:
                     text = "Connection between '%s' and '%s'" % (step.stop, step.road)
+
+            elif isinstance(step, Tempus.TransferStep ):
+                    text = "On %s,<br/>At %s:<br/>\n" % (step.road, step.poi)
+                    if step.initial_mode != step.final_mode:
+                            imode = self.transport_modes_dict[step.initial_mode]
+                            fmode = self.transport_modes_dict[step.final_mode]
+                            print imode.name, fmode.name, imode.need_parking, fmode.need_parking
+                            add_t = []
+                            if imode.need_parking:
+                                    add_t += ["park your %s" % imode.name]
+                            if fmode.need_parking:
+                                    add_t += ["take a %s" % fmode.name]
+                            text += ' and '.join(add_t)
+                    else:
+                            text = "Continue on %s" % step.road
 
             for k,v in step.costs.iteritems():
                 cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
@@ -797,6 +817,9 @@ class IfsttarRouting:
         self.dlg.ui.pluginCombo.setCurrentIndex( idx )
 
         self.transport_modes = Tempus.parse_transport_modes( loaded['server_state'][2] )
+        self.transport_modes_dict = {}
+        for t in self.transport_modes:
+                self.transport_modes_dict[t.id] = t
         self.networks = Tempus.parse_transport_networks( loaded['server_state'][3] )
 
         self.displayTransportAndNetworks()

@@ -7,6 +7,7 @@ set( HEADER_FILES
     transport_modes.hh
     multimodal_graph.hh 
     request.hh
+    roadmap.hh
     application.hh plugin.hh 
     pgsql_importer.hh 
     plugin.hh 
@@ -22,6 +23,7 @@ set( SOURCE_FILES
     poi.cc
     transport_modes.cc
     request.cc
+    roadmap.cc
     application.cc plugin.cc 
     pgsql_importer.cc 
     plugin.cc 

@@ -10,6 +10,7 @@ namespace Tempus {
 
 // Time penalty to add when walking in and out from/to a public transport station
 #define PT_STATION_PENALTY 0.1
+#define POI_STATION_PENALTY 0.1
 
 double road_travel_time( const Road::Graph& road_graph, const Road::Edge& road_e, double length, const TransportMode& mode,
                          double walking_speed = DEFAULT_WALKING_SPEED, double cycling_speed = DEFAULT_CYCLING_SPEED )
@@ -79,6 +80,7 @@ public:
                 Road::Edge road_e;
                 bool found;
                 boost::tie( road_e, found ) = road_edge( e );
+                BOOST_ASSERT(found);
 										
                 return road_travel_time( graph.road, road_e, graph.road[ road_e ].length(), mode,
                                          walking_speed_, cycling_speed_ ); 
@@ -127,6 +129,7 @@ public:
                 PublicTransport::Edge pt_e;
                 bool found = false;
                 boost::tie( pt_e, found ) = public_transport_edge( e );
+                BOOST_ASSERT(found);
 						
                 // Timetable travel time calculation
                 if (timetable_.find( pt_e ) != timetable_.end() ) {
@@ -172,6 +175,38 @@ public:
             }
                 break; 
 					
+            case Multimodal::Edge::Road2Poi: {
+                Road::Edge road_e = e.target.poi->road_edge();
+                double abscissa = e.target.poi->abscissa_road_section();
+
+                // if we are coming from the start point of the road
+                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
+                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                }
+                // otherwise, that is the opposite direction
+                else {
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                }
+            }
+                break;
+            case Multimodal::Edge::Poi2Road: {
+                Road::Edge road_e = e.source.poi->road_edge();
+                double abscissa = e.source.poi->abscissa_road_section();
+
+                // if we are coming from the start point of the road
+                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
+                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                }
+                // otherwise, that is the opposite direction
+                else {
+                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                }
+            }
+                break;
             default: {
 						
             }
@@ -181,25 +216,48 @@ public:
     }
 		
     // Mode transfer time function : returns numeric_limits<double>::max() when the mode transfer is impossible
-    double transfer_time( const Multimodal::Graph& graph, const Multimodal::Vertex& v, db_id_t initial_mode_id, db_id_t final_mode_id ) const
+    double transfer_time( const Multimodal::Graph& graph, const Multimodal::Vertex& src, const Multimodal::Vertex& tgt, db_id_t initial_mode_id, db_id_t final_mode_id ) const
     {
         double transf_t = 0;
         if (initial_mode_id != final_mode_id ) {
             const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
-            //            const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
+            const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
             // Parking search time for initial mode
             if ( initial_mode.need_parking() ) {
-                if ( ( ( v.type == Multimodal::Vertex::Road )  &&
-                       ( (graph.road[ v.road_vertex ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
-                     || ( (v.type == Multimodal::Vertex::Poi ) && ( (v.poi)->has_parking_transport_mode( initial_mode.db_id() )) ) )
+                if ( ( ( src.type == Multimodal::Vertex::Road )  &&
+                       ( (graph.road[ src.road_vertex ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
+                     || ( (src.type == Multimodal::Vertex::Poi ) && ( (src.poi)->has_parking_transport_mode( initial_mode.db_id() )) ) )
                 {
                     // FIXME more complex than that
                     if (initial_mode.traffic_rules() & TrafficRuleCar ) 
                         transf_t += car_parking_search_time_ ; // Personal car
                     // For bicycle, parking search time = 0
                 }
-                else
-                    transf_t = std::numeric_limits<double>::max(); 
+                else {
+                    transf_t = std::numeric_limits<double>::max();
+                }
+                std::cout << initial_mode_id << "=>" << final_mode_id;
+                std::cout << " " << transf_t << std::endl;
+            }
+
+            if ( final_mode.is_shared() ) {
+                if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( final_mode.db_id() ) )) {
+                    // FIXME replace 1 by time to take a shared vehicle
+                    transf_t = 1;
+                }
+                else {
+                    transf_t = std::numeric_limits<double>::max();
+                }
+            }
+
+            if ( initial_mode.must_be_returned() ) {
+                if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( initial_mode.db_id() ) )) {
+                    // FIXME replace 1 by time to park a shared vehicle
+                    transf_t = 1;
+                }
+                else {
+                    transf_t = std::numeric_limits<double>::max();
+                }                
             }
 
 #if 0

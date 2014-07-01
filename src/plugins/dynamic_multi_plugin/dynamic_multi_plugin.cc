@@ -84,7 +84,7 @@ public:
             throw path_found_exception( t );
         }
         if (verbose_) {
-            std::cout << "examine vertex " << t.vertex << std::endl;
+            std::cout << "examine vertex " << t.vertex << " mode " << t.mode << std::endl;
         }
     }
 private:
@@ -454,44 +454,44 @@ private:
             result_.push_back( Roadmap() ); 
             Roadmap& roadmap = result_.back();
 
-            roadmap.total_costs[ CostDuration ] = 0.0; 
+            roadmap.total_cost( CostDuration, 0.0 );
 		
-            std::list< Triple >::const_iterator previous = path.begin();
-            std::list< Triple >::const_iterator it = ++previous;
-            --previous; 
+            std::list< Triple >::const_iterator it = path.begin();
+            std::list< Triple >::const_iterator next = ++it;
+            --it; 
 
-            for ( ; it != path.end(); ++it ) {
+            for ( ; next != path.end(); ++next ) {
                 Roadmap::Step* mstep = 0;
 
-                if ( previous->vertex.type == Multimodal::Vertex::Road && it->vertex.type == Multimodal::Vertex::Road ) {
+                if ( it->mode == next->mode && it->vertex.type == Multimodal::Vertex::Road && next->vertex.type == Multimodal::Vertex::Road ) {
                     mstep = new Roadmap::RoadStep();
                     Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( mstep );
                     Road::Edge e;
                     bool found = false;
-                    boost::tie( e, found ) = edge( previous->vertex.road_vertex, it->vertex.road_vertex, *it->vertex.road_graph ); 
+                    boost::tie( e, found ) = edge( it->vertex.road_vertex, next->vertex.road_vertex, *it->vertex.road_graph ); 
 
                     if ( !found ) {
                         throw std::runtime_error( "Can't find the road edge !" );
                     }
 
-                    step->road_edge = e;
-                    step->transport_type = it->mode ;   
-                    step->costs[ CostDuration ] = potential_map_[ *it ] - potential_map_[ *previous ]  ; 
+                    step->road_edge( e );
+                    step->transport_mode( it->mode );
+                    step->cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
-                else if ( previous->vertex.type == Multimodal::Vertex::PublicTransport && it->vertex.type == Multimodal::Vertex::PublicTransport ) {
+                else if ( it->mode == next->mode && it->vertex.type == Multimodal::Vertex::PublicTransport && next->vertex.type == Multimodal::Vertex::PublicTransport ) {
                     mstep = new Roadmap::PublicTransportStep();
                     Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep );
                     PublicTransport::Edge e;
                     bool found = false;
-                    boost::tie( e, found ) = edge( previous->vertex.pt_vertex, it->vertex.pt_vertex, *(it->vertex).pt_graph ); 
+                    boost::tie( e, found ) = edge( it->vertex.pt_vertex, next->vertex.pt_vertex, *(it->vertex).pt_graph ); 
 
                     if ( !found ) 
                         throw std::runtime_error( "Can't find the pt edge !" ); 
 				
                     step->section = e; 
                     step->trip_id = trip_map_[ *it ]; 
-                    step->wait = wait_map_[ *previous ]; 
+                    step->wait = wait_map_[ *it ]; 
 				
                     // find the network_id
                     for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {
@@ -500,12 +500,15 @@ private:
                             break;
                         }
                     }
-                    step->costs[ CostDuration ] = potential_map_[ *it ] - potential_map_[ *previous ] - step->wait;
+                    step->cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] - step->wait );
                 }
                 else {
                     // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-                    mstep = new Roadmap::GenericStep( Multimodal::Edge( previous->vertex, it->vertex ) );
-                    mstep->costs[ CostDuration ] = potential_map_[ *it ] - potential_map_[ *previous ]; 
+                    mstep = new Roadmap::GenericStep( Multimodal::Edge( it->vertex, next->vertex ) );
+                    Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>(mstep);
+                    step->transport_mode( it->mode );
+                    step->final_mode( next->mode );
+                    step->cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
                 roadmap.steps.push_back( mstep );
@@ -515,9 +518,9 @@ private:
                 // we assume the edge exists in these maps
                 //Multimodal::Edge me( *previous, *it );
                 //mstep->costs[ CostDuration ] = potential_map[ vertex_index[*it] ] - potential_map[ vertex_index[*previous] ] - mstep->wait;
-                roadmap.total_costs[ CostDuration ] += mstep->costs[ CostDuration ];
+                roadmap.total_cost( CostDuration, roadmap.total_cost(CostDuration) + mstep->cost( CostDuration ) );
 
-                previous = it; 
+                it = next;
             }
 	}
 
