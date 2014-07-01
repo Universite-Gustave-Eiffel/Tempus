@@ -69,8 +69,10 @@ namespace Tempus {
 class DestinationDetector
 {
 public:
-    DestinationDetector( const Road::Vertex& destination, bool verbose = false ) :
-        destination_(destination), verbose_(verbose) {}
+    DestinationDetector( const Road::Vertex& destination, bool walk_at_destination = true, bool verbose = false ) :
+        destination_(destination),
+        walk_at_destination_(walk_at_destination),
+        verbose_(verbose) {}
 
     struct path_found_exception
     {
@@ -81,7 +83,9 @@ public:
     void examine_vertex( const Triple& t, const Multimodal::Graph& )
     {
         if ( t.vertex.type == Multimodal::Vertex::Road && t.vertex.road_vertex == destination_ ) {
-            throw path_found_exception( t );
+            if ( !walk_at_destination_ || (walk_at_destination_ && t.mode == 1) ) {
+                throw path_found_exception( t );
+            }
         }
         if (verbose_) {
             std::cout << "examine vertex " << t.vertex << " mode " << t.mode << std::endl;
@@ -89,6 +93,7 @@ public:
     }
 private:
     Road::Vertex destination_;
+    bool walk_at_destination_;
     bool verbose_;
 };
 
@@ -110,6 +115,7 @@ private:
             odl.declare_option( "walking_speed", "Average walking speed (km/h)", 3.6); 
             odl.declare_option( "cycling_speed", "Average cycling speed (km/h)", 12); 
             odl.declare_option( "car_parking_search_time", "Car parking search time (min)", 5); 
+            odl.declare_option( "walk_at_destination", "Walk at destination", true );
             return odl;
         }
 
@@ -332,7 +338,6 @@ private:
             origin_o.state = automaton_.initial_state_;
             // take the first mode allowed
             origin_o.mode = request_.allowed_modes()[0];
-            std::cout << "vertex " << origin_o.vertex << " state " << origin_o.state << " mode " << origin_o.mode << std::endl;
 
             // Initialize the potential map
             // adaptation to a property map : infinite default value
@@ -355,7 +360,9 @@ private:
             CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
 
             //            Tempus::PluginGraphVisitor vis ( this ) ;
-            DestinationDetector vis( request_.destination(), verbose_ );
+            bool walk_at_destination;
+            get_option( "walk_at_destination", walk_at_destination ); 
+            DestinationDetector vis( request_.destination(), walk_at_destination, verbose_ );
             Triple destination_o;
             bool path_found = false;
             try {

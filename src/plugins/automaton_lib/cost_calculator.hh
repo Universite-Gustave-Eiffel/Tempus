@@ -236,8 +236,6 @@ public:
                 else {
                     transf_t = std::numeric_limits<double>::max();
                 }
-                std::cout << initial_mode_id << "=>" << final_mode_id;
-                std::cout << " " << transf_t << std::endl;
             }
 
             if ( final_mode.is_shared() ) {
