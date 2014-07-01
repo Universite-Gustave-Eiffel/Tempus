@@ -466,11 +466,11 @@ private:
             --it; 
 
             for ( ; next != path.end(); ++next ) {
-                Roadmap::Step* mstep = 0;
+                std::auto_ptr<Roadmap::Step> mstep;
 
                 if ( it->mode == next->mode && it->vertex.type == Multimodal::Vertex::Road && next->vertex.type == Multimodal::Vertex::Road ) {
-                    mstep = new Roadmap::RoadStep();
-                    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( mstep );
+                    mstep.reset( new Roadmap::RoadStep() );
+                    Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( mstep.get() );
                     Road::Edge e;
                     bool found = false;
                     boost::tie( e, found ) = edge( it->vertex.road_vertex, next->vertex.road_vertex, *it->vertex.road_graph ); 
@@ -485,8 +485,8 @@ private:
                 }
 
                 else if ( it->mode == next->mode && it->vertex.type == Multimodal::Vertex::PublicTransport && next->vertex.type == Multimodal::Vertex::PublicTransport ) {
-                    mstep = new Roadmap::PublicTransportStep();
-                    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep );
+                    mstep.reset( new Roadmap::PublicTransportStep() );
+                    Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep.get() );
                     PublicTransport::Edge e;
                     bool found = false;
                     boost::tie( e, found ) = edge( it->vertex.pt_vertex, next->vertex.pt_vertex, *(it->vertex).pt_graph ); 
@@ -509,14 +509,14 @@ private:
                 }
                 else {
                     // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-                    mstep = new Roadmap::GenericStep( Multimodal::Edge( it->vertex, next->vertex ) );
-                    Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>(mstep);
+                    mstep.reset( new Roadmap::GenericStep( Multimodal::Edge( it->vertex, next->vertex ) ) );
+                    Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>(mstep.get());
                     step->set_transport_mode( it->mode );
                     step->set_final_mode( next->mode );
                     step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
-                roadmap.steps.push_back( mstep );
+                roadmap.add_step( mstep );
 
                 // build the multimodal edge to find corresponding costs
                 // we don't use edge() since it will loop over the whole graph each time

@@ -431,9 +431,8 @@ public:
             const Tempus::Roadmap& roadmap = *rit;
 
             xmlNode* result_node = XML::new_node( "result" );
-            Roadmap::StepList::const_iterator sit;
 
-            for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ ) {
+            for ( Roadmap::StepConstIterator sit = roadmap.begin(); sit != roadmap.end(); sit++ ) {
                 xmlNode* step_node = 0;
                 const Roadmap::Step* gstep = &*sit;
 

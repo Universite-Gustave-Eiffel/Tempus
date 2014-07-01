@@ -44,4 +44,34 @@ void Roadmap::set_total_cost( CostId id, double c )
     total_costs_[id] = c;
 }
 
+Roadmap::StepConstIterator Roadmap::begin() const
+{
+    return steps_.begin();
+}
+
+Roadmap::StepIterator Roadmap::begin()
+{
+    return steps_.begin();
+}
+
+Roadmap::StepConstIterator Roadmap::end() const
+{
+    return steps_.end();
+}
+
+Roadmap::StepIterator Roadmap::end()
+{
+    return steps_.end();
+}
+
+const Roadmap::Step& Roadmap::step( size_t idx ) const
+{
+    return steps_.at(idx);
+}
+
+void Roadmap::add_step( std::auto_ptr<Step> s )
+{
+    steps_.push_back( s.get() );
+}
+
 }

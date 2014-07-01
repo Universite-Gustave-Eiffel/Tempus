@@ -389,7 +389,7 @@ Result& Plugin::result()
 
         Roadmap::RoadStep::EndMovement movement;
 
-        for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++ ) {
+        for ( Roadmap::StepIterator it = roadmap.begin(); it != roadmap.end(); it++ ) {
             if ( it->step_type() == Roadmap::Step::GenericStep ) {
                 Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( &*it );
                 Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );

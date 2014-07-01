@@ -373,8 +373,8 @@ public:
                     continue;
                 }
 
-                Roadmap::RoadStep* step = new Roadmap::RoadStep();
-                roadmap.steps.push_back( step );
+                Roadmap::RoadStep* step( new Roadmap::RoadStep() );
+                roadmap.add_step( std::auto_ptr<Roadmap::Step>(step) );
                 step->set_road_edge( e ); 
 				
                 step->set_cost(CostDistance, step->cost(CostDistance) + get(edge_dist_pmap, e) );

@@ -148,10 +148,25 @@ public:
         }
     };
 
-    ///
-    /// A Roadmap is a list of Step augmented with some total costs.
     typedef boost::ptr_vector<Step> StepList;
-    StepList steps;
+    typedef StepList::iterator StepIterator;
+    typedef StepList::const_iterator StepConstIterator;
+
+    /// Read-only access to steps, begin iterator
+    StepConstIterator begin() const;
+    /// Write access to steps
+    StepIterator begin();
+
+    /// Read-only access to steps, end iterator
+    StepConstIterator end() const;
+    /// Write access to steps
+    StepIterator end();
+
+    /// Random access to a given step, with bound checking
+    const Step& step( size_t idx ) const;
+
+    /// Add a step
+    void add_step( std::auto_ptr<Step> step );
 
     // FIXME replace by a compute-only method ?
     DECLARE_RO_PROPERTY( total_costs, Costs );
@@ -160,6 +175,8 @@ public:
     double total_cost( CostId id ) const;
     /// Set a total cost
     void set_total_cost( CostId id, double c );
+private:
+    StepList steps_;
 };
 
 ///
