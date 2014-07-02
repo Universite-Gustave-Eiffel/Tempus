@@ -458,19 +458,8 @@ public:
                     XML::set_prop( step_node, "network", graph_.network_map[ step->network_id() ].name() );
 
                     std::string departure_str;
-                    PublicTransport::Vertex v1, v2;
-                    bool found;
-                    boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section()].stop_from_id(), pt_graph );
-
-                    if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section()].stop_from_id() ).str() );
-                    }
-
-                    boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section()].stop_to_id(), pt_graph );
-
-                    if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section()].stop_to_id() ).str() );
-                    }
+                    PublicTransport::Vertex v1 = step->departure_stop();
+                    PublicTransport::Vertex v2 = step->arrival_stop();
 
                     departure_str = pt_graph[ v1 ].name();
                     std::string arrival_str = pt_graph[ v2 ].name();

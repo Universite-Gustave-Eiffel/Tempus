@@ -65,6 +65,8 @@ public:
 
     ///
     /// A Step that occurs on the road, either by a pedestrian or a private vehicle
+    /// If the path goes along the same road (same name) in the same "direction",
+    /// there is no need to store one step for each edge, they can be merged.
     struct RoadStep : public Step {
         RoadStep() : Step( Step::RoadStep ) {}
 
@@ -106,8 +108,8 @@ public:
     ///
     /// A Step made with a public transport
     ///
-    /// For a trip from station A to station C that passes through the station B,
-    /// 2 steps are stored, each with the same trip_id.
+    /// For a trip from station A to station C that passes through the station B on the same trip_id
+    /// only one step is stored
     struct PublicTransportStep : public Step {
         PublicTransportStep() : Step( Step::PublicTransportStep ), wait_(0.0) {}
 
@@ -117,11 +119,12 @@ public:
         /// Wait time at this step (in min)
         DECLARE_RW_PROPERTY( wait, double );
 
-        ///
-        /// The public transport section part of the step
-        DECLARE_RW_PROPERTY( section, PublicTransport::Edge );
-
-        DECLARE_RW_PROPERTY( trip_id, db_id_t ); ///< used to indicate the direction
+        /// Of which trip this step is part of
+        DECLARE_RW_PROPERTY( trip_id, db_id_t );
+        /// PT stop on where to depart
+        DECLARE_RW_PROPERTY( departure_stop, PublicTransport::Vertex );
+        /// PT stop on where to arrive
+        DECLARE_RW_PROPERTY( arrival_stop, PublicTransport::Vertex );
 
         virtual PublicTransportStep* clone() const {
             return new PublicTransportStep( *this );

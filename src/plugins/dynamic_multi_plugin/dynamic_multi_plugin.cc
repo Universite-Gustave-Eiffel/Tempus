@@ -487,14 +487,9 @@ private:
                 else if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
                     mstep.reset( new Roadmap::PublicTransportStep() );
                     Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep.get() );
-                    PublicTransport::Edge e;
-                    bool found = false;
-                    boost::tie( e, found ) = edge( it->vertex.pt_vertex(), next->vertex.pt_vertex(), *(it->vertex).pt_graph() ); 
-
-                    if ( !found ) 
-                        throw std::runtime_error( "Can't find the pt edge !" ); 
 				
-                    step->set_section(e);
+                    step->set_departure_stop( it->vertex.pt_vertex() );
+                    step->set_arrival_stop( next->vertex.pt_vertex() );
                     step->set_trip_id(trip_map_[ *it ]);
                     step->set_wait(wait_map_[ *it ]);
 				
