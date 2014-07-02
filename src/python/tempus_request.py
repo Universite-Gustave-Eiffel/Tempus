@@ -243,9 +243,6 @@ def parse_plugins( output ):
         plugins.append( Plugin( name = name, options = options ) )
     return plugins
 
-def parse_road_types( output ):
-    return [ RoadType(id = int(x.attrib['id']), name = x.attrib['name']) for x in output ]
-
 def parse_transport_modes( output ):
     return [ TransportMode( id = int(x.attrib['id']),
                             name = x.attrib['name'],
@@ -380,8 +377,7 @@ class TempusRequest:
         outputs = self.wps.execute( 'constant_list', {} )
         for k,v in outputs.iteritems():
             self.save[k] = v
-        return ( parse_road_types(outputs['road_types']),
-                 parse_transport_modes(outputs['transport_modes']),
+        return ( parse_transport_modes(outputs['transport_modes']),
                  parse_transport_networks(outputs['transport_networks']) )
 
     def request( self, plugin_name = 'sample_road_plugin',
@@ -459,7 +455,6 @@ class TempusRequest:
         self.constant_list()
 
         r = "<server_state>" + ET.tostring(self.save['plugins']) \
-            + ET.tostring(self.save['road_types']) \
             + ET.tostring(self.save['transport_modes']) \
             + ET.tostring(self.save['transport_networks']) \
             + "</server_state>"

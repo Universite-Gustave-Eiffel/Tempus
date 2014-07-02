@@ -71,7 +71,7 @@ const Roadmap::Step& Roadmap::step( size_t idx ) const
 
 void Roadmap::add_step( std::auto_ptr<Step> s )
 {
-    steps_.push_back( s.get() );
+    steps_.push_back( s.release() );
 }
 
 }

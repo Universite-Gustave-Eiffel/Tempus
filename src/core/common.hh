@@ -239,20 +239,10 @@ typedef boost::gregorian::date Date;
 typedef boost::posix_time::ptime DateTime;
 
 ///
-/// Refers to tempus.road_type table
-struct RoadType : public Base {
-    std::string name;
-};
-
-///
 /// 2D Points
 struct Point2D {
     double x,y;
 };
-
-///
-/// Road types constants.
-typedef std::map<db_id_t, RoadType> RoadTypes;
 
 ///
 /// Type used to model costs. Either in a Step or as an optimizing criterion.

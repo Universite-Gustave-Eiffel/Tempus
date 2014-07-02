@@ -516,6 +516,7 @@ private:
                     step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
+                roadmap.set_total_cost( CostDuration, roadmap.total_cost(CostDuration) + mstep->cost( CostDuration ) );
                 roadmap.add_step( mstep );
 
                 // build the multimodal edge to find corresponding costs
@@ -523,7 +524,6 @@ private:
                 // we assume the edge exists in these maps
                 //Multimodal::Edge me( *previous, *it );
                 //mstep->costs[ CostDuration ] = potential_map[ vertex_index[*it] ] - potential_map[ vertex_index[*previous] ] - mstep->wait;
-                roadmap.set_total_cost( CostDuration, roadmap.total_cost(CostDuration) + mstep->cost( CostDuration ) );
 
                 it = next;
             }

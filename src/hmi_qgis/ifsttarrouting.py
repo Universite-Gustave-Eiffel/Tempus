@@ -277,7 +277,7 @@ class IfsttarRouting:
         if self.wps is None:
             return
         try:
-            (road_types, transport_modes, transport_networks) = self.wps.constant_list()
+            (transport_modes, transport_networks) = self.wps.constant_list()
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
@@ -742,7 +742,6 @@ class IfsttarRouting:
         xml_record = '<record>' + select_xml
         server_state = to_xml([ 'server_state',
                                 etree.tostring(self.wps.save['plugins']),
-                                etree.tostring(self.wps.save['road_types']), 
                                 etree.tostring(self.wps.save['transport_modes']),
                                 etree.tostring(self.wps.save['transport_networks']) ] )
         xml_record += server_state + '</record>'
