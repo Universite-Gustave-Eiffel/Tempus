@@ -1,4 +1,4 @@
-do $$
+﻿do $$
 begin
 raise notice '==== Init ===';
 end$$;
@@ -561,3 +561,10 @@ alter table tempus.pt_transfer add constraint pt_transfer_to_stop_id_fkey FOREIG
 alter table tempus.pt_stop_time add constraint pt_stop_time_stop_id_fkey FOREIGN KEY (stop_id)
       REFERENCES tempus.pt_stop (id)  ON UPDATE CASCADE ON DELETE CASCADE;
 
+
+CREATE OR REPLACE VIEW tempus.pt_stop_by_network AS
+ SELECT DISTINCT pt_stop.id AS stop_id, pt_stop.vendor_id, pt_stop.name, pt_stop.location_type, pt_stop.parent_station, 
+ pt_route.transport_mode, pt_stop.road_section_id, pt_stop.zone_id, pt_stop.abscissa_road_section, pt_stop.geom, pt_network.id AS network_id
+   FROM tempus.pt_stop, tempus.pt_section, tempus.pt_network, tempus.pt_route, tempus.pt_trip, tempus.pt_stop_time, tempus.pt_frequency
+  WHERE pt_network.id = pt_section.network_id AND (pt_section.stop_from = pt_stop.id OR pt_section.stop_to = pt_stop.id)
+  AND pt_route.id = pt_trip.route_id AND (pt_trip.id = pt_stop_time.trip_id AND pt_stop_time.stop_id = pt_stop.id)

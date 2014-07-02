@@ -1,21 +1,21 @@
--- Tempus - Navteq SQL import Wrapper
+﻿-- Tempus - Navteq SQL import Wrapper
 
 -- Handle direction type
-CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(text, text, boolean)
+CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, boolean)
 RETURNS integer AS $$
 
 DECLARE 
 	tt integer;
 BEGIN
 
-	IF $1 = '1' OR $1 = '2'	 THEN tt := 1;		-- Only cars for motorway and primary road
-	ELSE		     	      tt := 1 + 2 + 4 + 512;
+	IF $1 = '1' OR $1 = '2'	 THEN tt := 4;		-- Only cars for motorway and primary road
+	ELSE		     	      tt := 1 + 2 + 4;
 	END IF; 
 
 	IF     $2 IS NULL 					THEN RETURN tt;
 	ELSIF  $2 = 'B'						THEN RETURN tt;
 	ELSIF ($2 = 'F' AND $3) OR ($2 = 'T' AND NOT $3) 	THEN RETURN tt;
-	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 2; -- oneway: pedestrians only
+	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 1; -- oneway: pedestrians only
 	END IF;
 
 	RETURN NULL;
@@ -27,7 +27,6 @@ $$ LANGUAGE plpgsql;
 INSERT INTO tempus.road_node
 	SELECT
                 DISTINCT id,
-                true as junction,
                 false as bifurcation
         FROM 
 		(SELECT ref_in_id AS id  FROM _tempus_import.streets
@@ -57,9 +56,10 @@ where
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_from_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_to_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_road_type_fkey;
+ALTER TABLE tempus.road_section_speed DROP CONSTRAINT road_section_speed_road_section_id_fkey; 
 ALTER TABLE tempus.poi DROP CONSTRAINT poi_road_section_id_fkey;
 ALTER TABLE tempus.pt_stop DROP CONSTRAINT pt_stop_road_section_id_fkey;
-ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey;
+ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey; 
 
 -- Proceed to INSERT
 INSERT INTO tempus.road_section 
@@ -79,23 +79,11 @@ SELECT
 	ref_in_id AS node_from,
 	nref_in_id AS node_to,
 
-	_tempus_import.navteq_transport_direction(route_type, dir_travel, 't') AS transport_type_ft,
-	_tempus_import.navteq_transport_direction(route_type, dir_travel, 'f') AS transport_type_tf,
+	_tempus_import.navteq_transport_direction(route_type::character varying, dir_travel::character varying, true) AS transport_type_ft,
+	_tempus_import.navteq_transport_direction(route_type::character varying, dir_travel::character varying, false) AS transport_type_tf,
 
 	ST_Length(geom) AS length,
 	fr_spd_lim AS car_speed_limit,
-
-	CASE speed_cat::integer
-		WHEN 1 THEN 130 
-		WHEN 2 THEN 115
-		WHEN 3 THEN 95
-		WHEN 4 THEN 80
-		WHEN 5 THEN 60
-		WHEN 6 THEN 40
-		WHEN 7 THEN 20
-		WHEN 8 THEN 8
-		ELSE NULL 
-	END AS car_average_speed,
 
 	st_name AS road_name,
 
@@ -123,23 +111,40 @@ ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 	PRIMARY KEY (id);
 
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
-	FOREIGN KEY (node_from) REFERENCES tempus.road_node;
+	FOREIGN KEY (node_from) REFERENCES tempus.road_node; 
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
-	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id);
-
+	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id); 
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_road_type_fkey
-	FOREIGN KEY (road_type) REFERENCES tempus.road_type(id);
+	FOREIGN KEY (road_type) REFERENCES tempus.road_type(id); 
+
+ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_section_id_fkey
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
 ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
+
+INSERT INTO tempus.road_section_speed
+(
+SELECT link_id,0, 5, 
+CASE speed_cat::integer
+		WHEN 1 THEN 130 
+		WHEN 2 THEN 115
+		WHEN 3 THEN 95
+		WHEN 4 THEN 80
+		WHEN 5 THEN 60
+		WHEN 6 THEN 40
+		WHEN 7 THEN 20
+		WHEN 8 THEN 8
+		ELSE NULL 
+	END AS car_average_speed
+	FROM _tempus_import.streets);
 
 
 -- Set bifurcation flag
 update tempus.road_node
 set
-        bifurcation = true,
-        junction = false
+        bifurcation = true
 where id in 
 (
         select
@@ -159,68 +164,142 @@ where id in
 
 -- TABLE road_restriction
 INSERT INTO tempus.road_restriction
-select
-	mcond_id as id,
-	array_agg(link order by mseq_number) as sections
-from
+SELECT
+	mcond_id AS id,
+	array_agg(link ORDER BY mseq_number) AS sections
+FROM
 (
-
 -- select first link id of the sequence
-select
-	*,
-	cdms.cond_id::bigint as mcond_id,
-	rdms.link_id::bigint as link,
-	0 as mseq_number -- first item of the sequence
-from
-	_tempus_import.cdms as cdms
-join
-	_tempus_import.rdms as rdms
-on
-	cdms.cond_id = rdms.cond_id
-where
-	cond_type = 7
-and
-        seq_number = 1 -- only select the first item of the sequence
-union
-
--- union with remaining link ids
-select
-	*,
-	cdms.cond_id::bigint as mcond_id,
-	man_linkid::bigint as link,
-	seq_number as mseq_number -- here seq_number >= 1
-from
-	_tempus_import.cdms as cdms
-join
-	_tempus_import.rdms as rdms
-on
-	cdms.cond_id = rdms.cond_id
-where
-	cond_type = 7
-) as t
-group by
-	mcond_id
+	(
+	SELECT
+		cdms.cond_id::bigint AS mcond_id,
+		rdms.link_id::bigint AS link,
+		0 as mseq_number -- first item of the sequence
+	FROM _tempus_import.cdms AS cdms
+	JOIN _tempus_import.rdms AS rdms
+	ON cdms.cond_id = rdms.cond_id
+	WHERE (cond_type = 7 OR cond_type = 1) -- 7 for driving manoeuvres, 1 for tolls 
+		AND seq_number = 1 -- only select the first item of the sequence
+	)
+	UNION
+	(
+	-- union with remaining link ids
+	SELECT
+		cdms.cond_id::bigint as mcond_id,
+		man_linkid::bigint as link,
+		seq_number as mseq_number -- here seq_number >= 1
+	FROM _tempus_import.cdms as cdms
+	JOIN _tempus_import.rdms as rdms
+	ON cdms.cond_id = rdms.cond_id
+	WHERE (cond_type = 7 OR cond_type = 1)  -- 7 for driving manoeuvres, 1 for tolls
+	)
+) AS t
+GROUP BY mcond_id
 ;
 
 --
 -- TABLE tempus.road_restriction_cost 
-INSERT INTO tempus.road_restriction_cost
+INSERT INTO tempus.road_restriction_time_penalty
 SELECT
-	cond_id::bigint as id,
         cond_id::bigint as restriction_id,
-	case when ar_auto = 'Y' then 1 else 0 end
-	+ case when ar_bus = 'Y' then 8 else 0 end
-	--+ case when ar_taxis = 'Y' then ?? else 0 end
-	+ case when ar_carpool = 'Y' then 256 else 0 end
-	+ case when ar_pedstrn = 'Y' then 2 else 0 end
-	--+ case when ar_trucks = 'Y' then ?? else 0 end
-	as transport_types,
-        'Infinity'::float as cost
+        0 as period_id, 
+	case when ar_auto = 'Y' then 4 else 0 end
+	+ case when ar_bus = 'Y' then 64 else 0 end 
+	+ case when ar_taxis = 'Y' then 8 else 0 end
+	+ case when ar_carpool = 'Y' then 16 else 0 end
+	+ case when ar_pedstrn = 'Y' then 1 else 0 end
+	+ case when ar_trucks = 'Y' then 32 else 0 end
+	as traffic_rules,
+        'Infinity'::float as time_value
 FROM
 	_tempus_import.cdms as cdms
 WHERE
-        cond_type = 7;
+        cond_type = 7
+        ORDER BY traffic_rules DESC;
+
+INSERT INTO tempus.road_restriction_toll
+SELECT
+        cond_id::bigint as restriction_id,
+        0 as period_id, 
+	case when ar_auto = 'Y' then 4 else 0 end
+	+ case when ar_bus = 'Y' then 64 else 0 end 
+	+ case when ar_taxis = 'Y' then 8 else 0 end
+	+ case when ar_carpool = 'Y' then 16 else 0 end
+	+ case when ar_pedstrn = 'Y' then 1 else 0 end
+	+ case when ar_trucks = 'Y' then 32 else 0 end
+	as toll_rules,
+        NULL AS toll_value
+FROM
+	_tempus_import.cdms as cdms
+WHERE
+        cond_type = 1; 
+
+-- Updates the road traffic direction with table cdms (cond_type = 5)
+UPDATE tempus.road_section
+SET traffic_rules_ft = traffic_rules_ft + 
+	case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 4) = 0) then 4 else 0 end
+	+ case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 8) = 0) then 8 else 0 end
+	+ case when ar_carpool = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 16) = 0) then 16 else 0 end
+	+ case when ar_pedstrn = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 1) = 0)then 1 else 0 end
+	+ case when ar_bus = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 2) = 0)then 66 else 0 end, -- bicycles are considered allowed to ride on bus lanes
+    traffic_rules_tf = traffic_rules_tf + 
+        case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 4) = 0) then 4 else 0 end
+	+ case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 8) = 0) then 8 else 0 end
+	+ case when ar_carpool = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 16) = 0) then 16 else 0 end
+	+ case when ar_pedstrn = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 1) = 0)then 1 else 0 end
+	+ case when ar_bus = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 2) = 0) then 66 else 0 end -- bicycles are considered allowed to ride on bus lanes
+FROM _tempus_import.cdms as cdms
+WHERE cdms.cond_type = 5 AND cdms.link_id = road_section.id; 
+
+-- Deleting road restrictions associated to unreferenced road sections 
+DELETE FROM tempus.road_restriction_time_penalty WHERE restriction_id IN
+(
+	SELECT distinct id
+	FROM
+	(
+		SELECT q.id, q.road_section, q.rang, s.node_from, s.node_to
+		FROM 
+		(SELECT road_restriction.id, unnest(road_restriction.sections) as road_section, tempus.array_search(unnest(road_restriction.sections), sections) as rang
+		  FROM tempus.road_restriction) as q
+		LEFT JOIN tempus.road_section as s
+			ON s.id=q.road_section
+	) t
+	WHERE node_from IS NULL 
+); 
+
+DELETE FROM tempus.road_restriction_toll WHERE restriction_id IN
+(
+	SELECT distinct id
+	FROM
+	(
+		SELECT q.id, q.road_section, q.rang, s.node_from, s.node_to
+		FROM 
+		(
+		SELECT road_restriction.id, unnest(road_restriction.sections) as road_section, tempus.array_search(unnest(road_restriction.sections), sections) as rang
+		  FROM tempus.road_restriction) as q
+		LEFT JOIN tempus.road_section as s
+			ON s.id=q.road_section
+	) t
+	WHERE node_from is null
+); 
+
+DELETE FROM tempus.road_restriction WHERE id IN
+(
+	SELECT distinct id
+	FROM
+	(
+		SELECT q.id, q.road_section, q.rang, s.node_from, s.node_to
+		FROM 
+		(
+		SELECT road_restriction.id, unnest(road_restriction.sections) as road_section, tempus.array_search(unnest(road_restriction.sections), sections) as rang
+		  FROM tempus.road_restriction) as q
+		LEFT JOIN tempus.road_section as s
+			ON s.id=q.road_section
+	) t
+	WHERE node_from is null
+); 
 
 
--- Remove import function (direction type)
-DROP FUNCTION _tempus_import.navteq_transport_direction(text, text, boolean);
+
+-- Removing import function (direction type)
+DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, boolean);
