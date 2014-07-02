@@ -89,12 +89,12 @@ public:
 		
             case Multimodal::Edge::Road2Transport: {
                 // find the road section where the stop is attached to
-                const PublicTransport::Graph& pt_graph = *( e.target.pt_graph );
-                double abscissa = pt_graph[ e.target.pt_vertex ].abscissa_road_section();
-                Road::Edge road_e = pt_graph[ e.target.pt_vertex ].road_edge();
+                const PublicTransport::Graph& pt_graph = *( e.target.pt_graph() );
+                double abscissa = pt_graph[ e.target.pt_vertex() ].abscissa_road_section();
+                Road::Edge road_e = pt_graph[ e.target.pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
+                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
@@ -108,12 +108,12 @@ public:
 					
             case Multimodal::Edge::Transport2Road: {
                 // find the road section where the stop is attached to
-                const PublicTransport::Graph& pt_graph = *( e.source.pt_graph );
-                double abscissa = pt_graph[ e.source.pt_vertex ].abscissa_road_section();
-                Road::Edge road_e = pt_graph[ e.source.pt_vertex ].road_edge();
+                const PublicTransport::Graph& pt_graph = *( e.source.pt_graph() );
+                double abscissa = pt_graph[ e.source.pt_vertex() ].abscissa_road_section();
+                Road::Edge road_e = pt_graph[ e.source.pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
+                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
@@ -176,11 +176,11 @@ public:
                 break; 
 					
             case Multimodal::Edge::Road2Poi: {
-                Road::Edge road_e = e.target.poi->road_edge();
-                double abscissa = e.target.poi->abscissa_road_section();
+                Road::Edge road_e = e.target.poi()->road_edge();
+                double abscissa = e.target.poi()->abscissa_road_section();
 
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
+                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
@@ -192,11 +192,11 @@ public:
             }
                 break;
             case Multimodal::Edge::Poi2Road: {
-                Road::Edge road_e = e.source.poi->road_edge();
-                double abscissa = e.source.poi->abscissa_road_section();
+                Road::Edge road_e = e.source.poi()->road_edge();
+                double abscissa = e.source.poi()->abscissa_road_section();
 
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex ) {
+                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
@@ -224,9 +224,9 @@ public:
             const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
             // Parking search time for initial mode
             if ( initial_mode.need_parking() ) {
-                if ( ( ( src.type == Multimodal::Vertex::Road )  &&
-                       ( (graph.road[ src.road_vertex ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
-                     || ( (src.type == Multimodal::Vertex::Poi ) && ( (src.poi)->has_parking_transport_mode( initial_mode.db_id() )) ) )
+                if ( ( ( src.type() == Multimodal::Vertex::Road )  &&
+                       ( (graph.road[ src.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
+                     || ( (src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( initial_mode.db_id() )) ) )
                 {
                     // FIXME more complex than that
                     if (initial_mode.traffic_rules() & TrafficRuleCar ) 
@@ -239,7 +239,7 @@ public:
             }
 
             if ( ( transf_t < std::numeric_limits<double>::max() ) && final_mode.is_shared() ) {
-                if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( final_mode.db_id() ) )) {
+                if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
                     // FIXME replace 1 by time to take a shared vehicle
                     transf_t += 1;
                 }
@@ -249,7 +249,7 @@ public:
             }
 
             if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
-                if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( initial_mode.db_id() ) )) {
+                if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) )) {
                     // FIXME replace 1 by time to park a shared vehicle
                     transf_t += 1;
                 }
@@ -261,7 +261,7 @@ public:
             // Taking vehicle time for final mode 
             // FIXME add private parking location test
             if ( ( transf_t < std::numeric_limits<double>::max() ) && ( final_mode.need_parking() ) ) {
-                if (( tgt.type == Multimodal::Vertex::Poi ) && ( tgt.poi->has_parking_transport_mode( final_mode.db_id() ) )) {
+                if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
                     // vehicles parked on a POI
                     transf_t += 1;
                 }

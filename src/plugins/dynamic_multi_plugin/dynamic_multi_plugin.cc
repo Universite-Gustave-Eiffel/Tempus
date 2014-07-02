@@ -82,7 +82,7 @@ public:
 
     void examine_vertex( const Triple& t, const Multimodal::Graph& )
     {
-        if ( t.vertex.type == Multimodal::Vertex::Road && t.vertex.road_vertex == destination_ ) {
+        if ( t.vertex.type() == Multimodal::Vertex::Road && t.vertex.road_vertex() == destination_ ) {
             if ( !walk_at_destination_ || (walk_at_destination_ && t.mode == 1) ) {
                 throw path_found_exception( t );
             }
@@ -468,12 +468,12 @@ private:
             for ( ; next != path.end(); ++next ) {
                 std::auto_ptr<Roadmap::Step> mstep;
 
-                if ( it->mode == next->mode && it->vertex.type == Multimodal::Vertex::Road && next->vertex.type == Multimodal::Vertex::Road ) {
+                if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::Road && next->vertex.type() == Multimodal::Vertex::Road ) {
                     mstep.reset( new Roadmap::RoadStep() );
                     Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( mstep.get() );
                     Road::Edge e;
                     bool found = false;
-                    boost::tie( e, found ) = edge( it->vertex.road_vertex, next->vertex.road_vertex, *it->vertex.road_graph ); 
+                    boost::tie( e, found ) = edge( it->vertex.road_vertex(), next->vertex.road_vertex(), *it->vertex.road_graph() ); 
 
                     if ( !found ) {
                         throw std::runtime_error( "Can't find the road edge !" );
@@ -484,12 +484,12 @@ private:
                     step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
-                else if ( it->mode == next->mode && it->vertex.type == Multimodal::Vertex::PublicTransport && next->vertex.type == Multimodal::Vertex::PublicTransport ) {
+                else if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
                     mstep.reset( new Roadmap::PublicTransportStep() );
                     Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep.get() );
                     PublicTransport::Edge e;
                     bool found = false;
-                    boost::tie( e, found ) = edge( it->vertex.pt_vertex, next->vertex.pt_vertex, *(it->vertex).pt_graph ); 
+                    boost::tie( e, found ) = edge( it->vertex.pt_vertex(), next->vertex.pt_vertex(), *(it->vertex).pt_graph() ); 
 
                     if ( !found ) 
                         throw std::runtime_error( "Can't find the pt edge !" ); 
@@ -500,7 +500,7 @@ private:
 				
                     // find the network_id
                     for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {
-                        if ( it->vertex.pt_graph == &nit->second ) {
+                        if ( it->vertex.pt_graph() == &nit->second ) {
                             step->set_network_id(nit->first);
                             break;
                         }

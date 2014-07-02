@@ -400,32 +400,32 @@ Result& Plugin::result()
                 switch ( edge->connection_type() ) {
                 case Multimodal::Edge::Road2Transport: {
                     is_road_pt = true;
-                    const Road::Graph& rroad_graph = *( edge->source.road_graph );
-                    const PublicTransport::Graph& pt_graph = *( edge->target.pt_graph );
-                    road_id = rroad_graph[ edge->source.road_vertex ].db_id();
-                    pt_id = pt_graph[ edge->target.pt_vertex ].db_id();
+                    const Road::Graph& rroad_graph = *( edge->source.road_graph() );
+                    const PublicTransport::Graph& pt_graph = *( edge->target.pt_graph() );
+                    road_id = rroad_graph[ edge->source.road_vertex() ].db_id();
+                    pt_id = pt_graph[ edge->target.pt_vertex() ].db_id();
                 }
                 break;
                 case Multimodal::Edge::Transport2Road: {
                     is_road_pt = true;
-                    const PublicTransport::Graph& pt_graph = *( edge->source.pt_graph );
-                    const Road::Graph& rroad_graph = *( edge->target.road_graph );
-                    pt_id = pt_graph[ edge->source.pt_vertex ].db_id();
-                    road_id = rroad_graph[ edge->target.road_vertex ].db_id();
+                    const PublicTransport::Graph& pt_graph = *( edge->source.pt_graph() );
+                    const Road::Graph& rroad_graph = *( edge->target.road_graph() );
+                    pt_id = pt_graph[ edge->source.pt_vertex() ].db_id();
+                    road_id = rroad_graph[ edge->target.road_vertex() ].db_id();
                 }
                 break;
                 case Multimodal::Edge::Road2Poi: {
                     is_road_poi = true;
-                    const Road::Graph& rroad_graph = *( edge->source.road_graph );
-                    road_id = rroad_graph[ edge->source.road_vertex ].db_id();
-                    poi_id = edge->target.poi->db_id();
+                    const Road::Graph& rroad_graph = *( edge->source.road_graph() );
+                    road_id = rroad_graph[ edge->source.road_vertex() ].db_id();
+                    poi_id = edge->target.poi()->db_id();
                 }
                 break;
                 case Multimodal::Edge::Poi2Road: {
                     is_road_poi = true;
-                    const Road::Graph& rroad_graph = *( edge->target.road_graph );
-                    road_id = rroad_graph[ edge->target.road_vertex ].db_id();
-                    poi_id = edge->source.poi->db_id();
+                    const Road::Graph& rroad_graph = *( edge->target.road_graph() );
+                    road_id = rroad_graph[ edge->target.road_vertex() ].db_id();
+                    poi_id = edge->source.poi()->db_id();
                 }
                 break;
                 default:

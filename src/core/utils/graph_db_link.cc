@@ -58,15 +58,15 @@ Point2D coordinates( const POI* poi, Db::Connection& db )
 
 Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& )
 {
-    if ( v.type == Multimodal::Vertex::Road ) {
-        return coordinates( v.road_vertex, db, *v.road_graph );
+    if ( v.type() == Multimodal::Vertex::Road ) {
+        return coordinates( v.road_vertex(), db, *v.road_graph() );
     }
-    else if ( v.type == Multimodal::Vertex::PublicTransport ) {
-        return coordinates( v.pt_vertex, db, *v.pt_graph );
+    else if ( v.type() == Multimodal::Vertex::PublicTransport ) {
+    return coordinates( v.pt_vertex(), db, *v.pt_graph() );
     }
 
     // else
-    return coordinates( v.poi, db );
+return coordinates( v.poi(), db );
 }
 
 }

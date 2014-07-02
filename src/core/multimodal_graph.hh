@@ -18,6 +18,8 @@
 #ifndef TEMPUS_MULTIMODAL_GRAPH_HH
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
+#include <boost/variant.hpp>
+
 #include "common.hh"
 #include "transport_modes.hh"
 #include "road_graph.hh"
@@ -49,39 +51,79 @@ namespace Tempus {
 /// A Multimodal::Graph is a Road::Graph, a list of PublicTransport::Graph and a list of POIs
 ///
 namespace Multimodal {
+
+class VertexImpl;
 ///
 /// A Multimodal::Vertex is either a Road::Vertex or PublicTransport::Vertex on a particular public transport network
 struct Vertex {
-    enum VertexType {
-        Road,            /// This vertex is a road vertex
-        PublicTransport, /// This vertex is a public transport stop
-        Poi              /// This vertex is a POI
-    };
-    VertexType type;
-
-    union {
-        const Road::Graph* road_graph;
-        const PublicTransport::Graph* pt_graph;
-        const POI* poi;
-    };
-
-    ///
-    /// The road vertex if this is relevant ( cannot be stored in a union since it has non trivial constructors )
-    Road::Vertex road_vertex;
-    ///
-    /// The public transport vertex if this is relevant ( cannot be stored in a union since it has non trivial constructors )
-    PublicTransport::Vertex pt_vertex;
-
+public:
     ///
     /// Comparison operator
     bool operator==( const Vertex& v ) const;
     bool operator!=( const Vertex& v ) const;
     bool operator<( const Vertex& v ) const;
 
-    Vertex() {}
+    /// A null vertex
+    Vertex();
+    /// A road vertex
     Vertex( const Road::Graph* graph, Road::Vertex vertex );
+    /// A public transport vertex
     Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex );
-    Vertex( const POI* poi );
+    /// A POI vertex
+    explicit Vertex( const POI* poi );
+
+    enum VertexType {
+        Road = 0,        /// This vertex is a road vertex
+        PublicTransport, /// This vertex is a public transport stop
+        Poi              /// This vertex is a POI
+    };
+    VertexType type() const;
+
+    bool is_null() const;
+
+    /// Access to the underlying road graph
+    /// @returns the road graph or 0 if it's not a road vertex
+    const Road::Graph* road_graph() const;
+    /// @returns the road vertex on the road graph if it's a road vertex
+    Road::Vertex road_vertex() const;
+
+    /// @returns the public transport graph or 0 if it's not a pt vertex
+    const PublicTransport::Graph* pt_graph() const;
+    /// @returns the pt vertex on the pt graph if it's a pt vertex
+    PublicTransport::Vertex pt_vertex() const;
+
+    /// @returns the POI, if it's a POI, or 0
+    const POI* poi() const;
+
+private:
+    struct RoadVertex_
+    {
+        const Road::Graph* graph;
+        Road::Vertex vertex;
+        RoadVertex_() : graph(0) {}
+        RoadVertex_( const Road::Graph* g, const Road::Vertex& v ) : graph(g), vertex(v) {}
+        bool operator==( const RoadVertex_& other ) const {
+            return graph == other.graph && vertex == other.vertex;
+        }
+        bool operator< (const RoadVertex_& other ) const {
+            return graph == other.graph ? vertex < other.vertex : graph < other.graph;
+        }
+    };
+    struct PtVertex_
+    {
+        const PublicTransport::Graph* graph;
+        PublicTransport::Vertex vertex;
+        PtVertex_() : graph(0) {}
+        PtVertex_( const PublicTransport::Graph* g, const PublicTransport::Vertex& v) : graph(g), vertex(v) {}
+        bool operator==( const PtVertex_& other ) const {
+            return graph == other.graph && vertex == other.vertex;
+        }
+        bool operator< (const PtVertex_& other ) const {
+            return graph == other.graph ? vertex < other.vertex : graph < other.graph;
+        }
+    };
+    bool is_null_;
+    boost::variant< RoadVertex_, PtVertex_, const POI * > union_;
 };
 
 ///
