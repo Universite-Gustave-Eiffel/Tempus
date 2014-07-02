@@ -509,8 +509,8 @@ private:
                 }
                 else {
                     // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-                    mstep.reset( new Roadmap::GenericStep( Multimodal::Edge( it->vertex, next->vertex ) ) );
-                    Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>(mstep.get());
+                    mstep.reset( new Roadmap::TransferStep( Multimodal::Edge( it->vertex, next->vertex ) ) );
+                    Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>(mstep.get());
                     step->set_transport_mode( it->mode );
                     step->set_final_mode( next->mode );
                     step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );

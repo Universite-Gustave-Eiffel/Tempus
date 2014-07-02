@@ -39,7 +39,7 @@ public:
         enum StepType {
             RoadStep,
             PublicTransportStep,
-            GenericStep
+            TransferStep
         };
         DECLARE_RW_PROPERTY( step_type, StepType );
 
@@ -132,9 +132,9 @@ public:
     /// A generic step from a vertex to another
     /// Inherits from Step as well as from Multimodal::Edge
     /// This is used to represent a step from a mode to another (road, public transport, poi, etc)
-    struct GenericStep : public Step, public Multimodal::Edge {
-        GenericStep() : Step( Step::GenericStep ), Edge() {}
-        GenericStep( const Multimodal::Edge& edge ) : Step( Step::GenericStep ), Edge( edge ) {}
+    struct TransferStep : public Step, public Multimodal::Edge {
+        TransferStep() : Step( Step::TransferStep ), Edge() {}
+        TransferStep( const Multimodal::Edge& edge ) : Step( Step::TransferStep ), Edge( edge ) {}
 
         ///
         /// Road name, if relevant
@@ -143,8 +143,8 @@ public:
         /// Final transport mode id
         DECLARE_RW_PROPERTY( final_mode, db_id_t );
 
-        virtual GenericStep* clone() const {
-            return new GenericStep( *this );
+        virtual TransferStep* clone() const {
+            return new TransferStep( *this );
         }
     };
 

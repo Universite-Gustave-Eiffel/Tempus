@@ -390,8 +390,8 @@ Result& Plugin::result()
         Roadmap::RoadStep::EndMovement movement;
 
         for ( Roadmap::StepIterator it = roadmap.begin(); it != roadmap.end(); it++ ) {
-            if ( it->step_type() == Roadmap::Step::GenericStep ) {
-                Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( &*it );
+            if ( it->step_type() == Roadmap::Step::TransferStep ) {
+                Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>( &*it );
                 Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
 
                 bool is_road_pt = false, is_road_poi = false;

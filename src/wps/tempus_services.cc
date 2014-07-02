@@ -478,8 +478,8 @@ public:
                     XML::set_prop( step_node, "arrival_stop", arrival_str );
                     XML::set_prop( step_node, "trip", to_string( step->trip_id() ) );
                 }
-                else if ( sit->step_type() == Roadmap::Step::GenericStep ) {
-                    const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );
+                else if ( sit->step_type() == Roadmap::Step::TransferStep ) {
+                    const Roadmap::TransferStep* step = static_cast<const Roadmap::TransferStep*>( &*sit );
                     const Multimodal::Edge* edge = static_cast<const Multimodal::Edge*>( step );
 
                     std::string road_name, stop_name;
