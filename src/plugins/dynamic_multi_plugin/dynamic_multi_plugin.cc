@@ -103,6 +103,19 @@ private:
     typedef std::map< Triple, db_id_t > TripMap; 
     typedef std::map< Triple, Triple > PredecessorMap; 
 
+
+// variables to retain between two requests
+struct StaticVariables
+{
+    Date current_day; // Day for which timetable or frequency data are loaded
+    Automaton<Road::Edge> automaton;
+    TimetableMap timetable; // Timetable data for the current request
+    FrequencyMap frequency; // Frequency data for the current request
+
+    StaticVariables() : current_day( boost::gregorian::from_string("2013/11/12") )
+    {}
+};
+
     class DynamicMultiPlugin : public Plugin {
     public:
 
@@ -141,16 +154,14 @@ private:
         double time_algo_; // Time elapsed for process()
     
         // Other attributes
-        TimetableMap timetable_; // Timetable data for the current request
-        FrequencyMap frequency_; // Frequency data for the current request
         Multimodal::Vertex destination_; // Current request destination 
-        static Date current_day_; // Day for which timetable or frequency data are loaded
-        static Automaton<Road::Edge> automaton_; 
         map< Multimodal::Vertex, db_id_t > available_vehicles_; 
         PotentialMap potential_map_;     
         PredecessorMap pred_map_; 
         PotentialMap wait_map_; 
         TripMap trip_map_; 
+
+        static StaticVariables s_;
 	
     public: 
         static void post_build() { 
@@ -160,13 +171,13 @@ private:
             Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph );
             std::cout << "Turn restrictions imported" << std::endl;
 		
-            automaton_.build_graph( restrictions ) ;
+            s_.automaton.build_graph( restrictions ) ;
             std::cout << "Automaton built" << std::endl; 
 		
             std::ofstream ofs("all_movements_edge_automaton.dot"); // output to graphviz
-            Automaton<Road::Edge>::NodeWriter nodeWriter( automaton_.automaton_graph_ );
-            Automaton<Road::Edge>::ArcWriter arcWriter( automaton_.automaton_graph_, road_graph );
-            boost::write_graphviz( ofs, automaton_.automaton_graph_, nodeWriter, arcWriter);
+            Automaton<Road::Edge>::NodeWriter nodeWriter( s_.automaton.automaton_graph_ );
+            Automaton<Road::Edge>::ArcWriter arcWriter( s_.automaton.automaton_graph_, road_graph );
+            boost::write_graphviz( ofs, s_.automaton.automaton_graph_, nodeWriter, arcWriter);
             std::cout << "Automaton exported to graphviz" << std::endl; 
         }
     
@@ -207,9 +218,9 @@ private:
     	
 #if 1
             // If current date changed, reload timetable / frequency
-            if ( current_day_ != request_.steps()[0].constraint().date_time().date() )  {
+            if ( s_.current_day != request_.steps()[0].constraint().date_time().date() )  {
                 std::cout << "load timetable" << std::endl;
-        	current_day_ = request_.steps()[0].constraint().date_time().date();
+        	s_.current_day = request_.steps()[0].constraint().date_time().date();
 
                 // cache graph id to descriptor
                 // FIXME - integrate the cache into the graphs ?
@@ -244,7 +255,7 @@ private:
                                                                 "		FROM tempus.pt_calendar_date	"
                                                                 "		WHERE calendar_date='%1%' AND exception_type=1"
                                                                 "	)"
-                                                                ")") % current_day_ ).str() ); 
+                                                                ")") % s_.current_day ).str() ); 
 				
                     for ( size_t i = 0; i < res.size(); i++ ) {
                         PublicTransport::Vertex departure, arrival; 
@@ -256,8 +267,8 @@ private:
                         TimetableData t; 
                         t.trip_id=res[i][2].as<int>(); 
                         t.arrival_time=res[i][4].as<double>(); 
-                        timetable_.insert( std::make_pair(e, map<double, TimetableData>() ) ); 
-                        timetable_[e].insert( std::make_pair( res[i][3].as<double>(), t ) ) ; 				
+                        s_.timetable.insert( std::make_pair(e, map<double, TimetableData>() ) ); 
+                        s_.timetable[e].insert( std::make_pair( res[i][3].as<double>(), t ) ) ; 				
                     }
                 }
                 else if (timetable_frequency_ == 1) // frequency model
@@ -286,7 +297,7 @@ private:
                                                                 "		FROM tempus.pt_calendar_date	"
                                                                 "		WHERE calendar_date='%1%' AND exception_type=1"
                                                                 "	)"
-                                                                ")") % current_day_ ).str() ); 
+                                                                ")") % s_.current_day ).str() ); 
 				
                     for ( size_t i = 0; i < res.size(); i++ ) {
                         PublicTransport::Vertex departure, arrival; 
@@ -301,8 +312,8 @@ private:
                         f.headway=res[i][5].as<double>(); 
                         f.travel_time=res[i][6].as<double>(); 
 					
-                        frequency_.insert( std::make_pair(e, map<double, FrequencyData>() ) ); 
-                        frequency_[e].insert( std::make_pair( res[i][3].as<double>(), f ) ) ; 	
+                        s_.frequency.insert( std::make_pair(e, map<double, FrequencyData>() ) ); 
+                        s_.frequency[e].insert( std::make_pair( res[i][3].as<double>(), f ) ) ; 	
                     }
                 }
             }
@@ -333,7 +344,7 @@ private:
 
             Triple origin_o;
             origin_o.vertex = origin;
-            origin_o.state = automaton_.initial_state_;
+            origin_o.state = s_.automaton.initial_state_;
             // take the first mode allowed
             origin_o.mode = request_.allowed_modes()[0];
 
@@ -355,7 +366,7 @@ private:
             boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
 
             // Define and initialize the cost calculator
-            CostCalculator cost_calculator( timetable_, frequency_, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
+            CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
 
             //            Tempus::PluginGraphVisitor vis ( this ) ;
             bool walk_at_destination;
@@ -364,7 +375,7 @@ private:
             Triple destination_o;
             bool path_found = false;
             try {
-                combined_ls_algorithm_no_init( graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis );
+                combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis );
             }
             catch ( DestinationDetector::path_found_exception& e ) {
                 // Dijkstra has been short cut when the destination node is reached
@@ -531,8 +542,7 @@ private:
     
     }; 
 
-    Automaton<Road::Edge> DynamicMultiPlugin::automaton_;
-    Date DynamicMultiPlugin::current_day_ = boost::gregorian::from_string("2013/11/12");
+    StaticVariables DynamicMultiPlugin::s_;
 }
 DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin )
 
