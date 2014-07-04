@@ -440,7 +440,7 @@ public:
                     const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                     step_node = XML::new_node( "road_step" );
 
-                    XML::set_prop( step_node, "road", step->road_name() );
+                    XML::set_prop( step_node, "road", graph_.road[step->road_edge()].road_name() );
                     XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
                 }
                 else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
@@ -475,15 +475,15 @@ public:
 
                     const PublicTransport::Graph* pt_graph = 0;
                     bool road_transport = false;
-                    road_name = step->road_name();
+                    road_name = graph_.road[edge->road_edge()].road_name();
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
-                        pt_graph = edge->target.pt_graph();
-                        stop_name = ( *pt_graph )[edge->target.pt_vertex()].name();
+                        pt_graph = edge->target().pt_graph();
+                        stop_name = ( *pt_graph )[edge->target().pt_vertex()].name();
                         road_transport = true;
                     }
                     else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
-                        pt_graph = edge->source.pt_graph();
-                        stop_name = ( *pt_graph )[edge->source.pt_vertex()].name();
+                        pt_graph = edge->source().pt_graph();
+                        stop_name = ( *pt_graph )[edge->source().pt_vertex()].name();
                         road_transport = true;
                     }
 
@@ -510,10 +510,10 @@ public:
                         std::string poi_name = "";
                         step_node = XML::new_node( "transfer_step" );
                         if ( edge->connection_type() == Multimodal::Edge::Road2Poi ) {
-                            poi_name = edge->target.poi()->name();
+                            poi_name = edge->target().poi()->name();
                         }
                         else if ( edge->connection_type() == Multimodal::Edge::Poi2Road ) {
-                            poi_name = edge->source.poi()->name();
+                            poi_name = edge->source().poi()->name();
                         }
                         XML::set_prop( step_node, "type", type_str );
                         XML::set_prop( step_node, "road", road_name );

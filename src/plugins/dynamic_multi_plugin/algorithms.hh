@@ -82,7 +82,7 @@ namespace Tempus {
                     typename Automaton::State s = min_object.state;
                     {
                         bool found;
-                        boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge );
+                        boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge() );
                         // if not found, s == min_object.state
                     }
                     Object new_object;

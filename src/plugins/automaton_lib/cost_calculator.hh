@@ -77,24 +77,19 @@ public:
         {
             switch ( e.connection_type() ) {  
             case Multimodal::Edge::Road2Road: {
-                Road::Edge road_e;
-                bool found;
-                boost::tie( road_e, found ) = road_edge( e );
-                BOOST_ASSERT(found);
-										
-                return road_travel_time( graph.road, road_e, graph.road[ road_e ].length(), mode,
+                return road_travel_time( graph.road, e.road_edge(), graph.road[ e.road_edge() ].length(), mode,
                                          walking_speed_, cycling_speed_ ); 
             }
                 break;
 		
             case Multimodal::Edge::Road2Transport: {
                 // find the road section where the stop is attached to
-                const PublicTransport::Graph& pt_graph = *( e.target.pt_graph() );
-                double abscissa = pt_graph[ e.target.pt_vertex() ].abscissa_road_section();
-                Road::Edge road_e = pt_graph[ e.target.pt_vertex() ].road_edge();
+                const PublicTransport::Graph& pt_graph = *( e.target().pt_graph() );
+                double abscissa = pt_graph[ e.target().pt_vertex() ].abscissa_road_section();
+                Road::Edge road_e = pt_graph[ e.target().pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
+                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
@@ -108,12 +103,12 @@ public:
 					
             case Multimodal::Edge::Transport2Road: {
                 // find the road section where the stop is attached to
-                const PublicTransport::Graph& pt_graph = *( e.source.pt_graph() );
-                double abscissa = pt_graph[ e.source.pt_vertex() ].abscissa_road_section();
-                Road::Edge road_e = pt_graph[ e.source.pt_vertex() ].road_edge();
+                const PublicTransport::Graph& pt_graph = *( e.source().pt_graph() );
+                double abscissa = pt_graph[ e.source().pt_vertex() ].abscissa_road_section();
+                Road::Edge road_e = pt_graph[ e.source().pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
+                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
@@ -176,11 +171,11 @@ public:
                 break; 
 					
             case Multimodal::Edge::Road2Poi: {
-                Road::Edge road_e = e.target.poi()->road_edge();
-                double abscissa = e.target.poi()->abscissa_road_section();
+                Road::Edge road_e = e.target().poi()->road_edge();
+                double abscissa = e.target().poi()->abscissa_road_section();
 
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
+                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
@@ -192,11 +187,11 @@ public:
             }
                 break;
             case Multimodal::Edge::Poi2Road: {
-                Road::Edge road_e = e.source.poi()->road_edge();
-                double abscissa = e.source.poi()->abscissa_road_section();
+                Road::Edge road_e = e.source().poi()->road_edge();
+                double abscissa = e.source().poi()->abscissa_road_section();
 
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source.road_vertex() ) {
+                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
                     return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }

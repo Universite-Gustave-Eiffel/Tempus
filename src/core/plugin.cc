@@ -400,32 +400,32 @@ Result& Plugin::result()
                 switch ( edge->connection_type() ) {
                 case Multimodal::Edge::Road2Transport: {
                     is_road_pt = true;
-                    const Road::Graph& rroad_graph = *( edge->source.road_graph() );
-                    const PublicTransport::Graph& pt_graph = *( edge->target.pt_graph() );
-                    road_id = rroad_graph[ edge->source.road_vertex() ].db_id();
-                    pt_id = pt_graph[ edge->target.pt_vertex() ].db_id();
+                    const Road::Graph& rroad_graph = *( edge->source().road_graph() );
+                    const PublicTransport::Graph& pt_graph = *( edge->target().pt_graph() );
+                    road_id = rroad_graph[ edge->source().road_vertex() ].db_id();
+                    pt_id = pt_graph[ edge->target().pt_vertex() ].db_id();
                 }
                 break;
                 case Multimodal::Edge::Transport2Road: {
                     is_road_pt = true;
-                    const PublicTransport::Graph& pt_graph = *( edge->source.pt_graph() );
-                    const Road::Graph& rroad_graph = *( edge->target.road_graph() );
-                    pt_id = pt_graph[ edge->source.pt_vertex() ].db_id();
-                    road_id = rroad_graph[ edge->target.road_vertex() ].db_id();
+                    const PublicTransport::Graph& pt_graph = *( edge->source().pt_graph() );
+                    const Road::Graph& rroad_graph = *( edge->target().road_graph() );
+                    pt_id = pt_graph[ edge->source().pt_vertex() ].db_id();
+                    road_id = rroad_graph[ edge->target().road_vertex() ].db_id();
                 }
                 break;
                 case Multimodal::Edge::Road2Poi: {
                     is_road_poi = true;
-                    const Road::Graph& rroad_graph = *( edge->source.road_graph() );
-                    road_id = rroad_graph[ edge->source.road_vertex() ].db_id();
-                    poi_id = edge->target.poi()->db_id();
+                    const Road::Graph& rroad_graph = *( edge->source().road_graph() );
+                    road_id = rroad_graph[ edge->source().road_vertex() ].db_id();
+                    poi_id = edge->target().poi()->db_id();
                 }
                 break;
                 case Multimodal::Edge::Poi2Road: {
                     is_road_poi = true;
-                    const Road::Graph& rroad_graph = *( edge->target.road_graph() );
-                    road_id = rroad_graph[ edge->target.road_vertex() ].db_id();
-                    poi_id = edge->source.poi()->db_id();
+                    const Road::Graph& rroad_graph = *( edge->target().road_graph() );
+                    road_id = rroad_graph[ edge->target().road_vertex() ].db_id();
+                    poi_id = edge->source().poi()->db_id();
                 }
                 break;
                 default:
@@ -434,8 +434,7 @@ Result& Plugin::result()
 
                 if ( is_road_pt ) {
                     // get as Linestring from A to B
-                    // also get the road_name where the pt stop is attached to
-                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), t2.road_name from "
+                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
                                                          "(select geom from tempus.road_node where id=%1%) as t1, "
                                                          "(select pt.geom, rs.road_name from tempus.pt_stop as pt, "
                                                          "tempus.road_section as rs where rs.id = pt.road_section_id "
@@ -445,14 +444,12 @@ Result& Plugin::result()
                     Db::Result res = db_.exec( query );
                     BOOST_ASSERT( res.size() > 0 );
                     std::string wkb = res[0][0].as<std::string>();
-                    step->set_road_name( res[0][1].as<std::string>() );
                     // get rid of the heading '\x'
                     step->set_geometry_wkb( wkb.substr( 2 ) );
                 }
                 if ( is_road_poi ) {
                     // get as Linestring from A to B
-                    // also get the road_name
-                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), t2.road_name from "
+                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
                                                          "(select geom from tempus.road_node where id=%1%) as t1, "
                                                          "(select poi.geom, rs.road_name from tempus.poi as poi, "
                                                          "tempus.road_section as rs where rs.id = poi.road_section_id "
@@ -462,7 +459,6 @@ Result& Plugin::result()
                     Db::Result res = db_.exec( query );
                     BOOST_ASSERT( res.size() > 0 );
                     std::string wkb = res[0][0].as<std::string>();
-                    step->set_road_name( res[0][1].as<std::string>() );
                     // get rid of the heading '\x'
                     step->set_geometry_wkb( wkb.substr( 2 ) );
                 }
@@ -489,15 +485,14 @@ Result& Plugin::result()
                 {
                     // reverse the geometry if needed
                     // we also get the road_name here
-                    std::string q = ( boost::format( "SELECT road_name, CASE WHEN node_from=%1%"
+                    std::string q = ( boost::format( "SELECT CASE WHEN node_from=%1%"
                                                      " THEN ST_AsBinary(geom)"
                                                      " ELSE ST_AsBinary(ST_Reverse(geom)) END"
                                                      " FROM tempus.road_section WHERE id=%2%" ) %
                                       road_graph[ source(step->road_edge(), road_graph) ].db_id() %
                                       road_graph[step->road_edge()].db_id() ).str();
                     Db::Result res = db_.exec( q );
-                    step->set_road_name( res[0][0].as<std::string>() );
-                    std::string wkb = res[0][1].as<std::string>();
+                    std::string wkb = res[0][0].as<std::string>();
 
                     // get rid of the heading '\x'
                     if ( wkb.size() > 0 ) {

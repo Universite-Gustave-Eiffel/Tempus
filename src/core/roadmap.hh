@@ -75,10 +75,6 @@ public:
         DECLARE_RW_PROPERTY( road_edge, Road::Edge );
 
         ///
-        /// The road name (field not present in a Road::Section, so copied from the DB here)
-        DECLARE_RW_PROPERTY( road_name, std::string );
-
-        ///
         /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
         ///
         DECLARE_RW_PROPERTY( distance_km, double );
@@ -138,10 +134,6 @@ public:
     struct TransferStep : public Step, public Multimodal::Edge {
         TransferStep() : Step( Step::TransferStep ), Edge() {}
         TransferStep( const Multimodal::Edge& edge ) : Step( Step::TransferStep ), Edge( edge ) {}
-
-        ///
-        /// Road name, if relevant
-        DECLARE_RW_PROPERTY( road_name, std::string );
 
         /// Final transport mode id
         DECLARE_RW_PROPERTY( final_mode, db_id_t );

@@ -127,14 +127,21 @@ private:
 };
 
 ///
-/// A multimodal edge is a pair of multimodal vertices
+/// A multimodal edge is defined with :
+/// * a source vertex
+/// * a destination vertex
+/// * and an orientation for road edges
 struct Edge {
     ///
     /// The source vertex
-    Multimodal::Vertex source;
+    DECLARE_RO_PROPERTY( source, Multimodal::Vertex );
     ///
     /// The target vertex
-    Multimodal::Vertex target;
+    DECLARE_RO_PROPERTY( target, Multimodal::Vertex );
+
+    ///
+    /// The (oriented) road edge involved
+    DECLARE_RO_PROPERTY( road_edge, Road::Edge );
 
     enum ConnectionType {
         UnknownConnection,
@@ -145,11 +152,6 @@ struct Edge {
         Road2Poi,
         Poi2Road
     };
-
-    ///
-    /// The road edge involved
-    Road::Edge road_edge;
-
     ///
     /// Get the connection type of the edge
     ConnectionType connection_type() const;
@@ -158,19 +160,36 @@ struct Edge {
     /// Allowed traffic rules
     unsigned traffic_rules() const;
 
+    /// empty constructor
     Edge() {}
-    Edge( Multimodal::Vertex s, Multimodal::Vertex t ) : source( s ), target( t ) {}
+    /// Generic constructor
+    /// Warning try to call more specialized, faster constructors
+    Edge( const Multimodal::Vertex& s, const Multimodal::Vertex& t );
 
-    bool operator==( const Multimodal::Edge& e ) const {
-        return source == e.source && target == e.target;
-    }
-    bool operator!=( const Multimodal::Edge& e ) const {
-        return source != e.source || target != e.target;
-    }
-    bool operator<( const Multimodal::Edge& e ) const {
-        return source < e.source || ( ( source == e.source ) && target < e.target );
-    }
+    /// Road2Road constructor
+    Edge( const Road::Graph* graph, const Road::Vertex& s, const Road::Vertex& t );
+    /// Transport2Road constructor
+    Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s,
+          const Road::Graph* graph, const Road::Vertex& t );
+    /// Road2Transport constructor
+    Edge( const Road::Graph* graph, const Road::Vertex& s,
+          const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& t );
+    /// Transport2Transport constructor
+    Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s, const PublicTransport::Vertex& t );
+    /// Road2Poi constructor
+    Edge( const Road::Graph* graph, const Road::Vertex& s, const POI* t );
+    /// Poi2Road constructor
+    Edge( const POI* s, const Road::Graph* graph, const Road::Vertex& t );
+
+    bool operator==( const Multimodal::Edge& e ) const;
+    bool operator!=( const Multimodal::Edge& e ) const;
+    bool operator<( const Multimodal::Edge& e ) const;
 };
+
+///
+/// Get the public transport edge if the given edge is a Transport2Transport
+/// else, return false
+std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
 
 ///
 /// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
@@ -453,16 +472,6 @@ size_t out_degree( const Vertex& v, const Graph& graph );
 /// Find an edge, based on a source and target vertex.
 /// It does not implements AdjacencyMatrix, since it does not returns in constant time (linear in the number of edges)
 std::pair< Edge, bool > edge( const Vertex& u, const Vertex& v, const Graph& graph );
-
-///
-/// Get the road edge if the given edge is a Road2Road
-/// else, return false
-std::pair< Road::Edge, bool > road_edge( const Multimodal::Edge& e );
-
-///
-/// Get the public transport edge if the given edge is a Transport2Transport
-/// else, return false
-std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
 
 ///
 /// Overloading of get()

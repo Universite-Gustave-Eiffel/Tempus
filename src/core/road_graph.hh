@@ -101,6 +101,10 @@ struct Section : public Base {
 
     DECLARE_RW_PROPERTY( road_type, RoadType );
 
+    /// name of the road.
+    /// FIXME should be replaced by a reference to a 'road' table
+    DECLARE_RW_PROPERTY( road_name, std::string );
+
     DECLARE_RW_PROPERTY( traffic_rules, int );
     DECLARE_RW_PROPERTY( length, double );
     DECLARE_RW_PROPERTY( car_speed_limit, double );
