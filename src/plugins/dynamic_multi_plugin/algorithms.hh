@@ -91,7 +91,7 @@ namespace Tempus {
                     new_object.state = s;
 
                     double new_pi = get( potential_map, new_object );
-                    db_id_t initial_trip_id = get( trip_map, new_object );
+                    db_id_t initial_trip_id = get( trip_map, min_object );
                     db_id_t final_trip_id ;
                     double wait_time;
 

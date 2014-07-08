@@ -476,7 +476,7 @@ struct StaticVariables
             std::list< Triple >::const_iterator next = ++it;
             --it; 
 
-            for ( ; next != path.end(); ++next ) {
+            for ( ; next != path.end(); ++next, ++it ) {
                 std::auto_ptr<Roadmap::Step> mstep;
 
                 if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::Road && next->vertex.type() == Multimodal::Vertex::Road ) {
@@ -495,10 +495,11 @@ struct StaticVariables
                     step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
-                else if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
+                else if ( it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
                     mstep.reset( new Roadmap::PublicTransportStep() );
                     Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep.get() );
 				
+                    step->set_transport_mode( it->mode );
                     step->set_departure_stop( it->vertex.pt_vertex() );
                     step->set_arrival_stop( next->vertex.pt_vertex() );
                     step->set_trip_id(trip_map_[ *it ]);
@@ -524,14 +525,6 @@ struct StaticVariables
 
                 roadmap.set_total_cost( CostDuration, roadmap.total_cost(CostDuration) + mstep->cost( CostDuration ) );
                 roadmap.add_step( mstep );
-
-                // build the multimodal edge to find corresponding costs
-                // we don't use edge() since it will loop over the whole graph each time
-                // we assume the edge exists in these maps
-                //Multimodal::Edge me( *previous, *it );
-                //mstep->costs[ CostDuration ] = potential_map[ vertex_index[*it] ] - potential_map[ vertex_index[*previous] ] - mstep->wait;
-
-                it = next;
             }
 	}
 

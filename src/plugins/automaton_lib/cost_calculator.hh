@@ -127,17 +127,19 @@ public:
                 BOOST_ASSERT(found);
 						
                 // Timetable travel time calculation
-                if (timetable_.find( pt_e ) != timetable_.end() ) {
-                    std::map< double, TimetableData >::iterator it = timetable_.find( pt_e )->second.lower_bound( initial_time ) ;  
-                    if ( it != timetable_.find( pt_e )->second.end() ) { 								
+                TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
+                if ( pt_e_it != timetable_.end() ) {
+                    const std::map<double,TimetableData>& tt = pt_e_it->second;
+                    std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;  
+                    if ( it != tt.end() ) { 								
                         if (it->second.trip_id == initial_trip_id ) { 
                             final_trip_id = it->second.trip_id; 
                             wait_time = 0; 
                             return it->second.arrival_time - initial_time ; 
                         } 
                         else { // No connection without transfer found
-                            it = timetable_.find( pt_e )->second.lower_bound( initial_time + min_transfer_time_ ); 
-                            if ( it != timetable_.find( pt_e )->second.end() ) {
+                            it = tt.lower_bound( initial_time + min_transfer_time_ ); 
+                            if ( it != tt.end() ) {
                                 final_trip_id = it->second.trip_id; 
                                 wait_time = it->first - initial_time ; 
                                 return it->second.arrival_time - initial_time ; 
