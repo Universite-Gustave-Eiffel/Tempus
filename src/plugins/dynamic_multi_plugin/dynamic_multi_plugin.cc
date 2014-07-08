@@ -19,6 +19,7 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/iteration_macros.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
 
 
 #include "plugin.hh"
@@ -53,16 +54,8 @@ namespace Tempus {
 	}
         bool operator<( const Triple& other ) const
         {
-            // impose an order
-            if ( vertex == other.vertex ) {
-                if ( state == other.state ) {
-                    return mode < other.mode;
-                }
-                else {
-                    return state < other.state;
-                }
-            }
-            return vertex < other.vertex;
+            // use tuple comparison operator (lexicographical search)
+            return boost::tie( vertex,state,mode ) < boost::tie( other.vertex, other.state, other.mode );
         }
     };
 
