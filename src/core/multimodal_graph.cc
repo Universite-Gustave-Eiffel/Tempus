@@ -106,6 +106,16 @@ PublicTransport::Vertex Vertex::pt_vertex() const
     return get<PtVertex_>( union_ ).vertex;
 }
 
+Road::Node get_road_node( const Multimodal::Vertex& v )
+{
+    return (*v.road_graph())[v.road_vertex()];
+}
+
+PublicTransport::Stop get_pt_stop( const Multimodal::Vertex& v )
+{
+    return (*v.pt_graph())[v.pt_vertex()];
+}
+
 const POI* Vertex::poi() const
 {
     if ( is_null_ || union_.which() != 2 ) {
