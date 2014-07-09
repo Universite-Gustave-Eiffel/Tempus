@@ -394,6 +394,12 @@ Result& Plugin::result()
         std::vector< std::pair< db_id_t, db_id_t > > accum_pt;
         Roadmap::PublicTransportStep* pt_first = 0;
 
+        // road step accumulator
+        std::vector< db_id_t > accum_road;
+
+        // cost accumulator
+        Costs accum_costs;
+
         Roadmap::StepIterator it = roadmap.begin();
         Roadmap::StepIterator next = it;
         next++;
@@ -478,7 +484,12 @@ Result& Plugin::result()
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
                 PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id()];
 
+                // store stops
                 accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );
+                // accumulate costs
+                for ( Costs::const_iterator cit = step->costs().begin(); cit != step->costs().end(); ++cit ) {
+                    accum_costs[cit->first] += cit->second;
+                }
                 if ( !pt_first ) {
                     pt_first = step;
                 }
@@ -523,22 +534,39 @@ Result& Plugin::result()
 
                 accum_pt.clear();
                 pt_first = 0;
+                accum_costs.clear();
             }
             else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 
                 Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( &*it );
 
+                // accumulate step sharing the same road name
+                accum_road.push_back( road_graph[step->road_edge()].db_id() );
+                // accumulate costs
+                for ( Costs::const_iterator cit = step->costs().begin(); cit != step->costs().end(); ++cit ) {
+                    accum_costs[cit->first] += cit->second;
+                }
+
+                if ( next != roadmap.end() && next->step_type() == Roadmap::Step::RoadStep ) {
+                    Roadmap::RoadStep* next_step = static_cast<Roadmap::RoadStep*>( &*next );
+                    if ( road_graph[next_step->road_edge()].road_name() == 
+                         road_graph[step->road_edge()].road_name() ) {
+                        continue;
+                    }
+                }
+
                 //
                 // retrieval of the step's geometry
                 {
+                    std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.road_section WHERE id IN (";
+                    for ( size_t i = 0; i < accum_road.size(); i++ ) {
+                        q += (boost::format("%1%") % accum_road[i]).str();
+                        if ( i != accum_road.size()-1 ) {
+                            q += ",";
+                        }
+                    }
+                    q += ")) t";
                     // reverse the geometry if needed
-                    // we also get the road_name here
-                    std::string q = ( boost::format( "SELECT CASE WHEN node_from=%1%"
-                                                     " THEN ST_AsBinary(geom)"
-                                                     " ELSE ST_AsBinary(ST_Reverse(geom)) END"
-                                                     " FROM tempus.road_section WHERE id=%2%" ) %
-                                      road_graph[ source(step->road_edge(), road_graph) ].db_id() %
-                                      road_graph[step->road_edge()].db_id() ).str();
                     Db::Result res = db_.exec( q );
                     std::string wkb = res[0][0].as<std::string>();
 
@@ -598,21 +626,33 @@ Result& Plugin::result()
                     }
                 }
 
-#if 0
+#if 1
                 if ( last_step ) {
                     last_step->set_end_movement( movement );
                     last_step->set_distance_km( -1.0 );
                 }
 #endif
 
-                previous_section = road_graph[step->road_edge()].db_id();
                 was_on_roundabout = on_roundabout;
-                last_step = step;
 
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
+
+                if ( next != roadmap.end() && next->step_type() != Roadmap::Step::RoadStep ) {
+                    previous_section = 0;
+                    last_step = 0;
+                }
+                else {
+                    previous_section = road_graph[step->road_edge()].db_id();
+                    Roadmap::StepIterator ite = new_roadmap.end();
+                    ite--;
+                    last_step = static_cast<Roadmap::RoadStep*>(&*ite);
+                }
+
+                accum_road.clear();
+                accum_costs.clear();
             }
         }
-#if 0
+#if 1
         if ( last_step ) {
             last_step->set_end_movement( Roadmap::RoadStep::YouAreArrived );
             last_step->set_distance_km( -1.0 );
