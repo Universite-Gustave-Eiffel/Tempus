@@ -466,8 +466,8 @@ struct StaticVariables
             roadmap.set_total_cost( CostDuration, 0.0 );
 		
             std::list< Triple >::const_iterator it = path.begin();
-            std::list< Triple >::const_iterator next = ++it;
-            --it; 
+            std::list< Triple >::const_iterator next = it;
+            next++;
 
             for ( ; next != path.end(); ++next, ++it ) {
                 std::auto_ptr<Roadmap::Step> mstep;

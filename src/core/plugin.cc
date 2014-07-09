@@ -380,6 +380,7 @@ Result& Plugin::result()
 {
     for ( Result::iterator rit = result_.begin(); rit != result_.end(); ++rit ) {
         Roadmap& roadmap = *rit;
+        Roadmap new_roadmap;
         Road::Graph& road_graph = graph_.road;
 
         Tempus::db_id_t previous_section = 0;
@@ -389,7 +390,14 @@ Result& Plugin::result()
 
         Roadmap::RoadStep::EndMovement movement;
 
-        for ( Roadmap::StepIterator it = roadmap.begin(); it != roadmap.end(); it++ ) {
+        // public transport step accumulator
+        std::vector< std::pair< db_id_t, db_id_t > > accum_pt;
+
+        Roadmap::StepIterator it = roadmap.begin();
+        Roadmap::StepIterator next = it;
+        next++;
+
+        for ( ; it != roadmap.end(); next++,it++ ) {
             if ( it->step_type() == Roadmap::Step::TransferStep ) {
                 Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>( &*it );
                 Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
@@ -462,19 +470,40 @@ Result& Plugin::result()
                     // get rid of the heading '\x'
                     step->set_geometry_wkb( wkb.substr( 2 ) );
                 }
+
+                new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
                 PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id()];
 
-                //
+                accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );
+
+                // accumulate step sharing the same trip
+                if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
+                    Roadmap::PublicTransportStep* next_step = static_cast<Roadmap::PublicTransportStep*>( &*next );
+                    if ( next_step->trip_id() == step->trip_id() ) {
+                        continue;
+                    }
+                }
+
                 // retrieval of the step's geometry
-                std::string q = ( boost::format( "SELECT st_asbinary(geom) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%" ) %
-                                  pt_graph[step->departure_stop()].db_id() % pt_graph[step->arrival_stop()].db_id() ).str();
+                std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
+                for ( size_t i = 0; i < accum_pt.size(); i++ ) {
+                    q += (boost::format("ARRAY[%1%,%2%]") % pt_graph[accum_pt[i].first].db_id() % pt_graph[accum_pt[i].second].db_id() ).str();
+                    if ( i != accum_pt.size()-1 ) {
+                        q += ",";
+                    }
+                }
+                q += ")) t";
                 Db::Result res = db_.exec( q );
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
                 step->set_geometry_wkb( wkb.substr( 2 ) );
+
+                step->set_departure_stop( accum_pt[0].first );
+                new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
+                accum_pt.clear();
             }
             else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 
@@ -550,21 +579,27 @@ Result& Plugin::result()
                     }
                 }
 
+#if 0
                 if ( last_step ) {
                     last_step->set_end_movement( movement );
                     last_step->set_distance_km( -1.0 );
                 }
+#endif
 
                 previous_section = road_graph[step->road_edge()].db_id();
                 was_on_roundabout = on_roundabout;
                 last_step = step;
+
+                new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
             }
         }
-
+#if 0
         if ( last_step ) {
             last_step->set_end_movement( Roadmap::RoadStep::YouAreArrived );
             last_step->set_distance_km( -1.0 );
         }
+#endif
+        *rit = new_roadmap;
     }
 
     return result_;
