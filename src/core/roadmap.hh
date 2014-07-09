@@ -114,9 +114,15 @@ public:
         ///
         /// Wait time at this step (in min)
         DECLARE_RW_PROPERTY( wait, double );
+        /// Departure time
+        DECLARE_RW_PROPERTY( departure_time, double );
+        /// Arrival time
+        DECLARE_RW_PROPERTY( arrival_time, double );
 
         /// Of which trip this step is part of
         DECLARE_RW_PROPERTY( trip_id, db_id_t );
+        /// Name of the route
+        DECLARE_RW_PROPERTY( route, std::string );
         /// PT stop on where to depart
         DECLARE_RW_PROPERTY( departure_stop, PublicTransport::Vertex );
         /// PT stop on where to arrive

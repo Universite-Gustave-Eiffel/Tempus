@@ -130,7 +130,9 @@ public:
                 TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
                 if ( pt_e_it != timetable_.end() ) {
                     const std::map<double,TimetableData>& tt = pt_e_it->second;
-                    std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;  
+                    // get the time, just after initial_time
+                    std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;
+
                     if ( it != tt.end() ) { 								
                         if (it->second.trip_id == initial_trip_id ) { 
                             final_trip_id = it->second.trip_id; 

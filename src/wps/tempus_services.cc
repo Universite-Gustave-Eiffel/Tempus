@@ -464,7 +464,10 @@ public:
                     std::string arrival_str = pt_graph[ v2 ].name();
                     XML::set_prop( step_node, "departure_stop", departure_str );
                     XML::set_prop( step_node, "arrival_stop", arrival_str );
-                    XML::set_prop( step_node, "trip", to_string( step->trip_id() ) );
+                    XML::set_prop( step_node, "route", step->route() );
+                    XML::set_prop( step_node, "departure_time", to_string(step->departure_time()) );
+                    XML::set_prop( step_node, "arrival_time", to_string(step->arrival_time()) );
+                    XML::set_prop( step_node, "wait_time", to_string(step->wait()) );
                 }
                 else if ( sit->step_type() == Roadmap::Step::TransferStep ) {
                     const Roadmap::TransferStep* step = static_cast<const Roadmap::TransferStep*>( &*sit );

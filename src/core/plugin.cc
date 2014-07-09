@@ -392,6 +392,7 @@ Result& Plugin::result()
 
         // public transport step accumulator
         std::vector< std::pair< db_id_t, db_id_t > > accum_pt;
+        Roadmap::PublicTransportStep* pt_first = 0;
 
         Roadmap::StepIterator it = roadmap.begin();
         Roadmap::StepIterator next = it;
@@ -478,6 +479,9 @@ Result& Plugin::result()
                 PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id()];
 
                 accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );
+                if ( !pt_first ) {
+                    pt_first = step;
+                }
 
                 // accumulate step sharing the same trip
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
@@ -501,9 +505,24 @@ Result& Plugin::result()
                 // get rid of the heading '\x'
                 step->set_geometry_wkb( wkb.substr( 2 ) );
 
-                step->set_departure_stop( accum_pt[0].first );
+                // get the route name
+                q = (boost::format("SELECT r.short_name, r.long_name, r.transport_mode from tempus.pt_trip as t, tempus.pt_route as r where t.id=%1% and t.route_id = r.id")
+                     % step->trip_id() ).str();
+                Db::Result res2 = db_.exec( q );
+                std::string short_name = res2[0][0].as<std::string>();
+                std::string long_name = res2[0][1].as<std::string>();
+                step->set_transport_mode( res2[0][2].as<db_id_t>() );
+                step->set_route( short_name + " - " + long_name );
+
+                // copy info from the first step
+                step->set_departure_stop( pt_first->departure_stop() );
+                step->set_departure_time( pt_first->departure_time() );
+                step->set_wait( pt_first->wait() );
+
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
+
                 accum_pt.clear();
+                pt_first = 0;
             }
             else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 

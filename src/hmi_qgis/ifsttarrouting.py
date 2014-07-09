@@ -105,6 +105,13 @@ def clearBoxLayout( lay ):
         lay.removeWidget(w)
         w.close()
 
+# minutes (float) to hh:mm:ss
+def min2hm( m ):
+        hh = int(m/60)
+        mm = int(m-hh*60)
+        ss = int((m-hh*60-mm) * 60)
+        return "%02d:%02d:%02d" % (hh,mm,ss)
+
 class SplashScreen(QDialog):
     def __init__(self):
         QDialog.__init__(self)
@@ -500,7 +507,12 @@ class IfsttarRouting:
             elif isinstance(step, Tempus.PublicTransportStep ):
                 # set network text as icon
                 icon_text = step.network
-                text += "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure, step.arrival)
+                if step.wait_time > 0.0:
+                        text += "Wait %s <br/>" % min2hm(step.wait_time)
+                text += "At %s<br/>\n" % min2hm(step.departure_time+step.wait_time)
+                pt_name = self.transport_modes_dict[step.mode].name
+                text += "Take the %s %s from '%s' to '%s'" % (pt_name, step.route, step.departure, step.arrival)
+                text += "<br/>Leave at %s" % min2hm(step.arrival_time)
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network

@@ -495,8 +495,10 @@ struct StaticVariables
                     step->set_transport_mode( it->mode );
                     step->set_departure_stop( it->vertex.pt_vertex() );
                     step->set_arrival_stop( next->vertex.pt_vertex() );
-                    step->set_trip_id(trip_map_[ *it ]);
+                    step->set_trip_id(trip_map_[ *next ]);
                     step->set_wait(wait_map_[ *it ]);
+                    step->set_departure_time( potential_map_[*it] );
+                    step->set_arrival_time( potential_map_[*next] );
 				
                     // find the network_id
                     for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {

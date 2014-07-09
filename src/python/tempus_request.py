@@ -122,11 +122,14 @@ class RoadStep:
         self.wkb = wkb
 
 class PublicTransportStep:
-    def __init__( self, network = '', departure = '', arrival = '', trip = '', costs = {}, mode = 0, wkb = '' ):
+    def __init__( self, network = '', departure = '', arrival = '', route = '', costs = {}, mode = 0, departure_time = 0.0, arrival_time = 0.0, wait_time = 0.0, wkb = '' ):
         self.network = network
         self.departure = departure
         self.arrival = arrival
-        self.trip = trip
+        self.route = route
+        self.departure_time = departure_time
+        self.arrival_time = arrival_time
+        self.wait_time = wait_time
         self.costs = costs
         self.mode = mode
         self.wkb = wkb
@@ -290,16 +293,22 @@ def parse_results( results ):
                 wkb = child.attrib['wkb']
                 departure = child.attrib['departure_stop']
                 arrival = child.attrib['arrival_stop']
-                trip = child.attrib['trip']
+                route = child.attrib['route']
                 network = child.attrib['network']
                 transport_mode = int(child.attrib['transport_mode'])
+                departure_time = float(child.attrib['departure_time'])
+                arrival_time = float(child.attrib['arrival_time'])
+                wait_time = float(child.attrib['wait_time'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])
                 steps.append( PublicTransportStep( network = network,
                                                    departure = departure,
                                                    arrival = arrival,
-                                                   trip = trip,
+                                                   route = route,
+                                                   departure_time = departure_time,
+                                                   arrival_time = arrival_time,
+                                                   wait_time = wait_time,
                                                    costs = costs,
                                                    mode = transport_mode,
                                                    wkb = wkb) )
@@ -310,7 +319,6 @@ def parse_results( results ):
                 network = child.attrib['network']
                 stop = child.attrib['stop']
                 type = int(child.attrib['type'])
-                transport_mode = int(child.attrib['transport_mode'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])
