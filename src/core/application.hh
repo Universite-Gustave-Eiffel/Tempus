@@ -78,7 +78,7 @@ public:
 
     ///
     /// Build the graph in memory (import from the database and wake up plugins)
-    void build_graph();
+    void build_graph( bool consistency_check = false );
 
     ///
     /// Graph accessor (non const)

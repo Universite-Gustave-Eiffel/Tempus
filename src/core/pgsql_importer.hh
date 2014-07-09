@@ -43,7 +43,7 @@ public:
 
     ///
     /// Import the multimodal graph
-    void import_graph( Multimodal::Graph& graph, ProgressionCallback& callback = null_progression_callback );
+    void import_graph( Multimodal::Graph& graph, ProgressionCallback& callback = null_progression_callback, bool consistency_check = true );
 
     ///
     /// Access to underlying connection object

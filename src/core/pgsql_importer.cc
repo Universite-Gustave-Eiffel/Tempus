@@ -70,7 +70,7 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
 
 ///
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
-void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& progression )
+void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& progression, bool consistency_check )
 {
     Road::Graph& road_graph = graph.road;
     road_graph.clear();
@@ -103,75 +103,74 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         }
     }
 
-    // FIXME consistency check : to be put in post-import SQL scripts
-#if 0
-    //
-    // check road section consistency
-    {
-        // look for sections where 'from' or 'to' road ids do not exist
-        const std::string q = "SELECT COUNT(*) "
-            "FROM "
-            "tempus.road_section AS rs "
-            "LEFT JOIN tempus.road_node AS rn1 "
-            "ON rs.node_from = rn1.id "
-            "LEFT JOIN tempus.road_node AS rn2 "
-            "ON rs.node_to = rn2.id "
-            "WHERE "
-            "rn1.id IS NULL "
-            "OR "
-            "rn2.id IS NULL";
+    if ( consistency_check ) {
+        //
+        // check road section consistency
+        {
+            // look for sections where 'from' or 'to' road ids do not exist
+            const std::string q = "SELECT COUNT(*) "
+                "FROM "
+                "tempus.road_section AS rs "
+                "LEFT JOIN tempus.road_node AS rn1 "
+                "ON rs.node_from = rn1.id "
+                "LEFT JOIN tempus.road_node AS rn2 "
+                "ON rs.node_to = rn2.id "
+                "WHERE "
+                "rn1.id IS NULL "
+                "OR "
+                "rn2.id IS NULL";
 
-        Db::Result res( connection_.exec( q ) );
-        size_t count = 0;
-        res[0][0] >> count;
-        if ( count ) {
-            CERR << "[WARNING]: there are " << count << " road sections with inexistent node_from or node_to" << std::endl;
+            Db::Result res( connection_.exec( q ) );
+            size_t count = 0;
+            res[0][0] >> count;
+            if ( count ) {
+                CERR << "[WARNING]: there are " << count << " road sections with inexistent node_from or node_to" << std::endl;
+            }
+        }
+        {
+            // look for cycles
+            const std::string q = "SELECT count(*) FROM tempus.road_section WHERE node_from = node_to";
+            Db::Result res( connection_.exec( q ) );
+            size_t count = 0;
+            res[0][0] >> count;
+            if ( count ) {
+                CERR << "[WARNING]: there are " << count << " road sections with cycles" << std::endl;
+            }
+        }
+
+        {
+            // look for duplicated road sections that do not serve as
+            // attachment for any PT stop or POI
+            const std::string q = "SELECT COUNT(rs.id) FROM "
+                "( "
+                "SELECT "
+                "	rs1.id "
+                "FROM "
+                "	tempus.road_section as rs1, "
+                "	tempus.road_section as rs2 "
+                "WHERE "
+                "	rs1.node_from = rs2.node_from "
+                "AND "
+                "	rs1.node_to = rs2.node_to "
+                "AND rs1.id != rs2.id "
+                ") AS rs "
+                "LEFT JOIN tempus.pt_stop AS pt "
+                "ON rs.id = pt.road_section_id "
+                "LEFT JOIN tempus.poi AS poi "
+                "ON rs.id = poi.road_section_id "
+                "WHERE "
+                "pt.id IS NULL "
+                "and "
+                "poi.id IS NULL";
+
+            Db::Result res( connection_.exec( q ) );
+            size_t count = 0;
+            res[0][0] >> count;
+            if ( count ) {
+                CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
+            }
         }
     }
-    {
-        // look for cycles
-        const std::string q = "SELECT count(*) FROM tempus.road_section WHERE node_from = node_to";
-        Db::Result res( connection_.exec( q ) );
-        size_t count = 0;
-        res[0][0] >> count;
-        if ( count ) {
-            CERR << "[WARNING]: there are " << count << " road sections with cycles" << std::endl;
-        }
-    }
-
-    {
-        // look for duplicated road sections that do not serve as
-        // attachment for any PT stop or POI
-        const std::string q = "SELECT COUNT(rs.id) FROM "
-            "( "
-            "SELECT "
-            "	rs1.id "
-            "FROM "
-            "	tempus.road_section as rs1, "
-            "	tempus.road_section as rs2 "
-            "WHERE "
-            "	rs1.node_from = rs2.node_from "
-            "AND "
-            "	rs1.node_to = rs2.node_to "
-            "AND rs1.id != rs2.id "
-            ") AS rs "
-            "LEFT JOIN tempus.pt_stop AS pt "
-            "ON rs.id = pt.road_section_id "
-            "LEFT JOIN tempus.poi AS poi "
-            "ON rs.id = poi.road_section_id "
-            "WHERE "
-            "pt.id IS NULL "
-            "and "
-            "poi.id IS NULL";
-
-        Db::Result res( connection_.exec( q ) );
-        size_t count = 0;
-        res[0][0] >> count;
-        if ( count ) {
-            CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
-        }
-    }
-#endif
 
     {
         //
@@ -293,7 +292,6 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( network.db_id() > 0 );
             network.set_name( res[i][1] );
 
-            // FIXME
             graph.network_map[network.db_id()] = network;
             graph.public_transports[network.db_id()] = PublicTransport::Graph();
         }

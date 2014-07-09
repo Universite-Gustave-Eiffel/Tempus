@@ -72,7 +72,7 @@ void Application::pre_build_graph()
     state_ = GraphPreBuilt;
 }
 
-void Application::build_graph()
+void Application::build_graph( bool consistency_check )
 {
     // request the database
     PQImporter importer( db_options_ );
@@ -81,7 +81,7 @@ void Application::build_graph()
     COUT << "Importing constants ... " << std::endl;
     importer.import_constants( graph_ );
     COUT << "Importing graph ... " << std::endl;
-    importer.import_graph( graph_, progression );
+    importer.import_graph( graph_, progression, consistency_check );
     state_ = GraphBuilt;
 }
 
