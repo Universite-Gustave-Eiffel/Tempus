@@ -115,16 +115,20 @@ struct Section : public Base {
     DECLARE_RW_PROPERTY( is_ramp, bool );
     DECLARE_RW_PROPERTY( is_tollway, bool );
 
+    /// list of pointers to public transport steps referenced on this edge
+    DECLARE_RO_PROPERTY( stops, std::vector<const PublicTransport::Stop*> );
+
+    /// add a link to a public transport step
+    void add_stop_ref( const PublicTransport::Stop* );
+
+    /// list of pointers to POIs referenced on this edge
+    DECLARE_RO_PROPERTY( pois, std::vector<const POI*> );
+
+    /// add a link to a POI
+    void add_poi_ref( const POI* );
+
 public:
     Section() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0) {}
-    ///
-    /// List of public transport stops, attached to this road section
-    /// FIXME turn into private
-    std::vector< PublicTransport::Stop* > stops;
-    ///
-    /// List of Point Of Interests attached to this road section
-    /// FIXME turn into private
-    std::vector<POI*> pois;
 };
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;

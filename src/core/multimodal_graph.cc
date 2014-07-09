@@ -529,15 +529,15 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         BOOST_ASSERT( road_it_ != road_it_end_ );
         Road::Vertex r_target = boost::target( *road_it_, graph_->road );
 
-        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road[ *road_it_ ].stops.size() ) {
+        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road[ *road_it_ ].stops().size() ) {
             size_t idx = road2stop_connection_;
-            const PublicTransport::Graph* pt_graph = graph_->road[ *road_it_ ].stops[ idx ]->graph();
-            PublicTransport::Vertex v = graph_->road[ *road_it_ ].stops[ idx ]->vertex();
+            const PublicTransport::Graph* pt_graph = graph_->road[ *road_it_ ].stops()[ idx ]->graph();
+            PublicTransport::Vertex v = graph_->road[ *road_it_ ].stops()[ idx ]->vertex();
             edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), pt_graph, v );
         }
-        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road[ *road_it_ ].pois.size() ) {
+        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road[ *road_it_ ].pois().size() ) {
             size_t idx = road2poi_connection_;
-            const POI* poi = graph_->road[ *road_it_ ].pois[ idx ];
+            const POI* poi = graph_->road[ *road_it_ ].pois()[ idx ];
             edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), poi );
         }
         else {
@@ -580,10 +580,10 @@ void OutEdgeIterator::increment()
     BOOST_ASSERT( graph_ != 0 );
 
     if ( source_.type() == Vertex::Road ) {
-        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road[*road_it_].stops.size() ) {
+        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road[*road_it_].stops().size() ) {
             road2stop_connection_++;
         }
-        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road[*road_it_].pois.size() ) {
+        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road[*road_it_].pois().size() ) {
             road2poi_connection_++;
         }
         else {
@@ -782,7 +782,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
         // M POis (given by pois.size())
         // the out edge (+1)
         for ( boost::tie( ei, ei_end ) = out_edges( v.road_vertex(), graph.road ); ei != ei_end; ei++ ) {
-            sum += graph.road[ *ei ].stops.size() + graph.road[ *ei ].pois.size() + 1;
+            sum += graph.road[ *ei ].stops().size() + graph.road[ *ei ].pois().size() + 1;
         }
 
         return sum;

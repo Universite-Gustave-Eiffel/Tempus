@@ -377,7 +377,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
             Road::Edge rs = g[ *vi ].road_edge();
-            road_graph[ rs ].stops.push_back( &g[*vi] );
+            road_graph[ rs ].add_stop_ref( &g[*vi] );
         }
     }
 
@@ -469,7 +469,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
     for ( pit = graph.pois.begin(); pit != graph.pois.end(); pit++ ) {
         Road::Edge rs = pit->second.road_edge();
-        graph.road[ rs ].pois.push_back( &pit->second ); 
+        graph.road[ rs ].add_poi_ref( &pit->second ); 
     }
 
     //

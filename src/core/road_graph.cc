@@ -89,5 +89,15 @@ void Restrictions::add_restriction( Restriction r )
     restrictions_.push_back( r );
 }
 
+void Section::add_stop_ref( const PublicTransport::Stop* stop )
+{
+    stops_.push_back( stop );
+}
+
+void Section::add_poi_ref( const POI* poi )
+{
+    pois_.push_back( poi );
+}
+
 }
 }

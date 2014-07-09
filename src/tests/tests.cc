@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
     Road::EdgeIterator pei, pei_end;
 
     for ( boost::tie( pei, pei_end ) = edges( graph.road ); pei != pei_end; pei++ ) {
-        n_stops += graph.road[ *pei ].stops.size();
+        n_stops += graph.road[ *pei ].stops().size();
     }
 
     std::cout << "ne = " << ne << std::endl;
