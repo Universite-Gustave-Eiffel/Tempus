@@ -32,16 +32,20 @@ void Roadmap::Step::set_cost( CostId id, double c )
     costs_[id] = c;
 }
 
-double Roadmap::total_cost( CostId id ) const
+Costs get_total_costs( const Roadmap& roadmap )
 {
-    Costs::const_iterator it = total_costs_.find(id);
-    BOOST_ASSERT( it != total_costs_.end() );
-    return it->second;
-}
-
-void Roadmap::set_total_cost( CostId id, double c )
-{
-    total_costs_[id] = c;
+    Costs costs;
+    for ( Roadmap::StepConstIterator it = roadmap.begin(); it != roadmap.end(); ++it ) {
+        for ( Costs::const_iterator cit = it->costs().begin(); cit != it->costs().end(); ++cit ) {
+            if ( costs.find(cit->first) == costs.end() ) {
+                costs[cit->first] = cit->second;
+            }
+            else {
+                costs[cit->first] += cit->second;
+            }
+        }
+    }
+    return costs;
 }
 
 Roadmap::StepConstIterator Roadmap::begin() const

@@ -169,16 +169,13 @@ public:
     /// Add a step
     void add_step( std::auto_ptr<Step> step );
 
-    // FIXME replace by a compute-only method ?
-    DECLARE_RO_PROPERTY( total_costs, Costs );
-
-    /// Get a particular cost
-    double total_cost( CostId id ) const;
-    /// Set a total cost
-    void set_total_cost( CostId id, double c );
 private:
     StepList steps_;
 };
+
+///
+/// Convenience function to compute the sum of costs for a roadmap
+Costs get_total_costs( const Roadmap& );
 
 ///
 /// A Result is a list of Roadmap, ordered by relevance towards optimizing criteria

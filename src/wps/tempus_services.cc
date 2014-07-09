@@ -549,7 +549,8 @@ public:
 
             // total costs
 
-                for ( Tempus::Costs::const_iterator cit = roadmap.total_costs().begin(); cit != roadmap.total_costs().end(); cit++ ) {
+                Costs total_costs( get_total_costs(roadmap) );
+                for ( Tempus::Costs::const_iterator cit = total_costs.begin(); cit != total_costs.end(); cit++ ) {
                 xmlNode* cost_node = XML::new_node( "cost" );
                 XML::new_prop( cost_node,
                                "type",

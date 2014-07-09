@@ -463,8 +463,6 @@ struct StaticVariables
             result_.push_back( Roadmap() ); 
             Roadmap& roadmap = result_.back();
 
-            roadmap.set_total_cost( CostDuration, 0.0 );
-		
             std::list< Triple >::const_iterator it = path.begin();
             std::list< Triple >::const_iterator next = it;
             next++;
@@ -518,7 +516,6 @@ struct StaticVariables
                     step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
                 }
 
-                roadmap.set_total_cost( CostDuration, roadmap.total_cost(CostDuration) + mstep->cost( CostDuration ) );
                 roadmap.add_step( mstep );
             }
 	}

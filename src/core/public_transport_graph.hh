@@ -84,13 +84,13 @@ struct Stop : public Base {
 public:
     Stop() : Base(), graph_(0) {}
  
-    /// FIXME: really needed ??
+    /// Shortcut to the public transport where this stop belongs
+    /// Can be null
     DECLARE_RW_PROPERTY( graph, const Graph* );
 
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    /// FIXME: really needed ??
     DECLARE_RW_PROPERTY( vertex, OrNull<Vertex> );
 
     DECLARE_RW_PROPERTY( name, std::string );
@@ -123,13 +123,13 @@ struct Section {
 public:
     Section() : graph_(0) {}
 
-    /// FIXME: really needed ??
+    /// Shortcut to the public transport graph where this edge belongs
+    /// Can be null
     DECLARE_RW_PROPERTY( graph, const Graph* );
 
     /// This is a shortcut to the edge index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's edge from a Section
     /// Can be null
-    /// FIXME: really needed ??
     DECLARE_RW_PROPERTY( edge, OrNull<Edge> );
 
     // A Section has no proper id, but a stop_from and a stop_to

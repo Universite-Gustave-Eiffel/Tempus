@@ -379,9 +379,6 @@ public:
 				
                 step->set_cost(CostDistance, step->cost(CostDistance) + get(edge_dist_pmap, e) );
                 step->set_cost(CostDuration, step->cost(CostDuration) + get(edge_tt_pmap, e) ); 
-                roadmap.set_total_cost(CostDistance, roadmap.total_cost(CostDistance) + get(edge_dist_pmap, e) );
-                roadmap.set_total_cost(CostDuration, roadmap.total_cost(CostDistance) + get(edge_tt_pmap, e) );
-				
                 previous = v;
             } 
         }
