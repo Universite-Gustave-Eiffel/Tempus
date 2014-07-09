@@ -25,11 +25,6 @@ void Network::add_agency( const Agency& agency )
     agencies_.push_back( agency );
 }
 
-void Route::add_trip( const Trip& trip )
-{
-    trips_.push_back( trip );
-}
-
 } // PublicTransport namespace
 } // Tempus namespace
 
