@@ -269,6 +269,8 @@ public:
 
     /// Select public transports
     void select_public_transports( const std::set<db_id_t>& );
+    /// Current public transport selection
+    std::set<db_id_t> public_transport_selection() const;
 
     ///
     /// Point of interests

@@ -919,6 +919,11 @@ void Graph::select_public_transports( const std::set<db_id_t> & s )
     public_transports_.select(s);
 }
 
+std::set<db_id_t> Graph::public_transport_selection() const
+{
+    return public_transports_.selection();
+}
+
 Graph::~Graph()
 {
     for ( PublicTransportGraphList::iterator it = public_transports_.begin(); it != public_transports_.end(); ++it ) {

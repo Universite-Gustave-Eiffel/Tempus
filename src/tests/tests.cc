@@ -426,30 +426,37 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
 
             size_t n_vertices = num_vertices( *graph );
             size_t n_edges = num_edges( *graph );
-#if 0
-            //FIXME
+
             // insert a new pt that is a copy of the first
-            graph->public_transports[max_id+1] = graph->public_transports.begin()->second;
-            graph.public_transports.select_all();
+            boost::ptr_map<db_id_t, PublicTransport::Graph> pt_copy;
+            pt_copy.insert( 1, std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) ) );
+            pt_copy.insert( 2, std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) ) );
 
+            graph->set_public_transports( pt_copy );
+
+            // check that vertices are doubled
+            size_t vv = num_vertices( *graph );
+            BOOST_CHECK_EQUAL( vv + n_pt_vertices, n_vertices );
+            std::cout << "vv " << vv << " vertices " << n_vertices << std::endl;
+            
             // unselect the first network
-            std::set<db_id_t> selection = graph.public_transports.selection();
-            selection.erase( graph.public_transports.begin()->first );
-            graph.public_transports.select( selection );
+            std::set<db_id_t> selection = graph->public_transport_selection();
+            selection.erase( selection.begin() );
+            graph->select_public_transports( selection );
 
-            size_t n_vertices3 = num_vertices( graph );
-            size_t n_edges3 = num_edges( graph );
+            size_t n_vertices3 = num_vertices( *graph );
+            size_t n_edges3 = num_edges( *graph );
             size_t n_computed_vertices = 0;
             Multimodal::VertexIterator vi, vi_end;
 
-            for ( boost::tie( vi, vi_end ) = vertices( graph ); vi != vi_end; vi++ ) {
+            for ( boost::tie( vi, vi_end ) = vertices( *graph ); vi != vi_end; vi++ ) {
                 n_computed_vertices ++;
             }
 
             size_t n_computed_edges = 0;
             Multimodal::EdgeIterator ei, ei_end;
 
-            for ( boost::tie( ei, ei_end ) = edges( graph ); ei != ei_end; ei++ ) {
+            for ( boost::tie( ei, ei_end ) = edges( *graph ); ei != ei_end; ei++ ) {
                 n_computed_edges ++;
             }
 
@@ -461,7 +468,6 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
             BOOST_CHECK_EQUAL( n_edges, n_edges3 );
             // check the use of edges iterators
             BOOST_CHECK_EQUAL( n_computed_edges, n_edges3 );
-#endif
         }
     }
 }
