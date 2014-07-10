@@ -1,7 +1,7 @@
 include_directories(../core)
 
-#add_library( sample_multi_plugin MODULE sample_multi_plugin/sample_multi_plugin.cc )
-#target_link_libraries( sample_multi_plugin tempus )
+add_library( sample_multi_plugin MODULE sample_multi_plugin/sample_multi_plugin.cc )
+target_link_libraries( sample_multi_plugin tempus )
 
 add_library( sample_road_plugin MODULE sample_road_plugin/sample_road_plugin.cc )
 target_link_libraries( sample_road_plugin tempus )

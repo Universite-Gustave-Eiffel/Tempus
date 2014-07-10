@@ -132,17 +132,24 @@ public:
     /// Can be null
     DECLARE_RW_PROPERTY( edge, OrNull<Edge> );
 
-    // A Section has no proper id, but a stop_from and a stop_to
-    db_id_t stop_from_id() const {
-        return (*graph_)[source( edge_.value(), *graph_ )].db_id();
-    }
-    db_id_t stop_to_id() const {
-        return (*graph_)[target( edge_.value(), *graph_ )].db_id();
-    }
-
     /// must not be null
     DECLARE_RW_PROPERTY( network_id, db_id_t );
 };
+
+///
+/// Convenience function - Get the departure stop of a public transport section
+inline Stop get_stop_from( const Section& s )
+{
+    return (*s.graph())[source( s.edge().value(), *s.graph() )];
+}
+
+///
+/// Convenience function - Get the arrival stop of a public transport section
+inline Stop get_stop_to( const Section& s )
+{
+    return (*s.graph())[target( s.edge().value(), *s.graph() )];
+}
+
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
