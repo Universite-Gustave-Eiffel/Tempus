@@ -37,13 +37,13 @@ namespace Tempus {
     class WeightCalculator
     {
     public:
-        double operator() ( Road::Graph& graph, Road::Edge& e ) {
-            if ( (graph[e].transport_type & 1) == 0 ) {
+        double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
+            if ( (graph[e].traffic_rules() & TrafficRuleCar) == 0 ) {
                 // allowed transport types do not include car
                 // It is an oversimplification here : it must depends on allowed transport types selected by the user
                 return std::numeric_limits<double>::infinity();
             }
-            return graph[e].length;
+            return graph[e].length();
         }
     };
 
@@ -76,10 +76,10 @@ public:
     virtual void pre_process( Request& request ) {
         REQUIRE( request.check_consistency() );
 
-        REQUIRE( vertex_exists( request.origin, graph_.road ) );
-        REQUIRE( vertex_exists( request.destination(), graph_.road ) );
+        REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
+        REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
 
-        if ( ( request.optimizing_criteria[0] != CostDistance ) ) {
+        if ( ( request.optimizing_criteria()[0] != CostDistance ) ) {
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
@@ -105,7 +105,7 @@ public:
     }
 
     virtual void process() {
-        Road::Graph& road_graph = graph_.road;
+        const Road::Graph& road_graph = graph_.road();
 
         Timer timer;
 
@@ -126,21 +126,21 @@ public:
         Tempus::PluginRoadGraphVisitor vis( this );
 
         std::list<Road::Vertex> path;
-        Road::Vertex origin = request_.origin;
+        Road::Vertex origin = request_.origin();
         // resolve each step, in reverse order
         bool path_found = true;
 
-        for ( size_t ik = request_.steps.size(); ik >= 1; --ik ) {
+        for ( size_t ik = request_.steps().size(); ik >= 1; --ik ) {
             size_t i = ik - 1;
 
             if ( i > 0 ) {
-                origin = request_.steps[i-1].destination;
+                origin = request_.steps()[i-1].location();
             }
             else {
-                origin = request_.origin;
+                origin = request_.origin();
             }
 
-            destination_ = request_.steps[i].destination;
+            destination_ = request_.steps()[i].location();
 
             try {
                 boost::dijkstra_shortest_paths( road_graph,
@@ -189,43 +189,32 @@ public:
 
         result_.push_back( Roadmap() );
         Roadmap& roadmap = result_.back();
-        Roadmap::RoadStep* step = 0;
+        std::auto_ptr<Roadmap::Step> step;
 
         Road::Edge current_road;
         std::list<Road::Vertex>::iterator prev = path.begin();
         std::list<Road::Vertex>::iterator it = prev;
+        it++;
 
-        if ( prev != path.end() ) {
-            for ( ;; ) {
-                ++it;
+        for ( ; it != path.end(); ++it, ++prev) {
+            Road::Vertex v = *it;
+            Road::Vertex previous = *prev;
 
-                if ( it == path.end() ) {
-                    break;
-                }
+            // Find an edge, based on a source and destination vertex
+            Road::Edge e;
+            bool found = false;
+            boost::tie( e, found ) = boost::edge( previous, v, road_graph );
 
-                Road::Vertex v = *it;
-                Road::Vertex previous = *prev;
-                ++prev;
-
-                // Find an edge, based on a source and destination vertex
-                Road::Edge e;
-                bool found = false;
-                boost::tie( e, found ) = boost::edge( previous, v, road_graph );
-
-                if ( !found ) {
-                    continue;
-                }
-
-                if ( step == 0 || e != current_road ) {
-                    step = new Roadmap::RoadStep();
-                    roadmap.steps.push_back( step );
-                    step->road_edge = e;
-                    current_road = e;
-                }
-
-                step->costs[CostDistance] += road_graph[e].length;
-                roadmap.total_costs[CostDistance] += road_graph[e].length;
+            if ( !found ) {
+                continue;
             }
+
+            step.reset( new Roadmap::RoadStep() );
+            step->set_cost(CostDistance, road_graph[e].length());
+            step->set_transport_mode(1);
+            Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
+            rstep->set_road_edge( e );
+            roadmap.add_step( step );
         }
     }
 
