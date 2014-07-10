@@ -118,7 +118,7 @@ protected:
 
 public:
     static void post_build() {
-    	Road::Graph& road_graph = Application::instance()->graph().road;
+    	const Road::Graph& road_graph = Application::instance()->graph()->road();
     	
     	// Building automaton 
         PQImporter psql( Application::instance()->db_options() ); 
@@ -148,7 +148,7 @@ public:
 
     virtual void pre_process( Request& request ) {   	    	
     	
-    	Road::Graph& road_graph = Application::instance()->graph().road; 
+    	const Road::Graph& road_graph = Application::instance()->graph()->road();
     			
     	// Recording request
         /*if ( ( request.optimizing_criteria[0] != CostDistance ) ) {
@@ -159,8 +159,8 @@ public:
         source_ = request.origin();
         destination_ = request.destination();
 				
-        REQUIRE( vertex_exists( request.origin(), graph_.road ) );
-        REQUIRE( vertex_exists( request.destination(), graph_.road ) );
+        REQUIRE( vertex_exists( request.origin(), road_graph ) );
+        REQUIRE( vertex_exists( request.destination(), road_graph ) );
 		
         std::cout << "source: " << road_graph[source_].db_id() << " target: " << road_graph[destination_].db_id() << std::endl;
 		
@@ -175,7 +175,7 @@ public:
     
     virtual void process() {
     	// Copy road graph
-        Road::Graph& road_graph = graph_.road;
+        const Road::Graph& road_graph = graph_.road();
         
         Timer timer;
 
@@ -217,7 +217,7 @@ public:
         
         ///// Maps storing arc and node weights
         // Node penalty map
-        TransportMode car_mode = graph_.transport_mode( TransportModePrivateCar ).first;
+        TransportMode car_mode = *graph_.transport_mode( TransportModePrivateCar );
         PenaltyCalculator penalty_calculator( car_mode );
         Tempus::FunctionPropertyAccessor< MyAutomaton::Graph,
                                           boost::vertex_property_tag,

@@ -78,10 +78,9 @@ void Application::build_graph( bool consistency_check )
     PQImporter importer( db_options_ );
     TextProgression progression( 50 );
     COUT << "Loading graph from database: " << std::endl;
-    COUT << "Importing constants ... " << std::endl;
-    importer.import_constants( graph_ );
-    COUT << "Importing graph ... " << std::endl;
-    importer.import_graph( graph_, progression, consistency_check );
+    graph_ = importer.import_graph( progression, consistency_check );
+    COUT << "Importing constants ..." << std::endl;
+    importer.import_constants( *graph_, progression );
     state_ = GraphBuilt;
 }
 

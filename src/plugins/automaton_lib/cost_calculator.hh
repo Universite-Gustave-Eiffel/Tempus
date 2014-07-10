@@ -77,7 +77,7 @@ public:
         {
             switch ( e.connection_type() ) {  
             case Multimodal::Edge::Road2Road: {
-                return road_travel_time( graph.road, e.road_edge(), graph.road[ e.road_edge() ].length(), mode,
+                return road_travel_time( graph.road(), e.road_edge(), graph.road()[ e.road_edge() ].length(), mode,
                                          walking_speed_, cycling_speed_ ); 
             }
                 break;
@@ -89,13 +89,13 @@ public:
                 Road::Edge road_e = pt_graph[ e.target().pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
             }
@@ -108,13 +108,13 @@ public:
                 Road::Edge road_e = pt_graph[ e.source().pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
             } 
@@ -179,13 +179,13 @@ public:
                 double abscissa = e.target().poi()->abscissa_road_section();
 
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
             }
@@ -195,13 +195,13 @@ public:
                 double abscissa = e.source().poi()->abscissa_road_section();
 
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * abscissa, mode,
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road, road_e, graph.road[ road_e ].length() * (1 - abscissa), mode,
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
                                              walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
                 }
             }
@@ -224,7 +224,7 @@ public:
             // Parking search time for initial mode
             if ( initial_mode.need_parking() ) {
                 if ( ( ( src.type() == Multimodal::Vertex::Road )  &&
-                       ( (graph.road[ src.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
+                       ( (graph.road()[ src.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
                      || ( (src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( initial_mode.db_id() )) ) )
                 {
                     // FIXME more complex than that

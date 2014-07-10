@@ -127,11 +127,11 @@ public:
     Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const {
         ParameterMap output_parameters;
 
-        Tempus::Multimodal::Graph& graph = Application::instance()->graph();
+        const Tempus::Multimodal::Graph& graph = *Application::instance()->graph();
 
         {
             xmlNode* root_node = XML::new_node( "transport_modes" );
-            Tempus::TransportModes::const_iterator it;
+            Tempus::Multimodal::Graph::TransportModes::const_iterator it;
 
             for ( it = graph.transport_modes().begin(); it != graph.transport_modes().end(); it++ ) {
                 xmlNode* node = XML::new_node( "transport_mode" );
@@ -152,9 +152,9 @@ public:
 
         {
             xmlNode* root_node = XML::new_node( "transport_networks" );
-            Multimodal::Graph::NetworkMap::iterator it;
+            Multimodal::Graph::NetworkMap::const_iterator it;
 
-            for ( it = graph.network_map.begin(); it != graph.network_map.end(); it++ ) {
+            for ( it = graph.network_map().begin(); it != graph.network_map().end(); it++ ) {
                 xmlNode* node = XML::new_node( "transport_network" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
@@ -214,7 +214,7 @@ public:
         Tempus::db_id_t id;
         double x, y;
 
-        Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
+        const Tempus::Road::Graph& road_graph = Application::instance()->graph()->road();
 
         bool has_vertex = XML::has_prop( node, "vertex" );
         bool has_x = XML::has_prop( node, "x" );
@@ -414,7 +414,7 @@ public:
         // result
         Tempus::Result& result = plugin->result();
 
-        Multimodal::Graph& graph_ = Application::instance()->graph();
+        const Multimodal::Graph& graph_ = *Application::instance()->graph();
 
         xmlNode* root_node = XML::new_node( "results" );
 
@@ -440,21 +440,21 @@ public:
                     const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                     step_node = XML::new_node( "road_step" );
 
-                    XML::set_prop( step_node, "road", graph_.road[step->road_edge()].road_name() );
+                    XML::set_prop( step_node, "road", graph_.road()[step->road_edge()].road_name() );
                     XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
                 }
                 else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
                     const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
 
-                    if ( graph_.public_transports.find( step->network_id() ) == graph_.public_transports.end() ) {
+                    if ( graph_.public_transports().find( step->network_id() ) == graph_.public_transports().end() ) {
                         throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
                     }
 
-                    PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id() ];
+                    const PublicTransport::Graph& pt_graph = *graph_.public_transport( step->network_id() );
 
                     step_node = XML::new_node( "public_transport_step" );
 
-                    XML::set_prop( step_node, "network", graph_.network_map[ step->network_id() ].name() );
+                    XML::set_prop( step_node, "network", graph_.network( step->network_id() )->name() );
 
                     std::string departure_str;
                     PublicTransport::Vertex v1 = step->departure_stop();
@@ -478,7 +478,7 @@ public:
 
                     const PublicTransport::Graph* pt_graph = 0;
                     bool road_transport = false;
-                    road_name = graph_.road[edge->road_edge()].road_name();
+                    road_name = graph_.road()[edge->road_edge()].road_name();
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
                         pt_graph = edge->target().pt_graph();
                         stop_name = ( *pt_graph )[edge->target().pt_vertex()].name();
@@ -493,10 +493,10 @@ public:
                     if ( road_transport ) {
                         db_id_t network_id = 0;
 
-                        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();
-                              nit != graph_.public_transports.end();
+                        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin();
+                              nit != graph_.public_transports().end();
                               ++nit ) {
-                            if ( &nit->second == pt_graph ) {
+                            if ( nit->second == pt_graph ) {
                                 network_id = nit->first;
                                 break;
                             }
@@ -506,7 +506,7 @@ public:
 
                         XML::set_prop( step_node, "type", type_str );
                         XML::set_prop( step_node, "road", road_name );
-                        XML::set_prop( step_node, "network", graph_.network_map[ network_id ].name() );
+                        XML::set_prop( step_node, "network", graph_.network( network_id )->name() );
                         XML::set_prop( step_node, "stop", stop_name );
                     }
                     else {

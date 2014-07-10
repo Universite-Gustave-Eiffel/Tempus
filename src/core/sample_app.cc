@@ -93,8 +93,8 @@ int main( int argc, char* argv[] )
 
         //
         // Build the user request
-        Multimodal::Graph& graph = app->graph();
-        Road::Graph& road_graph = graph.road;
+        const Multimodal::Graph& graph = *app->graph();
+        const Road::Graph& road_graph = graph.road();
 
         Request req;
         Request::Step step;

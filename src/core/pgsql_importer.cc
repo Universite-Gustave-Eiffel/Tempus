@@ -39,9 +39,9 @@ Db::Result PQImporter::query( const std::string& query_str )
 
 void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression )
 {
+    Multimodal::Graph::TransportModes modes;
     {
         Db::Result res( connection_.exec( "SELECT id, name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle FROM tempus.transport_mode" ) );
-        graph.clear_constants();
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t db_id=0; // avoid warning "may be used uninitialized"
@@ -61,47 +61,20 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
             if ( ! res[i][9].is_null() ) t.set_is_shared( res[i][9] );
             if ( ! res[i][10].is_null() ) t.set_must_be_returned( res[i][10] );
 
-            graph.add_transport_mode( t );
+            modes[t.db_id()] = t;
 
             progression( static_cast<float>( ( i + 0. ) / res.size() / 2.0 ) );
         }
+        graph.set_transport_modes( modes );
     }
 }
 
 ///
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
-void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& progression, bool consistency_check )
+std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check )
 {
-    Road::Graph& road_graph = graph.road;
-    road_graph.clear();
-    graph.network_map.clear();
-    graph.public_transports.clear();
-    graph.pois.clear();
-
-    // locally maps db ID to Node or Section
-    std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
-    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
-    // network_id -> pt_node_id -> vertex
-    std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
-
-    {
-        Db::Result res( connection_.exec( "SELECT id, bifurcation FROM tempus.road_node" ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
-            Road::Node node;
-
-            node.set_db_id( res[i][0] );
-            // only overwritten if not null
-            node.set_is_bifurcation( res[i][1] );
-
-            Road::Vertex v = boost::add_vertex( node, road_graph );
-
-            road_nodes_map[ node.db_id() ] = v;
-            road_graph[v].set_vertex( v );
-
-            progression( static_cast<float>( ( i + 0. ) / res.size() / 4.0 ) );
-        }
-    }
+    Road::Graph* road_graph = new Road::Graph();
+    std::auto_ptr<Road::Graph> sm_road_graph( road_graph );
 
     if ( consistency_check ) {
         //
@@ -172,6 +145,37 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         }
     }
 
+    // locally maps db ID to Node or Section
+    std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
+    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
+    // network_id -> pt_node_id -> vertex
+    std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
+
+    //------------------
+    //   Road nodes
+    //------------------
+    {
+        Db::Result res( connection_.exec( "SELECT id, bifurcation FROM tempus.road_node" ) );
+
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            Road::Node node;
+
+            node.set_db_id( res[i][0] );
+            // only overwritten if not null
+            node.set_is_bifurcation( res[i][1] );
+
+            Road::Vertex v = boost::add_vertex( node, *road_graph );
+
+            road_nodes_map[ node.db_id() ] = v;
+            (*road_graph)[v].set_vertex( v );
+
+            progression( static_cast<float>( ( i + 0. ) / res.size() / 4.0 ) );
+        }
+    }
+
+    //------------------
+    //   Road sections
+    //------------------
     {
         //
         // Get a road section and its opposite, if present
@@ -254,34 +258,40 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             if ( traffic_rules_ft > 0 ) {
                 Road::Edge e;
                 bool is_added, found;
-                boost::tie( e, found ) = boost::edge( v_from, v_to, road_graph );
+                boost::tie( e, found ) = boost::edge( v_from, v_to, *road_graph );
                 /*if ( found ) {
                     continue;
                 }*/
 
-                boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, road_graph );
+                boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, *road_graph );
                 BOOST_ASSERT( is_added );
-                road_graph[e].set_edge( e );
+                (*road_graph)[e].set_edge( e );
                 // link the road_section to this edge
                 road_sections_map[ section.db_id() ] = e;
             }
             if ( traffic_rules_tf > 0 ) {
                 Road::Edge e;
                 bool is_added, found;
-                boost::tie( e, found ) = boost::edge( v_to, v_from, road_graph );
+                boost::tie( e, found ) = boost::edge( v_to, v_from, *road_graph );
                 /*if ( found ) {
                     continue;
                 }*/
 
-                boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, road_graph );
+                boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, *road_graph );
                 BOOST_ASSERT( is_added );
-                road_graph[e].set_edge( e );
+                (*road_graph)[e].set_edge( e );
             }
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
         }
     }
 
+    // build the multimodal graph
+    std::auto_ptr<Multimodal::Graph> graph( new Multimodal::Graph( sm_road_graph ) );
+    road_graph = &graph->road();
+
+    boost::ptr_map<db_id_t, PublicTransport::Graph> pt_graphs;
+    Multimodal::Graph::NetworkMap networks;
     {
         Db::Result res( connection_.exec( "SELECT id, pnname FROM tempus.pt_network" ) );
 
@@ -292,8 +302,8 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             BOOST_ASSERT( network.db_id() > 0 );
             network.set_name( res[i][1] );
 
-            graph.network_map[network.db_id()] = network;
-            graph.public_transports[network.db_id()] = PublicTransport::Graph();
+            networks[network.db_id()] = network;
+            pt_graphs.insert(network.db_id(), std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph()));
         }
     }
 
@@ -311,9 +321,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             Tempus::db_id_t network_id;
             res[i][j++] >> network_id;
             BOOST_ASSERT( network_id > 0 );
-            BOOST_ASSERT( graph.network_map.find( network_id ) != graph.network_map.end() );
-            BOOST_ASSERT( graph.public_transports.find( network_id ) != graph.public_transports.end() );
-            PublicTransport::Graph& pt_graph = graph.public_transports[network_id];
+            BOOST_ASSERT( networks.find( network_id ) != networks.end() );
+            BOOST_ASSERT( pt_graphs.find( network_id ) != pt_graphs.end() );
+            PublicTransport::Graph& pt_graph = pt_graphs[network_id];
             PublicTransport::Stop stop;
 
             stop.set_db_id( res[i][j++] );
@@ -345,9 +355,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             {
                 Road::Edge opposite_edge;
                 bool found;
-                boost::tie( opposite_edge, found ) = edge( target( stop.road_edge(), graph.road ),
-                                                           source( stop.road_edge(), graph.road ),
-                                                           graph.road );
+                boost::tie( opposite_edge, found ) = edge( target( stop.road_edge(), *road_graph ),
+                                                           source( stop.road_edge(), *road_graph ),
+                                                           *road_graph );
                 if ( found ) {
                     stop.set_opposite_road_edge( opposite_edge );
                 }
@@ -367,15 +377,15 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
     //
     // For all public transport nodes, add a reference to the attached road section
-    Multimodal::Graph::PublicTransportGraphList::iterator it;
+    boost::ptr_map<db_id_t, PublicTransport::Graph>::iterator it;
 
-    for ( it = graph.public_transports.begin(); it != graph.public_transports.end(); it++ ) {
-        PublicTransport::Graph& g = it->second;
+    for ( it = pt_graphs.begin(); it != pt_graphs.end(); it++ ) {
+        PublicTransport::Graph& g = *it->second;
         PublicTransport::VertexIterator vi, vi_end;
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
             Road::Edge rs = g[ *vi ].road_edge();
-            road_graph[ rs ].add_stop_ref( &g[*vi] );
+            (*road_graph)[ rs ].add_stop_ref( &g[*vi] );
         }
     }
 
@@ -386,8 +396,8 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             Tempus::db_id_t network_id;
             res[i][0] >> network_id;
             BOOST_ASSERT( network_id > 0 );
-            BOOST_ASSERT( graph.public_transports.find( network_id ) != graph.public_transports.end() );
-            PublicTransport::Graph& pt_graph = graph.public_transports[ network_id ];
+            BOOST_ASSERT( pt_graphs.find( network_id ) != pt_graphs.end() );
+            PublicTransport::Graph& pt_graph = pt_graphs[ network_id ];
 
             Tempus::db_id_t stop_from_id, stop_to_id;
             res[i][1] >> stop_from_id;
@@ -419,6 +429,10 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
         }
     }
 
+    //-------------
+    //    POI
+    //-------------
+    boost::ptr_map<db_id_t, POI> pois;
     {
         Db::Result res( connection_.exec( "SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section FROM tempus.poi" ) );
 
@@ -447,9 +461,9 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
             {
                 Road::Edge opposite_edge;
                 bool found;
-                boost::tie( opposite_edge, found ) = edge( target( poi.road_edge(), graph.road ),
-                                                           source( poi.road_edge(), graph.road ),
-                                                           graph.road );
+                boost::tie( opposite_edge, found ) = edge( target( poi.road_edge(), *road_graph ),
+                                                           source( poi.road_edge(), *road_graph ),
+                                                           *road_graph );
                 if ( found ) {
                     poi.set_opposite_road_edge( opposite_edge );
                 }
@@ -457,7 +471,7 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
 
             poi.set_abscissa_road_section( res[i][5] );
 
-            graph.pois[ poi.db_id() ] = poi;
+            pois.insert( poi.db_id(), std::auto_ptr<POI>(new POI( poi )) );
         }
     }
 
@@ -465,17 +479,19 @@ void PQImporter::import_graph( Multimodal::Graph& graph, ProgressionCallback& pr
     // For all POIs, add a reference to the attached road section
     Multimodal::Graph::PoiList::iterator pit;
 
-    for ( pit = graph.pois.begin(); pit != graph.pois.end(); pit++ ) {
-        Road::Edge rs = pit->second.road_edge();
-        graph.road[ rs ].add_poi_ref( &pit->second ); 
+    for ( pit = pois.begin(); pit != pois.end(); pit++ ) {
+        Road::Edge rs = pit->second->road_edge();
+        (*road_graph)[ rs ].add_poi_ref( &*pit->second ); 
     }
 
-    //
-    // By default, all public transport networks are part of the selected subset
-    graph.public_transports.select_all();
+    /// assign to the multimodal graph
+    graph->set_network_map( networks );
+    graph->set_public_transports( pt_graphs );
+    graph->set_pois( pois );
 
     progression( 1.0, /* finished = */ true );
 
+    return graph;
 }
 
 Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& graph )

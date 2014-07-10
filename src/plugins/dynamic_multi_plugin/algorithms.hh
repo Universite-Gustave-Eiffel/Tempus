@@ -67,15 +67,12 @@ namespace Tempus {
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
                 for ( size_t i = 0; i < request_allowed_modes.size(); i++ ) {
                     db_id_t mode_id = request_allowed_modes[i];
-                    TransportMode mode;
-                    {
-                        bool found;
-                        boost::tie(mode, found) = graph.transport_mode(mode_id);
-                        BOOST_ASSERT( found );
-                    }
+                    boost::optional<TransportMode> mode;
+                    mode = graph.transport_mode(mode_id);
+                    BOOST_ASSERT(mode);
 
                     // if this mode is not allowed on the current edge, skip it
-                    if ( ! (current_edge.traffic_rules() & mode.traffic_rules() ) ) {
+                    if ( ! (current_edge.traffic_rules() & mode->traffic_rules() ) ) {
                         continue;
                     }
 
@@ -109,7 +106,7 @@ namespace Tempus {
                                                              wait_time );
                         cost += travel_time;
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
-                            cost += penalty( automaton.automaton_graph_, s, mode.traffic_rules() ) ;
+                            cost += penalty( automaton.automaton_graph_, s, mode->traffic_rules() ) ;
                         }
                     }
 

@@ -158,7 +158,7 @@ struct StaticVariables
 	
     public: 
         static void post_build() { 
-            Road::Graph& road_graph = Application::instance()->graph().road;
+            const Road::Graph& road_graph = Application::instance()->graph()->road();
 		
             PQImporter psql( Application::instance()->db_options() ); 
             Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph );
@@ -185,19 +185,19 @@ struct StaticVariables
             Timer timer; 
     	
             // Check graph
-            REQUIRE( graph_.public_transports.size() >= 1 );
-            PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
+            REQUIRE( graph_.public_transports().size() >= 1 );
+            const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
     	
             // Check request and clear result
             REQUIRE( request.allowed_modes().size() >= 1 );
-            REQUIRE( vertex_exists( request.origin(), graph_.road ) );
-            REQUIRE( vertex_exists( request.destination(), graph_.road ) );
+            REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
+            REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
             request_ = request; 
 
             if ( request.optimizing_criteria()[0] != CostDuration ) 
                 throw std::invalid_argument( "Unsupported optimizing criterion" ); 
         
-            if ( verbose_ ) cout << "Road origin node ID = " << graph_.road[request_.origin()].db_id() << ", road destination node ID = " << graph_.road[request_.destination()].db_id() << endl;
+            if ( verbose_ ) cout << "Road origin node ID = " << graph_.road()[request_.origin()].db_id() << ", road destination node ID = " << graph_.road()[request_.destination()].db_id() << endl;
             result_.clear(); 
             	
             // Get plugin options 		
@@ -332,8 +332,8 @@ struct StaticVariables
             Timer timer;
 
             // Get origin and destination nodes
-            Multimodal::Vertex origin = Multimodal::Vertex( &graph_.road, request_.origin() );
-            destination_ = Multimodal::Vertex( &graph_.road, request_.destination() );
+            Multimodal::Vertex origin = Multimodal::Vertex( &graph_.road(), request_.origin() );
+            destination_ = Multimodal::Vertex( &graph_.road(), request_.destination() );
 
             Triple origin_o;
             origin_o.vertex = origin;
@@ -499,8 +499,8 @@ struct StaticVariables
                     step->set_arrival_time( potential_map_[*next] );
 				
                     // find the network_id
-                    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {
-                        if ( it->vertex.pt_graph() == &nit->second ) {
+                    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin(); nit != graph_.public_transports().end(); ++nit ) {
+                        if ( it->vertex.pt_graph() == nit->second ) {
                             step->set_network_id(nit->first);
                             break;
                         }

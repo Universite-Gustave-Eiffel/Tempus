@@ -271,7 +271,7 @@ public:
 protected:
     ///
     /// Graph extracted from the database
-    Multimodal::Graph& graph_;
+    const Multimodal::Graph& graph_;
     ///
     /// User request
     Request request_;

@@ -249,7 +249,7 @@ const Plugin::OptionDescriptionList PluginFactory::option_descriptions( const st
 
 
 Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
-    graph_( Application::instance()->graph() ),
+    graph_( *Application::instance()->graph() ),
     name_( nname ),
     db_( db_options ) // create another connection
 {
@@ -381,7 +381,7 @@ Result& Plugin::result()
     for ( Result::iterator rit = result_.begin(); rit != result_.end(); ++rit ) {
         Roadmap& roadmap = *rit;
         Roadmap new_roadmap;
-        Road::Graph& road_graph = graph_.road;
+        const Road::Graph& road_graph = graph_.road();
 
         Tempus::db_id_t previous_section = 0;
         bool on_roundabout = false;
@@ -482,7 +482,7 @@ Result& Plugin::result()
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-                PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id()];
+                const PublicTransport::Graph& pt_graph = *graph_.public_transport(step->network_id());
 
                 // store stops
                 accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );

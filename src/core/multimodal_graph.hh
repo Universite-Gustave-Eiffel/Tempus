@@ -19,6 +19,7 @@
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
 #include <boost/variant.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
 
 #include "common.hh"
 #include "transport_modes.hh"
@@ -227,47 +228,71 @@ struct Graph: boost::noncopyable {
         return vertex_descriptor();   // depending on boost version, this can be useless
     }
 
+    /// Cosntructor
+    /// Needs a road graph at a minimum
+    explicit Graph( std::auto_ptr<Road::Graph> );
+
+    ~Graph();
+
     ///
     /// The road graph
-    Road::Graph road;
+    const Road::Graph& road() const;
+
+    /// Write access
+    Road::Graph& road();
+private:
+    std::auto_ptr<Road::Graph> road_;
+public:
+    void set_road( std::auto_ptr<Road::Graph> );
 
     ///
     /// Public transport networks
     typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
-    NetworkMap network_map;
+    DECLARE_RW_PROPERTY( network_map, NetworkMap );
 
+    /// Access to a particular network
+    boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
+    
     ///
     /// Public transports graphs
     /// network_id -> PublicTransport::Graph
     /// This a sub_map that can thus be filtered to select only a subset
-    typedef sub_map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
-    PublicTransportGraphList public_transports;
+    /// Public transport graphs are owned by this class
+    /// FIXME find a smart pointer class that work with sub_map
+    typedef sub_map< db_id_t, const PublicTransport::Graph* > PublicTransportGraphList;
+    DECLARE_RO_PROPERTY( public_transports, PublicTransportGraphList );
+
+    /// Access to a particular graph
+    boost::optional<const PublicTransport::Graph&> public_transport( db_id_t ) const;
+    /// take ownership (move)
+    void set_public_transports( boost::ptr_map<db_id_t, PublicTransport::Graph>& );
+
+    /// Select public transports
+    void select_public_transports( const std::set<db_id_t>& );
 
     ///
     /// Point of interests
-    typedef std::map<db_id_t, POI> PoiList;
-    PoiList pois;
+    typedef boost::ptr_map<db_id_t, POI> PoiList;
+    DECLARE_RO_PROPERTY( pois, PoiList );
+    /// Access to a particular poi
+    boost::optional<const POI&> poi( db_id_t ) const;
+    /// Set POIs (take ownership)
+    void set_pois( boost::ptr_map<db_id_t, POI>& );
 
-    /// prepare for constant (re)loading
-    void clear_constants();
+    typedef std::map<db_id_t, TransportMode> TransportModes;
+    DECLARE_RO_PROPERTY( transport_modes, TransportModes );
 
-    /// register a new transport mode
-    void add_transport_mode( const TransportMode& tm );
-
-    /// access to registered transport modes
-    const TransportModes& transport_modes() const { return transport_modes_; }
+    void set_transport_modes( const TransportModes& );
 
     /// access to a transportmode, given its id
     /// the second element of the pair tells if the mode exists
-    std::pair<TransportMode,bool> transport_mode( db_id_t id ) const;
+    boost::optional<TransportMode> transport_mode( db_id_t id ) const;
 
     /// access to a transportmode, given its name
     /// the second element of the pair tells if the mode exists
-    std::pair<TransportMode,bool> transport_mode( const std::string& name ) const;
+    boost::optional<TransportMode> transport_mode( const std::string& name ) const;
 
 private:
-    TransportModes transport_modes_;
-
     typedef std::map<std::string, Tempus::db_id_t> NameToId;
     ///
     /// Associative array that maps a transport type name to a transport type id

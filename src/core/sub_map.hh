@@ -32,14 +32,14 @@
 /// In addition, the selected subset can be set with select( std::set<KT>& )
 /// and can be iterated over with a pair of iterators given by subset_begin() and subset_end()
 //
-template <class KT, class VT>
-class sub_map : public std::map<KT, VT> {
+template < class KT, class VT, class Map = std::map<KT,VT> >
+class sub_map : public Map {
 public:
-    sub_map() : std::map<KT, VT>(), predicate_( selection_ ) {}
+    sub_map() : Map(), predicate_( selection_ ) {}
 
     ///
     /// Set the current subset
-    void select( std::set<KT>& sselection ) {
+    void select( const std::set<KT>& sselection ) {
         selection_ = sselection;
     }
 
@@ -47,7 +47,7 @@ public:
     /// Select all the elements of the map as the current subset
     void select_all() {
         selection_.clear();
-        typename std::map<KT,VT>::const_iterator it;
+        typename Map::const_iterator it;
 
         for ( it = this->begin(); it != this->end(); it++ ) {
             selection_.insert( it->first );
@@ -84,19 +84,19 @@ protected:
     };
     FilterPredicate<KT, VT> predicate_;
 public:
-    typedef boost::filter_iterator<FilterPredicate<KT, VT>, typename std::map<KT, VT>::const_iterator> const_subset_iterator;
-    typedef boost::filter_iterator<FilterPredicate<KT, VT>, typename std::map<KT, VT>::iterator> subset_iterator;
+    typedef boost::filter_iterator<FilterPredicate<KT, VT>, typename Map::const_iterator> const_subset_iterator;
+    typedef boost::filter_iterator<FilterPredicate<KT, VT>, typename Map::iterator> subset_iterator;
     const_subset_iterator subset_begin() const {
-        return const_subset_iterator( predicate_, std::map<KT, VT>::begin(), std::map<KT, VT>::end() );
+        return const_subset_iterator( predicate_, Map::begin(), Map::end() );
     }
     const_subset_iterator subset_end() const {
-        return const_subset_iterator( predicate_, std::map<KT, VT>::end(), std::map<KT, VT>::end() );
+        return const_subset_iterator( predicate_, Map::end(), Map::end() );
     }
     subset_iterator subset_begin() {
-        return subset_iterator( predicate_, std::map<KT, VT>::begin(), std::map<KT, VT>::end() );
+        return subset_iterator( predicate_, Map::begin(), Map::end() );
     }
     subset_iterator subset_end() {
-        return subset_iterator( predicate_, std::map<KT, VT>::end(), std::map<KT, VT>::end() );
+        return subset_iterator( predicate_, Map::end(), Map::end() );
     }
 };
 
