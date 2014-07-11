@@ -62,8 +62,6 @@ namespace Tempus {
 
             double min_pi = get( potential_map, min_object );
 			
-            //vis.examine_vertex( min_object, graph );
-			
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
                 for ( size_t i = 0; i < request_allowed_modes.size(); i++ ) {
                     db_id_t mode_id = request_allowed_modes[i];
@@ -119,12 +117,12 @@ namespace Tempus {
 
                         vertex_queue.push( new_object ); 
 
-                        //vis.edge_relaxed( current_edge, mode_label, graph ); 
+                        vis.edge_relaxed( current_edge, mode_id, graph ); 
                     }
                 }
             }
 
-            //vis.finish_vertex( min_object, graph ); 
+            vis.finish_vertex( min_object, graph ); 
         }
     }
 	

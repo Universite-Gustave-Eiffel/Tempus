@@ -59,14 +59,15 @@ namespace Tempus {
         }
     };
 
-class DestinationDetector
+class DestinationDetectorVisitor
 {
 public:
-    DestinationDetector( const Road::Vertex& destination, bool walk_at_destination = true, bool verbose = false ) :
+    DestinationDetectorVisitor( const Road::Vertex& destination, bool walk_at_destination = true, bool verbose = false ) :
         destination_(destination),
         walk_at_destination_(walk_at_destination),
         verbose_(verbose) {}
 
+    // the exception used to shortcut dijkstra
     struct path_found_exception
     {
         path_found_exception( const Triple& t ) : destination(t) {}
@@ -81,9 +82,25 @@ public:
             }
         }
         if (verbose_) {
-            std::cout << "examine vertex " << t.vertex << " mode " << t.mode << std::endl;
+            std::cout << "Examine triple (vertex=" << t.vertex << ", mode=" << t.mode << ", state=" << t.state << ")" << std::endl;
         }
     }
+
+    void finish_vertex( const Triple&, const Multimodal::Graph& )
+    {
+    }
+
+    void examine_edge( const Multimodal::Edge& e, const Multimodal::Graph& )
+    {
+        if (verbose_) {
+            std::cout << "Examine edge " << e << std::endl;
+        }
+    }
+
+    void edge_relaxed( const Multimodal::Edge&, unsigned int, const Multimodal::Graph& )
+    {
+    }
+
 private:
     Road::Vertex destination_;
     bool walk_at_destination_;
@@ -356,16 +373,17 @@ struct StaticVariables
             // Define and initialize the cost calculator
             CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
 
-            //            Tempus::PluginGraphVisitor vis ( this ) ;
             bool walk_at_destination;
-            get_option( "walk_at_destination", walk_at_destination ); 
-            DestinationDetector vis( request_.destination(), walk_at_destination, verbose_ );
+            get_option( "walk_at_destination", walk_at_destination );
+            // we cannot use the regular visitor here, since we examine tuples instead of vertices
+            DestinationDetectorVisitor vis( request_.destination(), walk_at_destination, verbose_ );
+
             Triple destination_o;
             bool path_found = false;
             try {
                 combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis );
             }
-            catch ( DestinationDetector::path_found_exception& e ) {
+            catch ( DestinationDetectorVisitor::path_found_exception& e ) {
                 // Dijkstra has been short cut when the destination node is reached
                 destination_o = e.destination;
                 path_found = true;
@@ -385,49 +403,6 @@ struct StaticVariables
             Path path = reorder_path( origin_o, destination_o );
             add_roadmap( path );
         }
-
-        /*virtual void vertex_accessor( Triple triple, int access_type ) {
-          if ( access_type == Plugin::ExamineAccess ) {
-          if ( triple.vertex == destination_ ) // If destination is reached, a triple with state 0 and mode 2 is added to the potential and predecessor maps, to allow the reorder_path function to work  
-          {
-          if ( ( triple.state != 0 ) && ( triple.mode != 2 ) ) {
-          Triple additional_triple; 
-          additional_triple.vertex = triple.vertex; 
-          additional_triple.state = 0; 
-          additional_triple.mode = 2; 
-          potential_map_[additional_triple] = potential_map_[ triple ]; 
-          pred_map_[additional_triple] = pred_map_[ triple ]; 
-          } 
-          throw path_found_exception(); // For a label-setting algorithm, the search is interrupted when the destination node is examined
-          }
-    		
-          iterations_++;
-          if ( verbose_algo_ ) cout << " Potential value : "<<potential_map_[ triple ]<< endl; 
-          }
-        
-          // Calls road_vertex_accessor and pt_vertex_accessor
-          if ( triple.vertex.type == Multimodal::Vertex::Road ) {
-          if ( verbose_algo_ ) cout << "Examining triple : (road vertex = " << graph_.road[ triple.vertex.road_vertex ].db_id << ", state = " << triple.state << ", mode = " << triple.mode << ")" << endl; 
-          }
-          else if ( triple.vertex.type == Multimodal::Vertex::PublicTransport ) { 
-          if ( verbose_algo_ ) cout << "Examining triple : (pt vertex = " << graph_.public_transports.begin()->second[ triple.vertex.pt_vertex ].db_id << ", state = " << triple.state << ", mode = " << triple.mode << ")" << endl; 
-          }
-          }
-        
-          virtual void edge_accessor( Multimodal::Edge e, int access_type ) {
-          if ( e.connection_type() == Multimodal::Edge::Transport2Transport ) {
-          PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-          PublicTransport::Edge pt_e ;
-          bool found; 
-          boost::tie( pt_e, found ) = edge( source(e, graph_).pt_vertex, target(e, graph_).pt_vertex, pt_graph );
-
-          if ( access_type == Plugin::ExamineAccess ) {
-          if ( verbose_algo_ ) {
-          cout << "	Examining edge (" << pt_graph[ source(pt_e, pt_graph) ].db_id << ", " << pt_graph[ target(pt_e, pt_graph) ].db_id << ")" << endl;
-          }
-          }
-          }
-          } */
     
         Path reorder_path( Triple departure, Triple arrival )
         {
