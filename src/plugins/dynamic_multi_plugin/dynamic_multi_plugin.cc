@@ -184,10 +184,6 @@ struct StaticVariables
             // Initialize timer for preprocessing time
             Timer timer; 
     	
-            // Check graph
-            REQUIRE( graph_.public_transports().size() >= 1 );
-            const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
-    	
             // Check request and clear result
             REQUIRE( request.allowed_modes().size() >= 1 );
             REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
@@ -209,9 +205,9 @@ struct StaticVariables
             get_option( "cycling_speed", cycling_speed_ ); 
             get_option( "car_parking_search_time", car_parking_search_time_ ); 
     	
-#if 1
             // If current date changed, reload timetable / frequency
-            if ( s_.current_day != request_.steps()[0].constraint().date_time().date() )  {
+            if ( (graph_.public_transports().size() > 0) && (s_.current_day != request_.steps()[0].constraint().date_time().date()) )  {
+                const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
                 std::cout << "load timetable" << std::endl;
         	s_.current_day = request_.steps()[0].constraint().date_time().date();
 
@@ -310,7 +306,6 @@ struct StaticVariables
                     }
                 }
             }
-#endif
         
 #if 0
             // Load vehicle positions
