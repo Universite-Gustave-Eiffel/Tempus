@@ -74,8 +74,6 @@ public:
     static void post_build() { }
 
     virtual void pre_process( Request& request ) {
-        REQUIRE( request.check_consistency() );
-
         REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
         REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
 

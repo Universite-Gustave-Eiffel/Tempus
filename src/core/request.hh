@@ -30,7 +30,8 @@ namespace Tempus {
    It is composed of at least an origin and a destination with optional time constraints.
    Intermediary steps can be added.
 */
-class Request : public ConsistentClass {
+class Request
+{
 public:
 
     struct TimeConstraint {

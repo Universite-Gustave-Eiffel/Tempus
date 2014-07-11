@@ -127,26 +127,6 @@ std::string to_string( const TIN& in )
 ///
 typedef unsigned long long int db_id_t;
 
-struct ConsistentClass {
-    ///
-    /// Consistency checking.
-    /// When on debug mode, calls the virtual check() method.
-    /// When the debug mode is disabled, it does nothing.
-    bool check_consistency() {
-#ifndef NDEBUG
-        return check_consistency_();
-#else
-        return true;
-#endif
-    }
-protected:
-    ///
-    /// Private method to override in derived classes. Does nothing by default.
-    virtual bool check_consistency_() {
-        return true;
-    }
-};
-
 #ifndef NDEBUG
 ///
 /// Assertion, will abort if the condition is false
@@ -192,7 +172,8 @@ private:                                               \
 public:                                                \
   void set_##NAME( const TYPE& a ) { NAME ## _ = a; }
 
-class Base : public ConsistentClass {
+class Base
+{
 public:
     Base() : db_id_(0) {}
     explicit Base( db_id_t id ) : db_id_(id) {}
