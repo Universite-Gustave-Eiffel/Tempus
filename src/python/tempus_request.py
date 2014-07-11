@@ -194,11 +194,6 @@ class Plugin:
         self.name = name
         self.options = options
 
-class RoadType:
-    def __init__( self, name = '', id = 0 ):
-        self.name = name
-        self.id = id
-
 class TransportMode:
     def __init__( self, id = 0, name = '', need_parking = False, is_shared = False, must_be_returned = False, traffic_rules = 0, speed_rule = 0, toll_rules = 0, engine_type = 0 ):
         self.id = id
