@@ -91,7 +91,7 @@ public:
         result_.clear();
     }
 
-    virtual void road_vertex_accessor( Road::Vertex v, int access_type ) {
+    virtual void road_vertex_accessor( const Road::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
             if ( v == destination_ ) {
                 throw path_found_exception();

@@ -260,7 +260,7 @@ public:
     // current destination
     Multimodal::Vertex destination_;
 
-    void vertex_accessor( Multimodal::Vertex v, int access_type ) {
+    void vertex_accessor( const Multimodal::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
             if ( v == destination_ ) {
                 throw PathFound();

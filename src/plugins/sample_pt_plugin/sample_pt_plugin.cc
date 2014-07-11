@@ -74,7 +74,7 @@ public:
         result_.clear();
     }
 
-    virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type ) {
+    virtual void pt_vertex_accessor( const PublicTransport::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
             const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
             CERR << "Examining vertex " << pt_graph[v].db_id() << endl;

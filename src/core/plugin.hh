@@ -234,12 +234,12 @@ public:
     ///
     /// Acessors methods. They can be called on graph traversals.
     /// A Plugin is made compatible with a boost::visitor by means of a PluginGraphVisitor
-    virtual void road_vertex_accessor( Road::Vertex, int /*access_type*/ ) {}
-    virtual void road_edge_accessor( Road::Edge, int /*access_type*/ ) {}
-    virtual void pt_vertex_accessor( PublicTransport::Vertex, int /*access_type*/ ) {}
-    virtual void pt_edge_accessor( PublicTransport::Edge, int /*access_type*/ ) {}
-    virtual void vertex_accessor( Multimodal::Vertex, int /*access_type*/ ) {}
-    virtual void edge_accessor( Multimodal::Edge, int /*access_type*/ ) {}
+    virtual void road_vertex_accessor( const Road::Vertex&, int /*access_type*/ ) {}
+    virtual void road_edge_accessor( const Road::Edge&, int /*access_type*/ ) {}
+    virtual void pt_vertex_accessor( const PublicTransport::Vertex&, int /*access_type*/ ) {}
+    virtual void pt_edge_accessor( const PublicTransport::Edge&, int /*access_type*/ ) {}
+    virtual void vertex_accessor( const Multimodal::Vertex&, int /*access_type*/ ) {}
+    virtual void edge_accessor( const Multimodal::Edge&, int /*access_type*/ ) {}
 
     ///
     /// Cycle
@@ -308,8 +308,8 @@ struct Plugin::OptionTypeFrom<std::string> { static const Plugin::OptionType typ
 /// This is a proxy to Plugin::xxx_accessor methods. It may be used as implementation of any kind of boost::graph visitors
 /// (BFS, DFS, Dijkstra, A*, Bellman-Ford)
 template <class Graph,
-         void ( Plugin::*VertexAccessorFunction )( typename boost::graph_traits<Graph>::vertex_descriptor, int ),
-         void ( Plugin::*EdgeAccessorFunction )( typename boost::graph_traits<Graph>::edge_descriptor, int )
+         void ( Plugin::*VertexAccessorFunction )( const typename boost::graph_traits<Graph>::vertex_descriptor&, int ),
+         void ( Plugin::*EdgeAccessorFunction )( const typename boost::graph_traits<Graph>::edge_descriptor&, int )
          >
 class PluginGraphVisitorHelper {
 public:
@@ -317,53 +317,53 @@ public:
     typedef typename boost::graph_traits<Graph>::vertex_descriptor VDescriptor;
     typedef typename boost::graph_traits<Graph>::edge_descriptor EDescriptor;
 
-    void initialize_vertex( VDescriptor v, const Graph& ) {
+    void initialize_vertex( const VDescriptor& v, const Graph& ) {
         ( plugin_->*VertexAccessorFunction )( v, Plugin::InitAccess );
     }
-    void examine_vertex( VDescriptor v, const Graph& ) {
+    void examine_vertex( const VDescriptor& v, const Graph& ) {
         ( plugin_->*VertexAccessorFunction )( v, Plugin::ExamineAccess );
     }
-    void discover_vertex( VDescriptor v, const Graph& ) {
+    void discover_vertex( const VDescriptor& v, const Graph& ) {
         ( plugin_->*VertexAccessorFunction )( v, Plugin::DiscoverAccess );
     }
-    void start_vertex( VDescriptor v, const Graph& ) {
+    void start_vertex( const VDescriptor& v, const Graph& ) {
         ( plugin_->*VertexAccessorFunction )( v, Plugin::StartAccess );
     }
-    void finish_vertex( VDescriptor v, const Graph& ) {
+    void finish_vertex( const VDescriptor& v, const Graph& ) {
         ( plugin_->*VertexAccessorFunction )( v, Plugin::FinishAccess );
     }
 
-    void examine_edge( EDescriptor e, const Graph& ) {
+    void examine_edge( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::ExamineAccess );
     }
-    void tree_edge( EDescriptor e, const Graph& ) {
+    void tree_edge( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::TreeEdgeAccess );
     }
-    void non_tree_edge( EDescriptor e, const Graph& ) {
+    void non_tree_edge( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::NonTreeEdgeAccess );
     }
-    void back_edge( EDescriptor e, const Graph& ) {
+    void back_edge( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::BackEdgeAccess );
     }
-    void gray_target( EDescriptor e, const Graph& ) {
+    void gray_target( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::GrayTargetAccess );
     }
-    void black_target( EDescriptor e, const Graph& ) {
+    void black_target( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::BlackTargetAccess );
     }
-    void forward_or_cross_edge( EDescriptor e, const Graph& ) {
+    void forward_or_cross_edge( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::ForwardOrCrossEdgeAccess );
     }
-    void edge_relaxed( EDescriptor e, const Graph& ) {
+    void edge_relaxed( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeRelaxedAccess );
     }
-    void edge_not_relaxed( EDescriptor e, const Graph& ) {
+    void edge_not_relaxed( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeNotRelaxedAccess );
     }
-    void edge_minimized( EDescriptor e, const Graph& ) {
+    void edge_minimized( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeMinimizedAccess );
     }
-    void edge_not_minimized( EDescriptor e, const Graph& ) {
+    void edge_not_minimized( const EDescriptor& e, const Graph& ) {
         ( plugin_->*EdgeAccessorFunction )( e, Plugin::EdgeNotMinimizedAccess );
     }
 
