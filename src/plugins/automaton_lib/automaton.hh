@@ -31,6 +31,7 @@
 #define AUTOMATION_LIB_AUTOMATON_HH
 
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/iteration_macros.hpp>
 
 namespace Tempus {
 	
