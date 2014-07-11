@@ -22,12 +22,12 @@ namespace Tempus {
 template <class Graph, class Tag, class T, class Function>
 struct FunctionPropertyAccessor {
     typedef T value_type;
-    typedef T& reference;
+    typedef const T& reference;
     typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
     typedef boost::readable_property_map_tag category;
 
-    FunctionPropertyAccessor( Graph& graph, Function fct ) : graph_( graph ), fct_( fct ) {}
-    Graph& graph_;
+    FunctionPropertyAccessor( const Graph& graph, Function fct ) : graph_( graph ), fct_( fct ) {}
+    const Graph& graph_;
     Function fct_;
 };
 }

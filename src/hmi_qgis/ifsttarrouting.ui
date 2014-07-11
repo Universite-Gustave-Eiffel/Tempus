@@ -202,14 +202,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Transport types</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Transport networks</string>
+             <string>Transport modes</string>
             </property>
            </widget>
           </item>
@@ -219,13 +212,6 @@
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <widget class="QListView" name="transportList">
-            <property name="selectionMode">
-             <enum>QAbstractItemView::MultiSelection</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QListView" name="networkList">
             <property name="selectionMode">
              <enum>QAbstractItemView::MultiSelection</enum>
             </property>

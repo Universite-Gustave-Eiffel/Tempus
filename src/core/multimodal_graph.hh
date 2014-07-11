@@ -18,9 +18,14 @@
 #ifndef TEMPUS_MULTIMODAL_GRAPH_HH
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
+#include <boost/variant.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
+
 #include "common.hh"
+#include "transport_modes.hh"
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
+#include "poi.hh"
 #include "sub_map.hh"
 
 namespace Db {
@@ -47,50 +52,106 @@ namespace Tempus {
 /// A Multimodal::Graph is a Road::Graph, a list of PublicTransport::Graph and a list of POIs
 ///
 namespace Multimodal {
+
 ///
 /// A Multimodal::Vertex is either a Road::Vertex or PublicTransport::Vertex on a particular public transport network
 struct Vertex {
-    enum VertexType {
-        Road,            /// This vertex is a road vertex
-        PublicTransport, /// This vertex is a public transport stop
-        Poi              /// This vertex is a POI
-    };
-    VertexType type;
-
-    union {
-        const Road::Graph* road_graph;
-        const PublicTransport::Graph* pt_graph;
-        const POI* poi;
-    };
-
-    ///
-    /// The road vertex if this is relevant ( cannot be stored in a union since it has non trivial constructors )
-    Road::Vertex road_vertex;
-    ///
-    /// The public transport vertex if this is relevant ( cannot be stored in a union since it has non trivial constructors )
-    PublicTransport::Vertex pt_vertex;
-
+public:
     ///
     /// Comparison operator
     bool operator==( const Vertex& v ) const;
     bool operator!=( const Vertex& v ) const;
     bool operator<( const Vertex& v ) const;
 
-    Vertex() {}
+    /// A null vertex
+    Vertex();
+    /// A road vertex
     Vertex( const Road::Graph* graph, Road::Vertex vertex );
+    /// A public transport vertex
     Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex );
-    Vertex( const POI* poi );
+    /// A POI vertex
+    explicit Vertex( const POI* poi );
+
+    enum VertexType {
+        Road = 0,        /// This vertex is a road vertex
+        PublicTransport, /// This vertex is a public transport stop
+        Poi              /// This vertex is a POI
+    };
+    VertexType type() const;
+
+    bool is_null() const;
+
+    /// Access to the underlying road graph
+    /// @returns the road graph or 0 if it's not a road vertex
+    const Road::Graph* road_graph() const;
+    /// @returns the road vertex on the road graph if it's a road vertex
+    Road::Vertex road_vertex() const;
+
+    /// @returns the public transport graph or 0 if it's not a pt vertex
+    const PublicTransport::Graph* pt_graph() const;
+    /// @returns the pt vertex on the pt graph if it's a pt vertex
+    PublicTransport::Vertex pt_vertex() const;
+
+    /// @returns the POI, if it's a POI, or 0
+    const POI* poi() const;
+
+private:
+    struct RoadVertex_
+    {
+        const Road::Graph* graph;
+        Road::Vertex vertex;
+        RoadVertex_() : graph(0) {}
+        RoadVertex_( const Road::Graph* g, const Road::Vertex& v ) : graph(g), vertex(v) {}
+        bool operator==( const RoadVertex_& other ) const {
+            return graph == other.graph && vertex == other.vertex;
+        }
+        bool operator< (const RoadVertex_& other ) const {
+            return graph == other.graph ? vertex < other.vertex : graph < other.graph;
+        }
+    };
+    struct PtVertex_
+    {
+        const PublicTransport::Graph* graph;
+        PublicTransport::Vertex vertex;
+        PtVertex_() : graph(0) {}
+        PtVertex_( const PublicTransport::Graph* g, const PublicTransport::Vertex& v) : graph(g), vertex(v) {}
+        bool operator==( const PtVertex_& other ) const {
+            return graph == other.graph && vertex == other.vertex;
+        }
+        bool operator< (const PtVertex_& other ) const {
+            return graph == other.graph ? vertex < other.vertex : graph < other.graph;
+        }
+    };
+    bool is_null_;
+    boost::variant< RoadVertex_, PtVertex_, const POI * > union_;
 };
 
+/// Convenience function - get a Road::Node out of a Vertex, if defined
+/// @returns the corresponding road node
+/// warning no check is done, could crash
+Road::Node get_road_node( const Vertex& v );
+
+/// Convenience function - get a PublicTransport::Stop out of a Vertex, if defined
+/// @returns the corresponding public transport stop
+/// warning no check is done, could crash
+PublicTransport::Stop get_pt_stop( const Vertex& v );
+
 ///
-/// A multimodal edge is a pair of multimodal vertices
+/// A multimodal edge is defined with :
+/// * a source vertex
+/// * a destination vertex
+/// * and an orientation for road edges
 struct Edge {
     ///
     /// The source vertex
-    Multimodal::Vertex source;
+    DECLARE_RO_PROPERTY( source, Multimodal::Vertex );
     ///
     /// The target vertex
-    Multimodal::Vertex target;
+    DECLARE_RO_PROPERTY( target, Multimodal::Vertex );
+
+    ///
+    /// The (oriented) road edge involved
+    DECLARE_RO_PROPERTY( road_edge, Road::Edge );
 
     enum ConnectionType {
         UnknownConnection,
@@ -101,28 +162,44 @@ struct Edge {
         Road2Poi,
         Poi2Road
     };
-
-    ///
-    /// The road edge involved
-    Road::Edge road_edge;
-
     ///
     /// Get the connection type of the edge
     ConnectionType connection_type() const;
 
-    Edge() {}
-    Edge( Multimodal::Vertex s, Multimodal::Vertex t ) : source( s ), target( t ) {}
+    ///
+    /// Allowed traffic rules
+    unsigned traffic_rules() const;
 
-    bool operator==( const Multimodal::Edge& e ) const {
-        return source == e.source && target == e.target;
-    }
-    bool operator!=( const Multimodal::Edge& e ) const {
-        return source != e.source || target != e.target;
-    }
-    bool operator<( const Multimodal::Edge& e ) const {
-        return source < e.source || ( ( source == e.source ) && target < e.target );
-    }
+    /// empty constructor
+    Edge() {}
+    /// Generic constructor
+    /// Warning try to call more specialized, faster constructors
+    Edge( const Multimodal::Vertex& s, const Multimodal::Vertex& t );
+
+    /// Road2Road constructor
+    Edge( const Road::Graph* graph, const Road::Vertex& s, const Road::Vertex& t );
+    /// Transport2Road constructor
+    Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s,
+          const Road::Graph* graph, const Road::Vertex& t );
+    /// Road2Transport constructor
+    Edge( const Road::Graph* graph, const Road::Vertex& s,
+          const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& t );
+    /// Transport2Transport constructor
+    Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s, const PublicTransport::Vertex& t );
+    /// Road2Poi constructor
+    Edge( const Road::Graph* graph, const Road::Vertex& s, const POI* t );
+    /// Poi2Road constructor
+    Edge( const POI* s, const Road::Graph* graph, const Road::Vertex& t );
+
+    bool operator==( const Multimodal::Edge& e ) const;
+    bool operator!=( const Multimodal::Edge& e ) const;
+    bool operator<( const Multimodal::Edge& e ) const;
 };
+
+///
+/// Get the public transport edge if the given edge is a Transport2Transport
+/// else, return false
+std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
 
 ///
 /// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
@@ -151,39 +228,77 @@ struct Graph: boost::noncopyable {
         return vertex_descriptor();   // depending on boost version, this can be useless
     }
 
+    /// Cosntructor
+    /// Needs a road graph at a minimum
+    explicit Graph( std::auto_ptr<Road::Graph> );
+
+    ~Graph();
+
     ///
     /// The road graph
-    Road::Graph road;
+    const Road::Graph& road() const;
+
+    /// Write access
+    Road::Graph& road();
+private:
+    std::auto_ptr<Road::Graph> road_;
+public:
+    void set_road( std::auto_ptr<Road::Graph> );
 
     ///
     /// Public transport networks
     typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
-    NetworkMap network_map;
+    DECLARE_RW_PROPERTY( network_map, NetworkMap );
 
+    /// Access to a particular network
+    boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
+    
     ///
     /// Public transports graphs
     /// network_id -> PublicTransport::Graph
     /// This a sub_map that can thus be filtered to select only a subset
-    typedef sub_map<db_id_t, PublicTransport::Graph> PublicTransportGraphList;
-    PublicTransportGraphList public_transports;
+    /// Public transport graphs are owned by this class
+    /// FIXME find a smart pointer class that work with sub_map
+    typedef sub_map< db_id_t, const PublicTransport::Graph* > PublicTransportGraphList;
+    DECLARE_RO_PROPERTY( public_transports, PublicTransportGraphList );
+
+    /// Access to a particular graph
+    boost::optional<const PublicTransport::Graph&> public_transport( db_id_t ) const;
+    /// take ownership (move)
+    void set_public_transports( boost::ptr_map<db_id_t, PublicTransport::Graph>& );
+
+    /// Select public transports
+    void select_public_transports( const std::set<db_id_t>& );
+    /// Current public transport selection
+    std::set<db_id_t> public_transport_selection() const;
 
     ///
     /// Point of interests
-    typedef std::map<db_id_t, POI> PoiList;
-    PoiList pois;
+    typedef boost::ptr_map<db_id_t, POI> PoiList;
+    DECLARE_RO_PROPERTY( pois, PoiList );
+    /// Access to a particular poi
+    boost::optional<const POI&> poi( db_id_t ) const;
+    /// Set POIs (take ownership)
+    void set_pois( boost::ptr_map<db_id_t, POI>& );
 
-    ///
-    /// Variables used to store constants.
-    RoadTypes road_types;
-    TransportTypes transport_types;
+    typedef std::map<db_id_t, TransportMode> TransportModes;
+    DECLARE_RO_PROPERTY( transport_modes, TransportModes );
 
+    void set_transport_modes( const TransportModes& );
+
+    /// access to a transportmode, given its id
+    /// the second element of the pair tells if the mode exists
+    boost::optional<TransportMode> transport_mode( db_id_t id ) const;
+
+    /// access to a transportmode, given its name
+    /// the second element of the pair tells if the mode exists
+    boost::optional<TransportMode> transport_mode( const std::string& name ) const;
+
+private:
     typedef std::map<std::string, Tempus::db_id_t> NameToId;
     ///
-    /// Associative array that maps a road type name to a road type id
-    NameToId road_type_from_name;
-    ///
     /// Associative array that maps a transport type name to a transport type id
-    NameToId transport_type_from_name;
+    NameToId transport_mode_from_name_;
 };
 
 ///
@@ -395,16 +510,6 @@ size_t out_degree( const Vertex& v, const Graph& graph );
 std::pair< Edge, bool > edge( const Vertex& u, const Vertex& v, const Graph& graph );
 
 ///
-/// Get the road edge if the given edge is a Road2Road
-/// else, return false
-std::pair< Road::Edge, bool > road_edge( const Multimodal::Edge& e );
-
-///
-/// Get the public transport edge if the given edge is a Transport2Transport
-/// else, return false
-std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
-
-///
 /// Overloading of get()
 VertexIndexProperty get( boost::vertex_index_t, const Multimodal::Graph& graph );
 
@@ -458,12 +563,10 @@ struct vertex_or_edge {
 };
 template <class G>
 struct vertex_or_edge<G, boost::vertex_property_tag> {
-    typedef typename boost::vertex_bundle_type<G>::type property_type;
     typedef typename boost::graph_traits<G>::vertex_descriptor descriptor;
 };
 template <class G>
 struct vertex_or_edge<G, boost::edge_property_tag> {
-    typedef typename boost::edge_bundle_type<G>::type property_type;
     typedef typename boost::graph_traits<G>::edge_descriptor descriptor;
 };
 

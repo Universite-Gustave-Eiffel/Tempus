@@ -105,6 +105,13 @@ def clearBoxLayout( lay ):
         lay.removeWidget(w)
         w.close()
 
+# minutes (float) to hh:mm:ss
+def min2hm( m ):
+        hh = int(m/60)
+        mm = int(m-hh*60)
+        ss = int((m-hh*60-mm) * 60)
+        return "%02d:%02d:%02d" % (hh,mm,ss)
+
 class SplashScreen(QDialog):
     def __init__(self):
         QDialog.__init__(self)
@@ -144,7 +151,8 @@ class IfsttarRouting:
 
         # list of transport types
         # array of Tempus.TransportType
-        self.transport_types = []
+        self.transport_modes = []
+        self.transport_modes_dict = {}
         # list of public networks
         # array of Tempus.TransportNetwork
         self.networks = []
@@ -237,6 +245,7 @@ class IfsttarRouting:
             self.displayPlugins( self.plugins )
 
             self.getConstants()
+            self.displayTransportAndNetworks()
         
             self.dlg.ui.pluginCombo.setEnabled( True )
             self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -275,11 +284,15 @@ class IfsttarRouting:
         if self.wps is None:
             return
         try:
-            (road_types, transport_types, transport_networks) = self.wps.constant_list()
+            (transport_modes, transport_networks) = self.wps.constant_list()
         except RuntimeError as e:
             QMessageBox.warning( self.dlg, "Error", repr(e.args) )
             return
-        self.transport_types = transport_types
+        self.transport_modes = transport_modes
+        self.transport_modes_dict = {}
+        for t in self.transport_modes:
+                self.transport_modes_dict[t.id] = t
+
         self.networks = transport_networks
 
     def update_plugin_options( self, plugin_idx ):
@@ -298,7 +311,7 @@ class IfsttarRouting:
         elif tab == 2:
                 # prepare for a new query
                 self.dlg.reset()
-                self.displayTransportAndNetworks()
+#                self.displayTransportAndNetworks()
 
     def loadHistory( self ):
         #
@@ -334,7 +347,7 @@ class IfsttarRouting:
 
     def onOptionChanged( self, plugin_name, option_name, option_type, val ):
             if option_type == Tempus.OptionType.Bool:
-                    val = 'true' if val else 0
+                    val = True if val else False
             elif option_type == Tempus.OptionType.Int:
                     # int
                     if val:
@@ -453,8 +466,14 @@ class IfsttarRouting:
 
         self.profile.clear()
 
+        first = True
+
         for step in roadmap:
-            text = ''
+            if first:
+                    text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
+                    first = False
+            else:
+                    text = ''
             icon_text = ''
             cost_text = ''
 
@@ -472,7 +491,7 @@ class IfsttarRouting:
                 road_name = step.road
                 movement = step.end_movement
                 text += "<p>"
-                action_txt = 'Walk on '
+                action_txt = 'Continue on '
                 if last_movement == Tempus.EndMovement.TurnLeft:
                     icon_text += "<img src=\"%s/turn_left.png\" width=\"24\" height=\"24\"/>" % config.DATA_DIR
                     action_txt = "Turn left on "
@@ -488,16 +507,35 @@ class IfsttarRouting:
             elif isinstance(step, Tempus.PublicTransportStep ):
                 # set network text as icon
                 icon_text = step.network
-                text = "Take the trip %s from '%s' to '%s'" % (step.trip, step.departure, step.arrival)
+                if step.wait_time > 0.0:
+                        text += "Wait %s <br/>" % min2hm(step.wait_time)
+                text += "At %s<br/>\n" % min2hm(step.departure_time+step.wait_time)
+                pt_name = self.transport_modes_dict[step.mode].name
+                text += "Take the %s %s from '%s' to '%s'" % (pt_name, step.route, step.departure, step.arrival)
+                text += "<br/>Leave at %s" % min2hm(step.arrival_time)
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network
                 if step.type == Tempus.ConnectionType.Road2Transport:
-                    text = "Go to the '%s' station from %s" % (step.stop, step.road)
+                    text += "Go to the '%s' station from %s" % (step.stop, step.road)
                 elif step.type == Tempus.ConnectionType.Transport2Road:
-                    text = "Leave the '%s' station to %s" % (step.stop, step.road)
+                    text += "Leave the '%s' station to %s" % (step.stop, step.road)
                 else:
-                    text = "Connection between '%s' and '%s'" % (step.stop, step.road)
+                    text += "Connection between '%s' and '%s'" % (step.stop, step.road)
+
+            elif isinstance(step, Tempus.TransferStep ):
+                    text += "On %s,<br/>At %s:<br/>\n" % (step.road, step.poi)
+                    if step.mode != step.final_mode:
+                            imode = self.transport_modes_dict[step.mode]
+                            fmode = self.transport_modes_dict[step.final_mode]
+                            add_t = []
+                            if imode.need_parking:
+                                    add_t += ["park your %s" % imode.name]
+                            if fmode.need_parking:
+                                    add_t += ["take a %s" % fmode.name]
+                            text += ' and '.join(add_t)
+                    else:
+                            text = "Continue on %s" % step.road
 
             for k,v in step.costs.iteritems():
                 cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
@@ -608,43 +646,13 @@ class IfsttarRouting:
     def displayTransportAndNetworks( self ):
 
         listModel = QStandardItemModel()
-        for ttype in self.transport_types:
-            idt = ttype.id
-            has_network = False
-            if ttype.need_network:
-                # look for networks that provide this kind of transport
-                for network in self.networks:
-                    ptt = network.provided_transport_types
-                    if ptt & ttype.id:
-                        has_network = True
-                        break
-
+        for ttype in self.transport_modes:
             item = QStandardItem( ttype.name )
-            if ttype.need_network and not has_network:
-                item.setFlags(Qt.ItemIsUserCheckable)
-                item.setData( Qt.Unchecked, Qt.CheckStateRole)
-            else:
-                item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                item.setData( Qt.Checked, Qt.CheckStateRole)
+            item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            item.setData( ttype.id, Qt.UserRole )
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
-
-        networkListModel = QStandardItemModel()
-        for network in self.networks:
-            title = network.name
-
-            # look for provided transport types
-            tlist = []
-            ptt = network.provided_transport_types
-            for ttype in self.transport_types:
-                if ptt & ttype.id:
-                    tlist.append( ttype.name )
-
-            item = QStandardItem( network.name + ' (' + ', '.join(tlist) + ')')
-            item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData( Qt.Checked, Qt.CheckStateRole)
-            networkListModel.appendRow(item)
-        self.dlg.ui.networkList.setModel( networkListModel )
 
     #
     # Take an XML tree from the WPS 'results'
@@ -702,8 +710,8 @@ class IfsttarRouting:
         constraints = self.dlg.get_constraints()
         parking = self.dlg.get_parking()
         pvads = self.dlg.get_pvads()
-        networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
-        transports = sum([ self.transport_types[x].id for x in self.dlg.selected_transports() ])
+        #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
+        transports = [ self.transport_modes[x].id for x in self.dlg.selected_transports() ]
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
@@ -722,10 +730,9 @@ class IfsttarRouting:
                                            origin = Tempus.Point(ox, oy),
                                            departure_constraint = Tempus.Constraint( type = constraints[0][0],
                                                                                      date_time = constraints[0][1] ),
-                                           allowed_transport_types = transports,
+                                           allowed_transport_modes = transports,
                                            parking_location = None if parking == [] else Tempus.Point(parking[0], parking[1]),
                                            criteria = criteria,
-                                           networks = networks,
                                            steps = steps
                                            )
         except RuntimeError as e:
@@ -747,8 +754,7 @@ class IfsttarRouting:
         xml_record = '<record>' + select_xml
         server_state = to_xml([ 'server_state',
                                 etree.tostring(self.wps.save['plugins']),
-                                etree.tostring(self.wps.save['road_types']), 
-                                etree.tostring(self.wps.save['transport_types']),
+                                etree.tostring(self.wps.save['transport_modes']),
                                 etree.tostring(self.wps.save['transport_networks']) ] )
         xml_record += server_state + '</record>'
         self.historyFile.addRecord( xml_record )
@@ -788,11 +794,6 @@ class IfsttarRouting:
         self.clear()
 
         # update UI
-        self.dlg.loadFromXML( loaded['select'][1] )
-        self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
-        self.results = Tempus.parse_results(loaded['select'][3])
-        self.displayResults( self.results )
-
         self.plugins.clear()
         plugins = Tempus.parse_plugins(loaded['server_state'][0])
         for plugin in plugins:
@@ -809,10 +810,18 @@ class IfsttarRouting:
         idx = self.dlg.ui.pluginCombo.findText( currentPlugin )
         self.dlg.ui.pluginCombo.setCurrentIndex( idx )
 
-        self.transport_types = Tempus.parse_transport_types( loaded['server_state'][2] )
-        self.networks = Tempus.parse_transport_networks( loaded['server_state'][3] )
+        self.transport_modes = Tempus.parse_transport_modes( loaded['server_state'][1] )
+        self.transport_modes_dict = {}
+        for t in self.transport_modes:
+                self.transport_modes_dict[t.id] = t
+        self.networks = Tempus.parse_transport_networks( loaded['server_state'][2] )
 
         self.displayTransportAndNetworks()
+
+        self.dlg.loadFromXML( loaded['select'][1] )
+        self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
+        self.results = Tempus.parse_results(loaded['select'][3])
+        self.displayResults( self.results )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )

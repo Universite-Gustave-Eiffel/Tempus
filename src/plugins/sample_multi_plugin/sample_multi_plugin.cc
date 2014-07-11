@@ -87,13 +87,14 @@ public:
 
         Multimodal::EdgeIterator ei, ei_end;
 
-        for ( boost::tie( ei, ei_end ) = edges( Application::instance()->graph() ); ei != ei_end; ei++ ) {
+        const Multimodal::Graph& graph = *Application::instance()->graph();
+        const Road::Graph& road_graph = graph.road();
+
+        for ( boost::tie( ei, ei_end ) = edges( graph ); ei != ei_end; ei++ ) {
             switch ( ei->connection_type() ) {
             case Multimodal::Edge::Road2Road: {
-                Road::Edge e;
-                bool found;
-                boost::tie( e, found ) = road_edge( *ei );
-                distances[*ei] = Application::instance()->graph().road[e].length;
+                Road::Edge e = ei->road_edge();
+                distances[*ei] = road_graph[e].length();
                 // average pedestrian walk : 5000 m / h
                 durations[*ei] = distances[*ei] / 5000.0 * 60.0;
             }
@@ -101,7 +102,7 @@ public:
 
             case Multimodal::Edge::Transport2Transport: {
                 PublicTransport::Edge e;
-                const PublicTransport::Graph& pt_graph = *( ei->source.pt_graph );
+                const PublicTransport::Graph& pt_graph = *( ei->source().pt_graph() );
                 bool found;
                 boost::tie( e, found ) = public_transport_edge( *ei );
 
@@ -109,7 +110,7 @@ public:
                     CERR << "Can't find pt edge" << *ei << std::endl;
                 }
 
-                distances[*ei] = pt_lengths[ std::make_pair( pt_graph[e].stop_from, pt_graph[e].stop_to ) ];
+                distances[*ei] = pt_lengths[ std::make_pair( get_stop_from(pt_graph[e]).db_id(), get_stop_to(pt_graph[e]).db_id() ) ];
                 // average public transport speed : 25 km / h
                 durations[*ei] = distances[*ei] / 25000.0 * 60.0;
             }
@@ -117,18 +118,17 @@ public:
 
             case Multimodal::Edge::Road2Transport: {
                 // find the road section where the stop is attached to
-                const PublicTransport::Graph& pt_graph = *( ei->target.pt_graph );
-                const Road::Graph& road_graph = *( ei->source.road_graph );
-                double abscissa = pt_graph[ei->target.pt_vertex].abscissa_road_section;
-                Road::Edge e = pt_graph[ ei->target.pt_vertex ].road_edge;
+                const PublicTransport::Graph& pt_graph = *( ei->target().pt_graph() );
+                double abscissa = pt_graph[ei->target().pt_vertex()].abscissa_road_section();
+                Road::Edge e = pt_graph[ ei->target().pt_vertex() ].road_edge();
 
                 // if we are coming from the start point of the road
-                if ( source( e, road_graph ) == ei->source.road_vertex ) {
-                    distances[*ei] = road_graph[e].length * abscissa;
+                if ( source( e, road_graph ) == ei->source().road_vertex() ) {
+                    distances[*ei] = road_graph[e].length() * abscissa;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    distances[*ei] = road_graph[e].length * ( 1 - abscissa );
+                    distances[*ei] = road_graph[e].length() * ( 1 - abscissa );
                 }
 
                 // average walking speed + average waiting time on the stop (say 5 minutes )
@@ -138,18 +138,17 @@ public:
 
             case Multimodal::Edge::Transport2Road: {
                 // find the road section where the stop is attached to
-                const PublicTransport::Graph& pt_graph = *( ei->source.pt_graph );
-                const Road::Graph& road_graph = *( ei->target.road_graph );
-                double abscissa = pt_graph[ei->source.pt_vertex].abscissa_road_section;
-                Road::Edge e = pt_graph[ ei->source.pt_vertex ].road_edge;
+                const PublicTransport::Graph& pt_graph = *( ei->source().pt_graph() );
+                double abscissa = pt_graph[ei->source().pt_vertex()].abscissa_road_section();
+                Road::Edge e = pt_graph[ ei->source().pt_vertex() ].road_edge();
 
                 // if we are coming from the start point of the road
-                if ( source( e, road_graph ) == ei->target.road_vertex ) {
-                    distances[*ei] = road_graph[e].length * abscissa;
+                if ( source( e, road_graph ) == ei->target().road_vertex() ) {
+                    distances[*ei] = road_graph[e].length() * abscissa;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    distances[*ei] = road_graph[e].length * ( 1 - abscissa );
+                    distances[*ei] = road_graph[e].length() * ( 1 - abscissa );
                 }
 
                 // average walking speed
@@ -165,24 +164,25 @@ public:
             }
         }
 
-        REQUIRE( distances.size() == num_edges( Application::instance()->graph() ) );
+        REQUIRE( distances.size() == num_edges( graph ) );
     }
 
     virtual void pre_process( Request& request ) {
         request_ = request;
 
-        for ( size_t i = 0; i < request.optimizing_criteria.size(); ++i ) {
-            REQUIRE( request.optimizing_criteria[i] == CostDistance || request.optimizing_criteria[i] == CostDuration );
+        for ( size_t i = 0; i < request.optimizing_criteria().size(); ++i ) {
+            REQUIRE( request.optimizing_criteria()[i] == CostDistance || request.optimizing_criteria()[i] == CostDuration );
         }
 
         result_.clear();
     }
 
     Multimodal::Vertex vertex_from_road_node_id( db_id_t id ) {
+        const Road::Graph& road_graph = graph_.road();
         Multimodal::VertexIterator vi, vi_end;
 
         for ( boost::tie( vi, vi_end ) = vertices( graph_ ); vi != vi_end; vi++ ) {
-            if ( vi->type == Multimodal::Vertex::Road && graph_.road[ vi->road_vertex ].db_id == id ) {
+            if ( vi->type() == Multimodal::Vertex::Road && road_graph[ vi->road_vertex() ].db_id() == id ) {
                 return *vi;
             }
         }
@@ -200,69 +200,57 @@ public:
         result_.push_back( Roadmap() );
         Roadmap& roadmap = result_.back();
 
-        roadmap.total_costs[CostDistance] = 0.0;
-        roadmap.total_costs[CostDuration] = 0.0;
         std::list<Multimodal::Vertex>::const_iterator previous = path.begin();
         std::list<Multimodal::Vertex>::const_iterator it = ++previous;
         --previous;
 
-        for ( ; it != path.end(); ++it ) {
+        for ( ; it != path.end(); ++it, ++previous ) {
             Roadmap::Step* mstep = 0;
 
-            if ( previous->type == Multimodal::Vertex::Road && it->type == Multimodal::Vertex::Road ) {
+            if ( previous->type() == Multimodal::Vertex::Road && it->type() == Multimodal::Vertex::Road ) {
                 mstep = new Roadmap::RoadStep();
                 Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( mstep );
                 Road::Edge e;
                 bool found = false;
-                boost::tie( e, found ) = edge( previous->road_vertex, it->road_vertex, *it->road_graph );
+                boost::tie( e, found ) = edge( previous->road_vertex(), it->road_vertex(), *it->road_graph() );
 
                 if ( !found ) {
                     throw std::runtime_error( "Can't find the road edge !" );
                 }
 
-                step->road_edge = e;
+                step->set_road_edge(e);
             }
 
-            else if ( previous->type == Multimodal::Vertex::PublicTransport && it->type == Multimodal::Vertex::PublicTransport ) {
+            else if ( previous->type() == Multimodal::Vertex::PublicTransport && it->type() == Multimodal::Vertex::PublicTransport ) {
                 mstep = new Roadmap::PublicTransportStep();
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep );
-                PublicTransport::Edge e;
-                bool found = false;
-                boost::tie( e, found ) = edge( previous->pt_vertex, it->pt_vertex, *it->pt_graph );
-
-                if ( !found ) {
-                    throw std::runtime_error( "Can't find the pt edge !" );
-                }
-
-                step->section = e;
+                step->set_departure_stop( previous->pt_vertex() );
+                step->set_arrival_stop( it->pt_vertex() );
                 // Set the trip ID
-                step->trip_id = 1;
+                step->set_trip_id( 1 );
 
                 // find the network_id
-                for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin(); nit != graph_.public_transports.end(); ++nit ) {
-                    if ( it->pt_graph == &nit->second ) {
-                        step->network_id = nit->first;
+                for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin(); nit != graph_.public_transports().end(); ++nit ) {
+                    if ( it->pt_graph() == nit->second ) {
+                        step->set_network_id( nit->first );
                         break;
                     }
                 }
             }
             else {
                 // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-                mstep = new Roadmap::GenericStep( Multimodal::Edge( *previous, *it ) );
+                mstep = new Roadmap::TransferStep( Multimodal::Edge( *previous, *it ) );
             }
-
-            roadmap.steps.push_back( mstep );
 
             // build the multimodal edge to find corresponding costs
             // we don't use edge() since it will loop over the whole graph each time
             // we assume the edge exists in these maps
             Multimodal::Edge me( *previous, *it );
-            mstep->costs[CostDistance] = distances[me];
-            mstep->costs[CostDuration] = durations[me];
-            roadmap.total_costs[CostDistance] += distances[me];
-            roadmap.total_costs[CostDuration] += durations[me];
+            mstep->set_cost(CostDistance, distances[me]);
+            mstep->set_cost(CostDuration, durations[me]);
+            mstep->set_transport_mode( 1 );
 
-            previous = it;
+            roadmap.add_step( std::auto_ptr<Roadmap::Step>(mstep) );
         }
     }
 
@@ -272,7 +260,7 @@ public:
     // current destination
     Multimodal::Vertex destination_;
 
-    void vertex_accessor( Multimodal::Vertex v, int access_type ) {
+    void vertex_accessor( const Multimodal::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
             if ( v == destination_ ) {
                 throw PathFound();
@@ -360,29 +348,26 @@ public:
     virtual void process() {
         //
         // Here we run the optimization for each criterion (this is NOT a multi-objective optimisation)
-        for ( size_t i = 0; i < request_.optimizing_criteria.size(); ++i ) {
+        for ( size_t i = 0; i < request_.optimizing_criteria().size(); ++i ) {
             //
             // Run for each intermiadry steps
 
             Multimodal::Vertex vorigin, vdestination;
-            vorigin = Multimodal::Vertex( &graph_.road, request_.origin );
+            vorigin = Multimodal::Vertex( &graph_.road(), request_.origin() );
 
             Timer timer;
 
             // global path
             Path path;
-            for ( size_t j = 0; j < request_.steps.size(); ++j ) {
+            for ( size_t j = 1; j < request_.steps().size(); ++j ) {
                 // path of this step
                 Path lpath;
 
-                if ( j > 0 ) {
-                    vorigin = Multimodal::Vertex( &graph_.road, request_.steps[j - 1].destination );
-                }
-
-                vdestination = Multimodal::Vertex( &graph_.road, request_.steps[j].destination );
+                vorigin = Multimodal::Vertex( &graph_.road(), request_.steps()[j - 1].location() );
+                vdestination = Multimodal::Vertex( &graph_.road(), request_.steps()[j].location() );
 
                 bool found;
-                found = find_path( vorigin, vdestination, request_.optimizing_criteria[i], lpath );
+                found = find_path( vorigin, vdestination, request_.optimizing_criteria()[i], lpath );
 
                 metrics_[ "time_s" ] = timer.elapsed();
 
@@ -396,7 +381,7 @@ public:
                 std::copy( lpath.begin(), lpath.end(), std::back_inserter(path) );
             }
             // add origin back
-            path.push_front( Multimodal::Vertex( &graph_.road, request_.origin ) );
+            path.push_front( Multimodal::Vertex( &graph_.road(), request_.origin() ) );
 
             metrics_[ "time_s" ] = timer.elapsed();
 

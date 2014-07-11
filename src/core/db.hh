@@ -56,7 +56,7 @@ public:
     /// It calls stringstream conversion operators (slow!).
     /// Specialization can be introduced, or via a specialization of the stringstream::operator>>()
     template <class T>
-    T as() {
+    T as() const {
         T obj;
         std::istringstream istr( value_ );
         istr >> obj;
@@ -73,6 +73,13 @@ public:
     }
 
     ///
+    /// Casting operator
+    template <class T>
+    operator T () {
+        return as<T>();
+    }
+
+    ///
     /// Tests if the underlying object is null
     bool is_null() {
         return isnull_;
@@ -86,19 +93,21 @@ protected:
 //
 // List of conversion specializations
 template <>
-bool Value::as<bool>();
+bool Value::as<bool>() const;
 template <>
-std::string Value::as<std::string>();
+std::string Value::as<std::string>() const;
 template <>
-Tempus::Time Value::as<Tempus::Time>();
+Tempus::Time Value::as<Tempus::Time>() const;
 template <>
-long long Value::as<long long>();
+long long Value::as<long long>() const;
 template <>
-int Value::as<int>();
+int Value::as<int>() const;
 template <>
-float Value::as<float>();
+float Value::as<float>() const;
 template <>
-double Value::as<double>();
+double Value::as<double>() const;
+template <>
+std::vector<Tempus::db_id_t> Value::as<std::vector<Tempus::db_id_t> >() const;
 
 ///
 /// Class used to represent a row in a result.

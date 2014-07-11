@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include <boost/optional.hpp>
+
 #include "multimodal_graph.hh"
 #include "db.hh"
 
@@ -78,12 +80,15 @@ public:
 
     ///
     /// Build the graph in memory (import from the database and wake up plugins)
-    void build_graph();
+    void build_graph( bool consistency_check = false );
 
     ///
     /// Graph accessor (non const)
-    Multimodal::Graph& graph() {
-        return graph_;
+    boost::optional<const Multimodal::Graph&> graph() {
+        if (!graph_.get()) {
+            return boost::optional<const Multimodal::Graph&>();
+        }
+        return *graph_;
     }
 
 protected:
@@ -92,7 +97,7 @@ protected:
     {}
 
     std::string db_options_;
-    Multimodal::Graph graph_;
+    std::auto_ptr<Multimodal::Graph> graph_;
 
     State state_;
 };

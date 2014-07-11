@@ -115,64 +115,49 @@ public:
 ///
 /// "constant_list" service, outputs list of constants contained in the database (road type, transport type, transport networks).
 ///
-/// Output var: road_types.
-/// Output var: transport_types.
+/// Output var: transport_modes.
 /// Output var: transport_networks.
 ///
 class ConstantListService : public Service {
 public:
     ConstantListService() : Service( "constant_list" ) {
-        add_output_parameter( "road_types" );
-        add_output_parameter( "transport_types" );
+        add_output_parameter( "transport_modes" );
         add_output_parameter( "transport_networks" );
     };
     Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const {
         ParameterMap output_parameters;
 
-        Tempus::Multimodal::Graph& graph = Application::instance()->graph();
+        const Tempus::Multimodal::Graph& graph = *Application::instance()->graph();
 
         {
-            xmlNode* root_node = XML::new_node( "road_types" );
-            Tempus::RoadTypes::iterator it;
+            xmlNode* root_node = XML::new_node( "transport_modes" );
+            Tempus::Multimodal::Graph::TransportModes::const_iterator it;
 
-            for ( it = graph.road_types.begin(); it != graph.road_types.end(); it++ ) {
-                xmlNode* node = XML::new_node( "road_type" );
+            for ( it = graph.transport_modes().begin(); it != graph.transport_modes().end(); it++ ) {
+                xmlNode* node = XML::new_node( "transport_mode" );
                 XML::new_prop( node, "id", it->first );
-                XML::new_prop( node, "name", it->second.name );
+                XML::new_prop( node, "name", it->second.name() );
+                XML::new_prop( node, "need_parking", it->second.need_parking() );
+                XML::new_prop( node, "is_shared", it->second.is_shared() );
+                XML::new_prop( node, "must_be_returned", it->second.must_be_returned() );
+                XML::new_prop( node, "traffic_rules", it->second.traffic_rules() );
+                XML::new_prop( node, "speed_rule", it->second.speed_rule() );
+                XML::new_prop( node, "toll_rules", it->second.toll_rules() );
+                XML::new_prop( node, "engine_type", it->second.engine_type() );
                 XML::add_child( root_node, node );
             }
 
-            output_parameters[ "road_types" ] = root_node;
-        }
-
-        {
-            xmlNode* root_node = XML::new_node( "transport_types" );
-            Tempus::TransportTypes::iterator it;
-
-            for ( it = graph.transport_types.begin(); it != graph.transport_types.end(); it++ ) {
-                xmlNode* node = XML::new_node( "transport_type" );
-                XML::new_prop( node, "id", it->first );
-                XML::new_prop( node, "parent_id", it->second.parent_id );
-                XML::new_prop( node, "name", it->second.name );
-                XML::new_prop( node, "need_parking", it->second.need_parking );
-                XML::new_prop( node, "need_station", it->second.need_station );
-                XML::new_prop( node, "need_return", it->second.need_return );
-                XML::new_prop( node, "need_network", it->second.need_network );
-                XML::add_child( root_node, node );
-            }
-
-            output_parameters[ "transport_types" ] = root_node;
+            output_parameters[ "transport_modes" ] = root_node;
         }
 
         {
             xmlNode* root_node = XML::new_node( "transport_networks" );
-            Multimodal::Graph::NetworkMap::iterator it;
+            Multimodal::Graph::NetworkMap::const_iterator it;
 
-            for ( it = graph.network_map.begin(); it != graph.network_map.end(); it++ ) {
+            for ( it = graph.network_map().begin(); it != graph.network_map().end(); it++ ) {
                 xmlNode* node = XML::new_node( "transport_network" );
                 XML::new_prop( node, "id", it->first );
-                XML::new_prop( node, "name", it->second.name );
-                XML::new_prop( node, "provided_transport_types", it->second.provided_transport_types );
+                XML::new_prop( node, "name", it->second.name() );
                 XML::add_child( root_node, node );
             }
 
@@ -214,14 +199,14 @@ public:
     }
 
     void parse_constraint( const xmlNode* node, Request::TimeConstraint& constraint ) const {
-        constraint.type = lexical_cast<int>( XML::get_prop( node, "type" ) );
+        constraint.type( lexical_cast<int>( XML::get_prop( node, "type" ) ) );
 
         std::string date_time = XML::get_prop( node, "date_time" );
         const char* date_time_str = date_time.c_str();
         int day, month, year, hour, min;
         sscanf( date_time_str, "%04d-%02d-%02dT%02d:%02d", &year, &month, &day, &hour, &min );
-        constraint.date_time = boost::posix_time::ptime( boost::gregorian::date( year, month, day ),
-                               boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) );
+        constraint.set_date_time( boost::posix_time::ptime( boost::gregorian::date( year, month, day ),
+                                                        boost::posix_time::hours( hour ) + boost::posix_time::minutes( min ) ) );
     }
 
     Road::Vertex get_road_vertex_from_point( const xmlNode* node, Db::Connection& db ) const {
@@ -229,7 +214,7 @@ public:
         Tempus::db_id_t id;
         double x, y;
 
-        Tempus::Road::Graph& road_graph = Application::instance()->graph().road;
+        const Tempus::Road::Graph& road_graph = Application::instance()->graph()->road();
 
         bool has_vertex = XML::has_prop( node, "vertex" );
         bool has_x = XML::has_prop( node, "x" );
@@ -328,65 +313,72 @@ public:
 
             // now extract actual data
             xmlNode* request_node = input_parameter_map.find( "request" )->second;
-            // allowed transport types
-            request.allowed_transport_types = lexical_cast<int>( XML::get_prop( request_node, "allowed_transport_types" ) );
 
             const xmlNode* field = XML::get_next_nontext( request_node->children );
 
-            request.origin = get_road_vertex_from_point( field, db );
+            Request::Step origin;
+            origin.set_location( get_road_vertex_from_point( field, db ) ); 
 
             // departure_constraint
             field = XML::get_next_nontext( field->next );
-            parse_constraint( field, request.departure_constraint );
+            {
+                Request::TimeConstraint constraint;
+                parse_constraint( field, constraint );
+                origin.set_constraint( constraint );
+            }
+            request.set_origin( origin );
 
             // parking location id, optional
             const xmlNode* n = XML::get_next_nontext( field->next );
 
             if ( !xmlStrcmp( n->name, ( const xmlChar* )"parking_location" ) ) {
-                request.parking_location = get_road_vertex_from_point( n, db );
+                request.set_parking_location( get_road_vertex_from_point( n, db ) );
                 field = n;
             }
 
             // optimizing criteria
-            request.optimizing_criteria.clear();
             field = XML::get_next_nontext( field->next );
-            request.optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
+            request.set_optimizing_criterion( 0, lexical_cast<int>( field->children->content ) );
             field = XML::get_next_nontext( field->next );
 
             while ( !xmlStrcmp( field->name, ( const xmlChar* )"optimizing_criterion" ) ) {
-                request.optimizing_criteria.push_back( lexical_cast<int>( field->children->content ) );
-                field = XML::get_next_nontext( field->next );
-            }
-
-            // allowed networks, 1 .. N
-            request.allowed_networks.clear();
-
-            while ( !xmlStrcmp( field->name, ( const xmlChar* )"allowed_network" ) ) {
-                Tempus::db_id_t network_id = lexical_cast<Tempus::db_id_t>( field->children->content );
-                request.allowed_networks.push_back( network_id );
+                request.add_criterion( static_cast<CostId>(lexical_cast<int>( field->children->content )) );
                 field = XML::get_next_nontext( field->next );
             }
 
             // steps, 1 .. N
-            request.steps.clear();
-
-            while ( field ) {
-                request.steps.resize( request.steps.size() + 1 );
-
+            while ( field && !xmlStrcmp( field->name, (const xmlChar*)"step" ) ) {
+                std::cout << field->name << std::endl;
+                Request::Step step;
                 const xmlNode* subfield;
                 // destination id
                 subfield = XML::get_next_nontext( field->children );
-                request.steps.back().destination = get_road_vertex_from_point( subfield, db );
+                step.set_location( get_road_vertex_from_point( subfield, db ) );
 
                 // constraint
                 subfield = XML::get_next_nontext( subfield->next );
-                parse_constraint( subfield, request.steps.back().constraint );
+                Request::TimeConstraint constraint;
+                parse_constraint( subfield, constraint );
+                step.set_constraint( constraint );
 
                 // private_vehicule_at_destination
                 std::string val = XML::get_prop( field, "private_vehicule_at_destination" );
-                request.steps.back().private_vehicule_at_destination = ( val == "true" );
+                step.set_private_vehicule_at_destination( val == "true" );
 
                 // next step
+                field = XML::get_next_nontext( field->next );
+                if ( field && !xmlStrcmp( field->name, (const xmlChar*)"step" ) ) {
+                    request.add_intermediary_step( step );
+                }
+                else {
+                    // destination
+                    request.set_destination( step );
+                }
+            }
+
+            // allowed modes
+            while ( field && !xmlStrcmp( field->name, ( const xmlChar* )"allowed_mode" ) ) {
+                request.add_allowed_mode( lexical_cast<int>( field->children->content ) );
                 field = XML::get_next_nontext( field->next );
             }
 
@@ -422,7 +414,7 @@ public:
         // result
         Tempus::Result& result = plugin->result();
 
-        Multimodal::Graph& graph_ = Application::instance()->graph();
+        const Multimodal::Graph& graph_ = *Application::instance()->graph();
 
         xmlNode* root_node = XML::new_node( "results" );
 
@@ -439,90 +431,105 @@ public:
             const Tempus::Roadmap& roadmap = *rit;
 
             xmlNode* result_node = XML::new_node( "result" );
-            Roadmap::StepList::const_iterator sit;
 
-            for ( sit = roadmap.steps.begin(); sit != roadmap.steps.end(); sit++ ) {
+            for ( Roadmap::StepConstIterator sit = roadmap.begin(); sit != roadmap.end(); sit++ ) {
                 xmlNode* step_node = 0;
                 const Roadmap::Step* gstep = &*sit;
 
-                if ( sit->step_type == Roadmap::Step::RoadStep ) {
+                if ( sit->step_type() == Roadmap::Step::RoadStep ) {
                     const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                     step_node = XML::new_node( "road_step" );
 
-                    XML::set_prop( step_node, "road", step->road_name );
-                    XML::set_prop( step_node, "end_movement", to_string( step->end_movement ) );
+                    XML::set_prop( step_node, "road", graph_.road()[step->road_edge()].road_name() );
+                    XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
                 }
-                else if ( sit->step_type == Roadmap::Step::PublicTransportStep ) {
+                else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
                     const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
 
-                    if ( graph_.public_transports.find( step->network_id ) == graph_.public_transports.end() ) {
-                        throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id ).str() );
+                    if ( graph_.public_transports().find( step->network_id() ) == graph_.public_transports().end() ) {
+                        throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
                     }
 
-                    PublicTransport::Graph& pt_graph = graph_.public_transports[ step->network_id ];
+                    const PublicTransport::Graph& pt_graph = *graph_.public_transport( step->network_id() );
 
                     step_node = XML::new_node( "public_transport_step" );
 
-                    XML::set_prop( step_node, "network", graph_.network_map[ step->network_id ].name );
+                    XML::set_prop( step_node, "network", graph_.network( step->network_id() )->name() );
 
                     std::string departure_str;
-                    PublicTransport::Vertex v1, v2;
-                    bool found;
-                    boost::tie( v1, found ) = vertex_from_id( pt_graph[step->section].stop_from, pt_graph );
+                    PublicTransport::Vertex v1 = step->departure_stop();
+                    PublicTransport::Vertex v2 = step->arrival_stop();
 
-                    if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_from ).str() );
-                    }
-
-                    boost::tie( v2, found ) = vertex_from_id( pt_graph[step->section].stop_to, pt_graph );
-
-                    if ( ! found ) {
-                        throw std::runtime_error( ( boost::format( "Cannot find PT stop from ID %1%" ) % pt_graph[step->section].stop_to ).str() );
-                    }
-
-                    departure_str = pt_graph[ v1 ].name;
-                    std::string arrival_str = pt_graph[ v2 ].name;
+                    departure_str = pt_graph[ v1 ].name();
+                    std::string arrival_str = pt_graph[ v2 ].name();
                     XML::set_prop( step_node, "departure_stop", departure_str );
                     XML::set_prop( step_node, "arrival_stop", arrival_str );
-                    XML::set_prop( step_node, "trip", to_string( step->trip_id ) );
+                    XML::set_prop( step_node, "route", step->route() );
+                    XML::set_prop( step_node, "departure_time", to_string(step->departure_time()) );
+                    XML::set_prop( step_node, "arrival_time", to_string(step->arrival_time()) );
+                    XML::set_prop( step_node, "wait_time", to_string(step->wait()) );
                 }
-                else if ( sit->step_type == Roadmap::Step::GenericStep ) {
-                    const Roadmap::GenericStep* step = static_cast<const Roadmap::GenericStep*>( &*sit );
+                else if ( sit->step_type() == Roadmap::Step::TransferStep ) {
+                    const Roadmap::TransferStep* step = static_cast<const Roadmap::TransferStep*>( &*sit );
                     const Multimodal::Edge* edge = static_cast<const Multimodal::Edge*>( step );
 
-                    const PublicTransport::Graph* pt_graph = 0;
-                    db_id_t network_id = 0;
-                    std::string stop_name, road_name;
+                    std::string road_name, stop_name;
                     std::string type_str = to_string( edge->connection_type() );
 
-                    road_name = step->road_name;
+                    const PublicTransport::Graph* pt_graph = 0;
+                    bool road_transport = false;
+                    road_name = graph_.road()[edge->road_edge()].road_name();
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
-                        pt_graph = edge->target.pt_graph;
-                        stop_name = ( *pt_graph )[edge->target.pt_vertex].name;
+                        pt_graph = edge->target().pt_graph();
+                        stop_name = ( *pt_graph )[edge->target().pt_vertex()].name();
+                        road_transport = true;
                     }
                     else if ( edge->connection_type() == Multimodal::Edge::Transport2Road ) {
-                        pt_graph = edge->source.pt_graph;
-                        stop_name = ( *pt_graph )[edge->source.pt_vertex].name;
+                        pt_graph = edge->source().pt_graph();
+                        stop_name = ( *pt_graph )[edge->source().pt_vertex()].name();
+                        road_transport = true;
                     }
 
-                    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports.begin();
-                            nit != graph_.public_transports.end();
-                            ++nit ) {
-                        if ( &nit->second == pt_graph ) {
-                            network_id = nit->first;
-                            break;
+                    if ( road_transport ) {
+                        db_id_t network_id = 0;
+
+                        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin();
+                              nit != graph_.public_transports().end();
+                              ++nit ) {
+                            if ( nit->second == pt_graph ) {
+                                network_id = nit->first;
+                                break;
+                            }
                         }
+
+                        step_node = XML::new_node( "road_transport_step" );
+
+                        XML::set_prop( step_node, "type", type_str );
+                        XML::set_prop( step_node, "road", road_name );
+                        XML::set_prop( step_node, "network", graph_.network( network_id )->name() );
+                        XML::set_prop( step_node, "stop", stop_name );
                     }
-
-                    step_node = XML::new_node( "road_transport_step" );
-
-                    XML::set_prop( step_node, "type", type_str );
-                    XML::set_prop( step_node, "road", road_name );
-                    XML::set_prop( step_node, "network", graph_.network_map[ network_id ].name );
-                    XML::set_prop( step_node, "stop", stop_name );
+                    else {
+                        std::string poi_name = "";
+                        step_node = XML::new_node( "transfer_step" );
+                        if ( edge->connection_type() == Multimodal::Edge::Road2Poi ) {
+                            poi_name = edge->target().poi()->name();
+                        }
+                        else if ( edge->connection_type() == Multimodal::Edge::Poi2Road ) {
+                            poi_name = edge->source().poi()->name();
+                        }
+                        XML::set_prop( step_node, "type", type_str );
+                        XML::set_prop( step_node, "road", road_name );
+                        XML::set_prop( step_node, "poi", poi_name );
+                        XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
+                    }
                 }
+                BOOST_ASSERT( step_node );
 
-                for ( Tempus::Costs::const_iterator cit = gstep->costs.begin(); cit != gstep->costs.end(); cit++ ) {
+                // transport_mode
+                XML::new_prop( step_node, "transport_mode", to_string(sit->transport_mode()) );
+
+                for ( Tempus::Costs::const_iterator cit = gstep->costs().begin(); cit != gstep->costs().end(); cit++ ) {
                     xmlNode* cost_node = XML::new_node( "cost" );
                     XML::new_prop( cost_node,
                                    "type",
@@ -533,7 +540,7 @@ public:
                     XML::add_child( step_node, cost_node );
                 }
 
-                XML::set_prop( step_node, "wkb", sit->geometry_wkb );
+                XML::set_prop( step_node, "wkb", sit->geometry_wkb() );
 
                 XML::add_child( result_node, step_node );
             }
@@ -542,7 +549,8 @@ public:
 
             // total costs
 
-            for ( Tempus::Costs::const_iterator cit = roadmap.total_costs.begin(); cit != roadmap.total_costs.end(); cit++ ) {
+                Costs total_costs( get_total_costs(roadmap) );
+                for ( Tempus::Costs::const_iterator cit = total_costs.begin(); cit != total_costs.end(); cit++ ) {
                 xmlNode* cost_node = XML::new_node( "cost" );
                 XML::new_prop( cost_node,
                                "type",

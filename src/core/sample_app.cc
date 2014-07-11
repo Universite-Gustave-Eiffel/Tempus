@@ -93,8 +93,8 @@ int main( int argc, char* argv[] )
 
         //
         // Build the user request
-        Multimodal::Graph& graph = app->graph();
-        Road::Graph& road_graph = graph.road;
+        const Multimodal::Graph& graph = *app->graph();
+        const Road::Graph& road_graph = graph.road();
 
         Request req;
         Request::Step step;
@@ -103,8 +103,8 @@ int main( int argc, char* argv[] )
         bool found_destination = false;
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
-            if ( road_graph[*vi].db_id == origin_id ) {
-                req.origin = *vi;
+            if ( road_graph[*vi].db_id() == origin_id ) {
+                req.set_origin( *vi );
                 found_origin = true;
                 break;
             }
@@ -116,8 +116,8 @@ int main( int argc, char* argv[] )
         }
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
-            if ( road_graph[*vi].db_id == destination_id ) {
-                step.destination = *vi;
+            if ( road_graph[*vi].db_id() == destination_id ) {
+                req.set_destination( *vi );
                 found_destination = true;
                 break;
             }
@@ -127,11 +127,6 @@ int main( int argc, char* argv[] )
             CERR << "Cannot find destination vertex ID " << destination_id << endl;
             return 1;
         }
-
-        req.steps.push_back( step );
-
-        // the only optimizing criterion
-        req.optimizing_criteria.push_back( CostDistance );
 
         COUT << endl << ">> pre_process" << endl;
 

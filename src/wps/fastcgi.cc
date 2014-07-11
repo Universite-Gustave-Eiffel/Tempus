@@ -68,7 +68,10 @@ struct RequestThread {
                 continue;
             }
 
-            try {
+#ifdef NDEBUG
+            try
+#endif
+            {
                 fcgi_streambuf cin_fcgi_streambuf( request.in );
 
                 // This causes a crash under Windows (??).
@@ -82,9 +85,12 @@ struct RequestThread {
                 const std::string& outstr = outbuf.str();
                 FCGX_PutStr( outstr.c_str(), outstr.size(), request.out );
             }
+#ifdef NDEBUG
+            // only catch in release mode
             catch ( std::exception& e ) {
-                CERR << "failed to process request (excpetion thrown): " << e.what() << "\n";
+                CERR << "failed to process request (exception thrown): " << e.what() << "\n";
             }
+#endif
 
             FCGX_Finish_r( &request );
         }
@@ -105,6 +111,7 @@ int main( int argc, char* argv[] )
     std::vector<string> plugins;
     size_t num_threads = 1;
     string dbstring = "dbname=tempus_test_db";
+    bool consistency_check = true;
 #ifndef WIN32
     bool daemon = false;
     ( void )daemon;
@@ -147,6 +154,9 @@ int main( int argc, char* argv[] )
                     dbstring = argv[++i];
                 }
             }
+            else if ( arg == "-X" ) {
+                consistency_check = false;
+            }
             else {
                 std::cout << "Options: " << endl
                           << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl
@@ -154,6 +164,7 @@ int main( int argc, char* argv[] )
                           << "\t-t num_threads\tnumber of request-processing threads" << endl
                           << "\t-l plugin_name\tload plugin" << endl
                           << "\t-d dbstring\tstring used to connect to pgsql" << endl
+                          << "\t-X no consistency check" << endl
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
 #endif
@@ -208,12 +219,15 @@ int main( int argc, char* argv[] )
     FCGX_Init();
 
     // initialise connection and graph
-    try {
+#ifdef NDEBUG
+    try
+#endif
+    {
         std::cout << "connecting to database: " << dbstring << "\n";
         Tempus::Application::instance()->connect( dbstring );
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
-        Tempus::Application::instance()->build_graph();
+        Tempus::Application::instance()->build_graph( consistency_check );
 
         // load plugins
         for ( size_t i=0; i< plugins.size(); i++ ) {
@@ -222,10 +236,13 @@ int main( int argc, char* argv[] )
             PluginFactory::instance()->load( plugins[i] );
         }
     }
+#ifdef NDEBUG
+    // only catch in release mode
     catch ( std::exception& e ) {
         std::cerr << "cannot create application: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+#endif
 
     std::cout << "ready !" << std::endl;
 
@@ -240,7 +257,10 @@ int main( int argc, char* argv[] )
         }
     }
 
-    try {
+#ifdef NDEBUG
+    try
+#endif
+    {
         boost::thread_group pool;
 
         for ( size_t i=0; i<num_threads-1; i++ ) {
@@ -251,10 +271,14 @@ int main( int argc, char* argv[] )
         mainThread();
         pool.join_all();
     }
+#ifdef NDEBUG
+    // only catch in release mode
     catch ( std::exception& e ) {
         std::cerr << "exception during thread creation or deletion: " << e.what() << std::endl;
+        // rethrow it in debug mode, so that gdb can see it
         return EXIT_FAILURE;
     }
+#endif
 
     return EXIT_SUCCESS;
 }

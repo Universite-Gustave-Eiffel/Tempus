@@ -84,6 +84,20 @@ void Restrictions::add_restriction( db_id_t id,
     restrictions_.push_back( Restriction( id, road_edges, cost ) );
 }
 
+void Restrictions::add_restriction( Restriction r )
+{
+    restrictions_.push_back( r );
+}
+
+void Section::add_stop_ref( const PublicTransport::Stop* stop )
+{
+    stops_.push_back( stop );
+}
+
+void Section::add_poi_ref( const POI* poi )
+{
+    pois_.push_back( poi );
+}
 
 }
 }

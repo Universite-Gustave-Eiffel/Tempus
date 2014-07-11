@@ -13,6 +13,7 @@
     </xs:sequence>
     <xs:attribute name="road" type="xs:string" use="required"/>
     <xs:attribute name="end_movement" type="xs:int" use="required"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
     <xs:attribute name="wkb" type="xs:string" use="required"/>
   </xs:complexType>
   <xs:complexType name="RoadTransportStep">
@@ -23,6 +24,7 @@
     <xs:attribute name="road" type="xs:string"/>
     <xs:attribute name="network" type="xs:string"/>
     <xs:attribute name="stop" type="xs:string"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
   <xs:complexType name="PublicTransportStep">
@@ -32,7 +34,22 @@
     <xs:attribute name="network" type="xs:string"/>
     <xs:attribute name="departure_stop" type="xs:string"/>
     <xs:attribute name="arrival_stop" type="xs:string"/>
-    <xs:attribute name="trip" type="xs:string"/>
+    <xs:attribute name="route" type="xs:string"/>
+    <xs:attribute name="departure_time" type="xs:float"/>
+    <xs:attribute name="arrival_time" type="xs:float"/>
+    <xs:attribute name="wait_time" type="xs:float"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
+    <xs:attribute name="wkb" type="xs:string"/>
+  </xs:complexType>
+  <xs:complexType name="TransferStep">
+    <xs:sequence>
+      <xs:element name="cost" type="Cost" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="type" type="xs:int"/>
+    <xs:attribute name="road" type="xs:string"/>
+    <xs:attribute name="poi" type="xs:string"/>
+    <xs:attribute name="transport_mode" type="xs:int" use="required"/>
+    <xs:attribute name="final_mode" type="xs:int"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
   <xs:complexType name="Results">
@@ -44,6 +61,7 @@
               <xs:element name="road_step" type="RoadStep"/>
               <xs:element name="public_transport_step" type="PublicTransportStep"/>
               <xs:element name="road_transport_step" type="RoadTransportStep"/>
+              <xs:element name="transfer_step" type="TransferStep"/>
             </xs:choice>
             <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>

@@ -37,7 +37,7 @@
 /// when the object is out of scope.
 /// This is the way libxml works: it returns allocated pointers that have to be freed by the caller
 ///
-/// There is no reference counting. Objets are "moved" from instances (as boost::auto_ptr does)
+/// There is no reference counting. Objets are "moved" from instances (as std::auto_ptr does)
 /// For example a = b transfers ownership from b to a and b is set to null
 ///
 template <class T, void deletion_fct ( T* )>

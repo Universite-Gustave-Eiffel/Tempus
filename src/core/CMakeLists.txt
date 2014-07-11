@@ -1,8 +1,20 @@
 set( HEADER_FILES
-    common.hh 
+    common.hh
+    cast.hh
+    cost.hh
+    io.hh
+    property.hh
+    base.hh
+    datetime.hh
+    progression.hh
+    abscissa.hh
     road_graph.hh
     public_transport_graph.hh
+    poi.hh
+    transport_modes.hh
     multimodal_graph.hh 
+    request.hh
+    roadmap.hh
     application.hh plugin.hh 
     pgsql_importer.hh 
     plugin.hh 
@@ -11,9 +23,16 @@ set( HEADER_FILES
     )
 
 set( SOURCE_FILES 
-    common.cc 
+    io.cc
+    progression.cc
+    cost.cc
+    abscissa.cc
     road_graph.cc
     multimodal_graph.cc 
+    poi.cc
+    transport_modes.cc
+    request.cc
+    roadmap.cc
     application.cc plugin.cc 
     pgsql_importer.cc 
     plugin.cc 

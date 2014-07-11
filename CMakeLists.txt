@@ -23,7 +23,7 @@ if (WIN32)
     set (Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options)
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time)
 find_package(PostgreSQL REQUIRED)
 include_directories( ${PostgreSQL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
 link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
@@ -44,16 +44,20 @@ if(MSVC)
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
 	# Update if necessary
-    set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
     add_definitions( -Wl,-E )
 elseif(CMAKE_CXX_COMPILER MATCHES ".*clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wextra -Werror " CACHE STRING "compile flags" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror " CACHE STRING "compile flags" FORCE)
 endif()
 
 set(CPACK_PACKAGE_NAME "tempus")
 set(CPACK_PACKAGE_VENDOR "IFSTTAR")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tempus - manipulate transport graphs")
+<<<<<<< HEAD
 set(CPACK_PACKAGE_VERSION "1.0-rc4")
+=======
+set(CPACK_PACKAGE_VERSION "1.1-rc1")
+>>>>>>> b46da5620cff3640597e160a6a94600141f1593c
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus-${CPACK_PACKAGE_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
@@ -169,8 +173,12 @@ endif()
 install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
 add_subdirectory(src)
-add_subdirectory(doc)
 
+set( BUILD_DOC ON CACHE BOOL "Build documentation ?" )
+
+if(BUILD_DOC)
+  add_subdirectory( doc )
+endif()
 
 
  #cmake -DBUILD_INTRALYS_PLUGIN=ON -DBUILD_QGIS_PLUGIN=ON -DBUILD_TESTS=ON -DLIBXML2_INCLUDE_DIR="C:\Program Files (x86)\libxml2-2.7.8.win32\include" -DLIBXML2_LIBRARIES="C:\Program Files (x86)\libxml2-2.7.8.win32\lib\libxml2.lib" -DPQ_INCLUDE_DIR="C:/Program Files (x86)/PostgreSQL/9.3/include" -DPQ_LIBS_DIR="C:/Program Files (x86)/PostgreSQL/9.3/lib" -DBUILD_WPS=ON ..

@@ -59,13 +59,20 @@ raster2pgsql -I -t 20x20 -s 2154 ~/data/dem/srtm_36_03_2154.tif | psql tempus_te
 
 - an import of shared cycles points (Bicloo) provided by Nantes open data ("Liste des équipements publics (thème Mobilité)"), OdBL license
 
-./load_tempus -t poi -y 4 -v name:NOM_COMPLE "filter:LIBTYPE='Bicloo'" parking_transport_type:128 -s /xxxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+Shared bikes
+./load_tempus -t poi -y 4 -v name:NOM_COMPLE service_name:Bicloo filter:type=100301 -s /xxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+Shared cars
+./load_tempus -t poi -y 2 -v name:NOM_COMPLE service_name:Marguerite filter:type=100302 -s /xxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
+Car parkings
+/load_tempus -t poi -y 1 -v name:NOM_COMPLE filter:categorie=1001 -s /xxx/LOC_EQUIPUB_MOBILITE_NM.shp -d "dbname=tempus_nantes" -W LATIN1 -S 2154
 
 - two dummy turn restrictions on the road network (see the tempus.road_road table)
 
 insert into tempus.road_restriction values (1, array[45588,45053] );
-insert into tempus.road_restriction values (2, array[44884,14023,44942] );
+insert into tempus.road_restriction values (2, array[45049,14228,45084] );
 insert into tempus.road_restriction values (3, array[45049, 45049] );
-insert into tempus.road_restriction_cost values (1, 1, 1031, 'Infinity'::float);
-insert into tempus.road_restriction_cost values (2, 2, 1031, 'Infinity'::float);
-insert into tempus.road_restriction_cost values (3, 3, 1031, 'Infinity'::float);
+# 60: for all types of cars
+# 4 : car only (not taxi or car pool)
+insert into tempus.road_restriction_time_penalty values (1, 0, 60, 'Infinity'::float);
+insert into tempus.road_restriction_time_penalty values (2, 0, 4, 'Infinity'::float);
+insert into tempus.road_restriction_time_penalty values (3, 0, 60, 'Infinity'::float);

@@ -38,12 +38,16 @@ public:
     Db::Result query( const std::string& query_str );
 
     ///
-    /// Import constants (road, transports types) into global variables.
-    void import_constants( Multimodal::Graph& graph, ProgressionCallback& callback = null_progression_callback );
+    /// Import the multimodal graph
+    std::auto_ptr<Multimodal::Graph> import_graph( ProgressionCallback& callback = null_progression_callback, bool consistency_check = true );
 
     ///
-    /// Import the multimodal graph
-    void import_graph( Multimodal::Graph& graph, ProgressionCallback& callback = null_progression_callback );
+    /// Import constants transport modes
+    void import_constants( Multimodal::Graph&, ProgressionCallback& callback = null_progression_callback );
+
+    ///
+    /// Import turn restrictions
+    Road::Restrictions import_turn_restrictions( const Road::Graph& graph );
 
     ///
     /// Access to underlying connection object
@@ -51,11 +55,7 @@ public:
         return connection_;
     }
 
-    ///
-    /// Import turn restrictions
-    Road::Restrictions import_turn_restrictions( const Road::Graph& graph );
-
-protected:
+private:
     Db::Connection connection_;
 };
 } // Tempus namespace

@@ -46,18 +46,6 @@ class POIImporter(ShpImporter):
             subs['name'] = 'pname'
         subs['poi_type'] = poi_type
 
-        if not 'parking_transport_type' in subs.keys():
-            if poi_type == 5:
-                subs['parking_transport_type'] = '0'
-            elif poi_type == 4:
-                subs['parking_transport_type'] = '128'
-            elif poi_type == 3:
-                subs['parking_transport_type'] = '4'
-            elif poi_type == 2:
-                subs['parking_transport_type'] = '256'
-            elif poi_type == 1:
-                subs['parking_transport_type'] = '1'
-
         self.POSTLOADSQL = [('poi.sql', subs)]
 
     def check_input(self):

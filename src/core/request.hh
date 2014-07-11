@@ -18,93 +18,123 @@
 #ifndef TEMPUS_REQUEST_HH
 #define TEMPUS_REQUEST_HH
 
+#include <boost/optional.hpp>
 #include "common.hh"
 #include "road_graph.hh"
 
 #include <list>
-#include <boost/any.hpp>
 
 namespace Tempus {
 /**
    A Request is used to model user requests to the planning engine.
+
+   It is composed of at least an origin and a destination with optional time constraints.
+   Intermediary steps can be added.
 */
-class Request : public ConsistentClass {
+class Request
+{
 public:
 
     struct TimeConstraint {
         enum TimeConstraintType {
             NoConstraint = 0,
             ConstraintBefore,
-            ConstraintAfter
+            ConstraintAfter,
+            LastValue = ConstraintAfter
         };
-        int type; ///< TimeConstraintType
-
-        DateTime date_time;
+        DECLARE_RW_PROPERTY( type, TimeConstraintType );
+        /// type setter from an int
+        void type( int );
+        DECLARE_RW_PROPERTY( date_time, DateTime );
     };
 
     ///
     /// Class used to represent destinations of a request and constraints of the step
     struct Step {
-        Road::Vertex destination;
-
-        TimeConstraint constraint;
-
+        DECLARE_RW_PROPERTY( location, Road::Vertex );
+        DECLARE_RW_PROPERTY( constraint, TimeConstraint );
         ///
         /// Whether the private vehicule must reach the destination
-        bool private_vehicule_at_destination;
+        DECLARE_RW_PROPERTY( private_vehicule_at_destination, bool );
     };
-
     typedef std::vector<Step> StepList;
-    ///
-    /// Steps involved in the request. It has to be made at a minimum of an origin and a destination. It may include intermediary points.
-    StepList steps;
+
+    /// Construct a request with default values
+    Request();
 
     ///
-    /// Allowed transport types. It can be stored in an integer, since transport_type ID are powers of two.
-    unsigned allowed_transport_types;
+    /// Construct a request with an origin and a destination
+    /// @param origin The origin
+    /// @param destination The destination. The timing causality must be respected
+    Request( const Step& origin, const Step& destination );
+
+    ///
+    /// Steps involved in the request. It is made of an origin, optional intermediary steps and a destination
+    DECLARE_RO_PROPERTY( steps, StepList );
+
+    ///
+    /// Adds an intermediary step, just before the destination
+    void add_intermediary_step( const Step& step );
+
+    ///
+    /// Get access to the origin vertex
+    Road::Vertex origin() const;
+
+    /// Get write access to the origin vertex
+    void set_origin( const Road::Vertex& );
+    /// Get write access to the origin
+    void set_origin( const Step& );
+
+    ///
+    /// Get access to the destination vertex
+    Road::Vertex destination() const;
+
+    /// Get write access to the destination vertex
+    void set_destination( const Road::Vertex& );
+    /// Get write access to the destination
+    void set_destination( const Step& );
+
+    ///
+    /// Allowed transport modes (their ID)
+    DECLARE_RO_PROPERTY( allowed_modes, std::vector<db_id_t> );
+
+    /// Adds an allowed mode
+    void add_allowed_mode( db_id_t );
 
     ///
     /// Private vehicule option: parking location
-    Road::Vertex parking_location;
-
-    ///
-    /// Public transport options: list of allowed networks
-    std::vector<db_id_t> allowed_networks;
-
-    ///
-    /// Timeing constraint on the departure
-    TimeConstraint departure_constraint;
-    ///
-    /// Vertex origin of the request
-    Road::Vertex origin;
-
-    ///
-    /// Shortcut to get the final destination (the last step)
-    Road::Vertex destination() {
-        return steps.back().destination;
-    }
+    DECLARE_RW_PROPERTY( parking_location, boost::optional<Road::Vertex> );
 
     ///
     /// Criteria to optimize. The list is ordered by criterion priority.
     /// Refers to a CostId (see common.hh)
-    std::vector<int> optimizing_criteria;
+    /// The class is built with one default optimizing criterion
+    DECLARE_RO_PROPERTY( optimizing_criteria, std::vector<CostId> );
 
-protected:
-    bool check_consistency_() {
-        REQUIRE( steps.size() >= 1 );
-        REQUIRE( optimizing_criteria.size() >= 1 );
+    /// Write access to a particular criterion
+    /// @param idx Index of the criterion (sorted by priority) must be >= 0. The first criterion is always available
+    /// @param cost The CostId
+    void set_optimizing_criterion( unsigned idx, const CostId& cost );
 
-        //
-        // For each step, check correct timing causalities on constraints
-        TimeConstraint last = departure_constraint;
-        ( void )last;
+    /// Write access to a particular criterion
+    /// @param idx Index of the criterion (sorted by priority) must be >= 0. The first criterion is always available
+    /// @param cost The cost, as an int
+    void set_optimizing_criterion( unsigned idx, int cost );
 
-        for ( StepList::const_iterator it = steps.begin(); it != steps.end(); it++ ) {
-            REQUIRE( it->constraint.date_time >= last.date_time );
-        }
+    /// Add a new criterion (with the lowest priority)
+    void add_criterion( CostId criterion );
 
-        return true;
-    }
+    ///
+    /// Exception thrown when a request has inconsistent timing constraints
+    class BadRequestTiming : public std::out_of_range
+    {
+    public:
+        explicit BadRequestTiming() : std::out_of_range( "Bad request timing" ) {}
+    };
+
+private:
+    /// check time causality
+    bool check_timing_() const;
 };
 } // Tempus namespace
 

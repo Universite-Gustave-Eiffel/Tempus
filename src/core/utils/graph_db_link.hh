@@ -35,7 +35,7 @@ std::pair<typename boost::graph_traits<G>::vertex_descriptor, bool> vertex_from_
     typename boost::graph_traits<G>::vertex_iterator vi, vi_end;
 
     for ( boost::tie( vi, vi_end ) = vertices( graph ); vi != vi_end; vi++ ) {
-        if ( graph[*vi].db_id == db_id ) {
+        if ( graph[*vi].db_id() == db_id ) {
             return std::make_pair( *vi, true );
         }
     }
@@ -54,7 +54,7 @@ std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id
     typename boost::graph_traits<G>::edge_iterator vi, vi_end;
 
     for ( boost::tie( vi, vi_end ) = edges( graph ); vi != vi_end; vi++ ) {
-        if ( graph[*vi].db_id == db_id ) {
+        if ( graph[*vi].db_id() == db_id ) {
             return std::make_pair( *vi, true );
         }
     }
@@ -62,6 +62,12 @@ std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id
     // null element
     return std::make_pair( typename boost::graph_traits<G>::edge_descriptor(), false );
 }
+
+///
+/// 2D Points
+struct Point2D {
+    double x,y;
+};
 
 ///
 /// Get 2D coordinates of a road vertex, from the database

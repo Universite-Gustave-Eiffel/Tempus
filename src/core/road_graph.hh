@@ -18,8 +18,9 @@
 #ifndef TEMPUS_ROAD_GRAPH_HH
 #define TEMPUS_ROAD_GRAPH_HH
 
-#include "common.hh"
+#include <boost/optional.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include "common.hh"
 
 namespace Tempus {
 // forward declaration
@@ -56,6 +57,18 @@ struct Section;
 /// The final road graph type
 typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;
 
+/// Road types
+enum RoadType
+{
+    RoadMotorway = 1,
+    RoadPrimary = 2,
+    RoadSecondary = 3,      
+    RoadStreet = 4,
+    RoadOther = 5,
+    RoadCycleWay = 6,       //FIXME redundant with traffic rules ?
+    RoadPedestrianOnly = 7  //FIXME redundant with traffic rules ?
+};
+
 ///
 /// Used as Vertex.
 /// Refers to the 'road_node' DB's table
@@ -63,10 +76,19 @@ struct Node : public Base {
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    Vertex vertex;
+    DECLARE_RW_PROPERTY( vertex, boost::optional<Vertex> );
 
-    bool is_junction;
-    bool is_bifurcation;
+    /// Total number of incident edges > 2
+    DECLARE_RW_PROPERTY( is_bifurcation, bool );
+
+    /// Type of parking available on this node
+    /// This is to be used for parking on the streets
+    /// Special parks are represented using a POI
+    /// This is a bitfield value composeed of TransportModeTrafficRules
+    DECLARE_RW_PROPERTY( parking_traffic_rules, int );
+
+public:
+    Node() : is_bifurcation_(false), parking_traffic_rules_(0) {}
 };
 
 ///
@@ -76,28 +98,38 @@ struct Section : public Base {
     /// This is a shortcut to the edge index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's edge from a Section.
     /// Can be null
-    Edge edge;
+    DECLARE_RW_PROPERTY( edge, Edge );
 
-    db_id_t       road_type;
-    /// allowed transport types
-    int           transport_type; ///< bitfield of TransportTypeId
-    double        length;
-    double        car_speed_limit;
-    double        car_average_speed;
-    double        bus_average_speed;
-    int           lane;
-    bool          is_roundabout;
-    bool          is_bridge;
-    bool          is_tunnel;
-    bool          is_ramp;
-    bool          is_tollway;
+    DECLARE_RW_PROPERTY( road_type, RoadType );
 
-    ///
-    /// List of public transport stops, attached to this road section
-    std::vector< PublicTransport::Stop* > stops;
-    ///
-    /// List of Point Of Interests attached to this road section
-    std::vector<POI*> pois;
+    /// name of the road.
+    /// FIXME should be replaced by a reference to a 'road' table
+    DECLARE_RW_PROPERTY( road_name, std::string );
+
+    DECLARE_RW_PROPERTY( traffic_rules, int );
+    DECLARE_RW_PROPERTY( length, double );
+    DECLARE_RW_PROPERTY( car_speed_limit, double );
+    DECLARE_RW_PROPERTY( lane, int );
+    DECLARE_RW_PROPERTY( is_roundabout, bool );
+    DECLARE_RW_PROPERTY( is_bridge, bool );
+    DECLARE_RW_PROPERTY( is_tunnel, bool );
+    DECLARE_RW_PROPERTY( is_ramp, bool );
+    DECLARE_RW_PROPERTY( is_tollway, bool );
+
+    /// list of pointers to public transport steps referenced on this edge
+    DECLARE_RO_PROPERTY( stops, std::vector<const PublicTransport::Stop*> );
+
+    /// add a link to a public transport step
+    void add_stop_ref( const PublicTransport::Stop* );
+
+    /// list of pointers to POIs referenced on this edge
+    DECLARE_RO_PROPERTY( pois, std::vector<const POI*> );
+
+    /// add a link to a POI
+    void add_poi_ref( const POI* );
+
+public:
+    Section() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0) {}
 };
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
@@ -105,41 +137,27 @@ typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 
 ///
-/// refers to the 'road_restriction' DB's table
+/// refers to the 'road_restriction_time_penalty' DB's table
 /// This structure reflects turn restrictions on the road network
 class Restriction : public Base {
 public:
     ///
     /// Map of cost associated for each transport type
-    /// the key is here a bitfield (refer to TransportType)
+    /// the key is here a binary combination of TransportTrafficRule
     /// the value is a cost, as double (including infinity)
     typedef std::map<int, double> CostPerTransport;
 
     typedef std::vector<Edge> EdgeSequence;
 
     Restriction( db_id_t id, const EdgeSequence& edge_seq, const CostPerTransport& cost = CostPerTransport() ) :
+        Base( id ),
         road_edges_( edge_seq ),
         cost_per_transport_( cost )
-    {
-        db_id = id;
-    }
+    {}
 
-    const EdgeSequence& road_edges() const {
-        return road_edges_;
-    }
+    DECLARE_RO_PROPERTY( road_edges, EdgeSequence );
 
-    const CostPerTransport& cost_per_transport() const {
-        return cost_per_transport_;
-    }
-    CostPerTransport& cost_per_transport() {
-        return cost_per_transport_;
-    }
-private:
-    ///
-    /// Array of road edges
-    EdgeSequence road_edges_;
-
-    CostPerTransport cost_per_transport_;
+    DECLARE_RW_PROPERTY( cost_per_transport, CostPerTransport );
 };
 
 class Restrictions {
@@ -150,9 +168,7 @@ public:
     /// List of restrictions (as edges)
     typedef std::list<Restriction> RestrictionSequence;
 
-    const RestrictionSequence& restrictions() const {
-        return restrictions_;
-    }
+    DECLARE_RO_PROPERTY( restrictions, RestrictionSequence );
 
     ///
     /// Add a restriction
@@ -160,44 +176,15 @@ public:
     void add_restriction( db_id_t id,
                           const Restriction::EdgeSequence& edges,
                           const Restriction::CostPerTransport& cost );
+    void add_restriction( Restriction restriction ); 
 
 private:
-    RestrictionSequence restrictions_;
-
     ///
     /// Pointer to the underlying road graph
     const Graph* road_graph_;
 };
 }  // Road namespace
 
-///
-/// refers to the 'poi' DB's table
-struct POI : public Base {
-    enum PoiType {
-        TypeCarPark = 1,
-        TypeSharedCarPoint,
-        TypeCyclePark,
-        TypeSharedCyclePoint,
-        TypeUserPOI
-    };
-    int poi_type;
-
-    std::string name;
-    int parking_transport_type; ///< bitfield of TransportTypeId
-
-    ///
-    /// Link to a road edge
-    Road::Edge road_edge;
-
-    ///
-    /// optional link to the opposite road edge
-    /// considered null if == to road_edge
-    Road::Edge opposite_road_edge;
-
-    ///
-    /// Number between 0 and 1 : position of the POI on the main road section
-    double abscissa_road_section;
-};
 } // Tempus namespace
 
 #endif

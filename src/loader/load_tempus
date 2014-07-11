@@ -12,9 +12,9 @@ def import_tomtom(args, shape_options):
     mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     mni.load()
 
-def import_pt(args):
+def import_pt(args, substitutions):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean)
+    gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean, substitutions)
     gtfsi.load()
 
 def import_navteq(args, shape_options):
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     elif args.type == 'navteq':
         import_navteq(args, shape_options)
     elif args.type == 'gtfs':
-        import_pt(args)
+        import_pt(args, substitutions)
     elif args.type == 'poi':
         try:
             poi_type = int(args.poitype)

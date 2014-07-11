@@ -34,21 +34,29 @@ public:
     ///
     /// A Step is a part of a route, where the transport type is constant
     /// This a generic class
-    struct Step {
+    class Step {
+    public:
         enum StepType {
             RoadStep,
             PublicTransportStep,
-            GenericStep
+            TransferStep
         };
-        StepType step_type;
+        DECLARE_RW_PROPERTY( step_type, StepType );
 
-        Costs costs;
+        DECLARE_RO_PROPERTY( costs, Costs );
+        /// Gets a cost
+        double cost( CostId id ) const;
+        /// Sets a cost
+        void set_cost( CostId id, double c );
+
+        /// (Initial) transport mode id
+        DECLARE_RW_PROPERTY( transport_mode, db_id_t );
 
         /// Geometry of the step, described as a WKB, for visualization purpose
         /// May be empty.
-        std::string geometry_wkb;
+        DECLARE_RW_PROPERTY( geometry_wkb, std::string );
 
-        Step( StepType type ) : step_type( type ) {}
+        Step( StepType type ) : step_type_( type ) {}
 
         virtual Step* clone() const {
             return new Step( *this );
@@ -57,21 +65,20 @@ public:
 
     ///
     /// A Step that occurs on the road, either by a pedestrian or a private vehicle
+    /// If the path goes along the same road (same name) in the same "direction",
+    /// there is no need to store one step for each edge, they can be merged.
     struct RoadStep : public Step {
         RoadStep() : Step( Step::RoadStep ) {}
 
         ///
         /// The road section where to start from
-        Road::Edge road_edge;
-
-        ///
-        /// The road name (field not present in a Road::Section, so copied from the DB here)
-        std::string road_name;
+        DECLARE_RW_PROPERTY( road_edge, Road::Edge );
 
         ///
         /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
         ///
-        double distance_km;
+        DECLARE_RW_PROPERTY( distance_km, double );
+
         /// The movement that is to be done at the end of the section
         enum EndMovement {
             GoAhead,
@@ -87,7 +94,7 @@ public:
             SixthExit,
             YouAreArrived = 999
         };
-        EndMovement end_movement;
+        DECLARE_RW_PROPERTY( end_movement, EndMovement );
 
         virtual RoadStep* clone() const {
             return new RoadStep( *this );
@@ -97,17 +104,29 @@ public:
     ///
     /// A Step made with a public transport
     ///
-    /// For a trip from station A to station C that passes through the station B,
-    /// 2 steps are stored, each with the same trip_id.
+    /// For a trip from station A to station C that passes through the station B on the same trip_id
+    /// only one step is stored
     struct PublicTransportStep : public Step {
-        PublicTransportStep() : Step( Step::PublicTransportStep ) {}
+        PublicTransportStep() : Step( Step::PublicTransportStep ), wait_(0.0) {}
 
-        db_id_t network_id;
+        DECLARE_RW_PROPERTY( network_id, db_id_t );
+
         ///
-        /// The public transport section part of the step
-        PublicTransport::Edge section;
+        /// Wait time at this step (in min)
+        DECLARE_RW_PROPERTY( wait, double );
+        /// Departure time
+        DECLARE_RW_PROPERTY( departure_time, double );
+        /// Arrival time
+        DECLARE_RW_PROPERTY( arrival_time, double );
 
-        db_id_t trip_id; ///< used to indicate the direction
+        /// Of which trip this step is part of
+        DECLARE_RW_PROPERTY( trip_id, db_id_t );
+        /// Name of the route
+        DECLARE_RW_PROPERTY( route, std::string );
+        /// PT stop on where to depart
+        DECLARE_RW_PROPERTY( departure_stop, PublicTransport::Vertex );
+        /// PT stop on where to arrive
+        DECLARE_RW_PROPERTY( arrival_stop, PublicTransport::Vertex );
 
         virtual PublicTransportStep* clone() const {
             return new PublicTransportStep( *this );
@@ -118,25 +137,45 @@ public:
     /// A generic step from a vertex to another
     /// Inherits from Step as well as from Multimodal::Edge
     /// This is used to represent a step from a mode to another (road, public transport, poi, etc)
-    struct GenericStep : public Step, public Multimodal::Edge {
-        GenericStep() : Step( Step::GenericStep ), Edge() {}
-        GenericStep( const Multimodal::Edge& edge ) : Step( Step::GenericStep ), Edge( edge ) {}
+    struct TransferStep : public Step, public Multimodal::Edge {
+        TransferStep() : Step( Step::TransferStep ), Edge() {}
+        TransferStep( const Multimodal::Edge& edge ) : Step( Step::TransferStep ), Edge( edge ) {}
 
-        ///
-        /// Road name, if relevant
-        std::string road_name;
+        /// Final transport mode id
+        DECLARE_RW_PROPERTY( final_mode, db_id_t );
 
-        virtual GenericStep* clone() const {
-            return new GenericStep( *this );
+        virtual TransferStep* clone() const {
+            return new TransferStep( *this );
         }
     };
 
-    ///
-    /// A Roadmap is a list of Step augmented with some total costs.
     typedef boost::ptr_vector<Step> StepList;
-    StepList steps;
-    Costs total_costs;
+    typedef StepList::iterator StepIterator;
+    typedef StepList::const_iterator StepConstIterator;
+
+    /// Read-only access to steps, begin iterator
+    StepConstIterator begin() const;
+    /// Write access to steps
+    StepIterator begin();
+
+    /// Read-only access to steps, end iterator
+    StepConstIterator end() const;
+    /// Write access to steps
+    StepIterator end();
+
+    /// Random access to a given step, with bound checking
+    const Step& step( size_t idx ) const;
+
+    /// Add a step
+    void add_step( std::auto_ptr<Step> step );
+
+private:
+    StepList steps_;
 };
+
+///
+/// Convenience function to compute the sum of costs for a roadmap
+Costs get_total_costs( const Roadmap& );
 
 ///
 /// A Result is a list of Roadmap, ordered by relevance towards optimizing criteria

@@ -34,9 +34,9 @@ public:
     LengthCalculator( Db::Connection& db ) : db_( db ) {}
 
     // TODO - possible improvement: cache length
-    double operator()( PublicTransport::Graph& graph, PublicTransport::Edge& e ) {
+    double operator()( const PublicTransport::Graph& graph, const PublicTransport::Edge& e ) {
         Db::Result res = db_.exec( ( boost::format( "SELECT ST_Length(geom) FROM tempus.pt_section WHERE stop_from = %1% AND stop_to = %2%" )
-                                     % graph[e].stop_from % graph[e].stop_to ).str() );
+                                     % get_stop_from(graph[e]).db_id() % get_stop_to(graph[e]).db_id() ).str() );
         BOOST_ASSERT( res.size() > 0 );
         double l = res[0][0].as<double>();
         return l;
@@ -63,11 +63,10 @@ public:
 
 public:
     virtual void pre_process( Request& request ) {
-        REQUIRE( graph_.public_transports.size() >= 1 );
-        REQUIRE( request.check_consistency() );
-        REQUIRE( request.steps.size() == 1 );
+        REQUIRE( graph_.public_transports().size() >= 1 );
+        REQUIRE( request.steps().size() == 2 );
 
-        if ( ( request.optimizing_criteria[0] != CostDuration ) && ( request.optimizing_criteria[0] != CostDistance ) ) {
+        if ( ( request.optimizing_criteria()[0] != CostDuration ) && ( request.optimizing_criteria()[0] != CostDistance ) ) {
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
@@ -75,15 +74,15 @@ public:
         result_.clear();
     }
 
-    virtual void pt_vertex_accessor( PublicTransport::Vertex v, int access_type ) {
+    virtual void pt_vertex_accessor( const PublicTransport::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
-            PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-            CERR << "Examining vertex " << pt_graph[v].db_id << endl;
+            const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
+            CERR << "Examining vertex " << pt_graph[v].db_id() << endl;
         }
     }
     virtual void process() {
-        PublicTransport::Graph& pt_graph = graph_.public_transports.begin()->second;
-        db_id_t network_id = graph_.public_transports.begin()->first;
+        const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
+        db_id_t network_id = graph_.public_transports().begin()->first;
 
         PublicTransport::Vertex departure, arrival;
 
@@ -109,15 +108,15 @@ public:
         }
         else {
             // else use regular road nodes from the request
-            Road::Graph& road_graph = graph_.road;
-            CERR << "origin = " << road_graph[request_.origin].db_id << " dest = " << road_graph[request_.destination()].db_id << endl;
+            const Road::Graph& road_graph = graph_.road();
+            CERR << "origin = " << road_graph[request_.origin()].db_id() << " dest = " << road_graph[request_.destination()].db_id() << endl;
 
             // for each step in the request, find the corresponding public transport node
             for ( size_t i = 0; i < 2; i++ ) {
                 Road::Vertex node;
 
                 if ( i == 0 ) {
-                    node = request_.origin;
+                    node = request_.origin();
                 }
                 else {
                     node = request_.destination();
@@ -126,7 +125,7 @@ public:
                 PublicTransport::Vertex found_vertex;
 
                 std::string q = ( boost::format( "select s.id from tempus.road_node as n join tempus.pt_stop as s on st_dwithin( n.geom, s.geom, 100 ) "
-                                                 "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % road_graph[node].db_id ).str();
+                                                 "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % road_graph[node].db_id() ).str();
                 Db::Result res = db_.exec( q );
 
                 if ( res.size() < 1 ) {
@@ -144,7 +143,7 @@ public:
                         arrival = found_vertex;
                     }
 
-                    CERR << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id << std::endl;
+                    CERR << "Road node #" << node << " <-> Public transport node " << pt_graph[found_vertex].db_id() << std::endl;
                 }
             }
         }
@@ -209,38 +208,31 @@ public:
         // we result in only one roadmap
         result_.push_back( Roadmap() );
         Roadmap& roadmap = result_.back();
-        Roadmap::PublicTransportStep* step = 0;
-        roadmap.total_costs[ CostDuration ] = 0.0;
-        roadmap.total_costs[ CostDistance ] = 0.0;
 
         bool first_loop = true;
 
         Road::Vertex previous = *path.begin();
 
         for ( std::list<PublicTransport::Vertex>::iterator it = path.begin(); it != path.end(); it++ ) {
-            CERR << "path " << pt_graph[ *it ].db_id << std::endl;
+            CERR << "path " << pt_graph[ *it ].db_id() << std::endl;
 
             if ( first_loop ) {
                 first_loop = false;
                 continue;
             }
 
-            step = new Roadmap::PublicTransportStep();
-            roadmap.steps.push_back( step );
+            Roadmap::PublicTransportStep* ptstep = new Roadmap::PublicTransportStep();
 
-            bool found_e = false;
-            PublicTransport::Edge e;
-            boost::tie( e, found_e ) = boost::edge( previous, *it, pt_graph );
-
-            step->section = e;
-            // default
-            step->network_id = network_id;
-            step->trip_id = 1;
+            ptstep->set_trip_id(1);
+            ptstep->set_departure_stop( previous );
+            ptstep->set_arrival_stop( *it );
+            ptstep->set_network_id( network_id );
+            ptstep->set_transport_mode( 1 );
+            ptstep->set_cost( CostDistance, distance_map[*it] );
 
             previous = *it;
 
-            step->costs[ CostDistance ] = distance_map[ *it ];
-            roadmap.total_costs[ CostDistance ] += step->costs[ CostDistance ];
+            roadmap.add_step( std::auto_ptr<Roadmap::Step>(ptstep) );
         }
     }
 

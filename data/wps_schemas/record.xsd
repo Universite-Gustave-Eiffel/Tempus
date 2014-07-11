@@ -9,8 +9,7 @@
 
   <xs:include schemaLocation="plugin_list/plugins.xsd"/>
 
-  <xs:include schemaLocation="constant_list/road_types.xsd"/>
-  <xs:include schemaLocation="constant_list/transport_types.xsd"/>
+  <xs:include schemaLocation="constant_list/transport_modes.xsd"/>
   <xs:include schemaLocation="constant_list/transport_networks.xsd"/>
 
   <xs:complexType name="Record">
@@ -30,8 +29,7 @@
         <xs:complexType>
           <xs:sequence>
             <xs:element name="plugins" type="Plugins"/>
-            <xs:element name="road_types" type="RoadTypes"/>
-            <xs:element name="transport_types" type="TransportTypes"/>
+            <xs:element name="transport_modes" type="TransportModes"/>
             <xs:element name="transport_networks" type="TransportNetworks"/>
           </xs:sequence>
         </xs:complexType>

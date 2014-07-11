@@ -116,10 +116,11 @@ class IfsttarRoutingDock(QDockWidget):
         criteria = []
         steps = []
         networks = []
+        modes = []
         parking = None
         origin = None
         dep = None
-        for child in pson[2:]:
+        for child in pson[1:]:
             if child[0] == 'origin':
                 origin = child
             elif child[0] == 'departure_constraint':
@@ -130,9 +131,10 @@ class IfsttarRoutingDock(QDockWidget):
                 criteria.append(int(child[1]))
             elif child[0] == 'allowed_network':
                 networks.append(int(child[1]))
+            elif child[0] == 'allowed_mode':
+                modes.append(int(child[1]))
             elif child[0] == 'step':
                 steps.append(child)
-        ttypes = pson[1]['allowed_transport_types']
 
         def readCoords( n ):
             if n[1].has_key('vertex'):
@@ -161,6 +163,8 @@ class IfsttarRoutingDock(QDockWidget):
         self.set_coordinates( coords )
         self.set_pvads( pvads )
         self.set_constraints( constraints )
+
+        self.set_selected_transports_from_id( modes )
         
     #
     # Save widgets' states
@@ -347,6 +351,17 @@ class IfsttarRoutingDock(QDockWidget):
         n = model.rowCount()
         for i in range(0, n):
             if i in sel:
+                q = Qt.Checked
+            else:
+                q = Qt.Unchecked
+            model.setData( model.index(i,0), q, Qt.CheckStateRole )
+
+    def set_selected_transports_from_id( self, sel ):
+        model = self.ui.transportList.model()
+        n = model.rowCount()
+        for i in range(0, n):
+            id = model.data( model.index(i,0), Qt.UserRole )
+            if id in sel:
                 q = Qt.Checked
             else:
                 q = Qt.Unchecked

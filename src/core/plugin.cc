@@ -249,7 +249,7 @@ const Plugin::OptionDescriptionList PluginFactory::option_descriptions( const st
 
 
 Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
-    graph_( Application::instance()->graph() ),
+    graph_( *Application::instance()->graph() ),
     name_( nname ),
     db_( db_options ) // create another connection
 {
@@ -380,7 +380,8 @@ Result& Plugin::result()
 {
     for ( Result::iterator rit = result_.begin(); rit != result_.end(); ++rit ) {
         Roadmap& roadmap = *rit;
-        Road::Graph& road_graph = graph_.road;
+        Roadmap new_roadmap;
+        const Road::Graph& road_graph = graph_.road();
 
         Tempus::db_id_t previous_section = 0;
         bool on_roundabout = false;
@@ -389,29 +390,57 @@ Result& Plugin::result()
 
         Roadmap::RoadStep::EndMovement movement;
 
-        for ( Roadmap::StepList::iterator it = roadmap.steps.begin(); it != roadmap.steps.end(); it++ ) {
-            if ( it->step_type == Roadmap::Step::GenericStep ) {
-                Roadmap::GenericStep* step = static_cast<Roadmap::GenericStep*>( &*it );
+        // public transport step accumulator
+        std::vector< std::pair< db_id_t, db_id_t > > accum_pt;
+        Roadmap::PublicTransportStep* pt_first = 0;
+
+        // road step accumulator
+        std::vector< db_id_t > accum_road;
+
+        // cost accumulator
+        Costs accum_costs;
+
+        Roadmap::StepIterator it = roadmap.begin();
+        Roadmap::StepIterator next = it;
+        next++;
+
+        for ( ; it != roadmap.end(); it++ ) {
+            if ( it->step_type() == Roadmap::Step::TransferStep ) {
+                Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>( &*it );
                 Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
 
-                bool is_road_pt = false;
-                db_id_t road_id, pt_id;
+                bool is_road_pt = false, is_road_poi = false;
+                db_id_t road_id, pt_id, poi_id;
 
                 switch ( edge->connection_type() ) {
                 case Multimodal::Edge::Road2Transport: {
                     is_road_pt = true;
-                    const Road::Graph& rroad_graph = *( edge->source.road_graph );
-                    const PublicTransport::Graph& pt_graph = *( edge->target.pt_graph );
-                    road_id = rroad_graph[ edge->source.road_vertex ].db_id;
-                    pt_id = pt_graph[ edge->target.pt_vertex ].db_id;
+                    const Road::Graph& rroad_graph = *( edge->source().road_graph() );
+                    const PublicTransport::Graph& pt_graph = *( edge->target().pt_graph() );
+                    road_id = rroad_graph[ edge->source().road_vertex() ].db_id();
+                    pt_id = pt_graph[ edge->target().pt_vertex() ].db_id();
                 }
                 break;
                 case Multimodal::Edge::Transport2Road: {
                     is_road_pt = true;
-                    const PublicTransport::Graph& pt_graph = *( edge->source.pt_graph );
-                    const Road::Graph& rroad_graph = *( edge->target.road_graph );
-                    pt_id = pt_graph[ edge->source.pt_vertex ].db_id;
-                    road_id = rroad_graph[ edge->target.road_vertex ].db_id;
+                    const PublicTransport::Graph& pt_graph = *( edge->source().pt_graph() );
+                    const Road::Graph& rroad_graph = *( edge->target().road_graph() );
+                    pt_id = pt_graph[ edge->source().pt_vertex() ].db_id();
+                    road_id = rroad_graph[ edge->target().road_vertex() ].db_id();
+                }
+                break;
+                case Multimodal::Edge::Road2Poi: {
+                    is_road_poi = true;
+                    const Road::Graph& rroad_graph = *( edge->source().road_graph() );
+                    road_id = rroad_graph[ edge->source().road_vertex() ].db_id();
+                    poi_id = edge->target().poi()->db_id();
+                }
+                break;
+                case Multimodal::Edge::Poi2Road: {
+                    is_road_poi = true;
+                    const Road::Graph& rroad_graph = *( edge->target().road_graph() );
+                    road_id = rroad_graph[ edge->target().road_vertex() ].db_id();
+                    poi_id = edge->source().poi()->db_id();
                 }
                 break;
                 default:
@@ -420,8 +449,7 @@ Result& Plugin::result()
 
                 if ( is_road_pt ) {
                     // get as Linestring from A to B
-                    // also get the road_name where the pt stop is attached to
-                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), t2.road_name from "
+                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
                                                          "(select geom from tempus.road_node where id=%1%) as t1, "
                                                          "(select pt.geom, rs.road_name from tempus.pt_stop as pt, "
                                                          "tempus.road_section as rs where rs.id = pt.road_section_id "
@@ -431,49 +459,125 @@ Result& Plugin::result()
                     Db::Result res = db_.exec( query );
                     BOOST_ASSERT( res.size() > 0 );
                     std::string wkb = res[0][0].as<std::string>();
-                    step->road_name = res[0][1].as<std::string>();
                     // get rid of the heading '\x'
-                    step->geometry_wkb = wkb.substr( 2 );
+                    step->set_geometry_wkb( wkb.substr( 2 ) );
                 }
-            }
-            else if ( it->step_type == Roadmap::Step::PublicTransportStep ) {
-                Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-                PublicTransport::Graph& pt_graph = graph_.public_transports[step->network_id];
+                if ( is_road_poi ) {
+                    // get as Linestring from A to B
+                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                                         "(select geom from tempus.road_node where id=%1%) as t1, "
+                                                         "(select poi.geom, rs.road_name from tempus.poi as poi, "
+                                                         "tempus.road_section as rs where rs.id = poi.road_section_id "
+                                                         "and poi.id=%2%) as t2" ) %
+                                          road_id %
+                                          poi_id ).str();
+                    Db::Result res = db_.exec( query );
+                    BOOST_ASSERT( res.size() > 0 );
+                    std::string wkb = res[0][0].as<std::string>();
+                    // get rid of the heading '\x'
+                    step->set_geometry_wkb( wkb.substr( 2 ) );
+                }
 
-                //
+                new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
+            }
+            else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
+                Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
+                const PublicTransport::Graph& pt_graph = *graph_.public_transport(step->network_id());
+
+                // store stops
+                accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );
+                // accumulate costs
+                for ( Costs::const_iterator cit = step->costs().begin(); cit != step->costs().end(); ++cit ) {
+                    accum_costs[cit->first] += cit->second;
+                }
+                if ( !pt_first ) {
+                    pt_first = step;
+                }
+
+                // accumulate step sharing the same trip
+                if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
+                    Roadmap::PublicTransportStep* next_step = static_cast<Roadmap::PublicTransportStep*>( &*next );
+                    if ( next_step->trip_id() == step->trip_id() ) {
+						if ( next != roadmap.end() ) next++;
+                        continue;
+                    }
+                }
+
                 // retrieval of the step's geometry
-                std::string q = ( boost::format( "SELECT st_asbinary(geom) FROM tempus.pt_section WHERE stop_from=%1% AND stop_to=%2%" ) %
-                                  pt_graph[step->section].stop_from % pt_graph[step->section].stop_to ).str();
+                std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
+                for ( size_t i = 0; i < accum_pt.size(); i++ ) {
+                    q += (boost::format("ARRAY[%1%,%2%]") % pt_graph[accum_pt[i].first].db_id() % pt_graph[accum_pt[i].second].db_id() ).str();
+                    if ( i != accum_pt.size()-1 ) {
+                        q += ",";
+                    }
+                }
+                q += ")) t";
                 Db::Result res = db_.exec( q );
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
-                step->geometry_wkb = wkb.substr( 2 );
+                step->set_geometry_wkb( wkb.substr( 2 ) );
+
+                // get the route name
+                q = (boost::format("SELECT r.short_name, r.long_name, r.transport_mode from tempus.pt_trip as t, tempus.pt_route as r where t.id=%1% and t.route_id = r.id")
+                     % step->trip_id() ).str();
+                Db::Result res2 = db_.exec( q );
+                std::string short_name = res2[0][0].as<std::string>();
+                std::string long_name = res2[0][1].as<std::string>();
+                step->set_transport_mode( res2[0][2].as<db_id_t>() );
+                step->set_route( short_name + " - " + long_name );
+
+                // copy info from the first step
+                step->set_departure_stop( pt_first->departure_stop() );
+                step->set_departure_time( pt_first->departure_time() );
+                step->set_wait( pt_first->wait() );
+
+                new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
+
+                accum_pt.clear();
+                pt_first = 0;
+                accum_costs.clear();
             }
-            else if ( it->step_type == Roadmap::Step::RoadStep ) {
+            else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 
                 Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( &*it );
+
+                // accumulate step sharing the same road name
+                accum_road.push_back( road_graph[step->road_edge()].db_id() );
+                // accumulate costs
+                for ( Costs::const_iterator cit = step->costs().begin(); cit != step->costs().end(); ++cit ) {
+                    accum_costs[cit->first] += cit->second;
+                }
+
+                if ( next != roadmap.end() && next->step_type() == Roadmap::Step::RoadStep ) {
+                    Roadmap::RoadStep* next_step = static_cast<Roadmap::RoadStep*>( &*next );
+                    if ( road_graph[next_step->road_edge()].road_name() == 
+                         road_graph[step->road_edge()].road_name() ) {
+						if ( next != roadmap.end() ) next++;
+                        continue;
+                    }
+                }
 
                 //
                 // retrieval of the step's geometry
                 {
+                    std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.road_section WHERE id IN (";
+                    for ( size_t i = 0; i < accum_road.size(); i++ ) {
+                        q += (boost::format("%1%") % accum_road[i]).str();
+                        if ( i != accum_road.size()-1 ) {
+                            q += ",";
+                        }
+                    }
+                    q += ")) t";
                     // reverse the geometry if needed
-                    // we also get the road_name here
-                    std::string q = ( boost::format( "SELECT road_name, CASE WHEN node_from=%1%"
-                                                     " THEN ST_AsBinary(geom)"
-                                                     " ELSE ST_AsBinary(ST_Reverse(geom)) END"
-                                                     " FROM tempus.road_section WHERE id=%2%" ) %
-                                      road_graph[ source(step->road_edge, road_graph) ].db_id %
-                                      road_graph[step->road_edge].db_id ).str();
                     Db::Result res = db_.exec( q );
-                    step->road_name = res[0][0].as<std::string>();
-                    std::string wkb = res[0][1].as<std::string>();
+                    std::string wkb = res[0][0].as<std::string>();
 
                     // get rid of the heading '\x'
                     if ( wkb.size() > 0 ) {
-                        step->geometry_wkb = wkb.substr( 2 );
+                        step->set_geometry_wkb( wkb.substr( 2 ) );
                     }
                     else {
-                        step->geometry_wkb = "";
+                        step->set_geometry_wkb( "" );
                     }
                 }
 
@@ -482,7 +586,7 @@ Result& Plugin::result()
                 //
                 movement = Roadmap::RoadStep::GoAhead;
 
-                on_roundabout =  road_graph[step->road_edge].is_roundabout;
+                on_roundabout =  road_graph[step->road_edge()].is_roundabout();
 
                 bool action = false;
 
@@ -501,7 +605,7 @@ Result& Plugin::result()
 
                 if ( previous_section && !on_roundabout && !action ) {
                     std::string q1 = ( boost::format( "SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
-                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge].db_id ).str();
+                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge()].db_id() ).str();
                     Db::Result res = db_.exec( q1 );
                     double pi = 3.14159265;
                     double z1 = res[0][0].as<double>() / pi * 180.0;
@@ -524,21 +628,40 @@ Result& Plugin::result()
                     }
                 }
 
+#if 1
                 if ( last_step ) {
-                    last_step->end_movement = movement;
-                    last_step->distance_km = -1.0;
+                    last_step->set_end_movement( movement );
+                    last_step->set_distance_km( -1.0 );
+                }
+#endif
+
+                was_on_roundabout = on_roundabout;
+
+                new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
+
+                if ( next != roadmap.end() && next->step_type() != Roadmap::Step::RoadStep ) {
+                    previous_section = 0;
+                    last_step = 0;
+                }
+                else {
+                    previous_section = road_graph[step->road_edge()].db_id();
+                    Roadmap::StepIterator ite = new_roadmap.end();
+                    ite--;
+                    last_step = static_cast<Roadmap::RoadStep*>(&*ite);
                 }
 
-                previous_section = road_graph[step->road_edge].db_id;
-                was_on_roundabout = on_roundabout;
-                last_step = step;
-            }
+                accum_road.clear();
+                accum_costs.clear();
+			}
+			if (next != roadmap.end()) next++;
         }
-
+#if 1
         if ( last_step ) {
-            last_step->end_movement = Roadmap::RoadStep::YouAreArrived;
-            last_step->distance_km = -1.0;
+            last_step->set_end_movement( Roadmap::RoadStep::YouAreArrived );
+            last_step->set_distance_km( -1.0 );
         }
+#endif
+        *rit = new_roadmap;
     }
 
     return result_;

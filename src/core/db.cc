@@ -23,19 +23,19 @@ namespace Db {
 boost::mutex Connection::mutex;
 
 template <>
-bool Value::as<bool>()
+bool Value::as<bool>() const
 {
     return std::string( value_, len_ ) == "t" ? true : false;
 }
 
 template <>
-std::string Value::as<std::string>()
+std::string Value::as<std::string>() const
 {
     return std::string( value_, len_ );
 }
 
 template <>
-Tempus::Time Value::as<Tempus::Time>()
+Tempus::Time Value::as<Tempus::Time>() const
 {
     Tempus::Time t;
     int h, m, s;
@@ -45,34 +45,52 @@ Tempus::Time Value::as<Tempus::Time>()
 }
 
 template <>
-long long Value::as<long long>()
+long long Value::as<long long>() const
 {
     long long v;
     sscanf( value_, "%lld", &v );
     return v;
 }
 template <>
-int Value::as<int>()
+int Value::as<int>() const
 {
     int v;
     sscanf( value_, "%d", &v );
     return v;
 }
 template <>
-float Value::as<float>()
+float Value::as<float>() const
 {
     float v;
     sscanf( value_, "%f", &v );
     return v;
 }
 template <>
-double Value::as<double>()
+double Value::as<double>() const
 {
     double v;
     sscanf( value_, "%lf", &v );
     return v;
 }
 
+template <>
+std::vector<Tempus::db_id_t> Value::as< std::vector<Tempus::db_id_t> >() const
+{
+    std::vector<Tempus::db_id_t> res;
+    std::string array_str( value_ );
+    // trim '{}'
+    std::istringstream array_sub( array_str.substr( 1, array_str.size()-2 ) );
+
+    // parse each array element
+    std::string n_str;
+    while ( std::getline( array_sub, n_str, ',' ) ) {
+        std::istringstream n_stream( n_str );
+        Tempus::db_id_t id;
+        n_stream >> id;
+        res.push_back(id);
+    }
+    return res;
+}
 }
 
 
