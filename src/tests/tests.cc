@@ -489,12 +489,11 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
 
     // restriction nodes
     db_id_t expected_nodes[][4] = { { 22587, 22510, 22451, 0 },
-                                    { 21801, 21652, 21712, 21691 },
+                                    { 21906, 21934, 21993, 21987 },
                                     // forbidden u-turn :
-                                    { 21934, 21906, 21934 },
-                                    { 21906, 21934, 21906 }
+                                    { 21934, 21906, 21934, 0 },
+                                    { 21906, 21934, 21906, 0 }
     };
-
     Road::Restrictions restrictions( importer->import_turn_restrictions( graph->road() ) );
 
     Road::Restrictions::RestrictionSequence::const_iterator it;

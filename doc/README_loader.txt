@@ -73,6 +73,6 @@ insert into tempus.road_restriction values (2, array[45049,14228,45084] );
 insert into tempus.road_restriction values (3, array[45049, 45049] );
 # 60: for all types of cars
 # 4 : car only (not taxi or car pool)
-insert into tempus.road_restriction_cost values (1, 0, 60, 'Infinity'::float);
-insert into tempus.road_restriction_cost values (2, 0, 4, 'Infinity'::float);
-insert into tempus.road_restriction_cost values (3, 0, 60, 'Infinity'::float);
+insert into tempus.road_restriction_time_penalty values (1, 0, 60, 'Infinity'::float);
+insert into tempus.road_restriction_time_penalty values (2, 0, 4, 'Infinity'::float);
+insert into tempus.road_restriction_time_penalty values (3, 0, 60, 'Infinity'::float);
