@@ -218,55 +218,58 @@ public:
     double transfer_time( const Multimodal::Graph& graph, const Multimodal::Vertex& src, const Multimodal::Vertex& tgt, db_id_t initial_mode_id, db_id_t final_mode_id ) const
     {
         double transf_t = 0;
-        if (initial_mode_id != final_mode_id ) {
-            const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
-            const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
-            // Parking search time for initial mode
-            if ( initial_mode.need_parking() ) {
-                if ( ( ( src.type() == Multimodal::Vertex::Road )  &&
-                       ( (graph.road()[ src.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
-                     || ( (src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( initial_mode.db_id() )) ) )
-                {
-                    // FIXME more complex than that
-                    if (initial_mode.traffic_rules() & TrafficRuleCar ) 
-                        transf_t += car_parking_search_time_ ; // Personal car
-                    // For bicycle, parking search time = 0
-                }
-                else {
-                    transf_t = std::numeric_limits<double>::max();
-                }
-            }
+        if (initial_mode_id == final_mode_id ) {
+            return 0;
+        }
 
-            if ( ( transf_t < std::numeric_limits<double>::max() ) && final_mode.is_shared() ) {
-                if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
-                    // FIXME replace 1 by time to take a shared vehicle
-                    transf_t += 1;
-                }
-                else {
-                    transf_t = std::numeric_limits<double>::max();
-                }
+        const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
+        const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
+        // park shared vehicle
+        if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
+            if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) )) {
+                // FIXME replace 1 by time to park a shared vehicle
+                transf_t += 1;
             }
-
-            if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
-                if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) )) {
-                    // FIXME replace 1 by time to park a shared vehicle
-                    transf_t += 1;
-                }
-                else {
-                    transf_t = std::numeric_limits<double>::max();
-                }                
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }                
+        }
+        // Parking search time for initial mode
+        else if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.need_parking() ) {
+            if ( ( ( src.type() == Multimodal::Vertex::Road )  &&
+                   ( (graph.road()[ src.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
+                 || ( (src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( initial_mode.db_id() )) ) )
+            {
+                // FIXME more complex than that
+                if (initial_mode.traffic_rules() & TrafficRuleCar ) 
+                    transf_t += car_parking_search_time_ ; // Personal car
+                // For bicycle, parking search time = 0
             }
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }
+        }
 
-            // Taking vehicle time for final mode 
-            // FIXME add private parking location test
-            if ( ( transf_t < std::numeric_limits<double>::max() ) && ( final_mode.need_parking() ) ) {
-                if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
-                    // vehicles parked on a POI
-                    transf_t += 1;
-                }
-                else {
-                    transf_t = std::numeric_limits<double>::max();
-                }
+
+        // take a shared vehicle from a POI
+        if ( ( transf_t < std::numeric_limits<double>::max() ) && final_mode.is_shared() ) {
+            if (( src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
+                // FIXME replace 1 by time to take a shared vehicle
+                transf_t += 1;
+            }
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }
+        }
+        // Taking vehicle time for final mode 
+        // FIXME add private parking location test
+        else if ( ( transf_t < std::numeric_limits<double>::max() ) && ( final_mode.need_parking() ) ) {
+            if (( src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
+                // vehicles parked on a POI
+                transf_t += 1;
+            }
+            else {
+                transf_t = std::numeric_limits<double>::max();
             }
         }
 

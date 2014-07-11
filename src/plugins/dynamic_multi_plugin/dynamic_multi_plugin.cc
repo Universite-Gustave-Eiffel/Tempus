@@ -144,10 +144,20 @@ void DynamicMultiPlugin::pre_process( Request& request )
     get_option( "min_transfer_time", min_transfer_time_ ); 
     get_option( "walking_speed", walking_speed_ ); 
     get_option( "cycling_speed", cycling_speed_ ); 
-    get_option( "car_parking_search_time", car_parking_search_time_ ); 
+    get_option( "car_parking_search_time", car_parking_search_time_ );
+
+    // look for public transports in allowed modes
+    bool pt_allowed = false;
+    for ( size_t i = 0; i < request.allowed_modes().size(); i++ ) {
+        db_id_t mode_id = request.allowed_modes()[i];
+        if (graph_.transport_mode( mode_id )->is_public_transport() ) {
+            pt_allowed = true;
+            break;
+        }
+    }
     	
     // If current date changed, reload timetable / frequency
-    if ( (graph_.public_transports().size() > 0) && (s_.current_day != request_.steps()[0].constraint().date_time().date()) )  {
+    if ( pt_allowed && (graph_.public_transports().size() > 0) && (s_.current_day != request_.steps()[0].constraint().date_time().date()) )  {
         const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
         std::cout << "load timetable" << std::endl;
         s_.current_day = request_.steps()[0].constraint().date_time().date();
@@ -301,7 +311,7 @@ void DynamicMultiPlugin::process()
     bool walk_at_destination;
     get_option( "walk_at_destination", walk_at_destination );
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
-    DestinationDetectorVisitor vis( request_.destination(), walk_at_destination, verbose_ );
+    DestinationDetectorVisitor vis( request_.destination(), walk_at_destination, verbose_algo_ );
 
     Triple destination_o;
     bool path_found = false;
