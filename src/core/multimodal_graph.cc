@@ -905,8 +905,9 @@ void Graph::set_public_transports( boost::ptr_map<db_id_t, PublicTransport::Grap
 
     while (!nmap.empty()) {
         boost::ptr_map<db_id_t, PublicTransport::Graph>::iterator it = nmap.begin();
+		db_id_t id = it->first;
         PublicTransport::Graph* p(nmap.release(it).release());
-        public_transports_[it->first] = p;
+        public_transports_[id] = p;
     }
 
     //

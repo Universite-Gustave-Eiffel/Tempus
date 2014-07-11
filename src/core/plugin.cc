@@ -404,7 +404,7 @@ Result& Plugin::result()
         Roadmap::StepIterator next = it;
         next++;
 
-        for ( ; it != roadmap.end(); next++,it++ ) {
+        for ( ; it != roadmap.end(); it++ ) {
             if ( it->step_type() == Roadmap::Step::TransferStep ) {
                 Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>( &*it );
                 Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
@@ -498,6 +498,7 @@ Result& Plugin::result()
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
                     Roadmap::PublicTransportStep* next_step = static_cast<Roadmap::PublicTransportStep*>( &*next );
                     if ( next_step->trip_id() == step->trip_id() ) {
+						if ( next != roadmap.end() ) next++;
                         continue;
                     }
                 }
@@ -551,6 +552,7 @@ Result& Plugin::result()
                     Roadmap::RoadStep* next_step = static_cast<Roadmap::RoadStep*>( &*next );
                     if ( road_graph[next_step->road_edge()].road_name() == 
                          road_graph[step->road_edge()].road_name() ) {
+						if ( next != roadmap.end() ) next++;
                         continue;
                     }
                 }
@@ -650,7 +652,8 @@ Result& Plugin::result()
 
                 accum_road.clear();
                 accum_costs.clear();
-            }
+			}
+			if (next != roadmap.end()) next++;
         }
 #if 1
         if ( last_step ) {
