@@ -143,6 +143,38 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
             }
         }
+
+        {
+            // look for PT stops that are not referenced by any PT sections, or stop times
+            const std::string q = "SELECT COUNT(*) FROM tempus.pt_stop AS p "
+                "from"
+                "    tempus.pt_stop as p"
+                "left join"
+                "    tempus.pt_section as s1"
+                "on"
+                "    p.id = s1.stop_from"
+                "left join"
+                "    tempus.pt_section as s2"
+                "on"
+                "    p.id = s2.stop_to"
+                "left join"
+                "    tempus.pt_stop_time"
+                "on p.id = stop_id"
+                "left join"
+                "    tempus.pt_stop as pp"
+                "on p.id = pp.parent_station"
+                "where"
+                "    s1.stop_from is null"
+                "and s2.stop_to is null"
+                "and stop_id is null"
+                "and pp.parent_station is null";
+            Db::Result res( connection_.exec( q ) );
+            size_t count = 0;
+            res[0][0] >> count;
+            if ( count ) {
+                CERR << "[WARNING]: there are " << count << " unreferenced public transport stops" << std::endl;
+            }
+        }
     }
 
     // locally maps db ID to Node or Section
