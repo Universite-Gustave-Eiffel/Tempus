@@ -1,5 +1,12 @@
 set( HEADER_FILES
-    common.hh 
+    common.hh
+    cast.hh
+    cost.hh
+    io.hh
+    property.hh
+    base.hh
+    datetime.hh
+    progression.hh
     abscissa.hh
     road_graph.hh
     public_transport_graph.hh
@@ -16,7 +23,9 @@ set( HEADER_FILES
     )
 
 set( SOURCE_FILES 
-    common.cc 
+    io.cc
+    progression.cc
+    cost.cc
     abscissa.cc
     road_graph.cc
     multimodal_graph.cc 

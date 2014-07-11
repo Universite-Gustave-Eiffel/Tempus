@@ -64,6 +64,12 @@ std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id
 }
 
 ///
+/// 2D Points
+struct Point2D {
+    double x,y;
+};
+
+///
 /// Get 2D coordinates of a road vertex, from the database
 Point2D coordinates( const Road::Vertex& v, Db::Connection& db, const Road::Graph& graph );
 ///
