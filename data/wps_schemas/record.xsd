@@ -29,7 +29,6 @@
         <xs:complexType>
           <xs:sequence>
             <xs:element name="plugins" type="Plugins"/>
-            <xs:element name="road_types" type="RoadTypes"/>
             <xs:element name="transport_modes" type="TransportModes"/>
             <xs:element name="transport_networks" type="TransportNetworks"/>
           </xs:sequence>

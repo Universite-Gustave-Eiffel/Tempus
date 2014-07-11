@@ -528,7 +528,6 @@ class IfsttarRouting:
                     if step.mode != step.final_mode:
                             imode = self.transport_modes_dict[step.mode]
                             fmode = self.transport_modes_dict[step.final_mode]
-                            print imode.name, fmode.name, imode.need_parking, fmode.need_parking
                             add_t = []
                             if imode.need_parking:
                                     add_t += ["park your %s" % imode.name]
@@ -651,6 +650,7 @@ class IfsttarRouting:
             item = QStandardItem( ttype.name )
             item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
             item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            item.setData( ttype.id, Qt.UserRole )
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
 
@@ -794,11 +794,6 @@ class IfsttarRouting:
         self.clear()
 
         # update UI
-        self.dlg.loadFromXML( loaded['select'][1] )
-        self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
-        self.results = Tempus.parse_results(loaded['select'][3])
-        self.displayResults( self.results )
-
         self.plugins.clear()
         plugins = Tempus.parse_plugins(loaded['server_state'][0])
         for plugin in plugins:
@@ -815,13 +810,18 @@ class IfsttarRouting:
         idx = self.dlg.ui.pluginCombo.findText( currentPlugin )
         self.dlg.ui.pluginCombo.setCurrentIndex( idx )
 
-        self.transport_modes = Tempus.parse_transport_modes( loaded['server_state'][2] )
+        self.transport_modes = Tempus.parse_transport_modes( loaded['server_state'][1] )
         self.transport_modes_dict = {}
         for t in self.transport_modes:
                 self.transport_modes_dict[t.id] = t
-        self.networks = Tempus.parse_transport_networks( loaded['server_state'][3] )
+        self.networks = Tempus.parse_transport_networks( loaded['server_state'][2] )
 
         self.displayTransportAndNetworks()
+
+        self.dlg.loadFromXML( loaded['select'][1] )
+        self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
+        self.results = Tempus.parse_results(loaded['select'][3])
+        self.displayResults( self.results )
 
         # enable tabs
         self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
