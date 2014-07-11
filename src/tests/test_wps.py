@@ -181,7 +181,7 @@ class TestWPS(unittest.TestCase):
                         plugin_options = { 'trace_vertex' : True },
                         origin = Point( ox, oy ),
                         steps = [ RequestStep(destination = Point(dx, dy)) ] )
-        self.assertEqual( len(tempus.results[0].steps), 12 )
+        self.assertEqual( len(tempus.results[0].steps), 5 )
 
         # run without options
         is_ex = False
@@ -209,17 +209,17 @@ class TestWPS(unittest.TestCase):
         tempus.request( plugin_name = 'sample_multi_plugin',
                         origin = Point( ox, oy ),
                         steps = [ RequestStep(destination = Point(dx, dy)) ] )
-        self.assertEqual( len(tempus.results[0].steps), 16 )
+        self.assertEqual( len(tempus.results[0].steps), 7 )
 
     def test_pt_plugin( self ):
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
         tempus.request( plugin_name = 'sample_pt_plugin',
-                        plugin_options = { 'origin_pt_stop' : 2442,
-                                           'destination_pt_stop' : 1551 },
+                        plugin_options = { 'origin_pt_stop' : 5890,
+                                           'destination_pt_stop' : 4733 },
                         origin = Point( vertex = 0 ),
                         steps = [ RequestStep(destination = Point( vertex = 0 )) ] )
-        self.assertEqual( len(tempus.results[0].steps), 5 )
+        self.assertEqual( len(tempus.results[0].steps), 1 )
 
 if __name__ == '__main__':
     unittest.main()

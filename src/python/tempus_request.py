@@ -319,6 +319,7 @@ def parse_results( results ):
                 network = child.attrib['network']
                 stop = child.attrib['stop']
                 type = int(child.attrib['type'])
+                transport_mode = int(child.attrib['transport_mode'])
                 for p in child:
                     if p.tag == 'cost':
                         costs[int(p.attrib['type'])] = float(p.attrib['value'])
