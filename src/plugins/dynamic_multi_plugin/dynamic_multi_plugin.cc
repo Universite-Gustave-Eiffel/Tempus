@@ -83,7 +83,7 @@ private:
     bool verbose_;
 };
 
-const DynamicMultiPlugin::OptionDescriptionList option_descriptions()
+const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
     Plugin::OptionDescriptionList odl; 
     odl.declare_option( "timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", 0);         
