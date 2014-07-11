@@ -64,7 +64,7 @@ public:
 public:
     virtual void pre_process( Request& request ) {
         REQUIRE( graph_.public_transports().size() >= 1 );
-        REQUIRE( request.steps().size() == 1 );
+        REQUIRE( request.steps().size() == 2 );
 
         if ( ( request.optimizing_criteria()[0] != CostDuration ) && ( request.optimizing_criteria()[0] != CostDistance ) ) {
             throw std::invalid_argument( "Unsupported optimizing criterion" );
