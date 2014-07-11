@@ -18,6 +18,7 @@
 #ifndef TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 #define TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 
+#include <boost/optional.hpp>
 #include "common.hh"
 #include "road_graph.hh"
 
@@ -91,14 +92,14 @@ public:
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    DECLARE_RW_PROPERTY( vertex, OrNull<Vertex> );
+    DECLARE_RW_PROPERTY( vertex, boost::optional<Vertex> );
 
     DECLARE_RW_PROPERTY( name, std::string );
     DECLARE_RW_PROPERTY( is_station, bool );
 
     ///
     /// link to a possible parent station, or null
-    DECLARE_RW_PROPERTY( parent_station, OrNull<Vertex> );
+    DECLARE_RW_PROPERTY( parent_station, boost::optional<Vertex> );
 
     /// link to a road edge
     DECLARE_RW_PROPERTY( road_edge, Road::Edge );
@@ -106,7 +107,7 @@ public:
     ///
     /// optional link to the opposite road edge
     /// Can be null
-    DECLARE_RW_PROPERTY( opposite_road_edge, OrNull<Road::Edge> );
+    DECLARE_RW_PROPERTY( opposite_road_edge, boost::optional<Road::Edge> );
 
     ///
     /// Number between 0 and 1 : position of the stop on the main road section
@@ -130,7 +131,7 @@ public:
     /// This is a shortcut to the edge index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's edge from a Section
     /// Can be null
-    DECLARE_RW_PROPERTY( edge, OrNull<Edge> );
+    DECLARE_RW_PROPERTY( edge, boost::optional<Edge> );
 
     /// must not be null
     DECLARE_RW_PROPERTY( network_id, db_id_t );
@@ -140,14 +141,14 @@ public:
 /// Convenience function - Get the departure stop of a public transport section
 inline Stop get_stop_from( const Section& s )
 {
-    return (*s.graph())[source( s.edge().value(), *s.graph() )];
+    return (*s.graph())[source( *s.edge(), *s.graph() )];
 }
 
 ///
 /// Convenience function - Get the arrival stop of a public transport section
 inline Stop get_stop_to( const Section& s )
 {
-    return (*s.graph())[target( s.edge().value(), *s.graph() )];
+    return (*s.graph())[target( *s.edge(), *s.graph() )];
 }
 
 

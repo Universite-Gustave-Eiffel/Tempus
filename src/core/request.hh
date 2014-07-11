@@ -18,6 +18,7 @@
 #ifndef TEMPUS_REQUEST_HH
 #define TEMPUS_REQUEST_HH
 
+#include <boost/optional.hpp>
 #include "common.hh"
 #include "road_graph.hh"
 
@@ -102,7 +103,7 @@ public:
 
     ///
     /// Private vehicule option: parking location
-    DECLARE_RW_PROPERTY( parking_location, OrNull<Road::Vertex> );
+    DECLARE_RW_PROPERTY( parking_location, boost::optional<Road::Vertex> );
 
     ///
     /// Criteria to optimize. The list is ordered by criterion priority.

@@ -18,6 +18,7 @@
 #ifndef TEMPUS_POI_HH
 #define TEMPUS_POI_HH
 
+#include <boost/optional.hpp>
 #include "common.hh"
 #include "abscissa.hh"
 #include "road_graph.hh"
@@ -53,7 +54,7 @@ struct POI : public Base {
 
     ///
     /// optional link to the opposite road edge
-    DECLARE_RW_PROPERTY( opposite_road_edge, OrNull<Road::Edge> );
+    DECLARE_RW_PROPERTY( opposite_road_edge, boost::optional<Road::Edge> );
 
     ///
     /// Number between 0 and 1 : position of the POI on the main road section

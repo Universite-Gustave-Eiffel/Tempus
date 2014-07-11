@@ -44,27 +44,6 @@ private:
     db_id_t db_id_;
 };
 
-
-///
-/// Class with a possible null value - FIXME replace by boost::optional ?
-template <class T>
-class OrNull
-{
-public:
-    OrNull() : is_null_(true) {}
-    OrNull( const T& v ) : is_null_(false), v_(v) {}
-    bool is_null() const { return is_null_; }
-    bool is_not_null() const { return ! is_null_; }
-    operator T() const { return v_; }
-    operator bool() const { return ! is_null(); }
-    T value() const { return v_; }
-    void reset() { is_null_ = true; }
-private:
-    bool is_null_;
-    T v_;
-};
-
-
 }
 
 #endif
