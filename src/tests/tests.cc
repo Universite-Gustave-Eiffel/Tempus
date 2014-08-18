@@ -436,7 +436,7 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
 
             // check that vertices are doubled
             size_t vv = num_vertices( *graph );
-            BOOST_CHECK_EQUAL( vv + n_pt_vertices, n_vertices );
+            BOOST_CHECK_EQUAL( vv, n_vertices + n_pt_vertices );
             std::cout << "vv " << vv << " vertices " << n_vertices << std::endl;
             
             // unselect the first network
