@@ -197,7 +197,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
                                                         "		FROM tempus.pt_calendar_date	"
                                                         "		WHERE calendar_date='%1%' AND exception_type=1"
                                                         "	)"
-                                                        ")") % s_.current_day ).str() ); 
+                                                        ")") % boost::gregorian::to_simple_string(s_.current_day) ).str() ); 
 				
             for ( size_t i = 0; i < res.size(); i++ ) {
                 PublicTransport::Vertex departure, arrival; 
@@ -239,7 +239,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
                                                         "		FROM tempus.pt_calendar_date	"
                                                         "		WHERE calendar_date='%1%' AND exception_type=1"
                                                         "	)"
-                                                        ")") % s_.current_day ).str() ); 
+                                                        ")") % boost::gregorian::to_simple_string(s_.current_day) ).str() ); 
 				
             for ( size_t i = 0; i < res.size(); i++ ) {
                 PublicTransport::Vertex departure, arrival; 
