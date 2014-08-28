@@ -1,4 +1,4 @@
-﻿-- Tempus - Multinet SQL import Wrapper
+-- Tempus - Multinet SQL import Wrapper
 
 -- TABLE road_node 
 INSERT INTO tempus.road_node

@@ -1,4 +1,4 @@
-﻿do $$
+do $$
 begin
 raise notice '==== Init ===';
 end$$;

@@ -1,4 +1,4 @@
-﻿-- Tempus - Navteq SQL import Wrapper
+-- Tempus - Navteq SQL import Wrapper
 
 -- Handle direction type
 CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, boolean)
