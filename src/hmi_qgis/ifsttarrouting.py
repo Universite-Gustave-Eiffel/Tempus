@@ -34,6 +34,8 @@ import config
 import binascii
 import os
 import math
+import random
+import colorsys
 from datetime import datetime
 
 # Import the PyQt and QGIS libraries
@@ -378,12 +380,26 @@ class IfsttarRouting:
 
         if NEW_API:
             vl.startEditing()
-            vl.addAttribute( QgsField( "transport_type", QVariant.Int ) )
+            vl.addAttribute( QgsField( "transport_mode", QVariant.Int ) )
         else:
-            pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
+            pr.addAttributes( [ QgsField( "transport_mode", QVariant.Int ) ] )
 
-        # set layer's style
-        vl.loadNamedStyle( config.DATA_DIR + "/style_roadmap.qml" )
+
+        root_rule = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'} ))
+
+        for mode_id, mode in self.transport_modes_dict.iteritems():
+                p = float(mode_id-1) / len(self.transport_modes_dict)
+                rgb = colorsys.hsv_to_rgb( p, 0.7, 0.9 )
+                color = '%d,%d,%d' % (rgb[0]*255, rgb[1]*255, rgb[2]*255)
+                rule = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : color}),
+                                                    0,
+                                                    0,
+                                                    "transport_mode=%d" % mode_id,
+                                                    mode.name)
+                root_rule.appendChild( rule )
+
+        renderer = QgsRuleBasedRendererV2( root_rule );
+        vl.setRendererV2( renderer )
 
         # browse steps
         for step in steps:
@@ -396,17 +412,11 @@ class IfsttarRouting:
             fet = QgsFeature()
             geo = QgsGeometry()
             geo.fromWkb( binascii.unhexlify(wkb) )
-            if isinstance(step, Tempus.RoadStep):
-                transport_type = 1
-            elif isinstance( step, Tempus.PublicTransportStep ):
-                transport_type = 2
-            else:
-                transport_type = 3
 
             if NEW_API:
-                fet.setAttributes( [ transport_type ] )
+                fet.setAttributes( [ step.mode ] )
             else:
-                fet.setAttributeMap( { 0: transport_type } )
+                fet.setAttributeMap( { 0: step.mode } )
             fet.setGeometry( geo )
             pr.addFeatures( [fet] )
 
