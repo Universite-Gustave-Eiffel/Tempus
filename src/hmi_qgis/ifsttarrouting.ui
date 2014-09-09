@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>543</width>
+    <width>494</width>
     <height>553</height>
    </rect>
   </property>
@@ -164,7 +164,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>503</width>
+             <width>454</width>
              <height>200</height>
             </rect>
            </property>
@@ -419,6 +419,32 @@
       </item>
       <item>
        <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/logo_cerema2.jpg</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_4">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
