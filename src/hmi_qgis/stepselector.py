@@ -170,6 +170,7 @@ class StepSelector( QFrame ):
         self.canvas.unsetMapTool( self.clickTool )
         self.set_coordinates( [p.x(), p.y()] )
         QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
+        self.canvas.refresh()
 
         if self.updateCallback:
             self.updateCallback( self.dock )
