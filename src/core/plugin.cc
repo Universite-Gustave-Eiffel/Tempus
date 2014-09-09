@@ -531,11 +531,16 @@ Result& Plugin::result()
                 step->set_departure_time( pt_first->departure_time() );
                 step->set_wait( pt_first->wait() );
 
+                // set costs from the accumulator
+                for ( Costs::const_iterator cit = accum_costs.begin(); cit != accum_costs.end(); ++cit ) {
+                    step->set_cost( static_cast<CostId>(cit->first), cit->second );
+                }
+                accum_costs.clear();
+
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
 
                 accum_pt.clear();
                 pt_first = 0;
-                accum_costs.clear();
             }
             else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 
@@ -637,6 +642,12 @@ Result& Plugin::result()
 
                 was_on_roundabout = on_roundabout;
 
+                // set costs from the accumulator
+                for ( Costs::const_iterator cit = accum_costs.begin(); cit != accum_costs.end(); ++cit ) {
+                    step->set_cost( static_cast<CostId>(cit->first), cit->second );
+                }
+                accum_costs.clear();
+
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
 
                 if ( next != roadmap.end() && next->step_type() != Roadmap::Step::RoadStep ) {
@@ -651,9 +662,8 @@ Result& Plugin::result()
                 }
 
                 accum_road.clear();
-                accum_costs.clear();
-			}
-			if (next != roadmap.end()) next++;
+            }
+            if (next != roadmap.end()) next++;
         }
 #if 1
         if ( last_step ) {

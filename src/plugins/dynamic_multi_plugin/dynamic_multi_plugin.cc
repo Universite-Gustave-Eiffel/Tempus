@@ -413,7 +413,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path )
                     break;
                 }
             }
-            step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] - step->wait() );
+            step->set_cost( CostDuration, step->arrival_time() - step->departure_time() );
         }
         else {
             // Make a multimodal edge and copy it into the roadmap as a 'generic' step
