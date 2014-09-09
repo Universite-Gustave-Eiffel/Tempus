@@ -467,6 +467,7 @@ class IfsttarRouting:
         self.profile.clear()
 
         first = True
+        leaving_time = None
 
         for step in roadmap:
             if first:
@@ -512,14 +513,16 @@ class IfsttarRouting:
                 text += "At %s<br/>\n" % min2hm(step.departure_time+step.wait_time)
                 pt_name = self.transport_modes_dict[step.mode].name
                 text += "Take the %s %s from '%s' to '%s'" % (pt_name, step.route, step.departure, step.arrival)
-                text += "<br/>Leave at %s" % min2hm(step.arrival_time)
+                leaving_time = step.arrival_time
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network
                 if step.type == Tempus.ConnectionType.Road2Transport:
                     text += "Go to the '%s' station from %s" % (step.stop, step.road)
                 elif step.type == Tempus.ConnectionType.Transport2Road:
-                    text += "Leave the '%s' station to %s" % (step.stop, step.road)
+                        if leaving_time is not None:
+                                text += "At %s<br/>\n" % min2hm(leaving_time)
+                        text += "Leave the '%s' station to %s" % (step.stop, step.road)
                 else:
                     text += "Connection between '%s' and '%s'" % (step.stop, step.road)
 
