@@ -649,7 +649,10 @@ class IfsttarRouting:
         for ttype in self.transport_modes:
             item = QStandardItem( ttype.name )
             item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            if ttype.id != 1:
+                    item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            else:
+                    item.setData( Qt.Checked, Qt.CheckStateRole )
             item.setData( ttype.id, Qt.UserRole )
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
@@ -712,6 +715,9 @@ class IfsttarRouting:
         pvads = self.dlg.get_pvads()
         #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
         transports = [ self.transport_modes[x].id for x in self.dlg.selected_transports() ]
+        if transports == []:
+                QMessageBox.warning( self.dlg, "Warning", "No transport mode is selected, defaulting to pedestrian walk")
+                transports = [ 1 ]
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
