@@ -162,9 +162,11 @@ endif()
 if (WIN32)
   set(TEMPUS_INSTALL_DATA_DIRECTORY .)
   set(TEMPUS_INSTALL_DOC_DIRECTORY doc)
+  set( PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/bin" )
 else()
   set(TEMPUS_INSTALL_DATA_DIRECTORY "share/${CMAKE_PROJECT_NAME}")
   set(TEMPUS_INSTALL_DOC_DIRECTORY "share/doc/${CMAKE_PROJECT_NAME}")
+  set( PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
 endif()
 install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
@@ -174,6 +176,18 @@ set( BUILD_DOC ON CACHE BOOL "Build documentation ?" )
 
 if(BUILD_DOC)
   add_subdirectory( doc )
+endif()
+
+if (WIN32)
+#  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh )
+#  install(FILES script/startTempus.sh ${CMAKE_INSTALL_PREFIX}/bin)
+else()
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh )
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    )
 endif()
 
 

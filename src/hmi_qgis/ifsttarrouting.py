@@ -36,6 +36,9 @@ import os
 import math
 import random
 import colorsys
+import subprocess
+import time
+import signal
 from datetime import datetime
 
 # Import the PyQt and QGIS libraries
@@ -176,6 +179,8 @@ class IfsttarRouting:
 
         self.setStateText("DISCONNECTED")
 
+        self.server = None
+
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(QIcon(":/plugins/ifsttarrouting/icon.png"), \
@@ -184,6 +189,12 @@ class IfsttarRouting:
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
 
         QObject.connect(self.dlg.ui.connectBtn, SIGNAL("clicked()"), self.onConnect)
+        self.dlg.ui.tempusBinPathBrowse.clicked.connect( self.onBinPathBrowse )
+        self.dlg.ui.addPluginToLoadBtn.clicked.connect( self.onAddPluginToLoad )
+        self.dlg.ui.removePluginToLoadBtn.clicked.connect( self.onRemovePluginToLoad )
+        self.dlg.ui.startServerBtn.clicked.connect( self.onStartServer )
+        self.dlg.ui.stopServerBtn.clicked.connect( self.onStopServer )
+
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
 
@@ -216,6 +227,15 @@ class IfsttarRouting:
         # init the history
         self.loadHistory()
 
+        # init server configuration from settings
+        s = QSettings()
+        self.dlg.ui.tempusBinPathEdit.setText( s.value("IfsttarTempus/startTempus", "/usr/local/bin/startTempus.sh" ) )
+        plugins = s.value("IfsttarTempus/plugins", ["sample_road_plugin", "sample_multi_plugin"] )
+        for p in plugins:
+            item = QListWidgetItem( p )
+            item.setFlags( item.flags() | Qt.ItemIsEditable )
+            self.dlg.ui.pluginsToLoadList.insertItem(0, item )
+
         self.clear()
 
     # reset widgets contents and visibility
@@ -233,6 +253,43 @@ class IfsttarRouting:
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
+
+    def onBinPathBrowse( self ):
+        d = QFileDialog.getOpenFileName( self.dlg, "Tempus wps executable path" )
+        if d is not None:
+            self.dlg.ui.tempusBinPathEdit.setText( d )
+
+    def onAddPluginToLoad( self ):
+        item = QListWidgetItem("new_plugin")
+        item.setFlags( item.flags() | Qt.ItemIsEditable)
+        self.dlg.ui.pluginsToLoadList.insertItem(0,item)
+
+    def onRemovePluginToLoad( self ):
+        r = self.dlg.ui.pluginsToLoadList.currentRow()
+        if r != -1:
+            self.dlg.ui.pluginsToLoadList.takeItem( r )
+
+    def onStartServer( self ):
+        self.onStopServer()
+        executable = self.dlg.ui.tempusBinPathEdit.text()
+        plugins = []
+        for i in range(self.dlg.ui.pluginsToLoadList.count()):
+            plugins.append( self.dlg.ui.pluginsToLoadList.item(i).text() )
+        cmdLine = [executable] + plugins
+
+        # os.setid: run subprocess in a process group
+        # so that we can kill it afterward
+        self.server = subprocess.Popen(cmdLine, preexec_fn=os.setsid)
+
+        # save parameters
+        s = QSettings()
+        s.setValue("IfsttarTempus/startTempus", self.dlg.ui.tempusBinPathEdit.text() )
+        s.setValue("IfsttarTempus/plugins", plugins )
+
+    def onStopServer( self ):
+        if self.server is not None:
+            os.killpg(self.server.pid, signal.SIGTERM)
+            self.server = None
 
     # when the 'connect' button gets clicked
     def onConnect( self ):
