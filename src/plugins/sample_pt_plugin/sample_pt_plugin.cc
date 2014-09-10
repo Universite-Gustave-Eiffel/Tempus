@@ -55,6 +55,13 @@ public:
         return odl;
     }
 
+    static const PluginParameters plugin_parameters() {
+        PluginParameters params;
+        params.supported_optimization_criteria.push_back( CostDistance );
+        params.supported_optimization_criteria.push_back( CostDuration );
+        return params;
+    }
+
     PtPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
     }
 

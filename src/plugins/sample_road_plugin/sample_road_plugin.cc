@@ -56,6 +56,12 @@ public:
         return odl;
     }
 
+    static const PluginParameters plugin_parameters() {
+        PluginParameters params;
+        params.supported_optimization_criteria.push_back( CostDistance );
+        return params;
+    }
+
     RoadPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
     }
 

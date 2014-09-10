@@ -70,8 +70,8 @@ public:
                            "name",
                            names[i] );
 
-            Plugin::OptionDescriptionList options = PluginFactory::instance()->option_descriptions( names[i] );
-            Plugin::OptionDescriptionList::iterator it;
+            const Plugin::OptionDescriptionList& options = PluginFactory::instance()->option_descriptions( names[i] );
+            Plugin::OptionDescriptionList::const_iterator it;
 
             for ( it = options.begin(); it != options.end(); it++ ) {
                 xmlNode* option_node = XML::new_node( "option" );
@@ -102,6 +102,16 @@ public:
                 XML::add_child( option_node, default_value_node );
 
                 XML::add_child( node, option_node );
+            }
+
+            const Plugin::PluginParameters& params = PluginFactory::instance()->plugin_parameters( names[i] );
+            for ( std::vector<CostId>::const_iterator cit = params.supported_optimization_criteria.begin();
+                  cit != params.supported_optimization_criteria.end();
+                  cit ++ ) {
+                xmlNode* param_node = XML::new_node( "supported_criterion" );
+                XML::add_child( param_node, XML::new_text( boost::lexical_cast<std::string>(static_cast<int>(*cit)) ) );
+
+                XML::add_child( node, param_node );
             }
 
             XML::add_child( root_node, node );

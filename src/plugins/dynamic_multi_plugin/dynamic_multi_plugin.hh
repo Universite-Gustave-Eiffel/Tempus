@@ -67,6 +67,7 @@ class DynamicMultiPlugin : public Plugin {
 public:
 
     static const OptionDescriptionList option_descriptions();
+    static const PluginParameters plugin_parameters();
 
     DynamicMultiPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
     }

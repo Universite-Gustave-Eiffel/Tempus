@@ -99,6 +99,13 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
     return odl;
 }
 
+const DynamicMultiPlugin::PluginParameters DynamicMultiPlugin::plugin_parameters()
+{
+    Plugin::PluginParameters params; 
+    params.supported_optimization_criteria.push_back( CostDuration );
+    return params;
+}
+
 void DynamicMultiPlugin::post_build()
 {
     const Road::Graph& road_graph = Application::instance()->graph()->road();
