@@ -190,9 +190,10 @@ class PluginOption:
 
 # options : option_name => PluginOption
 class Plugin:
-    def __init__( self, name = '', options = {} ):
+    def __init__( self, name = '', options = {}, supported_criteria = [] ):
         self.name = name
         self.options = options
+        self.supported_criteria = supported_criteria
 
 class TransportMode:
     def __init__( self, id = 0, name = '', need_parking = False, is_shared = False, must_be_returned = False, traffic_rules = 0, speed_rule = 0, toll_rules = 0, engine_type = 0 ):
@@ -233,12 +234,16 @@ def parse_plugins( output ):
     for plugin in output:
         name = plugin.attrib['name']
         options = {}
+        supported_criteria = []
         for option in plugin:
-            optval = parse_option_value( option[0][0] )
-            options[option.attrib['name']] = PluginOption( name = option.attrib['name'],
-                                                           description = option.attrib['description'],
-                                                           default_value = optval )
-        plugins.append( Plugin( name = name, options = options ) )
+            if option.tag == 'option':
+                optval = parse_option_value( option[0][0] )
+                options[option.attrib['name']] = PluginOption( name = option.attrib['name'],
+                                                               description = option.attrib['description'],
+                                                               default_value = optval )
+            if option.tag == 'supported_criterion':
+                supported_criteria.append( int(option.text) )
+        plugins.append( Plugin( name = name, options = options, supported_criteria = supported_criteria ) )
     return plugins
 
 def parse_transport_modes( output ):

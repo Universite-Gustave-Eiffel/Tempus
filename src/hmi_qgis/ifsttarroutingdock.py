@@ -264,6 +264,12 @@ class IfsttarRoutingDock(QDockWidget):
             self.ui.criterionBox.itemAt(i).widget().set_selection( selected )
             i += 1
 
+    def set_supported_criteria( self, criteria ):
+        c = self.ui.criterionBox.count()
+        for i in range(c):
+            self.ui.criterionBox.itemAt(i).widget().set_supported_criteria( criteria )
+
+
     # get coordinates of all steps
     def get_coordinates( self ):
         coords = [ self.ui.origin.get_coordinates() ]

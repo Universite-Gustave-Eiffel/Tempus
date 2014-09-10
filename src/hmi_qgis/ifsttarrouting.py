@@ -653,6 +653,9 @@ class IfsttarRouting:
             
             row += 1
 
+            self.dlg.set_supported_criteria( self.plugins[plugin_name].supported_criteria )
+
+
     #
     # Take an XML trees from 'constant_list'
     # load them and display them
