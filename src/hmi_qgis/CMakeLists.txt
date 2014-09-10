@@ -19,7 +19,6 @@ SET(INSTALLER_FILES ${INSTALLER_FILES}
   ${CMAKE_CURRENT_SOURCE_DIR}/../python/history_file.py
   style_pinpoints.qml
   style_parking.qml
-  style_roadmap.qml
   ${IMAGES_FILES}
   ${CMAKE_CURRENT_BINARY_DIR}/config.py )
 
