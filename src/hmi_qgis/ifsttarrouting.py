@@ -230,6 +230,7 @@ class IfsttarRouting:
         # init server configuration from settings
         s = QSettings()
         self.dlg.ui.tempusBinPathEdit.setText( s.value("IfsttarTempus/startTempus", "/usr/local/bin/startTempus.sh" ) )
+        self.dlg.ui.dbOptionsEdit.setText( s.value("IfsttarTempus/dbOptions", "dbname=tempus_test_db" ) )
         plugins = s.value("IfsttarTempus/plugins", ["sample_road_plugin", "sample_multi_plugin"] )
         for p in plugins:
             item = QListWidgetItem( p )
@@ -272,10 +273,16 @@ class IfsttarRouting:
     def onStartServer( self ):
         self.onStopServer()
         executable = self.dlg.ui.tempusBinPathEdit.text()
+        dbOptions = self.dlg.ui.dbOptionsEdit.text()
         plugins = []
         for i in range(self.dlg.ui.pluginsToLoadList.count()):
             plugins.append( self.dlg.ui.pluginsToLoadList.item(i).text() )
-        cmdLine = [executable] + plugins
+        cmdLine = [executable]
+        for p in plugins:
+            cmdLine += ['-l', p]
+        if dbOptions != '':
+            cmdLine += ['-d', dbOptions ]
+        print cmdLine
 
         # os.setid: run subprocess in a process group
         # so that we can kill it afterward
@@ -284,6 +291,7 @@ class IfsttarRouting:
         # save parameters
         s = QSettings()
         s.setValue("IfsttarTempus/startTempus", self.dlg.ui.tempusBinPathEdit.text() )
+        s.setValue("IfsttarTempus/dbOptions", self.dlg.ui.dbOptionsEdit.text() )
         s.setValue("IfsttarTempus/plugins", plugins )
 
     def onStopServer( self ):
