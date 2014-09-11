@@ -179,8 +179,11 @@ if(BUILD_DOC)
 endif()
 
 if (WIN32)
-#  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh )
-#  install(FILES script/startTempus.sh ${CMAKE_INSTALL_PREFIX}/bin)
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat )
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
 else()
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh )
   install(
