@@ -33,6 +33,7 @@ from wps_client import *
 import config
 import binascii
 import os
+import sys
 import math
 import random
 import colorsys
@@ -282,11 +283,15 @@ class IfsttarRouting:
             cmdLine += ['-l', p]
         if dbOptions != '':
             cmdLine += ['-d', dbOptions ]
-        print cmdLine
 
-        # os.setid: run subprocess in a process group
-        # so that we can kill it afterward
-        self.server = subprocess.Popen(cmdLine, preexec_fn=os.setsid)
+        opts = {}
+        if sys.platform == 'win32':
+                opts['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+                # os.setid: run subprocess in a process group
+                # so that we can kill it afterward
+                opts['preexec_fn'] = os.setsid
+        self.server = subprocess.Popen(cmdLine, **opts)
 
         # save parameters
         s = QSettings()
@@ -296,7 +301,10 @@ class IfsttarRouting:
 
     def onStopServer( self ):
         if self.server is not None:
-            os.killpg(self.server.pid, signal.SIGTERM)
+            if sys.platform == 'win32':
+                 self.server.terminate()
+            else:
+                 os.killpg(self.server.pid, signal.SIGTERM)
             self.server = None
 
     # when the 'connect' button gets clicked
