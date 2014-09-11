@@ -50,6 +50,7 @@ enum TransportModeTrafficRule
     TrafficRuleTaxi            = 1 << 3,
     TrafficRuleCarPool         = 1 << 4,
     TrafficRuleTruck           = 1 << 5,
+    TrafficRuleCoach           = 1 << 6,
     /// Special traffic rule for public transport
     TrafficRulePublicTransport = 1 << 16
 };
