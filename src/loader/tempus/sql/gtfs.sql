@@ -190,7 +190,7 @@ alter table tempus.pt_stop add CONSTRAINT pt_stop_pkey PRIMARY KEY (id);
 alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
 	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 alter table tempus.pt_stop add CONSTRAINT pt_stop_road_section_id_fkey FOREIGN KEY (road_section_id)
-      REFERENCES tempus.road_section (id);
+      REFERENCES tempus.road_section (id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 /* ==== /stops ==== */
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>569</width>
-    <height>553</height>
+    <width>874</width>
+    <height>847</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -130,13 +130,20 @@
             <widget class="QLineEdit" name="dbOptionsEdit"/>
            </item>
            <item row="2" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>Schema</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
             <widget class="QLabel" name="label_8">
              <property name="text">
               <string>Plugins to load</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
+           <item row="3" column="1">
             <layout class="QHBoxLayout" name="horizontalLayout_12">
              <item>
               <widget class="QListWidget" name="pluginsToLoadList"/>
@@ -173,7 +180,7 @@
              </item>
             </layout>
            </item>
-           <item row="3" column="1">
+           <item row="4" column="1">
             <layout class="QHBoxLayout" name="horizontalLayout_8">
              <item>
               <widget class="QPushButton" name="startServerBtn">
@@ -190,6 +197,9 @@
               </widget>
              </item>
             </layout>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="schemaNameEdit"/>
            </item>
           </layout>
          </widget>
@@ -580,6 +590,7 @@
  </widget>
  <resources>
   <include location="resources.qrc"/>
+  <include location="../../../../../../.designer/backup/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

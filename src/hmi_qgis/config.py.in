@@ -1,4 +1,10 @@
 import os
+# Path where binaries are located (used below)
+BINPATH=""
+
+# PostgreSQL's console client binary location
+PSQL=BINPATH + ""
+
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPUS_DATA_DIR = "${CMAKE_INSTALL_PREFIX}/${TEMPUS_INSTALL_DATA_DIRECTORY}/data"
 if not os.path.exists( TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" ):
@@ -8,3 +14,24 @@ if not os.path.exists( TEMPUS_DATA_DIR + "/wps_schemas/record.xsd" ):
       raise RuntimeError( "Can't find the Tempus data directory in %s" % os.environ["TEMPUS_DATA_DIRECTORY"])
    TEMPUS_DATA_DIR = os.environ["TEMPUS_DATA_DIRECTORY"]
 
+def is_exe(fpath):
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+def which(program):
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+if not is_exe(PSQL):
+    PSQL = which("psql")
+
+if PSQL is None:
+    raise OSError("Could not find psql.")
