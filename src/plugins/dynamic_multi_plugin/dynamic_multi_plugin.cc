@@ -111,7 +111,7 @@ void DynamicMultiPlugin::post_build()
     const Road::Graph& road_graph = Application::instance()->graph()->road();
 		
     PQImporter psql( Application::instance()->db_options() ); 
-    Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph );
+    Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph, Application::instance()->schema_name() );
     std::cout << "Turn restrictions imported" << std::endl;
 		
     s_.automaton.build_graph( restrictions ) ;

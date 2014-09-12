@@ -37,7 +37,7 @@ Db::Result PQImporter::query( const std::string& query_str )
     return connection_.exec( query_str );
 }
 
-void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression )
+void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression, const std::string& /*schema_name*/ )
 {
     Multimodal::Graph::TransportModes modes;
     {
@@ -71,7 +71,7 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
 
 ///
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
-std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check )
+std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
 {
     Road::Graph* road_graph = new Road::Graph();
     std::auto_ptr<Road::Graph> sm_road_graph( road_graph );
@@ -81,17 +81,17 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
         // check road section consistency
         {
             // look for sections where 'from' or 'to' road ids do not exist
-            const std::string q = "SELECT COUNT(*) "
-                "FROM "
-                "tempus.road_section AS rs "
-                "LEFT JOIN tempus.road_node AS rn1 "
-                "ON rs.node_from = rn1.id "
-                "LEFT JOIN tempus.road_node AS rn2 "
-                "ON rs.node_to = rn2.id "
-                "WHERE "
-                "rn1.id IS NULL "
-                "OR "
-                "rn2.id IS NULL";
+            const std::string q = (boost::format("SELECT COUNT(*) "
+                                                 "FROM "
+                                                 "%1%.road_section AS rs "
+                                                 "LEFT JOIN %1%.road_node AS rn1 "
+                                                 "ON rs.node_from = rn1.id "
+                                                 "LEFT JOIN %1%.road_node AS rn2 "
+                                                 "ON rs.node_to = rn2.id "
+                                                 "WHERE "
+                                                 "rn1.id IS NULL "
+                                                 "OR "
+                                                 "rn2.id IS NULL") % schema_name ).str();
 
             Db::Result res( connection_.exec( q ) );
             size_t count = 0;
@@ -102,7 +102,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
         }
         {
             // look for cycles
-            const std::string q = "SELECT count(*) FROM tempus.road_section WHERE node_from = node_to";
+            const std::string q = (boost::format("SELECT count(*) FROM %1%.road_section WHERE node_from = node_to") % schema_name).str();
             Db::Result res( connection_.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
@@ -114,27 +114,27 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
         {
             // look for duplicated road sections that do not serve as
             // attachment for any PT stop or POI
-            const std::string q = "SELECT COUNT(rs.id) FROM "
-                "( "
-                "SELECT "
-                "	rs1.id "
-                "FROM "
-                "	tempus.road_section as rs1, "
-                "	tempus.road_section as rs2 "
-                "WHERE "
-                "	rs1.node_from = rs2.node_from "
-                "AND "
-                "	rs1.node_to = rs2.node_to "
-                "AND rs1.id != rs2.id "
-                ") AS rs "
-                "LEFT JOIN tempus.pt_stop AS pt "
-                "ON rs.id = pt.road_section_id "
-                "LEFT JOIN tempus.poi AS poi "
-                "ON rs.id = poi.road_section_id "
-                "WHERE "
-                "pt.id IS NULL "
-                "and "
-                "poi.id IS NULL";
+            const std::string q = (boost::format("SELECT COUNT(rs.id) FROM "
+                                                 "( "
+                                                 "SELECT "
+                                                 "	rs1.id "
+                                                 "FROM "
+                                                 "	%1%.road_section as rs1, "
+                                                 "	%1%.road_section as rs2 "
+                                                 "WHERE "
+                                                 "	rs1.node_from = rs2.node_from "
+                                                 "AND "
+                                                 "	rs1.node_to = rs2.node_to "
+                                                 "AND rs1.id != rs2.id "
+                                                 ") AS rs "
+                                                 "LEFT JOIN %1%.pt_stop AS pt "
+                                                 "ON rs.id = pt.road_section_id "
+                                                 "LEFT JOIN %1%.poi AS poi "
+                                                 "ON rs.id = poi.road_section_id "
+                                                 "WHERE "
+                                                 "pt.id IS NULL "
+                                                 "and "
+                                                 "poi.id IS NULL") % schema_name).str();
 
             Db::Result res( connection_.exec( q ) );
             size_t count = 0;
@@ -146,26 +146,26 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
         {
             // look for PT stops that are not referenced by any PT sections, or stop times
-            const std::string q = "SELECT COUNT(*) FROM tempus.pt_stop AS p "
-                "left join"
-                "    tempus.pt_section as s1 "
-                "on"
-                "    p.id = s1.stop_from "
-                "left join"
-                "    tempus.pt_section as s2 "
-                "on"
-                "    p.id = s2.stop_to "
-                "left join"
-                "    tempus.pt_stop_time "
-                "on p.id = stop_id "
-                "left join"
-                "    tempus.pt_stop as pp "
-                "on p.id = pp.parent_station "
-                "where"
-                "    s1.stop_from is null "
-                "and s2.stop_to is null "
-                "and stop_id is null "
-                "and pp.parent_station is null";
+            const std::string q = (boost::format("SELECT COUNT(*) FROM %1%.pt_stop AS p "
+                                                 "left join"
+                                                 "    %1%.pt_section as s1 "
+                                                 "on"
+                                                 "    p.id = s1.stop_from "
+                                                 "left join"
+                                                 "    %1%.pt_section as s2 "
+                                                 "on"
+                                                 "    p.id = s2.stop_to "
+                                                 "left join"
+                                                 "    %1%.pt_stop_time "
+                                                 "on p.id = stop_id "
+                                                 "left join"
+                                                 "    %1%.pt_stop as pp "
+                                                 "on p.id = pp.parent_station "
+                                                 "where"
+                                                 "    s1.stop_from is null "
+                                                 "and s2.stop_to is null "
+                                                 "and stop_id is null "
+                                                 "and pp.parent_station is null" ) % schema_name ).str();
             Db::Result res( connection_.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
@@ -185,7 +185,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //   Road nodes
     //------------------
     {
-        Db::Result res( connection_.exec( "SELECT id, bifurcation FROM tempus.road_node" ) );
+        Db::Result res( connection_.exec( (boost::format("SELECT id, bifurcation FROM %1%.road_node") % schema_name).str() ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             Road::Node node;
@@ -209,16 +209,16 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     {
         //
         // Get a road section and its opposite, if present
-        const std::string qquery = "SELECT "
-            "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
-            "rs1.traffic_rules_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
-            "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, rs1.road_name, "
-            "rs2.id, rs2.road_type, "
-            "rs2.traffic_rules_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
-            "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
-            "FROM tempus.road_section AS rs1 "
-            "LEFT JOIN tempus.road_section AS rs2 "
-            "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from ";
+        const std::string qquery = (boost::format("SELECT "
+                                                  "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
+                                                  "rs1.traffic_rules_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
+                                                  "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, rs1.road_name, "
+                                                  "rs2.id, rs2.road_type, "
+                                                  "rs2.traffic_rules_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
+                                                  "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
+                                                  "FROM %1%.road_section AS rs1 "
+                                                  "LEFT JOIN %1%.road_section AS rs2 "
+                                                  "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from ") % schema_name).str();
         Db::Result res( connection_.exec( qquery ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
@@ -339,11 +339,11 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     {
 
-        Db::Result res( connection_.exec( "select distinct on (n.id) "
-                                          "s.network_id, n.id, n.name, n.location_type, "
-                                          "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
-                                          "from tempus.pt_stop as n, tempus.pt_section as s "
-                                          "where s.stop_from = n.id or s.stop_to = n.id" ) );
+        Db::Result res( connection_.exec( (boost::format("select distinct on (n.id) "
+                                                         "s.network_id, n.id, n.name, n.location_type, "
+                                                         "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
+                                                         "from %1%.pt_stop as n, %1%.pt_section as s "
+                                                         "where s.stop_from = n.id or s.stop_to = n.id") % schema_name).str() ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
 
@@ -420,7 +420,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     }
 
     {
-        Db::Result res( connection_.exec( "SELECT network_id, stop_from, stop_to FROM tempus.pt_section" ) );
+        Db::Result res( connection_.exec( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section") % schema_name).str() ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             Tempus::db_id_t network_id;
@@ -464,7 +464,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //-------------
     boost::ptr_map<db_id_t, POI> pois;
     {
-        Db::Result res( connection_.exec( "SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section FROM tempus.poi" ) );
+        Db::Result res( connection_.exec( (boost::format("SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section FROM %1%.poi") % schema_name).str() ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             POI poi;
@@ -524,7 +524,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     return graph;
 }
 
-Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& graph )
+Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& graph, const std::string& schema_name )
 {
     Road::Restrictions restrictions( graph );
 
@@ -533,7 +533,7 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     EdgesMap edges_map;
 
     {
-        Db::Result res( connection_.exec( "SELECT id, sections FROM tempus.road_restriction" ) );
+        Db::Result res( connection_.exec( (boost::format("SELECT id, sections FROM %1%.road_restriction") % schema_name).str() ) );
 
         std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
         Road::EdgeIterator it, it_end;
@@ -574,7 +574,7 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
 
     // get restriction costs
     {
-        Db::Result res( connection_.exec( "SELECT restriction_id, traffic_rules, time_value FROM tempus.road_restriction_time_penalty" ) );
+        Db::Result res( connection_.exec( (boost::format("SELECT restriction_id, traffic_rules, time_value FROM %1%.road_restriction_time_penalty") % schema_name).str() ) );
         std::map<db_id_t, Road::Restriction::CostPerTransport> costs;
         for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t restr_id;
