@@ -39,15 +39,15 @@ public:
 
     ///
     /// Import the multimodal graph
-    std::auto_ptr<Multimodal::Graph> import_graph( ProgressionCallback& callback = null_progression_callback, bool consistency_check = true );
+    std::auto_ptr<Multimodal::Graph> import_graph( ProgressionCallback& callback = null_progression_callback, bool consistency_check = true, const std::string& schema_name = "tempus" );
 
     ///
     /// Import constants transport modes
-    void import_constants( Multimodal::Graph&, ProgressionCallback& callback = null_progression_callback );
+    void import_constants( Multimodal::Graph&, ProgressionCallback& callback = null_progression_callback, const std::string& schema_name = "tempus" );
 
     ///
     /// Import turn restrictions
-    Road::Restrictions import_turn_restrictions( const Road::Graph& graph );
+    Road::Restrictions import_turn_restrictions( const Road::Graph& graph, const std::string& schema_name = "tempus" );
 
     ///
     /// Access to underlying connection object

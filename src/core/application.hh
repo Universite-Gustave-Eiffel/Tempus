@@ -80,7 +80,11 @@ public:
 
     ///
     /// Build the graph in memory (import from the database and wake up plugins)
-    void build_graph( bool consistency_check = false );
+    void build_graph( bool consistency_check = false, const std::string& schema_name = "tempus" );
+
+    ///
+    /// Get the current schema used
+    std::string schema_name() const;
 
     ///
     /// Graph accessor (non const)
@@ -97,6 +101,7 @@ protected:
     {}
 
     std::string db_options_;
+    std::string schema_name_;
     std::auto_ptr<Multimodal::Graph> graph_;
 
     State state_;
