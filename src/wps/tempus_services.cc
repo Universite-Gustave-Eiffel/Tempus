@@ -183,10 +183,10 @@ Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, d
     //
     // Call to the stored procedure
     //
-    std::string q = ( boost::format( "SELECT tempus.road_node_id_from_coordinates(%1%, %2%)" ) % x % y ).str();
+    std::string q = ( boost::format( "SELECT tempus.road_node_id_from_coordinates(%.3f, %.3f)" ) % x % y ).str();
     Db::Result res = db.exec( q );
 
-    if ( res.size() == 0 ) {
+    if ( (res.size() == 0) || (res[0][0].is_null()) ) {
         return 0;
     }
 
@@ -250,7 +250,7 @@ public:
             id = road_vertex_id_from_coordinates( db, x, y );
 
             if ( id == 0 ) {
-                throw std::invalid_argument( ( boost::format( "Cannot find vertex id from %1%, %2%" ) % x % y ).str() );
+                throw std::invalid_argument( ( boost::format( "Cannot find vertex id for %.3f, %.3f" ) % x % y ).str() );
             }
         }
 
