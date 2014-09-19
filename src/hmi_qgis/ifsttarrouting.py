@@ -37,7 +37,6 @@ import sys
 import math
 import random
 import colorsys
-import subprocess
 import time
 import signal
 from datetime import datetime
@@ -69,6 +68,7 @@ from result_selection import ResultSelection
 from altitude_profile import AltitudeProfile
 from wkb import WKB
 import tempus_request as Tempus
+from consolelauncher import ConsoleLauncher
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
@@ -284,14 +284,8 @@ class IfsttarRouting:
         if dbOptions != '':
             cmdLine += ['-d', dbOptions ]
 
-        opts = {}
-        if sys.platform == 'win32':
-                opts['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
-        else:
-                # os.setid: run subprocess in a process group
-                # so that we can kill it afterward
-                opts['preexec_fn'] = os.setsid
-        self.server = subprocess.Popen(cmdLine, **opts)
+        self.server = ConsoleLauncher( cmdLine )
+        self.server.launch()
 
         # save parameters
         s = QSettings()
@@ -301,11 +295,7 @@ class IfsttarRouting:
 
     def onStopServer( self ):
         if self.server is not None:
-            if sys.platform == 'win32':
-                 self.server.terminate()
-            else:
-                 os.killpg(self.server.pid, signal.SIGTERM)
-            self.server = None
+            self.server.stop()
 
     # when the 'connect' button gets clicked
     def onConnect( self ):
