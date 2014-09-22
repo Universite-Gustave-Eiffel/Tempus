@@ -40,10 +40,14 @@ COMMENT ON COLUMN tempus.transport_mode.shared_vehicle IS 'If vehicule is shared
 COMMENT ON COLUMN tempus.transport_mode.return_shared_vehicle IS 'If vehicule is shared and needs to be returned to its initial station at the end of a loop, NULL for PT modes'; 
 -- TODO Add a CHECK on parent_id related to id bitfield values
 
-INSERT INTO tempus.transport_mode VALUES (1, 'Walking',         'f', NULL, 1,  1, NULL, NULL, 'f', 'f', 'f'); 
-INSERT INTO tempus.transport_mode VALUES (2, 'Private bicycle', 'f', NULL, 2,  2, NULL, NULL, 't', 'f', 'f'); 
-INSERT INTO tempus.transport_mode VALUES (3, 'Private car',     'f', NULL, 4,  5, 1,    1,    't', 'f', 'f'); 
-INSERT INTO tempus.transport_mode VALUES (4, 'Taxi',            'f', NULL, 12, 5, 1,    1,    'f', 'f', 'f'); 
+INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle) 
+	VALUES ('Walking',         'f', NULL, 1,  1, NULL, NULL, 'f', 'f', 'f'); 
+INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle) 
+	VALUES ('Private bicycle', 'f', NULL, 2,  2, NULL, NULL, 't', 'f', 'f'); 
+INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle) 
+	VALUES ('Private car',     'f', NULL, 4,  5, 1,    1,    't', 'f', 'f'); 
+INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle) 
+	VALUES ('Taxi',            'f', NULL, 12, 5, 1,    1,    'f', 'f', 'f'); 
 
 CREATE TABLE tempus.road_validity_period
 (
@@ -175,7 +179,7 @@ CREATE TABLE tempus.road_section_speed
 (
     road_section_id bigint NOT NULL REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE, 
     period_id integer NOT NULL REFERENCES tempus.road_validity_period ON DELETE CASCADE ON UPDATE CASCADE, 
-    speed_rule integer NOT NULL REFERENCES tempus.transport_mode_speed_rule ON DELETE CASCADE ON UPDATE CASCADE, 
+    speed_rule integer NOT NULL, 
     speed_value double precision NOT NULL, -- In km/h
     PRIMARY KEY (road_section_id, period_id, speed_rule)
 ); 
@@ -502,3 +506,19 @@ SELECT
 FROM tempus.road_section, tempus.road_restriction
 WHERE road_section.id = ANY (road_restriction.sections)
 GROUP BY road_restriction.id;
+
+DROP FUNCTION IF EXISTS tempus.array_search(anyelement, anyarray);
+
+CREATE OR REPLACE FUNCTION tempus.array_search(needle anyelement, haystack anyarray)
+  RETURNS integer AS
+$BODY$
+    SELECT i
+      FROM generate_subscripts($2, 1) AS i
+     WHERE $2[i] = $1
+  ORDER BY i
+$BODY$
+  LANGUAGE sql STABLE
+  COST 100;
+ALTER FUNCTION tempus.array_search(anyelement, anyarray)
+  OWNER TO postgres;
+

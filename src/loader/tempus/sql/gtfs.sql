@@ -121,12 +121,12 @@ create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 
 -- remove constraint on tempus stops and dependencies
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
+alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey; 
 alter table tempus.pt_transfer drop constraint pt_transfer_from_stop_id_fkey;
 alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
 alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
-alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;; 
-alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;; 
-alter table tempus.pt_stop drop CONSTRAINT pt_stop_pkey;
+alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;
+alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;
 
 insert into
 	tempus.pt_stop
@@ -186,11 +186,10 @@ where id in
 );
 
 -- restore constraints on pt_stop
-alter table tempus.pt_stop add CONSTRAINT pt_stop_pkey PRIMARY KEY (id);
-alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
-	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 alter table tempus.pt_stop add CONSTRAINT pt_stop_road_section_id_fkey FOREIGN KEY (road_section_id)
       REFERENCES tempus.road_section (id);
+alter table tempus.pt_stop add CONSTRAINT pt_stop_parent_station_fkey FOREIGN KEY (parent_station)
+	REFERENCES tempus.pt_stop (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 
 /* ==== /stops ==== */
 
@@ -281,7 +280,7 @@ with pt_seq as (
 )
 select
 
-        foo.stop_from
+        distinct foo.stop_from
         , foo.stop_to
         , (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
         -- Geometry is a line between stops
@@ -323,11 +322,9 @@ on
 
 -- restore constraints
 alter table tempus.pt_section add constraint pt_section_stop_from_fkey FOREIGN KEY (stop_from)
-      REFERENCES tempus.pt_stop(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
+      REFERENCES tempus.pt_stop(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 alter table tempus.pt_section add constraint pt_section_stop_to_fkey FOREIGN KEY (stop_to)
-      REFERENCES tempus.pt_stop(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
-alter table tempus.pt_section add constraint pt_section_network_id_fkey FOREIGN KEY (network_id)
-      REFERENCES tempus.pt_network(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
+      REFERENCES tempus.pt_stop(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 /* ==== GTFS calendar ==== */
@@ -562,9 +559,27 @@ alter table tempus.pt_stop_time add constraint pt_stop_time_stop_id_fkey FOREIGN
       REFERENCES tempus.pt_stop (id)  ON UPDATE CASCADE ON DELETE CASCADE;
 
 
+do $$
+begin
+raise notice '==== Adding views et cleaning data';
+end
+$$;
+
 CREATE OR REPLACE VIEW tempus.pt_stop_by_network AS
  SELECT DISTINCT pt_stop.id AS stop_id, pt_stop.vendor_id, pt_stop.name, pt_stop.location_type, pt_stop.parent_station, 
  pt_route.transport_mode, pt_stop.road_section_id, pt_stop.zone_id, pt_stop.abscissa_road_section, pt_stop.geom, pt_network.id AS network_id
    FROM tempus.pt_stop, tempus.pt_section, tempus.pt_network, tempus.pt_route, tempus.pt_trip, tempus.pt_stop_time, tempus.pt_frequency
   WHERE pt_network.id = pt_section.network_id AND (pt_section.stop_from = pt_stop.id OR pt_section.stop_to = pt_stop.id)
   AND pt_route.id = pt_trip.route_id AND (pt_trip.id = pt_stop_time.trip_id AND pt_stop_time.stop_id = pt_stop.id)
+
+DELETE FROM tempus.pt_stop
+WHERE id NOT IN
+(
+SELECT stop_from FROM tempus.pt_section
+UNION
+SELECT stop_to FROM tempus.pt_section
+);
+
+
+
+

@@ -1,4 +1,4 @@
-﻿-- Tempus - Navteq SQL import Wrapper
+-- Tempus - Navteq SQL import Wrapper
 
 -- Handle direction type
 CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, boolean)
@@ -55,7 +55,6 @@ where
 -- Begin to remove all related constraints and index (performances concern)
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_from_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_to_fkey;
-ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_road_type_fkey;
 ALTER TABLE tempus.road_section_speed DROP CONSTRAINT road_section_speed_road_section_id_fkey; 
 ALTER TABLE tempus.poi DROP CONSTRAINT poi_road_section_id_fkey;
 ALTER TABLE tempus.pt_stop DROP CONSTRAINT pt_stop_road_section_id_fkey;
@@ -113,9 +112,7 @@ ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
 	FOREIGN KEY (node_from) REFERENCES tempus.road_node; 
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
-	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id); 
-ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_road_type_fkey
-	FOREIGN KEY (road_type) REFERENCES tempus.road_type(id); 
+	FOREIGN KEY (node_to) REFERENCES tempus.road_node; 
 
 ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
