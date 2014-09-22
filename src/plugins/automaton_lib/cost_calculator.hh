@@ -289,8 +289,8 @@ public:
         }
         // Taking vehicle time for final mode 
         else if ( ( transf_t < std::numeric_limits<double>::max() ) && ( final_mode.need_parking() ) ) {
-            if (( src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
-                // vehicles parked on a POI
+            if (( src.type() == Multimodal::Vertex::Poi ) && final_mode.is_shared() && ( src.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
+                // shared vehicles parked on a POI
                 transf_t += 1;
             }
             else if ( private_parking_ && !final_mode.is_shared() && src.road_vertex() == private_parking_.get() ) {
