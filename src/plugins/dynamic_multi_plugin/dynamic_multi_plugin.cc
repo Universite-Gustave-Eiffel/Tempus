@@ -315,7 +315,7 @@ void DynamicMultiPlugin::process()
     boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
 
     // Define and initialize the cost calculator
-    CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_ );
+    CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, request_.parking_location() );
 
     bool walk_at_destination;
     get_option( "walk_at_destination", walk_at_destination );
