@@ -157,11 +157,25 @@ void DynamicMultiPlugin::pre_process( Request& request )
 
     // look for public transports in allowed modes
     bool pt_allowed = false;
+    // look also for private modes
+    bool private_mode = false;
     for ( size_t i = 0; i < request.allowed_modes().size(); i++ ) {
         db_id_t mode_id = request.allowed_modes()[i];
         if (graph_.transport_mode( mode_id )->is_public_transport() ) {
             pt_allowed = true;
-            break;
+        }
+        else if ( (mode_id == TransportModePrivateBicycle) || (mode_id == TransportModePrivateCar) ) {
+            private_mode = true;
+        }
+    }
+    // resolve private parking location
+    if ( private_mode ) {
+        if ( request_.parking_location() ) {
+            parking_location_ = request_.parking_location().get();
+        }
+        else {
+            // place the private parking at the origin
+            parking_location_ = request_.origin();
         }
     }
     	
@@ -315,7 +329,7 @@ void DynamicMultiPlugin::process()
     boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
 
     // Define and initialize the cost calculator
-    CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, request_.parking_location() );
+    CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_ );
 
     bool walk_at_destination;
     get_option( "walk_at_destination", walk_at_destination );

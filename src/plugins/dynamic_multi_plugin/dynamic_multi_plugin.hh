@@ -98,6 +98,8 @@ protected:
     PotentialMap wait_map_; 
     TripMap trip_map_; 
 
+    Road::Vertex parking_location_;
+
     static StaticVariables s_;
 	
 public: 

@@ -127,7 +127,7 @@ private:
 enum TransportModeId
 {
     TransportModeWalking = 1,
-    TransportModePrivateBicyle = 2,
+    TransportModePrivateBicycle = 2,
     TransportModePrivateCar = 3,
     TransportModeTaxi = 4
 };
