@@ -111,6 +111,7 @@ int main( int argc, char* argv[] )
     std::vector<string> plugins;
     size_t num_threads = 1;
     string dbstring = "dbname=tempus_test_db";
+    string schema_name = "tempus";
     bool consistency_check = true;
 #ifndef WIN32
     bool daemon = false;
@@ -154,6 +155,11 @@ int main( int argc, char* argv[] )
                     dbstring = argv[++i];
                 }
             }
+            else if ( arg == "-s" ) {
+                if ( argc > i+1 ) {
+                    schema_name = argv[++i];
+                }
+            }
             else if ( arg == "-X" ) {
                 consistency_check = false;
             }
@@ -164,6 +170,7 @@ int main( int argc, char* argv[] )
                           << "\t-t num_threads\tnumber of request-processing threads" << endl
                           << "\t-l plugin_name\tload plugin" << endl
                           << "\t-d dbstring\tstring used to connect to pgsql" << endl
+                          << "\t-s schema\tschema to use (default: tempus)" << endl
                           << "\t-X no consistency check" << endl
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
@@ -227,7 +234,7 @@ int main( int argc, char* argv[] )
         Tempus::Application::instance()->connect( dbstring );
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
-        Tempus::Application::instance()->build_graph( consistency_check );
+        Tempus::Application::instance()->build_graph( consistency_check, schema_name );
 
         // load plugins
         for ( size_t i=0; i< plugins.size(); i++ ) {

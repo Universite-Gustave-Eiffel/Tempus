@@ -142,6 +142,12 @@ public:
     };
 
     ///
+    /// Stores plugin parameters
+    struct PluginParameters {
+        std::vector<CostId> supported_optimization_criteria;
+    };
+
+    ///
     /// Access to the list of option values
     OptionValueList& options() {
         return options_;
@@ -387,7 +393,15 @@ struct PluginFactory: boost::noncopyable {
      */
     std::vector<std::string> plugin_list() const;
 
+    /**
+     * Get descriptions of the options for a given plugin
+     */
     const Plugin::OptionDescriptionList option_descriptions( const std::string& dll_name ) const;
+
+    /**
+     * Get parameters (supported criteria, etc.) for a given plugin
+     */
+    const Plugin::PluginParameters plugin_parameters( const std::string& dll_name ) const;
 
     /**
      * create a Plugin from a given dll
@@ -410,10 +424,12 @@ private:
     struct Dll {
         typedef Plugin*                              ( *PluginCreationFct )( const std::string& );
         typedef const Plugin::OptionDescriptionList* ( *PluginOptionDescriptionFct )();
+        typedef const Plugin::PluginParameters*      ( *PluginParametersFct )();
         typedef const char*                          ( *PluginNameFct )();
         HMODULE           handle_;
         PluginCreationFct create;
         PluginOptionDescriptionFct options_description;
+        PluginParametersFct plugin_parameters;
     };
 
     typedef std::map<std::string, Dll > DllMap;
@@ -434,6 +450,7 @@ private:
     extern "C" EXPORT Tempus::Plugin* createPlugin( const std::string & db_options ) { return new type( name, db_options ); } \
     extern "C" EXPORT const char *    pluginName() { return name; } \
     extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList* optionDescriptions( ) { return new Tempus::Plugin::OptionDescriptionList(type::option_descriptions()); } \
+    extern "C" EXPORT const Tempus::Plugin::PluginParameters* pluginParameters( ) { return new Tempus::Plugin::PluginParameters(type::plugin_parameters()); } \
     extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; } \
     extern "C" EXPORT void post_build(){type::post_build();}
 

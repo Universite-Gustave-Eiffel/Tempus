@@ -172,6 +172,13 @@ void PluginFactory::load( const std::string& dll_name )
         THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name  );
     }
 
+    Dll::PluginParametersFct paramsFct;
+    *reinterpret_cast<void**>( &paramsFct ) = DLSYM( hRAII.get(), "pluginParameters" );
+
+    if ( !paramsFct ) {
+        THROW_DLERROR( "no function pluginParameters in " + complete_dll_name  );
+    }
+
     Dll::PluginNameFct nameFct;
     *reinterpret_cast<void**>( &nameFct ) = DLSYM( hRAII.get(), "pluginName" );
 
@@ -187,7 +194,7 @@ void PluginFactory::load( const std::string& dll_name )
         THROW_DLERROR( "no function post_build in " + complete_dll_name  );
     }
 
-    Dll dll = { hRAII.release(), createFct, optDescFct };
+    Dll dll = { hRAII.release(), createFct, optDescFct, paramsFct };
     const std::string pluginName = ( *nameFct )();
     dll_.insert( std::make_pair( pluginName, dll ) );
 
@@ -247,6 +254,23 @@ const Plugin::OptionDescriptionList PluginFactory::option_descriptions( const st
     return Plugin::OptionDescriptionList( *list );
 }
 
+const Plugin::PluginParameters PluginFactory::plugin_parameters( const std::string& dll_name ) const
+{
+    std::string loaded;
+
+    for ( DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++ ) {
+        loaded += " " + i->first;
+    }
+
+    DllMap::const_iterator dll = dll_.find( dll_name );
+
+    if ( dll == dll_.end() ) {
+        throw std::runtime_error( dll_name + " is not loaded (loaded:" + loaded+")" );
+    }
+
+    std::auto_ptr<const Plugin::PluginParameters> l( dll->second.plugin_parameters() );
+    return Plugin::PluginParameters( *l );
+}
 
 Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
     graph_( *Application::instance()->graph() ),
@@ -531,11 +555,16 @@ Result& Plugin::result()
                 step->set_departure_time( pt_first->departure_time() );
                 step->set_wait( pt_first->wait() );
 
+                // set costs from the accumulator
+                for ( Costs::const_iterator cit = accum_costs.begin(); cit != accum_costs.end(); ++cit ) {
+                    step->set_cost( static_cast<CostId>(cit->first), cit->second );
+                }
+                accum_costs.clear();
+
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
 
                 accum_pt.clear();
                 pt_first = 0;
-                accum_costs.clear();
             }
             else if ( it->step_type() == Roadmap::Step::RoadStep ) {
 
@@ -637,6 +666,12 @@ Result& Plugin::result()
 
                 was_on_roundabout = on_roundabout;
 
+                // set costs from the accumulator
+                for ( Costs::const_iterator cit = accum_costs.begin(); cit != accum_costs.end(); ++cit ) {
+                    step->set_cost( static_cast<CostId>(cit->first), cit->second );
+                }
+                accum_costs.clear();
+
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
 
                 if ( next != roadmap.end() && next->step_type() != Roadmap::Step::RoadStep ) {
@@ -651,9 +686,8 @@ Result& Plugin::result()
                 }
 
                 accum_road.clear();
-                accum_costs.clear();
-			}
-			if (next != roadmap.end()) next++;
+            }
+            if (next != roadmap.end()) next++;
         }
 #if 1
         if ( last_step ) {

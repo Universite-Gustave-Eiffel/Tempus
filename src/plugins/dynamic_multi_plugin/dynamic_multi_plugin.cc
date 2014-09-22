@@ -99,12 +99,19 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
     return odl;
 }
 
+const DynamicMultiPlugin::PluginParameters DynamicMultiPlugin::plugin_parameters()
+{
+    Plugin::PluginParameters params; 
+    params.supported_optimization_criteria.push_back( CostDuration );
+    return params;
+}
+
 void DynamicMultiPlugin::post_build()
 {
     const Road::Graph& road_graph = Application::instance()->graph()->road();
 		
     PQImporter psql( Application::instance()->db_options() ); 
-    Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph );
+    Road::Restrictions restrictions = psql.import_turn_restrictions( road_graph, Application::instance()->schema_name() );
     std::cout << "Turn restrictions imported" << std::endl;
 		
     s_.automaton.build_graph( restrictions ) ;
@@ -197,7 +204,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
                                                         "		FROM tempus.pt_calendar_date	"
                                                         "		WHERE calendar_date='%1%' AND exception_type=1"
                                                         "	)"
-                                                        ")") % s_.current_day ).str() ); 
+                                                        ")") % boost::gregorian::to_simple_string(s_.current_day) ).str() ); 
 				
             for ( size_t i = 0; i < res.size(); i++ ) {
                 PublicTransport::Vertex departure, arrival; 
@@ -239,7 +246,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
                                                         "		FROM tempus.pt_calendar_date	"
                                                         "		WHERE calendar_date='%1%' AND exception_type=1"
                                                         "	)"
-                                                        ")") % s_.current_day ).str() ); 
+                                                        ")") % boost::gregorian::to_simple_string(s_.current_day) ).str() ); 
 				
             for ( size_t i = 0; i < res.size(); i++ ) {
                 PublicTransport::Vertex departure, arrival; 
@@ -413,7 +420,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path )
                     break;
                 }
             }
-            step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] - step->wait() );
+            step->set_cost( CostDuration, step->arrival_time() - step->departure_time() );
         }
         else {
             // Make a multimodal edge and copy it into the roadmap as a 'generic' step

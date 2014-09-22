@@ -491,9 +491,17 @@ SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', 2154, 'LINESTRING', 3);
 --
 
 
+-- find the closest road_section, then select the closest endpoint
 create or replace function tempus.road_node_id_from_coordinates( float8, float8 ) returns bigint
 as '
-select id from tempus.road_node where st_dwithin( geom, st_setsrid(st_point($1, $2), 2154), 100) order by st_distance( geom, st_setsrid(st_point($1, $2), 2154)) asc limit 1
+with rs as (
+select id, node_from, node_to from tempus.road_section
+order by geom <-> st_setsrid(st_point($1, $2), 2154) limit 1
+)
+select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), 2154)) < st_distance( p2.geom, st_setsrid(st_point($1,$2), 2154)) then p1.id else p2.id end
+from rs, tempus.road_node as p1, tempus.road_node as p2
+where
+rs.node_from = p1.id and rs.node_to = p2.id
 '
 language sql;
 

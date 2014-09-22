@@ -11,6 +11,7 @@
   <xs:complexType name="LoadedPlugin">
     <xs:sequence>
       <xs:element name="option" type="OptionDesc" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="supported_criterion" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="name" type="xs:string"/>
   </xs:complexType>

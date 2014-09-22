@@ -80,3 +80,12 @@ class CriterionChooser( QWidget ):
             if t == name:
                 self.criterionList.setCurrentIndex( i )
                 break
+
+    def set_supported_criteria( self, criteria ):
+        n = 0
+        self.criterionList.clear()
+        for t, i in CriterionChooser.criterion_id.iteritems():
+            if i in criteria:
+                self.criterionList.insertItem( n, t )
+                n += 1
+                continue

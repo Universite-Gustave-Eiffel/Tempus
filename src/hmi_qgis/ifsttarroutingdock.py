@@ -264,6 +264,12 @@ class IfsttarRoutingDock(QDockWidget):
             self.ui.criterionBox.itemAt(i).widget().set_selection( selected )
             i += 1
 
+    def set_supported_criteria( self, criteria ):
+        c = self.ui.criterionBox.count()
+        for i in range(c):
+            self.ui.criterionBox.itemAt(i).widget().set_supported_criteria( criteria )
+
+
     # get coordinates of all steps
     def get_coordinates( self ):
         coords = [ self.ui.origin.get_coordinates() ]
@@ -396,7 +402,7 @@ class IfsttarRoutingDock(QDockWidget):
             self.set_coordinates( [ [] for x in c ] )
             self.set_parking( [] )
             # remove layers
-            to_remove = ['Tempus_pin_points', 'Tempus_private_parking', 'Tempus_Roadmap_']
+            to_remove = ['Tempus_pin_points', 'Tempus_private_parking']
             to_remove_ids = []
             maps = QgsMapLayerRegistry.instance().mapLayers()
             for k,v in maps.items():
@@ -405,3 +411,11 @@ class IfsttarRoutingDock(QDockWidget):
                         to_remove_ids.append( v.id() )
             QgsMapLayerRegistry.instance().removeMapLayers( to_remove_ids )
             self.newQuery = False
+
+        # always delete the roadmap
+        l = 'Tempus_Roadmap_'
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        for k,v in maps.items():
+            if v.name()[0:len(l)] == l:
+                QgsMapLayerRegistry.instance().removeMapLayers( [v.id()] )
+                break

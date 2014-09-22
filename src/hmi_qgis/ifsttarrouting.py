@@ -33,7 +33,12 @@ from wps_client import *
 import config
 import binascii
 import os
+import sys
 import math
+import random
+import colorsys
+import time
+import signal
 from datetime import datetime
 
 # Import the PyQt and QGIS libraries
@@ -63,6 +68,7 @@ from result_selection import ResultSelection
 from altitude_profile import AltitudeProfile
 from wkb import WKB
 import tempus_request as Tempus
+from consolelauncher import ConsoleLauncher
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 
@@ -174,6 +180,8 @@ class IfsttarRouting:
 
         self.setStateText("DISCONNECTED")
 
+        self.server = None
+
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(QIcon(":/plugins/ifsttarrouting/icon.png"), \
@@ -182,6 +190,12 @@ class IfsttarRouting:
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
 
         QObject.connect(self.dlg.ui.connectBtn, SIGNAL("clicked()"), self.onConnect)
+        self.dlg.ui.tempusBinPathBrowse.clicked.connect( self.onBinPathBrowse )
+        self.dlg.ui.addPluginToLoadBtn.clicked.connect( self.onAddPluginToLoad )
+        self.dlg.ui.removePluginToLoadBtn.clicked.connect( self.onRemovePluginToLoad )
+        self.dlg.ui.startServerBtn.clicked.connect( self.onStartServer )
+        self.dlg.ui.stopServerBtn.clicked.connect( self.onStopServer )
+
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
 
@@ -214,6 +228,16 @@ class IfsttarRouting:
         # init the history
         self.loadHistory()
 
+        # init server configuration from settings
+        s = QSettings()
+        self.dlg.ui.tempusBinPathEdit.setText( s.value("IfsttarTempus/startTempus", "/usr/local/bin/startTempus.sh" ) )
+        self.dlg.ui.dbOptionsEdit.setText( s.value("IfsttarTempus/dbOptions", "dbname=tempus_test_db" ) )
+        plugins = s.value("IfsttarTempus/plugins", ["sample_road_plugin", "sample_multi_plugin"] )
+        for p in plugins:
+            item = QListWidgetItem( p )
+            item.setFlags( item.flags() | Qt.ItemIsEditable )
+            self.dlg.ui.pluginsToLoadList.insertItem(0, item )
+
         self.clear()
 
     # reset widgets contents and visibility
@@ -231,6 +255,47 @@ class IfsttarRouting:
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
+
+    def onBinPathBrowse( self ):
+        d = QFileDialog.getOpenFileName( self.dlg, "Tempus wps executable path" )
+        if d is not None:
+            self.dlg.ui.tempusBinPathEdit.setText( d )
+
+    def onAddPluginToLoad( self ):
+        item = QListWidgetItem("new_plugin")
+        item.setFlags( item.flags() | Qt.ItemIsEditable)
+        self.dlg.ui.pluginsToLoadList.insertItem(0,item)
+
+    def onRemovePluginToLoad( self ):
+        r = self.dlg.ui.pluginsToLoadList.currentRow()
+        if r != -1:
+            self.dlg.ui.pluginsToLoadList.takeItem( r )
+
+    def onStartServer( self ):
+        self.onStopServer()
+        executable = self.dlg.ui.tempusBinPathEdit.text()
+        dbOptions = self.dlg.ui.dbOptionsEdit.text()
+        plugins = []
+        for i in range(self.dlg.ui.pluginsToLoadList.count()):
+            plugins.append( self.dlg.ui.pluginsToLoadList.item(i).text() )
+        cmdLine = [executable]
+        for p in plugins:
+            cmdLine += ['-l', p]
+        if dbOptions != '':
+            cmdLine += ['-d', dbOptions ]
+
+        self.server = ConsoleLauncher( cmdLine )
+        self.server.launch()
+
+        # save parameters
+        s = QSettings()
+        s.setValue("IfsttarTempus/startTempus", self.dlg.ui.tempusBinPathEdit.text() )
+        s.setValue("IfsttarTempus/dbOptions", self.dlg.ui.dbOptionsEdit.text() )
+        s.setValue("IfsttarTempus/plugins", plugins )
+
+    def onStopServer( self ):
+        if self.server is not None:
+            self.server.stop()
 
     # when the 'connect' button gets clicked
     def onConnect( self ):
@@ -378,12 +443,26 @@ class IfsttarRouting:
 
         if NEW_API:
             vl.startEditing()
-            vl.addAttribute( QgsField( "transport_type", QVariant.Int ) )
+            vl.addAttribute( QgsField( "transport_mode", QVariant.Int ) )
         else:
-            pr.addAttributes( [ QgsField( "transport_type", QVariant.Int ) ] )
+            pr.addAttributes( [ QgsField( "transport_mode", QVariant.Int ) ] )
 
-        # set layer's style
-        vl.loadNamedStyle( config.DATA_DIR + "/style_roadmap.qml" )
+
+        root_rule = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : '255,255,0'} ))
+
+        for mode_id, mode in self.transport_modes_dict.iteritems():
+                p = float(mode_id-1) / len(self.transport_modes_dict)
+                rgb = colorsys.hsv_to_rgb( p, 0.7, 0.9 )
+                color = '%d,%d,%d' % (rgb[0]*255, rgb[1]*255, rgb[2]*255)
+                rule = QgsRuleBasedRendererV2.Rule( QgsLineSymbolV2.createSimple({'width': '1.5', 'color' : color}),
+                                                    0,
+                                                    0,
+                                                    "transport_mode=%d" % mode_id,
+                                                    mode.name)
+                root_rule.appendChild( rule )
+
+        renderer = QgsRuleBasedRendererV2( root_rule );
+        vl.setRendererV2( renderer )
 
         # browse steps
         for step in steps:
@@ -396,17 +475,11 @@ class IfsttarRouting:
             fet = QgsFeature()
             geo = QgsGeometry()
             geo.fromWkb( binascii.unhexlify(wkb) )
-            if isinstance(step, Tempus.RoadStep):
-                transport_type = 1
-            elif isinstance( step, Tempus.PublicTransportStep ):
-                transport_type = 2
-            else:
-                transport_type = 3
 
             if NEW_API:
-                fet.setAttributes( [ transport_type ] )
+                fet.setAttributes( [ step.mode ] )
             else:
-                fet.setAttributeMap( { 0: transport_type } )
+                fet.setAttributeMap( { 0: step.mode } )
             fet.setGeometry( geo )
             pr.addFeatures( [fet] )
 
@@ -467,6 +540,7 @@ class IfsttarRouting:
         self.profile.clear()
 
         first = True
+        leaving_time = None
 
         for step in roadmap:
             if first:
@@ -512,14 +586,16 @@ class IfsttarRouting:
                 text += "At %s<br/>\n" % min2hm(step.departure_time+step.wait_time)
                 pt_name = self.transport_modes_dict[step.mode].name
                 text += "Take the %s %s from '%s' to '%s'" % (pt_name, step.route, step.departure, step.arrival)
-                text += "<br/>Leave at %s" % min2hm(step.arrival_time)
+                leaving_time = step.arrival_time
 
             elif isinstance(step, Tempus.RoadTransportStep ):
                 icon_text = step.network
                 if step.type == Tempus.ConnectionType.Road2Transport:
                     text += "Go to the '%s' station from %s" % (step.stop, step.road)
                 elif step.type == Tempus.ConnectionType.Transport2Road:
-                    text += "Leave the '%s' station to %s" % (step.stop, step.road)
+                        if leaving_time is not None:
+                                text += "At %s<br/>\n" % min2hm(leaving_time)
+                        text += "Leave the '%s' station to %s" % (step.stop, step.road)
                 else:
                     text += "Connection between '%s' and '%s'" % (step.stop, step.road)
 
@@ -640,6 +716,9 @@ class IfsttarRouting:
             
             row += 1
 
+            self.dlg.set_supported_criteria( self.plugins[plugin_name].supported_criteria )
+
+
     #
     # Take an XML trees from 'constant_list'
     # load them and display them
@@ -649,7 +728,10 @@ class IfsttarRouting:
         for ttype in self.transport_modes:
             item = QStandardItem( ttype.name )
             item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            if ttype.id != 1:
+                    item.setData( Qt.Unchecked, Qt.CheckStateRole)
+            else:
+                    item.setData( Qt.Checked, Qt.CheckStateRole )
             item.setData( ttype.id, Qt.UserRole )
             listModel.appendRow(item)
         self.dlg.ui.transportList.setModel( listModel )
@@ -712,6 +794,9 @@ class IfsttarRouting:
         pvads = self.dlg.get_pvads()
         #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
         transports = [ self.transport_modes[x].id for x in self.dlg.selected_transports() ]
+        if transports == []:
+                QMessageBox.warning( self.dlg, "Warning", "No transport mode is selected, defaulting to pedestrian walk")
+                transports = [ 1 ]
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())

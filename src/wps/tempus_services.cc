@@ -70,8 +70,8 @@ public:
                            "name",
                            names[i] );
 
-            Plugin::OptionDescriptionList options = PluginFactory::instance()->option_descriptions( names[i] );
-            Plugin::OptionDescriptionList::iterator it;
+            const Plugin::OptionDescriptionList& options = PluginFactory::instance()->option_descriptions( names[i] );
+            Plugin::OptionDescriptionList::const_iterator it;
 
             for ( it = options.begin(); it != options.end(); it++ ) {
                 xmlNode* option_node = XML::new_node( "option" );
@@ -102,6 +102,16 @@ public:
                 XML::add_child( option_node, default_value_node );
 
                 XML::add_child( node, option_node );
+            }
+
+            const Plugin::PluginParameters& params = PluginFactory::instance()->plugin_parameters( names[i] );
+            for ( std::vector<CostId>::const_iterator cit = params.supported_optimization_criteria.begin();
+                  cit != params.supported_optimization_criteria.end();
+                  cit ++ ) {
+                xmlNode* param_node = XML::new_node( "supported_criterion" );
+                XML::add_child( param_node, XML::new_text( boost::lexical_cast<std::string>(static_cast<int>(*cit)) ) );
+
+                XML::add_child( node, param_node );
             }
 
             XML::add_child( root_node, node );
@@ -173,10 +183,10 @@ Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, d
     //
     // Call to the stored procedure
     //
-    std::string q = ( boost::format( "SELECT tempus.road_node_id_from_coordinates(%1%, %2%)" ) % x % y ).str();
+    std::string q = ( boost::format( "SELECT tempus.road_node_id_from_coordinates(%.3f, %.3f)" ) % x % y ).str();
     Db::Result res = db.exec( q );
 
-    if ( res.size() == 0 ) {
+    if ( (res.size() == 0) || (res[0][0].is_null()) ) {
         return 0;
     }
 
@@ -240,7 +250,7 @@ public:
             id = road_vertex_id_from_coordinates( db, x, y );
 
             if ( id == 0 ) {
-                throw std::invalid_argument( ( boost::format( "Cannot find vertex id from %1%, %2%" ) % x % y ).str() );
+                throw std::invalid_argument( ( boost::format( "Cannot find vertex id for %.3f, %.3f" ) % x % y ).str() );
             }
         }
 

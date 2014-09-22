@@ -72,16 +72,22 @@ void Application::pre_build_graph()
     state_ = GraphPreBuilt;
 }
 
-void Application::build_graph( bool consistency_check )
+void Application::build_graph( bool consistency_check, const std::string& schema )
 {
     // request the database
     PQImporter importer( db_options_ );
     TextProgression progression( 50 );
     COUT << "Loading graph from database: " << std::endl;
-    graph_ = importer.import_graph( progression, consistency_check );
+    graph_ = importer.import_graph( progression, consistency_check, schema );
     COUT << "Importing constants ..." << std::endl;
-    importer.import_constants( *graph_, progression );
+    importer.import_constants( *graph_, progression, schema );
     state_ = GraphBuilt;
+    schema_name_ = schema;
+}
+
+std::string Application::schema_name() const
+{
+    return schema_name_;
 }
 
 const std::string Application::data_directory() const
