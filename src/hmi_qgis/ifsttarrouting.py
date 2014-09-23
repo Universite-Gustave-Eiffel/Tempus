@@ -793,7 +793,16 @@ class IfsttarRouting:
                     item.setData( Qt.Checked, Qt.CheckStateRole )
             item.setData( ttype.id, Qt.UserRole )
             listModel.appendRow(item)
+
+        def on_transport_changed( item ):
+            t = self.dlg.selected_transports()
+            c = 1 in t or 2 in t # private cycle or car
+            self.dlg.parkingEnabledBox.setEnabled( c )
+            self.dlg.parkingChooser.setEnabled( c and self.dlg.parkingEnabledBox.checkState() == Qt.Checked )
+
+        listModel.itemChanged.connect( on_transport_changed )
         self.dlg.ui.transportList.setModel( listModel )
+        on_transport_changed( item )
 
     #
     # Take an XML tree from the WPS 'results'
