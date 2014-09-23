@@ -535,7 +535,7 @@ BEGIN
 
   -- poi
   EXECUTE format( 'create table %s.poi as ' ||
-                  'select poi.* from tempus.poi as poi, %1$s.road_node as rn where road_section_id = rn.id', subset );
+                  'select poi.* from tempus.poi as poi, %1$s.road_section as rs where road_section_id = rs.id', subset );
 
   -- road_restriction
   EXECUTE format( 'create table %s.road_restriction as ' ||
