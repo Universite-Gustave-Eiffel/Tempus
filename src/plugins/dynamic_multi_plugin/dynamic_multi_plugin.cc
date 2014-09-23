@@ -40,9 +40,10 @@ namespace Tempus {
 class DestinationDetectorVisitor
 {
 public:
-    DestinationDetectorVisitor( const Road::Vertex& destination, bool walk_at_destination = true, bool verbose = false ) :
+    DestinationDetectorVisitor( const Multimodal::Graph& graph, const Road::Vertex& destination, bool pvad = true, bool verbose = false ) :
+        graph_(graph),
         destination_(destination),
-        walk_at_destination_(walk_at_destination),
+        pvad_(pvad),
         verbose_(verbose) {}
 
     // the exception used to shortcut dijkstra
@@ -55,8 +56,16 @@ public:
     void examine_vertex( const Triple& t, const Multimodal::Graph& )
     {
         if ( t.vertex.type() == Multimodal::Vertex::Road && t.vertex.road_vertex() == destination_ ) {
-            if ( !walk_at_destination_ || (walk_at_destination_ && t.mode == 1) ) {
-                throw path_found_exception( t );
+            TransportMode mode = graph_.transport_mode( t.mode ).get();
+            if ( !mode.must_be_returned() && !mode.is_public_transport() ) {
+                if ( (t.mode == TransportModePrivateCar) || (t.mode == TransportModePrivateBicycle) ) {
+                    if ( pvad_ ) {
+                        throw path_found_exception( t );
+                    }
+                }
+                else {
+                    throw path_found_exception( t );
+                }
             }
         }
         if (verbose_) {
@@ -80,8 +89,10 @@ public:
     }
 
 private:
+    const Multimodal::Graph& graph_;
     Road::Vertex destination_;
-    bool walk_at_destination_;
+    // private vehicule at destination
+    bool pvad_;
     bool verbose_;
 };
 
@@ -95,7 +106,6 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
     odl.declare_option( "walking_speed", "Average walking speed (km/h)", 3.6); 
     odl.declare_option( "cycling_speed", "Average cycling speed (km/h)", 12); 
     odl.declare_option( "car_parking_search_time", "Car parking search time (min)", 5); 
-    odl.declare_option( "walk_at_destination", "Walk at destination", true );
     return odl;
 }
 
@@ -331,10 +341,8 @@ void DynamicMultiPlugin::process()
     // Define and initialize the cost calculator
     CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_ );
 
-    bool walk_at_destination;
-    get_option( "walk_at_destination", walk_at_destination );
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
-    DestinationDetectorVisitor vis( request_.destination(), walk_at_destination, verbose_algo_ );
+    DestinationDetectorVisitor vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_ );
 
     Triple destination_o;
     bool path_found = false;

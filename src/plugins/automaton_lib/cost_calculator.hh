@@ -262,9 +262,9 @@ public:
         }
         // Parking search time for initial mode
         else if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.need_parking() ) {
-            if ( ( ( src.type() == Multimodal::Vertex::Road )  &&
-                   ( (graph.road()[ src.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
-                 || ( (src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( initial_mode.db_id() )) ) )
+            if ( /*( ( tgt.type() == Multimodal::Vertex::Road )  &&
+                   ( (graph.road()[ tgt.road_vertex() ].parking_traffic_rules() & initial_mode.traffic_rules() ) > 0 ) )
+                   ||*/ ( (tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() )) ) )
             {
                 // FIXME more complex than that
                 if (initial_mode.traffic_rules() & TrafficRuleCar ) 

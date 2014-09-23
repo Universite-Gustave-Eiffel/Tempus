@@ -30,7 +30,7 @@ namespace Tempus {
 struct Triple {
     Multimodal::Vertex vertex;
     Automaton<Road::Edge>::Graph::vertex_descriptor state; 
-    unsigned int mode; 
+    db_id_t mode; 
 	
     bool operator==( const Tempus::Triple& t ) const {
         return (vertex == t.vertex) && (state == t.state) && (mode == t.mode);
