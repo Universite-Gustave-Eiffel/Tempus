@@ -22,6 +22,16 @@ def import_navteq(args, shape_options):
     ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     ntqi.load()
 
+def import_route120(args, shape_options):
+    """Load IGN (Route120) data into a PostGIS database."""
+    igni = tempus.IGNRoute120Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    igni.load()
+
+def import_route500(args, shape_options):
+    """Load IGN (Route500) data into a PostGIS database."""
+    igni = tempus.IGNRoute500Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    igni.load()
+
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
     osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
@@ -40,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument('-S', '--srid', required=False,
             help="Set the SRID for geometries. Defaults to 4326 (lat/lon).")
     parser.add_argument('-t', '--type', required=True,
-            help='The data type (tomtom, navteq, osm, gtfs, poi)')
+                        help='The data type (tomtom, navteq, osm, gtfs, poi, route120, route500)')
     parser.add_argument('-d', '--dbstring', required=False,
             help='The database connexion string')
     parser.add_argument('-p', '--prefix', required=False,
@@ -66,12 +76,15 @@ if __name__ == "__main__":
         [var, value] = v.split(':')
         substitutions[var] = value
         
-    if args.type in ['tomtom', 'navteq', 'poi', 'osm']:
+    if args.type in ['tomtom', 'navteq', 'poi', 'osm' ]:
         if not args.srid:
             sys.stderr.write("SRID needed for %s data type. Assuming EPSG:4326.\n" % args.type)
             shape_options['s'] = 4326
         else:
             shape_options['s'] = args.srid
+    if args.type in ['route120', 'route500']:
+        shape_options['s'] = 2154
+
     if args.copymode:
         shape_options['D'] = True
     if args.encoding:
@@ -88,6 +101,10 @@ if __name__ == "__main__":
         import_osm(args, shape_options)
     elif args.type == 'navteq':
         import_navteq(args, shape_options)
+    elif args.type == 'route120':
+        import_route120(args, shape_options)
+    elif args.type == 'route500':
+        import_route500(args, shape_options)
     elif args.type == 'gtfs':
         import_pt(args, substitutions)
     elif args.type == 'poi':
