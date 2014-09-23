@@ -233,7 +233,7 @@ CREATE TABLE tempus.poi
 	poi_type integer,
 	name varchar,
         parking_transport_modes integer[] NOT NULL,
-	road_section_id bigint REFERENCES tempus.road_section NOT NULL,
+	road_section_id bigint REFERENCES tempus.road_section NOT NULL ON DELETE CASCADE ON UPDATE CASCADE,
 	abscissa_road_section double precision NOT NULL CHECK (abscissa_road_section >= 0 AND abscissa_road_section <= 1)
 	-- NOTA: geometry column added NOT NULL
 );
@@ -291,7 +291,7 @@ CREATE TABLE tempus.pt_stop
 	name varchar NOT NULL,
 	location_type boolean, -- As in GTFS: false means stop, true means station
 	parent_station integer REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
-	road_section_id bigint REFERENCES tempus.road_section,
+	road_section_id bigint REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE,
 	zone_id integer, -- relative to fare zone
 	abscissa_road_section double precision -- curve length from start of road_section to the stop point
 	-- NOTA: geometry column added NOT NULL
@@ -324,7 +324,7 @@ CREATE TABLE tempus.pt_section
 (
 	stop_from integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
 	stop_to integer NOT NULL REFERENCES tempus.pt_stop ON DELETE CASCADE ON UPDATE CASCADE,
-	network_id integer NOT NULL REFERENCES tempus.pt_network, 
+	network_id integer NOT NULL REFERENCES tempus.pt_network ON DELETE CASCADE ON UPDATE CASCADE, 
 	PRIMARY KEY(stop_from, stop_to, network_id)
 	-- NOTA: geometry column added
 ); 
@@ -458,8 +458,8 @@ COMMENT ON COLUMN tempus.pt_fare_rule.contains_id IS 'Zone ID referenced in temp
 -- GTFS Transfers
 CREATE TABLE tempus.pt_transfer
 (
-	from_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL,
-	to_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL,
+	from_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL ON DELETE CASCADE ON UPDATE CASCADE,
+	to_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL ON DELETE CASCADE ON UPDATE CASCADE,
 	transfer_type integer NOT NULL CHECK(transfer_type >=0 AND transfer_type <=3),
 	--    0 or (empty) - This is a recommended transfer point between two routes.
 	--    1 - This is a timed transfer point between two routes. The departing vehicle is expected to wait for the arriving one, with sufficient time for a passenger to transfer between routes.
@@ -529,4 +529,50 @@ $BODY$
   COST 100;
 ALTER FUNCTION tempus.array_search(anyelement, anyarray)
   OWNER TO postgres;
+
+CREATE OR REPLACE FUNCTION tempus.create_subset(subset text, polygon text) RETURNS void AS $$
+--DECLARE
+    -- declarations
+BEGIN
+  EXECUTE format('DROP SCHEMA IF EXISTS %s CASCADE', subset);
+  EXECUTE format('delete from geometry_columns where f_table_schema=''%s''', subset);
+  EXECUTE format('create schema %s', subset);
+
+  -- road nodes
+  EXECUTE format('create table %s.road_node as select rn.* from tempus.road_node as rn where st_intersects( ''' || polygon || '''::geometry, rn.geom )', subset);
+  -- road sections
+  EXECUTE format( 'create table %s.road_section as ' ||
+	'select rs.* from tempus.road_section as rs ' ||
+	'where ' ||
+        'node_from in (select id from %1$s.road_node) ' ||
+        'and node_to in (select id from %1$s.road_node)', subset);
+  -- pt stops
+  EXECUTE format( 'create table %s.pt_stop as ' ||
+                   'select pt.* from tempus.pt_stop as pt, %1$s.road_section as rs where road_section_id = rs.id', subset );
+
+  -- pt section
+  EXECUTE format( 'create table %s.pt_section as ' ||
+		'select pt.* from tempus.pt_section as pt ' ||
+	        'where stop_from in (select id from %1$s.pt_stop) ' ||
+                'and stop_to in (select id from %1$s.pt_stop)', subset );
+
+  -- pt stop time
+  EXECUTE format( 'create table %s.pt_stop_time as ' ||
+	'select st.* from tempus.pt_stop_time as st, %1$s.pt_stop as stop where stop_id = stop.id', subset );
+
+  -- poi
+  EXECUTE format( 'create table %s.poi as ' ||
+                  'select poi.* from tempus.poi as poi, %1$s.road_section as rs where road_section_id = rs.id', subset );
+
+  -- road_restriction
+  EXECUTE format( 'create table %s.road_restriction as ' ||
+         'select distinct rr.id, rr.sections from tempus.road_restriction as rr, %1$s.road_section as rs ' ||
+         'where rs.id in (select unnest(sections) from tempus.road_restriction where id=rr.id)', subset );
+
+  EXECUTE format( 'create table %s.road_restriction_time_penalty as ' ||
+         'select rrtp.* from tempus.road_restriction_time_penalty as rrtp, ' ||
+         '%1$s.road_restriction as rr where restriction_id = rr.id', subset );
+
+END;
+$$ LANGUAGE plpgsql;
 

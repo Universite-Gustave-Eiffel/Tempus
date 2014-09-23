@@ -68,6 +68,8 @@ from result_selection import ResultSelection
 from altitude_profile import AltitudeProfile
 from wkb import WKB
 import tempus_request as Tempus
+from polygon_selection import PolygonSelection
+from psql_helper import psql_query
 from consolelauncher import ConsoleLauncher
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
@@ -222,7 +224,10 @@ class IfsttarRouting:
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
-        self.iface.addPluginToMenu(u"&Compute route", self.action)
+        self.clipAction = QAction( u"Polygon subset", self.iface.mainWindow())
+        self.clipAction.triggered.connect( self.onClip )
+        self.iface.addPluginToMenu(u"&Tempus", self.action)
+        self.iface.addPluginToMenu(u"&Tempus", self.clipAction)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
 
         # init the history
@@ -232,6 +237,7 @@ class IfsttarRouting:
         s = QSettings()
         self.dlg.ui.tempusBinPathEdit.setText( s.value("IfsttarTempus/startTempus", "/usr/local/bin/startTempus.sh" ) )
         self.dlg.ui.dbOptionsEdit.setText( s.value("IfsttarTempus/dbOptions", "dbname=tempus_test_db" ) )
+        self.dlg.ui.schemaNameEdit.setText( s.value("IfsttarTempus/schemaName", "tempus" ) )
         plugins = s.value("IfsttarTempus/plugins", ["sample_road_plugin", "sample_multi_plugin"] )
         for p in plugins:
             item = QListWidgetItem( p )
@@ -256,6 +262,56 @@ class IfsttarRouting:
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
 
+    def onClip( self ):
+        # current layer
+        l = self.iface.activeLayer()
+        if l and isinstance( l, QgsVectorLayer ) and l.dataProvider().name() == "postgres":
+            d = QgsDataSourceURI( l.source() )
+            connStr = "database: %s user:%s host:%s post:%s" % (d.database(), d.username(), d.host(), d.port())
+            r = QMessageBox.question( None, "Polygon subset selection",
+                                      "You are about to create a subset of the selected layer with the following connection settings:\n" + connStr + ". Are you sure ?",
+                                      QMessageBox.Yes | QMessageBox.No )
+            if r == QMessageBox.No:
+                return
+
+            QMessageBox.information( None, "Polygon selection",
+                                     "Please select the polygon used for subsetting. Cancel with right click. Confirm the last point with a double click.")
+            self.select = PolygonSelection( self.canvas )
+            self.select.polygonCaptured.connect( lambda valid : self.onPolygonCaptured(valid, d) )
+            self.canvas.setMapTool( self.select )
+        else:
+            QMessageBox.critical( None, "No layer selected",
+                                  "You must select the 'road_node' layer before proceeding" )
+
+    def onPolygonCaptured( self, valid, source ):
+        self.canvas.unsetMapTool( self.select )
+        if not valid:
+            return
+
+        schema, ok = QInputDialog.getText(None, "Name of the subset to create (schema)", "Schema name")
+        wkt = self.select.polygon
+
+        sql = "SELECT tempus.create_subset('%s','SRID=2154;%s');" % (schema, wkt)
+
+        dlg = QDialog(self.dlg)
+        v = QVBoxLayout()
+        log = QLabel( dlg )
+        v.addWidget(log)
+        btn = QDialogButtonBox( dlg )
+        btn.addButton(QDialogButtonBox.Ok)
+        v.addWidget(btn)
+        dlg.setLayout(v)
+        log.setText('Executing script ...\n')
+        dlg.show()
+
+        QCoreApplication.processEvents()
+
+        (sout, serr) = psql_query( source.host(), source.database(), source.username(), source.port(), sql )
+
+        btn.accepted.connect( dlg.close )
+        log.setText('Outputs:\n' + sout + 'Errors:\n' + serr)
+        dlg.setModal( True )
+
     def onBinPathBrowse( self ):
         d = QFileDialog.getOpenFileName( self.dlg, "Tempus wps executable path" )
         if d is not None:
@@ -275,10 +331,12 @@ class IfsttarRouting:
         self.onStopServer()
         executable = self.dlg.ui.tempusBinPathEdit.text()
         dbOptions = self.dlg.ui.dbOptionsEdit.text()
+        schemaName = self.dlg.ui.schemaNameEdit.text()
         plugins = []
         for i in range(self.dlg.ui.pluginsToLoadList.count()):
             plugins.append( self.dlg.ui.pluginsToLoadList.item(i).text() )
         cmdLine = [executable]
+        cmdLine += ['-s', schemaName]
         for p in plugins:
             cmdLine += ['-l', p]
         if dbOptions != '':
@@ -289,8 +347,9 @@ class IfsttarRouting:
 
         # save parameters
         s = QSettings()
-        s.setValue("IfsttarTempus/startTempus", self.dlg.ui.tempusBinPathEdit.text() )
-        s.setValue("IfsttarTempus/dbOptions", self.dlg.ui.dbOptionsEdit.text() )
+        s.setValue("IfsttarTempus/startTempus", executable )
+        s.setValue("IfsttarTempus/dbOptions", dbOptions )
+        s.setValue("IfsttarTempus/schemaName", schemaName )
         s.setValue("IfsttarTempus/plugins", plugins )
 
     def onStopServer( self ):
@@ -1015,7 +1074,8 @@ class IfsttarRouting:
 
     def unload(self):
         # Remove the plugin menu item and icon
-        self.iface.removePluginMenu(u"&Compute route",self.action)
+        self.iface.removePluginMenu(u"&Tempus",self.action)
+        self.iface.removePluginMenu(u"&Tempus",self.clipAction)
         self.iface.removeToolBarIcon(self.action)
 
     # run method that performs all the real work

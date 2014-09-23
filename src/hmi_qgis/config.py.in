@@ -38,4 +38,3 @@ if not is_exe(PSQL):
 
 if PSQL is None:
     raise OSError("Could not find psql.")
-
