@@ -93,7 +93,7 @@ namespace Tempus {
                     double wait_time;
 
                     // compute the time needed to transfer from one mode to another
-                    double cost = cost_calculator.transfer_time( graph, min_object.vertex, new_object.vertex, min_object.mode, new_object.mode );
+                    double cost = cost_calculator.transfer_time( graph, current_edge, min_object.mode, new_object.mode );
                     if ( cost < std::numeric_limits<double>::max() )
                     {
                         // will update final_trip_id and wait_time

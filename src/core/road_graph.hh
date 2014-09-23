@@ -80,15 +80,8 @@ struct Node : public Base {
 
     /// Total number of incident edges > 2
     DECLARE_RW_PROPERTY( is_bifurcation, bool );
-
-    /// Type of parking available on this node
-    /// This is to be used for parking on the streets
-    /// Special parks are represented using a POI
-    /// This is a bitfield value composeed of TransportModeTrafficRules
-    DECLARE_RW_PROPERTY( parking_traffic_rules, int );
-
 public:
-    Node() : is_bifurcation_(false), parking_traffic_rules_(0) {}
+    Node() : is_bifurcation_(false) {}
 };
 
 ///
@@ -128,8 +121,14 @@ struct Section : public Base {
     /// add a link to a POI
     void add_poi_ref( const POI* );
 
+    /// Type of parking available on this section
+    /// This is to be used for parking on the streets
+    /// Special parks are represented using a POI
+    /// This is a bitfield value composeed of TransportModeTrafficRules
+    DECLARE_RW_PROPERTY( parking_traffic_rules, int );
+
 public:
-    Section() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0) {}
+    Section() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0), parking_traffic_rules_(0) {}
 };
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
