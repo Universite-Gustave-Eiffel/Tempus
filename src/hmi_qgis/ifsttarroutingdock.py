@@ -221,6 +221,10 @@ class IfsttarRoutingDock(QDockWidget):
                                             coordinates_only = True,
                                             dock = self )
         self.parkingChooser.set_canvas( self.canvas )
+        self.parkingEnabledBox = QCheckBox( self.ui.queryPage )
+        self.parkingEnabledBox.stateChanged.connect( self.on_toggle_parking )
+        self.parkingEnabledBox.setCheckState( Qt.Unchecked )
+        self.ui.parkingLayout.addWidget( self.parkingEnabledBox )
         self.ui.parkingLayout.addWidget( self.parkingChooser )
 
         # set parking location updater
@@ -234,6 +238,9 @@ class IfsttarRoutingDock(QDockWidget):
             self.loadState( self.prefs )
         else:
             self.prefs = {}
+
+    def on_toggle_parking( self, state ):
+        self.parkingChooser.setEnabled( state == Qt.Checked )
 
     def updateLayers( self ):
         "Update pinpoints and parking layers"
@@ -374,13 +381,17 @@ class IfsttarRoutingDock(QDockWidget):
             model.setData( model.index(i,0), q, Qt.CheckStateRole )
 
     def get_parking( self ):
-        [x,y] = self.parkingChooser.get_coordinates()
-        if x < 0.001:
-            return []
-        return [x,y]
+        if self.parkingEnabledBox.checkState() == Qt.Checked:
+            [x,y] = self.parkingChooser.get_coordinates()
+            if x < 0.001:
+                return []
+            return [x,y]
+        return []
 
     def set_parking( self, xy ):
-        self.parkingChooser.set_coordinates( xy )
+        self.parkingEnabledBox.setCheckState( Qt.Unchecked if xy == [] else Qt.Checked )
+        if xy != []:
+            self.parkingChooser.set_coordinates( xy )
 
     def set_steps( self, nsteps ):
         # first remove all intermediary steps
