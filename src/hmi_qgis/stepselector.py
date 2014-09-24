@@ -88,9 +88,16 @@ class StepSelector( QFrame ):
 
         self.layout.addLayout( self.hlayout2 )
 
+        if self.updateCallback:
+            self.coordinates.textChanged.connect( self.on_coordinates_changed )
+
         if name != 'Origin':
             self.pvadCheck = QCheckBox( "Private vehicule at destination" )
             self.layout.addWidget( self.pvadCheck )
+
+    def on_coordinates_changed( self, new_text ):
+        if self.updateCallback:
+            self.updateCallback( self.dock )
 
     def set_canvas( self, canvas ):
         self.canvas = canvas
@@ -100,8 +107,11 @@ class StepSelector( QFrame ):
 
     def get_coordinates( self ):
         s = self.coordinates.text().split(',')
-        if len(s) == 2:
-            return [ float(s[0]), float(s[1]) ]
+        try:
+            if len(s) == 2:
+                return [ float(s[0]), float(s[1]) ]
+        except ValueError:
+            return [0,0]
         return [ 0, 0 ]
 
     def set_coordinates( self, xy ):
