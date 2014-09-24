@@ -859,6 +859,15 @@ class IfsttarRouting:
         [ox, oy] = coords[0]
         criteria = self.dlg.get_selected_criteria()
         constraints = self.dlg.get_constraints()
+        for i in range(len(constraints)-1):
+            ci, ti = constraints[i]
+            cj, tj = constraints[i+1]
+            dti = datetime.strptime(ti, "%Y-%m-%dT%H:%M:%S")
+            dtj = datetime.strptime(tj, "%Y-%m-%dT%H:%M:%S")
+            if ci == 2 and cj == 1 and dtj < dti:
+                QMessageBox.warning( self.dlg, "Warning", "Impossible constraint : " + tj + " < " + ti )
+                return
+
         parking = self.dlg.get_parking()
         pvads = self.dlg.get_pvads()
         #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
