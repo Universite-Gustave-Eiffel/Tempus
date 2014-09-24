@@ -134,9 +134,12 @@ drop sequence if exists tempus.seq_road_node_id;
 create sequence tempus.seq_road_node_id start with 1;
 select setval('tempus.seq_road_node_id', (select max(id) from tempus.road_node));
 
-drop table if exists _tempus_new_nodes;
-create /*temporary*/ table _tempus_new_nodes as
-select stop_id, nextval('tempus.seq_road_node_id')::bigint as node_id
+drop table if exists _tempus_import.new_nodes;
+create /*temporary*/ table _tempus_import.new_nodes as
+select
+   stop_id,
+   nextval('tempus.seq_road_node_id')::bigint as node_id,
+   nextval('tempus.seq_road_node_id')::bigint as node_id2
 from
 (
 select
@@ -161,11 +164,21 @@ insert into tempus.road_node
 select 
    nn.node_id as id,
    false as bifurcation,
-   st_force3DZ( geom ) as geom
-   from _tempus_new_nodes as nn,
+   st_force3DZ( st_translate(geom,-10,0,0) ) as geom
+   from _tempus_import.new_nodes as nn,
         _tempus_import.stops_geom as sg
    where
-        nn.stop_id = sg.stop_id;
+        nn.stop_id = sg.stop_id
+union
+select 
+   nn.node_id2 as id,
+   false as bifurcation,
+   st_force3DZ( st_translate(geom,10,0,0) ) as geom
+   from _tempus_import.new_nodes as nn,
+        _tempus_import.stops_geom as sg
+   where
+        nn.stop_id = sg.stop_id
+;
 
 drop sequence if exists tempus.seq_road_section_id;
 create sequence tempus.seq_road_section_id start with 1;
@@ -176,7 +189,7 @@ select
    nextval('tempus.seq_road_section_id')::bigint as id, 
    1 as road_type, -- ??
    node_id as node_from,
-   node_id as node_to,
+   node_id2 as node_to,
    65535 as traffic_rules_ft,
    65535 as traffic_rules_tf,
    0 as length,
@@ -191,7 +204,7 @@ select
    -- create an artificial line around the stop
    st_makeline(st_translate(geom, -10, 0, 0),st_translate(geom,10,0,0)) as geom
 from
-   _tempus_new_nodes as nn,
+   _tempus_import.new_nodes as nn,
    _tempus_import.stops_geom as sg
 where nn.stop_id = sg.stop_id
 ;
@@ -504,7 +517,6 @@ where trip_id in (select id from tempus.pt_trip) and stop_id in (select id from 
 
 -- restore constraints
 
-
 do $$
 begin
 raise notice '==== Update PT networks ====';
@@ -544,23 +556,6 @@ FROM
 	  ORDER BY network_id
 ) req
 WHERE req.network_id = pt_network.id; 
-
-
--- Update transport modes desserving pt stops
---UPDATE tempus.pt_stop
---SET transport_mode = reqB.transport_mode
---FROM 
---(
---SELECT stop_id, sum(transport_mode) AS transport_mode
---FROM
---(
---SELECT distinct pt_stop_time.stop_id, pt_route.transport_mode
---FROM tempus.pt_stop_time, tempus.pt_trip, tempus.pt_route
---WHERE pt_stop_time.trip_id = pt_trip.id AND pt_trip.route_id = pt_route.id
---) reqA
---GROUP BY stop_id
---) reqB
---WHERE pt_stop.id = reqB.stop_id ; 
 
 do $$
 begin
