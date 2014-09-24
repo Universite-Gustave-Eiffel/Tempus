@@ -233,7 +233,7 @@ CREATE TABLE tempus.poi
 	poi_type integer,
 	name varchar,
         parking_transport_modes integer[] NOT NULL,
-	road_section_id bigint REFERENCES tempus.road_section NOT NULL ON DELETE CASCADE ON UPDATE CASCADE,
+	road_section_id bigint REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE,
 	abscissa_road_section double precision NOT NULL CHECK (abscissa_road_section >= 0 AND abscissa_road_section <= 1)
 	-- NOTA: geometry column added NOT NULL
 );
@@ -458,8 +458,8 @@ COMMENT ON COLUMN tempus.pt_fare_rule.contains_id IS 'Zone ID referenced in temp
 -- GTFS Transfers
 CREATE TABLE tempus.pt_transfer
 (
-	from_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL ON DELETE CASCADE ON UPDATE CASCADE,
-	to_stop_id integer REFERENCES tempus.pt_stop (id) NOT NULL ON DELETE CASCADE ON UPDATE CASCADE,
+	from_stop_id integer REFERENCES tempus.pt_stop (id) ON DELETE CASCADE ON UPDATE CASCADE,
+	to_stop_id integer REFERENCES tempus.pt_stop (id) ON DELETE CASCADE ON UPDATE CASCADE,
 	transfer_type integer NOT NULL CHECK(transfer_type >=0 AND transfer_type <=3),
 	--    0 or (empty) - This is a recommended transfer point between two routes.
 	--    1 - This is a timed transfer point between two routes. The departing vehicle is expected to wait for the arriving one, with sufficient time for a passenger to transfer between routes.
