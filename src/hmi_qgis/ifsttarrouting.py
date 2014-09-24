@@ -88,16 +88,16 @@ def clearLayout( lay ):
         for row in range(0, rc):
             l1 = lay.itemAt( rc-row-1, QFormLayout.LabelRole )
             l2 = lay.itemAt( rc-row-1, QFormLayout.FieldRole )
-            if l1 is None or l2 is None:
-                break
-            lay.removeItem( l1 )
-            lay.removeItem( l2 )
-            w1 = l1.widget()
-            w2 = l2.widget()
-            lay.removeWidget( w1 )
-            lay.removeWidget( w2 )
-            w1.close()
-            w2.close()
+            if l1 is not None:
+                lay.removeItem( l1 )
+                w1 = l1.widget()
+                lay.removeWidget( w1 )
+                w1.close()
+            if l2 is not None:
+                lay.removeItem( l2 )
+                w2 = l2.widget()
+                lay.removeWidget( w2 )
+                w2.close()
 
 #
 # clears a BoxLayout
