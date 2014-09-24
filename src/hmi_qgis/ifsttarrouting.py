@@ -525,21 +525,23 @@ class IfsttarRouting:
 
         # browse steps
         for step in steps:
-            if step.wkb == '':
-                continue
-            # find wkb geometry
-            wkb = WKB(step.wkb)
-            wkb = wkb.force2d()
-
             fet = QgsFeature()
-            geo = QgsGeometry()
-            geo.fromWkb( binascii.unhexlify(wkb) )
+            if step.wkb != '':
+                # find wkb geometry
+                wkb = WKB(step.wkb)
+                wkb = wkb.force2d()
+                geo = QgsGeometry()
+                geo.fromWkb( binascii.unhexlify(wkb) )
+                fet.setGeometry( geo )
 
-            if NEW_API:
-                fet.setAttributes( [ step.mode ] )
+            if isinstance(step, Tempus.TransferStep):
+                mode = step.final_mode
             else:
-                fet.setAttributeMap( { 0: step.mode } )
-            fet.setGeometry( geo )
+                mode = step.mode
+            if NEW_API:
+                fet.setAttributes( [ mode ] )
+            else:
+                fet.setAttributeMap( { 0: mode } )
             pr.addFeatures( [fet] )
 
         if NEW_API:
@@ -666,8 +668,7 @@ class IfsttarRouting:
                             add_t = []
                             if imode.need_parking:
                                     add_t += ["park your %s" % imode.name]
-                            if fmode.need_parking:
-                                    add_t += ["take a %s" % fmode.name]
+                            add_t += ["take a %s" % fmode.name]
                             text += ' and '.join(add_t)
                     else:
                             text = "Continue on %s" % step.road

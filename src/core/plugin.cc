@@ -467,6 +467,22 @@ Result& Plugin::result()
                     poi_id = edge->source().poi()->db_id();
                 }
                 break;
+                case Multimodal::Edge::Road2Road: {
+                    const Road::Graph& rroad_graph = *( edge->source().road_graph() );
+                    const Road::Vertex& p1 = rroad_graph[ edge->source().road_vertex() ].db_id();
+                    const Road::Vertex& p2 = rroad_graph[ edge->target().road_vertex() ].db_id();
+                    // get as Linestring from A to B
+                    std::string query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                                         "(select geom from tempus.road_node where id=%1%) as t1, "
+                                                         "(select geom from tempus.road_node where id=%2%) as t2 "
+                                                         ) % p1 % p2 ).str();
+                    Db::Result res = db_.exec( query );
+                    BOOST_ASSERT( res.size() > 0 );
+                    std::string wkb = res[0][0].as<std::string>();
+                    // get rid of the heading '\x'
+                    step->set_geometry_wkb( wkb.substr( 2 ) );
+                }
+                break;
                 default:
                     break;
                 }
