@@ -93,10 +93,6 @@ select
 from
 	_tempus_import.agency;
 	
-do $$
-begin
-raise notice '==== PT stops ====';
-end$$;
 /* ==== Stops ==== */
 
 -- add geometry index on stops import table
@@ -127,6 +123,84 @@ alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
 alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;
+
+do $$
+begin
+raise notice '==== Insert new road nodes if needed ====';
+end$$;
+/* ==== Stops ==== */
+
+drop sequence if exists tempus.seq_road_node_id;
+create sequence tempus.seq_road_node_id start with 1;
+select setval('tempus.seq_road_node_id', (select max(id) from tempus.road_node));
+
+drop table if exists _tempus_new_nodes;
+create /*temporary*/ table _tempus_new_nodes as
+select stop_id, nextval('tempus.seq_road_node_id')::bigint as node_id
+from
+(
+select
+		distinct stops.stop_id
+	from
+		_tempus_import.stops
+	join
+		_tempus_import.stops_geom
+	on
+		stops.stop_id = stops_geom.stop_id
+	left join
+		tempus.road_section as rs
+	on
+		-- only consider road sections within xx meters
+		-- stops further than this distance will not be included
+		st_dwithin(stops_geom.geom, rs.geom, 500)
+	where
+	     rs.id is null
+) as t;
+
+insert into tempus.road_node
+select 
+   nn.node_id as id,
+   false as bifurcation,
+   st_force3DZ( geom ) as geom
+   from _tempus_new_nodes as nn,
+        _tempus_import.stops_geom as sg
+   where
+        nn.stop_id = sg.stop_id;
+
+drop sequence if exists tempus.seq_road_section_id;
+create sequence tempus.seq_road_section_id start with 1;
+select setval('tempus.seq_road_section_id', (select max(id) from tempus.road_section));
+
+insert into tempus.road_section
+select 
+   nextval('tempus.seq_road_section_id')::bigint as id, 
+   1 as road_type, -- ??
+   node_id as node_from,
+   node_id as node_to,
+   65535 as traffic_rules_ft,
+   65535 as traffic_rules_tf,
+   0 as length,
+   0 as car_speed_limit,
+   '' as road_name,
+   1 as lane,
+   false as roundabout,
+   false as bridge,
+   false as tunnel,
+   false as ramp,
+   false as tollway,
+   -- create an artificial line around the stop
+   st_makeline(st_translate(geom, -10, 0, 0),st_translate(geom,10,0,0)) as geom
+from
+   _tempus_new_nodes as nn,
+   _tempus_import.stops_geom as sg
+where nn.stop_id = sg.stop_id
+;
+
+
+do $$
+begin
+raise notice '==== PT stops ====';
+end$$;
 
 insert into
 	tempus.pt_stop
@@ -572,14 +646,28 @@ CREATE OR REPLACE VIEW tempus.pt_stop_by_network AS
   WHERE pt_network.id = pt_section.network_id AND (pt_section.stop_from = pt_stop.id OR pt_section.stop_to = pt_stop.id)
   AND pt_route.id = pt_trip.route_id AND (pt_trip.id = pt_stop_time.trip_id AND pt_stop_time.stop_id = pt_stop.id);
 
-DELETE FROM tempus.pt_stop
-WHERE id NOT IN
+-- delete stops not involved in a section and not parent of another stop
+delete from tempus.pt_stop
+where id IN
 (
-SELECT stop_from FROM tempus.pt_section
-UNION
-SELECT stop_to FROM tempus.pt_section
-);
 
-
+select stop.id
+from
+   tempus.pt_stop as stop
+left join
+   tempus.pt_stop as stop2
+on stop.id = stop2.parent_station
+left join
+   tempus.pt_section as s1
+on s1.stop_from = stop.id
+left join
+   tempus.pt_section as s2
+on s2.stop_to = stop.id
+where
+   s1.stop_from is null and
+   s2.stop_to is null and
+   stop2.parent_station is null
+)
+;
 
 
