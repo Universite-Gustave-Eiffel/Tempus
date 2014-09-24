@@ -80,6 +80,10 @@ class StepSelector( QFrame ):
         self.constraintBox.insertItem(1, "Before" )
         self.constraintBox.insertItem(2, "After" )
 
+        self.constraintBox.currentIndexChanged[int].connect( self.on_update_constraint )
+        self.constraintBox.setCurrentIndex(0)
+        self.on_update_constraint(0)
+
         self.hlayout2 = QHBoxLayout()
         self.hlayout2.setMargin( 0 )
         self.hlayout2.addWidget( self.constraintBox )
@@ -94,6 +98,10 @@ class StepSelector( QFrame ):
         if name != 'Origin':
             self.pvadCheck = QCheckBox( "Private vehicule at destination" )
             self.layout.addWidget( self.pvadCheck )
+
+    def on_update_constraint( self, idx ):
+        print "update constraint", idx
+        self.dateEdit.setEnabled( idx != 0 )
 
     def on_coordinates_changed( self, new_text ):
         if self.updateCallback:
