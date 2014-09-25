@@ -32,7 +32,7 @@ class MultinetImporter(ShpImporter):
     # Shapefile names to load, without the extension and prefix. It will be the table name.
     SHAPEFILES = ['nw', 'jc', 'mn', 'cf', '2r', 'rn', 'mp', 'is', 'ig', 'rs', 'td', 'sr']
     # SQL files to execute before loading shapefiles
-    PRELOADSQL = ["reset_import_schema.sql", "tempus.sql"]
+    PRELOADSQL = ["reset_import_schema.sql"]
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = ["multinet.sql"]
 

@@ -42,6 +42,10 @@ def import_poi(args, shape_options, poi_type, substitutions):
     poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type, substitutions)
     poii.load()
 
+def reset_db(args):
+    r = tempus.ResetImporter('', '', args.dbstring, args.logfile, '', False)
+    r.load()
+
 if __name__ == "__main__":
     shape_options = {}
     parser = argparse.ArgumentParser(description='Tempus data loader')
@@ -49,6 +53,9 @@ if __name__ == "__main__":
             help='The source directory/file to load data from')
     parser.add_argument('-S', '--srid', required=False,
             help="Set the SRID for geometries. Defaults to 4326 (lat/lon).")
+    parser.add_argument('-R', '--reset', required=False,
+                        help='Reset the database before importing',
+                        action='store_true', dest='doreset', default=False)
     parser.add_argument('-t', '--type', required=True,
                         help='The data type (tomtom, navteq, osm, gtfs, poi, route120, route500)')
     parser.add_argument('-d', '--dbstring', required=False,
@@ -95,6 +102,11 @@ if __name__ == "__main__":
     shape_options['I'] = True
     shape_options['g'] = 'geom'
     shape_options['S'] = True
+
+    # first reset if needed
+    if args.doreset:
+        reset_db( args )
+
     if args.type == 'tomtom':
         import_tomtom(args, shape_options)
     elif args.type == 'osm':

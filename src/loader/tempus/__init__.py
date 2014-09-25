@@ -24,3 +24,4 @@ from navteq import NavstreetsImporter
 from osm import OSMImporter
 from pt import GTFSImporter
 from poi import POIImporter
+from reset import ResetImporter

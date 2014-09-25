@@ -128,8 +128,6 @@ ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey
 	FOREIGN KEY (node_from) REFERENCES tempus.road_node;
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
 	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id);
-ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_road_type_fkey
-	FOREIGN KEY (road_type) REFERENCES tempus.road_type(id);
 ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey

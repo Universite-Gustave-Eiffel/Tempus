@@ -45,7 +45,7 @@ class GTFSImporter(DataImporter):
             ('stops', True),
             ('trips', True)]
     # SQL files to execute before loading GTFS data
-    PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql"]
+    PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql" ]
     # SQL files to execute after loading GTFS data 
     POSTLOADSQL = []
 

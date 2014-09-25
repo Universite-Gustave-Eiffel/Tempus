@@ -34,7 +34,7 @@ class OSMImporter(ShpImporter):
     # Shapefile names to load, without the extension and prefix. It will be the table name.
     SHAPEFILES = ['highway'] 
     # SQL files to execute before loading shapefiles
-    PRELOADSQL = ["reset_import_schema.sql", "tempus.sql"]
+    PRELOADSQL = ["reset_import_schema.sql"]
     # SQL files to execute after loading shapefiles 
     POSTLOADSQL = ["osm.sql", "osm_processing.sql"]
 
