@@ -374,7 +374,7 @@ class TempusRequest:
         # test wps connection
         [r, msg] = self.wps.get_capabilities()
         if r != 200:
-            raise RuntimeError("WPS connection problem: " + msg)
+            raise RuntimeError(msg)
         self.save = {}
 
     def plugin_list( self ):

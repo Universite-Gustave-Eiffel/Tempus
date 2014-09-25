@@ -126,6 +126,16 @@ class SplashScreen(QDialog):
         self.ui = Ui_SplashScreen()
         self.ui.setupUi(self)
 
+# process error message returned by WPS
+def displayError( error ):
+    if error.startswith('<ows:ExceptionReport'):
+        # WPS exception
+        t = ET.fromstring( error )
+        QMessageBox.warning( None, "Tempus error", t[0][0].text )
+    else:
+        # HTML
+        QMessageBox.warning( None, "Error", error )
+
 class IfsttarRouting:
 
     def __init__(self, iface):
@@ -358,7 +368,11 @@ class IfsttarRouting:
 
     # when the 'connect' button gets clicked
     def onConnect( self ):
-        self.wps = Tempus.TempusRequest( self.dlg.ui.wpsUrlText.text() )
+        try:
+            self.wps = Tempus.TempusRequest( self.dlg.ui.wpsUrlText.text() )
+        except RuntimeError as e:
+            displayError( e.args[0] )
+            return
 
         self.getPluginList()
         if len(self.plugins) == 0:
@@ -390,7 +404,7 @@ class IfsttarRouting:
         try:
             plugins = self.wps.plugin_list()
         except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", e.args[1] )
+            displayError( e.args[1] )
             return
         self.plugins.clear()
         for plugin in plugins:
@@ -410,7 +424,7 @@ class IfsttarRouting:
         try:
             (transport_modes, transport_networks) = self.wps.constant_list()
         except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", repr(e.args) )
+            displayError( e.args[1] )
             return
         self.transport_modes = transport_modes
         self.transport_modes_dict = {}
@@ -899,7 +913,7 @@ class IfsttarRouting:
                                            steps = steps
                                            )
         except RuntimeError as e:
-            QMessageBox.warning( self.dlg, "Error", repr(e.args) )
+            displayError( e.args[1] )
             return
 
         self.results = self.wps.results
