@@ -65,6 +65,7 @@ namespace Tempus {
             double min_pi = get( potential_map, min_object );
 			
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
+                vis.examine_edge( current_edge, graph );
                 for ( size_t i = 0; i < request_allowed_modes.size(); i++ ) {
                     db_id_t mode_id = request_allowed_modes[i];
                     boost::optional<TransportMode> mode;

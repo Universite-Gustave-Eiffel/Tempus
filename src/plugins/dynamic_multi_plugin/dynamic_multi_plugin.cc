@@ -84,8 +84,11 @@ public:
         }
     }
 
-    void edge_relaxed( const Multimodal::Edge&, unsigned int, const Multimodal::Graph& )
+    void edge_relaxed( const Multimodal::Edge& e, unsigned int mode, const Multimodal::Graph& )
     {
+        if (verbose_) {
+            std::cout << "Edge relaxed " << e << " mode " << mode << std::endl;
+        }
     }
 
 private:
