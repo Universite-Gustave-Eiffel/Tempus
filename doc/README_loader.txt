@@ -79,3 +79,9 @@ insert into tempus.road_restriction values (3, array[45049, 45049] );
 insert into tempus.road_restriction_time_penalty values (1, 0, 60, 'Infinity'::float);
 insert into tempus.road_restriction_time_penalty values (2, 0, 4, 'Infinity'::float);
 insert into tempus.road_restriction_time_penalty values (3, 0, 60, 'Infinity'::float);
+
+-- some PT frequencies
+-- Bus 26
+insert into tempus.pt_frequency values (1, 25963, '08:00', '20:00', 5*60);
+-- Tram 2
+insert into tempus.pt_frequency values (2, 24689, '08:00', '20:00', 5*60);
