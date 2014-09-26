@@ -40,7 +40,7 @@ class TestWPS(unittest.TestCase):
         self.client = HttpCgiConnection( WPS_HOST, WPS_PATH )
         self.wps = WPSClient(self.client)
 
-    def test_plugin( self ):
+    def test_forbidden_movements( self ):
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
 
@@ -48,8 +48,8 @@ class TestWPS(unittest.TestCase):
         # where a restriction forbids U-turn to cars
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         origin = Point( 355956.316044, 6688240.140580 ),
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "walk_at_destination": False },
-                        steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 )) ],
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 ), private_vehicule_at_destination = True) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [3] # car
                         )
@@ -59,9 +59,9 @@ class TestWPS(unittest.TestCase):
         # we request the same U_turn, but with a bike
         # (allowed)
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "walk_at_destination": False },
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point( 355956.316044, 6688240.140580 ),
-                        steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 )) ],
+                        steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 ), private_vehicule_at_destination = True) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [2] # bike
                         )
@@ -70,7 +70,7 @@ class TestWPS(unittest.TestCase):
         # we request the same U_turn, but walking
         # there is a shortcut in that case
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "walk_at_destination": False },
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point( 355956.316044, 6688240.140580 ),
                         steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 )) ],
                         criteria = [Cost.Duration],
@@ -78,35 +78,26 @@ class TestWPS(unittest.TestCase):
                         )
         self.assertEqual( len(tempus.results[0].steps), 2 )
 
+    def test_modes( self ):
+
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
         # request public transports
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "walk_at_destination": True },
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point( 356291.893979, 6687249.036434),
                         departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
                         steps = [ RequestStep(destination = Point( 355365.147244, 6689705.650793 )) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 5] # pedestrian and tram
                         )
-        self.assertEqual( len(tempus.results[0].steps), 8 )
+        self.assertEqual( len(tempus.results[0].steps), 6 )
 
         # request a shared bike
 
-        # Keep the bike at destination
+        # Use a shared bike
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "walk_at_destination": False },
-                        origin = Point(355943.384642, 6687666.979354),
-                        steps = [ RequestStep(destination = Point( 355410.137514, 6688374.297960 )) ],
-                        criteria = [Cost.Duration],
-                        allowed_transport_modes = [1, 8] # pedestrian and shared bike
-                        )
-        n_road2poi = len([ s for s in tempus.results[0].steps if isinstance(s, TransferStep) and s.mode == 1 and s.final_mode == 8 ])
-        n_poi2road = len([ s for s in tempus.results[0].steps if isinstance(s, TransferStep) and s.mode == 8 and s.final_mode == 1 ])
-        self.assertEqual( n_road2poi, 1 )
-        self.assertEqual( n_poi2road, 0 )
-
-        # This time, park the bike before destination
-        tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "walk_at_destination": True },
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point(355943.384642, 6687666.979354),
                         steps = [ RequestStep(destination = Point( 355410.137514, 6688374.297960 )) ],
                         criteria = [Cost.Duration],
@@ -116,6 +107,68 @@ class TestWPS(unittest.TestCase):
         n_poi2road = len([ s for s in tempus.results[0].steps if isinstance(s, TransferStep) and s.mode == 8 and s.final_mode == 1 ])
         self.assertEqual( n_road2poi, 1 )
         self.assertEqual( n_poi2road, 1 )
+
+    def test_parking( self ):
+
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        # private car
+        # only private car, at destination
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 355873.900102, 6687910.974614 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [3] # private car
+                        )
+        self.assertEqual(len(tempus.results[0].steps), 7)
+
+        # walking and private car, at destination
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 355873.900102, 6687910.974614 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 3] # walking, private car
+                        )
+        s1 = tempus.results[0].steps[0]
+        self.assertEqual( isinstance(s1, TransferStep) and s1.mode == 1 and s1.final_mode == 3, True )
+        self.assertEqual(len(tempus.results[0].steps), 8)
+
+        # walking and private car, at destination, with a private parking on the path
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 355873.900102, 6687910.974614 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 3], # walking, private car
+                        parking_location = Point(355745.798990, 6688016.989327)
+                        )
+        # check that the second step is a transfer
+        s2 = tempus.results[0].steps[1]
+        self.assertEqual( isinstance(s2, TransferStep) and s2.mode == 1 and s2.final_mode == 3, True )
+        self.assertEqual(len(tempus.results[0].steps), 9)
+
+        # walking and private car, with a private parking on the path, but must park before reaching destination
+        # car_park_search_time is artificially set to 0
+        print "Warning, this test is slow"
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "car_parking_search_time" : 0 },
+                        origin = Point( 355873.900102, 6687910.974614 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = False) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 3], # walking, private car
+                        parking_location = Point(355745.798990, 6688016.989327)
+                        )
+        # check that the second and n-1 step is a transfer
+        s2 = tempus.results[0].steps[1]
+        sn = tempus.results[0].steps[-3]
+        self.assertEqual( isinstance(s2, TransferStep) and s2.mode == 1 and s2.final_mode == 3, True )
+        self.assertEqual( isinstance(sn, TransferStep) and sn.mode == 3 and sn.final_mode == 1, True )
 
 if __name__ == '__main__':
     unittest.main()
