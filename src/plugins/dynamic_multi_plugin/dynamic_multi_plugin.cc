@@ -40,11 +40,16 @@ namespace Tempus {
 class DestinationDetectorVisitor
 {
 public:
-    DestinationDetectorVisitor( const Multimodal::Graph& graph, const Road::Vertex& destination, bool pvad = true, bool verbose = false ) :
+    DestinationDetectorVisitor( const Multimodal::Graph& graph,
+                                const Road::Vertex& destination,
+                                bool pvad,
+                                bool verbose,
+                                int& iterations) :
         graph_(graph),
         destination_(destination),
         pvad_(pvad),
-        verbose_(verbose) {}
+        verbose_(verbose),
+        iterations_(iterations) {}
 
     // the exception used to shortcut dijkstra
     struct path_found_exception
@@ -71,6 +76,7 @@ public:
         if (verbose_) {
             std::cout << "Examine triple (vertex=" << t.vertex << ", mode=" << t.mode << ", state=" << t.state << ")" << std::endl;
         }
+        iterations_++;
     }
 
     void finish_vertex( const Triple&, const Multimodal::Graph& )
@@ -97,6 +103,7 @@ private:
     // private vehicule at destination
     bool pvad_;
     bool verbose_;
+    int& iterations_;
 };
 
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
@@ -348,7 +355,7 @@ void DynamicMultiPlugin::process()
     CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_ );
 
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
-    DestinationDetectorVisitor vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_ );
+    DestinationDetectorVisitor vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
 
     Triple destination_o;
     bool path_found = false;
