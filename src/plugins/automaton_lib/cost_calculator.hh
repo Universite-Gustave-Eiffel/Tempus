@@ -271,6 +271,10 @@ public:
                     transf_t += car_parking_search_time_ ; // Personal car
                 // For bicycle, parking search time = 0
             }
+            // park on the private parking
+            else if ( private_parking_ && !initial_mode.is_shared() && tgt.road_vertex() == private_parking_.get() ) {
+                transf_t += 1;
+            }
             // park on streets
             else if ( ( tgt.type() == Multimodal::Vertex::Road ) && (src.type() == Multimodal::Vertex::Road) &&
                       ( (graph.road()[ edge.road_edge() ].parking_traffic_rules() & initial_mode.traffic_rules()) > 0 ) ) {
