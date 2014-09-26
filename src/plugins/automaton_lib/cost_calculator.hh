@@ -74,6 +74,7 @@ struct TimetableData {
 	
 struct FrequencyData {
     unsigned int trip_id; 
+    unsigned int mode_id;
     double end_time; 
     double headway;
     double travel_time; 
@@ -183,22 +184,26 @@ public:
                 else if (frequency_.find( pt_e ) != frequency_.end() ) {
                     std::map<double, FrequencyData>::iterator it = frequency_.find( pt_e )->second.lower_bound( initial_time );
                     if (it != frequency_.find( pt_e )->second.begin() ) {
-                        it--; 
-                        if (it->second.trip_id == initial_trip_id  && ( it->second.end_time >= initial_time ) ) { // Connection without transfer
-                            final_trip_id = it->second.trip_id; 
-                            wait_time = 0; 
-                            return it->second.travel_time ; 
-                        } 
-                        else { // No connection without transfer found
-                            it = frequency_.find( pt_e )->second.upper_bound( initial_time + min_transfer_time_ ); 
-                            if ( it != frequency_.find( pt_e )->second.begin() ) { 
-                                it--; 
-                                if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
-                                    final_trip_id = it->second.trip_id ; 
-                                    wait_time = it->second.headway/2 ; 
-                                    return it->second.travel_time + wait_time ; 
+                        it--;
+                        // only if the mode is allowed
+                        if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
+                             != allowed_transport_modes_.end() ) {
+                            if (it->second.trip_id == initial_trip_id  && ( it->second.end_time >= initial_time ) ) { // Connection without transfer
+                                final_trip_id = it->second.trip_id; 
+                                wait_time = 0; 
+                                return it->second.travel_time ; 
+                            } 
+                            else { // No connection without transfer found
+                                it = frequency_.find( pt_e )->second.upper_bound( initial_time + min_transfer_time_ ); 
+                                if ( it != frequency_.find( pt_e )->second.begin() ) { 
+                                    it--; 
+                                    if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
+                                        final_trip_id = it->second.trip_id ; 
+                                        wait_time = it->second.headway/2 ; 
+                                        return it->second.travel_time + wait_time ; 
+                                    }
                                 }
-                            }  
+                            }
                         }
                     }
                 }

@@ -253,10 +253,11 @@ void DynamicMultiPlugin::pre_process( Request& request )
         {
             // Charging necessary frequency data for request processing 
             Db::Result res = db_.exec( ( boost::format( "SELECT t1.stop_id as origin_stop, t2.stop_id as destination_stop, "
-                                                        "t1.trip_id, extract(epoch from pt_frequency.start_time)/60 as start_time, extract(epoch from pt_frequency.end_time)/60 as end_time, "
+                                                        "t1.trip_id, pt_route.transport_mode, extract(epoch from pt_frequency.start_time)/60 as start_time, extract(epoch from pt_frequency.end_time)/60 as end_time, "
                                                         "pt_frequency.headway_secs/60 as headway, extract(epoch from t2.departure_time - t1.arrival_time)/60 as travel_time "
-                                                        "FROM tempus.pt_stop_time t1, tempus.pt_stop_time t2, tempus.pt_trip, tempus.pt_frequency "
+                                                        "FROM tempus.pt_stop_time t1, tempus.pt_stop_time t2, tempus.pt_trip, tempus.pt_frequency, tempus.pt_route "
                                                         "WHERE t1.trip_id=t2.trip_id AND t1.stop_sequence + 1 = t2.stop_sequence AND pt_trip.id=t1.trip_id AND pt_frequency.trip_id = t1.trip_id "
+                                                        "AND pt_route.id = pt_trip.route_id "
                                                         "AND pt_trip.service_id IN "
                                                         "("
                                                         "	(WITH calend AS ("
@@ -276,7 +277,6 @@ void DynamicMultiPlugin::pre_process( Request& request )
                                                         "		WHERE calendar_date='%1%' AND exception_type=1"
                                                         "	)"
                                                         ")") % boost::gregorian::to_simple_string(s_.current_day) ).str() ); 
-				
             for ( size_t i = 0; i < res.size(); i++ ) {
                 PublicTransport::Vertex departure, arrival; 
                 PublicTransport::Edge e; 
@@ -286,12 +286,13 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
                 FrequencyData f; 
                 f.trip_id=res[i][2].as<int>(); 
-                f.end_time=res[i][4].as<double>(); 
-                f.headway=res[i][5].as<double>(); 
-                f.travel_time=res[i][6].as<double>(); 
+                f.mode_id = res[i][3].as<int>();
+                f.end_time=res[i][5].as<double>(); 
+                f.headway=res[i][6].as<double>(); 
+                f.travel_time=res[i][7].as<double>(); 
 					
                 s_.frequency.insert( std::make_pair(e, map<double, FrequencyData>() ) ); 
-                s_.frequency[e].insert( std::make_pair( res[i][3].as<double>(), f ) ) ; 	
+                s_.frequency[e].insert( std::make_pair( res[i][4].as<double>(), f ) ) ; 	
             }
         }
     }
