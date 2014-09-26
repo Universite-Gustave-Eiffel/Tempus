@@ -104,8 +104,29 @@ class TestWPS(unittest.TestCase):
                         )
         self.assertEqual( len(tempus.results[0].steps), 7 )
 
-        # request a shared bike
+        # request public transports with frequency-based scheduling
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
+                        origin = Point( 356171.238242, 6687756.369824 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        self.assertEqual( len(tempus.results[0].steps), 8 )
 
+        # request public transports with frequency-based scheduling
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
+                        origin = Point( 356171.238242, 6687756.369824 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 6] # pedestrian and BUS only
+                        )
+        self.assertEqual( len(tempus.results[0].steps), 7 )
+
+        # request a shared bike
         # Use a shared bike
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         plugin_options = { 'verbose_algo' : False, "verbose" : False },
