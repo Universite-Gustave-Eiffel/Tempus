@@ -210,9 +210,10 @@ void DynamicMultiPlugin::pre_process( Request& request )
         {
             // Charging necessary timetable data for request processing
             Db::Result res = db_.exec( ( boost::format( "SELECT t1.stop_id as origin_stop, t2.stop_id as destination_stop, "
-                                                        "t1.trip_id, extract(epoch from t1.arrival_time)/60 as departure_time, extract(epoch from t2.departure_time)/60 as arrival_time "
-                                                        "FROM tempus.pt_stop_time t1, tempus.pt_stop_time t2, tempus.pt_trip "
+                                                        "t1.trip_id, pt_route.transport_mode, extract(epoch from t1.arrival_time)/60 as departure_time, extract(epoch from t2.departure_time)/60 as arrival_time "
+                                                        "FROM tempus.pt_stop_time t1, tempus.pt_stop_time t2, tempus.pt_trip, tempus.pt_route "
                                                         "WHERE t1.trip_id = t2.trip_id AND t1.stop_sequence + 1 = t2.stop_sequence AND pt_trip.id = t1.trip_id "
+                                                        "AND pt_route.id = pt_trip.route_id "
                                                         "AND pt_trip.service_id IN "
                                                         "("
                                                         "	(WITH calend AS ("
@@ -242,9 +243,10 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
                 TimetableData t; 
                 t.trip_id=res[i][2].as<int>(); 
-                t.arrival_time=res[i][4].as<double>(); 
+                t.mode_id = res[i][3].as<int>();
+                t.arrival_time=res[i][5].as<double>(); 
                 s_.timetable.insert( std::make_pair(e, map<double, TimetableData>() ) ); 
-                s_.timetable[e].insert( std::make_pair( res[i][3].as<double>(), t ) ) ; 				
+                s_.timetable[e].insert( std::make_pair( res[i][4].as<double>(), t ) ) ; 				
             }
         }
         else if (timetable_frequency_ == 1) // frequency model

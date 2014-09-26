@@ -67,7 +67,8 @@ double penalty ( const AutomatonGraph& graph, const typename boost::graph_traits
 }		
 
 struct TimetableData {
-    unsigned int trip_id; 
+    unsigned int trip_id;
+    unsigned int mode_id;
     double arrival_time; 
 };
 	
@@ -159,18 +160,22 @@ public:
                     // get the time, just after initial_time
                     std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;
 
-                    if ( it != tt.end() ) { 								
-                        if (it->second.trip_id == initial_trip_id ) { 
-                            final_trip_id = it->second.trip_id; 
-                            wait_time = 0; 
-                            return it->second.arrival_time - initial_time ; 
-                        } 
-                        else { // No connection without transfer found
-                            it = tt.lower_bound( initial_time + min_transfer_time_ ); 
-                            if ( it != tt.end() ) {
+                    if ( it != tt.end() ) {
+                        // only if the mode is allowed
+                        if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
+                             != allowed_transport_modes_.end() ) {
+                            if (it->second.trip_id == initial_trip_id ) { 
                                 final_trip_id = it->second.trip_id; 
-                                wait_time = it->first - initial_time ; 
+                                wait_time = 0; 
                                 return it->second.arrival_time - initial_time ; 
+                            } 
+                            else { // No connection without transfer found
+                                it = tt.lower_bound( initial_time + min_transfer_time_ ); 
+                                if ( it != tt.end() ) {
+                                    final_trip_id = it->second.trip_id; 
+                                    wait_time = it->first - initial_time ; 
+                                    return it->second.arrival_time - initial_time ; 
+                                }
                             }
                         }
                     }

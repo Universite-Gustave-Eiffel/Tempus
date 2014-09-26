@@ -85,13 +85,24 @@ class TestWPS(unittest.TestCase):
         # request public transports
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         plugin_options = { 'verbose_algo' : False, "verbose" : False },
-                        origin = Point( 356291.893979, 6687249.036434),
+                        origin = Point( 356171.238242, 6687756.369824 ),
                         departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
-                        steps = [ RequestStep(destination = Point( 355365.147244, 6689705.650793 )) ],
+                        steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
                         criteria = [Cost.Duration],
-                        allowed_transport_modes = [1, 5] # pedestrian and tram
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
                         )
-        self.assertEqual( len(tempus.results[0].steps), 6 )
+        self.assertEqual( len(tempus.results[0].steps), 8 )
+
+        # request public transports
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356171.238242, 6687756.369824 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 6] # pedestrian and BUS only
+                        )
+        self.assertEqual( len(tempus.results[0].steps), 7 )
 
         # request a shared bike
 
