@@ -106,6 +106,20 @@ private:
     int& iterations_;
 };
 
+struct EuclidianHeuristic
+{
+public:
+    EuclidianHeuristic( const Road::Vertex& destination ) :
+        destination_(destination) {}
+
+    double operator()( const Multimodal::Vertex& v )
+    {
+        return 0.0;
+    }
+private:
+    Road::Vertex destination_;
+};
+
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
     Plugin::OptionDescriptionList odl; 
@@ -357,10 +371,11 @@ void DynamicMultiPlugin::process()
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
     DestinationDetectorVisitor vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
 
+    EuclidianHeuristic heuristic( request_.destination() );
     Triple destination_o;
     bool path_found = false;
     try {
-        combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis );
+        combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, heuristic );
     }
     catch ( DestinationDetectorVisitor::path_found_exception& e ) {
         // Dijkstra has been short cut when the destination node is reached

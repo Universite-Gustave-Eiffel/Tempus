@@ -46,15 +46,16 @@ namespace Tempus {
                                        TripMap trip_map, 
                                        WaitMap wait_map, 
                                        const std::vector<db_id_t>& request_allowed_modes,
-                                       Visitor vis) 
+                                       Visitor vis,
+                                       boost::function<double (const Multimodal::Vertex&)> heuristic) 
     {
         typedef boost::indirect_cmp< PotentialMap, std::greater<double> > Cmp; 
-        Cmp cmp( potential_map ); 
+        Cmp cmp( potential_map );
 		
         typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;  
         VertexQueue vertex_queue( cmp ); 
         vertex_queue.push( source_object ); 
-		
+
         Object min_object; 
 
         while ( !vertex_queue.empty() ) {
@@ -109,6 +110,9 @@ namespace Tempus {
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
                             cost += penalty( automaton.automaton_graph_, s, mode->traffic_rules() ) ;
                         }
+                    }
+                    if ( cost < std::numeric_limits<double>::max() ) {
+                        cost += heuristic( new_object.vertex );
                     }
 
                     if ( ( cost < std::numeric_limits<double>::max() ) && ( min_pi + cost < new_pi ) ) {
