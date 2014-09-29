@@ -155,7 +155,7 @@ select
 	on
 		-- only consider road sections within xx meters
 		-- stops further than this distance will not be included
-		st_dwithin(stops_geom.geom, rs.geom, 500)
+		_st_dwithin(stops_geom.geom, rs.geom, 500)
 	where
 	     rs.id is null
 ) as t;
