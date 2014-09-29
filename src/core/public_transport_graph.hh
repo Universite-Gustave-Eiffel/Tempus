@@ -116,6 +116,10 @@ public:
     ///
     /// Fare zone ID of this stop
     DECLARE_RW_PROPERTY( zone_id, int );
+
+    ///
+    /// coordinates
+    DECLARE_RW_PROPERTY( coordinates, Point3D );
 };
 
 ///

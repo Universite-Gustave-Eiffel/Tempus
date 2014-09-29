@@ -95,6 +95,9 @@ public:
     /// @returns the POI, if it's a POI, or 0
     const POI* poi() const;
 
+    /// @returns the coordinates, whatever the vertex type
+    Point3D coordinates() const;
+
 private:
     struct RoadVertex_
     {
@@ -122,6 +125,33 @@ private:
             return graph == other.graph ? vertex < other.vertex : graph < other.graph;
         }
     };
+
+    template <class T, class Visitor>
+    struct ProxyVisitor : public boost::static_visitor<T>
+    {
+        Visitor visitor_;
+        ProxyVisitor( Visitor visitor ) : visitor_(visitor) {}
+        T operator()(const RoadVertex_& r ) const
+        {
+            return visitor_( *r.graph, r.vertex );
+        }
+        T operator()(const PtVertex_& r ) const
+        {
+            return visitor_( *r.graph, r.vertex );
+        }
+        T operator()(const POI* p ) const
+        {
+            return visitor_( *p );
+        }
+    };
+
+    template <class T, class Visitor>
+    T apply_visitor_( Visitor v ) const
+    {
+        ProxyVisitor<T,Visitor> pv(v);
+        return boost::apply_visitor( pv, union_ );
+    }
+
     bool is_null_;
     boost::variant< RoadVertex_, PtVertex_, const POI * > union_;
 };

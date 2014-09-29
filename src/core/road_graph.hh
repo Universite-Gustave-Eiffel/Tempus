@@ -21,6 +21,7 @@
 #include <boost/optional.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include "common.hh"
+#include "point.hh"
 
 namespace Tempus {
 // forward declaration
@@ -80,6 +81,9 @@ struct Node : public Base {
 
     /// Total number of incident edges > 2
     DECLARE_RW_PROPERTY( is_bifurcation, bool );
+
+    /// coordinates
+    DECLARE_RW_PROPERTY( coordinates, Point3D );
 public:
     Node() : is_bifurcation_(false) {}
 };

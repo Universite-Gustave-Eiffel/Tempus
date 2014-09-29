@@ -24,6 +24,7 @@
 #include "../public_transport_graph.hh"
 #include "../multimodal_graph.hh"
 #include "../db.hh"
+#include "../point.hh"
 
 namespace Tempus {
 ///
@@ -62,12 +63,6 @@ std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id
     // null element
     return std::make_pair( typename boost::graph_traits<G>::edge_descriptor(), false );
 }
-
-///
-/// 2D Points
-struct Point2D {
-    double x,y;
-};
 
 ///
 /// Get 2D coordinates of a road vertex, from the database

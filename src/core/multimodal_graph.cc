@@ -1035,4 +1035,28 @@ std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it
     return ostr;
 }
 
+class coordinates_visitor
+{
+public:
+    Point3D operator()(const Road::Graph& g, const Road::Vertex& v ) const
+    {
+        return g[v].coordinates();
+    }
+    
+    Point3D operator()(const PublicTransport::Graph& g, const PublicTransport::Vertex& v ) const
+    {
+        return g[v].coordinates();
+    }
+
+    Point3D operator()(const POI& p) const
+    {
+        return p.coordinates();
+    }
+};
+
+Point3D Multimodal::Vertex::coordinates() const
+{
+    return apply_visitor_<Point3D, coordinates_visitor>( coordinates_visitor() );
+}
+
 }

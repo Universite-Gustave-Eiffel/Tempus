@@ -59,6 +59,10 @@ struct POI : public Base {
     ///
     /// Number between 0 and 1 : position of the POI on the main road section
     DECLARE_RW_PROPERTY( abscissa_road_section, Abscissa );
+
+    ///
+    /// coordinates
+    DECLARE_RW_PROPERTY( coordinates, Point3D );
 };
 
 }
