@@ -71,7 +71,7 @@ Car parkings
 
 - two dummy turn restrictions on the road network (see the tempus.road_road table)
 
-insert into tempus.road_restriction values (1, array[45588,45053] );
+insert into tempus.road_restriction values (1, array[45727, 14590] );
 insert into tempus.road_restriction values (2, array[45049,14228,45084] );
 insert into tempus.road_restriction values (3, array[45049, 45049] );
 # 60: for all types of cars
