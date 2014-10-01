@@ -80,15 +80,15 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   endPostgres:
   
   ; **** INSTALL QGIS ***
-  MessageBox MB_YESNO 'Install QGIS 2.0 ?' /SD IDYES IDNO endQGIS
-    NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-    IfFileExists QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe QgisExists QgisMissing
+  MessageBox MB_YESNO 'Install QGIS 2.4 ?' /SD IDYES IDNO endQGIS
+    NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe
+    IfFileExists QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe QgisExists QgisMissing
     QgisExists:
-       ExecWait QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
-       Delete QGIS-OSGeo4W-2.0.1-2-Setup-x86.exe
+       ExecWait QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe
+       Delete QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe
        Goto endQGIS
     QgisMissing:
-       MessageBox MB_OK 'Unable to download QGIS 2.0' 
+       MessageBox MB_OK 'Unable to download QGIS 2.4' 
   endQGIS:
   
   ; *** INSTALL NGINX ***
