@@ -209,6 +209,7 @@ class IfsttarRouting:
         self.dlg.ui.stopServerBtn.clicked.connect( self.onStopServer )
 
         QObject.connect(self.dlg.ui.computeBtn, SIGNAL("clicked()"), self.onCompute)
+        QObject.connect(self.dlg.ui.resetBtn, SIGNAL("clicked()"), self.onReset)
         QObject.connect(self.dlg.ui.verticalTabWidget, SIGNAL("currentChanged( int )"), self.onTabChanged)
 
         QObject.connect( self.dlg.ui.pluginCombo, SIGNAL("currentIndexChanged(int)"), self.update_plugin_options )
@@ -860,6 +861,11 @@ class IfsttarRouting:
                 self.currentRoadmap = i
                 self.dlg.ui.showElevationsBtn.show()
                 break
+
+
+    def onReset( self ):
+        # reset prefs
+        self.dlg.reset_prefs()
 
     #
     # When the 'compute' button gets clicked

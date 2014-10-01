@@ -109,6 +109,7 @@ class IfsttarRoutingDock(QDockWidget):
         self.set_constraints( state['constraints'] )
         self.set_parking( state['parking'] )
         self.set_pvads( state['pvads'] )
+        self.set_selected_transports( state['transports'] )
 
     def loadFromXML( self, xml ):
         pson = to_pson(xml)
@@ -179,6 +180,7 @@ class IfsttarRoutingDock(QDockWidget):
             'constraints': self.get_constraints(),
             'parking' : self.get_parking(),
             'pvads': self.get_pvads(),
+            'transports': self.selected_transports()
             }
         return state
 
@@ -231,6 +233,9 @@ class IfsttarRoutingDock(QDockWidget):
         self.parkingChooser.updateCallback = update_parking
         self.parkingChooser.dock = self
 
+        self.reset_prefs()
+
+    def reset_prefs( self ):
         # preferences is an object used to store user preferences
         if os.path.exists( PREFS_FILE ):
             f = open( PREFS_FILE, 'r' )
