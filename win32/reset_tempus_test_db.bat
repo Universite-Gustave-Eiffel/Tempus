@@ -20,6 +20,10 @@ GOTO end
 copy "%PGPATH%\data\pg_hba.conf" "%PGPATH%\data\pg_hba.conf.back">nul
 copy data\%conf_file% "%PGPATH%\data\pg_hba.conf">nul
 
+:: decompress .sql.zip
+SET cpath=%~dp0
+cscript //nologo unzip.vbs "%cpath%data\tempus_test_db.sql.zip" "%cpath%data"
+
 "%PGPATH%\bin\dropdb" -U postgres tempus_test_db 
 "%PGPATH%\bin\createdb" -U postgres tempus_test_db
 "%PGPATH%\bin\psql" -U postgres -d tempus_test_db -f data\create_extension_postgis.sql
