@@ -79,6 +79,10 @@ public:
         iterations_++;
     }
 
+    void discover_vertex( const Triple&, const Multimodal::Graph& )
+    {
+    }
+
     void finish_vertex( const Triple&, const Multimodal::Graph& )
     {
     }
@@ -95,6 +99,9 @@ public:
         if (verbose_) {
             std::cout << "Edge relaxed " << e << " mode " << mode << std::endl;
         }
+    }
+    void edge_not_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& )
+    {
     }
 
 private:

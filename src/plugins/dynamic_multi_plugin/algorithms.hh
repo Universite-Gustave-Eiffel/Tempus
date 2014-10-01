@@ -66,6 +66,7 @@ struct HeuristicCompare
         typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;  
         VertexQueue vertex_queue( cmp ); 
         vertex_queue.push( source_object ); 
+        vis.discover_vertex( source_object, graph );
 
         Object min_object; 
 
@@ -124,6 +125,8 @@ struct HeuristicCompare
                     }
 
                     if ( ( cost < std::numeric_limits<double>::max() ) && ( min_pi + cost < new_pi ) ) {
+                        vis.edge_relaxed( current_edge, mode_id, graph ); 
+
                         put( potential_map, new_object, min_pi + cost ); 
                         put( trip_map, new_object, final_trip_id ); 
 
@@ -131,10 +134,13 @@ struct HeuristicCompare
                         put( wait_map, min_object, wait_time ); 
 
                         vertex_queue.push( new_object ); 
-
-                        vis.edge_relaxed( current_edge, mode_id, graph ); 
+                        vis.discover_vertex( new_object, graph );
+                    }
+                    else {
+                        vis.edge_not_relaxed( current_edge, mode_id, graph );
                     }
                 }
+                vis.finish_vertex( min_object, graph );
             }
 
             vis.finish_vertex( min_object, graph ); 
