@@ -10,6 +10,31 @@ Some usage examples of the data loader:
 
 ./load_tempus -s ../../data/multinet -t osm -d "host=localhost dbname=tempus user=postgres port=5433" -l /tmp/tempus.load
 
+OSM2SHP
+-------
+
+The Tempus loader for OSM data has been originally designed to work with OSM shapefiles exports from CloudMade.
+Unfortunately this shapefile provider no longer delivers shapefile extracts.
+
+The small 'osm2shp' utility then allows to convert a native OSM file to a shapefile readable by the Tempus loader.
+
+OSM native file formats are:
+* .osm, xml based file format
+* .pbf, protobuffer based binary format
+
+osm2shp only accepts .osm XML format in input.
+Conversion from/to .osm and .pbf can be done through the use of utilities like osmosis.
+
+OSM dumps in native formats may be obtained from different providers.
+Have a look at http://wiki.openstreetmap.org/wiki/Planet.osm for a list of such mirrors.
+Planet dumps can be downloaded as well as country / region extracts.
+
+For instance, to import the road network from an OSM extract (pbf) into Tempus, use a command like :
+osmosis --read-pbf /path/to/osm-extract.pbf --write-xml - | osm2shp -d . /dev/stdin
+
+* "--write-xml -" is used to direct the pbf/osm conversion to the standard output
+* using "/dev/stdin" (if you're using bash) allows to read data from the standard input
+
 Public transportation data
 --------------------------
 
