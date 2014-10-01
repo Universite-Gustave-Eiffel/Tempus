@@ -28,10 +28,11 @@ import config
 
 class StepSelector( QFrame ):
 
-    def __init__( self, parent, name = "Origin", coordinates_only = False, dock = None, updateCall = None ):
+    coordinates_changed = pyqtSignal()
+
+    def __init__( self, parent, name = "Origin", coordinates_only = False, dock = None ):
         QFrame.__init__( self )
         self.parent = parent
-        self.updateCallback = updateCall
         self.dock = dock
 
         self.layout = QVBoxLayout( self )
@@ -92,20 +93,17 @@ class StepSelector( QFrame ):
 
         self.layout.addLayout( self.hlayout2 )
 
-        if self.updateCallback:
-            self.coordinates.textChanged.connect( self.on_coordinates_changed )
+        self.coordinates.textChanged.connect( self.on_coordinates_changed )
 
         if name != 'Origin':
             self.pvadCheck = QCheckBox( "Private vehicule at destination" )
             self.layout.addWidget( self.pvadCheck )
 
     def on_update_constraint( self, idx ):
-        print "update constraint", idx
         self.dateEdit.setEnabled( idx != 0 )
 
     def on_coordinates_changed( self, new_text ):
-        if self.updateCallback:
-            self.updateCallback( self.dock )
+        self.coordinates_changed.emit()
 
     def set_canvas( self, canvas ):
         self.canvas = canvas
@@ -158,7 +156,9 @@ class StepSelector( QFrame ):
 
     def onAdd( self ):
         # we assume the parent widget is a QLayout
-        s = StepSelector( self.parent, "Step", False, self.dock, self.updateCallback )
+        s = StepSelector( self.parent, "Step", False, self.dock )
+        # forward the signal
+        s.coordinates_changed.connect( lambda: self.coordinates_changed.emit() )
         s.set_canvas( self.canvas )
 
         # remove the last one
@@ -173,8 +173,7 @@ class StepSelector( QFrame ):
         self.close()
 
         # update pin points layer
-        if self.updateCallback:
-            self.updateCallback( self.dock )
+        self.coordinates_changed.emit()
 
     def onSelect( self ):
         # will reset coordinates if needed
@@ -190,6 +189,5 @@ class StepSelector( QFrame ):
         QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
         self.canvas.refresh()
 
-        if self.updateCallback:
-            self.updateCallback( self.dock )
+        self.coordinates_changed.emit()
 

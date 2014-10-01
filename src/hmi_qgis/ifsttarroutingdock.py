@@ -70,29 +70,21 @@ def display_pinpoints( coords, start_letter, style_file, layer_name, canvas ):
         vl.loadNamedStyle( config.DATA_DIR + "/" + style_file )
         QgsMapLayerRegistry.instance().addMapLayers( [vl] )
 
-    pr = vl.dataProvider()
-    i = 0
-    for coord in coords:
-        fet = QgsFeature()
-        pt = QgsPoint( coord[0], coord[1] )
-        geo = QgsGeometry.fromPoint( pt )
-        fet.setGeometry( geo )
-        tag = chr(ord( start_letter )+i)
-        fet.setAttributes( [tag] )
-        pr.addFeatures( [fet] )
-        i = i + 1
+    if coords is not None:
+        pr = vl.dataProvider()
+        i = 0
+        for coord in coords:
+            fet = QgsFeature()
+            pt = QgsPoint( coord[0], coord[1] )
+            geo = QgsGeometry.fromPoint( pt )
+            fet.setGeometry( geo )
+            tag = chr(ord( start_letter )+i)
+            fet.setAttributes( [tag] )
+            pr.addFeatures( [fet] )
+            i = i + 1
 
     # refresh canvas
-    canvas.updateFullExtent()
-
-def update_pinpoints( dock ):
-    display_pinpoints( dock.get_coordinates(), 'A', 'style_pinpoints.qml', 'Tempus_pin_points', dock.canvas )
-
-def update_parking( dock ):
-    c = dock.get_parking()
-    if c == []:
-        return
-    display_pinpoints( [ c ], 'P', 'style_parking.qml', 'Tempus_private_parking', dock.canvas )
+    canvas.refresh()
 
 # create the dialog for route queries
 class IfsttarRoutingDock(QDockWidget):
@@ -187,6 +179,8 @@ class IfsttarRoutingDock(QDockWidget):
     def __init__(self, canvas):
         QDockWidget.__init__(self)
         self.canvas = canvas
+        self.in_query = False
+
         # Set up the user interface from Designer.
         self.ui = Ui_IfsttarRoutingDock()
         self.ui.setupUi(self)
@@ -206,8 +200,8 @@ class IfsttarRoutingDock(QDockWidget):
         # add the Destination chooser
         dest = StepSelector( self.ui.stepBox, "Destination",
                              coordinates_only = False,
-                             dock = self,
-                             updateCall = update_pinpoints)
+                             dock = self )
+        dest.coordinates_changed.connect( self.update_pinpoints )
         dest.set_canvas( self.canvas )
         self.ui.stepBox.addWidget( dest )
 
@@ -215,7 +209,7 @@ class IfsttarRoutingDock(QDockWidget):
         self.ui.scrollArea.setMinimumHeight( dest.sizeHint().height() )
 
         # set pin points updater
-        self.ui.origin.updateCallback = update_pinpoints
+        self.ui.origin.coordinates_changed.connect( self.update_pinpoints )
         self.ui.origin.dock = self
 
         # add the private parking chooser
@@ -230,7 +224,7 @@ class IfsttarRoutingDock(QDockWidget):
         self.ui.parkingLayout.addWidget( self.parkingChooser )
 
         # set parking location updater
-        self.parkingChooser.updateCallback = update_parking
+        self.parkingChooser.coordinates_changed.connect( self.update_parking )
         self.parkingChooser.dock = self
 
         self.reset_prefs()
@@ -246,11 +240,12 @@ class IfsttarRoutingDock(QDockWidget):
 
     def on_toggle_parking( self, state ):
         self.parkingChooser.setEnabled( state == Qt.Checked )
+        self.update_parking()
 
     def updateLayers( self ):
         "Update pinpoints and parking layers"
-        update_pinpoints( self )
-        update_parking( self )
+        self.update_pinpoints()
+        self.update_parking()
 
     def closeEvent( self, event ):
         self.prefs = self.saveState()
@@ -347,6 +342,8 @@ class IfsttarRoutingDock(QDockWidget):
     def selected_transports( self ):
         s = []
         model = self.ui.transportList.model()
+        if model is None:
+            return s
         n = model.rowCount()
         for i in range(0, n):
             v = model.data( model.index(i,0), Qt.CheckStateRole )
@@ -366,6 +363,8 @@ class IfsttarRoutingDock(QDockWidget):
 
     def set_selected_transports( self, sel ):
         model = self.ui.transportList.model()
+        if model is None:
+            return
         n = model.rowCount()
         for i in range(0, n):
             if i in sel:
@@ -411,23 +410,12 @@ class IfsttarRoutingDock(QDockWidget):
     def reset( self ):
         self.newQuery = True
 
+    def inQuery( self ):
+        self.in_query = True
+        self.updateLayers()
+
     def resetCoordinates( self ):
         "called by StepSelector on coordinate modification"
-        if self.newQuery:
-            c = self.get_coordinates()
-            self.set_coordinates( [ [] for x in c ] )
-            self.set_parking( [] )
-            # remove layers
-            to_remove = ['Tempus_pin_points', 'Tempus_private_parking']
-            to_remove_ids = []
-            maps = QgsMapLayerRegistry.instance().mapLayers()
-            for k,v in maps.items():
-                for l in to_remove:
-                    if v.name()[0:len(l)] == l:
-                        to_remove_ids.append( v.id() )
-            QgsMapLayerRegistry.instance().removeMapLayers( to_remove_ids )
-            self.newQuery = False
-
         # always delete the roadmap
         l = 'Tempus_Roadmap_'
         maps = QgsMapLayerRegistry.instance().mapLayers()
@@ -435,3 +423,16 @@ class IfsttarRoutingDock(QDockWidget):
             if v.name()[0:len(l)] == l:
                 QgsMapLayerRegistry.instance().removeMapLayers( [v.id()] )
                 break
+
+    def update_pinpoints( self ):
+        if self.in_query:
+            display_pinpoints( self.get_coordinates(), 'A', 'style_pinpoints.qml', 'Tempus_pin_points', self.canvas )
+
+    def update_parking( self ):
+        c = self.get_parking()
+        if c == []:
+            p = None
+        else:
+            p = [c]
+        display_pinpoints( p, 'P', 'style_parking.qml', 'Tempus_private_parking', self.canvas )
+
