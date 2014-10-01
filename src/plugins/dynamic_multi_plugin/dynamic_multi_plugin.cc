@@ -151,7 +151,7 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
     odl.declare_option( "walking_speed", "Average walking speed (km/h)", 3.6); 
     odl.declare_option( "cycling_speed", "Average cycling speed (km/h)", 12); 
     odl.declare_option( "car_parking_search_time", "Car parking search time (min)", 5); 
-    odl.declare_option( "heuristic", "Use an heuristic based on euclidian distance", true );
+    odl.declare_option( "heuristic", "Use an heuristic based on euclidian distance", false );
     odl.declare_option( "speed_heuristic", "Max speed (km/h) to use in the heuristic", 0.06 );
     return odl;
 }
