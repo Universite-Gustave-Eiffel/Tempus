@@ -25,6 +25,17 @@
 
 namespace Tempus {
 
+template <class Object, class PotentialMap, class Heuristic>
+struct HeuristicCompare
+{
+    PotentialMap pmap_;
+    Heuristic h_;
+    HeuristicCompare( const PotentialMap& pmap, Heuristic h ) : pmap_(pmap), h_(h) {}
+    bool operator()( const Object& a, const Object& b ) const {
+        return (get( pmap_, a ) + h_(a.vertex)) > (get( pmap_, b ) + h_(b.vertex));
+    }
+};
+
     //
     // Implementation of the Dijkstra algorithm (label-setting) for a graph and an automaton
     template < class NetworkGraph,
@@ -49,9 +60,9 @@ namespace Tempus {
                                        Visitor vis,
                                        boost::function<double (const Multimodal::Vertex&)> heuristic) 
     {
-        typedef boost::indirect_cmp< PotentialMap, std::greater<double> > Cmp; 
-        Cmp cmp( potential_map );
-		
+        typedef HeuristicCompare<Object, PotentialMap, boost::function<double (const Multimodal::Vertex&)> > Cmp;
+        Cmp cmp( potential_map, heuristic );
+
         typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;  
         VertexQueue vertex_queue( cmp ); 
         vertex_queue.push( source_object ); 
@@ -110,9 +121,6 @@ namespace Tempus {
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
                             cost += penalty( automaton.automaton_graph_, s, mode->traffic_rules() ) ;
                         }
-                    }
-                    if ( cost < std::numeric_limits<double>::max() ) {
-                        cost += heuristic( new_object.vertex );
                     }
 
                     if ( ( cost < std::numeric_limits<double>::max() ) && ( min_pi + cost < new_pi ) ) {

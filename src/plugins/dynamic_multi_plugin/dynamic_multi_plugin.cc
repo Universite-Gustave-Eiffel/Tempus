@@ -109,15 +109,29 @@ private:
 struct EuclidianHeuristic
 {
 public:
-    EuclidianHeuristic( const Road::Vertex& destination ) :
-        destination_(destination) {}
+    EuclidianHeuristic( const Multimodal::Graph& g, const Road::Vertex& destination, double max_speed = 0.06 ) :
+        graph_(g), max_speed_(max_speed)
+    {
+        destination_ = g.road()[destination].coordinates();
+    }
 
     double operator()( const Multimodal::Vertex& v )
     {
-        return 0.0;
+        // max speed = 130 km/h (in m/min)
+        return distance( destination_, v.coordinates() ) / (max_speed_ * 1000.0 / 60.0);
     }
 private:
-    Road::Vertex destination_;
+    const Multimodal::Graph& graph_;
+    Point3D destination_;
+    double max_speed_;
+};
+
+struct NullHeuristic
+{
+    double operator()( const Multimodal::Vertex& )
+    {
+        return 0.0;
+    }
 };
 
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
@@ -130,6 +144,8 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
     odl.declare_option( "walking_speed", "Average walking speed (km/h)", 3.6); 
     odl.declare_option( "cycling_speed", "Average cycling speed (km/h)", 12); 
     odl.declare_option( "car_parking_search_time", "Car parking search time (min)", 5); 
+    odl.declare_option( "heuristic", "Use an heuristic based on euclidian distance", true );
+    odl.declare_option( "speed_heuristic", "Max speed (km/h) to use in the heuristic", 0.06 );
     return odl;
 }
 
@@ -371,11 +387,21 @@ void DynamicMultiPlugin::process()
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
     DestinationDetectorVisitor vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
 
-    EuclidianHeuristic heuristic( request_.destination() );
     Triple destination_o;
     bool path_found = false;
     try {
-        combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, heuristic );
+        bool use_heuristic;
+        get_option( "heuristic", use_heuristic );
+        if ( use_heuristic ) {
+            double h_speed_max;
+            get_option( "speed_heuristic", h_speed_max );
+            EuclidianHeuristic heuristic( graph_, request_.destination(), h_speed_max );
+            combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, heuristic );
+        }
+        else {
+            EuclidianHeuristic heuristic( graph_, request_.destination() );
+            combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, NullHeuristic() );
+        }
     }
     catch ( DestinationDetectorVisitor::path_found_exception& e ) {
         // Dijkstra has been short cut when the destination node is reached

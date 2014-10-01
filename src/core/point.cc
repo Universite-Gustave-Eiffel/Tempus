@@ -15,33 +15,25 @@
  *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TEMPUS_POINT_HH
-#define TEMPUS_POINT_HH
-
-#include "common.hh"
+#include <math.h>
+#include "point.hh"
 
 namespace Tempus
 {
 
-
-///
-/// 2D Points
-struct Point2D {
-    DECLARE_RW_PROPERTY( x, double );
-    DECLARE_RW_PROPERTY( y, double );
-};
-
-///
-/// 3D Points
-struct Point3D {
-    DECLARE_RW_PROPERTY( x, double );
-    DECLARE_RW_PROPERTY( y, double );
-    DECLARE_RW_PROPERTY( z, double );
-};
-
-double distance( const Point3D& a, const Point3D& b );
-double distance( const Point2D& a, const Point2D& b );
-
+double distance( const Point2D& a, const Point2D& b )
+{
+    return sqrt(
+                (a.x() - b.x()) * (a.x() - b.x()) +
+                (a.y() - b.y()) * (a.y() - b.y()) );
 }
 
-#endif
+double distance( const Point3D& a, const Point3D& b )
+{
+    return sqrt(
+                (a.x() - b.x()) * (a.x() - b.x()) +
+                (a.y() - b.y()) * (a.y() - b.y()) +
+                (a.z() - b.z()) * (a.z() - b.z()) );
+}
+
+}
