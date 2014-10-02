@@ -67,6 +67,9 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegExpandStr HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY $INSTDIR\\\\data
    SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 'STR:Environment' /TIMEOUT=5000
    
+   ; update startTempus location
+   WriteRegExpandStr HKCU 'Software\\\\QGIS\\\\QGIS2\\\\IfsttarTempus' startTempus $INSTDIR\\\\bin\\\\startTempus.bat
+   
   ; **** INSTALL POSTGRESQL ***
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
