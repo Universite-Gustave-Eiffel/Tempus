@@ -182,13 +182,13 @@ if (WIN32)
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat )
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    DESTINATION bin
     )
 else()
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh )
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.sh
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    DESTINATION bin
     PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 endif()
