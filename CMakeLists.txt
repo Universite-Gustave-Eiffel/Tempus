@@ -106,9 +106,9 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ExecWait `reset_tempus_test_db.bat`
 
   ; *** INSTALL AND START WPS SERVICE ***
-  ExecWait `gen_wps_service_xml.bat`
-  ExecWait `wps_service.exe install`
-  ExecWait `net start wps`
+  ;ExecWait `gen_wps_service_xml.bat`
+  ;ExecWait `wps_service.exe install`
+  ;ExecWait `net start wps`
   
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
   ExecWait `install_qgis_plugins.bat`
@@ -116,12 +116,12 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
 )
 set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
   DeleteRegValue HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY
-  ExecWait `net stop wps`
-  ExecWait `\\\$INSTDIR\\\\wps_service.exe uninstall`
-  Delete \\\$INSTDIR\\\\wps_service.err.log
-  Delete \\\$INSTDIR\\\\wps_service.out.log
-  Delete \\\$INSTDIR\\\\wps_service.wrapper.log
-  Delete \\\$INSTDIR\\\\wps_service.xml
+  ;ExecWait `net stop wps`
+  ;ExecWait `\\\$INSTDIR\\\\wps_service.exe uninstall`
+  ;Delete \\\$INSTDIR\\\\wps_service.err.log
+  ;Delete \\\$INSTDIR\\\\wps_service.out.log
+  ;Delete \\\$INSTDIR\\\\wps_service.wrapper.log
+  ;Delete \\\$INSTDIR\\\\wps_service.xml
   RMDir \\\$INSTDIR
 ")
 #Push `TEMPUS_DATA_DIRECTORY`
