@@ -53,7 +53,7 @@ endif()
 set(CPACK_PACKAGE_NAME "tempus")
 set(CPACK_PACKAGE_VENDOR "IFSTTAR")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tempus - manipulate transport graphs")
-set(CPACK_PACKAGE_VERSION "1.1-rc3")
+set(CPACK_PACKAGE_VERSION "1.1-rc4")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "tempus-${CPACK_PACKAGE_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
@@ -125,6 +125,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
   ;Delete \\\$INSTDIR\\\\wps_service.out.log
   ;Delete \\\$INSTDIR\\\\wps_service.wrapper.log
   ;Delete \\\$INSTDIR\\\\wps_service.xml
+  Delete \\\$INSTDIR\\\\data\\\\tempus_test_db.sql
   RMDir \\\$INSTDIR
 ")
 #Push `TEMPUS_DATA_DIRECTORY`
@@ -182,7 +183,6 @@ if(BUILD_DOC)
 endif()
 
 if (WIN32)
-  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/script/startTempus.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat )
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat
     DESTINATION bin
