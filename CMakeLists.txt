@@ -184,7 +184,7 @@ endif()
 
 if (WIN32)
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/script/startTempus.bat
+    FILES script/startTempus.bat
     DESTINATION bin
     )
 else()
