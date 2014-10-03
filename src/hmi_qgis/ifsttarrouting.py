@@ -249,7 +249,7 @@ class IfsttarRouting:
         self.dlg.ui.tempusBinPathEdit.setText( s.value("IfsttarTempus/startTempus", "/usr/local/bin/startTempus.sh" ) )
         self.dlg.ui.dbOptionsEdit.setText( s.value("IfsttarTempus/dbOptions", "dbname=tempus_test_db user=postgres" ) )
         self.dlg.ui.schemaNameEdit.setText( s.value("IfsttarTempus/schemaName", "tempus" ) )
-        plugins = s.value("IfsttarTempus/plugins", ["sample_road_plugin", "sample_multi_plugin"] )
+        plugins = s.value("IfsttarTempus/plugins", ["sample_road_plugin", "sample_multi_plugin", "dynamic_multi_plugin"] )
         for p in plugins:
             item = QListWidgetItem( p )
             item.setFlags( item.flags() | Qt.ItemIsEditable )
