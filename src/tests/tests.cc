@@ -240,6 +240,9 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
     {
         Multimodal::VertexIterator vi, vi_end;
 
+        size_t totalOut = 0;
+        size_t totalIn = 0;
+
         for ( boost::tie( vi, vi_end ) = vertices( *graph ); vi != vi_end; vi++ ) {
             Multimodal::OutEdgeIterator oei, oei_end;
             boost::tie( oei, oei_end ) = out_edges( *vi, *graph );
@@ -251,7 +254,27 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
 
             size_t out_deg2 = out_degree( *vi, *graph );
             BOOST_CHECK_EQUAL( out_deg, out_deg2 );
+
+            Multimodal::InEdgeIterator iei, iei_end;
+            boost::tie( iei, iei_end ) = in_edges( *vi, *graph );
+            size_t in_deg = 0;
+
+            for ( ; iei != iei_end; iei++ ) {
+                in_deg++;
+            }
+
+            size_t in_deg2 = in_degree( *vi, *graph );
+
+            BOOST_CHECK_EQUAL( in_deg, in_deg2 );
+
+            size_t deg = degree( *vi, *graph );
+            BOOST_CHECK_EQUAL( deg, in_deg + out_deg );
+
+            totalOut += out_deg;
+            totalIn += in_deg;
         }
+
+        BOOST_CHECK_EQUAL( totalOut, totalIn );
     }
     size_t ne = 0;
     size_t n_road2road = 0;

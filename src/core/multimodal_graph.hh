@@ -37,11 +37,13 @@ namespace Tempus {
 namespace Multimodal {
 class VertexIterator;
 class OutEdgeIterator;
+class InEdgeIterator;
 class EdgeIterator;
 }
 // For debugging purposes
 std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
 std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator& it );
+std::ostream& operator<<( std::ostream& ostr, const Multimodal::InEdgeIterator& it );
 std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it );
 }
 
@@ -238,13 +240,14 @@ struct Graph: boost::noncopyable {
     typedef Tempus::Multimodal::Vertex          vertex_descriptor;
     typedef Tempus::Multimodal::Edge            edge_descriptor;
     typedef Tempus::Multimodal::OutEdgeIterator out_edge_iterator;
+    typedef Tempus::Multimodal::InEdgeIterator  in_edge_iterator;
     typedef Tempus::Multimodal::VertexIterator  vertex_iterator;
     typedef Tempus::Multimodal::EdgeIterator    edge_iterator;
 
-    typedef boost::directed_tag                 directed_category;
+    typedef boost::bidirectional_tag            directed_category;
 
     typedef boost::disallow_parallel_edge_tag   edge_parallel_category;
-    typedef boost::incidence_graph_tag          traversal_category;
+    typedef boost::bidirectional_graph_tag      traversal_category;
 
     typedef size_t vertices_size_type;
     typedef size_t edges_size_type;
@@ -252,7 +255,6 @@ struct Graph: boost::noncopyable {
 
     // unused types (here to please boost::graph_traits<>)
     typedef void adjacency_iterator;
-    typedef void in_edge_iterator;
 
     static inline vertex_descriptor null_vertex() {
         return vertex_descriptor();   // depending on boost version, this can be useless
@@ -448,6 +450,65 @@ protected:
     friend std::ostream& Tempus::operator<<( std::ostream& ostr, const OutEdgeIterator& it );
 };
 
+class InEdgeIterator :
+    public boost::iterator_facade< InEdgeIterator,
+    Multimodal::Edge,
+    boost::forward_traversal_tag,
+/* reference */ Multimodal::Edge> {
+public:
+    InEdgeIterator() : graph_( 0 ) {}
+    InEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
+
+    void to_end();
+    Multimodal::Edge dereference() const;
+    void increment();
+    bool equal( const InEdgeIterator& v ) const;
+protected:
+    ///
+    /// The source vertex
+    Multimodal::Vertex source_;
+
+    ///
+    /// The underlying graph
+    const Multimodal::Graph* graph_;
+
+    ///
+    /// A pair of out edge iterators for road vertices
+    Road::InEdgeIterator road_it_, road_it_end_;
+
+    ///
+    /// A pair of out edge iterators for public transport vertices
+    PublicTransport::InEdgeIterator pt_it_, pt_it_end_;
+
+    ///
+    /// A counter used to represent position on a Transport2Road connection.
+    /// Indeed, a transport stop is linked to a road section and thus to 2 road nodes.
+    /// 0: on the node_from of the associated road section
+    /// 1: on the node_to
+    /// 2: out of the connection
+    size_t stop_from_road_connection_;
+
+    ///
+    /// A counter used to represent position on a Road2Transport connection.
+    /// A road node can be linked to 0..N public transport nodes (@relates Road::Section::stops)
+    int road_from_stop_connection_;
+
+    ///
+    /// A counter used to represent position on a Road2Poi connection.
+    /// A road node can be linked to 0..N POI (@relates Road::Section::pois)
+    int road_from_poi_connection_;
+
+    ///
+    /// A counter used to represent position on a Poi2Road connection.
+    /// Indeed, a POI is linked to a road section and thus to 2 road nodes.
+    /// 0: on the node_from of the associated road section
+    /// 1: on the node_to
+    /// 2: out of the connection
+    int poi_from_road_connection_;
+
+    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const InEdgeIterator& it );
+};
+
 ///
 /// Class that implements the edge iterator concept of a Multimodal::Graph
 ///
@@ -531,8 +592,17 @@ std::pair<EdgeIterator, EdgeIterator> edges( const Graph& graph );
 /// Returns a range of EdgeIterator that allows to iterate on out edges of a vertex. Constant time
 std::pair<OutEdgeIterator, OutEdgeIterator> out_edges( const Vertex& v, const Graph& graph );
 ///
+/// Returns a range of EdgeIterator that allows to iterate on in edges of a vertex. Constant time
+std::pair<InEdgeIterator, InEdgeIterator> in_edges( const Vertex& v, const Graph& graph );
+///
 /// Number of out edges for a vertex.
 size_t out_degree( const Vertex& v, const Graph& graph );
+///
+/// Number of in edges for a vertex.
+size_t in_degree( const Vertex& v, const Graph& graph );
+///
+/// Number of out and in edges for a vertex.
+size_t degree( const Vertex& v, const Graph& graph );
 
 ///
 /// Find an edge, based on a source and target vertex.

@@ -50,13 +50,13 @@ typedef boost::vecS EdgeListType;
 /// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
 typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 /// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
+typedef boost::detail::edge_desc_impl<boost::bidirectional_tag, Vertex> Edge;
 
 struct Node;
 struct Section;
 ///
 /// The final road graph type
-typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Node, Section > Graph;
+typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Node, Section > Graph;
 
 /// Road types
 enum RoadType
@@ -138,6 +138,7 @@ public:
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
+typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
 ///
 /// refers to the 'road_restriction_time_penalty' DB's table

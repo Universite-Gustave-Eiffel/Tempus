@@ -70,13 +70,13 @@ typedef boost::vecS EdgeListType;
 /// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
 typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
 /// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::directed_tag, Vertex> Edge;
+typedef boost::detail::edge_desc_impl<boost::bidirectional_tag, Vertex> Edge;
 
 struct Stop;
 struct Section;
 ///
 /// Definition of a public transport graph
-typedef boost::adjacency_list<VertexListType, EdgeListType, boost::directedS, Stop, Section> Graph;
+typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section> Graph;
 
 ///
 /// Used as a vertex in a PublicTransportGraph.
@@ -159,6 +159,7 @@ inline Stop get_stop_to( const Section& s )
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
+typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
 } // PublicTransport namespace
 } // Tempus namespace
