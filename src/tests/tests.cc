@@ -20,6 +20,7 @@
 #include "db.hh"
 #include "pgsql_importer.hh"
 #include "multimodal_graph.hh"
+#include "reverse_multimodal_graph.hh"
 
 #include <iostream>
 #include <string>
@@ -497,6 +498,39 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
 
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE( tempus_core_reverse )
+
+std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+
+std::auto_ptr<Multimodal::Graph> graph;
+
+BOOST_AUTO_TEST_CASE( testReverse )
+{
+    std::cout << "PgImporterTest::testReverse()" << std::endl;
+    TextProgression progression;
+    graph = importer->import_graph( progression );
+    importer->import_constants( *graph, progression );
+
+    Multimodal::ReverseGraph rgraph( *graph );
+    Multimodal::VertexIterator vi, vi_end;
+    
+    for ( boost::tie( vi, vi_end ) = vertices( *graph ); vi != vi_end; vi++ ) {
+        BOOST_CHECK_EQUAL( out_degree( *vi, *graph ), in_degree( *vi, rgraph ) );
+        Multimodal::OutEdgeIterator oei, oei_end;
+        Multimodal::OutEdgeIterator roei, roei_end;
+        boost::tie( oei, oei_end ) = out_edges( *vi, *graph );
+        boost::tie( roei, roei_end ) = in_edges( *vi, rgraph );
+        while ( oei != oei_end ) {
+            BOOST_CHECK_EQUAL( *oei == *roei, true );
+            oei++;
+            roei++;
+        }
+    }
+    BOOST_CHECK_EQUAL( num_vertices( *graph ), num_vertices( rgraph ) );
+    BOOST_CHECK_EQUAL( num_edges( *graph ), num_edges( rgraph ) );
+    
+}
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_road_restrictions )
 
@@ -540,5 +574,3 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
-

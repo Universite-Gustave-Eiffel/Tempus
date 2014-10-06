@@ -1240,6 +1240,33 @@ std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator&
     return ostr;
 }
 
+std::ostream& operator<<( std::ostream& ostr, const Multimodal::InEdgeIterator& it )
+{
+    ostr << "in_edge_iterator{ source(" << it.source_ << "), graph(" << it.graph_;
+    ostr << "), road_it(";
+
+    if ( it.road_it_ == it.road_it_end_ ) {
+        ostr << "-END-";
+    }
+    else {
+        ostr << *it.road_it_;
+    }
+
+    ostr << "), pt_it(";
+
+    if ( it.pt_it_ == it.pt_it_end_ ) {
+        ostr << "-END-";
+    }
+    else {
+        ostr << *it.pt_it_;
+    }
+
+    ostr << "), stop_from_road(" << it.stop_from_road_connection_ << "), road_from_stop(" << it.road_from_stop_connection_;
+    ostr << "), poi_from_road(" << it.poi_from_road_connection_ << "), road_from_poi(" << it.road_from_poi_connection_;
+    ostr << ")}" ;
+    return ostr;
+}
+
 std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it )
 {
     ostr << "edge_iterator{";

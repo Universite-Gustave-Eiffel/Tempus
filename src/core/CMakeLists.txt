@@ -14,6 +14,7 @@ set( HEADER_FILES
     point.hh
     transport_modes.hh
     multimodal_graph.hh 
+    reverse_multimodal_graph.hh
     request.hh
     roadmap.hh
     application.hh plugin.hh 
@@ -30,6 +31,7 @@ set( SOURCE_FILES
     abscissa.cc
     road_graph.cc
     multimodal_graph.cc 
+    reverse_multimodal_graph.cc
     poi.cc
     point.cc
     transport_modes.cc
