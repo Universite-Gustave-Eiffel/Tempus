@@ -31,16 +31,25 @@
 #include "automaton_lib/cost_calculator.hh"
 #include "automaton_lib/automaton.hh"
 #include "algorithms.hh"
+#include "reverse_multimodal_graph.hh"
 
 using namespace std;
 
 namespace Tempus {
 
+// the exception used to shortcut dijkstra
+struct path_found_exception
+{
+    path_found_exception( const Triple& t ) : destination(t) {}
+    Triple destination;
+};
+
 // special visitor to shortcut dijkstra
+template <class Graph>
 class DestinationDetectorVisitor
 {
 public:
-    DestinationDetectorVisitor( const Multimodal::Graph& graph,
+    DestinationDetectorVisitor( const Graph& graph,
                                 const Road::Vertex& destination,
                                 bool pvad,
                                 bool verbose,
@@ -51,14 +60,7 @@ public:
         verbose_(verbose),
         iterations_(iterations) {}
 
-    // the exception used to shortcut dijkstra
-    struct path_found_exception
-    {
-        path_found_exception( const Triple& t ) : destination(t) {}
-        Triple destination;
-    };
-
-    void examine_vertex( const Triple& t, const Multimodal::Graph& )
+    void examine_vertex( const Triple& t, const Graph& )
     {
         if ( t.vertex.type() == Multimodal::Vertex::Road && t.vertex.road_vertex() == destination_ ) {
             TransportMode mode = graph_.transport_mode( t.mode ).get();
@@ -79,33 +81,33 @@ public:
         iterations_++;
     }
 
-    void discover_vertex( const Triple&, const Multimodal::Graph& )
+    void discover_vertex( const Triple&, const Graph& )
     {
     }
 
-    void finish_vertex( const Triple&, const Multimodal::Graph& )
+    void finish_vertex( const Triple&, const Graph& )
     {
     }
 
-    void examine_edge( const Multimodal::Edge& e, const Multimodal::Graph& )
+    void examine_edge( const Multimodal::Edge& e, const Graph& )
     {
         if (verbose_) {
             std::cout << "Examine edge " << e << std::endl;
         }
     }
 
-    void edge_relaxed( const Multimodal::Edge& e, unsigned int mode, const Multimodal::Graph& )
+    void edge_relaxed( const Multimodal::Edge& e, unsigned int mode, const Graph& )
     {
         if (verbose_) {
             std::cout << "Edge relaxed " << e << " mode " << mode << std::endl;
         }
     }
-    void edge_not_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& )
+    void edge_not_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Graph& )
     {
     }
 
 private:
-    const Multimodal::Graph& graph_;
+    const Graph& graph_;
     Road::Vertex destination_;
     // private vehicule at destination
     bool pvad_;
@@ -113,10 +115,11 @@ private:
     int& iterations_;
 };
 
+template <class Graph>
 struct EuclidianHeuristic
 {
 public:
-    EuclidianHeuristic( const Multimodal::Graph& g, const Road::Vertex& destination, double max_speed = 0.06 ) :
+    EuclidianHeuristic( const Graph& g, const Road::Vertex& destination, double max_speed = 0.06 ) :
         graph_(g), max_speed_(max_speed)
     {
         destination_ = g.road()[destination].coordinates();
@@ -128,7 +131,7 @@ public:
         return distance( destination_, v.coordinates() ) / (max_speed_ * 1000.0 / 60.0);
     }
 private:
-    const Multimodal::Graph& graph_;
+    const Graph& graph_;
     Point3D destination_;
     double max_speed_;
 };
@@ -392,7 +395,7 @@ void DynamicMultiPlugin::process()
     CostCalculator cost_calculator( s_.timetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_ );
 
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
-    DestinationDetectorVisitor vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
+    DestinationDetectorVisitor<Multimodal::Graph> vis( graph_, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
 
     Triple destination_o;
     bool path_found = false;
@@ -402,15 +405,21 @@ void DynamicMultiPlugin::process()
         if ( use_heuristic ) {
             double h_speed_max;
             get_option( "speed_heuristic", h_speed_max );
-            EuclidianHeuristic heuristic( graph_, request_.destination(), h_speed_max );
+
+            /*            Multimodal::ReverseGraph rgraph( graph_ );
+            EuclidianHeuristic<Multimodal::ReverseGraph> heuristic( rgraph, request_.destination(), h_speed_max );
+            DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
+            combined_ls_algorithm_no_init( rgraph, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), rvis, heuristic );*/
+            
+            EuclidianHeuristic<Multimodal::Graph> heuristic( graph_, request_.destination(), h_speed_max );
             combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, heuristic );
         }
         else {
-            EuclidianHeuristic heuristic( graph_, request_.destination() );
+            EuclidianHeuristic<Multimodal::Graph> heuristic( graph_, request_.destination() );
             combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, NullHeuristic() );
         }
     }
-    catch ( DestinationDetectorVisitor::path_found_exception& e ) {
+    catch ( path_found_exception& e ) {
         // Dijkstra has been short cut when the destination node is reached
         destination_o = e.destination;
         path_found = true;
