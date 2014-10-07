@@ -31,7 +31,8 @@ namespace Tempus {
 #define PT_STATION_PENALTY 0.1
 #define POI_STATION_PENALTY 0.1
 
-double road_travel_time( const Road::Graph& road_graph, const Road::Edge& road_e, double length, const TransportMode& mode,
+template <class RoadGraph>
+double road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, double length, const TransportMode& mode,
                          double walking_speed = DEFAULT_WALKING_SPEED, double cycling_speed = DEFAULT_CYCLING_SPEED )
 {
     if ( (road_graph[ road_e ].traffic_rules() & mode.traffic_rules()) == 0 ) { // Not allowed mode 
@@ -97,7 +98,8 @@ public:
         private_parking_( private_parking ) { }; 
 		
     // Multimodal travel time function
-    double travel_time( const Multimodal::Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
+    template <class Graph>
+    double travel_time( const Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
     {
         const TransportMode& mode = graph.transport_modes().find( mode_id )->second;
         if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), mode_id) != allowed_transport_modes_.end() ) 
@@ -251,7 +253,8 @@ public:
     }
 		
     // Mode transfer time function : returns numeric_limits<double>::max() when the mode transfer is impossible
-    double transfer_time( const Multimodal::Graph& graph, const Multimodal::Edge& edge, db_id_t initial_mode_id, db_id_t final_mode_id ) const
+    template <class Graph>
+    double transfer_time( const Graph& graph, const Multimodal::Edge& edge, db_id_t initial_mode_id, db_id_t final_mode_id ) const
     {
         double transf_t = 0;
         if (initial_mode_id == final_mode_id ) {
