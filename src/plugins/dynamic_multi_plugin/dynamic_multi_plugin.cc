@@ -406,13 +406,15 @@ void DynamicMultiPlugin::process()
             double h_speed_max;
             get_option( "speed_heuristic", h_speed_max );
 
-            /*            Multimodal::ReverseGraph rgraph( graph_ );
+#if 0
+            Multimodal::ReverseGraph rgraph( graph_ );
             EuclidianHeuristic<Multimodal::ReverseGraph> heuristic( rgraph, request_.destination(), h_speed_max );
             DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, request_.destination(), request_.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
-            combined_ls_algorithm_no_init( rgraph, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), rvis, heuristic );*/
-            
+            combined_ls_algorithm_no_init( rgraph, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), rvis, heuristic );
+#else       
             EuclidianHeuristic<Multimodal::Graph> heuristic( graph_, request_.destination(), h_speed_max );
             combined_ls_algorithm_no_init( graph_, s_.automaton, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, request_.allowed_modes(), vis, heuristic );
+#endif
         }
         else {
             EuclidianHeuristic<Multimodal::Graph> heuristic( graph_, request_.destination() );
