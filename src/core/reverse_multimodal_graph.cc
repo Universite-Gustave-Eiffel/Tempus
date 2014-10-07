@@ -18,9 +18,10 @@
 #include "reverse_multimodal_graph.hh"
 
 namespace Tempus {
+
 namespace Multimodal {
 
-ReverseGraph::ReverseGraph( const Graph& g ) : graph_(g), rroad_(boost::make_reverse_graph(g.road())) {
+ReverseGraph::ReverseGraph( const Graph& g ) : graph_(g), rroad_(g.road()) {
 }
 
 const Road::ReverseGraph& ReverseGraph::road() const
@@ -40,7 +41,7 @@ boost::optional<const PublicTransport::Network&> ReverseGraph::network( db_id_t 
 
 boost::optional<PublicTransport::ReverseGraph> ReverseGraph::public_transport( db_id_t id ) const
 {
-    return boost::make_reverse_graph( graph_.public_transport(id).get() );
+    return PublicTransport::ReverseGraph( graph_.public_transport(id).get() );
 }
 
 ReverseGraph::PoiList ReverseGraph::pois() const
