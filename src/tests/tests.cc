@@ -498,15 +498,62 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
 
 BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE( tempus_core_reverse )
+BOOST_AUTO_TEST_SUITE( tempus_core_reverse_road )
 
 std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
 std::auto_ptr<Multimodal::Graph> graph;
 
-BOOST_AUTO_TEST_CASE( testReverse )
+BOOST_AUTO_TEST_CASE( testReverseRoad )
 {
-    std::cout << "PgImporterTest::testReverse()" << std::endl;
+    std::cout << "PgImporterTest::testReverseRoad()" << std::endl;
+    TextProgression progression;
+    graph = importer->import_graph( progression );
+    importer->import_constants( *graph, progression );
+
+    Road::ReverseGraph rroad( graph->road() );
+    const Road::Graph& road = graph->road();
+
+    Road::VertexIterator vi, vi_end;
+    
+    for ( boost::tie( vi, vi_end ) = vertices( road ); vi != vi_end; vi++ ) {
+        BOOST_CHECK_EQUAL( out_degree( *vi, road ), in_degree( *vi, rroad ) );
+        Road::OutEdgeIterator oei, oei_end;
+        Road::OutEdgeIterator roei, roei_end;
+        boost::tie( oei, oei_end ) = out_edges( *vi, road );
+        boost::tie( roei, roei_end ) = in_edges( *vi, rroad );
+        while ( oei != oei_end ) {
+            BOOST_CHECK_EQUAL( *oei == *roei, true );
+            oei++;
+            roei++;
+        }
+    }
+
+    Road::EdgeIterator ei, ei_end;
+    for ( boost::tie(ei, ei_end) = edges( road ); ei != ei_end; ei++ ) {
+        // check access to opeartor[](e)
+        BOOST_CHECK_EQUAL(road[*ei].db_id(), rroad[*ei].db_id());
+        // check that edges are reversed
+        BOOST_CHECK_EQUAL( source( *ei, road ), target( *ei, rroad ) );
+        BOOST_CHECK_EQUAL( target( *ei, road ), source( *ei, rroad ) );
+        // check access to opeartor[](v)
+        BOOST_CHECK_EQUAL( road[source(*ei, road)].db_id(), rroad[target(*ei, rroad)].db_id());
+    }
+    BOOST_CHECK_EQUAL( num_vertices( road ), num_vertices( rroad ) );
+    BOOST_CHECK_EQUAL( num_edges( road ), num_edges( rroad ) );    
+
+}
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( tempus_core_reverse_multimodal )
+
+std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+
+std::auto_ptr<Multimodal::Graph> graph;
+
+BOOST_AUTO_TEST_CASE( testReverseMultimodal )
+{
+    std::cout << "PgImporterTest::testReverseMultimodal()" << std::endl;
     TextProgression progression;
     graph = importer->import_graph( progression );
     importer->import_constants( *graph, progression );
