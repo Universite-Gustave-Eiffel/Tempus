@@ -39,12 +39,13 @@ class VertexIterator;
 class OutEdgeIterator;
 class InEdgeIterator;
 class EdgeIterator;
-}
+
 // For debugging purposes
-std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
-std::ostream& operator<<( std::ostream& ostr, const Multimodal::OutEdgeIterator& it );
-std::ostream& operator<<( std::ostream& ostr, const Multimodal::InEdgeIterator& it );
-std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it );
+std::ostream& operator<<( std::ostream& ostr, const VertexIterator& it );
+std::ostream& operator<<( std::ostream& ostr, const OutEdgeIterator& it );
+std::ostream& operator<<( std::ostream& ostr, const InEdgeIterator& it );
+std::ostream& operator<<( std::ostream& ostr, const EdgeIterator& it );
+}
 }
 
 namespace Tempus {
@@ -377,7 +378,7 @@ protected:
     PublicTransport::VertexIterator pt_it_, pt_it_end_;
     const Multimodal::Graph* graph_;
 
-    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
+    friend std::ostream& operator<<( std::ostream& ostr, const Multimodal::VertexIterator& it );
 };
 
 ///
@@ -447,7 +448,7 @@ protected:
     /// 2: out of the connection
     int poi2road_connection_;
 
-    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const OutEdgeIterator& it );
+    friend std::ostream& operator<<( std::ostream& ostr, const OutEdgeIterator& it );
 };
 
 class InEdgeIterator :
@@ -506,7 +507,7 @@ protected:
     /// 2: out of the connection
     int poi_from_road_connection_;
 
-    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const InEdgeIterator& it );
+    friend std::ostream& operator<<( std::ostream& ostr, const InEdgeIterator& it );
 };
 
 ///
@@ -541,7 +542,7 @@ protected:
     /// A pair of OutEdgeIterator
     Multimodal::OutEdgeIterator ei_, ei_end_;
 
-    friend std::ostream& Tempus::operator<<( std::ostream& ostr, const EdgeIterator& it );
+    friend std::ostream& operator<<( std::ostream& ostr, const EdgeIterator& it );
 };
 
 ///
@@ -618,8 +619,11 @@ size_t get( const VertexIndexProperty& p, const Multimodal::Vertex& v );
 }
 
 namespace Tempus {
-std::ostream& operator<<( std::ostream& out, const Multimodal::Vertex& v );
-std::ostream& operator<<( std::ostream& out, const Multimodal::Edge& v );
+
+namespace Multimodal {
+std::ostream& operator<<( std::ostream& out, const Vertex& v );
+std::ostream& operator<<( std::ostream& out, const Edge& v );
+}
 
 ///
 /// Tests if a vertex exists. Works for Road::Vertex, PublicTransport::Vertex and Multimodal::Vertex

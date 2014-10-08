@@ -1161,8 +1161,6 @@ void Graph::set_pois( PoiList& p )
     pois_.transfer( p );
 }
 
-} // namespace Multimodal
-
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
 {
     if ( v.type() == Multimodal::Vertex::Road ) {
@@ -1275,6 +1273,8 @@ std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it
     ostr << ")}" ;
     return ostr;
 }
+
+} // namespace Multimodal
 
 class coordinates_visitor
 {
