@@ -524,6 +524,8 @@ BOOST_AUTO_TEST_CASE( testReverseRoad )
         boost::tie( roei, roei_end ) = in_edges( *vi, rroad );
         while ( oei != oei_end ) {
             BOOST_CHECK_EQUAL( *oei == *roei, true );
+            BOOST_CHECK_EQUAL( source( *oei, road ), target( *roei, rroad ) );
+            BOOST_CHECK_EQUAL( target( *oei, road ), source( *roei, rroad ) );
             oei++;
             roei++;
         }
@@ -569,6 +571,8 @@ BOOST_AUTO_TEST_CASE( testReverseMultimodal )
         boost::tie( roei, roei_end ) = in_edges( *vi, rgraph );
         while ( oei != oei_end ) {
             BOOST_CHECK_EQUAL( *oei == *roei, true );
+            BOOST_CHECK_EQUAL( source( *oei, *graph ), target( *roei, rgraph ) );
+            BOOST_CHECK_EQUAL( target( *oei, *graph ), source( *roei, rgraph ) );
             oei++;
             roei++;
         }
