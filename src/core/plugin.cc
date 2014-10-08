@@ -477,7 +477,9 @@ Result& Plugin::result()
                                                          "(select geom from tempus.road_node where id=%2%) as t2 "
                                                          ) % p1 % p2 ).str();
                     Db::Result res = db_.exec( query );
-                    BOOST_ASSERT( res.size() > 0 );
+                    if ( ! res.size() ) {
+                        throw std::runtime_error("No result for " + query);
+                    }
                     std::string wkb = res[0][0].as<std::string>();
                     // get rid of the heading '\x'
                     step->set_geometry_wkb( wkb.substr( 2 ) );
@@ -497,7 +499,9 @@ Result& Plugin::result()
                                           road_id %
                                           pt_id ).str();
                     Db::Result res = db_.exec( query );
-                    BOOST_ASSERT( res.size() > 0 );
+                    if ( ! res.size() ) {
+                        throw std::runtime_error("No result for " + query);
+                    }
                     std::string wkb = res[0][0].as<std::string>();
                     // get rid of the heading '\x'
                     step->set_geometry_wkb( wkb.substr( 2 ) );
@@ -512,7 +516,9 @@ Result& Plugin::result()
                                           road_id %
                                           poi_id ).str();
                     Db::Result res = db_.exec( query );
-                    BOOST_ASSERT( res.size() > 0 );
+                    if ( ! res.size() ) {
+                        throw std::runtime_error("No result for " + query);
+                    }
                     std::string wkb = res[0][0].as<std::string>();
                     // get rid of the heading '\x'
                     step->set_geometry_wkb( wkb.substr( 2 ) );
@@ -553,6 +559,9 @@ Result& Plugin::result()
                 }
                 q += ")) t";
                 Db::Result res = db_.exec( q );
+                if ( ! res.size() ) {
+                    throw std::runtime_error("No result for " + q);
+                }
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
                 step->set_geometry_wkb( wkb.substr( 2 ) );
@@ -561,6 +570,9 @@ Result& Plugin::result()
                 q = (boost::format("SELECT r.short_name, r.long_name, r.transport_mode from tempus.pt_trip as t, tempus.pt_route as r where t.id=%1% and t.route_id = r.id")
                      % step->trip_id() ).str();
                 Db::Result res2 = db_.exec( q );
+                if ( ! res2.size() ) {
+                    throw std::runtime_error("No result for " + q);
+                }
                 std::string short_name = res2[0][0].as<std::string>();
                 std::string long_name = res2[0][1].as<std::string>();
                 step->set_transport_mode( res2[0][2].as<db_id_t>() );
@@ -615,6 +627,9 @@ Result& Plugin::result()
                     q += ")) t";
                     // reverse the geometry if needed
                     Db::Result res = db_.exec( q );
+                    if ( ! res.size() ) {
+                        throw std::runtime_error("No result for " + q);
+                    }
                     std::string wkb = res[0][0].as<std::string>();
 
                     // get rid of the heading '\x'
@@ -652,6 +667,9 @@ Result& Plugin::result()
                     std::string q1 = ( boost::format( "SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
                                                       "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge()].db_id() ).str();
                     Db::Result res = db_.exec( q1 );
+                    if ( ! res.size() ) {
+                        throw std::runtime_error("No result for " + q1);
+                    }
                     double pi = 3.14159265;
                     double z1 = res[0][0].as<double>() / pi * 180.0;
                     double z2 = res[0][1].as<double>() / pi * 180.0;
