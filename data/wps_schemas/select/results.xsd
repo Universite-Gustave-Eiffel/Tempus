@@ -64,6 +64,7 @@
               <xs:element name="transfer_step" type="TransferStep"/>
             </xs:choice>
             <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="starting_date_time" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

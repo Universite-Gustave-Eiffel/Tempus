@@ -28,6 +28,7 @@
 #include "utils/function_property_accessor.hh"
 #include "utils/associative_property_map_default_value.hh"
 
+#include "datetime.hh"
 #include "automaton_lib/cost_calculator.hh"
 #include "automaton_lib/automaton.hh"
 #include "algorithms.hh"
@@ -539,10 +540,12 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
     double start_time;
     if ( ! reverse ) {
         start_time = request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60;
+        roadmap.set_starting_date_time( request_.steps()[0].constraint().date_time() );
     }
     else {
         start_time = request_.steps().back().constraint().date_time().time_of_day().total_seconds()/60;
     }
+    double total_duration = 0.0;
     for ( ; next != path.end(); ++next, ++it ) {
         std::auto_ptr<Roadmap::Step> mstep;
 
@@ -598,8 +601,17 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             step->set_final_mode( next->mode );
             step->set_cost( CostDuration, reverse ? potential_map_[ *it ] - potential_map_[ *next ] : potential_map_[ *next ] - potential_map_[ *it ] );
         }
+        total_duration += mstep->cost( CostDuration );
 
         roadmap.add_step( mstep );
+    }
+
+    if (reverse) {
+        // set starting time
+        int mins = int(total_duration / 60);
+        int secs = int((total_duration - mins) * 60.0);
+        DateTime dt = request_.steps().back().constraint().date_time() - boost::posix_time::minutes( mins ) - boost::posix_time::seconds( secs );
+        roadmap.set_starting_date_time( dt );
     }
 }
 

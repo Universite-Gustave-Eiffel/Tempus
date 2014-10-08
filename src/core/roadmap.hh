@@ -169,6 +169,9 @@ public:
     /// Add a step
     void add_step( std::auto_ptr<Step> step );
 
+    /// Starting date time
+    DECLARE_RW_PROPERTY( starting_date_time, DateTime );
+
 private:
     StepList steps_;
 };

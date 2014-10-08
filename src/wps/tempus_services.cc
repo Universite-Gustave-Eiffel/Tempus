@@ -561,15 +561,22 @@ public:
 
                 Costs total_costs( get_total_costs(roadmap) );
                 for ( Tempus::Costs::const_iterator cit = total_costs.begin(); cit != total_costs.end(); cit++ ) {
-                xmlNode* cost_node = XML::new_node( "cost" );
-                XML::new_prop( cost_node,
-                               "type",
-                               to_string( cit->first ) );
-                XML::new_prop( cost_node,
-                               "value",
-                               to_string( cit->second ) );
-                XML::add_child( result_node, cost_node );
-            }
+                    xmlNode* cost_node = XML::new_node( "cost" );
+                    XML::new_prop( cost_node,
+                                   "type",
+                                   to_string( cit->first ) );
+                    XML::new_prop( cost_node,
+                                   "value",
+                                   to_string( cit->second ) );
+                    XML::add_child( result_node, cost_node );
+                }
+
+                {
+                    xmlNode* starting_dt_node = XML::new_node( "starting_date_time" );
+                    std::string dt_string = boost::posix_time::to_iso_extended_string( roadmap.starting_date_time() );
+                    XML::add_child( starting_dt_node, XML::new_text( dt_string ) );
+                    XML::add_child( result_node, starting_dt_node );
+                }
 
             XML::add_child( root_node, result_node );
         } // for each result

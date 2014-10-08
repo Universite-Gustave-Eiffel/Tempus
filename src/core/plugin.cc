@@ -729,6 +729,9 @@ Result& Plugin::result()
             last_step->set_distance_km( -1.0 );
         }
 #endif
+
+        new_roadmap.set_starting_date_time( roadmap.starting_date_time() );
+
         *rit = new_roadmap;
     }
 

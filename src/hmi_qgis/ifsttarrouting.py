@@ -620,10 +620,10 @@ class IfsttarRouting:
 
         for step in roadmap:
             if first:
-                    text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
-                    first = False
+                text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
+                first = False
             else:
-                    text = ''
+                text = ''
             icon_text = ''
             cost_text = ''
 
@@ -831,7 +831,8 @@ class IfsttarRouting:
         clearBoxLayout( self.dlg.ui.resultSelectionLayout )
         k = 1
         for result in results:
-            name = "%s%d" % (ROADMAP_LAYER_NAME,k)
+            start = "%02d:%02d:%02d" % (result.starting_date_time.hour,result.starting_date_time.minute,result.starting_date_time.second)
+            name = "%s%d (start: %s)" % (ROADMAP_LAYER_NAME,k, start)
             rselect = ResultSelection()
             rselect.setText( name )
             for k,v in result.costs.iteritems():

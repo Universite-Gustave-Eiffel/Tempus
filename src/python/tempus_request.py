@@ -165,9 +165,11 @@ class TransferStep:
 
 class Result:
     # cost : id(int) => value(float)
-    def __init__( self, steps = [], costs = {} ):
+    def __init__( self, steps = [], costs = {}, starting_date_time = '' ):
         self.steps = steps
         self.costs = costs
+        dt = datetime.datetime.strptime(starting_date_time, '%Y-%m-%dT%H:%M:%S')
+        self.starting_date_time = DateTime( dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second )
 
 class OptionType:
     Bool = 0,
@@ -273,6 +275,7 @@ def parse_results( results ):
     for result in results:
         steps = []
         gcosts = {}
+        starting_dt = ''
         for child in result:
             if child.tag == 'road_step':
                 costs = {}
@@ -350,7 +353,9 @@ def parse_results( results ):
                                                     wkb = wkb) )
             elif child.tag == 'cost':
                 gcosts[int(child.attrib['type'])] = float(child.attrib['value'])
-        r.append( Result( steps = steps, costs = gcosts ) )
+            elif child.tag == 'starting_date_time':
+                starting_dt = child.text
+        r.append( Result( steps = steps, costs = gcosts, starting_date_time = starting_dt ) )
     return r
 
 def parse_plugin_options( xml ):
