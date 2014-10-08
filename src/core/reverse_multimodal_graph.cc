@@ -24,7 +24,12 @@ namespace Multimodal {
 ReverseGraph::ReverseGraph( const Graph& g ) : graph_(g), rroad_(g.road()) {
 }
 
-const Road::ReverseGraph& ReverseGraph::road() const
+const Road::Graph& ReverseGraph::road() const
+{
+    return graph_.road();
+}
+
+const Road::ReverseGraph& ReverseGraph::reverse_road() const
 {
     return rroad_;
 }
@@ -39,7 +44,12 @@ boost::optional<const PublicTransport::Network&> ReverseGraph::network( db_id_t 
     return graph_.network( id );
 }
 
-boost::optional<PublicTransport::ReverseGraph> ReverseGraph::public_transport( db_id_t id ) const
+boost::optional<PublicTransport::Graph> ReverseGraph::public_transport( db_id_t id ) const
+{
+    return graph_.public_transport(id).get();
+}
+
+boost::optional<PublicTransport::ReverseGraph> ReverseGraph::reverse_public_transport( db_id_t id ) const
 {
     return PublicTransport::ReverseGraph( graph_.public_transport(id).get() );
 }

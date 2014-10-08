@@ -191,7 +191,8 @@ struct ReverseGraph: boost::noncopyable {
 
     ///
     /// The road graph
-    const Road::ReverseGraph& road() const;
+    const Road::Graph& road() const;
+    const Road::ReverseGraph& reverse_road() const;
 
     ///
     /// Public transport networks
@@ -202,7 +203,8 @@ struct ReverseGraph: boost::noncopyable {
     boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
     
     /// Access to a particular graph
-    boost::optional<PublicTransport::ReverseGraph> public_transport( db_id_t ) const;
+    boost::optional<PublicTransport::Graph> public_transport( db_id_t ) const;
+    boost::optional<PublicTransport::ReverseGraph> reverse_public_transport( db_id_t ) const;
 
     ///
     /// Point of interests
@@ -283,7 +285,29 @@ std::pair< Edge, bool > edge( const Vertex& u, const Vertex& v, const ReverseGra
 /// Overloading of get()
 VertexIndexProperty get( boost::vertex_index_t, const Multimodal::ReverseGraph& graph );
 
-}
+} // multimodal
+
+template <class G>
+struct is_graph_reversed
+{
+    static const bool value = false;
+};
+template <>
+struct is_graph_reversed<Multimodal::ReverseGraph>
+{
+    static const bool value = true;
+};
+template <>
+struct is_graph_reversed<Road::ReverseGraph>
+{
+    static const bool value = true;
+};
+template <>
+struct is_graph_reversed<PublicTransport::ReverseGraph>
+{
+    static const bool value = true;
+};
+
 }
 
 #endif
