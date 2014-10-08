@@ -58,6 +58,7 @@ struct StaticVariables
     Automaton<Road::Edge> automaton;
     TimetableMap timetable; // Timetable data for the current request
     FrequencyMap frequency; // Frequency data for the current request
+    TimetableMap rtimetable; // Reverse time table
 
     StaticVariables() : current_day( boost::gregorian::from_string("2013/11/12") )
     {}
@@ -107,8 +108,8 @@ public:
     virtual void pre_process( Request& request );
     virtual void process();
 private:
-    Path reorder_path( Triple departure, Triple arrival );    
-    void add_roadmap( const Path& path );
+    Path reorder_path( Triple departure, Triple arrival, bool reverse = false );
+    void add_roadmap( const Path& path, bool reverse = false );
 }; 
 
 }

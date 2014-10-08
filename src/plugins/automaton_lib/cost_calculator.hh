@@ -20,6 +20,8 @@
 #ifndef AUTOMATION_LIB_COST_CALCULATOR_HH
 #define AUTOMATION_LIB_COST_CALCULATOR_HH
 
+#include "reverse_multimodal_graph.hh"
+
 namespace Tempus {
 
 // Pedestrian speed in m/sec
@@ -81,17 +83,18 @@ struct FrequencyData {
     double travel_time; 
 };
 	
+// Edge -> departure_time -> Timetable
 typedef std::map<PublicTransport::Edge, std::map<double, TimetableData> > TimetableMap; 
 typedef std::map<PublicTransport::Edge, std::map<double, FrequencyData> > FrequencyMap; 
 	
 class CostCalculator {
 public: 
     // Constructor 
-    CostCalculator( TimetableMap& timetable, FrequencyMap& frequency, 
+    CostCalculator( const TimetableMap& timetable, const TimetableMap& rtimetable, const FrequencyMap& frequency, 
                     const std::vector<db_id_t>& allowed_transport_modes, std::map<Multimodal::Vertex, db_id_t>& vehicle_nodes, 
                     double walking_speed, double cycling_speed, 
                     double min_transfer_time, double car_parking_search_time, boost::optional<Road::Vertex> private_parking ) : 
-        timetable_( timetable ), frequency_( frequency ), 
+        timetable_( timetable ), rtimetable_( rtimetable ), frequency_( frequency ), 
         allowed_transport_modes_( allowed_transport_modes ), vehicle_nodes_( vehicle_nodes ), 
         walking_speed_( walking_speed ), cycling_speed_( cycling_speed ), 
         min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time ),
@@ -159,32 +162,60 @@ public:
                 // Timetable travel time calculation
                 TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
                 if ( pt_e_it != timetable_.end() ) {
-                    const std::map<double,TimetableData>& tt = pt_e_it->second;
-                    // get the time, just after initial_time
-                    std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;
-
-                    if ( it != tt.end() ) {
-                        // only if the mode is allowed
-                        if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
-                             != allowed_transport_modes_.end() ) {
-                            if (it->second.trip_id == initial_trip_id ) { 
-                                final_trip_id = it->second.trip_id; 
-                                wait_time = 0; 
-                                return it->second.arrival_time - initial_time ; 
-                            } 
-                            else { // No connection without transfer found
-                                it = tt.lower_bound( initial_time + min_transfer_time_ ); 
-                                if ( it != tt.end() ) {
+                    if ( ! is_graph_reversed<Graph>::value ) {
+                        const std::map<double,TimetableData>& tt = pt_e_it->second;
+                        // get the time, just after initial_time
+                        std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;
+                        if ( it != tt.end() ) {
+                            // only if the mode is allowed
+                            if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
+                                 != allowed_transport_modes_.end() ) {
+                                if (it->second.trip_id == initial_trip_id ) { 
                                     final_trip_id = it->second.trip_id; 
-                                    wait_time = it->first - initial_time ; 
+                                    wait_time = 0; 
                                     return it->second.arrival_time - initial_time ; 
+                                } 
+                                else { // No connection without transfer found
+                                    it = tt.lower_bound( initial_time + min_transfer_time_ ); 
+                                    if ( it != tt.end() ) {
+                                        final_trip_id = it->second.trip_id; 
+                                        wait_time = it->first - initial_time ; 
+                                        return it->second.arrival_time - initial_time ; 
+                                    }
                                 }
                             }
                         }
                     }
-                } 
+                    else {
+                        const std::map<double,TimetableData>& tt = rtimetable_.find(pt_e)->second;
+                        // get the time, just before initial_time
+                        std::map< double, TimetableData >::const_iterator it = tt.upper_bound( initial_time ) ;
+                        if ( it != tt.begin() ) {
+                            it--;
+                            // only if the mode is allowed
+                            if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
+                                 != allowed_transport_modes_.end() ) {
+                                if (it->second.trip_id == initial_trip_id ) { 
+                                    final_trip_id = it->second.trip_id; 
+                                    wait_time = 0; 
+                                    // here arrival_time is actually the departure time
+                                    return initial_time - it->second.arrival_time; 
+                                } 
+                                else { // No connection without transfer found
+                                    it = tt.upper_bound( initial_time - min_transfer_time_ ); 
+                                    if ( it != tt.begin() ) {
+                                        it--;
+                                        final_trip_id = it->second.trip_id; 
+                                        wait_time = initial_time - it->first;
+                                        return initial_time - it->second.arrival_time;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 else if (frequency_.find( pt_e ) != frequency_.end() ) {
-                    std::map<double, FrequencyData>::iterator it = frequency_.find( pt_e )->second.lower_bound( initial_time );
+                    std::map<double, FrequencyData>::const_iterator it = frequency_.find( pt_e )->second.lower_bound( initial_time );
                     if (it != frequency_.find( pt_e )->second.begin() ) {
                         it--;
                         // only if the mode is allowed
@@ -330,8 +361,9 @@ public:
     }
 		
 protected:
-    TimetableMap& timetable_; 
-    FrequencyMap& frequency_; 
+    const TimetableMap& timetable_; 
+    const TimetableMap& rtimetable_; 
+    const FrequencyMap& frequency_; 
     std::vector<db_id_t> allowed_transport_modes_;
     std::map< Multimodal::Vertex, db_id_t >& vehicle_nodes_; 
     double walking_speed_; 

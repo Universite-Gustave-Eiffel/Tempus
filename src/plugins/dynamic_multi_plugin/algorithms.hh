@@ -23,6 +23,8 @@
 #include <boost/heap/d_ary_heap.hpp>
 #include <boost/heap/binomial_heap.hpp>
 
+#include "reverse_multimodal_graph.hh"
+
 namespace Tempus {
 
 template <class Object, class PotentialMap, class Heuristic>
@@ -50,7 +52,8 @@ struct HeuristicCompare
     void combined_ls_algorithm_no_init(
                                        const NetworkGraph& graph,
                                        const Automaton& automaton,
-                                       Object source_object, 
+                                       Object source_object,
+                                       double start_time,
                                        PredecessorMap predecessor_map, 
                                        PotentialMap potential_map,
                                        CostCalculator cost_calculator, 
@@ -110,14 +113,21 @@ struct HeuristicCompare
                     double cost = cost_calculator.transfer_time( graph, current_edge, min_object.mode, new_object.mode );
                     if ( cost < std::numeric_limits<double>::max() )
                     {
+                        double time = start_time;
+                        if ( is_graph_reversed<NetworkGraph>::value ) {
+                            time -= min_pi;
+                        }
+                        else {
+                            time += min_pi;
+                        }
                         // will update final_trip_id and wait_time
                         double travel_time = cost_calculator.travel_time( graph,
-                                                             current_edge,
-                                                             mode_id,
-                                                             min_pi,
-                                                             initial_trip_id,
-                                                             final_trip_id,
-                                                             wait_time );
+                                                                          current_edge,
+                                                                          mode_id,
+                                                                          time,
+                                                                          initial_trip_id,
+                                                                          final_trip_id,
+                                                                          wait_time );
                         cost += travel_time;
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
                             cost += penalty( automaton.automaton_graph_, s, mode->traffic_rules() ) ;
