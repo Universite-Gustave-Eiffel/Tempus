@@ -21,6 +21,7 @@
 #include "pgsql_importer.hh"
 #include "multimodal_graph.hh"
 #include "reverse_multimodal_graph.hh"
+#include "utils/graph_db_link.hh"
 
 #include <iostream>
 #include <string>
@@ -576,7 +577,74 @@ BOOST_AUTO_TEST_CASE( testReverseMultimodal )
             oei++;
             roei++;
         }
+        Multimodal::InEdgeIterator iei, iei_end;
+        Multimodal::InEdgeIterator riei, riei_end;
+        boost::tie( iei, iei_end ) = in_edges( *vi, *graph );
+        boost::tie( riei, riei_end ) = out_edges( *vi, rgraph );
+        while ( iei != iei_end ) {
+            BOOST_CHECK_EQUAL( *iei == *riei, true );
+            BOOST_CHECK_EQUAL( source( *iei, *graph ), target( *riei, rgraph ) );
+            BOOST_CHECK_EQUAL( target( *iei, *graph ), source( *riei, rgraph ) );
+            iei++;
+            riei++;
+        }
     }
+
+    // find a PT vertex and a POI
+    // store their out_edges
+    // check for in_edges of each out_edges
+    Multimodal::Vertex ptv, poiv;
+    Multimodal::VertexIterator vit, vend;
+    for (boost::tie(vit, vend) = vertices(*graph); vit != vend; vit++ ) {
+        if ( vit->type() == Multimodal::Vertex::PublicTransport ) {
+            ptv = *vit;
+            break;
+        }
+    }
+    for (boost::tie(vit, vend) = vertices(*graph); vit != vend; vit++ ) {
+        if ( vit->type() == Multimodal::Vertex::Poi ) {
+            poiv = *vit;
+            break;
+        }
+    }
+
+    std::vector<Multimodal::Vertex> pt_oedges, poi_oedges;
+    Multimodal::OutEdgeIterator oe, oe_end;
+    for (boost::tie(oe, oe_end) = out_edges( ptv, *graph ); oe != oe_end; oe++ ) {
+        Multimodal::Vertex v = target(*oe, *graph);
+        pt_oedges.push_back( v );
+    }
+    for (boost::tie(oe, oe_end) = out_edges( poiv, *graph ); oe != oe_end; oe++ ) {
+        Multimodal::Vertex v = target(*oe, *graph);
+        poi_oedges.push_back( v );
+    }
+
+    // look for in_edges of each out_edge
+    for ( size_t i = 0; i < pt_oedges.size(); i++ ) {
+        Multimodal::InEdgeIterator ie, ie_end;
+        bool found = false;
+        for (boost::tie(ie, ie_end) = in_edges( pt_oedges[i], *graph ); ie != ie_end; ie++ ) {
+            Multimodal::Vertex v = source(*ie, *graph);
+            if ( v == ptv ) {
+                found = true;
+                break;
+            }
+        }
+        BOOST_CHECK_EQUAL( found, true );
+    }
+    for ( size_t i = 0; i < poi_oedges.size(); i++ ) {
+        Multimodal::InEdgeIterator ie, ie_end;
+        bool found = false;
+        for (boost::tie(ie, ie_end) = in_edges( poi_oedges[i], *graph ); ie != ie_end; ie++ ) {
+            Multimodal::Vertex v = source(*ie, *graph);
+            if ( v == poiv ) {
+                found = true;
+                break;
+            }
+        }
+        BOOST_CHECK_EQUAL( found, true );
+    }
+
     BOOST_CHECK_EQUAL( num_vertices( *graph ), num_vertices( rgraph ) );
     BOOST_CHECK_EQUAL( num_edges( *graph ), num_edges( rgraph ) );
     

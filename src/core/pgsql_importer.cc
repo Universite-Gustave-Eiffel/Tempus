@@ -395,7 +395,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 boost::tie( opposite_edge, found ) = edge( target( stop.road_edge(), *road_graph ),
                                                            source( stop.road_edge(), *road_graph ),
                                                            *road_graph );
-                if ( found ) {
+                if ( found && (graph->road()[stop.road_edge()].db_id() == graph->road()[opposite_edge].db_id()) ) {
                     stop.set_opposite_road_edge( opposite_edge );
                 }
             }
@@ -429,6 +429,11 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
             Road::Edge rs = g[ *vi ].road_edge();
             (*road_graph)[ rs ].add_stop_ref( &g[*vi] );
+            // add a ref to the opposite road edge, if any
+            if (g[*vi].opposite_road_edge()) {
+                rs = g[*vi].opposite_road_edge().get();
+                (*road_graph)[rs].add_stop_ref( &g[*vi] );
+            }
         }
     }
 
@@ -508,7 +513,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 boost::tie( opposite_edge, found ) = edge( target( poi.road_edge(), *road_graph ),
                                                            source( poi.road_edge(), *road_graph ),
                                                            *road_graph );
-                if ( found ) {
+                if ( found && (graph->road()[poi.road_edge()].db_id() == graph->road()[opposite_edge].db_id()) ) {
                     poi.set_opposite_road_edge( opposite_edge );
                 }
             }
@@ -531,7 +536,11 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     for ( pit = pois.begin(); pit != pois.end(); pit++ ) {
         Road::Edge rs = pit->second->road_edge();
-        (*road_graph)[ rs ].add_poi_ref( &*pit->second ); 
+        (*road_graph)[ rs ].add_poi_ref( &*pit->second );
+        if ( pit->second->opposite_road_edge() ) {
+            rs = pit->second->opposite_road_edge().get();
+            (*road_graph)[ rs ].add_poi_ref( &*pit->second );
+        }
     }
 
     /// assign to the multimodal graph
