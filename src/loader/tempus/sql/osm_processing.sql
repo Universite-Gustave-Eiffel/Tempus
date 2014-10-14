@@ -1,132 +1,150 @@
-drop sequence if exists seq_section;
-create sequence seq_section;
-select setval('seq_section', (select max(id)+1 from tempus.road_section), false);
+-- create index on tempus.road_section(node_from);
+-- create index on tempus.road_section(node_to);
+-- create index on tempus.road_section using gist(geom);
 
-drop table if exists road_section_tmp;
-create temporary table road_section_tmp as
-(
+do $$
+DECLARE N integer;
+BEGIN
+    raise notice 'Splitting road sections, please wait ...';
+    LOOP
 
-with recursive split(section_id, lines, array_pid, array_pts)
-as
-(
-
-
-with points as
-(
+-- select road sections that intersect (but not on extrema)
+-- and take the first point of intersection
+drop table if exists _tempus_import.crossing_sections;
+create table _tempus_import.crossing_sections as
 select
-	sid, st_multi(sgeom) as array_lines, array_agg(pid) as array_pid, array_agg(pgeom) as array_pts
+-- do not repeat sections
+distinct on (rs1.id)
+rs1.id as id1, rs2.id as id2, st_geometryn(st_multi(st_intersection(rs1.geom, rs2.geom)),1) as geom
 from
-(
-select s.id as sid, p.id as pid, p.geom as pgeom, s.geom as sgeom
-	from
-		tempus.road_node as p
-	join
-		tempus.road_section as s -- sections declared below
-	on
-		st_intersects( p.geom, s.geom )
-	and
-		p.id != s.node_from
-	and
-		p.id != s.node_to
-        -- if two nodes (with different ids) share the same coordinates
-	and
-		not st_intersects( p.geom, st_startpoint(s.geom))
-	and
-		not st_intersects( p.geom, st_endpoint(s.geom))
-) t
-group by
-	sid, sgeom
-
-)
-select * from points
-
-union all
-
-select
-	section_id,
-	st_split(lines, array_pts[1]),
-	array_pid,
-	array_pts[2:array_length(array_pts,1)]
-from
-	split
+tempus.road_section as rs1,
+tempus.road_section as rs2
 where
-	array_length(array_pts,1) is not null
-),
-t as
-(
-	with recursive assign_nodes(section_id,line, array_lines, i, n, array_from, array_to) as
-	(
-		select
-			section_id, lines, array[]::geometry[], 0, st_numgeometries(lines), array[]::bigint[], array[]::bigint[]
-		from
-			split
-		where
-			-- selection of the most "splitted" line
-			array_length(array_pts, 1) is null
-		union all
-
-		select
-			section_id,
-			line,
-			array_lines || st_geometryn(line,i+1),
-			i+1,
-			n,
-			array_from || tnode_from.id,
-			array_to || tnode_to.id
-		from
-			assign_nodes,
-			tempus.road_node as tnode_from,
-			tempus.road_node as tnode_to
-		where
-			st_intersects(tnode_from.geom, st_startpoint(st_geometryn(line,i+1)))
-		and
-			st_intersects(tnode_to.geom, st_endpoint(st_geometryn(line,i+1)))
-		and
-			-- recursion stop
-			i < n
-	)
-	select section_id, array_lines, array_from, array_to, n from assign_nodes
-	where i = n
-)
-select
-	t.section_id,
-	nextval('seq_section')::bigint as id,
-	rs.road_type,
-	array_from[i] as node_from,
-	array_to[i] as node_to,
-	rs.traffic_rules_ft,
-	rs.traffic_rules_tf,
-	st_length(array_lines[i]) as length,
-	rs.car_speed_limit,
-	rs.road_name,
-	rs.lane,
-	rs.roundabout,
-	rs.bridge,
-	rs.tunnel,
-	rs.ramp,
-	rs.tollway,
-	array_lines[i] as geom
-from
-	t,
-	(select generate_series(1,n) as i, section_id from t) as tt,
-	tempus.road_section as rs
-where
-	tt.section_id = t.section_id
+rs1.id <> rs2.id and
+rs1.node_from <> rs2.node_to and
+rs1.node_from <> rs2.node_from and
+rs1.node_to <> rs2.node_from and
+rs1.node_to <> rs2.node_to and
+st_intersects(rs1.geom, rs2.geom) 
 and
-	rs.id = t.section_id
+-- do not include linestring intersections
+geometrytype(st_multi(st_intersection(rs1.geom, rs2.geom))) = 'MULTIPOINT';
 
+--
+-- There are two types of intersections :
+-- T-shaped : rs1 and rs2 cross on one of the ending point of either rs1 or rs2
+-- X-shaped : rs1 and rs2 cross on a new unknown point
+
+-- add new points for X-shaped intersections
+insert into tempus.road_node
+select
+nextval('tempus.seq_road_node_id')::bigint as id,
+false as bifurcation,
+st_force3DZ(s.geom) as geom
+from
+_tempus_import.crossing_sections as s,
+tempus.road_section as rs1,
+tempus.road_section as rs2
+where
+ rs1.id = id1 and
+ rs2.id = id2 and
+ not st_intersects(s.geom, st_startpoint(rs1.geom)) and
+ not st_intersects(s.geom, st_endpoint(rs1.geom)) and
+ not st_intersects(s.geom, st_startpoint(rs2.geom)) and
+ not st_intersects(s.geom, st_endpoint(rs2.geom));
+
+
+
+-- select sections that must be split, with the split point
+drop table if exists _tempus_import.splitted_sections;
+create table _tempus_import.splitted_sections as
+with sections_to_split as
+(
+select distinct on(section)
+   case when st_intersects(n.geom, st_startpoint(rs1.geom)) or st_intersects(n.geom, st_endpoint(rs1.geom)) then rs2.id
+        else rs1.id end as section,
+       n.id as point
+from
+_tempus_import.crossing_sections as s,
+tempus.road_section as rs1,
+tempus.road_section as rs2,
+tempus.road_node as n
+where 
+rs1.id = id1 and
+rs2.id = id2 and
+st_intersects( n.geom, s.geom )
 )
-;
+select
+  section as section_id, point as node_id,
+  -- use st_snap to include intersections a little bit outside of the linestring
+  st_geometryn(st_split(st_snap(rs.geom, n.geom,0.1), n.geom),1) as leftgeom,
+  st_geometryn(st_split(st_snap(rs.geom, n.geom,0.1), n.geom),2) as rightgeom
+from
+  tempus.road_node as n,
+  tempus.road_section as rs,
+  sections_to_split
+where
+  section = rs.id and
+  point = n.id;
 
--- delete sections that will be replaced by a sequence of sections
-delete from tempus.road_section where id in (select section_id from road_section_tmp);
+N := count(*) from _tempus_import.splitted_sections where rightgeom is not null;
+raise notice 'Splitted sections: %', N;
+if N = 0 then exit; end if;
 
--- insert new sections
+-- create the new splitted section from the old (from) point to the new one
 insert into tempus.road_section
 select
-	-- all columns except section_id
-	id, road_type, node_from, node_to, traffic_rules_ft, traffic_rules_tf, length,
-	car_speed_limit, road_name, lane, roundabout, bridge, tunnel, ramp, tollway, geom
-from
-	road_section_tmp
-;
+   nextval('_tempus_import.seq_road_section_import')::bigint as id,
+   road_type,
+   node_from,
+   s.node_id as node_to,
+   traffic_rules_ft,
+   traffic_rules_tf,
+   st_length(leftgeom),
+   car_speed_limit,
+   road_name,
+   lane,
+   roundabout,
+   bridge,
+   tunnel,
+   ramp,
+   tollway,
+   leftgeom
+from _tempus_import.splitted_sections as s,
+  tempus.road_section as rs
+where
+  s.section_id = rs.id
+ and s.rightgeom is not null;
+
+  -- create the new splitted section from the new point to the old (to) one
+insert into tempus.road_section
+select
+   nextval('_tempus_import.seq_road_section_import')::bigint as id,
+   road_type,
+   s.node_id as node_from,
+   node_to,
+   traffic_rules_ft,
+   traffic_rules_tf,
+   st_length(rightgeom),
+   car_speed_limit,
+   road_name,
+   lane,
+   roundabout,
+   bridge,
+   tunnel,
+   ramp,
+   tollway,
+   rightgeom
+from _tempus_import.splitted_sections as s,
+  tempus.road_section as rs
+where
+  s.section_id = rs.id
+and
+  s.rightgeom is not null;
+
+-- delete origin sections
+delete from tempus.road_section
+where id in (select section_id from _tempus_import.splitted_sections where rightgeom is not null);
+
+end loop;
+end$$;
