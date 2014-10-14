@@ -78,12 +78,13 @@ It consists of :
 wget http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff/srtm_36_03.zip
 unzip srtm_36_03.zip
 gdalwarp -s_srs EPSG:4326 -t_srs EPSG:2154 srtm_36_03.tif srtm_36_03_2154.tif
-raster2pgsql -I -t 20x20 -s 2154 srtm_36_03_2154.tif | psql tempus_test_db
+raster2pgsql -I -t 20x20 -s 2154 srtm_36_03_2154.tif dem | psql tempus_test_db
 (see src/loader/tempus/sql/dem_elevation.sql)
+(then drop table dem)
 
 - an import of GTFS data from TAN provided by Nantes open data ("Arrêts, horaires et circuits TAN"), OdBL license
 
-./load_tempus -t gtfs -s /xxxx/ARRETS_HORAIRES_CIRCUITS_TAN_GTFS.zip -d "dbname=tempus_test_db"
+./load_tempus -t gtfs -v network:TAN -s /xxxx/ARRETS_HORAIRES_CIRCUITS_TAN_GTFS.zip -d "dbname=tempus_test_db"
 
 - an import of shared cycles points (Bicloo) provided by Nantes open data ("Liste des équipements publics (thème Mobilité)"), OdBL license
 

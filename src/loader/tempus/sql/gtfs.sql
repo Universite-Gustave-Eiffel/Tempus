@@ -1,3 +1,7 @@
+/*
+        Substitutions options
+        network: name of the PT network
+*/
 do $$
 begin
 raise notice '==== Init ===';
