@@ -483,6 +483,19 @@ void DynamicMultiPlugin::process()
         throw std::runtime_error( "No path found" );                
     }
 
+    // populate the path parts, if needed
+    if (verbose_) {
+        PathParts parts;
+        for ( PredecessorMap::const_iterator it = pred_map_.begin(); it != pred_map_.end(); it++ ) {
+            PathPart part;
+            part.origin = it->second.vertex;
+            part.destination = it->first.vertex;
+            part.costs[CostDuration] = potential_map_[it->first] - potential_map_[it->second];
+            parts.push_back( part );
+        }
+        metrics_["path_parts"] = parts;
+    }
+
     if ( !reversed ) {
         Path path = reorder_path( origin_o, destination_o );
         add_roadmap( path );

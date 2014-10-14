@@ -30,6 +30,7 @@
 #include "roadmap.hh"
 #include "db.hh"
 #include "application.hh"
+#include "metric.hh"
 
 #ifdef _WIN32
 #   define NOMINMAX
@@ -71,7 +72,6 @@ namespace Tempus {
    A Tempus plugin is made of :
    - some user-defined options
    - some callback functions called when user requests are processed
-   - some performance metrics
 */
 class Plugin {
 public:
@@ -181,9 +181,6 @@ public:
         return v;
     }
 
-    ///
-    /// A metric is also an OptionValue
-    typedef OptionValue MetricValue;
     ///
     /// Metric name -> value
     typedef std::map<std::string, MetricValue> MetricValueList;

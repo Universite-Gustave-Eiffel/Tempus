@@ -365,7 +365,7 @@ std::string Plugin::metric_to_string( const std::string& nname )
     }
 
     MetricValue v = metrics_[nname];
-    return v.str();
+    return to_string(v);
 }
 
 void Plugin::validate()

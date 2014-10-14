@@ -3,7 +3,7 @@ find_package(FCGI REQUIRED)
 
 include_directories( ${LIBXML2_INCLUDE_DIR} ${FCGI_INCLUDE_DIR} ../core )
 
-add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc wps_service.cc tempus_services.cc )
+add_executable( wps fastcgi.cc wps_request.cc xml_helper.cc xml_serializers.cc wps_service.cc tempus_services.cc )
 target_link_libraries( wps tempus ${LIBXML2_LIBRARIES} ${FCGI_LIBRARIES})
 
 install( TARGETS wps DESTINATION bin )
