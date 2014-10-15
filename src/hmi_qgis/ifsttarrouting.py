@@ -879,11 +879,14 @@ class IfsttarRouting:
         [ox, oy] = coords[0]
         criteria = self.dlg.get_selected_criteria()
         constraints = self.dlg.get_constraints()
+        has_constraint = False
         for i in range(len(constraints)-1):
             ci, ti = constraints[i]
             cj, tj = constraints[i+1]
             dti = datetime.strptime(ti, "%Y-%m-%dT%H:%M:%S")
             dtj = datetime.strptime(tj, "%Y-%m-%dT%H:%M:%S")
+            if ci != 0 or cj != 0:
+                has_constraint = True
             if ci == 2 and cj == 1 and dtj < dti:
                 QMessageBox.warning( self.dlg, "Warning", "Impossible constraint : " + tj + " < " + ti )
                 return
@@ -892,9 +895,19 @@ class IfsttarRouting:
         pvads = self.dlg.get_pvads()
         #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
         transports = [ self.transport_modes[x].id for x in self.dlg.selected_transports() ]
+        has_pt = False
+        for x in self.dlg.selected_transports():
+            if self.transport_modes[x].is_public_transport:
+                has_pt = True
+                break
+
         if transports == []:
-                QMessageBox.warning( self.dlg, "Warning", "No transport mode is selected, defaulting to pedestrian walk")
-                transports = [ 1 ]
+            QMessageBox.warning( self.dlg, "Warning", "No transport mode is selected, defaulting to pedestrian walk")
+            transports = [ 1 ]
+
+        if has_pt and not has_constraint:
+            QMessageBox.critical( self.dlg, "Inconsistency", "Some public transports are selected, but not time constraint is specified" )
+            return
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
