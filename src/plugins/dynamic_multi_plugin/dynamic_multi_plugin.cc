@@ -235,9 +235,13 @@ void DynamicMultiPlugin::pre_process( Request& request )
             parking_location_ = request_.origin();
         }
     }
-    	
+
     // If current date changed, reload timetable / frequency
-    if ( pt_allowed && (graph_.public_transports().size() > 0) && (s_.current_day != request_.steps()[0].constraint().date_time().date()) )  {
+    if ( pt_allowed &&
+         (graph_.public_transports().size() > 0) &&
+         (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
+         (s_.current_day != request_.steps()[0].constraint().date_time().date())
+         )  {
         const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
         std::cout << "load timetable" << std::endl;
         s_.current_day = request_.steps()[0].constraint().date_time().date();
