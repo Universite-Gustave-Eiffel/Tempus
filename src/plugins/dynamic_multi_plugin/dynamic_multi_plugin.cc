@@ -383,7 +383,7 @@ void DynamicMultiPlugin::process()
     put( pred_pmap, origin_o, origin_o );
 
     // Initialize the trip map
-    boost::associative_property_map< TripMap > trip_pmap( trip_map_ );
+    associative_property_map_default_value< TripMap > trip_pmap( trip_map_, 0 );
 
     // Initialize the wait map
     boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
