@@ -98,25 +98,41 @@ class TransportMode : public Base
     DECLARE_RW_PROPERTY( is_public_transport, bool );
 
     /// does it need a parking ?
-    DECLARE_RW_PROPERTY( need_parking, bool );
+    /// Only makes sense when is_public_transport() is false
+    DECLARE_WO_PROPERTY( need_parking, bool );
+    bool need_parking() const {
+        return !is_public_transport() && need_parking_;
+    }
 
     /// is it shared
-    DECLARE_RW_PROPERTY( is_shared, bool );
+    /// Only makes sense when is_public_transport() is false
+    DECLARE_WO_PROPERTY( is_shared, bool );
+    bool is_shared() const {
+        return !is_public_transport() && is_shared_;
+    }
 
     /// is it shared and must be returned to its initial station ?
-    DECLARE_RW_PROPERTY( must_be_returned, bool );
+    /// Only makes sense when is_public_transport() is false
+    DECLARE_WO_PROPERTY( must_be_returned, bool );
+    bool must_be_returned() const {
+        return !is_public_transport() && must_be_returned_;
+    }
 
     /// get traffic rules
     unsigned traffic_rules() const;
     /// set traffic rules
     void set_traffic_rules( unsigned rules );
 
+    /// Only makes sense when is_public_transport() is false
     DECLARE_RW_PROPERTY( speed_rule, TransportModeSpeedRule );
 
+    /// Only makes sense when is_public_transport() is false
     DECLARE_RW_PROPERTY( toll_rules, unsigned );
 
+    /// Only makes sense when is_public_transport() is false
     DECLARE_RW_PROPERTY( engine_type, TransportModeEngine );
 
+    /// Only makes sense when is_public_transport() is false
     DECLARE_RW_PROPERTY( route_type, TransportModeRouteType );
 private:
     unsigned traffic_rules_;

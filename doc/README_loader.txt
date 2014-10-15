@@ -97,9 +97,9 @@ Car parkings
 
 - two dummy turn restrictions on the road network (see the tempus.road_road table)
 
-insert into tempus.road_restriction values (1, array[45727, 14590] );
-insert into tempus.road_restriction values (2, array[45049,14228,45084] );
-insert into tempus.road_restriction values (3, array[45049, 45049] );
+insert into tempus.road_restriction values (1, array[70945,14590] );
+insert into tempus.road_restriction values (2, array[54108,14228,35336] );
+insert into tempus.road_restriction values (3, array[54108,54108] );
 # 60: for all types of cars
 # 4 : car only (not taxi or car pool)
 insert into tempus.road_restriction_time_penalty values (1, 0, 60, 'Infinity'::float);

@@ -263,6 +263,11 @@ public:
 
         const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
         const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
+
+        if ( initial_mode.is_public_transport() && final_mode.is_public_transport() ) {
+            return 0.0;
+        }
+
         // park shared vehicle
         if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
             if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) )) {
