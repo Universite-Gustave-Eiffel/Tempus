@@ -21,9 +21,7 @@ set( HEADER_FILES
     pgsql_importer.hh 
     plugin.hh 
     db.hh 
-    utils/graph_db_link.hh
-    metric.hh
-    path_part.hh
+    utils/graph_db_link.hh 
     )
 
 set( SOURCE_FILES 
@@ -44,7 +42,6 @@ set( SOURCE_FILES
     plugin.cc 
     db.cc 
     utils/graph_db_link.cc 
-    metric.cc
     )
 
 if (WIN32)
