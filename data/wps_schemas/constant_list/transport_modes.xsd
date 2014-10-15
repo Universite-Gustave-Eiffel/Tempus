@@ -3,6 +3,7 @@
   <xs:complexType name="TransportMode">
     <xs:attribute name="id" type="xs:long"/>
     <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="is_public_transport" type="xs:boolean"/>
     <xs:attribute name="need_parking" type="xs:boolean"/>
     <xs:attribute name="is_shared" type="xs:boolean"/>
     <xs:attribute name="must_be_returned" type="xs:boolean"/>

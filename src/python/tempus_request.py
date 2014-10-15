@@ -196,9 +196,10 @@ class Plugin:
         self.supported_criteria = supported_criteria
 
 class TransportMode:
-    def __init__( self, id = 0, name = '', need_parking = False, is_shared = False, must_be_returned = False, traffic_rules = 0, speed_rule = 0, toll_rules = 0, engine_type = 0 ):
+    def __init__( self, id = 0, name = '', is_public_transport = False, need_parking = False, is_shared = False, must_be_returned = False, traffic_rules = 0, speed_rule = 0, toll_rules = 0, engine_type = 0 ):
         self.id = id
         self.name = name
+        self.is_public_transport = is_public_transport
         self.need_parking = need_parking
         self.is_shared = is_shared
         self.must_be_returned = must_be_returned
@@ -248,6 +249,7 @@ def parse_plugins( output ):
 
 def parse_transport_modes( output ):
     return [ TransportMode( id = int(x.attrib['id']),
+                            is_public_transport = x.attrib['is_public_transport'],
                             name = x.attrib['name'],
                             need_parking = x.attrib['need_parking'] == "1",
                             is_shared = x.attrib['is_shared'] == "1",

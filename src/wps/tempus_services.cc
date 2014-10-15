@@ -147,6 +147,7 @@ public:
                 xmlNode* node = XML::new_node( "transport_mode" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
+                XML::new_prop( node, "is_public_transport", it->second.is_public_transport() );
                 XML::new_prop( node, "need_parking", it->second.need_parking() );
                 XML::new_prop( node, "is_shared", it->second.is_shared() );
                 XML::new_prop( node, "must_be_returned", it->second.must_be_returned() );
