@@ -1,21 +1,20 @@
 -- Tempus - Navteq SQL import Wrapper
 
 -- Handle direction type
-CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, boolean)
+CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, boolean)
 RETURNS integer AS $$
 
 DECLARE 
 	tt integer;
 BEGIN
+        tt :=0;
+        IF $1 = 'Y' THEN tt := 4; END IF; -- cars
+        IF $2 = 'Y' THEN tt := tt + 2 + 1 ; END IF; -- pedestrians and bicycles
+        IF $3 = 'Y' THEN tt := tt + 8; END IF; -- taxis
 
-	IF $1 = '1' OR $1 = '2'	 THEN tt := 4;		-- Only cars for motorway and primary road
-	ELSE		     	      tt := 1 + 2 + 4;
-	END IF; 
-
-	IF     $2 IS NULL 					THEN RETURN tt;
-	ELSIF  $2 = 'B'						THEN RETURN tt;
-	ELSIF ($2 = 'F' AND $3) OR ($2 = 'T' AND NOT $3) 	THEN RETURN tt;
-	ELSIF ($2 = 'T' AND $3) OR ($2 = 'F' AND NOT $3)	THEN RETURN 1; -- oneway: pedestrians only
+        IF    (($4 IS NULL) OR ($4='B') OR ($4 = 'F' AND $5) OR ($4 = 'T' AND NOT $5)) THEN RETURN tt;
+        ELSIF (($4='T' AND $5 AND tt & 1 >0) OR ($4 = 'F' AND NOT $5 AND tt & 1 >0)) THEN RETURN 1; -- pedestrians are allowed to go back a one-way street
+        ELSE RETURN 0;
 	END IF;
 
 	RETURN NULL;
@@ -66,7 +65,7 @@ INSERT INTO tempus.road_section
 SELECT 
 	link_id AS id,
 
-        CASE route_type 
+        CASE func_class
 		WHEN '1' THEN 1
 		WHEN '2' THEN 1
 		WHEN '3' THEN 2
@@ -78,8 +77,8 @@ SELECT
 	ref_in_id AS node_from,
 	nref_in_id AS node_to,
 
-	_tempus_import.navteq_transport_direction(route_type::character varying, dir_travel::character varying, true) AS transport_type_ft,
-	_tempus_import.navteq_transport_direction(route_type::character varying, dir_travel::character varying, false) AS transport_type_tf,
+        _tempus_import.navteq_transport_direction(ar_auto, ar_pedest, ar_taxis, dir_travel::character varying, true) AS transport_type_ft,
+        _tempus_import.navteq_transport_direction(ar_auto, ar_pedest, ar_taxis, dir_travel::character varying, false) AS transport_type_tf,
 
 	ST_Length(geom) AS length,
 	fr_spd_lim AS car_speed_limit,
@@ -200,12 +199,10 @@ INSERT INTO tempus.road_restriction_time_penalty
 SELECT
         cond_id::bigint as restriction_id,
         0 as period_id, 
-	case when ar_auto = 'Y' then 4 else 0 end
-	+ case when ar_bus = 'Y' then 64 else 0 end 
-	+ case when ar_taxis = 'Y' then 8 else 0 end
-	+ case when ar_carpool = 'Y' then 16 else 0 end
-	+ case when ar_pedstrn = 'Y' then 1 else 0 end
-	+ case when ar_trucks = 'Y' then 32 else 0 end
+        case when ar_pedstrn = 'Y' then 1 else 0 end
+        + case when ar_bus = 'Y' then 2 else 0 end  -- restrictions applied to buses, are considered applied to bicycles
+        + case when ar_auto = 'Y' then 4 else 0 end
+        + case when ar_taxis = 'Y' then 8 else 0 end
 	as traffic_rules,
         'Infinity'::float as time_value
 FROM
@@ -218,12 +215,7 @@ INSERT INTO tempus.road_restriction_toll
 SELECT
         cond_id::bigint as restriction_id,
         0 as period_id, 
-	case when ar_auto = 'Y' then 4 else 0 end
-	+ case when ar_bus = 'Y' then 64 else 0 end 
-	+ case when ar_taxis = 'Y' then 8 else 0 end
-	+ case when ar_carpool = 'Y' then 16 else 0 end
-	+ case when ar_pedstrn = 'Y' then 1 else 0 end
-	+ case when ar_trucks = 'Y' then 32 else 0 end
+        case when ar_auto = 'Y' or ar_taxis = 'Y' then 1 else 0 end
 	as toll_rules,
         NULL AS toll_value
 FROM
@@ -233,18 +225,16 @@ WHERE
 
 -- Updates the road traffic direction with table cdms (cond_type = 5)
 UPDATE tempus.road_section
-SET traffic_rules_ft = traffic_rules_ft + 
-	case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 4) = 0) then 4 else 0 end
-	+ case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 8) = 0) then 8 else 0 end
-	+ case when ar_carpool = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 16) = 0) then 16 else 0 end
-	+ case when ar_pedstrn = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 1) = 0)then 1 else 0 end
-	+ case when ar_bus = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 2) = 0)then 66 else 0 end, -- bicycles are considered allowed to ride on bus lanes
-    traffic_rules_tf = traffic_rules_tf + 
-        case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 4) = 0) then 4 else 0 end
-	+ case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 8) = 0) then 8 else 0 end
-	+ case when ar_carpool = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 16) = 0) then 16 else 0 end
-	+ case when ar_pedstrn = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 1) = 0)then 1 else 0 end
-	+ case when ar_bus = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 2) = 0) then 66 else 0 end -- bicycles are considered allowed to ride on bus lanes
+SET traffic_rules_ft = traffic_rules_ft
+        + case when ar_pedstrn = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 1) = 0) then 1 else 0 end
+        + case when ar_bus = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE' )) AND ((traffic_rules_ft & 2) = 0) then 2 else 0 end -- bicycles are considered allowed to ride on bus lanes
+        + case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 4) = 0) then 4 else 0 end
+        + case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'FROM REFERENCE NODE')) AND ((traffic_rules_ft & 8) = 0) then 8 else 0 end,
+    traffic_rules_tf = traffic_rules_tf
+        + case when ar_pedstrn = 'Y'  and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 1) = 0)then 1 else 0 end
+        + case when ar_bus = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE' )) AND ((traffic_rules_tf & 2) = 0) then 2 else 0 end
+        + case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 4) = 0) then 4 else 0 end
+        + case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 8) = 0) then 8 else 0 end
 FROM _tempus_import.cdms as cdms
 WHERE cdms.cond_type = 5 AND cdms.link_id = road_section.id; 
 
@@ -299,4 +289,4 @@ DELETE FROM tempus.road_restriction WHERE id IN
 
 
 -- Removing import function (direction type)
-DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, boolean);
+DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, boolean);
