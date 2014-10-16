@@ -249,7 +249,7 @@ def parse_plugins( output ):
 
 def parse_transport_modes( output ):
     return [ TransportMode( id = int(x.attrib['id']),
-                            is_public_transport = x.attrib['is_public_transport'],
+                            is_public_transport = x.attrib['is_public_transport'] == "1",
                             name = x.attrib['name'],
                             need_parking = x.attrib['need_parking'] == "1",
                             is_shared = x.attrib['is_shared'] == "1",
