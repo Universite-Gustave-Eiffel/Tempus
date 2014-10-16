@@ -72,13 +72,13 @@ select
 	, case
 		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
 		when hw.oneway is null then 32+16+8+4+2+1
-		when oneway in ('true', 'yes') then 32+16+8+4+2+1
+		when oneway::text in ('true', 'yes', '1') then 32+16+8+4+2+1
 		else 32+16+8+4+2+1
 	end as traffic_rules_ft
 	, case
 		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
 		when hw.oneway is null then 32+16+8+4+2+1
-		when oneway in ('true', 'yes') then 1 -- one way, pedestrian only
+		when oneway::text in ('true', 'yes', '1') then 1 -- one way, pedestrian only
 		else 32+16+8+4+2+1
 	end as traffic_rules_tf
 	, st_length(st_transform(hw.geom, 2154)) as length
