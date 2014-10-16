@@ -237,8 +237,12 @@ class IfsttarRouting:
         self.iface.addToolBarIcon(self.action)
         self.clipAction = QAction( u"Polygon subset", self.iface.mainWindow())
         self.clipAction.triggered.connect( self.onClip )
+        self.loadLayersAction = QAction( u"Load layers", self.iface.mainWindow())
+        self.loadLayersAction.triggered.connect( self.onLoadLayers )
+
         self.iface.addPluginToMenu(u"&Tempus", self.action)
         self.iface.addPluginToMenu(u"&Tempus", self.clipAction)
+        self.iface.addPluginToMenu(u"&Tempus", self.loadLayersAction)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
 
         # init the history
@@ -272,6 +276,43 @@ class IfsttarRouting:
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
+
+    def onLoadLayers( self ):
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        project_tmpl = cwd + '/tempus.qgs.tmpl'
+        project = cwd + '/tempus.qgs'
+        dlg = QInputDialog( None )
+
+        q = QSettings()
+        q.beginGroup("/PostgreSQL/connections")
+        items = q.childGroups()
+        current = items.index(q.value('selected'))
+        connection, ok = QInputDialog.getItem(None, "Db connection", "Database to connect to", items, current, False )
+        if not ok:
+            return
+        q.beginGroup(connection)
+        db_params = "dbname='%s'" % q.value("database")
+        host = q.value("host")
+        if host:
+            db_params += " host='%s'" % host
+        port = q.value("port")
+        if port:
+            db_params += " port=%s" % port
+        user = q.value("username")
+        if user:
+            db_params += " user='%s'" % user
+        passwd = q.value("password")
+        if passwd:
+            db_params += " password='%s'" % passwd
+
+        fo = open(project, 'w+')
+        with open(project_tmpl) as f:
+            fo.write( f.read().replace('%DB_PARAMS%', str(db_params)) )
+            fo.close()
+        QgsProject.instance().setFileName( project )
+        ok = QgsProject.instance().read()
+        if not ok:
+            QMessageBox.warning( None, "Project error", QgsProject.instance().error())
 
     def onClip( self ):
         # current layer
@@ -1128,6 +1169,7 @@ class IfsttarRouting:
         # Remove the plugin menu item and icon
         self.iface.removePluginMenu(u"&Tempus",self.action)
         self.iface.removePluginMenu(u"&Tempus",self.clipAction)
+        self.iface.removePluginMenu(u"&Tempus",self.loadLayersAction)
         self.iface.removeToolBarIcon(self.action)
 
     # run method that performs all the real work
