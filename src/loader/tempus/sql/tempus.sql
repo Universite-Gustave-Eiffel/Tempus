@@ -506,6 +506,24 @@ rs.node_from = p1.id and rs.node_to = p2.id
 '
 language sql;
 
+create or replace function tempus.road_node_id_from_coordinates_and_modes( float8, float8, int[] = array[1] ) returns bigint
+as '
+with rs as (
+select road_section.id, node_from, node_to from tempus.road_section, tempus.transport_mode
+where
+  transport_mode.id in (select unnest($3)) and
+  (transport_mode.traffic_rules & traffic_rules_ft = transport_mode.traffic_rules
+   or
+  transport_mode.traffic_rules & traffic_rules_tf = transport_mode.traffic_rules)
+order by geom <-> st_setsrid(st_point($1, $2), 2154) limit 1
+)
+select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), 2154)) < st_distance( p2.geom, st_setsrid(st_point($1,$2), 2154)) then p1.id else p2.id end
+from rs, tempus.road_node as p1, tempus.road_node as p2
+where
+rs.node_from = p1.id and rs.node_to = p2.id
+'
+language sql;
+
 DROP VIEW IF EXISTS tempus.view_forbidden_movements;
 CREATE OR REPLACE VIEW tempus.view_forbidden_movements AS
  SELECT road_restriction.id,
