@@ -144,6 +144,7 @@ struct NullHeuristic
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
     Plugin::OptionDescriptionList odl; 
+    odl.declare_option( "with_forbidden_turning_movements", "With forbidden turning movements", true); 
     odl.declare_option( "timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", 0);         
     odl.declare_option( "verbose_algo", "Verbose algorithm: vertices and edges traversal", false);
     odl.declare_option( "verbose", "Verbose general processing", true); 
