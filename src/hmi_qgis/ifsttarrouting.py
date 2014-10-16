@@ -661,10 +661,15 @@ class IfsttarRouting:
 
         for step in roadmap:
             if first:
-                    text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
-                    first = False
-            else:
+                if isinstance(step, Tempus.TransferStep ) and step.poi == '':
+                    from_private_parking = True
                     text = ''
+                else:
+                    from_private_parking = False
+                    text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
+                first = False
+            else:
+                text = ''
             icon_text = ''
             cost_text = ''
 
@@ -717,6 +722,12 @@ class IfsttarRouting:
                     text += "Connection between '%s' and '%s'" % (step.stop, step.road)
 
             elif isinstance(step, Tempus.TransferStep ):
+                if from_private_parking:
+                    # my private parking
+                    text += "Take your %s<br/>\n" % self.transport_modes_dict[step.final_mode].name
+                    text += "Go on %s" % step.road
+                    from_private_parking = False
+                else:
                     text += "On %s,<br/>At %s:<br/>\n" % (step.road, step.poi)
                     if step.mode != step.final_mode:
                             imode = self.transport_modes_dict[step.mode]
