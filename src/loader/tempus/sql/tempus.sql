@@ -506,15 +506,17 @@ rs.node_from = p1.id and rs.node_to = p2.id
 '
 language sql;
 
-DROP VIEW IF EXISTS tempus.forbidden_movements;
-CREATE OR REPLACE VIEW tempus.forbidden_movements AS
-SELECT
-	road_restriction.id,
-	road_restriction.sections,
-	st_union(road_section.geom) AS geom
-FROM tempus.road_section, tempus.road_restriction
-WHERE road_section.id = ANY (road_restriction.sections)
-GROUP BY road_restriction.id;
+DROP VIEW IF EXISTS tempus.view_forbidden_movements;
+CREATE OR REPLACE VIEW tempus.view_forbidden_movements AS
+ SELECT road_restriction.id,
+    road_restriction.sections,
+    st_union(road_section.geom) AS geom,
+    max(road_restriction_time_penalty.traffic_rules) AS traffic_rules
+   FROM tempus.road_section,
+    tempus.road_restriction,
+    tempus.road_restriction_time_penalty
+  WHERE (road_section.id = ANY (road_restriction.sections)) AND road_restriction_time_penalty.restriction_id = road_restriction.id AND road_restriction_time_penalty.time_value = 'Infinity'::double precision
+  GROUP BY road_restriction.id;
 
 DROP FUNCTION IF EXISTS tempus.array_search(anyelement, anyarray);
 
