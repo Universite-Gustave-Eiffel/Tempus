@@ -24,10 +24,12 @@ psql tempus_bdx < loader/tempus/sql/road_cleaning.sql
 * Parkings :
 Open TO_EQPUB_P.shp with QGIS
 Filter with "substr(SSTHEME,1,2) = 'J8' or substr(SSTHEME,1,3) = 'J10'" to select parkings
-Remove column "geom_o", "toponyme_o", "toponyme_x", "toponyme_y"
-Save selection to parkings.shp
+(If you have problems with float fields that have "," instead of ".", make sure to use o recent version (2.2) of shp2pgsql otherwise :
+  - Remove column "geom_o", "toponyme_o", "toponyme_x", "toponyme_y"
+  - Save selection to parkings.shp
+)
 ./load_tempus -t poi -y 1 -v name:NOM -s /data/bordeaux/equipement_public/parkings.shp -S 2154 -d "dbname=tempus_bdx"
 
 * VLS
-Remove column "geom_o" from TB_STVEL_P.shp
+(Remove column "geom_o" from TB_STVEL_P.shp if you have problems with commas in floats)
 ./load_tempus -t poi -y 4 -v name:NOM service_name:VCUB -s /data/bordeaux/vls/TB_STVEL_P.shp -W LATIN1 -S 2154 -d "dbname=tempus_bdx"
