@@ -39,6 +39,7 @@ import random
 import colorsys
 import time
 import signal
+import pickle
 from datetime import datetime
 
 # Import the PyQt and QGIS libraries
@@ -73,6 +74,7 @@ from psql_helper import psql_query
 from consolelauncher import ConsoleLauncher
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
+PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 ROADMAP_LAYER_NAME = "Tempus_Roadmap_"
 
@@ -144,6 +146,11 @@ class IfsttarRouting:
         # Create the dialog and keep reference
         self.canvas = self.iface.mapCanvas()
         self.dlg = IfsttarRoutingDock( self.canvas )
+        if os.path.exists( PREFS_FILE ):
+            f = open( PREFS_FILE, 'r' )
+            prefs = pickle.load( f )
+            self.dlg.loadState( prefs['query'] )
+
         # show the splash screen
         self.splash = SplashScreen()
 
@@ -916,8 +923,12 @@ class IfsttarRouting:
 
 
     def onReset( self ):
-        # reset prefs
-        self.dlg.reset_prefs()
+        if os.path.exists( PREFS_FILE ):
+            f = open( PREFS_FILE, 'r' )
+            prefs = pickle.load( f )
+            self.dlg.loadState( prefs['query'] )
+            self.plugin_options = prefs['plugin_options']
+            self.update_plugin_options(0)
 
     #
     # When the 'compute' button gets clicked
@@ -997,6 +1008,13 @@ class IfsttarRouting:
         # clear the roadmap table
         self.dlg.ui.roadmapTable.clear()
         self.dlg.ui.roadmapTable.setRowCount(0)
+
+        # save query / plugin options
+        prefs = {}
+        prefs['query'] = self.dlg.saveState()
+        prefs['plugin_options'] = dict(self.plugin_options)
+        f = open( PREFS_FILE, 'w+' )
+        pickle.dump( prefs, f )
 
         # save the request and the server state
         xml_record = '<record>' + select_xml
