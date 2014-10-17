@@ -297,8 +297,13 @@ CREATE TABLE _tempus_import.transport_mode
   gtfs_route_type integer -- Reference to the equivalent GTFS code (for PT only)
 ); 
 
-INSERT INTO _tempus_import.transport_mode(name, public_transport, gtfs_route_type)
+drop sequence if exists _tempus_import.transport_mode_id;
+create sequence _tempus_import.transport_mode_id start with 1;
+select setval('_tempus_import.transport_mode_id', (select max(id) from tempus.transport_mode));
+
+INSERT INTO _tempus_import.transport_mode(id, name, public_transport, gtfs_route_type)
 SELECT
+        nextval('_tempus_import.transport_mode_id') as id,
 	case
         when r.route_type = 0 then 'Tram (%(network))'
         when r.route_type = 1 then 'Subway (%(network))'
@@ -314,9 +319,9 @@ SELECT
 FROM (SELECT DISTINCT route_type FROM _tempus_import.routes) r
 ;
 
-INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type)
+INSERT INTO tempus.transport_mode(id, name, public_transport, gtfs_route_type)
 SELECT 
-	name, public_transport, gtfs_route_type
+	id, name, public_transport, gtfs_route_type
 FROM _tempus_import.transport_mode; 
 
 do $$
