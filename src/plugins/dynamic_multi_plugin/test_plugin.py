@@ -86,7 +86,7 @@ class TestWPS(unittest.TestCase):
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point( 356171.238242, 6687756.369824 ),
-                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06), type = 2 ), # after
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 5] # pedestrian and TRAM only
@@ -99,7 +99,7 @@ class TestWPS(unittest.TestCase):
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point( 356171.238242, 6687756.369824 ),
-                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,9) ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,9), type = 2  ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 6] # pedestrian and BUS only
@@ -112,7 +112,7 @@ class TestWPS(unittest.TestCase):
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
                         origin = Point( 356171.238242, 6687756.369824 ),
-                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06), type = 2  ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 5] # pedestrian and TRAM only
@@ -125,7 +125,7 @@ class TestWPS(unittest.TestCase):
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
                         origin = Point( 356171.238242, 6687756.369824 ),
-                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,9) ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,9), type = 2  ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 )) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 6] # pedestrian and BUS only

@@ -396,7 +396,7 @@ class TempusRequest:
                  origin = Point(),
                  departure_constraint = Constraint(),
                  steps = [RequestStep()],
-                 allowed_transport_modes = [],
+                 allowed_transport_modes = [1], # at least pedestrian
                  criteria = [Cost.Distance, Cost.Duration], # list of optimizing criteria
                  parking_location = None,
                  networks = [] # public transport network id
