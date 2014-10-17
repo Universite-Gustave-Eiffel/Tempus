@@ -309,8 +309,8 @@ class IfsttarRouting:
         with open(project_tmpl) as f:
             fo.write( f.read().replace('%DB_PARAMS%', str(db_params)) )
             fo.close()
-        QgsProject.instance().setFileName( project )
-        ok = QgsProject.instance().read()
+        QgsMapLayerRegistry.instance().removeAllMapLayers()
+        ok = QgsProject.instance().read( QFileInfo( project ) )
         if not ok:
             QMessageBox.warning( None, "Project error", QgsProject.instance().error())
 
