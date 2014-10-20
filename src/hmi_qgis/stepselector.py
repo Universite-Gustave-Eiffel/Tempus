@@ -103,7 +103,8 @@ class StepSelector( QFrame ):
         self.dateEdit.setEnabled( idx != 0 )
 
     def on_coordinates_changed( self, new_text ):
-        self.coordinates_changed.emit()
+        if self.get_coordinates() != [0,0]:
+            self.coordinates_changed.emit()
 
     def set_canvas( self, canvas ):
         self.canvas = canvas
@@ -112,6 +113,8 @@ class StepSelector( QFrame ):
         QObject.connect( self.selectBtn, SIGNAL("clicked()"), self.onSelect )
 
     def get_coordinates( self ):
+        if self.coordinates.text().find(',') == -1:
+            return [0,0]
         s = self.coordinates.text().split(',')
         try:
             if len(s) == 2:

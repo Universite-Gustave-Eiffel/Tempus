@@ -151,6 +151,7 @@ struct NullHeuristic
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
     Plugin::OptionDescriptionList odl; 
+    odl.declare_option( "with_forbidden_turning_movements", "With forbidden turning movements", true); 
     odl.declare_option( "timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", 0);         
     odl.declare_option( "verbose_algo", "Verbose algorithm: vertices and edges traversal", false);
     odl.declare_option( "verbose", "Verbose general processing", true); 
@@ -242,9 +243,13 @@ void DynamicMultiPlugin::pre_process( Request& request )
             parking_location_ = request_.origin();
         }
     }
-    	
+
     // If current date changed, reload timetable / frequency
-    if ( pt_allowed && (graph_.public_transports().size() > 0) && (s_.current_day != request_.steps()[0].constraint().date_time().date()) )  {
+    if ( pt_allowed &&
+         (graph_.public_transports().size() > 0) &&
+         (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
+         (s_.current_day != request_.steps()[0].constraint().date_time().date())
+         )  {
         const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
         std::cout << "load timetable" << std::endl;
         s_.current_day = request_.steps()[0].constraint().date_time().date();
@@ -411,7 +416,7 @@ void DynamicMultiPlugin::process()
     }
 
     // Initialize the trip map
-    boost::associative_property_map< TripMap > trip_pmap( trip_map_ );
+    associative_property_map_default_value< TripMap > trip_pmap( trip_map_, 0 );
 
     // Initialize the wait map
     boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );

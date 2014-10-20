@@ -215,8 +215,8 @@ class TestWPS(unittest.TestCase):
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
         tempus.request( plugin_name = 'sample_pt_plugin',
-                        plugin_options = { 'origin_pt_stop' : 5890,
-                                           'destination_pt_stop' : 4733 },
+                        plugin_options = { 'origin_pt_stop' : 2475,
+                                           'destination_pt_stop' : 1318 },
                         origin = Point( vertex = 0 ),
                         steps = [ RequestStep(destination = Point( vertex = 0 )) ] )
         self.assertEqual( len(tempus.results[0].steps), 1 )

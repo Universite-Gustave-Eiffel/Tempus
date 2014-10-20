@@ -1,3 +1,7 @@
+/*
+        Substitutions options
+        network: name of the PT network
+*/
 do $$
 begin
 raise notice '==== Init ===';
@@ -293,8 +297,13 @@ CREATE TABLE _tempus_import.transport_mode
   gtfs_route_type integer -- Reference to the equivalent GTFS code (for PT only)
 ); 
 
-INSERT INTO _tempus_import.transport_mode(name, public_transport, gtfs_route_type)
+drop sequence if exists _tempus_import.transport_mode_id;
+create sequence _tempus_import.transport_mode_id start with 1;
+select setval('_tempus_import.transport_mode_id', (select max(id) from tempus.transport_mode));
+
+INSERT INTO _tempus_import.transport_mode(id, name, public_transport, gtfs_route_type)
 SELECT
+        nextval('_tempus_import.transport_mode_id') as id,
 	case
         when r.route_type = 0 then 'Tram (%(network))'
         when r.route_type = 1 then 'Subway (%(network))'
@@ -310,9 +319,9 @@ SELECT
 FROM (SELECT DISTINCT route_type FROM _tempus_import.routes) r
 ;
 
-INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type)
+INSERT INTO tempus.transport_mode(id, name, public_transport, gtfs_route_type)
 SELECT 
-	name, public_transport, gtfs_route_type
+	id, name, public_transport, gtfs_route_type
 FROM _tempus_import.transport_mode; 
 
 do $$
@@ -634,15 +643,19 @@ raise notice '==== Adding views and cleaning data';
 end
 $$;
 
-CREATE OR REPLACE VIEW tempus.pt_stop_by_network AS
- SELECT DISTINCT ON (pt_stop.id, pt_route.transport_mode, pt_network.id)
-    int4(row_number() over()) as id,
+CREATE OR REPLACE FUNCTION tempus.update_pt_views() RETURNS void as $$
+BEGIN
+-- pseudo materialized views
+drop table if exists tempus.view_stop_by_network;
+create table tempus.view_stop_by_network as
+ SELECT DISTINCT ON (pt_stop.id, pt_route.transport_mode, pt_network.id) int4(row_number() OVER ()) AS id,
     pt_stop.id AS stop_id,
     pt_stop.vendor_id,
     pt_stop.name,
     pt_stop.location_type,
     pt_stop.parent_station,
-    pt_route.transport_mode,
+    transport_mode.name AS transport_mode_name,
+    transport_mode.gtfs_route_type,
     pt_stop.road_section_id,
     pt_stop.zone_id,
     pt_stop.abscissa_road_section,
@@ -653,11 +666,31 @@ CREATE OR REPLACE VIEW tempus.pt_stop_by_network AS
     tempus.pt_network,
     tempus.pt_route,
     tempus.pt_trip,
-    tempus.pt_stop_time
-  WHERE pt_network.id = pt_section.network_id
-   AND (pt_section.stop_from = pt_stop.id OR pt_section.stop_to = pt_stop.id) AND pt_route.id = pt_trip.route_id
-   AND pt_trip.id = pt_stop_time.trip_id
-   AND pt_stop_time.stop_id = pt_stop.id;
+    tempus.pt_stop_time,
+    tempus.transport_mode
+  WHERE pt_network.id = pt_section.network_id AND (pt_section.stop_from = pt_stop.id OR pt_section.stop_to = pt_stop.id) AND pt_route.id = pt_trip.route_id AND pt_trip.id = pt_stop_time.trip_id AND pt_stop_time.stop_id = pt_stop.id AND transport_mode.id = pt_route.transport_mode;
+
+DROP TABLE IF EXISTS tempus.view_section_by_network;
+CREATE TABLE tempus.view_section_by_network AS
+ SELECT DISTINCT ON (pt_section.stop_from, pt_section.stop_to, pt_section.network_id, transport_mode.name) int4(row_number() OVER ()) AS id,
+    pt_section.stop_from,
+    pt_section.stop_to,
+    pt_section.network_id,
+    transport_mode.name AS transport_mode_name,
+    transport_mode.gtfs_route_type,
+    pt_section.geom
+   FROM tempus.pt_section,
+    tempus.pt_route,
+    tempus.pt_trip,
+    tempus.pt_stop_time pt_stop_time_from,
+    tempus.pt_stop_time pt_stop_time_to,
+    tempus.transport_mode
+  WHERE pt_route.id = pt_trip.route_id AND pt_trip.id = pt_stop_time_from.trip_id AND pt_stop_time_from.trip_id = pt_stop_time_to.trip_id AND pt_stop_time_from.stop_sequence = (pt_stop_time_to.stop_sequence - 1) AND pt_stop_time_from.stop_id = pt_section.stop_from AND pt_stop_time_to.stop_id = pt_section.stop_to AND transport_mode.id = pt_route.transport_mode;
+
+  END;
+$$ LANGUAGE plpgsql;
+
+select tempus.update_pt_views();
 
 -- delete stops not involved in a section and not parent of another stop
 delete from tempus.pt_stop

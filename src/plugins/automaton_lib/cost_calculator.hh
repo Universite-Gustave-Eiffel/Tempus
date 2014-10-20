@@ -166,55 +166,71 @@ public:
                         const std::map<double,TimetableData>& tt = pt_e_it->second;
                         // get the time, just after initial_time
                         std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;
+
+                        // find the first time with allowed mode
+                        while ( (it != tt.end()) && (std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
+                                                     == allowed_transport_modes_.end()) ) {
+                            it++;
+                        }
+
                         if ( it != tt.end() ) {
-                            // only if the mode is allowed
-                            if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
-                                 != allowed_transport_modes_.end() ) {
-                                if (it->second.trip_id == initial_trip_id ) { 
+                            // look for an allowed mode
+                            if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) { 
+                                final_trip_id = it->second.trip_id; 
+                                wait_time = 0; 
+                                return it->second.arrival_time - initial_time ; 
+                            } 
+                            else { // No connection without transfer found
+                                it = tt.lower_bound( initial_time + min_transfer_time_ ); 
+                                if ( it != tt.end() ) {
                                     final_trip_id = it->second.trip_id; 
-                                    wait_time = 0; 
+                                    wait_time = it->first - initial_time ; 
                                     return it->second.arrival_time - initial_time ; 
-                                } 
-                                else { // No connection without transfer found
-                                    it = tt.lower_bound( initial_time + min_transfer_time_ ); 
-                                    if ( it != tt.end() ) {
-                                        final_trip_id = it->second.trip_id; 
-                                        wait_time = it->first - initial_time ; 
-                                        return it->second.arrival_time - initial_time ; 
-                                    }
                                 }
                             }
                         }
                     }
                     else {
+                        // reversed
                         const std::map<double,TimetableData>& tt = rtimetable_.find(pt_e)->second;
                         // get the time, just before initial_time
                         std::map< double, TimetableData >::const_iterator it = tt.upper_bound( initial_time ) ;
-                        if ( it != tt.begin() ) {
-                            it--;
+                        bool mode_allowed = false;
+                        do {
+                            if ( it != tt.begin() ) {
+                                    it--;
+                            }
                             // only if the mode is allowed
                             if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
                                  != allowed_transport_modes_.end() ) {
-                                if (it->second.trip_id == initial_trip_id ) { 
+                                mode_allowed = true;
+                                break;
+                            }
+                        } while (it != tt.begin());
+
+                        if ( mode_allowed ) {
+                            // only if the mode is allowed
+                            if (it->second.trip_id == initial_trip_id ) { 
+                                final_trip_id = it->second.trip_id; 
+                                wait_time = 0; 
+                                // here arrival_time is actually the departure time
+                                return initial_time - it->second.arrival_time; 
+                            } 
+                            else { // No connection without transfer found
+                                it = tt.upper_bound( initial_time - min_transfer_time_ ); 
+                                if ( it != tt.begin() ) {
+                                    it--;
                                     final_trip_id = it->second.trip_id; 
-                                    wait_time = 0; 
-                                    // here arrival_time is actually the departure time
-                                    return initial_time - it->second.arrival_time; 
-                                } 
-                                else { // No connection without transfer found
-                                    it = tt.upper_bound( initial_time - min_transfer_time_ ); 
-                                    if ( it != tt.begin() ) {
-                                        it--;
-                                        final_trip_id = it->second.trip_id; 
-                                        wait_time = initial_time - it->first;
-                                        return initial_time - it->second.arrival_time;
-                                    }
+                                    wait_time = initial_time - it->first;
+                                    return initial_time - it->second.arrival_time;
                                 }
                             }
                         }
                     }
                 }
                 else if (frequency_.find( pt_e ) != frequency_.end() ) {
+                    // FIXME process reversed graphs
+                    // FIXME loop on transport modes
                     std::map<double, FrequencyData>::const_iterator it = frequency_.find( pt_e )->second.lower_bound( initial_time );
                     if (it != frequency_.find( pt_e )->second.begin() ) {
                         it--;
@@ -289,7 +305,7 @@ public:
     {
         double transf_t = 0;
         if (initial_mode_id == final_mode_id ) {
-            return 0;
+            return 0.0;
         }
 
         const Multimodal::Vertex& src = edge.source();
@@ -297,6 +313,11 @@ public:
 
         const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
         const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
+
+        if ( initial_mode.is_public_transport() && final_mode.is_public_transport() ) {
+            return 0.0;
+        }
+
         // park shared vehicle
         if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
             if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) )) {

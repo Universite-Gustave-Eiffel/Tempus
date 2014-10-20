@@ -147,6 +147,7 @@ public:
                 xmlNode* node = XML::new_node( "transport_mode" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
+                XML::new_prop( node, "is_public_transport", it->second.is_public_transport() );
                 XML::new_prop( node, "need_parking", it->second.need_parking() );
                 XML::new_prop( node, "is_shared", it->second.is_shared() );
                 XML::new_prop( node, "must_be_returned", it->second.must_be_returned() );
@@ -184,6 +185,26 @@ Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, d
     // Call to the stored procedure
     //
     std::string q = ( boost::format( "SELECT tempus.road_node_id_from_coordinates(%.3f, %.3f)" ) % x % y ).str();
+    Db::Result res = db.exec( q );
+
+    if ( (res.size() == 0) || (res[0][0].is_null()) ) {
+        return 0;
+    }
+
+    return res[0][0].as<Tempus::db_id_t>();
+}
+
+Tempus::db_id_t road_vertex_id_from_coordinates_and_modes( Db::Connection& db, double x, double y, const std::vector<db_id_t>& modes )
+{
+    std::string array_modes = "array[";
+    for ( size_t i = 0; i < modes.size(); i++ ) {
+        array_modes += (boost::format("%d") % modes[i]).str();
+        if (i<modes.size()-1) {
+            array_modes += ",";
+        }
+    }
+    array_modes += "]";
+    std::string q = ( boost::format( "SELECT tempus.road_node_id_from_coordinates_and_modes(%.3f, %.3f, %s)" ) % x % y % array_modes ).str();
     Db::Result res = db.exec( q );
 
     if ( (res.size() == 0) || (res[0][0].is_null()) ) {
@@ -248,6 +269,46 @@ public:
             y = lexical_cast<double>( y_str );
 
             id = road_vertex_id_from_coordinates( db, x, y );
+
+            if ( id == 0 ) {
+                throw std::invalid_argument( ( boost::format( "Cannot find vertex id for %.3f, %.3f" ) % x % y ).str() );
+            }
+        }
+
+        bool found;
+        boost::tie( vertex, found ) = vertex_from_id( id, road_graph );
+        return vertex;
+    }
+
+    Road::Vertex get_road_vertex_from_point_and_modes( const xmlNode* node, Db::Connection& db, const std::vector<db_id_t> modes ) const {
+        Road::Vertex vertex;
+        Tempus::db_id_t id;
+        double x, y;
+
+        const Tempus::Road::Graph& road_graph = Application::instance()->graph()->road();
+
+        bool has_vertex = XML::has_prop( node, "vertex" );
+        bool has_x = XML::has_prop( node, "x" );
+        bool has_y = XML::has_prop( node, "y" );
+
+        if ( ( has_x && has_y ) == has_vertex ) {
+            throw std::invalid_argument( "Node " + XML::to_string( node ) + " must have either x and y or vertex" );
+        }
+
+        // if "vertex" attribute is present, use it
+        if ( has_vertex ) {
+            std::string v_str = XML::get_prop( node, "vertex" );
+            id = lexical_cast<Tempus::db_id_t>( v_str );
+        }
+        else {
+            // should have "x" and "y" attributes
+            std::string x_str = XML::get_prop( node, "x" );
+            std::string y_str = XML::get_prop( node, "y" );
+
+            x = lexical_cast<double>( x_str );
+            y = lexical_cast<double>( y_str );
+
+            id = road_vertex_id_from_coordinates_and_modes( db, x, y, modes );
 
             if ( id == 0 ) {
                 throw std::invalid_argument( ( boost::format( "Cannot find vertex id for %.3f, %.3f" ) % x % y ).str() );
@@ -326,8 +387,23 @@ public:
 
             const xmlNode* field = XML::get_next_nontext( request_node->children );
 
+            // first, parse allowed modes
+            {
+                const xmlNode* sfield = field;
+                // skip until the first allowed mode
+                while ( sfield && xmlStrcmp( sfield->name, (const xmlChar*)"allowed_mode") ) {
+                    sfield = XML::get_next_nontext( sfield->next );                    
+                }
+                // loop over allowed modes
+                while ( sfield && !xmlStrcmp( sfield->name, ( const xmlChar* )"allowed_mode" ) ) {
+                    db_id_t mode = lexical_cast<db_id_t>( sfield->children->content );
+                    request.add_allowed_mode( mode );
+                    sfield = XML::get_next_nontext( sfield->next );
+                }
+            }
+
             Request::Step origin;
-            origin.set_location( get_road_vertex_from_point( field, db ) ); 
+            origin.set_location( get_road_vertex_from_point_and_modes( field, db, request.allowed_modes() ) ); 
 
             // departure_constraint
             field = XML::get_next_nontext( field->next );
@@ -358,12 +434,11 @@ public:
 
             // steps, 1 .. N
             while ( field && !xmlStrcmp( field->name, (const xmlChar*)"step" ) ) {
-                std::cout << field->name << std::endl;
                 Request::Step step;
                 const xmlNode* subfield;
                 // destination id
                 subfield = XML::get_next_nontext( field->children );
-                step.set_location( get_road_vertex_from_point( subfield, db ) );
+                step.set_location( get_road_vertex_from_point_and_modes( subfield, db, request.allowed_modes() ) );
 
                 // constraint
                 subfield = XML::get_next_nontext( subfield->next );
@@ -384,12 +459,6 @@ public:
                     // destination
                     request.set_destination( step );
                 }
-            }
-
-            // allowed modes
-            while ( field && !xmlStrcmp( field->name, ( const xmlChar* )"allowed_mode" ) ) {
-                request.add_allowed_mode( lexical_cast<int>( field->children->content ) );
-                field = XML::get_next_nontext( field->next );
             }
 
             // call cycle

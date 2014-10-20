@@ -39,6 +39,7 @@ import random
 import colorsys
 import time
 import signal
+import pickle
 from datetime import datetime
 
 # Import the PyQt and QGIS libraries
@@ -73,6 +74,7 @@ from psql_helper import psql_query
 from consolelauncher import ConsoleLauncher
 
 HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
+PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 ROADMAP_LAYER_NAME = "Tempus_Roadmap_"
 
@@ -144,6 +146,11 @@ class IfsttarRouting:
         # Create the dialog and keep reference
         self.canvas = self.iface.mapCanvas()
         self.dlg = IfsttarRoutingDock( self.canvas )
+        if os.path.exists( PREFS_FILE ):
+            f = open( PREFS_FILE, 'r' )
+            prefs = pickle.load( f )
+            self.dlg.loadState( prefs['query'] )
+
         # show the splash screen
         self.splash = SplashScreen()
 
@@ -237,8 +244,12 @@ class IfsttarRouting:
         self.iface.addToolBarIcon(self.action)
         self.clipAction = QAction( u"Polygon subset", self.iface.mainWindow())
         self.clipAction.triggered.connect( self.onClip )
+        self.loadLayersAction = QAction( u"Load layers", self.iface.mainWindow())
+        self.loadLayersAction.triggered.connect( self.onLoadLayers )
+
         self.iface.addPluginToMenu(u"&Tempus", self.action)
         self.iface.addPluginToMenu(u"&Tempus", self.clipAction)
+        self.iface.addPluginToMenu(u"&Tempus", self.loadLayersAction)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
 
         # init the history
@@ -272,6 +283,43 @@ class IfsttarRouting:
 
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
+
+    def onLoadLayers( self ):
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        project_tmpl = cwd + '/tempus.qgs.tmpl'
+        project = cwd + '/tempus.qgs'
+        dlg = QInputDialog( None )
+
+        q = QSettings()
+        q.beginGroup("/PostgreSQL/connections")
+        items = q.childGroups()
+        current = items.index(q.value('selected'))
+        connection, ok = QInputDialog.getItem(None, "Db connection", "Database to connect to", items, current, False )
+        if not ok:
+            return
+        q.beginGroup(connection)
+        db_params = "dbname='%s'" % q.value("database")
+        host = q.value("host")
+        if host:
+            db_params += " host='%s'" % host
+        port = q.value("port")
+        if port:
+            db_params += " port=%s" % port
+        user = q.value("username")
+        if user:
+            db_params += " user='%s'" % user
+        passwd = q.value("password")
+        if passwd:
+            db_params += " password='%s'" % passwd
+
+        fo = open(project, 'w+')
+        with open(project_tmpl) as f:
+            fo.write( f.read().replace('%DB_PARAMS%', str(db_params)) )
+            fo.close()
+        QgsMapLayerRegistry.instance().removeAllMapLayers()
+        ok = QgsProject.instance().read( QFileInfo( project ) )
+        if not ok:
+            QMessageBox.warning( None, "Project error", QgsProject.instance().error())
 
     def onClip( self ):
         # current layer
@@ -620,7 +668,12 @@ class IfsttarRouting:
 
         for step in roadmap:
             if first:
-                text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
+                if isinstance(step, Tempus.TransferStep ) and step.poi == '':
+                    from_private_parking = True
+                    text = ''
+                else:
+                    from_private_parking = False
+                    text = "Initial mode: %s<br/>\n" % self.transport_modes_dict[step.mode].name
                 first = False
             else:
                 text = ''
@@ -676,6 +729,12 @@ class IfsttarRouting:
                     text += "Connection between '%s' and '%s'" % (step.stop, step.road)
 
             elif isinstance(step, Tempus.TransferStep ):
+                if from_private_parking:
+                    # my private parking
+                    text += "Take your %s<br/>\n" % self.transport_modes_dict[step.final_mode].name
+                    text += "Go on %s" % step.road
+                    from_private_parking = False
+                else:
                     text += "On %s,<br/>At %s:<br/>\n" % (step.road, step.poi)
                     if step.mode != step.final_mode:
                             imode = self.transport_modes_dict[step.mode]
@@ -865,8 +924,12 @@ class IfsttarRouting:
 
 
     def onReset( self ):
-        # reset prefs
-        self.dlg.reset_prefs()
+        if os.path.exists( PREFS_FILE ):
+            f = open( PREFS_FILE, 'r' )
+            prefs = pickle.load( f )
+            self.dlg.loadState( prefs['query'] )
+            self.plugin_options = prefs['plugin_options']
+            self.update_plugin_options(0)
 
     #
     # When the 'compute' button gets clicked
@@ -880,11 +943,14 @@ class IfsttarRouting:
         [ox, oy] = coords[0]
         criteria = self.dlg.get_selected_criteria()
         constraints = self.dlg.get_constraints()
+        has_constraint = False
         for i in range(len(constraints)-1):
             ci, ti = constraints[i]
             cj, tj = constraints[i+1]
             dti = datetime.strptime(ti, "%Y-%m-%dT%H:%M:%S")
             dtj = datetime.strptime(tj, "%Y-%m-%dT%H:%M:%S")
+            if ci != 0 or cj != 0:
+                has_constraint = True
             if ci == 2 and cj == 1 and dtj < dti:
                 QMessageBox.warning( self.dlg, "Warning", "Impossible constraint : " + tj + " < " + ti )
                 return
@@ -893,9 +959,19 @@ class IfsttarRouting:
         pvads = self.dlg.get_pvads()
         #networks = [ self.networks[x].id for x in self.dlg.selected_networks() ]
         transports = [ self.transport_modes[x].id for x in self.dlg.selected_transports() ]
+        has_pt = False
+        for x in self.dlg.selected_transports():
+            if self.transport_modes[x].is_public_transport:
+                has_pt = True
+                break
+
         if transports == []:
-                QMessageBox.warning( self.dlg, "Warning", "No transport mode is selected, defaulting to pedestrian walk")
-                transports = [ 1 ]
+            QMessageBox.warning( self.dlg, "Warning", "No transport mode is selected, defaulting to pedestrian walk")
+            transports = [ 1 ]
+
+        if has_pt and not has_constraint:
+            QMessageBox.critical( self.dlg, "Inconsistency", "Some public transports are selected, but not time constraint is specified" )
+            return
 
         # build the request
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
@@ -933,6 +1009,13 @@ class IfsttarRouting:
         # clear the roadmap table
         self.dlg.ui.roadmapTable.clear()
         self.dlg.ui.roadmapTable.setRowCount(0)
+
+        # save query / plugin options
+        prefs = {}
+        prefs['query'] = self.dlg.saveState()
+        prefs['plugin_options'] = dict(self.plugin_options)
+        f = open( PREFS_FILE, 'w+' )
+        pickle.dump( prefs, f )
 
         # save the request and the server state
         xml_record = '<record>' + select_xml
@@ -1116,6 +1199,7 @@ class IfsttarRouting:
         # Remove the plugin menu item and icon
         self.iface.removePluginMenu(u"&Tempus",self.action)
         self.iface.removePluginMenu(u"&Tempus",self.clipAction)
+        self.iface.removePluginMenu(u"&Tempus",self.loadLayersAction)
         self.iface.removeToolBarIcon(self.action)
 
     # run method that performs all the real work

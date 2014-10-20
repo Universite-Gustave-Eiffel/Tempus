@@ -26,6 +26,10 @@ INSERT INTO tempus.transport_mode (name,public_transport,traffic_rules,shared_ve
    't' -- need_parking
    WHERE %(poi_type) in (2,4);
 
+drop sequence if exists _tempus_import.poi_id;
+create sequence _tempus_import.poi_id start with 1;
+select setval('_tempus_import.poi_id', (select case when max(id) is null then 1 else max(id)+1 end from tempus.poi), false);
+
 insert into
     tempus.poi (
             id
@@ -37,7 +41,7 @@ insert into
             , geom
         )
 select
-    gid as id
+    nextval('_tempus_import.poi_id')::bigint as id
     , %(poi_type)::integer as poi_type
     , %(name) as name
     , array[(select

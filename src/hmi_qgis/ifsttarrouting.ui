@@ -554,7 +554,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/entpe.gif</pixmap>
+         <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/logo_entpe.png</pixmap>
         </property>
        </widget>
       </item>
@@ -577,7 +577,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/logo_cerema2.jpg</pixmap>
+         <pixmap resource="resources.qrc">:/plugins/ifsttarrouting/logo_cerema.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>false</bool>

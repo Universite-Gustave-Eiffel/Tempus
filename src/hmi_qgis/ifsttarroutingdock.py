@@ -33,7 +33,6 @@ from criterionchooser import CriterionChooser
 from stepselector import StepSelector
 
 import os
-import pickle
 import config
 
 from PyQt4.QtCore import *
@@ -44,8 +43,6 @@ from ui_ifsttarrouting import Ui_IfsttarRoutingDock
 from wps_client import *
 
 from qgis.core import *
-
-PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 def display_pinpoints( coords, start_letter, style_file, layer_name, canvas ):
     maps = QgsMapLayerRegistry.instance().mapLayers()
@@ -227,17 +224,6 @@ class IfsttarRoutingDock(QDockWidget):
         self.parkingChooser.coordinates_changed.connect( self.update_parking )
         self.parkingChooser.dock = self
 
-        self.reset_prefs()
-
-    def reset_prefs( self ):
-        # preferences is an object used to store user preferences
-        if os.path.exists( PREFS_FILE ):
-            f = open( PREFS_FILE, 'r' )
-            self.prefs = pickle.load( f )
-            self.loadState( self.prefs )
-        else:
-            self.prefs = {}
-
     def on_toggle_parking( self, state ):
         self.parkingChooser.setEnabled( state == Qt.Checked )
         self.update_parking()
@@ -246,12 +232,6 @@ class IfsttarRoutingDock(QDockWidget):
         "Update pinpoints and parking layers"
         self.update_pinpoints()
         self.update_parking()
-
-    def closeEvent( self, event ):
-        self.prefs = self.saveState()
-        f = open( PREFS_FILE, 'w+' )
-        pickle.dump( self.prefs, f )
-        event.accept()
 
     def get_selected_criteria( self ):
         s = []

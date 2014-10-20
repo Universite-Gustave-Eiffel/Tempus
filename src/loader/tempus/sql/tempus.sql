@@ -47,7 +47,7 @@ INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traff
 INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle) 
 	VALUES ('Private car',     'f', NULL, 4,  5, 1,    1,    't', 'f', 'f'); 
 INSERT INTO tempus.transport_mode(name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle) 
-	VALUES ('Taxi',            'f', NULL, 12, 5, 1,    1,    'f', 'f', 'f'); 
+        VALUES ('Taxi',            'f', NULL, 8, 5, 1,    1,    'f', 'f', 'f');
 
 CREATE TABLE tempus.road_validity_period
 (
@@ -168,6 +168,7 @@ CREATE TABLE tempus.road_section
 );
 COMMENT ON TABLE tempus.road_section IS 'Road sections description';
 -- TODO Add a CHECK on transport_type_* bitfields value
+COMMENT ON COLUMN tempus.road_section.road_type IS '1: fast links between urban areas, 2: links between 1 level links, heavy traffic with lower speeds, 3: local links with heavy traffic, 4: low traffic';
 COMMENT ON COLUMN tempus.road_section.traffic_rules_ft IS 'Bitfield value giving allowed traffic rules for direction from -> to'; 
 COMMENT ON COLUMN tempus.road_section.traffic_rules_tf IS 'Bitfield value giving allowed traffic rules for direction to -> from'; 
 COMMENT ON COLUMN tempus.road_section.length IS 'In meters'; 
@@ -505,15 +506,35 @@ rs.node_from = p1.id and rs.node_to = p2.id
 '
 language sql;
 
-DROP VIEW IF EXISTS tempus.forbidden_movements;
-CREATE OR REPLACE VIEW tempus.forbidden_movements AS
-SELECT
-	road_restriction.id,
-	road_restriction.sections,
-	st_union(road_section.geom) AS geom
-FROM tempus.road_section, tempus.road_restriction
-WHERE road_section.id = ANY (road_restriction.sections)
-GROUP BY road_restriction.id;
+create or replace function tempus.road_node_id_from_coordinates_and_modes( float8, float8, int[] = array[1] ) returns bigint
+as '
+with rs as (
+select road_section.id, node_from, node_to from tempus.road_section, tempus.transport_mode
+where
+  transport_mode.id in (select unnest($3)) and
+  (transport_mode.traffic_rules & traffic_rules_ft = transport_mode.traffic_rules
+   or
+  transport_mode.traffic_rules & traffic_rules_tf = transport_mode.traffic_rules)
+order by geom <-> st_setsrid(st_point($1, $2), 2154) limit 1
+)
+select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), 2154)) < st_distance( p2.geom, st_setsrid(st_point($1,$2), 2154)) then p1.id else p2.id end
+from rs, tempus.road_node as p1, tempus.road_node as p2
+where
+rs.node_from = p1.id and rs.node_to = p2.id
+'
+language sql;
+
+DROP VIEW IF EXISTS tempus.view_forbidden_movements;
+CREATE OR REPLACE VIEW tempus.view_forbidden_movements AS
+ SELECT road_restriction.id,
+    road_restriction.sections,
+    st_union(road_section.geom) AS geom,
+    max(road_restriction_time_penalty.traffic_rules) AS traffic_rules
+   FROM tempus.road_section,
+    tempus.road_restriction,
+    tempus.road_restriction_time_penalty
+  WHERE (road_section.id = ANY (road_restriction.sections)) AND road_restriction_time_penalty.restriction_id = road_restriction.id AND road_restriction_time_penalty.time_value = 'Infinity'::double precision
+  GROUP BY road_restriction.id;
 
 DROP FUNCTION IF EXISTS tempus.array_search(anyelement, anyarray);
 

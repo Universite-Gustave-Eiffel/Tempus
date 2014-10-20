@@ -44,6 +44,8 @@ class POIImporter(ShpImporter):
 
         if not 'name' in subs.keys():
             subs['name'] = 'pname'
+        if not 'filter' in subs.keys():
+            subs['filter'] = 'true'
         subs['poi_type'] = poi_type
 
         self.POSTLOADSQL = [('poi.sql', subs)]

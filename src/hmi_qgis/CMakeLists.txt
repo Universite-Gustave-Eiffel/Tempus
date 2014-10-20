@@ -20,7 +20,9 @@ SET(INSTALLER_FILES ${INSTALLER_FILES}
   style_pinpoints.qml
   style_parking.qml
   ${IMAGES_FILES}
-  ${CMAKE_CURRENT_BINARY_DIR}/config.py )
+  ${CMAKE_CURRENT_BINARY_DIR}/config.py
+  tempus.qgs.tmpl
+)
 
 FILE(GLOB UI_FILES *.ui)
 PYQT4_WRAP_UI(PYUI_FILES ${UI_FILES})

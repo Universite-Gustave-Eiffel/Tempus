@@ -203,6 +203,6 @@ class ShpImporter(DataImporter):
             else:
                 notfound.append( filenameDbf )
                 sys.stderr.write("Warning : file for table %s not found.\n"\
-                                     "%s/shp not found\n" % (shp, filename) )            
+                                     "%s not found\n" % (shp, filenameDbf) )
         return notfound
 
