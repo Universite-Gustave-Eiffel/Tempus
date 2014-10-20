@@ -22,6 +22,7 @@ set( HEADER_FILES
     plugin.hh 
     db.hh 
     utils/graph_db_link.hh 
+    variant.hh
     )
 
 set( SOURCE_FILES 
@@ -42,6 +43,7 @@ set( SOURCE_FILES
     plugin.cc 
     db.cc 
     utils/graph_db_link.cc 
+    variant.cc
     )
 
 if (WIN32)

@@ -81,16 +81,16 @@ public:
                 xmlNode* value_node = 0;
 
                 switch ( it->second.type() ) {
-                case Plugin::BoolOption:
+                case BoolVariant:
                     value_node = XML::new_node( "bool_value" );
                     break;
-                case Plugin::IntOption:
+                case IntVariant:
                     value_node = XML::new_node( "int_value" );
                     break;
-                case Plugin::FloatOption:
+                case FloatVariant:
                     value_node = XML::new_node( "float_value" );
                     break;
-                case Plugin::StringOption:
+                case StringVariant:
                     value_node = XML::new_node( "string_value" );
                     break;
                 default:
@@ -354,19 +354,19 @@ public:
                 std::string name = XML::get_prop( field, "name" );
 
                 const xmlNode* value_node = XML::get_next_nontext( field->children );
-                Tempus::Plugin::OptionType t = Tempus::Plugin::IntOption;
+                Tempus::VariantType t = Tempus::IntVariant;
 
                 if ( !xmlStrcmp( value_node->name, ( const xmlChar* )"bool_value" ) ) {
-                    t = Tempus::Plugin::BoolOption;
+                    t = Tempus::BoolVariant;
                 }
                 else if ( !xmlStrcmp( value_node->name, ( const xmlChar* )"int_value" ) ) {
-                    t = Tempus::Plugin::IntOption;
+                    t = Tempus::IntVariant;
                 }
                 else if ( !xmlStrcmp( value_node->name, ( const xmlChar* )"float_value" ) ) {
-                    t = Tempus::Plugin::FloatOption;
+                    t = Tempus::FloatVariant;
                 }
                 else if ( !xmlStrcmp( value_node->name, ( const xmlChar* )"string_value" ) ) {
-                    t = Tempus::Plugin::StringOption;
+                    t = Tempus::StringVariant;
                 }
 
                 const std::string value = XML::get_prop( value_node, "value" );

@@ -282,24 +282,6 @@ Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
     metrics_[ "iterations" ] = ( int )0;
 }
 
-Plugin::OptionValue::OptionValue( bool b ) : type_( BoolOption )
-{
-    str_ = b ? "true" : "false";
-}
-Plugin::OptionValue::OptionValue( int i ) : type_( IntOption )
-{
-    std::ostringstream ostr;
-    ostr << i;
-    str_ = ostr.str();
-}
-Plugin::OptionValue::OptionValue( double i ) : type_( FloatOption )
-{
-    std::ostringstream ostr;
-    ostr << i;
-    str_ = ostr.str();
-}
-Plugin::OptionValue::OptionValue( const std::string& s, OptionType t ) : type_( t ), str_( s ) {}
-
 template <class T>
 void Plugin::get_option( const std::string& nname, T& value )
 {
@@ -324,7 +306,7 @@ template void Plugin::get_option<int>( const std::string&, int& );
 template void Plugin::get_option<double>( const std::string&, double& );
 template void Plugin::get_option<std::string>( const std::string&, std::string& );
 
-void Plugin::set_option_from_string( const std::string& nname, const std::string& value, Plugin::OptionType type )
+void Plugin::set_option_from_string( const std::string& nname, const std::string& value, VariantType type )
 {
     const Plugin::OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
     Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
@@ -333,7 +315,7 @@ void Plugin::set_option_from_string( const std::string& nname, const std::string
         return;
     }
 
-    const OptionType t = descIt->second.type();
+    const VariantType t = descIt->second.type();
 
     if ( t != type ) {
         throw std::invalid_argument( ( boost::format( "Requested type %1% for option %2% is different from the declared type %3%" )
@@ -342,7 +324,7 @@ void Plugin::set_option_from_string( const std::string& nname, const std::string
                                        % t ).str() );
     }
 
-    options_[nname] = OptionValue( value, t );
+    options_[nname] = Variant( value, t );
 }
 
 std::string Plugin::option_to_string( const std::string& nname )
@@ -354,7 +336,7 @@ std::string Plugin::option_to_string( const std::string& nname )
         throw std::invalid_argument( "Cannot find option " + nname );
     }
 
-    OptionValue value = options_[nname];
+    Variant value = options_[nname];
     return value.str();
 }
 

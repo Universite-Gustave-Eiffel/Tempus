@@ -30,6 +30,7 @@
 #include "roadmap.hh"
 #include "db.hh"
 #include "application.hh"
+#include "variant.hh"
 
 #ifdef _WIN32
 #   define NOMINMAX
@@ -49,21 +50,6 @@
 #   define HMODULE void*
 #endif
 
-namespace {
-template <typename T>
-struct OptionValueCast {
-    T operator()( const std::string& str ) {
-        return Tempus::lexical_cast<T>( str );
-    }
-};
-template <>
-struct OptionValueCast<bool> {
-    bool operator()( const std::string& str ) {
-        return str == "true";
-    }
-};
-}
-
 namespace Tempus {
 /**
    Base class that has to be derived in plugins
@@ -77,51 +63,15 @@ class Plugin {
 public:
 
     ///
-    /// Plugin option type
-    enum OptionType {
-        BoolOption,
-        IntOption,
-        FloatOption, // stored as a double
-        StringOption
-    };
-
-    ///
-    /// class OptionValue
-    /// Used to store plugin option values and metric values
-    class OptionValue {
-    public:
-        OptionValue( bool b );
-        OptionValue( int i = 0 );
-        OptionValue( double f );
-        OptionValue( const std::string& s, OptionType = StringOption );
-
-        std::string str() const {
-            return str_;
-        }
-        OptionType type() const {
-            return type_;
-        }
-
-        template <typename T>
-        T as() const {
-            return OptionValueCast<T>()( str_ );
-        }
-    private:
-        OptionType type_;
-        // string representation of the value
-        std::string str_;
-    };
-
-    ///
     /// List of option values
-    typedef std::map<std::string, OptionValue> OptionValueList;
+    typedef std::map<std::string, Variant> OptionValueList;
 
     ///
     /// Plugin option description
     struct OptionDescription {
         std::string description;
-        OptionValue default_value;
-        OptionType type() const {
+        Variant default_value;
+        VariantType type() const {
             return default_value.type();
         }
     };
@@ -132,7 +82,7 @@ public:
         template <class T>
         void declare_option( const std::string& nname, const std::string& description, T default_value ) {
             ( *this )[nname].description = description;
-            ( *this )[nname].default_value = OptionValue( default_value );
+            ( *this )[nname].default_value = Variant( default_value );
         }
         void set_options_default_value( Plugin* plugin ) {
             for ( iterator i=begin(); i!=end(); i++ ) {
@@ -162,7 +112,7 @@ public:
 
     ///
     /// Method used to set an option value from a string. Conversions are made, based on the option description
-    void set_option_from_string( const std::string& name, const std::string& value, Plugin::OptionType t );
+    void set_option_from_string( const std::string& name, const std::string& value, VariantType t );
     ///
     /// Method used to get a string from an option value
     std::string option_to_string( const std::string& name );
@@ -183,7 +133,7 @@ public:
 
     ///
     /// A metric is also an OptionValue
-    typedef OptionValue MetricValue;
+    typedef Variant MetricValue;
     ///
     /// Metric name -> value
     typedef std::map<std::string, MetricValue> MetricValueList;
@@ -296,17 +246,6 @@ protected:
 
     MetricValueList metrics_;
 };
-
-/*
-template <>
-struct Plugin::OptionTypeFrom<bool> { static const Plugin::OptionType type = Plugin::BoolOption; };
-template <>
-struct Plugin::OptionTypeFrom<int> { static const Plugin::OptionType type = Plugin::IntOption; };
-template <>
-struct Plugin::OptionTypeFrom<double> { static const Plugin::OptionType type = Plugin::FloatOption; };
-template <>
-struct Plugin::OptionTypeFrom<std::string> { static const Plugin::OptionType type = Plugin::StringOption; };
-*/
 
 
 ///
