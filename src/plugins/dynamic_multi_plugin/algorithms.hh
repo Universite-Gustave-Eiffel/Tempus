@@ -106,7 +106,8 @@ struct HeuristicCompare
 
                     double new_pi = get( potential_map, new_object );
                     db_id_t initial_trip_id = get( trip_map, min_object );
-                    db_id_t final_trip_id ;
+                    // don't forget to set to 0
+                    db_id_t final_trip_id = 0;
                     double wait_time;
 
                     // compute the time needed to transfer from one mode to another
