@@ -148,6 +148,22 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( n_road2poi, 1 )
         self.assertEqual( n_poi2road, 1 )
 
+    def test_pt( self ):
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        # request public transports
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356164.932271, 6687774.369325 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,16,10,7), type = 2 ), # after
+                        steps = [ RequestStep(destination = Point( 355325.964825, 6689586.616872 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        # Transfer from TRAM 3 to TRAM 2
+        self.assertEqual( tempus.results[0].steps[2].route[0], '3' )
+        self.assertEqual( tempus.results[0].steps[3].route[0], '2' )
+        
     def test_parking( self ):
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
