@@ -198,14 +198,6 @@ public:
     void build_shortcuts(const std::map < State, State >& failure_function_)
     {
         using namespace boost;
-#if 0
-        {
-            std::ofstream ofs("shortcuts.dot");
-            NodeWriter nodeWriter( automaton_graph_ );
-            MyArcWriter arcWriter( automaton_graph_ );
-            write_graphviz( ofs, automaton_graph_, nodeWriter, arcWriter );
-        }
-#endif
 
         // copy vertices
         Graph automaton_copy;

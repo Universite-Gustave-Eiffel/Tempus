@@ -53,6 +53,7 @@ enum VariantType {
 ///
 /// class Variant
 /// Used to store plugin option values and metric values
+/// FIXME: why not use boost::variant ?
 class Variant {
 public:
     Variant( bool b );
