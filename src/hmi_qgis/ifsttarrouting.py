@@ -77,6 +77,7 @@ HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 ROADMAP_LAYER_NAME = "Tempus_Roadmap_"
+TRACE_LAYER_NAME = "Tempus_Trace_"
 
 # There has been an API change regarding vector layer on 1.9 branch
 NEW_API = 'commitChanges' in dir(QgsVectorLayer)
@@ -622,6 +623,56 @@ class IfsttarRouting:
         # connect selection change signal
         QObject.connect( vl, SIGNAL("selectionChanged()"), lambda layer=vl: self.onLayerSelectionChanged(layer) )
 
+    def displayTrace(self, trace, lid):
+
+        # first pass to get the list of variants
+        variants_type = {}
+        for ve in trace:
+            for k,v in ve.variants.iteritems():
+                if variants_type.get(k) is None:
+                    variants_type[k] = v.__class__
+
+        lname = "%s%d" % ( TRACE_LAYER_NAME, lid )
+        # create a new vector layer
+        vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
+
+        pr = vl.dataProvider()
+
+        vl.startEditing()
+        vl.addAttribute( QgsField( "type", QVariant.Int ) )
+        vl.addAttribute( QgsField( "origin", QVariant.Int ) )
+        vl.addAttribute( QgsField( "destination", QVariant.Int ) )
+        for n, t in variants_type.iteritems():
+            if t == int:
+                vt = QVariant.Int
+            elif t == float:
+                vt = QVariant.Double
+            elif t == str:
+                vt = QVariant.String
+            elif t == bool:
+                vt = QVariant.Bool
+            vl.addAttribute( QgsField( n, vt ) )
+
+        for ve in trace:
+            fet = QgsFeature()
+            if ve.wkb != '':
+                # find wkb geometry
+                wkb = WKB(ve.wkb)
+                wkb = wkb.force2d()
+                geo = QgsGeometry()
+                geo.fromWkb( binascii.unhexlify(wkb) )
+                fet.setGeometry( geo )
+
+            attrs = [ 0, ve.origin.id, ve.destination.id ]
+            attrs += [ve.variants.get(k) for k in ve.variants.keys()]
+            fet.setAttributes( attrs )
+            pr.addFeatures( [fet] )
+
+        vl.commitChanges()
+        vl.updateExtents()
+
+        QgsMapLayerRegistry.instance().addMapLayers( [vl] )
+
     #
     # Select the roadmap layer
     #
@@ -903,13 +954,15 @@ class IfsttarRouting:
         # delete pre existing roadmap layers
         maps = QgsMapLayerRegistry.instance().mapLayers()
         for k,v in maps.items():
-            if v.name()[0:len(ROADMAP_LAYER_NAME)] == ROADMAP_LAYER_NAME:
+            if v.name().startswith(ROADMAP_LAYER_NAME) or v.name().startswith(TRACE_LAYER_NAME):
                 QgsMapLayerRegistry.instance().removeMapLayers( [k] )
 
         # then display each layer
         k = 1
         for result in results:
             self.displayRoadmapLayer( result.steps, k )
+            if result.trace is not None:
+                self.displayTrace( result.trace, k )
             k += 1
 
 
