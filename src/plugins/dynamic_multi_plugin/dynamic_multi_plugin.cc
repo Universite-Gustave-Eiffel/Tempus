@@ -618,6 +618,24 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
         DateTime dt = request_.steps().back().constraint().date_time() - boost::posix_time::minutes( mins ) - boost::posix_time::seconds( secs );
         roadmap.set_starting_date_time( dt );
     }
+
+    // populate the path parts, if needed
+    if (verbose_) {
+        PathTrace trace;
+        for ( PredecessorMap::const_iterator vit = pred_map_.begin(); vit != pred_map_.end(); vit++ ) {
+            if ( vit->second.vertex == vit->first.vertex ) {
+                continue;
+            }
+            ValuedEdge ve( vit->second.vertex, vit->first.vertex );
+            ve.set_value( "duration", potential_map_[vit->first] - potential_map_[vit->second] );
+            ve.set_value( "imode", int(vit->second.mode) );
+            ve.set_value( "fmode", int(vit->first.mode) );
+            ve.set_value( "istate", int(vit->second.state) );
+            ve.set_value( "fstate", int(vit->first.state) );
+            trace.push_back( ve );
+        }
+        roadmap.set_trace( trace );
+    }
 }
 
 StaticVariables DynamicMultiPlugin::s_;
