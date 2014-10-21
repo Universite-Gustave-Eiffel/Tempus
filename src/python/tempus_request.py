@@ -165,11 +165,12 @@ class TransferStep:
 
 class Result:
     # cost : id(int) => value(float)
-    def __init__( self, steps = [], costs = {}, starting_date_time = '' ):
+    def __init__( self, steps = [], costs = {}, starting_date_time = '', trace = None ):
         self.steps = steps
         self.costs = costs
         dt = datetime.datetime.strptime(starting_date_time, '%Y-%m-%dT%H:%M:%S')
         self.starting_date_time = DateTime( dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second )
+        self.trace = trace
 
 class OptionType:
     Bool = 0,
@@ -181,6 +182,10 @@ class OptionValue:
     def __init__( self, value = 0, type = OptionType.Int ):
         self.value = value
         self.type = type
+
+class Variant:
+    def __init__( self, value ):
+        self.value = value
 
 class PluginOption:
     def __init__( self, name = '', description = '', default_value = OptionValue() ):
@@ -214,6 +219,50 @@ class TransportNetwork:
     def __init__( self, id = 0, name = '' ):
         self.id = id
         self.name = name
+
+class RoadVertex:
+    def __init__( self, id ):
+        self.id = id
+
+class PoiVertex:
+    def __init__( self, id ):
+        self.id = id
+
+class PtVertex:
+    def __init__( self, id, network = 1):
+        self.id = id
+        self.network = network
+
+class ValuedEdge:
+    def __init__( self, origin = None, destination = None, wkb = '', variants = {} ):
+        self.origin = origin
+        self.destination = destination
+        self.wkb = wkb
+        self.variants = variants
+
+def parse_vertex( v ):
+    if v.tag == 'road':
+        return RoadVertex( int(v.attrib['id']) )
+    elif v.tag == 'poi':
+        return PoiVertex( int(v.attrib['id']) )
+    elif v.tag == 'pt':
+        if 'network' in v.attrib:
+            return PtVertex( int(v.attrib['id']), int(v.attrib['network']) )
+        else:
+            return PtVertex( int(v.attrib['id']) )
+
+def parse_variants( variants ):
+    v = {}
+    for x in variants:
+        if x.tag == 'b':
+            v[x.attrib['k']] = x.attrib['v'] == 'true'
+        elif x.tag == 'i':
+            v[x.attrib['k']] = int(x.attrib['v'])
+        elif x.tag == 'f':
+            v[x.attrib['k']] = float(x.attrib['v'])
+        elif x.tag == 's':
+            v[x.attrib['k']] = x.attrib['s']
+    return v
 
 def parse_option_value( opt ):
     optval = None
@@ -277,6 +326,7 @@ def parse_results( results ):
     for result in results:
         steps = []
         gcosts = {}
+        trace = []
         starting_dt = ''
         for child in result:
             if child.tag == 'road_step':
@@ -357,7 +407,17 @@ def parse_results( results ):
                 gcosts[int(child.attrib['type'])] = float(child.attrib['value'])
             elif child.tag == 'starting_date_time':
                 starting_dt = child.text
-        r.append( Result( steps = steps, costs = gcosts, starting_date_time = starting_dt ) )
+            elif child.tag == 'trace':
+                # for each edge
+                edges = child
+                for e in child:
+                    wkb = e.attrib['wkb']
+                    o = parse_vertex(e[0])
+                    d = parse_vertex(e[1])
+                    variants = parse_variants(e[2:])
+                    vedge = ValuedEdge( origin = o, destination = d, wkb = wkb, variants = variants )
+                    trace.append( vedge )
+        r.append( Result( steps = steps, costs = gcosts, starting_date_time = starting_dt, trace = trace ) )
     return r
 
 def parse_plugin_options( xml ):
