@@ -76,4 +76,8 @@ Point2D coordinates( const POI* poi, Db::Connection& db );
 ///
 /// Get 2D coordinates of a multimodal vertex, from the database
 Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph );
+
+///
+/// Get geometry WKB of a Multimodal edge, from the database
+std::string geometry_wkb( const Multimodal::Edge& e, Db::Connection& db );
 }

@@ -69,4 +69,76 @@ Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Mult
 return coordinates( v.poi(), db );
 }
 
+std::string geometry_wkb( const Multimodal::Edge& e, Db::Connection& db )
+{
+    std::string res_wkb;
+    std::string query;
+    if ( e.connection_type() == Multimodal::Edge::Road2Road ) {
+        db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
+        db_id_t d_id = (*e.target().road_graph())[e.target().road_vertex()].db_id();
+
+        query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                             "(select geom from tempus.road_node where id=%1%) as t1, "
+                                             "(select geom from tempus.road_node where id=%2%) as t2 "
+                                             ) % o_id % d_id ).str();
+    }
+    else if ( e.connection_type() == Multimodal::Edge::Road2Transport ) {
+        db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
+        db_id_t d_id = (*e.target().pt_graph())[e.target().pt_vertex()].db_id();
+
+        query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                             "(select geom from tempus.road_node where id=%1%) as t1, "
+                                             "(select geom from tempus.pt_stop where id=%2%) as t2 "
+                                             ) % o_id % d_id ).str();
+        
+    }
+    else if ( e.connection_type() == Multimodal::Edge::Transport2Road ) {
+        db_id_t o_id = (*e.source().pt_graph())[e.source().pt_vertex()].db_id();
+        db_id_t d_id = (*e.target().road_graph())[e.target().road_vertex()].db_id();
+
+        query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                             "(select geom from tempus.pt_stop where id=%1%) as t1, "
+                                             "(select geom from tempus.road_node where id=%2%) as t2 "
+                                             ) % o_id % d_id ).str();
+        
+    }
+    else if ( e.connection_type() == Multimodal::Edge::Road2Poi ) {
+        db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
+        db_id_t d_id = e.target().poi()->db_id();
+
+        query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                             "(select geom from tempus.road_node where id=%1%) as t1, "
+                                             "(select geom from tempus.poi where id=%2%) as t2 "
+                                             ) % o_id % d_id ).str();
+        
+    }
+    else if ( e.connection_type() == Multimodal::Edge::Poi2Road ) {
+        db_id_t o_id = e.source().poi()->db_id();
+        db_id_t d_id = (*e.target().road_graph())[e.target().road_vertex()].db_id();
+
+        query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
+                                             "(select geom from tempus.poi where id=%1%) as t1, "
+                                             "(select geom from tempus.road_node where id=%2%) as t2 "
+                                             ) % o_id % d_id ).str();
+        
+    }
+    else if ( e.connection_type() == Multimodal::Edge::Transport2Transport ) {
+        db_id_t o_id = (*e.source().pt_graph())[e.source().pt_vertex()].db_id();
+        db_id_t d_id = (*e.target().pt_graph())[e.target().pt_vertex()].db_id();
+
+        query = ( boost::format( "SELECT st_asbinary(geom) from "
+                                 "tempus.pt_section where stop_from=%1% and stop_to=%2%"
+                                 ) % o_id % d_id ).str();
+    }
+
+    Db::Result res = db.exec( query );
+    if ( ! res.size() ) {
+        throw std::runtime_error("No result for " + query);
+    }
+    std::string wkb = res[0][0].as<std::string>();
+    // get rid of the heading '\x'
+    res_wkb = wkb.substr( 2 );
+    return res_wkb;
+}
+
 }
