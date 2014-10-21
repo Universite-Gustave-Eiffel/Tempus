@@ -264,7 +264,7 @@ public:
             }
         }
         // If transition not found
-        return std::make_pair( q, false );
+        return std::make_pair( 0, false );
     }
 
 private:

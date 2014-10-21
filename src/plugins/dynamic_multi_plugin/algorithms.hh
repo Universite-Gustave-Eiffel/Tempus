@@ -93,12 +93,13 @@ struct HeuristicCompare
                         continue;
                     }
 
-                    typename Automaton::State s = min_object.state;
+                    typename Automaton::State s;
                     {
                         bool found;
                         boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge() );
-                        // if not found, s == min_object.state
+                        // if not found, s == 0
                     }
+
                     Object new_object;
                     new_object.vertex = target(current_edge, graph);
                     new_object.mode = mode_id;
