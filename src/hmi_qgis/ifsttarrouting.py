@@ -663,7 +663,19 @@ class IfsttarRouting:
                 geo.fromWkb( binascii.unhexlify(wkb) )
                 fet.setGeometry( geo )
 
-            attrs = [ 0, ve.origin.id, ve.destination.id ]
+            if isinstance(ve.origin, Tempus.RoadVertex) and isinstance(ve.destination, Tempus.RoadVertex):
+                type = Tempus.ConnectionType.Road2Road
+            elif isinstance(ve.origin, Tempus.RoadVertex) and isinstance(ve.destination, Tempus.PtVertex):
+                type = Tempus.ConnectionType.Road2Transport
+            elif isinstance(ve.origin, Tempus.PtVertex) and isinstance(ve.destination, Tempus.RoadVertex):
+                type = Tempus.ConnectionType.Transport2Road
+            elif isinstance(ve.origin, Tempus.PtVertex) and isinstance(ve.destination, Tempus.PtVertex):
+                type = Tempus.ConnectionType.Transport2Transport
+            elif isinstance(ve.origin, Tempus.RoadVertex) and isinstance(ve.destination, Tempus.PoiVertex):
+                type = Tempus.ConnectionType.Road2Poi
+            elif isinstance(ve.origin, Tempus.PoiVertex) and isinstance(ve.destination, Tempus.RoadVertex):
+                type = Tempus.ConnectionType.Poi2Road
+            attrs = [ type, ve.origin.id, ve.destination.id ]
             attrs += [ve.variants.get(k) for k in ve.variants.keys()]
             fet.setAttributes( attrs )
             pr.addFeatures( [fet] )
