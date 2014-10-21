@@ -7,6 +7,22 @@
     <xs:attribute name="type" type="xs:string"/>
     <xs:attribute name="value" type="xs:float"/>
   </xs:complexType>
+  <xs:complexType name="IntVariant">
+    <xs:attribute name="k" type="xs:string"/>
+    <xs:attribute name="v" type="xs:int"/>
+  </xs:complexType>
+  <xs:complexType name="FloatVariant">
+    <xs:attribute name="k" type="xs:string"/>
+    <xs:attribute name="v" type="xs:float"/>
+  </xs:complexType>
+  <xs:complexType name="BoolVariant">
+    <xs:attribute name="k" type="xs:string"/>
+    <xs:attribute name="v" type="xs:boolean"/>
+  </xs:complexType>
+  <xs:complexType name="StringVariant">
+    <xs:attribute name="k" type="xs:string"/>
+    <xs:attribute name="v" type="xs:string"/>
+  </xs:complexType>
   <xs:complexType name="RoadStep">
     <xs:sequence>
       <xs:element name="cost" type="Cost" maxOccurs="unbounded"/>
@@ -52,6 +68,42 @@
     <xs:attribute name="final_mode" type="xs:int"/>
     <xs:attribute name="wkb" type="xs:string"/>
   </xs:complexType>
+  <xs:complexType name="Vertex">
+    <xs:attribute name="id" type="xs:int"/>
+  </xs:complexType>
+  <xs:complexType name="PtVertex">
+    <xs:attribute name="id" type="xs:int"/>
+    <xs:attribute name="network" type="xs:int"/>
+  </xs:complexType>
+  <xs:complexType name="ValuedEdge">
+    <!-- origin vertex -->
+    <xs:sequence>
+      <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:element name="road" type="Vertex"/>
+        <xs:element name="pt" type="PtVertex"/>
+        <xs:element name="poi" type="Vertex"/>
+      </xs:choice>
+    <!-- destination vertex -->
+      <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:element name="road" type="Vertex"/>
+        <xs:element name="pt" type="PtVertex"/>
+        <xs:element name="poi" type="Vertex"/>
+      </xs:choice>
+    <!-- values -->
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="b" type="BoolVariant"/>
+        <xs:element name="i" type="IntVariant"/>
+        <xs:element name="f" type="FloatVariant"/>
+        <xs:element name="s" type="StringVariant"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="wkb" type="xs:string" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="PathTrace">
+    <xs:sequence>
+      <xs:element name="edge" type="ValuedEdge" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="Results">
     <xs:sequence>
       <xs:element name="result" minOccurs="0" maxOccurs="unbounded">
@@ -65,6 +117,7 @@
             </xs:choice>
             <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="starting_date_time" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="trace" type="PathTrace" minOccurs="0" maxOccurs="1"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

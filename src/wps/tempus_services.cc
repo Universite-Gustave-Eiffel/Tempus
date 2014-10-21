@@ -647,6 +647,73 @@ public:
                     XML::add_child( result_node, starting_dt_node );
                 }
 
+                // path trace
+                if ( roadmap.trace().size() ) {
+                    xmlNode * trace_node = XML::new_node( "trace" );
+
+                    for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
+                        xmlNode *edge_node = XML::new_node("edge");
+                        const ValuedEdge& ve = roadmap.trace()[i];
+
+                        XML::set_prop( edge_node, "wkb", ve.geometry_wkb() );
+
+                        Multimodal::Vertex orig = ve.source();
+                        Multimodal::Vertex dest = ve.target();
+
+                        xmlNode *orig_node;
+                        if ( orig.type() == Multimodal::Vertex::Road ) {
+                            orig_node = XML::new_node("road");
+                            XML::set_prop(orig_node, "id", to_string((*orig.road_graph())[orig.road_vertex()].db_id()) );
+                        }
+                        else if ( orig.type() == Multimodal::Vertex::PublicTransport ) {
+                            orig_node = XML::new_node("pt");
+                            XML::set_prop(orig_node, "id", to_string((*orig.pt_graph())[orig.pt_vertex()].db_id()) );
+                        }
+                        else if ( orig.type() == Multimodal::Vertex::Poi ) {
+                            orig_node = XML::new_node("poi");
+                            XML::set_prop(orig_node, "id", to_string(orig.poi()->db_id()));
+                        }
+                        XML::add_child(edge_node, orig_node);
+
+                        xmlNode *dest_node;
+                        if ( dest.type() == Multimodal::Vertex::Road ) {
+                            dest_node = XML::new_node("road");
+                            XML::set_prop(dest_node, "id", to_string((*dest.road_graph())[dest.road_vertex()].db_id()) );
+                        }
+                        else if ( dest.type() == Multimodal::Vertex::PublicTransport ) {
+                            dest_node = XML::new_node("pt");
+                            XML::set_prop(dest_node, "id", to_string((*dest.pt_graph())[dest.pt_vertex()].db_id()) );
+                        }
+                        else if ( dest.type() == Multimodal::Vertex::Poi ) {
+                            dest_node = XML::new_node("poi");
+                            XML::set_prop(dest_node, "id", to_string(dest.poi()->db_id()));
+                        }
+                        XML::add_child(edge_node, dest_node);
+
+                        VariantMap::const_iterator vit;
+                        for ( vit = ve.values().begin(); vit != ve.values().end(); ++vit ) {
+                            xmlNode *n;
+                            if (vit->second.type() == BoolVariant) {
+                                n = XML::new_node("b");
+                            }
+                            else if (vit->second.type() == IntVariant) {
+                                n = XML::new_node("i");
+                            }
+                            else if (vit->second.type() == FloatVariant) {
+                                n = XML::new_node("f");
+                            }
+                            else if (vit->second.type() == StringVariant) {
+                                n = XML::new_node("s");
+                            }
+                            XML::set_prop(n, "k", vit->first);
+                            XML::set_prop(n, "v", vit->second.str());
+                            XML::add_child(edge_node, n);
+                        }
+                        XML::add_child(trace_node, edge_node);
+                    }
+                    XML::add_child(result_node, trace_node);
+                }
+
             XML::add_child( root_node, result_node );
         } // for each result
 
