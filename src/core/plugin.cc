@@ -625,6 +625,17 @@ Result& Plugin::result()
 
         new_roadmap.set_starting_date_time( roadmap.starting_date_time() );
 
+        // set trace wkb
+        if ( roadmap.trace().size() ) {
+            PathTrace new_trace;
+            for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
+                ValuedEdge ve = roadmap.trace()[i];
+                ve.set_geometry_wkb( geometry_wkb( ve, db_ ) );
+                new_trace.push_back( ve );
+            }
+            new_roadmap.set_trace( new_trace );
+        }
+
         *rit = new_roadmap;
     }
 

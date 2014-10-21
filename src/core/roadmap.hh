@@ -23,6 +23,7 @@
 
 #include "common.hh"
 #include "multimodal_graph.hh"
+#include "path_trace.hh"
 
 namespace Tempus {
 /**
@@ -171,6 +172,9 @@ public:
 
     /// Starting date time
     DECLARE_RW_PROPERTY( starting_date_time, DateTime );
+
+    /// A path trace, for debugging purpose
+    DECLARE_RW_PROPERTY( trace, PathTrace );
 
 private:
     StepList steps_;
