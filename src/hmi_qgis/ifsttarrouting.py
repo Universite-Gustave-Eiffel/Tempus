@@ -623,7 +623,7 @@ class IfsttarRouting:
         # connect selection change signal
         QObject.connect( vl, SIGNAL("selectionChanged()"), lambda layer=vl: self.onLayerSelectionChanged(layer) )
 
-    def displayTrace(self, trace, lid):
+    def displayTrace(self, trace, lid, vl):
 
         # first pass to get the list of variants
         variants_type = {}
@@ -632,9 +632,11 @@ class IfsttarRouting:
                 if variants_type.get(k) is None:
                     variants_type[k] = v.__class__
 
-        lname = "%s%d" % ( TRACE_LAYER_NAME, lid )
-        # create a new vector layer
-        vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
+        if vl is None:
+            lname = "%s%d" % ( TRACE_LAYER_NAME, lid )
+            # create a new vector layer
+            vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
+            QgsMapLayerRegistry.instance().addMapLayers( [vl] )
 
         pr = vl.dataProvider()
 
@@ -682,8 +684,6 @@ class IfsttarRouting:
 
         vl.commitChanges()
         vl.updateExtents()
-
-        QgsMapLayerRegistry.instance().addMapLayers( [vl] )
 
     #
     # Select the roadmap layer
@@ -965,16 +965,24 @@ class IfsttarRouting:
 
         # delete pre existing roadmap layers
         maps = QgsMapLayerRegistry.instance().mapLayers()
+        trace_layer = None
         for k,v in maps.items():
-            if v.name().startswith(ROADMAP_LAYER_NAME) or v.name().startswith(TRACE_LAYER_NAME):
+            if v.name().startswith(ROADMAP_LAYER_NAME):
                 QgsMapLayerRegistry.instance().removeMapLayers( [k] )
+            elif v.name().startswith(TRACE_LAYER_NAME):
+                trace_layer = v
+                d = v.dataProvider()
+                ids = [f.id() for f in d.getFeatures()]
+                d.deleteFeatures(ids)
+                attr_ids = range(len(d.fields()))
+                d.deleteAttributes(attr_ids)
 
         # then display each layer
         k = 1
         for result in results:
             self.displayRoadmapLayer( result.steps, k )
             if result.trace is not None:
-                self.displayTrace( result.trace, k )
+                self.displayTrace( result.trace, k, trace_layer )
             k += 1
 
 
