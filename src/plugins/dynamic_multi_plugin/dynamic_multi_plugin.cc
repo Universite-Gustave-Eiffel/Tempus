@@ -247,12 +247,19 @@ void DynamicMultiPlugin::pre_process( Request& request )
     // If current date changed, reload timetable / frequency
     if ( pt_allowed &&
          (graph_.public_transports().size() > 0) &&
-         (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
-         (s_.current_day != request_.steps()[0].constraint().date_time().date())
+         ( (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
+           (s_.current_day != request_.steps()[0].constraint().date_time().date()) ) ||
+         ( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore) &&
+           (s_.current_day != request_.steps()[1].constraint().date_time().date()) )
          )  {
         const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
         std::cout << "load timetable" << std::endl;
-        s_.current_day = request_.steps()[0].constraint().date_time().date();
+        if ( request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter ) {
+            s_.current_day = request_.steps()[0].constraint().date_time().date();
+        }
+        if ( request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore ) {
+            s_.current_day = request_.steps()[1].constraint().date_time().date();
+        }
 
         // cache graph id to descriptor
         // FIXME - integrate the cache into the graphs ?

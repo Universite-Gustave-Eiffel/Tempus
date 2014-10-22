@@ -193,20 +193,18 @@ public:
                     else {
                         // reversed
                         const std::map<double,TimetableData>& tt = rtimetable_.find(pt_e)->second;
-                        // get the time, just before initial_time
+                        // get the time, just before initial_time (upper_bound - 1)
                         std::map< double, TimetableData >::const_iterator it = tt.upper_bound( initial_time ) ;
                         bool mode_allowed = false;
-                        do {
-                            if ( it != tt.begin() ) {
-                                    it--;
-                            }
+                        while ( it != tt.begin() ) {
+                            it--;
                             // only if the mode is allowed
                             if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
                                  != allowed_transport_modes_.end() ) {
                                 mode_allowed = true;
                                 break;
                             }
-                        } while (it != tt.begin());
+                        }
 
                         if ( mode_allowed ) {
                             // only if the mode is allowed
