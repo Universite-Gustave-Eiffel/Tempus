@@ -633,12 +633,22 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             if ( vit->second.vertex == vit->first.vertex ) {
                 continue;
             }
-            ValuedEdge ve( vit->second.vertex, vit->first.vertex );
-            ve.set_value( "duration", potential_map_[vit->first] - potential_map_[vit->second] );
-            ve.set_value( "imode", int(vit->second.mode) );
-            ve.set_value( "fmode", int(vit->first.mode) );
-            ve.set_value( "istate", int(vit->second.state) );
-            ve.set_value( "fstate", int(vit->first.state) );
+            Triple o, d;
+            if ( reverse ) {
+                o = vit->first;
+                d = vit->second;
+            }
+            else {
+                o = vit->second;
+                d = vit->first;
+            }
+
+            ValuedEdge ve( o.vertex, d.vertex );
+            ve.set_value( "duration", potential_map_[d] - potential_map_[o] );
+            ve.set_value( "imode", int(o.mode) );
+            ve.set_value( "fmode", int(d.mode) );
+            ve.set_value( "istate", int(o.state) );
+            ve.set_value( "fstate", int(d.state) );
             trace.push_back( ve );
         }
         roadmap.set_trace( trace );
