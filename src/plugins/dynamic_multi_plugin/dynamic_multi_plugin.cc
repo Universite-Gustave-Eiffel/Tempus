@@ -244,6 +244,13 @@ void DynamicMultiPlugin::pre_process( Request& request )
         }
     }
 
+    if ( pt_allowed ) {
+        if ( (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintBefore) ||
+             (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter) ) {
+            throw std::runtime_error( "Unsupported time constraint" );
+        }
+    }
+        
     // If current date changed, reload timetable / frequency
     if ( pt_allowed &&
          (graph_.public_transports().size() > 0) &&
