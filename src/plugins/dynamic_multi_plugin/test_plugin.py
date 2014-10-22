@@ -161,6 +161,39 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( n_road2poi, 1 )
         self.assertEqual( n_poi2road, 1 )
 
+    def test_reverse( self ):
+
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        # request public transports
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356172.860489, 6687751.207350 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,16,16,04), type = 2 ), # after
+                        steps = [ RequestStep(destination = Point( 355396.434795, 6689302.821110 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[3].route[0], '2') # Line 2
+        self.assertEqual( len(tempus.results[0].steps), 7 )
+
+        # arrive before
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356172.860489, 6687751.207350 ),
+                        steps = [ RequestStep(destination = Point( 355396.434795, 6689302.821110 ),
+                                              constraint = Constraint( date_time = DateTime(2014,6,16,16,18), type = 1 )) ], # before
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        # should return the same path
+        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[3].route[0], '2') # Line 2
+        self.assertEqual( len(tempus.results[0].steps), 7 )
+
     def test_parking( self ):
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
