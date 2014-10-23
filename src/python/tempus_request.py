@@ -524,6 +524,8 @@ class TempusRequest:
                 tag_name = "float_value"
             elif isinstance(v, str):
                 tag_name = "string_value"
+            elif isinstance(v, unicode):
+                tag_name = "string_value"
             else:
                 raise RuntimeError( "Unknown value type " + value )
 
