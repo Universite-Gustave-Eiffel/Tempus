@@ -247,10 +247,13 @@ class IfsttarRouting:
         self.clipAction.triggered.connect( self.onClip )
         self.loadLayersAction = QAction( u"Load layers", self.iface.mainWindow())
         self.loadLayersAction.triggered.connect( self.onLoadLayers )
+        self.exportTraceAction = QAction( u"Export trace", self.iface.mainWindow())
+        self.exportTraceAction.triggered.connect( self.onExportTrace )
 
         self.iface.addPluginToMenu(u"&Tempus", self.action)
         self.iface.addPluginToMenu(u"&Tempus", self.clipAction)
         self.iface.addPluginToMenu(u"&Tempus", self.loadLayersAction)
+        self.iface.addPluginToMenu(u"&Tempus", self.exportTraceAction)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
 
         # init the history
@@ -321,6 +324,47 @@ class IfsttarRouting:
         ok = QgsProject.instance().read( QFileInfo( project ) )
         if not ok:
             QMessageBox.warning( None, "Project error", QgsProject.instance().error())
+
+    def onExportTrace( self ):
+        # look for the trace layer
+        maps = QgsMapLayerRegistry.instance().mapLayers()
+        trace_layer = None
+        for k,v in maps.items():
+            if v.name().startswith(TRACE_LAYER_NAME):
+                trace_layer = v
+                break
+        if v is None:
+            QMessageBox.warning( None, "No trace layer", "Cannot find a trace layer to export !")
+            return
+
+        # ask for a filename
+        fn = QFileDialog.getSaveFileName( self.dlg, "GraphViz file where to export to", "", "GraphViz file (*.dot)" )
+        if not fn:
+            return
+
+        nodes = {}
+        edges = {}
+        d = trace_layer.dataProvider()
+        attr_names = [ f.name() for f in d.fields() if f.name() not in ('origin', 'destination') ]
+        for f in d.getFeatures():
+            attr = f.fields()
+            o = f['origin']
+            d = f['destination']
+            g = f.geometry().asPolyline()
+            nodes[ o ] = g[0]
+            nodes[ d ] = g[-1]
+            edge_attr = {}
+            edges[ '%s->%s' % (o,d) ] = dict([(k, f[k]) for k in attr_names])
+
+        with open(fn, 'w+') as f:
+            f.write("digraph G {\n")
+            for n,p in nodes.iteritems():
+                f.write('%s[pos="%f,%f"];\n' % (n, p[0], p[1]))
+            for n,attrs in edges.iteritems():
+                attr_str = ' '.join(['%s=%s' % (k,v) for k,v in attrs.iteritems()])
+                f.write(n)
+                f.write('[label="' + attr_str + '"]\n')
+            f.write('}\n')
 
     def onClip( self ):
         # current layer
@@ -1273,6 +1317,7 @@ class IfsttarRouting:
         self.iface.removePluginMenu(u"&Tempus",self.action)
         self.iface.removePluginMenu(u"&Tempus",self.clipAction)
         self.iface.removePluginMenu(u"&Tempus",self.loadLayersAction)
+        self.iface.removePluginMenu(u"&Tempus",self.exportTraceAction)
         self.iface.removeToolBarIcon(self.action)
 
     # run method that performs all the real work
