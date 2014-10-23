@@ -56,9 +56,9 @@ public:
         return odl;
     }
 
-    static const PluginParameters plugin_parameters() {
-        PluginParameters params;
-        params.supported_optimization_criteria.push_back( CostDistance );
+    static const PluginCapabilities plugin_capabilities() {
+        PluginCapabilities params;
+        params.optimization_criteria().push_back( CostDistance );
         return params;
     }
 

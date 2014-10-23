@@ -164,11 +164,13 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
     return odl;
 }
 
-const DynamicMultiPlugin::PluginParameters DynamicMultiPlugin::plugin_parameters()
+const DynamicMultiPlugin::PluginCapabilities DynamicMultiPlugin::plugin_capabilities()
 {
-    Plugin::PluginParameters params; 
-    params.supported_optimization_criteria.push_back( CostDuration );
-    return params;
+    Plugin::PluginCapabilities caps;
+    caps.optimization_criteria().push_back( CostDuration );
+    caps.set_depart_after( true );
+    caps.set_arrive_before( true );
+    return caps;
 }
 
 void DynamicMultiPlugin::post_build()
@@ -254,10 +256,10 @@ void DynamicMultiPlugin::pre_process( Request& request )
     // If current date changed, reload timetable / frequency
     if ( pt_allowed &&
          (graph_.public_transports().size() > 0) &&
-         ( (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
+         (( (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
            (s_.current_day != request_.steps()[0].constraint().date_time().date()) ) ||
          ( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore) &&
-           (s_.current_day != request_.steps()[1].constraint().date_time().date()) )
+           (s_.current_day != request_.steps()[1].constraint().date_time().date()) ))
          )  {
         const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
         std::cout << "load timetable" << std::endl;

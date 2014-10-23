@@ -957,8 +957,10 @@ class IfsttarRouting:
             
             row += 1
 
-            self.dlg.set_supported_criteria( self.plugins[plugin_name].supported_criteria )
-
+        self.dlg.set_supported_criteria( self.plugins[plugin_name].supported_criteria )
+        self.dlg.set_intermediate_steps_support( self.plugins[plugin_name].intermediate_steps )
+        self.dlg.set_depart_after_support( self.plugins[plugin_name].depart_after )
+        self.dlg.set_arrive_before_support( self.plugins[plugin_name].arrive_before )
 
     #
     # Take an XML trees from 'constant_list'

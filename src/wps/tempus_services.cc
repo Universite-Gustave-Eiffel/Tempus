@@ -104,14 +104,29 @@ public:
                 XML::add_child( node, option_node );
             }
 
-            const Plugin::PluginParameters& params = PluginFactory::instance()->plugin_parameters( names[i] );
-            for ( std::vector<CostId>::const_iterator cit = params.supported_optimization_criteria.begin();
-                  cit != params.supported_optimization_criteria.end();
+            const Plugin::PluginCapabilities& params = PluginFactory::instance()->plugin_capabilities( names[i] );
+            for ( std::vector<CostId>::const_iterator cit = params.optimization_criteria().begin();
+                  cit != params.optimization_criteria().end();
                   cit ++ ) {
                 xmlNode* param_node = XML::new_node( "supported_criterion" );
                 XML::add_child( param_node, XML::new_text( boost::lexical_cast<std::string>(static_cast<int>(*cit)) ) );
 
                 XML::add_child( node, param_node );
+            }
+            {
+                xmlNode *support_node = XML::new_node("intermediate_steps");
+                XML::add_child( support_node, XML::new_text( params.intermediate_steps() ? "true" : "false" ) );
+                XML::add_child( node, support_node );
+            }
+            {
+                xmlNode *support_node = XML::new_node("depart_after");
+                XML::add_child( support_node, XML::new_text( params.depart_after() ? "true" : "false" ) );
+                XML::add_child( node, support_node );
+            }
+            {
+                xmlNode *support_node = XML::new_node("arrive_before");
+                XML::add_child( support_node, XML::new_text( params.arrive_before() ? "true" : "false" ) );
+                XML::add_child( node, support_node );
             }
 
             XML::add_child( root_node, node );

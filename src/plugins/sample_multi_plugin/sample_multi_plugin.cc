@@ -51,10 +51,13 @@ public:
         return OptionDescriptionList();
     }
 
-    static const PluginParameters plugin_parameters() {
-        PluginParameters params;
-        params.supported_optimization_criteria.push_back( CostDistance );
-        params.supported_optimization_criteria.push_back( CostDuration );
+    static const PluginCapabilities plugin_capabilities() {
+        PluginCapabilities params;
+        params.optimization_criteria().push_back( CostDistance );
+        params.optimization_criteria().push_back( CostDuration );
+        params.set_intermediate_steps( true );
+        params.set_depart_after( true );
+        params.set_arrive_before( true );
         return params;
     }
 

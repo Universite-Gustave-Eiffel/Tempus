@@ -93,8 +93,27 @@ public:
 
     ///
     /// Stores plugin parameters
-    struct PluginParameters {
-        std::vector<CostId> supported_optimization_criteria;
+    struct PluginCapabilities {
+        /// List of supported optimizing criteria
+    private:
+        std::vector<CostId> optimization_criteria_;
+    public:
+        std::vector<CostId>& optimization_criteria() { return optimization_criteria_; }
+        const std::vector<CostId>& optimization_criteria() const { return optimization_criteria_; }
+
+        /// Does the plugin support intermediate steps ?
+        DECLARE_RW_PROPERTY( intermediate_steps, bool );
+
+        /// Does the plugin support 'depart after' time constraints ?
+        DECLARE_RW_PROPERTY( depart_after, bool );
+
+        /// Does the plugin support 'arrive before' time constraints ?
+        DECLARE_RW_PROPERTY( arrive_before, bool );
+
+        PluginCapabilities() :
+            intermediate_steps_( false ),
+            depart_after_( false ),
+            arrive_before_( false ) {}
     };
 
     ///
@@ -340,7 +359,7 @@ struct PluginFactory: boost::noncopyable {
     /**
      * Get parameters (supported criteria, etc.) for a given plugin
      */
-    const Plugin::PluginParameters plugin_parameters( const std::string& dll_name ) const;
+    const Plugin::PluginCapabilities plugin_capabilities( const std::string& dll_name ) const;
 
     /**
      * create a Plugin from a given dll
@@ -363,12 +382,12 @@ private:
     struct Dll {
         typedef Plugin*                              ( *PluginCreationFct )( const std::string& );
         typedef const Plugin::OptionDescriptionList* ( *PluginOptionDescriptionFct )();
-        typedef const Plugin::PluginParameters*      ( *PluginParametersFct )();
+        typedef const Plugin::PluginCapabilities*    ( *PluginCapabilitiesFct )();
         typedef const char*                          ( *PluginNameFct )();
         HMODULE           handle_;
         PluginCreationFct create;
         PluginOptionDescriptionFct options_description;
-        PluginParametersFct plugin_parameters;
+        PluginCapabilitiesFct plugin_capabilities;
     };
 
     typedef std::map<std::string, Dll > DllMap;
@@ -389,7 +408,7 @@ private:
     extern "C" EXPORT Tempus::Plugin* createPlugin( const std::string & db_options ) { return new type( name, db_options ); } \
     extern "C" EXPORT const char *    pluginName() { return name; } \
     extern "C" EXPORT const Tempus::Plugin::OptionDescriptionList* optionDescriptions( ) { return new Tempus::Plugin::OptionDescriptionList(type::option_descriptions()); } \
-    extern "C" EXPORT const Tempus::Plugin::PluginParameters* pluginParameters( ) { return new Tempus::Plugin::PluginParameters(type::plugin_parameters()); } \
+    extern "C" EXPORT const Tempus::Plugin::PluginCapabilities* pluginCapabilities( ) { return new Tempus::Plugin::PluginCapabilities(type::plugin_capabilities()); } \
     extern "C" EXPORT void                                        deletePlugin(Tempus::Plugin* p_) { delete p_; } \
     extern "C" EXPORT void post_build(){type::post_build();}
 

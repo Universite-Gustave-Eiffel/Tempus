@@ -172,11 +172,11 @@ void PluginFactory::load( const std::string& dll_name )
         THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name  );
     }
 
-    Dll::PluginParametersFct paramsFct;
-    *reinterpret_cast<void**>( &paramsFct ) = DLSYM( hRAII.get(), "pluginParameters" );
+    Dll::PluginCapabilitiesFct capFct;
+    *reinterpret_cast<void**>( &capFct ) = DLSYM( hRAII.get(), "pluginCapabilities" );
 
-    if ( !paramsFct ) {
-        THROW_DLERROR( "no function pluginParameters in " + complete_dll_name  );
+    if ( !capFct ) {
+        THROW_DLERROR( "no function pluginCapabilities in " + complete_dll_name  );
     }
 
     Dll::PluginNameFct nameFct;
@@ -194,7 +194,7 @@ void PluginFactory::load( const std::string& dll_name )
         THROW_DLERROR( "no function post_build in " + complete_dll_name  );
     }
 
-    Dll dll = { hRAII.release(), createFct, optDescFct, paramsFct };
+    Dll dll = { hRAII.release(), createFct, optDescFct, capFct };
     const std::string pluginName = ( *nameFct )();
     dll_.insert( std::make_pair( pluginName, dll ) );
 
@@ -254,7 +254,7 @@ const Plugin::OptionDescriptionList PluginFactory::option_descriptions( const st
     return Plugin::OptionDescriptionList( *list );
 }
 
-const Plugin::PluginParameters PluginFactory::plugin_parameters( const std::string& dll_name ) const
+const Plugin::PluginCapabilities PluginFactory::plugin_capabilities( const std::string& dll_name ) const
 {
     std::string loaded;
 
@@ -268,8 +268,8 @@ const Plugin::PluginParameters PluginFactory::plugin_parameters( const std::stri
         throw std::runtime_error( dll_name + " is not loaded (loaded:" + loaded+")" );
     }
 
-    std::auto_ptr<const Plugin::PluginParameters> l( dll->second.plugin_parameters() );
-    return Plugin::PluginParameters( *l );
+    std::auto_ptr<const Plugin::PluginCapabilities> l( dll->second.plugin_capabilities() );
+    return Plugin::PluginCapabilities( *l );
 }
 
 Plugin::Plugin( const std::string& nname, const std::string& db_options ) :

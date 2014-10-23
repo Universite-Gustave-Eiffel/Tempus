@@ -197,10 +197,13 @@ class PluginOption:
 
 # options : option_name => PluginOption
 class Plugin:
-    def __init__( self, name = '', options = {}, supported_criteria = [] ):
+    def __init__( self, name = '', options = {}, supported_criteria = [], intermediate_steps = False, depart_after = False, arrive_before = False ):
         self.name = name
         self.options = options
         self.supported_criteria = supported_criteria
+        self.intermediate_steps = intermediate_steps
+        self.depart_after = depart_after
+        self.arrive_before = arrive_before
 
 class TransportMode:
     def __init__( self, id = 0, name = '', is_public_transport = False, need_parking = False, is_shared = False, must_be_returned = False, traffic_rules = 0, speed_rule = 0, toll_rules = 0, engine_type = 0 ):
@@ -287,6 +290,9 @@ def parse_plugins( output ):
         name = plugin.attrib['name']
         options = {}
         supported_criteria = []
+        intermediate_steps = False
+        depart_after = False
+        arrive_before = False
         for option in plugin:
             if option.tag == 'option':
                 optval = parse_option_value( option[0][0] )
@@ -295,7 +301,19 @@ def parse_plugins( output ):
                                                                default_value = optval )
             if option.tag == 'supported_criterion':
                 supported_criteria.append( int(option.text) )
-        plugins.append( Plugin( name = name, options = options, supported_criteria = supported_criteria ) )
+            if option.tag == 'intermediate_steps':
+                intermediate_steps = option.text == "true"
+            if option.tag == 'depart_after':
+                depart_after = option.text == "true"
+            if option.tag == 'arrive_before':
+                arrive_before = option.text == "true"
+        plugins.append( Plugin( name = name,
+                                options = options,
+                                supported_criteria = supported_criteria,
+                                intermediate_steps = intermediate_steps,
+                                depart_after = depart_after,
+                                arrive_before = arrive_before
+                            ) )
     return plugins
 
 def parse_transport_modes( output ):

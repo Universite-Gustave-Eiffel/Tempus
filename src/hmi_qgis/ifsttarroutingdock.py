@@ -256,6 +256,26 @@ class IfsttarRoutingDock(QDockWidget):
         for i in range(c):
             self.ui.criterionBox.itemAt(i).widget().set_supported_criteria( criteria )
 
+    def set_intermediate_steps_support( self, enabled ):
+        print "intermediate_steps_support", enabled
+        n = self.nsteps()
+        for i in range(0, n):
+            w = self.ui.stepBox.itemAt(i).widget()
+            w.plusBtn.setEnabled( enabled )
+
+    def set_depart_after_support( self, enabled ):
+        self.ui.origin.set_depart_after_support(enabled)
+        n = self.nsteps()
+        for i in range(0, n):
+            w = self.ui.stepBox.itemAt(i).widget()
+            w.set_depart_after_support(enabled)
+
+    def set_arrive_before_support( self, enabled ):
+        self.ui.origin.set_arrive_before_support(enabled)
+        n = self.nsteps()
+        for i in range(0, n):
+            w = self.ui.stepBox.itemAt(i).widget()
+            w.set_arrive_before_support(enabled)
 
     # get coordinates of all steps
     def get_coordinates( self ):
