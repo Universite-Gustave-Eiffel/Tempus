@@ -404,11 +404,10 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 rf.end_time = start_time;
                 rf.headway = f.headway;
                 rf.travel_time = f.travel_time;
-                std::cout << "travel_time: " << f.travel_time << std::endl;
 
                 s_.rfrequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
                 s_.rfrequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
-                s_.rfrequency[e][mode_id].insert( std::make_pair( f.end_time, f ) );
+                s_.rfrequency[e][mode_id].insert( std::make_pair( f.end_time, rf ) );
             }
         }
     }
@@ -462,7 +461,7 @@ void DynamicMultiPlugin::process()
     boost::associative_property_map< PotentialMap > wait_pmap( wait_map_ );
 
     // Define and initialize the cost calculator
-    CostCalculator cost_calculator( s_.timetable, s_.rtimetable, s_.frequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_ );
+    CostCalculator cost_calculator( s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency, request_.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_ );
 
     // destinations
     std::vector<Road::Vertex> destinations;

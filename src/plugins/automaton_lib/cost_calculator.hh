@@ -88,11 +88,11 @@ typedef std::map<PublicTransport::Edge, std::map<int, std::map<double, Frequency
 class CostCalculator {
 public: 
     // Constructor 
-    CostCalculator( const TimetableMap& timetable, const TimetableMap& rtimetable, const FrequencyMap& frequency, 
+    CostCalculator( const TimetableMap& timetable, const TimetableMap& rtimetable, const FrequencyMap& frequency, const FrequencyMap& rfrequency,
                     const std::vector<db_id_t>& allowed_transport_modes, std::map<Multimodal::Vertex, db_id_t>& vehicle_nodes, 
                     double walking_speed, double cycling_speed, 
                     double min_transfer_time, double car_parking_search_time, boost::optional<Road::Vertex> private_parking ) : 
-        timetable_( timetable ), rtimetable_( rtimetable ), frequency_( frequency ), 
+        timetable_( timetable ), rtimetable_( rtimetable ), frequency_( frequency ), rfrequency_(rfrequency),
         allowed_transport_modes_( allowed_transport_modes ), vehicle_nodes_( vehicle_nodes ), 
         walking_speed_( walking_speed ), cycling_speed_( cycling_speed ), 
         min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time ),
@@ -414,6 +414,7 @@ protected:
     const TimetableMap& timetable_; 
     const TimetableMap& rtimetable_; 
     const FrequencyMap& frequency_; 
+    const FrequencyMap& rfrequency_; 
     std::vector<db_id_t> allowed_transport_modes_;
     std::map< Multimodal::Vertex, db_id_t >& vehicle_nodes_; 
     double walking_speed_; 
