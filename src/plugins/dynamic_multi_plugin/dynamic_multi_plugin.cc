@@ -332,19 +332,22 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
                 TimetableData t, rt; 
                 t.trip_id = res[i][2].as<int>();
-                t.mode_id = res[i][3].as<int>();
+                int mode_id = res[i][3].as<int>();
                 double departure_time = res[i][4].as<double>();
                 double arrival_time = res[i][5].as<double>();
                 t.arrival_time = arrival_time;
-                s_.timetable.insert( std::make_pair(e, map<double, TimetableData>() ) );
-                s_.timetable[e].insert( std::make_pair( departure_time, t ) );
+                s_.timetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
+                s_.timetable[e].insert( std::make_pair( mode_id, std::map<double, TimetableData>() ));
+                s_.timetable[e][mode_id].insert( std::make_pair( departure_time, t ) );
 
                 // reverse timetable
                 rt.trip_id = res[i][2].as<int>();
-                rt.mode_id = res[i][3].as<int>();
+                int rmode_id = res[i][3].as<int>();
                 rt.arrival_time = departure_time;
-                s_.rtimetable.insert( std::make_pair(e, map<double, TimetableData>() ) );
-                s_.rtimetable[e].insert( std::make_pair( arrival_time, rt ) );
+
+                s_.rtimetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
+                s_.rtimetable[e].insert( std::make_pair( rmode_id, std::map<double, TimetableData>() ));
+                s_.rtimetable[e][mode_id].insert( std::make_pair( departure_time, rt ) );
             }
         }
         else if (timetable_frequency_ == 1) // frequency model
@@ -384,13 +387,14 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
                 FrequencyData f; 
                 f.trip_id=res[i][2].as<int>(); 
-                f.mode_id = res[i][3].as<int>();
+                int mode_id = res[i][3].as<int>();
                 f.end_time=res[i][5].as<double>(); 
                 f.headway=res[i][6].as<double>(); 
                 f.travel_time=res[i][7].as<double>(); 
 					
-                s_.frequency.insert( std::make_pair(e, map<double, FrequencyData>() ) ); 
-                s_.frequency[e].insert( std::make_pair( res[i][4].as<double>(), f ) ) ; 	
+                s_.frequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) ); 
+                s_.frequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
+                s_.frequency[e][mode_id].insert( std::make_pair( res[i][4].as<double>(), f ) );
             }
         }
     }

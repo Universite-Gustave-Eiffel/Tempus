@@ -71,21 +71,19 @@ double penalty ( const AutomatonGraph& graph, const typename boost::graph_traits
 
 struct TimetableData {
     unsigned int trip_id;
-    unsigned int mode_id;
     double arrival_time; 
 };
 	
 struct FrequencyData {
     unsigned int trip_id; 
-    unsigned int mode_id;
     double end_time; 
     double headway;
     double travel_time; 
 };
 	
-// Edge -> departure_time -> Timetable
-typedef std::map<PublicTransport::Edge, std::map<double, TimetableData> > TimetableMap; 
-typedef std::map<PublicTransport::Edge, std::map<double, FrequencyData> > FrequencyMap; 
+// Edge -> transport_mode -> departure_time -> Timetable
+typedef std::map<PublicTransport::Edge, std::map<int, std::map<double, TimetableData> > > TimetableMap; 
+typedef std::map<PublicTransport::Edge, std::map<int, std::map<double, FrequencyData> > > FrequencyMap; 
 	
 class CostCalculator {
 public: 
@@ -163,93 +161,89 @@ public:
                 TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
                 if ( pt_e_it != timetable_.end() ) {
                     if ( ! is_graph_reversed<Graph>::value ) {
-                        const std::map<double,TimetableData>& tt = pt_e_it->second;
-                        // get the time, just after initial_time
-                        std::map< double, TimetableData >::const_iterator it = tt.lower_bound( initial_time ) ;
-
-                        // find the first time with allowed mode
-                        while ( (it != tt.end()) && (std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
-                                                     == allowed_transport_modes_.end()) ) {
-                            it++;
+                        const std::map<int, std::map<double,TimetableData> >& tt = pt_e_it->second;
+                        // look for timetable of the given mode
+                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = tt.find( mode_id );
+                        if ( mit == tt.end() ) { // no timetable for this mode
+                            return std::numeric_limits<double>::max(); 
                         }
 
-                        if ( it != tt.end() ) {
-                            // look for an allowed mode
-                            if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) { 
-                                final_trip_id = it->second.trip_id; 
-                                wait_time = 0; 
-                                return it->second.arrival_time - initial_time ; 
-                            } 
-                            else { // No connection without transfer found
-                                it = tt.lower_bound( initial_time + min_transfer_time_ ); 
-                                if ( it != tt.end() ) {
-                                    final_trip_id = it->second.trip_id; 
-                                    wait_time = it->first - initial_time ; 
-                                    return it->second.arrival_time - initial_time ; 
-                                }
-                            }
+                        // get the time, just after initial_time
+                        std::map<double, TimetableData >::const_iterator it = mit->second.lower_bound( initial_time ) ;
+                        if ( it == mit->second.end() ) { // no service after this time
+                            return std::numeric_limits<double>::max(); 
+                        }
+
+                        // Continue on the same trip (or first step)
+                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) { 
+                            final_trip_id = it->second.trip_id; 
+                            wait_time = 0; 
+                            return it->second.arrival_time - initial_time ; 
+                        } 
+                        // Else, no connection without transfer found
+                        // Look for a service after transfer_time
+                        it = mit->second.lower_bound( initial_time + min_transfer_time_ ); 
+                        if ( it != mit->second.end() ) {
+                            final_trip_id = it->second.trip_id; 
+                            wait_time = it->first - initial_time ; 
+                            return it->second.arrival_time - initial_time ; 
                         }
                     }
                     else {
                         // reversed
-                        const std::map<double,TimetableData>& tt = rtimetable_.find(pt_e)->second;
-                        // get the time, just before initial_time (upper_bound - 1)
-                        std::map< double, TimetableData >::const_iterator it = tt.upper_bound( initial_time ) ;
-                        bool mode_allowed = false;
-                        while ( it != tt.begin() ) {
-                            it--;
-                            // only if the mode is allowed
-                            if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
-                                 != allowed_transport_modes_.end() ) {
-                                mode_allowed = true;
-                                break;
-                            }
+                        const std::map<int, std::map<double,TimetableData> >& tt = rtimetable_.find(pt_e)->second;
+                        // look for timetable of the given mode
+                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = tt.find( mode_id );
+                        if ( mit == tt.end() ) { // no timetable for this mode
+                            return std::numeric_limits<double>::max(); 
                         }
+                        // get the time, just before initial_time (upper_bound - 1)
+                        std::map< double, TimetableData >::const_iterator it = mit->second.upper_bound( initial_time ) ;
+                        if ( it == mit->second.begin() ) { // nothing before this time
+                            return std::numeric_limits<double>::max(); 
+                        }
+                        it--;
 
-                        if ( mode_allowed ) {
-                            // only if the mode is allowed
-                            if (it->second.trip_id == initial_trip_id ) { 
-                                final_trip_id = it->second.trip_id; 
-                                wait_time = 0; 
-                                // here arrival_time is actually the departure time
-                                return initial_time - it->second.arrival_time; 
-                            } 
-                            else { // No connection without transfer found
-                                it = tt.upper_bound( initial_time - min_transfer_time_ ); 
-                                if ( it != tt.begin() ) {
-                                    it--;
-                                    final_trip_id = it->second.trip_id; 
-                                    wait_time = initial_time - it->first;
-                                    return initial_time - it->second.arrival_time;
-                                }
-                            }
+                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) { 
+                            final_trip_id = it->second.trip_id; 
+                            wait_time = 0; 
+                            // here arrival_time is actually the departure time
+                            return initial_time - it->second.arrival_time; 
+                        } 
+                        // Else, no connection without transfer found
+                        it = mit->second.upper_bound( initial_time - min_transfer_time_ ); 
+                        if ( it != mit->second.begin() ) {
+                            it--;
+                            final_trip_id = it->second.trip_id; 
+                            wait_time = initial_time - it->first;
+                            return initial_time - it->second.arrival_time;
                         }
                     }
                 }
                 else if (frequency_.find( pt_e ) != frequency_.end() ) {
                     // FIXME process reversed graphs
                     // FIXME loop on transport modes
-                    std::map<double, FrequencyData>::const_iterator it = frequency_.find( pt_e )->second.lower_bound( initial_time );
-                    if (it != frequency_.find( pt_e )->second.begin() ) {
+                    const std::map<int, std::map<double,FrequencyData> >& tt = frequency_.find( pt_e )->second;
+                    std::map<int, std::map<double, FrequencyData> >::const_iterator mit = tt.find( mode_id );
+                    if ( mit == tt.end() ) { // no timetable for this mode
+                        return std::numeric_limits<double>::max(); 
+                    }
+                    std::map<double, FrequencyData>::const_iterator it = mit->second.lower_bound( initial_time );
+                    if (it != mit->second.begin() ) {
                         it--;
-                        // only if the mode is allowed
-                        if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), it->second.mode_id)
-                             != allowed_transport_modes_.end() ) {
-                            if (it->second.trip_id == initial_trip_id  && ( it->second.end_time >= initial_time ) ) { // Connection without transfer
-                                final_trip_id = it->second.trip_id; 
-                                wait_time = 0; 
-                                return it->second.travel_time ; 
-                            } 
-                            else { // No connection without transfer found
-                                it = frequency_.find( pt_e )->second.upper_bound( initial_time + min_transfer_time_ ); 
-                                if ( it != frequency_.find( pt_e )->second.begin() ) { 
-                                    it--; 
-                                    if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
-                                        final_trip_id = it->second.trip_id ; 
-                                        wait_time = it->second.headway/2 ; 
-                                        return it->second.travel_time + wait_time ; 
-                                    }
-                                }
+                        if (it->second.trip_id == initial_trip_id  && ( it->second.end_time >= initial_time ) ) { // Connection without transfer
+                            final_trip_id = it->second.trip_id; 
+                            wait_time = 0; 
+                            return it->second.travel_time ; 
+                        } 
+                        // Else, no connection without transfer found
+                        it = mit->second.upper_bound( initial_time + min_transfer_time_ ); 
+                        if ( it != mit->second.begin() ) { 
+                            it--; 
+                            if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
+                                final_trip_id = it->second.trip_id ; 
+                                wait_time = it->second.headway/2 ; 
+                                return it->second.travel_time + wait_time ; 
                             }
                         }
                     }
