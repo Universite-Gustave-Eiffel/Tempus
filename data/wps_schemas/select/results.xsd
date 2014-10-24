@@ -51,6 +51,7 @@
     <xs:attribute name="departure_stop" type="xs:string"/>
     <xs:attribute name="arrival_stop" type="xs:string"/>
     <xs:attribute name="route" type="xs:string"/>
+    <xs:attribute name="trip_id" type="xs:int"/>
     <xs:attribute name="departure_time" type="xs:float"/>
     <xs:attribute name="arrival_time" type="xs:float"/>
     <xs:attribute name="wait_time" type="xs:float"/>

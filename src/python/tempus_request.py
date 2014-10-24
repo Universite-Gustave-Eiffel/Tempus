@@ -122,11 +122,12 @@ class RoadStep:
         self.wkb = wkb
 
 class PublicTransportStep:
-    def __init__( self, network = '', departure = '', arrival = '', route = '', costs = {}, mode = 0, departure_time = 0.0, arrival_time = 0.0, wait_time = 0.0, wkb = '' ):
+    def __init__( self, network = '', departure = '', arrival = '', route = '', trip_id = 0, costs = {}, mode = 0, departure_time = 0.0, arrival_time = 0.0, wait_time = 0.0, wkb = '' ):
         self.network = network
         self.departure = departure
         self.arrival = arrival
         self.route = route
+        self.trip_id = trip_id
         self.departure_time = departure_time
         self.arrival_time = arrival_time
         self.wait_time = wait_time
@@ -367,6 +368,7 @@ def parse_results( results ):
                 departure = child.attrib['departure_stop']
                 arrival = child.attrib['arrival_stop']
                 route = child.attrib['route']
+                trip_id = int(child.attrib['trip_id'])
                 network = child.attrib['network']
                 transport_mode = int(child.attrib['transport_mode'])
                 departure_time = float(child.attrib['departure_time'])
@@ -379,6 +381,7 @@ def parse_results( results ):
                                                    departure = departure,
                                                    arrival = arrival,
                                                    route = route,
+                                                   trip_id = trip_id,
                                                    departure_time = departure_time,
                                                    arrival_time = arrival_time,
                                                    wait_time = wait_time,
