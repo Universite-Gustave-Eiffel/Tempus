@@ -399,17 +399,6 @@ void DynamicMultiPlugin::pre_process( Request& request )
         }
     }
         
-#if 0
-    // Load vehicle positions
-    for ( Multimodal::Graph::PoiList::const_iterator p = graph_.pois.begin(); p != graph_.pois.end(); p++ )
-    {
-        if (p->second.poi_type() == POI::TypeSharedCarPoint)
-            available_vehicles_[Multimodal::Vertex(&p->second)] = 2;
-        else if (p->second.poi_type() == POI::TypeSharedCyclePoint)
-            available_vehicles_[Multimodal::Vertex(&p->second)] = 4;
-    }
-#endif
-                
     // Update timer for preprocessing
     time_+=timer.elapsed();
 }
