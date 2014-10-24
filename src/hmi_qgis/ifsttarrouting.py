@@ -752,13 +752,13 @@ class IfsttarRouting:
     # Take a XML tree from the WPS 'result' operation
     # and fill the "roadmap" tab
     #
-    def displayRoadmapTab( self, steps ):
+    def displayRoadmapTab( self, result ):
         last_movement = 0
-        roadmap = steps
+        roadmap = result.steps
         row = 0
         self.dlg.ui.roadmapTable.clear()
         self.dlg.ui.roadmapTable.setRowCount(0)
-        self.dlg.ui.roadmapTable.setHorizontalHeaderLabels( ["", "Direction", "Costs"] )
+        self.dlg.ui.roadmapTable.setHorizontalHeaderLabels( ["", "", "Direction"] )
 
         # array of altitudes (distance, elevation)
 
@@ -772,9 +772,9 @@ class IfsttarRouting:
             self.profile.hide()
             self.dlg.ui.resultSelectionLayout.addWidget( self.profile )
 
-        # mousevent even when no button is clicked
-
         self.profile.clear()
+
+        current_time = result.starting_date_time.hour*60 + result.starting_date_time.minute + result.starting_date_time.second / 60.0;
 
         first = True
         leaving_time = None
@@ -827,7 +827,7 @@ class IfsttarRouting:
                         text += "Wait %s <br/>" % min2hm(step.wait_time)
                 text += "At %s<br/>\n" % min2hm(step.departure_time+step.wait_time)
                 pt_name = self.transport_modes_dict[step.mode].name
-                text += "Take the %s %s from '%s' to '%s'" % (pt_name, step.route, step.departure, step.arrival)
+                text += "%s Take the %s %s from '%s' to '%s'" % (step.trip_id, pt_name, step.route, step.departure, step.arrival)
                 leaving_time = step.arrival_time
 
             elif isinstance(step, Tempus.RoadTransportStep ):
@@ -861,24 +861,28 @@ class IfsttarRouting:
                             text = "Continue on %s" % step.road
 
             for k,v in step.costs.iteritems():
-                cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
+                if k == Tempus.Cost.Duration:                    
+                    cost_text += "At %s<br/>\n" % min2hm(current_time)
+                    current_time += v
+                else:
+                    cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
                 
             self.dlg.ui.roadmapTable.insertRow( row )
             descLbl = QLabel()
             descLbl.setText( text )
             descLbl.setMargin( 5 )
-            self.dlg.ui.roadmapTable.setCellWidget( row, 1, descLbl )
+            self.dlg.ui.roadmapTable.setCellWidget( row, 2, descLbl )
 
             if icon_text != '':
                 lbl = QLabel()
                 lbl.setText( icon_text )
                 lbl.setMargin(5)
-                self.dlg.ui.roadmapTable.setCellWidget( row, 0, lbl )
+                self.dlg.ui.roadmapTable.setCellWidget( row, 1, lbl )
 
             costText = QLabel()
             costText.setText( cost_text )
             costText.setMargin( 5 )
-            self.dlg.ui.roadmapTable.setCellWidget( row, 2, costText )
+            self.dlg.ui.roadmapTable.setCellWidget( row, 0, costText )
             self.dlg.ui.roadmapTable.resizeRowToContents( row )
             row += 1
 
@@ -1008,9 +1012,13 @@ class IfsttarRouting:
             start = "%02d:%02d:%02d" % (result.starting_date_time.hour,result.starting_date_time.minute,result.starting_date_time.second)
             name = "%s%d (start: %s)" % (ROADMAP_LAYER_NAME,k, start)
             rselect = ResultSelection()
-            rselect.setText( name )
             for k,v in result.costs.iteritems():
                 rselect.addCost(Tempus.CostName[k], "%.1f%s" % (v, Tempus.CostUnit[k]))
+                if k == Tempus.Cost.Duration:
+                    s = result.starting_date_time.hour * 60 + result.starting_date_time.minute + result.starting_date_time.second / 60.0;
+                    s += v
+                    name = "%s%d (%s -> %s)" % (ROADMAP_LAYER_NAME,k, start, min2hm(s) )
+            rselect.setText( name )
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
@@ -1041,7 +1049,7 @@ class IfsttarRouting:
     def onResultSelected( self, id ):
         for i in range(0, len(self.result_ids)):
             if id == self.result_ids[i]:
-                self.displayRoadmapTab( self.results[i].steps )
+                self.displayRoadmapTab( self.results[i] )
                 self.selectRoadmapLayer( i+1 )
                 self.currentRoadmap = i
                 self.dlg.ui.showElevationsBtn.show()
@@ -1292,7 +1300,7 @@ class IfsttarRouting:
 
         # block signals to prevent infinite loop
         self.selectionInProgress = True
-        self.displayRoadmapTab( self.results[layerid-1].steps )
+        self.displayRoadmapTab( self.results[layerid-1] )
 
         selected = [ feature.id()-1 for feature in layer.selectedFeatures() ]
         k = 0
