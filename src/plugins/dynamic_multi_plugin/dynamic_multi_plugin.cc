@@ -385,16 +385,30 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 departure = vertex_from_id_[ res[i][0].as<db_id_t>() ];
                 arrival = vertex_from_id_[ res[i][1].as<db_id_t>() ];
                 boost::tie( e, found ) = boost::edge( departure, arrival, pt_graph );
+
                 FrequencyData f; 
-                f.trip_id=res[i][2].as<int>(); 
+                f.trip_id = res[i][2].as<int>();
                 int mode_id = res[i][3].as<int>();
-                f.end_time=res[i][5].as<double>(); 
-                f.headway=res[i][6].as<double>(); 
-                f.travel_time=res[i][7].as<double>(); 
-					
-                s_.frequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) ); 
+                f.end_time = res[i][5].as<double>();
+                f.headway = res[i][6].as<double>();
+                f.travel_time = res[i][7].as<double>();
+                double start_time = res[i][4].as<double>();
+
+                s_.frequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
                 s_.frequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
-                s_.frequency[e][mode_id].insert( std::make_pair( res[i][4].as<double>(), f ) );
+                s_.frequency[e][mode_id].insert( std::make_pair( start_time, f ) );
+
+                // reverse frequency data
+                FrequencyData rf;
+                rf.trip_id = f.trip_id;
+                rf.end_time = start_time;
+                rf.headway = f.headway;
+                rf.travel_time = f.travel_time;
+                std::cout << "travel_time: " << f.travel_time << std::endl;
+
+                s_.rfrequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
+                s_.rfrequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
+                s_.rfrequency[e][mode_id].insert( std::make_pair( f.end_time, f ) );
             }
         }
     }

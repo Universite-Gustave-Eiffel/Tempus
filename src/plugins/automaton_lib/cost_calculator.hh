@@ -221,17 +221,23 @@ public:
                     }
                 }
                 else if (frequency_.find( pt_e ) != frequency_.end() ) {
-                    // FIXME process reversed graphs
-                    // FIXME loop on transport modes
-                    const std::map<int, std::map<double,FrequencyData> >& tt = frequency_.find( pt_e )->second;
-                    std::map<int, std::map<double, FrequencyData> >::const_iterator mit = tt.find( mode_id );
-                    if ( mit == tt.end() ) { // no timetable for this mode
-                        return std::numeric_limits<double>::max(); 
-                    }
-                    std::map<double, FrequencyData>::const_iterator it = mit->second.lower_bound( initial_time );
-                    if (it != mit->second.begin() ) {
+                    if ( ! is_graph_reversed<Graph>::value ) {
+                        const std::map<int, std::map<double,FrequencyData> >& tt = frequency_.find( pt_e )->second;
+                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = tt.find( mode_id );
+                        if ( mit == tt.end() ) { // no timetable for this mode
+                            return std::numeric_limits<double>::max(); 
+                        }
+                        std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( initial_time );
+                        if (it == mit->second.begin() ) { // nothing before this time
+                            return std::numeric_limits<double>::max();
+                        }
                         it--;
-                        if (it->second.trip_id == initial_trip_id  && ( it->second.end_time >= initial_time ) ) { // Connection without transfer
+                        if ( it->second.end_time >= initial_time ) {
+                            // frequency-based trips are supposed not to overlap
+                            // so it means this trip is not in service anymore at initial_time
+                            return std::numeric_limits<double>::max();                        
+                        }
+                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) {
                             final_trip_id = it->second.trip_id; 
                             wait_time = 0; 
                             return it->second.travel_time ; 
@@ -241,6 +247,37 @@ public:
                         if ( it != mit->second.begin() ) { 
                             it--; 
                             if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
+                                final_trip_id = it->second.trip_id ; 
+                                wait_time = it->second.headway/2 ; 
+                                return it->second.travel_time + wait_time ; 
+                            }
+                        }
+                    }
+                    else {
+                        // reverse
+                        const std::map<int, std::map<double,FrequencyData> >& tt = rfrequency_.find( pt_e )->second;
+                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = tt.find( mode_id );
+                        if ( mit == tt.end() ) { // no timetable for this mode
+                            return std::numeric_limits<double>::max(); 
+                        }
+                        std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( initial_time );
+                        if (it == mit->second.end() ) { // nothing before this time
+                            return std::numeric_limits<double>::max();
+                        }
+                        if ( it->second.end_time >= initial_time ) {
+                            // frequency-based trips are supposed not to overlap
+                            // so it means this trip is not in service anymore at initial_time
+                            return std::numeric_limits<double>::max();                        
+                        }
+                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) {
+                            final_trip_id = it->second.trip_id; 
+                            wait_time = 0; 
+                            return it->second.travel_time ; 
+                        } 
+                        // Else, no connection without transfer found
+                        it = mit->second.upper_bound( initial_time - min_transfer_time_ ); 
+                        if ( it != mit->second.end() ) { 
+                            if ( it->second.end_time >= initial_time - min_transfer_time_ ) {
                                 final_trip_id = it->second.trip_id ; 
                                 wait_time = it->second.headway/2 ; 
                                 return it->second.travel_time + wait_time ; 
