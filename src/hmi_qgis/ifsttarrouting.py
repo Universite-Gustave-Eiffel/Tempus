@@ -641,6 +641,9 @@ class IfsttarRouting:
                 geo = QgsGeometry()
                 geo.fromWkb( binascii.unhexlify(wkb) )
                 fet.setGeometry( geo )
+            else:
+                geo = QgsGeometry.fromWkt('POINT(0 0)')
+                fet.setGeometry(geo)
 
             if isinstance(step, Tempus.TransferStep):
                 mode = step.final_mode
@@ -708,6 +711,9 @@ class IfsttarRouting:
                 geo = QgsGeometry()
                 geo.fromWkb( binascii.unhexlify(wkb) )
                 fet.setGeometry( geo )
+            else:
+                geo = QgsGeometry.fromWkt('POINT(0 0)')
+                fet.setGeometry(geo)
 
             if isinstance(ve.origin, Tempus.RoadVertex) and isinstance(ve.destination, Tempus.RoadVertex):
                 type = Tempus.ConnectionType.Road2Road
