@@ -194,6 +194,20 @@ class TestWPS(unittest.TestCase):
         self.assertEqual(tempus.results[0].steps[3].route[0], '2') # Line 2
         self.assertEqual( len(tempus.results[0].steps), 7 )
 
+        # arrive before with frequency-based trip
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
+                        origin = Point( 356171.238242, 6687756.369824 ),
+                        steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
+                                              constraint = Constraint( date_time = DateTime(2014,6,18,16,20), type = 1 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
+        self.assertEqual( len(tempus.results[0].steps), 8 )
+
+
     def test_parking( self ):
 
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
