@@ -597,3 +597,52 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Preparing pt views
+
+CREATE OR REPLACE FUNCTION tempus.update_pt_views() RETURNS void as $$
+BEGIN
+-- pseudo materialized views
+drop table if exists tempus.view_stop_by_network;
+create table tempus.view_stop_by_network as
+ SELECT DISTINCT ON (pt_stop.id, pt_route.transport_mode, pt_network.id) int4(row_number() OVER ()) AS id,
+    pt_stop.id AS stop_id,
+    pt_stop.vendor_id,
+    pt_stop.name,
+    pt_stop.location_type,
+    pt_stop.parent_station,
+    transport_mode.name AS transport_mode_name,
+    transport_mode.gtfs_route_type,
+    pt_stop.road_section_id,
+    pt_stop.zone_id,
+    pt_stop.abscissa_road_section,
+    pt_stop.geom,
+    pt_network.id AS network_id
+   FROM tempus.pt_stop,
+    tempus.pt_section,
+    tempus.pt_network,
+    tempus.pt_route,
+    tempus.pt_trip,
+    tempus.pt_stop_time,
+    tempus.transport_mode
+  WHERE pt_network.id = pt_section.network_id AND (pt_section.stop_from = pt_stop.id OR pt_section.stop_to = pt_stop.id) AND pt_route.id = pt_trip.route_id AND pt_trip.id = pt_stop_time.trip_id AND pt_stop_time.stop_id = pt_stop.id AND transport_mode.id = pt_route.transport_mode;
+
+DROP TABLE IF EXISTS tempus.view_section_by_network;
+CREATE TABLE tempus.view_section_by_network AS
+ SELECT DISTINCT ON (pt_section.stop_from, pt_section.stop_to, pt_section.network_id, transport_mode.name) int4(row_number() OVER ()) AS id,
+    pt_section.stop_from,
+    pt_section.stop_to,
+    pt_section.network_id,
+    transport_mode.name AS transport_mode_name,
+    transport_mode.gtfs_route_type,
+    pt_section.geom
+   FROM tempus.pt_section,
+    tempus.pt_route,
+    tempus.pt_trip,
+    tempus.pt_stop_time pt_stop_time_from,
+    tempus.pt_stop_time pt_stop_time_to,
+    tempus.transport_mode
+  WHERE pt_route.id = pt_trip.route_id AND pt_trip.id = pt_stop_time_from.trip_id AND pt_stop_time_from.trip_id = pt_stop_time_to.trip_id AND pt_stop_time_from.stop_sequence = (pt_stop_time_to.stop_sequence - 1) AND pt_stop_time_from.stop_id = pt_section.stop_from AND pt_stop_time_to.stop_id = pt_section.stop_to AND transport_mode.id = pt_route.transport_mode;
+  END;
+$$ LANGUAGE plpgsql;
+
+select tempus.update_pt_views();
