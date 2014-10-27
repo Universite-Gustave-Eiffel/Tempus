@@ -190,7 +190,7 @@ class WPSClient:
         try:
             xml = ET.XML( msg )
         except ET.ParseError as e:
-            raise RuntimeError( self, repr(e) )
+            raise RuntimeError( self, repr(e) + msg )
 
         outputs = xml[2] # ProcessOutputs
         outs = {}
