@@ -74,13 +74,10 @@ std::string geometry_wkb( const Multimodal::Edge& e, Db::Connection& db )
     std::string res_wkb;
     std::string query;
     if ( e.connection_type() == Multimodal::Edge::Road2Road ) {
-        db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
-        db_id_t d_id = (*e.target().road_graph())[e.target().road_vertex()].db_id();
-
-        query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)) from "
-                                             "(select geom from tempus.road_node where id=%1%) as t1, "
-                                             "(select geom from tempus.road_node where id=%2%) as t2 "
-                                             ) % o_id % d_id ).str();
+        db_id_t id = (*e.source().road_graph())[e.road_edge()].db_id();
+        query = ( boost::format( "SELECT st_asbinary(geom) from "
+                                 "tempus.road_section where id=%1%"
+                                 ) % id ).str();
     }
     else if ( e.connection_type() == Multimodal::Edge::Road2Transport ) {
         db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
