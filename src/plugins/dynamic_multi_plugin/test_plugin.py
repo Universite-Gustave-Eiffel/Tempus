@@ -227,6 +227,37 @@ class TestWPS(unittest.TestCase):
         self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
         self.assertEqual( len(tempus.results[0].steps), 8 )
 
+        # path with 2 PT involved
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356172.860489, 6687751.207350 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,16,16,07), type = 2 ), # after
+                        steps = [ RequestStep(destination = Point( 357137.197048, 6689740.983045 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[3].route[0], '3') # Line 3
+        self.assertEqual(isinstance(tempus.results[0].steps[10], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[10].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[10].route[0], '1') # Line 1
+
+        # path with 2 PT involved, reverted
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356172.860489, 6687751.207350 ),
+                        steps = [ RequestStep(destination = Point( 357137.197048, 6689740.983045 ),
+                                              constraint = Constraint( date_time = DateTime(2014,6,16,16,36), type = 1 )) ], # before
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[3].route[0], '3') # Line 3
+        self.assertEqual(isinstance(tempus.results[0].steps[10], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[10].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[10].route[0], '1') # Line 1
 
     def test_parking( self ):
 
