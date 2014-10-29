@@ -98,6 +98,7 @@ protected:
     PotentialMap potential_map_;     
     PredecessorMap pred_map_; 
     PotentialMap wait_map_; 
+    PotentialMap shift_map_; 
     TripMap trip_map_; 
 
     Road::Vertex parking_location_;

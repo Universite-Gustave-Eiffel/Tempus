@@ -27,7 +27,7 @@
 
 namespace Tempus {
 
-template <class Object, class PotentialMap, class Heuristic>
+template <class Object, class PotentialMap, class Heuristic >
 struct HeuristicCompare
 {
     PotentialMap pmap_;
@@ -48,25 +48,25 @@ struct HeuristicCompare
                class CostCalculator, 
                class TripMap, 
                class WaitMap, 
-               class Visitor >
+               class Visitor>
     void combined_ls_algorithm_no_init(
                                        const NetworkGraph& graph,
                                        const Automaton& automaton,
                                        Object source_object,
-                                       double start_time,
                                        PredecessorMap predecessor_map, 
                                        PotentialMap potential_map,
                                        CostCalculator cost_calculator, 
                                        TripMap trip_map, 
                                        WaitMap wait_map, 
+                                       WaitMap shift_map, 
                                        const std::vector<db_id_t>& request_allowed_modes,
                                        Visitor vis,
-                                       boost::function<double (const Multimodal::Vertex&)> heuristic) 
+                                       boost::function<double (const Multimodal::Vertex&)> heuristic )
     {
         typedef HeuristicCompare<Object, PotentialMap, boost::function<double (const Multimodal::Vertex&)> > Cmp;
         Cmp cmp( potential_map, heuristic );
 
-        typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;  
+        typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;
         VertexQueue vertex_queue( cmp ); 
         vertex_queue.push( source_object ); 
         vis.discover_vertex( source_object, graph );
@@ -110,23 +110,20 @@ struct HeuristicCompare
                     // don't forget to set to 0
                     db_id_t final_trip_id = 0;
                     double wait_time;
+                    double initial_shift_time, final_shift_time;
 
                     // compute the time needed to transfer from one mode to another
                     double cost = cost_calculator.transfer_time( graph, current_edge, min_object.mode, new_object.mode );
                     if ( cost < std::numeric_limits<double>::max() )
                     {
-                        double time = start_time;
-                        if ( is_graph_reversed<NetworkGraph>::value ) {
-                            time -= min_pi;
-                        }
-                        else {
-                            time += min_pi;
-                        }
+                        initial_shift_time = get( shift_map, min_object );
                         // will update final_trip_id and wait_time
                         double travel_time = cost_calculator.travel_time( graph,
                                                                           current_edge,
                                                                           mode_id,
-                                                                          time,
+                                                                          min_pi,
+                                                                          initial_shift_time,
+                                                                          final_shift_time,
                                                                           initial_trip_id,
                                                                           final_trip_id,
                                                                           wait_time );
@@ -144,6 +141,7 @@ struct HeuristicCompare
 
                         put( predecessor_map, new_object, min_object );
                         put( wait_map, min_object, wait_time ); 
+                        put( shift_map, new_object, final_shift_time ); 
 
                         vertex_queue.push( new_object ); 
                         vis.discover_vertex( new_object, graph );

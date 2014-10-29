@@ -117,9 +117,9 @@ class TestWPS(unittest.TestCase):
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 6] # pedestrian and BUS only
                         )
-        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
-        self.assertEqual(tempus.results[0].steps[3].mode, 6) # BUS
-        self.assertEqual( len(tempus.results[0].steps), 10 )
+        self.assertEqual(isinstance(tempus.results[0].steps[4], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[4].mode, 6) # BUS
+        self.assertEqual( len(tempus.results[0].steps), 11 )
 
         # request public transports with frequency-based scheduling
         tempus.request( plugin_name = 'dynamic_multi_plugin',
@@ -143,9 +143,9 @@ class TestWPS(unittest.TestCase):
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 6] # pedestrian and BUS only
                         )
-        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
-        self.assertEqual(tempus.results[0].steps[3].mode, 6) # BUS
-        self.assertEqual( len(tempus.results[0].steps), 10 )
+        self.assertEqual(isinstance(tempus.results[0].steps[4], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[4].mode, 6) # BUS
+        self.assertEqual( len(tempus.results[0].steps), 11 )
 
         # request a shared bike
         # Use a shared bike
@@ -160,6 +160,26 @@ class TestWPS(unittest.TestCase):
         n_poi2road = len([ s for s in tempus.results[0].steps if isinstance(s, TransferStep) and s.mode == 8 and s.final_mode == 1 ])
         self.assertEqual( n_road2poi, 1 )
         self.assertEqual( n_poi2road, 1 )
+
+    def test_pt_transfer( self ):
+
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        # request public transports
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 356171.238242, 6687756.369820 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,07), type = 2 ), # after
+                        steps = [ RequestStep(destination = Point( 355467.660265, 6689901.461590 )) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5] # pedestrian and TRAM only
+                        )
+        self.assertEqual(isinstance(tempus.results[0].steps[3], PublicTransportStep), True )
+        self.assertEqual(isinstance(tempus.results[0].steps[4], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[3].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[3].route[0], '3') # Line 3
+        self.assertEqual(tempus.results[0].steps[4].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[4].route[0], '2') # Line 2 (transfer)
 
     def test_reverse( self ):
 
@@ -184,7 +204,7 @@ class TestWPS(unittest.TestCase):
                         plugin_options = { 'verbose_algo' : False, "verbose" : False },
                         origin = Point( 356172.860489, 6687751.207350 ),
                         steps = [ RequestStep(destination = Point( 355396.434795, 6689302.821110 ),
-                                              constraint = Constraint( date_time = DateTime(2014,6,16,16,18), type = 1 )) ], # before
+                                              constraint = Constraint( date_time = DateTime(2014,6,16,16,20), type = 1 )) ], # before
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1, 5] # pedestrian and TRAM only
                         )

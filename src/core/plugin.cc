@@ -437,7 +437,7 @@ Result& Plugin::result()
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
                     Roadmap::PublicTransportStep* next_step = static_cast<Roadmap::PublicTransportStep*>( &*next );
                     if ( next_step->trip_id() == step->trip_id() ) {
-						if ( next != roadmap.end() ) next++;
+                        if ( next != roadmap.end() ) next++;
                         continue;
                     }
                 }

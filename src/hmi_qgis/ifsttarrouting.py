@@ -864,6 +864,7 @@ class IfsttarRouting:
                 if k == Tempus.Cost.Duration:                    
                     cost_text += "At %s<br/>\n" % min2hm(current_time)
                     current_time += v
+                    cost_text += "Duration " + min2hm(v)
                 else:
                     cost_text += "%s: %.1f %s<br/>\n" % (Tempus.CostName[k], v, Tempus.CostUnit[k])
                 

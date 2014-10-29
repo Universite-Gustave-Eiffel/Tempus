@@ -100,8 +100,17 @@ public:
 		
     // Multimodal travel time function
     template <class Graph>
-    double travel_time( const Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
+    double travel_time( const Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, double initial_shift_time, double& final_shift_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
     {
+        // default (for non-PT edges)
+        final_trip_id = 0;
+
+        if ( is_graph_reversed<Graph>::value ) {
+            initial_time = - initial_time;
+        }
+        final_shift_time = initial_shift_time;
+        wait_time = 0.0;
+
         const TransportMode& mode = graph.transport_modes().find( mode_id )->second;
         if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), mode_id) != allowed_transport_modes_.end() ) 
         {
@@ -114,6 +123,13 @@ public:
                 break;
 		
             case Multimodal::Edge::Road2Transport: {
+                if ( is_graph_reversed<Graph>::value ) {
+                    if ( initial_trip_id != 0 ) {
+                        // we are "coming" from a Transport2Transport
+                        final_shift_time += min_transfer_time_;
+                    }
+                }
+
                 // find the road section where the stop is attached to
                 const PublicTransport::Graph& pt_graph = *( e.target().pt_graph() );
                 double abscissa = pt_graph[ e.target().pt_vertex() ].abscissa_road_section();
@@ -174,22 +190,24 @@ public:
                             return std::numeric_limits<double>::max(); 
                         }
 
-                        // Continue on the same trip (or first step)
-                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) { 
+                        // Continue on the same trip
+                        if ( it->second.trip_id == initial_trip_id ) { 
                             final_trip_id = it->second.trip_id; 
-                            wait_time = 0; 
+                            wait_time = 0;
                             return it->second.arrival_time - initial_time ; 
                         } 
-                        // Else, no connection without transfer found
+                        // Else, no connection without transfer found, or first step
                         // Look for a service after transfer_time
                         it = mit->second.lower_bound( initial_time + min_transfer_time_ ); 
                         if ( it != mit->second.end() ) {
-                            final_trip_id = it->second.trip_id; 
-                            wait_time = it->first - initial_time ; 
-                            return it->second.arrival_time - initial_time ; 
+                            final_trip_id = it->second.trip_id;
+                            wait_time = it->first - initial_time;
+                            return it->second.arrival_time - initial_time;
                         }
                     }
                     else {
+                        double rinitial_time = initial_time - initial_shift_time;
+
                         // reversed
                         const std::map<int, std::map<double,TimetableData> >& tt = rtimetable_.find(pt_e)->second;
                         // look for timetable of the given mode
@@ -198,26 +216,16 @@ public:
                             return std::numeric_limits<double>::max(); 
                         }
                         // get the time, just before initial_time (upper_bound - 1)
-                        std::map< double, TimetableData >::const_iterator it = mit->second.upper_bound( initial_time ) ;
+                        std::map< double, TimetableData >::const_iterator it = mit->second.upper_bound( rinitial_time ) ;
                         if ( it == mit->second.begin() ) { // nothing before this time
                             return std::numeric_limits<double>::max(); 
                         }
                         it--;
 
-                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) { 
-                            final_trip_id = it->second.trip_id; 
-                            wait_time = 0; 
-                            // here arrival_time is actually the departure time
-                            return initial_time - it->second.arrival_time; 
-                        } 
-                        // Else, no connection without transfer found
-                        it = mit->second.upper_bound( initial_time - min_transfer_time_ ); 
-                        if ( it != mit->second.begin() ) {
-                            it--;
-                            final_trip_id = it->second.trip_id; 
-                            wait_time = initial_time - it->first;
-                            return initial_time - it->second.arrival_time;
-                        }
+                        final_trip_id = it->second.trip_id; 
+                        wait_time = rinitial_time - it->first;
+                        final_shift_time += wait_time;
+                        return it->first - it->second.arrival_time;
                     }
                 }
                 else if (frequency_.find( pt_e ) != frequency_.end() ) {
@@ -232,15 +240,15 @@ public:
                             return std::numeric_limits<double>::max();
                         }
                         it--;
-                        if ( it->second.end_time >= initial_time ) {
+                        if ( it->second.end_time < initial_time ) {
                             // frequency-based trips are supposed not to overlap
                             // so it means this trip is not in service anymore at initial_time
                             return std::numeric_limits<double>::max();                        
                         }
-                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) {
+                        if ( it->second.trip_id == initial_trip_id ) {
                             final_trip_id = it->second.trip_id; 
-                            wait_time = 0; 
-                            return it->second.travel_time ; 
+                            wait_time = 0;
+                            return it->second.travel_time;
                         } 
                         // Else, no connection without transfer found
                         it = mit->second.upper_bound( initial_time + min_transfer_time_ ); 
@@ -249,7 +257,7 @@ public:
                             if ( it->second.end_time >= initial_time + min_transfer_time_ ) {
                                 final_trip_id = it->second.trip_id ; 
                                 wait_time = it->second.headway/2 ; 
-                                return it->second.travel_time + wait_time ; 
+                                return it->second.travel_time + wait_time;
                             }
                         }
                     }
@@ -269,18 +277,18 @@ public:
                             // so it means this trip is not in service anymore at initial_time
                             return std::numeric_limits<double>::max();                        
                         }
-                        if ( !initial_trip_id || (it->second.trip_id == initial_trip_id) ) {
+                        if ( it->second.trip_id == initial_trip_id ) {
                             final_trip_id = it->second.trip_id; 
-                            wait_time = 0; 
-                            return it->second.travel_time ; 
+                            wait_time = 0;
+                            return it->second.travel_time;
                         } 
                         // Else, no connection without transfer found
                         it = mit->second.upper_bound( initial_time - min_transfer_time_ ); 
                         if ( it != mit->second.end() ) { 
-                            if ( it->second.end_time >= initial_time - min_transfer_time_ ) {
-                                final_trip_id = it->second.trip_id ; 
-                                wait_time = it->second.headway/2 ; 
-                                return it->second.travel_time + wait_time ; 
+                            if ( it->second.end_time < initial_time - min_transfer_time_ ) {
+                                final_trip_id = it->second.trip_id;
+                                wait_time = it->second.headway/2;
+                                return it->second.travel_time + wait_time;
                             }
                         }
                     }
