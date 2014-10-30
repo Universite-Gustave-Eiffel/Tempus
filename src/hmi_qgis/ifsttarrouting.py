@@ -152,9 +152,6 @@ class IfsttarRouting:
             prefs = pickle.load( f )
             self.dlg.loadState( prefs['query'] )
 
-        # show the splash screen
-        self.splash = SplashScreen()
-
         # initialize plugin directory
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/ifsttarrouting"
         # initialize locale
@@ -1339,6 +1336,5 @@ class IfsttarRouting:
 
     # run method that performs all the real work
     def run(self):
-        self.splash.show()
         # show the dialog
         self.dlg.show()
