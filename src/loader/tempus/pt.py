@@ -64,7 +64,10 @@ class GTFSImporter(DataImporter):
 
         if not 'network' in subs.keys():
             subs['network'] = "PT"
-        self.POSTLOADSQL = [("gtfs.sql", subs)]
+        self.POSTLOADSQL = [
+            ("gtfs.sql", subs),
+            'gtfs_shapes.sql'
+        ]
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""
