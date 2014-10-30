@@ -94,6 +94,9 @@ class ShpLoader:
             if os.path.splitext(self.shapefile)[1] == ".dbf":
                 self.options['n'] = True
                 self.options['I'] = False
+            else:
+                self.options['n'] = False
+                self.options['I'] = True
 
             # setup shp2pgsql command line
             command = [SHP2PGSQL]
