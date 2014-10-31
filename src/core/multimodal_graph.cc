@@ -860,35 +860,53 @@ size_t VertexIndexProperty::get_index( const Vertex& v ) const
     // If it is a poi, maps it to its vertex index + the sum of num_vertices for all previous graphs.
     //
     // The complexity is then not constant (linear in terms of number of public transports graphs and pois).
-    if ( v.type() == Vertex::Road ) {
-        return boost::get( boost::get( boost::vertex_index, *v.road_graph() ), v.road_vertex() );
+
+
+    switch (v.type()) {
+    case Vertex::Road: {
+        const Vertex::RoadVertex_& rv = boost::get<Vertex::RoadVertex_>( v.union_ );
+        return boost::get( boost::get( boost::vertex_index, *rv.graph ), rv.vertex );
     }
 
-    // else
-    size_t n = num_vertices( graph_.road() );
+    case Vertex::PublicTransport: {
+        size_t n = num_vertices( graph_.road() );
 
-    for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports().begin();
-          it != graph_.public_transports().end(); it++ ) {
-        if ( &*it->second != v.pt_graph() ) {
+        const Vertex::PtVertex_& rv = boost::get<Vertex::PtVertex_>( v.union_ );
+        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports().begin();
+              it != graph_.public_transports().end(); it++ ) {
+            if ( &*it->second != rv.graph ) {
+                n += num_vertices( *it->second );
+            }
+            else {
+                n += boost::get( boost::get( boost::vertex_index, *rv.graph ), rv.vertex );
+                break;
+            }
+        }
+        return n;
+    }
+
+    case Vertex::Poi: {
+        size_t n = num_vertices( graph_.road() );
+
+        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports().begin();
+              it != graph_.public_transports().end(); it++ ) {
             n += num_vertices( *it->second );
         }
-        else {
-            n += boost::get( boost::get( boost::vertex_index, *v.pt_graph() ), v.pt_vertex() );
-            break;
-        }
-    }
 
-    if ( v.type() == Vertex::Poi ) {
+        // FIXME : could be sped up by using a POI index in a POI vector rather than a loop
+        const POI* poi = boost::get<const POI*>( v.union_ );
         for ( Graph::PoiList::const_iterator it = graph_.pois().begin(); it != graph_.pois().end(); it++ ) {
-            if ( &*it->second == v.poi() ) {
+            if ( &*it->second == poi ) {
                 break;
             }
 
             n++;
         }
+        return n;
+    }
     }
 
-    return n;
+    return 0;
 }
 
 size_t num_vertices( const Graph& graph )

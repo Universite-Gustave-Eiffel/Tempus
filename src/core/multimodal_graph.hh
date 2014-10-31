@@ -56,6 +56,7 @@ namespace Tempus {
 ///
 namespace Multimodal {
 
+class VertexIndexProperty;
 ///
 /// A Multimodal::Vertex is either a Road::Vertex or PublicTransport::Vertex on a particular public transport network
 struct Vertex {
@@ -157,6 +158,8 @@ private:
 
     bool is_null_;
     boost::variant< RoadVertex_, PtVertex_, const POI * > union_;
+
+    friend class VertexIndexProperty;
 };
 
 /// Convenience function - get a Road::Node out of a Vertex, if defined
