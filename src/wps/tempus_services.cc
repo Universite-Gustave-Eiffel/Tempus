@@ -676,7 +676,7 @@ public:
                         Multimodal::Vertex orig = ve.source();
                         Multimodal::Vertex dest = ve.target();
 
-                        xmlNode *orig_node;
+                        xmlNode *orig_node = 0;
                         if ( orig.type() == Multimodal::Vertex::Road ) {
                             orig_node = XML::new_node("road");
                             XML::set_prop(orig_node, "id", to_string((*orig.road_graph())[orig.road_vertex()].db_id()) );
@@ -689,9 +689,11 @@ public:
                             orig_node = XML::new_node("poi");
                             XML::set_prop(orig_node, "id", to_string(orig.poi()->db_id()));
                         }
-                        XML::add_child(edge_node, orig_node);
+                        if (orig_node) {
+                            XML::add_child(edge_node, orig_node);
+                        }
 
-                        xmlNode *dest_node;
+                        xmlNode *dest_node = 0;
                         if ( dest.type() == Multimodal::Vertex::Road ) {
                             dest_node = XML::new_node("road");
                             XML::set_prop(dest_node, "id", to_string((*dest.road_graph())[dest.road_vertex()].db_id()) );
@@ -704,11 +706,13 @@ public:
                             dest_node = XML::new_node("poi");
                             XML::set_prop(dest_node, "id", to_string(dest.poi()->db_id()));
                         }
-                        XML::add_child(edge_node, dest_node);
+                        if (dest_node) {
+                            XML::add_child(edge_node, dest_node);
+                        }
 
                         VariantMap::const_iterator vit;
                         for ( vit = ve.values().begin(); vit != ve.values().end(); ++vit ) {
-                            xmlNode *n;
+                            xmlNode *n = 0;
                             if (vit->second.type() == BoolVariant) {
                                 n = XML::new_node("b");
                             }
@@ -721,9 +725,11 @@ public:
                             else if (vit->second.type() == StringVariant) {
                                 n = XML::new_node("s");
                             }
-                            XML::set_prop(n, "k", vit->first);
-                            XML::set_prop(n, "v", vit->second.str());
-                            XML::add_child(edge_node, n);
+                            if (n ) {
+                                XML::set_prop(n, "k", vit->first);
+                                XML::set_prop(n, "v", vit->second.str());
+                                XML::add_child(edge_node, n);
+                            }
                         }
                         XML::add_child(trace_node, edge_node);
                     }
