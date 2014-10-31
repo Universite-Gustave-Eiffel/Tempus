@@ -76,6 +76,8 @@ protected:
 
     Road::Vertex destination_;
 
+    int iterations_;
+
 public:
     static void post_build() { }
 
@@ -93,10 +95,13 @@ public:
         get_option( "prepare_result", prepare_result_ );
 
         result_.clear();
+
+        iterations_ = 0;
     }
 
     virtual void road_vertex_accessor( const Road::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
+            iterations_++;
             if ( v == destination_ ) {
                 throw path_found_exception();
             }
@@ -186,6 +191,7 @@ public:
         path.push_front( origin );
 
         metrics_[ "time_s" ] = timer.elapsed();
+        metrics_["iterations"] = iterations_;
 
         if ( !path_found ) {
             throw std::runtime_error( "No path found !" );

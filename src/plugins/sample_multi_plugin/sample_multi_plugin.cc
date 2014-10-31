@@ -185,6 +185,7 @@ public:
         }
 
         result_.clear();
+        iterations_ = 0;
     }
 
     Multimodal::Vertex vertex_from_road_node_id( db_id_t id ) {
@@ -272,8 +273,11 @@ public:
     // current destination
     Multimodal::Vertex destination_;
 
+    int iterations_;
+
     void vertex_accessor( const Multimodal::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
+            iterations_++;
             if ( v == destination_ ) {
                 throw PathFound();
             }
@@ -396,6 +400,7 @@ public:
             path.push_front( Multimodal::Vertex( &graph_.road(), request_.origin() ) );
 
             metrics_[ "time_s" ] = timer.elapsed();
+            metrics_["iterations"] = iterations_;
 
             // convert the path to a roadmap
             add_roadmap( path );
