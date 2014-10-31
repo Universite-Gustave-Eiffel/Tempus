@@ -40,6 +40,22 @@ class TestPerfs(unittest.TestCase):
         self.client = HttpCgiConnection( WPS_HOST, WPS_PATH )
         self.wps = WPSClient(self.client)
 
+    def _test_perfs( self ):
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        print "-- SAMPLE_MULTI - Across town - Walking --"
+        tempus.request( plugin_name = 'sample_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 355564.183649, 6683945.955172 ),
+                        steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
+                        criteria = [Cost.Distance],
+                        allowed_transport_modes = [1] # walking
+                        )
+        iterations = int(tempus.metrics['iterations'])
+        time_s = float(tempus.metrics['time_s'])
+        us_per_it = time_s / iterations * 1000000.0
+        print "Time: %.2fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
+
     def test_perfs( self ):
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
 
