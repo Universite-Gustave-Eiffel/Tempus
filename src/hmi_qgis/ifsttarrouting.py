@@ -240,8 +240,10 @@ class IfsttarRouting:
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
-        self.clipAction = QAction( u"Polygon subset", self.iface.mainWindow())
+        self.clipAction = QAction( u"Polygon subset (from mouse)", self.iface.mainWindow())
         self.clipAction.triggered.connect( self.onClip )
+        self.clipActionFromSel = QAction( u"Polygon subset from selection", self.iface.mainWindow())
+        self.clipActionFromSel.triggered.connect( self.onClipFromSel )
         self.loadLayersAction = QAction( u"Load layers", self.iface.mainWindow())
         self.loadLayersAction.triggered.connect( self.onLoadLayers )
         self.exportTraceAction = QAction( u"Export trace", self.iface.mainWindow())
@@ -249,6 +251,7 @@ class IfsttarRouting:
 
         self.iface.addPluginToMenu(u"&Tempus", self.action)
         self.iface.addPluginToMenu(u"&Tempus", self.clipAction)
+        self.iface.addPluginToMenu(u"&Tempus", self.clipActionFromSel)
         self.iface.addPluginToMenu(u"&Tempus", self.loadLayersAction)
         self.iface.addPluginToMenu(u"&Tempus", self.exportTraceAction)
         self.iface.addDockWidget( Qt.LeftDockWidgetArea, self.dlg )
@@ -285,10 +288,7 @@ class IfsttarRouting:
     def setStateText( self, text ):
         self.dlg.setWindowTitle( "Routing - " + text + "" )
 
-    def onLoadLayers( self ):
-        cwd = os.path.dirname(os.path.abspath(__file__))
-        project_tmpl = cwd + '/tempus.qgs.tmpl'
-        project = cwd + '/tempus.qgs'
+    def get_pgsql_connection( self ):
         dlg = QInputDialog( None )
 
         q = QSettings()
@@ -312,6 +312,16 @@ class IfsttarRouting:
         passwd = q.value("password")
         if passwd:
             db_params += " password='%s'" % passwd
+        return db_params
+
+    def onLoadLayers( self ):
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        project_tmpl = cwd + '/tempus.qgs.tmpl'
+        project = cwd + '/tempus.qgs'
+
+        db_params = self.get_pgsql_connection()
+        if db_params is None:
+            return
 
         fo = open(project, 'w+')
         with open(project_tmpl) as f:
@@ -364,33 +374,58 @@ class IfsttarRouting:
             f.write('}\n')
 
     def onClip( self ):
-        # current layer
-        l = self.iface.activeLayer()
-        if l and isinstance( l, QgsVectorLayer ) and l.dataProvider().name() == "postgres":
-            d = QgsDataSourceURI( l.source() )
-            connStr = "database: %s user:%s host:%s post:%s" % (d.database(), d.username(), d.host(), d.port())
-            r = QMessageBox.question( None, "Polygon subset selection",
-                                      "You are about to create a subset of the selected layer with the following connection settings:\n" + connStr + ". Are you sure ?",
-                                      QMessageBox.Yes | QMessageBox.No )
-            if r == QMessageBox.No:
-                return
+        # select a database
+        db_params = self.get_pgsql_connection()
+        if db_params is None:
+            return
 
-            QMessageBox.information( None, "Polygon selection",
+        QMessageBox.information( None, "Polygon selection",
                                      "Please select the polygon used for subsetting. Cancel with right click. Confirm the last point with a double click.")
-            self.select = PolygonSelection( self.canvas )
-            self.select.polygonCaptured.connect( lambda valid : self.onPolygonCaptured(valid, d) )
-            self.canvas.setMapTool( self.select )
-        else:
-            QMessageBox.critical( None, "No layer selected",
-                                  "You must select the 'road_node' layer before proceeding" )
+        self.select = PolygonSelection( self.canvas )
+        self.select.polygonCaptured.connect( lambda valid : self.onPolygonCaptured(valid, db_params) )
+        self.canvas.setMapTool( self.select )
 
-    def onPolygonCaptured( self, valid, source ):
+    def onClipFromSel( self ):
+        layer = self.iface.activeLayer()
+        if not isinstance(layer, QgsVectorLayer):
+            QMessageBox.critical( None, "Polygon selection",
+                                  "No vector layer selected" )
+            return
+        if len(layer.selectedFeatures()) == 0:
+            QMessageBox.critical( None, "Polygon selection",
+                                  "No polygon selected")
+            return
+        if len(layer.selectedFeatures()) > 1:
+            QMessageBox.critical( None, "Polygon selection",
+                                  "More than one polygon selected" )
+            return
+        feature = layer.selectedFeatures()[0]
+        if feature.geometry() is None or feature.geometry().type() != QGis.Polygon:
+            QMessageBox.critical( None, "Polygon selection",
+                                  "No polygon selected" )
+            return
+
+        geom = QgsGeometry(feature.geometry())
+        trans = QgsCoordinateTransform(layer.crs(), QgsCoordinateReferenceSystem( "EPSG:2154" ) )
+        geom.transform( trans )
+        polygon_wkt = geom.exportToWkt()
+
+        # select a database
+        db_params = self.get_pgsql_connection()
+        if db_params is None:
+            return
+
+        self.doPolygonSubset( polygon_wkt, db_params )
+
+    def onPolygonCaptured( self, valid, db_params ):
         self.canvas.unsetMapTool( self.select )
         if not valid:
             return
-
-        schema, ok = QInputDialog.getText(None, "Name of the subset to create (schema)", "Schema name")
         wkt = self.select.polygon
+        self.doPolygonSubset( wkt, db_params )
+
+    def doPolygonSubset( self, wkt, db_params ):
+        schema, ok = QInputDialog.getText(None, "Name of the subset to create (schema)", "Schema name")
 
         sql = "SELECT tempus.create_subset('%s','SRID=2154;%s');" % (schema, wkt)
 
@@ -407,7 +442,7 @@ class IfsttarRouting:
 
         QCoreApplication.processEvents()
 
-        (sout, serr) = psql_query( source.host(), source.database(), source.username(), source.port(), sql )
+        (sout, serr) = psql_query( db_params, sql )
 
         btn.accepted.connect( dlg.close )
         log.setText('Outputs:\n' + sout + 'Errors:\n' + serr)
@@ -1330,6 +1365,7 @@ class IfsttarRouting:
         # Remove the plugin menu item and icon
         self.iface.removePluginMenu(u"&Tempus",self.action)
         self.iface.removePluginMenu(u"&Tempus",self.clipAction)
+        self.iface.removePluginMenu(u"&Tempus",self.clipActionFromSel)
         self.iface.removePluginMenu(u"&Tempus",self.loadLayersAction)
         self.iface.removePluginMenu(u"&Tempus",self.exportTraceAction)
         self.iface.removeToolBarIcon(self.action)

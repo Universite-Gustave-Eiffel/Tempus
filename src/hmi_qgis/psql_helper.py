@@ -22,16 +22,11 @@
 import subprocess
 import config
 
-def psql_query( host, database, username, port, sql ):
+def psql_query( db_params, sql ):
 
     cmd = [ config.PSQL ]
-    if host:
-        cmd.append('--host=%s' % host)
-    if username:
-        cmd.append('--username=%s' % username)
-    if port:
-        cmd.append('--port=%s' % port)
-    cmd.append('--dbname=%s' % database)
+    cmd.append("-d")
+    cmd.append(db_params)
     conn = subprocess.Popen( cmd, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE )
 
     (sout, serr) = conn.communicate( sql )
