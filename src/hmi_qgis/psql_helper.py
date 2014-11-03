@@ -25,6 +25,7 @@ import config
 def psql_query( db_params, sql ):
 
     cmd = [ config.PSQL ]
+    cmd.append("-t")
     cmd.append("-d")
     cmd.append(db_params)
     conn = subprocess.Popen( cmd, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE )
@@ -32,7 +33,6 @@ def psql_query( db_params, sql ):
     (sout, serr) = conn.communicate( sql )
 
     return (sout, serr)
-
 
 
 

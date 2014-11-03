@@ -323,9 +323,19 @@ class IfsttarRouting:
         if db_params is None:
             return
 
+        # FIXME better use psycopg2 here ?
+        (ll,_) = psql_query( db_params, "SELECT schema_name FROM tempus.subset" )
+        items = ['tempus'] + [ n[1:] for n in ll.split('\n') ]
+        schema, ok = QInputDialog.getItem(None, "Schema", "Schema to load", items, 0, False )
+        if not ok:
+            return
+
         fo = open(project, 'w+')
         with open(project_tmpl) as f:
-            fo.write( f.read().replace('%DB_PARAMS%', str(db_params)) )
+            s = f.read()
+            s = s.replace('%DB_PARAMS%', str(db_params))
+            s = s.replace('%SCHEMA%', str(schema))
+            fo.write( s )
             fo.close()
         QgsMapLayerRegistry.instance().removeAllMapLayers()
         ok = QgsProject.instance().read( QFileInfo( project ) )

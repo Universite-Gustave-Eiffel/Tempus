@@ -290,7 +290,7 @@
     <projectlayers layercount="25">
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>bus_section_copier20141017152703912</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="tempus"."view_section_by_network" (geom) sql="gtfs_route_type" = 0</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="%SCHEMA%"."view_section_by_network" (geom) sql="gtfs_route_type" = 0</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -553,7 +553,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>forbidden_movements20141015143841800</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=MULTILINESTRING table="tempus"."view_forbidden_movements" (geom) sql=traffic_rules &amp; 4 > 0</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=MULTILINESTRING table="%SCHEMA%"."view_forbidden_movements" (geom) sql=traffic_rules &amp; 4 > 0</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -782,7 +782,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>forbidden_movements20141015144026989</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=MULTILINESTRING table="tempus"."view_forbidden_movements" (geom) sql=traffic_rules &amp; 2 > 0 </datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=MULTILINESTRING table="%SCHEMA%"."view_forbidden_movements" (geom) sql=traffic_rules &amp; 2 > 0 </datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -1011,7 +1011,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>forbidden_movements20141015155602132</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=MULTILINESTRING table="tempus"."view_forbidden_movements" (geom) sql="traffic_rules" &amp; 8 > 0 AND traffic_rules &amp; 4 = 0</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=MULTILINESTRING table="%SCHEMA%"."view_forbidden_movements" (geom) sql="traffic_rules" &amp; 8 > 0 AND traffic_rules &amp; 4 = 0</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -1240,7 +1240,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>metro_stop_copier20141017152624345</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="tempus"."view_stop_by_network" (geom) sql="gtfs_route_type" = 0</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="%SCHEMA%"."view_stop_by_network" (geom) sql="gtfs_route_type" = 0</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -1506,7 +1506,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>poi20141015174302501</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="tempus"."poi" (geom) sql="poi_type"=1</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="%SCHEMA%"."poi" (geom) sql="poi_type"=1</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -1728,7 +1728,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>poi20141015174504031</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="tempus"."poi" (geom) sql="poi_type" = 2</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="%SCHEMA%"."poi" (geom) sql="poi_type" = 2</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -1950,7 +1950,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>poi20141015174721229</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="tempus"."poi" (geom) sql="poi_type"=3</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="%SCHEMA%"."poi" (geom) sql="poi_type"=3</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -2172,7 +2172,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>poi20141015174819815</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="tempus"."poi" (geom) sql="poi_type"=4</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="%SCHEMA%"."poi" (geom) sql="poi_type"=4</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -2394,7 +2394,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>poi20141015175002699</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="tempus"."poi" (geom) sql="poi_type" = 5</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="%SCHEMA%"."poi" (geom) sql="poi_type" = 5</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -2617,7 +2617,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_section_by_network20141015164614306</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="tempus"."view_section_by_network" (geom) sql="gtfs_route_type" = 3</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="%SCHEMA%"."view_section_by_network" (geom) sql="gtfs_route_type" = 3</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -2855,7 +2855,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_section_by_network20141015164854898</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="tempus"."view_section_by_network" (geom) sql=</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="%SCHEMA%"."view_section_by_network" (geom) sql=</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -3093,7 +3093,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_section_by_network20141015170008222</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="tempus"."view_section_by_network" (geom) sql="gtfs_route_type"=1</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="%SCHEMA%"."view_section_by_network" (geom) sql="gtfs_route_type"=1</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -3331,7 +3331,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_section_by_network20141015171040606</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="tempus"."view_section_by_network" (geom) sql="gtfs_route_type"=4</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="%SCHEMA%"."view_section_by_network" (geom) sql="gtfs_route_type"=4</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -3569,7 +3569,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_section_by_network20141015171311210</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="tempus"."view_section_by_network" (geom) sql="gtfs_route_type"=5 or gtfs_route_type=6 or gtfs_route_type=7</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=LINESTRING table="%SCHEMA%"."view_section_by_network" (geom) sql="gtfs_route_type"=5 or gtfs_route_type=6 or gtfs_route_type=7</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -3807,7 +3807,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_stop_by_network20141015162538808</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="tempus"."view_stop_by_network" (geom) sql="gtfs_route_type"=2</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="%SCHEMA%"."view_stop_by_network" (geom) sql="gtfs_route_type"=2</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -4048,7 +4048,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_stop_by_network20141015162650234</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="tempus"."view_stop_by_network" (geom) sql="gtfs_route_type"=3</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="%SCHEMA%"."view_stop_by_network" (geom) sql="gtfs_route_type"=3</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -4289,7 +4289,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_stop_by_network20141015172645373</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="tempus"."view_stop_by_network" (geom) sql="gtfs_route_type" = 1</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="%SCHEMA%"."view_stop_by_network" (geom) sql="gtfs_route_type" = 1</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -4530,7 +4530,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_stop_by_network20141015172806480</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="tempus"."view_stop_by_network" (geom) sql="gtfs_route_type" = 4</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="%SCHEMA%"."view_stop_by_network" (geom) sql="gtfs_route_type" = 4</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -4771,7 +4771,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>pt_stop_by_network20141015172933953</id>
-            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="tempus"."view_stop_by_network" (geom) sql="gtfs_route_type" = 5 or "gtfs_route_type"=6 or "gtfs_route_type"=7</datasource>
+            <datasource>%DB_PARAMS% key='tid' srid=2154 type=POINT table="%SCHEMA%"."view_stop_by_network" (geom) sql="gtfs_route_type" = 5 or "gtfs_route_type"=6 or "gtfs_route_type"=7</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -5012,7 +5012,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Point" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>road_node20141014164800845</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="tempus"."road_node" (geom) sql=</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=POINT table="%SCHEMA%"."road_node" (geom) sql=</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -5223,7 +5223,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>road_section20141014164800767</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="tempus"."road_section" (geom) sql=("traffic_rules_ft" &amp; 4 > 0 OR traffic_rules_tf &amp; 4 >0)</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="%SCHEMA%"."road_section" (geom) sql=("traffic_rules_ft" &amp; 4 > 0 OR traffic_rules_tf &amp; 4 >0)</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -5582,7 +5582,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>road_section20141014170101149</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="tempus"."road_section" (geom) sql="traffic_rules_ft" &amp; 1 >0 OR "traffic_rules_tf" &amp; 1 >0</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="%SCHEMA%"."road_section" (geom) sql="traffic_rules_ft" &amp; 1 >0 OR "traffic_rules_tf" &amp; 1 >0</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -5830,7 +5830,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>road_section20141014170412771</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="tempus"."road_section" (geom) sql=( "traffic_rules_ft" &amp; 2 > 0 OR "traffic_rules_tf" &amp; 2 > 0 )</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="%SCHEMA%"."road_section" (geom) sql=( "traffic_rules_ft" &amp; 2 > 0 OR "traffic_rules_tf" &amp; 2 > 0 )</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -6112,7 +6112,7 @@
         </maplayer>
         <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" geometry="Line" simplifyMaxScale="1" type="vector" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
             <id>road_section20141015142158198</id>
-            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="tempus"."road_section" (geom) sql=("traffic_rules_ft" &amp; 8 > 0 AND NOT  "traffic_rules_ft" &amp; 4 >0) OR ("traffic_rules_tf" &amp; 8 >0 AND NOT "traffic_rules_tf" &amp; 4 >0 )</datasource>
+            <datasource>%DB_PARAMS% key='id' srid=2154 type=LINESTRING table="%SCHEMA%"."road_section" (geom) sql=("traffic_rules_ft" &amp; 8 > 0 AND NOT  "traffic_rules_ft" &amp; 4 >0) OR ("traffic_rules_tf" &amp; 8 >0 AND NOT "traffic_rules_tf" &amp; 4 >0 )</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
