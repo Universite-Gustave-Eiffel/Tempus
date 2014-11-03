@@ -238,6 +238,10 @@ SET traffic_rules_ft = traffic_rules_ft
 FROM _tempus_import.cdms as cdms
 WHERE cdms.cond_type = 5 AND cdms.link_id = road_section.id; 
 
+-- Delete road sections without traffic rules
+DELETE FROM tempus.road_section
+WHERE traffic_rules_ft=0 AND traffic_rules_tf=0;
+
 -- Deleting road restrictions associated to unreferenced road sections 
 DELETE FROM tempus.road_restriction_time_penalty WHERE restriction_id IN
 (
