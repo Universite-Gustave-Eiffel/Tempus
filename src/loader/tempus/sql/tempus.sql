@@ -369,7 +369,7 @@ CREATE TABLE tempus.pt_trip
 	id serial PRIMARY KEY, 
 	vendor_id varchar,
 	route_id integer NOT NULL REFERENCES tempus.pt_route ON DELETE CASCADE ON UPDATE CASCADE,
-	service_id integer NOT NULL,
+	service_id integer NOT NULL REFERENCES tempus.pt_calendar ON DELETE CASCADE ON UPDATE CASCADE,
 	short_name varchar
 	-- NOTA: shape_dist_traveled (if present) is stored as M dimension into geom
 );
@@ -534,7 +534,7 @@ CREATE OR REPLACE VIEW tempus.view_forbidden_movements AS
     tempus.road_restriction,
     tempus.road_restriction_time_penalty
   WHERE (road_section.id = ANY (road_restriction.sections)) AND road_restriction_time_penalty.restriction_id = road_restriction.id AND road_restriction_time_penalty.time_value = 'Infinity'::double precision
-  GROUP BY road_restriction.id;
+  GROUP BY road_restriction.id, road_restriction.sections;
 
 DROP FUNCTION IF EXISTS tempus.array_search(anyelement, anyarray);
 
@@ -550,52 +550,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION tempus.array_search(anyelement, anyarray)
   OWNER TO postgres;
-
-CREATE OR REPLACE FUNCTION tempus.create_subset(subset text, polygon text) RETURNS void AS $$
---DECLARE
-    -- declarations
-BEGIN
-  EXECUTE format('DROP SCHEMA IF EXISTS %s CASCADE', subset);
-  EXECUTE format('delete from geometry_columns where f_table_schema=''%s''', subset);
-  EXECUTE format('create schema %s', subset);
-
-  -- road nodes
-  EXECUTE format('create table %s.road_node as select rn.* from tempus.road_node as rn where st_intersects( ''' || polygon || '''::geometry, rn.geom )', subset);
-  -- road sections
-  EXECUTE format( 'create table %s.road_section as ' ||
-	'select rs.* from tempus.road_section as rs ' ||
-	'where ' ||
-        'node_from in (select id from %1$s.road_node) ' ||
-        'and node_to in (select id from %1$s.road_node)', subset);
-  -- pt stops
-  EXECUTE format( 'create table %s.pt_stop as ' ||
-                   'select pt.* from tempus.pt_stop as pt, %1$s.road_section as rs where road_section_id = rs.id', subset );
-
-  -- pt section
-  EXECUTE format( 'create table %s.pt_section as ' ||
-		'select pt.* from tempus.pt_section as pt ' ||
-	        'where stop_from in (select id from %1$s.pt_stop) ' ||
-                'and stop_to in (select id from %1$s.pt_stop)', subset );
-
-  -- pt stop time
-  EXECUTE format( 'create table %s.pt_stop_time as ' ||
-	'select st.* from tempus.pt_stop_time as st, %1$s.pt_stop as stop where stop_id = stop.id', subset );
-
-  -- poi
-  EXECUTE format( 'create table %s.poi as ' ||
-                  'select poi.* from tempus.poi as poi, %1$s.road_section as rs where road_section_id = rs.id', subset );
-
-  -- road_restriction
-  EXECUTE format( 'create table %s.road_restriction as ' ||
-         'select distinct rr.id, rr.sections from tempus.road_restriction as rr, %1$s.road_section as rs ' ||
-         'where rs.id in (select unnest(sections) from tempus.road_restriction where id=rr.id)', subset );
-
-  EXECUTE format( 'create table %s.road_restriction_time_penalty as ' ||
-         'select rrtp.* from tempus.road_restriction_time_penalty as rrtp, ' ||
-         '%1$s.road_restriction as rr where restriction_id = rr.id', subset );
-
-END;
-$$ LANGUAGE plpgsql;
 
 -- Preparing pt views
 
@@ -646,3 +600,101 @@ CREATE TABLE tempus.view_section_by_network AS
 $$ LANGUAGE plpgsql;
 
 select tempus.update_pt_views();
+
+-- subsets metadata
+
+CREATE TABLE tempus.subset
+(
+	id serial PRIMARY KEY,
+        schema_name text NOT NULL
+);
+-- polygon that has been used to define the subset
+SELECT AddGeometryColumn('tempus', 'subset', 'geom', 2154, 'POLYGON', 2);
+
+CREATE OR REPLACE FUNCTION tempus.create_subset(msubset text, polygon text) RETURNS void AS $$
+DECLARE
+    mdefinition text;
+    -- declarations
+BEGIN
+  EXECUTE format('DROP SCHEMA IF EXISTS %s CASCADE', msubset);
+  EXECUTE format('delete from geometry_columns where f_table_schema=''%s''', msubset);
+  EXECUTE format('create schema %s', msubset);
+
+  -- road nodes
+  EXECUTE format('create table %s.road_node as select rn.* from tempus.road_node as rn where st_intersects( ''' || polygon || '''::geometry, rn.geom )', msubset);
+  -- road sections
+  EXECUTE format( 'create table %s.road_section as ' ||
+	'select rs.* from tempus.road_section as rs ' ||
+	'where ' ||
+        'node_from in (select id from %1$s.road_node) ' ||
+        'and node_to in (select id from %1$s.road_node)', msubset);
+  -- pt stops
+  EXECUTE format( 'create table %s.pt_stop as ' ||
+                   'select pt.* from tempus.pt_stop as pt, %1$s.road_section as rs where road_section_id = rs.id', msubset );
+
+  -- pt section
+  EXECUTE format( 'create table %s.pt_section as ' ||
+		'select pt.* from tempus.pt_section as pt ' ||
+	        'where stop_from in (select id from %1$s.pt_stop) ' ||
+                'and stop_to in (select id from %1$s.pt_stop)', msubset );
+
+  -- pt stop time
+  EXECUTE format( 'create table %s.pt_stop_time as ' ||
+	'select st.* from tempus.pt_stop_time as st, %1$s.pt_stop as stop where stop_id = stop.id', msubset );
+
+  -- poi
+  EXECUTE format( 'create table %s.poi as ' ||
+                  'select poi.* from tempus.poi as poi, %1$s.road_section as rs where road_section_id = rs.id', msubset );
+
+  -- road_restriction
+  EXECUTE format( 'create table %s.road_restriction as ' ||
+         'select distinct rr.id, rr.sections from tempus.road_restriction as rr, %1$s.road_section as rs ' ||
+         'where rs.id in (select unnest(sections) from tempus.road_restriction where id=rr.id)', msubset );
+
+  EXECUTE format( 'create table %s.road_restriction_time_penalty as ' ||
+         'select rrtp.* from tempus.road_restriction_time_penalty as rrtp, ' ||
+         '%1$s.road_restriction as rr where restriction_id = rr.id', msubset );
+
+  -- pt_trip
+  EXECUTE format( 'create table %s.pt_trip as ' ||
+                  'select * from tempus.pt_trip where id in (select distinct trip_id from %1$s.pt_stop_time union select trip_id from tempus.pt_frequency)', msubset);
+  -- pt_frequency
+  EXECUTE format( 'create table %s.pt_frequency as select * from tempus.pt_frequency', msubset );
+
+  -- pt_route
+  EXECUTE format( 'create table %s.pt_route as select * from tempus.pt_route where id in (select distinct route_id from %1$s.pt_trip)', msubset );
+
+  -- pt_calendar
+  EXECUTE format( 'create table %s.pt_calendar as select * from tempus.pt_calendar where service_id in (select distinct service_id from %1$s.pt_trip)', msubset );
+  EXECUTE format( 'create table %s.pt_calendar_date as select * from tempus.pt_calendar_date where service_id in (select distinct service_id from %1$s.pt_trip)', msubset );
+
+  -- pt_network
+  EXECUTE format( 'create table %s.pt_network as select * from tempus.pt_network where id in (select distinct network_id from %1$s.pt_section)', msubset );
+  -- pt_agency
+  EXECUTE format( 'create table %s.pt_agency as select * from tempus.pt_agency where network_id in (select distinct id from %1$s.pt_network)', msubset );
+  -- pt_zone
+  EXECUTE format( 'create table %s.pt_zone as select * from tempus.pt_zone where network_id in (select distinct id from %1$s.pt_network)', msubset );
+  -- pt_fare_rule
+  EXECUTE format( 'create table %s.pt_fare_rule as select * from tempus.pt_fare_rule where route_id in (select id from %1$s.pt_route)', msubset );
+  -- pt_fare_attribute
+  EXECUTE format( 'create table %s.pt_fare_attribute as select * from tempus.pt_fare_attribute', msubset );
+  -- pt_transfer
+  EXECUTE format( 'create table %s.pt_transfer as select * from tempus.pt_transfer where from_stop_id in (select id from %1$s.pt_stop) and to_stop_id in (select id from %1$s.pt_stop)', msubset );
+
+  -- transport_mode
+  EXECUTE format( 'create table %s.transport_mode as select * from tempus.transport_mode', msubset );
+
+  -- forbidden movements view
+  SELECT replace(definition, 'tempus.', msubset || '.') into mdefinition from pg_views where schemaname='tempus' and viewname='view_forbidden_movements';
+  EXECUTE 'create view ' || msubset || '.view_forbidden_movements as ' || mdefinition;
+
+  -- update_pt_views
+  select replace(prosrc, 'tempus.', msubset || '.') into mdefinition
+     from pg_proc, pg_namespace where pg_proc.pronamespace = pg_namespace.oid and proname='update_pt_views' and nspname='tempus';
+  EXECUTE 'create function ' || msubset || '.update_pt_views() returns void as $' || '$' || mdefinition || '$' || '$ language plpgsql';
+  EXECUTE 'SELECT ' || msubset || '.update_pt_views()';
+
+  DELETE FROM tempus.subset WHERE schema_name=msubset;
+  INSERT INTO tempus.subset (schema_name, geom) VALUES (msubset, polygon::geometry);
+END;
+$$ LANGUAGE plpgsql;
