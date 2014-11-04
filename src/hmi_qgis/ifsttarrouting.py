@@ -1379,6 +1379,8 @@ class IfsttarRouting:
         self.iface.removePluginMenu(u"&Tempus",self.loadLayersAction)
         self.iface.removePluginMenu(u"&Tempus",self.exportTraceAction)
         self.iface.removeToolBarIcon(self.action)
+        if self.server is not None:
+            self.server.stop()
 
     # run method that performs all the real work
     def run(self):
