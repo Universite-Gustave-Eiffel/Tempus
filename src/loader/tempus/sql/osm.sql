@@ -1,5 +1,26 @@
 -- Tempus - OSM SQL import
 
+-- update import table if needed
+
+do $$
+declare
+  col text;
+begin
+  -- add bridge column if needed
+  select into col column_name from information_schema.columns where table_name='highway' and table_schema='_tempus_import' and column_name='bridge';
+  if col is null then
+    alter table _tempus_import.highway add column bridge integer;
+    update _tempus_import.highway set bridge = 0;
+  end if;
+
+  -- add tunnel column if needed
+  select into col column_name from information_schema.columns where table_name='highway' and table_schema='_tempus_import' and column_name='tunnel';
+  if col is null then
+    alter table _tempus_import.highway add column tunnel integer;
+    update _tempus_import.highway set tunnel = 0;
+  end if;
+end$$;
+
 -- TABLE road_node
 
 -- fill table
@@ -104,8 +125,8 @@ select
 	, hw."name" as road_name
 	, hw.lanes as lane
 	, false as roundabout
-	, false as bridge
-	, false as tunnel
+	, hw.bridge > 0 as bridge
+	, hw.tunnel > 0 as tunnel
 	, false as ramp
 	, false as tollway
 	, st_force_3DZ(st_transform(hw.geom, 2154)) as geom
