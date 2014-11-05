@@ -28,7 +28,11 @@ rs1.node_to <> rs2.node_to and
 st_intersects(rs1.geom, rs2.geom) 
 and
 -- do not include linestring intersections
-geometrytype(st_multi(st_intersection(rs1.geom, rs2.geom))) = 'MULTIPOINT';
+geometrytype(st_multi(st_intersection(rs1.geom, rs2.geom))) = 'MULTIPOINT'
+and
+-- do not cut bridges and tunnels
+not rs1.tunnel and not rs2.tunnel and not rs1.bridge and not rs2.bridge
+;
 
 --
 -- There are two types of intersections :
