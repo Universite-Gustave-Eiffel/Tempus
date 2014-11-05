@@ -10,41 +10,41 @@ import sys
 def import_tomtom(args, shape_options):
     """Load Tomtom (Multinet) data into a PostGIS database."""
     mni = tempus.MultinetImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
-    mni.load()
+    return mni.load()
 
 def import_pt(args, substitutions):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
     gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean, substitutions)
-    gtfsi.load()
+    return gtfsi.load()
 
 def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
     ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
-    ntqi.load()
+    return ntqi.load()
 
 def import_route120(args, shape_options):
     """Load IGN (Route120) data into a PostGIS database."""
     igni = tempus.IGNRoute120Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
-    igni.load()
+    return igni.load()
 
 def import_route500(args, shape_options):
     """Load IGN (Route500) data into a PostGIS database."""
     igni = tempus.IGNRoute500Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
-    igni.load()
+    return igni.load()
 
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
     osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
-    osmi.load()
+    return osmi.load()
 
 def import_poi(args, shape_options, poi_type, substitutions):
     """Load a point shapefile into a PostGIS database."""
     poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type, substitutions)
-    poii.load()
+    return poii.load()
 
 def reset_db(args):
     r = tempus.ResetImporter('', '', args.dbstring, args.logfile, '', False)
-    r.load()
+    return r.load()
 
 if __name__ == "__main__":
     shape_options = {}
@@ -107,18 +107,19 @@ if __name__ == "__main__":
     if args.doreset:
         reset_db( args )
 
+    r = None
     if args.type == 'tomtom':
-        import_tomtom(args, shape_options)
+        r = import_tomtom(args, shape_options)
     elif args.type == 'osm':
-        import_osm(args, shape_options)
+        r = import_osm(args, shape_options)
     elif args.type == 'navteq':
-        import_navteq(args, shape_options)
+        r = import_navteq(args, shape_options)
     elif args.type == 'route120':
-        import_route120(args, shape_options)
+        r = import_route120(args, shape_options)
     elif args.type == 'route500':
-        import_route500(args, shape_options)
+        r = import_route500(args, shape_options)
     elif args.type == 'gtfs':
-        import_pt(args, substitutions)
+        r = import_pt(args, substitutions)
     elif args.type == 'poi':
         try:
             poi_type = int(args.poitype)
@@ -127,5 +128,10 @@ if __name__ == "__main__":
         except ValueError:
             print "Wrong poi type. Assuming User type (5). Correct values are in range 1-5."
             poi_type = 5
-        import_poi(args, shape_options, poi_type, substitutions)
+        r = import_poi(args, shape_options, poi_type, substitutions)
+
+    if not r:
+        print "Error during import !"
+        sys.exit(1)
+    sys.exit(0)
 

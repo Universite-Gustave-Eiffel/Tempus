@@ -34,8 +34,7 @@ class TestMultinetImporter(unittest.TestCase):
 
     def test_check_input(self):
         # test input checker 
-        res = self.ml.check_input()
-        self.assertEqual(res, True)
+        self.ml.check_input()
 
     def test_get_shapefiles(self):
         res = ['/home/vpicavet/oslandia/local/projets/tempus/data/multinet/usaxxxxx______nw.shp',

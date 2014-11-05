@@ -91,6 +91,8 @@ class PsqlLoader:
             command.append("--port=%s" % self.dbparams['port'])
         if self.dbparams.has_key('dbname'):
             command.append("--dbname=%s" % self.dbparams['dbname'])
+        # single transaction
+        command.append("-1")
         if self.logfile:
             try:
                 out = open(self.logfile, "a")
@@ -105,7 +107,7 @@ class PsqlLoader:
             out.write("======= Executing SQL %s\n" % os.path.basename(filename) )
             out.flush()
             p = subprocess.Popen(command, stdin = subprocess.PIPE, stdout = out, stderr = err)
-            self.sqlfile = "set client_min_messages=NOTICE;\n" + self.sqlfile
+            self.sqlfile = "set client_min_messages=NOTICE;\n\\set ON_ERROR_STOP on\n" + self.sqlfile
             p.communicate( self.sqlfile )
             out.write("\n")
             retcode = p.returncode
@@ -113,5 +115,4 @@ class PsqlLoader:
             sys.stderr.write("Error calling %s (%s) : %s \n" % (" ".join(command), errno, strerror))
         if self.logfile:
             out.close()
-        if retcode == 0: res = True
-        return res
+        return retcode == 0

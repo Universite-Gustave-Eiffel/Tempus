@@ -36,9 +36,9 @@ create index idx_road_node_geom on tempus.road_node using gist(geom);
 -- drop all constraints
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_from_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_to_fkey;
-ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_road_type_fkey;
 ALTER TABLE tempus.poi DROP CONSTRAINT poi_road_section_id_fkey;
 ALTER TABLE tempus.pt_stop DROP CONSTRAINT pt_stop_road_section_id_fkey;
+ALTER TABLE tempus.road_section_speed DROP CONSTRAINT road_section_speed_road_section_id_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey;
 
 -- id sequence
@@ -125,13 +125,15 @@ where
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 	PRIMARY KEY (id);
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
-	FOREIGN KEY (node_from) REFERENCES tempus.road_node;
+	FOREIGN KEY (node_from) REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
-	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id);
+	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_section_id_fkey
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- INDEXES
 create index idx_road_section_geom on tempus.road_section using gist(geom);

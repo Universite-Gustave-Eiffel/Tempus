@@ -47,7 +47,7 @@ class DataImporter(object):
 
     def check_input(self):
         """Check if data input is ok."""
-        raise True
+        pass
 
     def clean(self):
         """Clean temporary files."""
@@ -55,22 +55,25 @@ class DataImporter(object):
 
     def load(self):
         ret = True
-        if self.check_input():
-            ret = self.preload_sql()
-            if ret:
-                ret = self.load_data()
-            else:
-                sys.stderr.write("Error during preload_sql().\n")
-            if ret:
-                ret = self.postload_sql()
-            else:
-                sys.stderr.write("Error during load_data().\n")
-            if ret:
-                self.clean()
-            else:
-                sys.stderr.write("Error during postload_sql().\n")
+        try:
+            self.check_input()
+        except StandardError as e:
+            sys.stderr.write("During import: %s\n" % e.message )
+            return False
+
+        ret = self.preload_sql()
+        if ret:
+            ret = self.load_data()
         else:
-            sys.stderr.write("Error in source data.\n")
+            sys.stderr.write("Error during preload_sql().\n")
+        if ret:
+            ret = self.postload_sql()
+        else:
+            sys.stderr.write("Error during load_data().\n")
+        if ret:
+            self.clean()
+        else:
+            sys.stderr.write("Error during postload_sql().\n")
         return ret
 
     def preload_sql(self):
@@ -135,8 +138,7 @@ class ShpImporter(DataImporter):
         """Check if data input is ok : we have the required number of shapefiles."""
         res = len(self.SHAPEFILES) == len(self.shapefiles)
         if not res:
-            sys.stderr.write("Some input files missing. Check data source.\n")
-        return res
+            raise StandardError ("Some input files missing. Check data source.")
 
     def load_data(self):
         """Load all given shapefiles into the database."""

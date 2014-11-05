@@ -52,10 +52,8 @@ class POIImporter(ShpImporter):
 
     def check_input(self):
         """Check if input is ok : given shape file exists."""
-        ret = False
-        if os.path.isfile(self.source):
-            ret = True
-        return ret
+        if not os.path.isfile(self.source):
+            raise StandardError("The given source file does not exist")
 
     def get_shapefiles(self):
         self.shapefiles = [self.source]
