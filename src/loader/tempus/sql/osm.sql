@@ -70,16 +70,18 @@ select
 	, nf.id as node_from
 	, nt.id as node_to
 	, case
-		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
-		when hw.oneway is null then 32+16+8+4+2+1
-		when oneway::text in ('true', 'yes', '1') then 32+16+8+4+2+1
+		when hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
+                when hw."type" = 'cycleway' then 2 -- bicycle only
 		else 32+16+8+4+2+1
 	end as traffic_rules_ft
 	, case
-		when hw.oneway is null and hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
-		when hw.oneway is null then 32+16+8+4+2+1
-		when oneway::text in ('true', 'yes', '1') then 1 -- one way, pedestrian only
-		else 32+16+8+4+2+1
+		when oneway::text in ('true', 'yes', '1') then 0 -- one way
+		else
+                  case
+                        when hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
+                        when hw."type" = 'cycleway' then 2 -- bicycle only
+		        else 32+16+8+4+2+1
+                  end
 	end as traffic_rules_tf
 	, st_length(st_transform(hw.geom, 2154)) as length
 	, case
