@@ -120,6 +120,8 @@ class ShpImporter(DataImporter):
     """This class enables to load shapefile data into a PostGIS database."""
     # Shapefile names to load, without the extension and prefix. It will be the table name.
     SHAPEFILES = [] 
+    # Optional shapefiles
+    OPT_SHAPEFILES = [] 
     # SQL files to execute before loading shapefiles
     PRELOADSQL = []
     # SQL files to execute after loading shapefiles 
@@ -136,19 +138,20 @@ class ShpImporter(DataImporter):
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""
-        res = len(self.SHAPEFILES) == len(self.shapefiles)
+        res = set(self.SHAPEFILES).issubset( set([ s for s,_ in self.shapefiles]) )
         if not res:
             raise StandardError ("Some input files missing. Check data source.")
 
     def load_data(self):
         """Load all given shapefiles into the database."""
         ret = True
-        for i, shp in enumerate(self.shapefiles):
+        for i, s in enumerate(self.shapefiles):
+            shp, rshp = s
             # if one shapefile failed, stop there
             if ret:
-                self.sloader.set_shapefile(shp)
+                self.sloader.set_shapefile(rshp)
                 # the table name is the shapefile name without extension
-                self.sloader.set_table(self.SHAPEFILES[i])
+                self.sloader.set_table(shp)
                 ret = self.sloader.load()
         return ret
 
@@ -192,16 +195,26 @@ class ShpImporter(DataImporter):
 
         baseDir = os.path.realpath(self.source)
         ls = os.listdir( baseDir )
+        for shp in self.OPT_SHAPEFILES:
+            filenameShp = self.prefix + shp + ".shp"
+            filenameDbf = self.prefix + shp + ".dbf"
+            lsLower = [ x.lower() for x in ls ]
+            if filenameShp in lsLower:
+                i = lsLower.index( filenameShp )
+                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
+            elif filenameDbf in lsLower:
+                i = lsLower.index( filenameDbf )
+                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
         for shp in self.SHAPEFILES:
             filenameShp = self.prefix + shp + ".shp"
             filenameDbf = self.prefix + shp + ".dbf"
             lsLower = [ x.lower() for x in ls ]
             if filenameShp in lsLower:
                 i = lsLower.index( filenameShp )
-                self.shapefiles.append( os.path.join( baseDir, ls[i] ) )
+                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
             elif filenameDbf in lsLower:
                 i = lsLower.index( filenameDbf )
-                self.shapefiles.append( os.path.join( baseDir, ls[i] ) )
+                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
             else:
                 notfound.append( filenameDbf )
                 sys.stderr.write("Warning : file for table %s not found.\n"\
