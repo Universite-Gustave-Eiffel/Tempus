@@ -66,11 +66,17 @@ ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey;
 drop sequence if exists _tempus_import.seq_road_section_import ;
 create sequence _tempus_import.seq_road_section_import start with 1;
 
+create table _tempus_import.road_section_idmap AS
+       SELECT nextval('_tempus_import.seq_road_section_import')::bigint as id, osm_id
+              FROM _tempus_import.highway;
+create index on _tempus_import.road_section_idmap(id);
+create index on _tempus_import.road_section_idmap(osm_id);
+
 -- insert into table
 insert into
 	tempus.road_section
 select
-	nextval('_tempus_import.seq_road_section_import')::bigint as id
+        (SELECT id FROM _tempus_import.road_section_idmap WHERE osm_id = hw.osm_id ) as id
 	, case
 		-- FIXME : check type correspondance with
 		-- http://wiki.openstreetmap.org/wiki/Routing
@@ -161,3 +167,22 @@ ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_sec
 -- INDEXES
 create index idx_road_section_geom on tempus.road_section using gist(geom);
 -- FIXME : other indexes needed ?
+
+-- add road restrictions
+do $$
+declare
+  col text;
+begin
+  select into col column_name from information_schema.columns where table_name='restriction' and table_schema='_tempus_import' and column_name='from_id';
+  if col is not null then
+     raise notice 'Add road restrictions';
+     insert into tempus.road_restriction
+     select osm_id, array[(select id from _tempus_import.road_section_idmap where osm_id=from_id),
+                          (select id from _tempus_import.road_section_idmap where osm_id=to_id)] from _tempus_import.restriction;
+     insert into tempus.road_restriction_time_penalty (restriction_id, period_id, traffic_rules, time_value)
+     select id,
+            0,
+            4+8+16+32+64, 'inf'::float from tempus.road_restriction;
+  end if;
+end$$;
+
