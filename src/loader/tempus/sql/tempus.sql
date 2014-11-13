@@ -456,24 +456,6 @@ COMMENT ON COLUMN tempus.pt_fare_rule.contains_id IS 'Zone ID referenced in temp
 
 -- TO DO: CASCADE DELETE from pt_network to pt_fare_rule and pt_fare_attribute
 
--- GTFS Transfers
-CREATE TABLE tempus.pt_transfer
-(
-	from_stop_id integer REFERENCES tempus.pt_stop (id) ON DELETE CASCADE ON UPDATE CASCADE,
-	to_stop_id integer REFERENCES tempus.pt_stop (id) ON DELETE CASCADE ON UPDATE CASCADE,
-	transfer_type integer NOT NULL CHECK(transfer_type >=0 AND transfer_type <=3),
-	--    0 or (empty) - This is a recommended transfer point between two routes.
-	--    1 - This is a timed transfer point between two routes. The departing vehicle is expected to wait for the arriving one, with sufficient time for a passenger to transfer between routes.
-	--    2 - This transfer requires a minimum amount of time between arrival and departure to ensure a connection. The time required to transfer is specified by min_transfer_time.
-	--    3 - Transfers are not possible between routes at this location.
-	min_tranfer_time integer CHECK (min_tranfer_time > 0),
-	PRIMARY KEY(from_stop_id, to_stop_id, transfer_type)
-);
-COMMENT ON TABLE tempus.pt_transfer
-  IS 'Public transport transfer permission and necessary time';
-COMMENT ON COLUMN tempus.pt_transfer.transfer_type IS 'As in GTFS: 0 recommanded transfer point, 1 timed transfer point : the departing vehicle is expected to wait the arriving one, 2 transfer which requires a minimum amount of time between arrival and departure to ensure connection, specified in min_transfer_time, 3 impossible to make transfers at this point'; 
-
-
 --
 -- PostGIS geometry 
 --
@@ -678,8 +660,6 @@ BEGIN
   EXECUTE format( 'create table %s.pt_fare_rule as select * from tempus.pt_fare_rule where route_id in (select id from %1$s.pt_route)', msubset );
   -- pt_fare_attribute
   EXECUTE format( 'create table %s.pt_fare_attribute as select * from tempus.pt_fare_attribute', msubset );
-  -- pt_transfer
-  EXECUTE format( 'create table %s.pt_transfer as select * from tempus.pt_transfer where from_stop_id in (select id from %1$s.pt_stop) and to_stop_id in (select id from %1$s.pt_stop)', msubset );
 
   -- transport_mode
   EXECUTE format( 'create table %s.transport_mode as select * from tempus.transport_mode', msubset );

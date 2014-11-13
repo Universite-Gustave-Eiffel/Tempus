@@ -39,6 +39,7 @@ class GTFSImporter(DataImporter):
             ('fare_attributes', False),
             ('fare_rules', False),
             ('frequencies', False),
+            ('transfers', False),
             ('routes', True),
             ('shapes', False),
             ('stop_times', True),
@@ -75,9 +76,8 @@ class GTFSImporter(DataImporter):
             with zipfile.ZipFile(self.source) as zipf:
                 filelist = [ os.path.basename(x) for x in zipf.namelist() ]
                 for f, mandatory in GTFSImporter.GTFSFILES:
-                    if res and "%s.txt" % f not in filelist:
-                        if mandatory:
-                            raise StandardError("Missing mandatory file: %s.txt" % f)
+                    if mandatory and "%s.txt" % f not in filelist:
+                        raise StandardError("Missing mandatory file: %s.txt" % f)
         else:
             raise StandardError("Not a zip file!")
 

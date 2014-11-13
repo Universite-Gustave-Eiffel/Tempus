@@ -122,8 +122,6 @@ create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 -- remove constraint on tempus stops and dependencies
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey; 
-alter table tempus.pt_transfer drop constraint pt_transfer_from_stop_id_fkey;
-alter table tempus.pt_transfer drop constraint pt_transfer_to_stop_id_fkey;
 alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;
@@ -619,20 +617,62 @@ begin
 raise notice '==== PT transfer ====';
 end$$;
 
+-- add a road_node for each pt_stop involved in a transfer
 insert into
-	tempus.pt_transfer
+	tempus.road_node
 select
-	(select id from _tempus_import.pt_stop_idmap where vendor_id=from_stop_id) as from_stop_id
-	, (select id from _tempus_import.pt_stop_idmap where vendor_id=to_stop_id) as to_stop_id
-	, transfer_type::integer as transfer_type
-	, min_transfer_time::integer as min_transfer_time
+        nextval('tempus.seq_road_node_id')::bigint as id,
+        false as bifurcation,
+        geom
 from
-	_tempus_import.transfers;
+(
+select
+        distinct pt_stop.id, pt_stop.geom
+from
+        _tempus_import.transfers,
+        tempus.pt_stop
+where
+	transfer_type::integer = 2
+and
+        (pt_stop.id = (select id from _tempus_import.pt_stop_idmap where vendor_id=from_stop_id)
+or
+        pt_stop.id = (select id from _tempus_import.pt_stop_idmap where vendor_id=to_stop_id))
+)
+t;
 
-alter table tempus.pt_transfer add constraint pt_transfer_from_stop_id_fkey FOREIGN KEY (from_stop_id)
-      REFERENCES tempus.pt_stop (id) ON UPDATE CASCADE ON DELETE CASCADE;
-alter table tempus.pt_transfer add constraint pt_transfer_to_stop_id_fkey FOREIGN KEY (to_stop_id)
-      REFERENCES tempus.pt_stop (id)  ON UPDATE CASCADE ON DELETE CASCADE;
+-- add a road_section for each transfer
+insert into
+	tempus.road_section
+select
+   nextval('tempus.seq_road_section_id')::bigint as id, 
+   5 as road_type, -- "other"
+   node1.id as node_from,
+   node2.id as node_to,
+   1 as traffic_rules_ft,
+   0 as traffic_rules_tf,
+   min_transfer_time::float * 5000 / 3600.0 as length, -- convert from time to distance (multiply by walking speed)
+   0 as car_speed_limit,
+   '' as road_name,
+   1 as lane,
+   false as roundabout,
+   false as bridge,
+   false as tunnel,
+   false as ramp,
+   false as tollway,
+   -- create an artificial line
+   st_makeline(node1.geom, node2.geom)
+from
+   _tempus_import.transfers,
+   tempus.pt_stop as node1,
+   tempus.pt_stop as node2
+where
+   transfer_type::integer = 2
+and
+   node1.id = (select id from _tempus_import.pt_stop_idmap where vendor_id = from_stop_id)
+and
+   node2.id = (select id from _tempus_import.pt_stop_idmap where vendor_id = to_stop_id)
+;
+
 alter table tempus.pt_stop_time add constraint pt_stop_time_stop_id_fkey FOREIGN KEY (stop_id)
       REFERENCES tempus.pt_stop (id)  ON UPDATE CASCADE ON DELETE CASCADE;
 
