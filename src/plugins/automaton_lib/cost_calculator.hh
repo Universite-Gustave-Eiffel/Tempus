@@ -40,16 +40,16 @@ double road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, 
     if ( (road_graph[ road_e ].traffic_rules() & mode.traffic_rules()) == 0 ) { // Not allowed mode 
         return std::numeric_limits<double>::infinity() ;
     }
-    else if ( mode.traffic_rules() & TrafficRuleCar ) {
+    else if ( mode.speed_rule() == SpeedRuleCar ) {
         // FIXME, we take the speed limit for now,
         // but should take the speed profile
         return length / (road_graph[ road_e ].car_speed_limit() * 1000) * 60 ;
     }
-    else if ( mode.traffic_rules() & TrafficRulePedestrian ) { // Walking
+    else if ( mode.speed_rule() == SpeedRulePedestrian ) { // Walking
         // FIXME the speed should be carried by the transport mode
         return length / (walking_speed * 1000) * 60 ;
     }
-    else if ( mode.traffic_rules() & TrafficRuleBicycle ) { // Bicycle
+    else if ( mode.speed_rule() == SpeedRuleBicycle ) { // Bicycle
         return length / (cycling_speed * 1000) * 60 ;
     }
     else {
