@@ -82,7 +82,22 @@ struct HeuristicCompare
 			
             BGL_FORALL_OUTEDGES_T( min_object.vertex, current_edge, graph, NetworkGraph ) {
                 vis.examine_edge( current_edge, graph );
-                for ( size_t i = 0; i < request_allowed_modes.size(); i++ ) {
+
+                typename Automaton::State s;
+                {
+                    bool found;
+                    boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge() );
+                    // if not found, s == 0
+                }
+
+                db_id_t initial_trip_id = get( trip_map, min_object );
+
+                Object new_object;
+                new_object.vertex = target(current_edge, graph);
+                new_object.state = s;
+
+                for ( size_t i = 0; i < request_allowed_modes.size(); i++ )
+                {
                     db_id_t mode_id = request_allowed_modes[i];
                     boost::optional<TransportMode> mode;
                     mode = graph.transport_mode(mode_id);
@@ -90,23 +105,13 @@ struct HeuristicCompare
 
                     // if this mode is not allowed on the current edge, skip it
                     if ( ! (current_edge.traffic_rules() & mode->traffic_rules() ) ) {
+                        vis.edge_not_relaxed( current_edge, mode_id, graph );
                         continue;
                     }
 
-                    typename Automaton::State s;
-                    {
-                        bool found;
-                        boost::tie( s, found ) = automaton.find_transition( min_object.state, current_edge.road_edge() );
-                        // if not found, s == 0
-                    }
-
-                    Object new_object;
-                    new_object.vertex = target(current_edge, graph);
                     new_object.mode = mode_id;
-                    new_object.state = s;
 
                     double new_pi = get( potential_map, new_object );
-                    db_id_t initial_trip_id = get( trip_map, min_object );
                     // don't forget to set to 0
                     db_id_t final_trip_id = 0;
                     double wait_time;
@@ -150,7 +155,6 @@ struct HeuristicCompare
                         vis.edge_not_relaxed( current_edge, mode_id, graph );
                     }
                 }
-                vis.finish_vertex( min_object, graph );
             }
 
             vis.finish_vertex( min_object, graph ); 
