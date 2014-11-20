@@ -335,6 +335,12 @@ public:
         return vertex;
     }
 
+    Road::Vertex get_road_vertex_from_point_and_mode( const xmlNode* node, Db::Connection& db, db_id_t mode ) const {
+        std::vector<db_id_t> modes;
+        modes.push_back( mode );
+        return get_road_vertex_from_point_and_modes( node, db, modes );
+    }
+
     Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const {
         ParameterMap output_parameters;
         /*
@@ -417,9 +423,22 @@ public:
                 }
             }
 
-            Request::Step origin;
-            origin.set_location( get_road_vertex_from_point_and_modes( field, db, request.allowed_modes() ) ); 
+            bool has_walking = std::find( request.allowed_modes().begin(), request.allowed_modes().end(), TransportModeWalking ) != request.allowed_modes().end();
+            bool has_private_bike = std::find( request.allowed_modes().begin(), request.allowed_modes().end(), TransportModePrivateBicycle ) != request.allowed_modes().end();
+            bool has_private_car = std::find( request.allowed_modes().begin(), request.allowed_modes().end(), TransportModePrivateCar ) != request.allowed_modes().end();
 
+            // add walking if private car && private bike
+            if ( !has_walking && has_private_car && has_private_bike ) {
+                request.add_allowed_mode( TransportModeWalking );
+            }
+            // add walking if no other private mode is present
+            if ( !has_walking && !has_private_car && !has_private_bike ) {
+                request.add_allowed_mode( TransportModeWalking );
+            }
+
+            Request::Step origin;
+            origin.set_location( get_road_vertex_from_point_and_mode( field, db, request.allowed_modes()[0] ) );
+            
             // departure_constraint
             field = XML::get_next_nontext( field->next );
             {
@@ -453,7 +472,7 @@ public:
                 const xmlNode* subfield;
                 // destination id
                 subfield = XML::get_next_nontext( field->children );
-                step.set_location( get_road_vertex_from_point_and_modes( subfield, db, request.allowed_modes() ) );
+                step.set_location( get_road_vertex_from_point_and_mode( subfield, db, request.allowed_modes()[0] ) );
 
                 // constraint
                 subfield = XML::get_next_nontext( subfield->next );

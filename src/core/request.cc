@@ -52,7 +52,9 @@ void Request::add_intermediary_step( const Step& step )
 
 void Request::add_allowed_mode( db_id_t m )
 {
+    // add a new mode, make sure the resulting vector stay sorted
     allowed_modes_.push_back( m );
+    std::sort( allowed_modes_.begin(), allowed_modes_.end() );
 }
 
 Road::Vertex Request::origin() const
