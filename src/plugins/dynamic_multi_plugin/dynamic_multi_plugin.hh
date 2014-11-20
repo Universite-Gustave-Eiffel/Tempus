@@ -22,7 +22,7 @@
 
 #include "plugin.hh"
 #include "automaton_lib/automaton.hh"
-#include "automaton_lib/cost_calculator.hh"
+#include "cost_lib/cost_calculator.hh"
 
 namespace Tempus {
 

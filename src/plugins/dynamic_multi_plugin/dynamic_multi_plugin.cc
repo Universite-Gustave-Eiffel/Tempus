@@ -29,7 +29,7 @@
 #include "utils/associative_property_map_default_value.hh"
 
 #include "datetime.hh"
-#include "automaton_lib/cost_calculator.hh"
+#include "cost_lib/cost_calculator.hh"
 #include "automaton_lib/automaton.hh"
 #include "algorithms.hh"
 #include "reverse_multimodal_graph.hh"
