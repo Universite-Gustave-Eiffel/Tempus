@@ -33,6 +33,7 @@ from tempus_request import *
 WPS_HOST = '127.0.0.1'
 WPS_PATH = '/wps'
 
+SAMPLING_N = 10
 
 class TestPerfs(unittest.TestCase):
 
@@ -49,58 +50,82 @@ class TestPerfs(unittest.TestCase):
         self.assertIn( 'dynamic_multi_plugin', plugins, "dynamic_multi_plugin is not loaded !")
 
         print "-- SAMPLE_ROAD - Across town - Walking --"
-        tempus.request( plugin_name = 'sample_road_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
-                        origin = Point( 355564.183649, 6683945.955172 ),
-                        steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
-                        criteria = [Cost.Distance],
-                        allowed_transport_modes = [1] # walking
+        iterations = 0
+        time_s = 0.0
+        for i in range(SAMPLING_N):
+            tempus.request( plugin_name = 'sample_road_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                            origin = Point( 355564.183649, 6683945.955172 ),
+                            steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
+                            criteria = [Cost.Distance],
+                            allowed_transport_modes = [1] # walking
                         )
-        iterations = int(tempus.metrics['iterations'])
-        time_s = float(tempus.metrics['time_s'])
+            iterations += int(tempus.metrics['iterations'])
+            time_s += float(tempus.metrics['time_s'])
+
+        iterations /= SAMPLING_N
+        time_s /= SAMPLING_N
         us_per_it = time_s / iterations * 1000000.0
         print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
 
         print "-- SAMPLE_MULTI - Across town - Walking --"
-        tempus.request( plugin_name = 'sample_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
-                        origin = Point( 355564.183649, 6683945.955172 ),
-                        steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
-                        criteria = [Cost.Distance],
-                        allowed_transport_modes = [1] # walking
-                        )
-        iterations = int(tempus.metrics['iterations'])
-        time_s = float(tempus.metrics['time_s'])
+        iterations = 0
+        time_s = 0.0
+        for i in range(SAMPLING_N):
+            tempus.request( plugin_name = 'sample_multi_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                            origin = Point( 355564.183649, 6683945.955172 ),
+                            steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
+                            criteria = [Cost.Distance],
+                            allowed_transport_modes = [1] # walking
+                            )
+            iterations += int(tempus.metrics['iterations'])
+            time_s += float(tempus.metrics['time_s'])
+
+        iterations /= SAMPLING_N
+        time_s /= SAMPLING_N
         us_per_it = time_s / iterations * 1000000.0
         print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
 
         print "-- DYNAMIC_MULTI - Dijkstra - Across town - Walking --"
-        tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
-                        origin = Point( 355564.183649, 6683945.955172 ),
-                        steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
-                        criteria = [Cost.Duration],
-                        allowed_transport_modes = [1] # walking
-                        )
-        iterations = int(tempus.metrics['iterations'])
-        time_s = float(tempus.metrics['time_s'])
+        iterations = 0
+        time_s = 0.0
+        for i in range(SAMPLING_N):
+            tempus.request( plugin_name = 'dynamic_multi_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                            origin = Point( 355564.183649, 6683945.955172 ),
+                            steps = [ RequestStep(destination = Point( 354318.103927, 6694572.246133 ), private_vehicule_at_destination = False) ],
+                            criteria = [Cost.Duration],
+                            allowed_transport_modes = [1] # walking
+                            )
+            iterations += int(tempus.metrics['iterations'])
+            time_s += float(tempus.metrics['time_s'])
+
+        iterations /= SAMPLING_N
+        time_s /= SAMPLING_N
         us_per_it = time_s / iterations * 1000000.0
         print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
 
         print "-- DYNAMIC_MULTI - Dijkstra - Private car + parking --"
         # walking and private car, with a private parking on the path, but must park before reaching destination
         # car_park_search_time is artificially set to 0
-        tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "car_parking_search_time" : 0 },
-                        origin = Point( 355873.900102, 6687910.974614 ),
-                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
-                        steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = False) ],
-                        criteria = [Cost.Duration],
-                        allowed_transport_modes = [1, 3], # walking, private car
-                        parking_location = Point(355745.798990, 6688016.989327)
-                        )
-        iterations = int(tempus.metrics['iterations'])
-        time_s = float(tempus.metrics['time_s'])
+        iterations = 0
+        time_s = 0.0
+        for i in range(SAMPLING_N):
+            tempus.request( plugin_name = 'dynamic_multi_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False, "car_parking_search_time" : 0 },
+                            origin = Point( 355873.900102, 6687910.974614 ),
+                            departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                            steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = False) ],
+                            criteria = [Cost.Duration],
+                            allowed_transport_modes = [1, 3], # walking, private car
+                            parking_location = Point(355745.798990, 6688016.989327)
+                            )
+            iterations += int(tempus.metrics['iterations'])
+            time_s += float(tempus.metrics['time_s'])
+
+        iterations /= SAMPLING_N
+        time_s /= SAMPLING_N
         us_per_it = time_s / iterations * 1000000.0
         print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
 
