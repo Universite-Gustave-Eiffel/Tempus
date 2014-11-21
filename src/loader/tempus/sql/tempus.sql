@@ -369,7 +369,9 @@ CREATE TABLE tempus.pt_trip
 	id serial PRIMARY KEY, 
 	vendor_id varchar,
 	route_id integer NOT NULL REFERENCES tempus.pt_route ON DELETE CASCADE ON UPDATE CASCADE,
-	service_id integer NOT NULL REFERENCES tempus.pt_calendar ON DELETE CASCADE ON UPDATE CASCADE,
+        -- no foreign key here, because service_id may refer either pt_calendar OR pt_calendar_date
+        -- FIXME
+	service_id integer NOT NULL,
 	short_name varchar
 	-- NOTA: shape_dist_traveled (if present) is stored as M dimension into geom
 );
