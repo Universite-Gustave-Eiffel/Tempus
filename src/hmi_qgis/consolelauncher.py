@@ -104,7 +104,8 @@ class ConsoleLauncher:
 
         opts = {}
         if sys.platform == 'win32':
-            self.proc = subprocess.Popen(self.cmd, creationflags = subprocess.CREATE_NEW_PROCESS_GROUP )
+            # close_fds = True to avoid inheriting file handles
+            self.proc = subprocess.Popen(self.cmd, close_fds = True )
         else:
             # os.setid: run subprocess in a process group
             # so that we can kill it afterward
