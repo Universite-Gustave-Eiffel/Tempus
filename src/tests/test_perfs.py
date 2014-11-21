@@ -129,6 +129,47 @@ class TestPerfs(unittest.TestCase):
         us_per_it = time_s / iterations * 1000000.0
         print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
 
+        print "-- DYNAMIC_MULTI - Dijkstra - Walking + bus + tram --"
+        iterations = 0
+        time_s = 0.0
+        for i in range(SAMPLING_N):
+            tempus.request( plugin_name = 'dynamic_multi_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                            origin = Point( 353512.189791, 6688532.281363 ),
+                            departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                            steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ), private_vehicule_at_destination = False) ],
+                            criteria = [Cost.Duration],
+                            allowed_transport_modes = [1, 5, 6] # walking, bus, tram
+                            )
+            iterations += int(tempus.metrics['iterations'])
+            time_s += float(tempus.metrics['time_s'])
+
+        iterations /= SAMPLING_N
+        time_s /= SAMPLING_N
+        us_per_it = time_s / iterations * 1000000.0
+        print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
+
+        print "-- DYNAMIC_MULTI - Dijkstra - Private car + bus + tram --"
+        iterations = 0
+        time_s = 0.0
+        for i in range(SAMPLING_N):
+            tempus.request( plugin_name = 'dynamic_multi_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                            origin = Point( 353512.189791, 6688532.281363 ),
+                            departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                            steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ), private_vehicule_at_destination = False) ],
+                            criteria = [Cost.Duration],
+                            allowed_transport_modes = [1, 3, 5, 6] # walking, private car, bus, tram
+                            )
+            iterations += int(tempus.metrics['iterations'])
+            time_s += float(tempus.metrics['time_s'])
+
+        iterations /= SAMPLING_N
+        time_s /= SAMPLING_N
+        us_per_it = time_s / iterations * 1000000.0
+        print "Time: %.3fs\titerations: %d\tPer iteration: %.2fµs" % (time_s, iterations, us_per_it)
+
+
 if __name__ == '__main__':
     unittest.main()
 

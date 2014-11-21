@@ -321,6 +321,32 @@ class TestWPS(unittest.TestCase):
         self.assertEqual( isinstance(s2, TransferStep) and s2.mode == 1 and s2.final_mode == 3, True )
         self.assertEqual( isinstance(sn, TransferStep) and sn.mode == 3 and sn.final_mode == 1, True )
 
+    def test_time(self):
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 353512.189791, 6688532.281363 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ), private_vehicule_at_destination = False) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5, 6] # walking, bus, tram
+        )
+        duration1 = tempus.results[0].costs[Cost.Duration]
+
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 353512.189791, 6688532.281363 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
+                        steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ), private_vehicule_at_destination = False) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [1, 5, 6, 8] # walking, shared bike, bus, tram
+        )
+        duration2 = tempus.results[0].costs[Cost.Duration]
+        # duration2 should not be greater than duration1
+        self.assertTrue( duration1 >= duration2, "Adding a mode gives a worse result !" )
+
+
 if __name__ == '__main__':
     unittest.main()
 
