@@ -56,26 +56,26 @@ class TestTempusLoader(unittest.TestCase):
         n_road_sections = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section"))
         self.assertEqual(4027, n_road_sections)
 
-    def _test_gtfs_loading( self ):
+    def test_gtfs_loading( self ):
         # GTFS loading without road
-        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs.zip', '-d', dbstring, '-R'] )
+        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
 
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node")), 6830)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section")), 3415)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop")), 3410)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_section")), 2659)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_trip")), 41128)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop_time")), 1086613)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_route")), 65)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node")), 282)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section")), 141)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop")), 141)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_section")), 69)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_trip")), 3)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop_time")), 80)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_route")), 2)
 
-    def _test_gtfs_transfers_loading( self ):
+    def test_gtfs_transfers_loading( self ):
         # GTFS loading without road
-        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_with_transfers.zip', '-d', dbstring, '-R'] )
+        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min_with_transfers.zip', '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
 
         # number of transfers
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section WHERE road_type=5")), 5)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section WHERE road_type=5")), 4)
 
 if __name__ == '__main__':
 

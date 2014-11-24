@@ -332,10 +332,18 @@ CREATE TABLE tempus.pt_section
 COMMENT ON TABLE tempus.pt_section
   IS 'Public transport sections (between two subsequent stops) description';
 
+-- Common table for sharing id between pt_calendar and pt_calendar_date
+CREATE TABLE tempus.pt_service
+(
+        service_id bigint,
+        vendor_id varchar,
+        PRIMARY KEY (service_id)
+);
+
 -- GTFS Calendar
 CREATE TABLE tempus.pt_calendar
 (
-	service_id bigint,
+	service_id bigint NOT NULL REFERENCES tempus.pt_service ON DELETE CASCADE ON UPDATE CASCADE,
 	monday boolean NOT NULL,
 	tuesday boolean NOT NULL,
 	wednesday boolean NOT NULL,
@@ -345,7 +353,7 @@ CREATE TABLE tempus.pt_calendar
 	sunday boolean NOT NULL,
 	start_date date NOT NULL,
 	end_date date NOT NULL,
-	PRIMARY KEY (service_id)
+        PRIMARY KEY (service_id)
 );
 COMMENT ON TABLE tempus.pt_calendar
   IS 'Public transport regular services description';
@@ -353,7 +361,7 @@ COMMENT ON TABLE tempus.pt_calendar
 -- GTFS Calendar Date
 CREATE TABLE tempus.pt_calendar_date
 (
-	service_id bigint,
+	service_id bigint NOT NULL REFERENCES tempus.pt_service ON DELETE CASCADE ON UPDATE CASCADE,
 	calendar_date date NOT NULL,
 	exception_type integer NOT NULL,-- As in GTFS: 1 service has been added,
 					--             2 service has been removed

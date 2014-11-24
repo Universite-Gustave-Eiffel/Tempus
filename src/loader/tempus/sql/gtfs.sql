@@ -67,6 +67,11 @@ insert into _tempus_import.pt_service_idmap( vendor_id )
 	select service_id from _tempus_import.calendar union select service_id from _tempus_import.calendar_dates; 
 create index pt_service_idmap_vendor_idx on _tempus_import.pt_service_idmap(vendor_id);
 
+-- copy to pt_service
+-- (_tempus_import is local for this import session)
+insert into tempus.pt_service (service_id, vendor_id)
+select id, vendor_id from _tempus_import.pt_service_idmap;
+
 -- pt_fare_id_map
 drop table if exists _tempus_import.pt_fare_idmap;
 create table _tempus_import.pt_fare_idmap
