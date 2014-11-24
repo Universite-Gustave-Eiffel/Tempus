@@ -46,18 +46,17 @@ class TestTempusLoader(unittest.TestCase):
     def setUp(self):
         pass
 
-    def _test_osm_loading( self ):
+    def test_osm_loading( self ):
         r = subprocess.call( [loader, '-t', 'osm', '-s', data_path, '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
 
-        # FIXME : not stable !
         n_road_nodes = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node"))
-        self.assertEqual(3113, n_road_nodes)
+        self.assertEqual(3172, n_road_nodes)
 
         n_road_sections = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section"))
-        self.assertEqual(30838, n_road_sections)
+        self.assertEqual(4027, n_road_sections)
 
-    def test_gtfs_loading( self ):
+    def _test_gtfs_loading( self ):
         # GTFS loading without road
         r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs.zip', '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
@@ -70,7 +69,7 @@ class TestTempusLoader(unittest.TestCase):
         self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop_time")), 1086613)
         self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_route")), 65)
 
-    def test_gtfs_transfers_loading( self ):
+    def _test_gtfs_transfers_loading( self ):
         # GTFS loading without road
         r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_with_transfers.zip', '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
