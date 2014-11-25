@@ -748,7 +748,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             }
 
             ValuedEdge ve( o.vertex, d.vertex );
-            ve.set_value( "duration", potential_map_[d] - potential_map_[o] );
+            ve.set_value( "duration", potential_map_[d] );
             ve.set_value( "imode", int(o.mode) );
             ve.set_value( "fmode", int(d.mode) );
             ve.set_value( "istate", int(o.state) );
