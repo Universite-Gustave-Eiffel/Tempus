@@ -145,6 +145,9 @@ struct HeuristicCompare
                         put( trip_map, new_object, final_trip_id ); 
 
                         put( predecessor_map, new_object, min_object );
+                        // Note: we are updating the wait_map of the min_object here (not new_object)
+                        // It means it can result in a Transport2Road with a positive wait_time
+                        // (it should be ignored in that case)
                         put( wait_map, min_object, wait_time ); 
                         put( shift_map, new_object, final_shift_time ); 
 

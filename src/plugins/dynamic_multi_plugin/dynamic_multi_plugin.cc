@@ -714,7 +714,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             }
             step->set_transport_mode( it->mode );
             step->set_final_mode( next->mode );
-            step->set_cost( CostDuration, (reverse ? -1.0 : 1.0) * (potential_map_[ *next ] - potential_map_[ *it ] + wait_map_[*it]) );
+            step->set_cost( CostDuration, (reverse ? -1.0 : 1.0) * (potential_map_[ *next ] - potential_map_[ *it ]) );
         }
         total_duration += mstep->cost( CostDuration );
 
