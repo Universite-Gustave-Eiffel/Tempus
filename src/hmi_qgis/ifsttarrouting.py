@@ -744,6 +744,11 @@ class IfsttarRouting:
                 vt = QVariant.Bool
             vl.addAttribute( QgsField( n, vt ) )
 
+        features = []
+        ntrace = len(trace)
+        i = 0
+        progressDlg = QProgressDialog("Loading traces ...", "Cancel", 0, ntrace)
+        progressDlg.setWindowModality(Qt.WindowModal)
         for ve in trace:
             fet = QgsFeature()
             if ve.wkb != '':
@@ -772,7 +777,14 @@ class IfsttarRouting:
             attrs = [ type, ve.origin.id, ve.destination.id ]
             attrs += [ve.variants.get(k) for k in ve.variants.keys()]
             fet.setAttributes( attrs )
-            pr.addFeatures( [fet] )
+
+            features.append( fet )
+            progressDlg.setValue(i)
+            if progressDlg.wasCanceled():
+                break
+            i = i + 1
+
+        pr.addFeatures( features )
 
         vl.commitChanges()
         vl.updateExtents()
