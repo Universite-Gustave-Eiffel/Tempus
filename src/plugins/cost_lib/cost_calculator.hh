@@ -348,8 +348,8 @@ public:
         const Multimodal::Vertex& src = edge.source();
         const Multimodal::Vertex& tgt = edge.target();
 
-        const TransportMode& initial_mode = graph.transport_modes().find( initial_mode_id )->second;
-        const TransportMode& final_mode = graph.transport_modes().find( final_mode_id )->second;
+        const TransportMode initial_mode = graph.transport_modes().find( initial_mode_id )->second;
+        const TransportMode final_mode = graph.transport_modes().find( final_mode_id )->second;
 
         if ( initial_mode.is_public_transport() && final_mode.is_public_transport() ) {
             return 0.0;
