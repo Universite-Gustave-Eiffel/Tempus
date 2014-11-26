@@ -155,13 +155,13 @@ public:
                 Road::Edge road_e = pt_graph[ e.source().pt_vertex() ].road_edge();
 						
                 // if we are coming from the start point of the road
-                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
+                if ( target( road_e, graph.road() ) == e.target().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
                                              walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
                 }
             } 
