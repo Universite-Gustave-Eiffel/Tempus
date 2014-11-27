@@ -25,7 +25,7 @@ import re
 import unittest
 
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-wps_path = os.path.abspath( script_path + '/../python' )
+wps_path = os.path.abspath( script_path + '/../src/python' )
 sys.path.insert(0, wps_path)
 from wps_client import *
 from tempus_request import *

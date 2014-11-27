@@ -1,4 +1,4 @@
-include_directories( ../core )
+include_directories( ../src/core )
 
 add_executable( test_core tests.cc main.cc )
 target_link_libraries( test_core tempus )

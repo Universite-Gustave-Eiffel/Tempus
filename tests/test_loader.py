@@ -26,15 +26,15 @@ import argparse
 import subprocess
 
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-loader_path = os.path.abspath(script_path + '/..')
-data_path = os.path.abspath( script_path + '/../../../test_data' )
+loader_path = os.path.abspath(script_path + '/../src/loader')
+data_path = os.path.abspath( script_path + '/../test_data' )
 sys.path.insert(0, loader_path)
 
 import tempus
 from tempus.config import *
 
 loader = loader_path + "/load_tempus"
-dbstring = "dbname=tempus_test_loader"
+dbstring = "dbname=tempus_unit_test"
 
 def get_sql_output( dbstring, sql ):
     cmd = [PSQL, dbstring, '-t', '-c', sql]
@@ -44,7 +44,8 @@ def get_sql_output( dbstring, sql ):
 class TestTempusLoader(unittest.TestCase):
 
     def setUp(self):
-        pass
+        cmd = [PSQL, dbstring, '-t', '-c', "CREATE EXTENSION IF NOT EXISTS postgis;DROP SCHEMA tempus CASCADE;"]
+        subprocess.call( cmd )
 
     def test_osm_loading( self ):
         r = subprocess.call( [loader, '-t', 'osm', '-s', data_path, '-d', dbstring, '-R'] )

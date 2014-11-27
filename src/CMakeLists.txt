@@ -1,6 +1,5 @@
 
 set( BUILD_CORE ON CACHE BOOL "Build Tempus core ?" )
-set( BUILD_TESTS ON CACHE BOOL "Build unit tests ?" )
 set( BUILD_WPS ON CACHE BOOL "Build WPS server ?" )
 set( BUILD_QGIS_PLUGIN ON CACHE BOOL "Build QGIS plugin ?" )
 set( BUILD_INTRALYS_PLUGIN ON CACHE BOOL "Build Intralys plugin ?" )
@@ -9,10 +8,6 @@ set( BUILD_OSM2SHP ON CACHE BOOL "Build osm2shp ?" )
 
 if(BUILD_CORE)
   add_subdirectory( core )
-endif()
-
-if(BUILD_TESTS)
-  add_subdirectory( tests )
 endif()
 
 if(BUILD_WPS)

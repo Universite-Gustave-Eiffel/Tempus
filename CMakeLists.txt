@@ -176,6 +176,12 @@ install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
 add_subdirectory(src)
 
+set( BUILD_TESTS ON CACHE BOOL "Build unit tests ?" )
+
+if (BUILD_TESTS)
+  add_subdirectory( tests )
+endif()
+
 set( BUILD_DOC ON CACHE BOOL "Build documentation ?" )
 
 if(BUILD_DOC)
