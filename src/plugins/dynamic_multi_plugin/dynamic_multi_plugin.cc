@@ -341,12 +341,11 @@ void DynamicMultiPlugin::pre_process( Request& request )
                 s_.timetable[e][mode_id].insert( std::make_pair( departure_time, t ) );
 
                 // reverse timetable
-                rt.trip_id = res[i][2].as<int>();
-                int rmode_id = res[i][3].as<int>();
+                rt.trip_id = t.trip_id;
                 rt.arrival_time = departure_time;
 
                 s_.rtimetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
-                s_.rtimetable[e].insert( std::make_pair( rmode_id, std::map<double, TimetableData>() ));
+                s_.rtimetable[e].insert( std::make_pair( mode_id, std::map<double, TimetableData>() ));
                 s_.rtimetable[e][mode_id].insert( std::make_pair( arrival_time, rt ) );
             }
         }
@@ -617,7 +616,8 @@ Path DynamicMultiPlugin::reorder_path( Triple departure, Triple arrival, bool re
 
 std::string sec2hm( double s )
 {
-    return (boost::format("%02d:%02d:%02d") % (int(s)/60) % (int(s) % 60) % int((s-int(s)) * 60)).str();
+    double s2 = s < 0 ? -s: s;
+    return (s<0?"-":"") + (boost::format("%02d:%02d:%02d") % (int(s2)/60) % (int(s2) % 60) % int((s2-int(s2)) * 60)).str();
 }
     
 void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
@@ -629,23 +629,86 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
     std::list< Triple >::const_iterator next = it;
     next++;
 
-    double wait_time = 0.0;
-
     double start_time;
-    if ( ! reverse ) {
-        start_time = request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60;
-        roadmap.set_starting_date_time( request_.steps()[0].constraint().date_time() );
+    if (reverse) {
+        //
+        // first pass to reverse the steps and get the right times and waiting times
+
+        double wait_time = 0.0;
+        PotentialMap new_wait_map;
+        double shift = shift_map_[*it];
+        double to_shift = 0.0;
+        potential_map_[*it] = -potential_map_[*it] - shift;
+        start_time = potential_map_[*it];
+        int n_pt_edges = 0;
+        for ( ; next != path.end(); ++next, ++it ) {
+            // std::cout << it->vertex << "\tP: " << sec2hm(potential_map_[*it]) << " W: " << sec2hm(wait_map_[*it]) << " shift_map: " << sec2hm(shift_map_[*it]) << std::endl;
+            //            std::cout << next->vertex << "\t  P: " << sec2hm(potential_map_[*next]) << " W: " << sec2hm(wait_map_[*next]) << " S: " << sec2hm(shift) << " wait_time: " << wait_time << std::endl;
+
+            double h1 = potential_map_[*it];
+            double h2 = -potential_map_[*next] - shift;
+            if ( it->vertex.type() == Multimodal::Vertex::Road && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
+                if ( wait_map_[*it] > 0.0 ) {
+                    // the waiting time is stored here, but must be moved to the next PT2PT
+                    // add it to the current wait_time (from a previous PT2PT)
+                    wait_time += wait_map_[*it];
+                }
+                new_wait_map[*it] = 0.0;
+                n_pt_edges = 0;
+            }
+            else if ( it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
+                if ( n_pt_edges == 0 ) {
+                    if ( wait_time > 0.0 ) {
+                        // we have a wait_time, move potential of the current vertex
+                        h1 -= wait_time;
+                        // store it at the right place
+                        new_wait_map[*next] = wait_time;
+                        wait_time = 0.0;
+                    }
+                    if ( to_shift > 0.0 ) {
+                        // we need to advance time
+                        shift -= to_shift;
+                        h1 += to_shift;
+                        h2 += to_shift;
+                        to_shift = 0.0;
+                    }
+                }
+                if ( wait_map_[*it] > 0.0 ) {
+                    // if we also have a wait_time here, it means we will need to shift time for the next PT2PT
+                    wait_time = wait_map_[*it];
+                    to_shift = wait_time;
+                }
+
+                // store the trip_id at the right place
+                trip_map_[*next] = trip_map_[*it];
+
+                n_pt_edges++;
+            }
+            else {
+                n_pt_edges = 0;
+            }
+            potential_map_[*it] = h1;
+            potential_map_[*next] = h2;
+        }
+        it = path.begin();
+        next = it;
+        next++;
+
+        wait_map_ = new_wait_map;
     }
     else {
-        start_time = -potential_map_[*it] - shift_map_[*it];
-        std::cout << "resulting start_time: " << sec2hm(start_time) << std::endl;
+        start_time = request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60;
     }
-    std::cout << it->vertex << " P: " << sec2hm(potential_map_[*it]) << " S: " << sec2hm(shift_map_[*it]) << " W: " << sec2hm(wait_map_[*it]) << std::endl;
+
+    roadmap.set_starting_date_time( request_.steps()[0].constraint().date_time() );
+    std::cout << "resulting start_time: " << sec2hm(start_time) << std::endl;
+
+    std::cout << it->vertex << "\tP: " << sec2hm(potential_map_[*it]) << " W: " << sec2hm(wait_map_[*it]) << std::endl;
     double total_duration = 0.0;
     for ( ; next != path.end(); ++next, ++it ) {
         std::auto_ptr<Roadmap::Step> mstep;
 
-        std::cout << next->vertex << " P: " << sec2hm(potential_map_[*next]) << " S: " << sec2hm(shift_map_[*next]) << " W: " << sec2hm(wait_map_[*next]) << " wait_time: " << wait_time << std::endl;
+        std::cout << next->vertex << "\tP: " << sec2hm(potential_map_[*next]) << " W: " << sec2hm(wait_map_[*next]) << std::endl;
 
         if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::Road && next->vertex.type() == Multimodal::Vertex::Road ) {
             mstep.reset( new Roadmap::RoadStep() );
@@ -655,12 +718,12 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             boost::tie( e, found ) = edge( it->vertex.road_vertex(), next->vertex.road_vertex(), *it->vertex.road_graph() ); 
 
             if ( !found ) {
-                throw std::runtime_error( "Can't find the road edge !" );
+                throw std::runtime_error( (boost::format("Can't find the road edge ! %d %d") % it->vertex.road_vertex() % next->vertex.road_vertex()).str() );
             }
 
             step->set_road_edge( e );
             step->set_transport_mode( it->mode );
-            step->set_cost( CostDuration, (reverse ? -1.0 : 1.0) * (potential_map_[ *next ] - potential_map_[ *it ]) );
+            step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
         }
 
         else if ( it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
@@ -670,28 +733,11 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             step->set_transport_mode( it->mode );
             step->set_departure_stop( it->vertex.pt_vertex() );
             step->set_arrival_stop( next->vertex.pt_vertex() );
-            if (!reverse) {
-                step->set_departure_time( potential_map_[*it] );
-                step->set_arrival_time( potential_map_[*next] );
-                step->set_trip_id(trip_map_[ *next ]);
-                step->set_wait(wait_map_[ *it ]);
-            }
-            else {
-                double departure_time = - potential_map_[*it] - shift_map_[*it];
-                double arrival_time = - potential_map_[*next] - shift_map_[*next];
-                if ( wait_time > 0.0 ) {
-                    // wait time from a previous edge
-                    step->set_wait( wait_time );
-                    departure_time -= wait_time;
-                    wait_time = 0.0;
-                }
-                if ( wait_map_[*next] > 0.0 ) {
-                    wait_time = wait_map_[*next];
-                }
-                step->set_departure_time( departure_time );
-                step->set_arrival_time( arrival_time );
-                step->set_trip_id(trip_map_[ *it ]); 
-            }
+
+            step->set_departure_time( potential_map_[*it] );
+            step->set_arrival_time( potential_map_[*next] );
+            step->set_trip_id(trip_map_[ *next ]);
+            step->set_wait(wait_map_[ *next ]);
 				
             // find the network_id
             for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin(); nit != graph_.public_transports().end(); ++nit ) {
@@ -706,15 +752,9 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             // Make a multimodal edge and copy it into the roadmap as a 'generic' step
             mstep.reset( new Roadmap::TransferStep( Multimodal::Edge( it->vertex, next->vertex ) ) );
             Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>(mstep.get());
-            if ( step->connection_type() == Multimodal::Edge::Road2Transport ) {
-                double d = shift_map_[*it] - shift_map_[*next];
-                if ( d > 0.0 ) {
-                    wait_time += d;
-                }
-            }
             step->set_transport_mode( it->mode );
             step->set_final_mode( next->mode );
-            step->set_cost( CostDuration, (reverse ? -1.0 : 1.0) * (potential_map_[ *next ] - potential_map_[ *it ]) );
+            step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
         }
         total_duration += mstep->cost( CostDuration );
 

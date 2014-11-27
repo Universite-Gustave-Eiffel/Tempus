@@ -105,9 +105,6 @@ public:
         // default (for non-PT edges)
         final_trip_id = 0;
 
-        if ( is_graph_reversed<Graph>::value ) {
-            initial_time = - initial_time;
-        }
         final_shift_time = initial_shift_time;
         wait_time = 0.0;
 
@@ -123,10 +120,12 @@ public:
                 break;
 		
             case Multimodal::Edge::Road2Transport: {
+                double add_cost = 0.0;
                 if ( is_graph_reversed<Graph>::value ) {
                     if ( initial_trip_id != 0 ) {
                         // we are "coming" from a Transport2Transport
-                        final_shift_time += min_transfer_time_;
+                        wait_time = min_transfer_time_;
+                        add_cost = min_transfer_time_;
                     }
                 }
 
@@ -138,12 +137,12 @@ public:
                 // if we are coming from the start point of the road
                 if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
                     return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY + add_cost;
                 }
                 // otherwise, that is the opposite direction
                 else {
                     return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
-                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY + add_cost;
                 }
             }
                 break; 
@@ -173,14 +172,13 @@ public:
                 boost::tie( pt_e, found ) = public_transport_edge( e );
                 BOOST_ASSERT(found);
 						
-                // Timetable travel time calculation
-                TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
-                if ( pt_e_it != timetable_.end() ) {
-                    if ( ! is_graph_reversed<Graph>::value ) {
-                        const std::map<int, std::map<double,TimetableData> >& tt = pt_e_it->second;
+                if ( ! is_graph_reversed<Graph>::value ) {
+                    // Timetable travel time calculation
+                    TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
+                    if ( pt_e_it != timetable_.end() ) {
                         // look for timetable of the given mode
-                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = tt.find( mode_id );
-                        if ( mit == tt.end() ) { // no timetable for this mode
+                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = pt_e_it->second.find( mode_id );
+                        if ( mit == pt_e_it->second.end() ) { // no timetable for this mode
                             return std::numeric_limits<double>::max(); 
                         }
 
@@ -205,34 +203,10 @@ public:
                             return it->second.arrival_time - initial_time;
                         }
                     }
-                    else {
-                        double rinitial_time = initial_time - initial_shift_time;
-
-                        // reversed
-                        const std::map<int, std::map<double,TimetableData> >& tt = rtimetable_.find(pt_e)->second;
-                        // look for timetable of the given mode
-                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = tt.find( mode_id );
-                        if ( mit == tt.end() ) { // no timetable for this mode
-                            return std::numeric_limits<double>::max(); 
-                        }
-                        // get the time, just before initial_time (upper_bound - 1)
-                        std::map< double, TimetableData >::const_iterator it = mit->second.upper_bound( rinitial_time ) ;
-                        if ( it == mit->second.begin() ) { // nothing before this time
-                            return std::numeric_limits<double>::max(); 
-                        }
-                        it--;
-
-                        final_trip_id = it->second.trip_id; 
-                        wait_time = rinitial_time - it->first;
-                        final_shift_time += wait_time;
-                        return it->first - it->second.arrival_time;
-                    }
-                }
-                else if (frequency_.find( pt_e ) != frequency_.end() ) {
-                    if ( ! is_graph_reversed<Graph>::value ) {
-                        const std::map<int, std::map<double,FrequencyData> >& tt = frequency_.find( pt_e )->second;
-                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = tt.find( mode_id );
-                        if ( mit == tt.end() ) { // no timetable for this mode
+                    else if (frequency_.find( pt_e ) != frequency_.end() ) {
+                        FrequencyMap::const_iterator pt_re_it = frequency_.find( pt_e );
+                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = pt_re_it->second.find( mode_id );
+                        if ( mit == pt_re_it->second.end() ) { // no timetable for this mode
                             return std::numeric_limits<double>::max(); 
                         }
                         std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( initial_time );
@@ -261,18 +235,42 @@ public:
                             }
                         }
                     }
-                    else {
-                        // reverse
-                        const std::map<int, std::map<double,FrequencyData> >& tt = rfrequency_.find( pt_e )->second;
-                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = tt.find( mode_id );
-                        if ( mit == tt.end() ) { // no timetable for this mode
+                }
+                else {
+                    // reverse graph
+                    TimetableMap::const_iterator pt_e_it = rtimetable_.find( pt_e );
+                    if ( pt_e_it != rtimetable_.end() ) {
+                        double rinitial_time = -initial_time - initial_shift_time;
+
+                        // look for timetable of the given mode
+                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = pt_e_it->second.find( mode_id );
+                        if ( mit == pt_e_it->second.end() ) { // no timetable for this mode
                             return std::numeric_limits<double>::max(); 
                         }
-                        std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( initial_time );
+                        // get the time, just before initial_time (upper_bound - 1)
+                        std::map< double, TimetableData >::const_iterator it = mit->second.upper_bound( rinitial_time ) ;
+                        if ( it == mit->second.begin() ) { // nothing before this time
+                            return std::numeric_limits<double>::max(); 
+                        }
+                        it--;
+
+                        final_trip_id = it->second.trip_id; 
+                        wait_time = rinitial_time - it->first;
+                        final_shift_time += wait_time;
+                        return it->first - it->second.arrival_time;
+                    }
+                    else if ( rfrequency_.find( pt_e ) != rfrequency_.end() ) {
+                        double rinitial_time = -initial_time - initial_shift_time;
+                        FrequencyMap::const_iterator pt_re_it = rfrequency_.find( pt_e );
+                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = pt_re_it->second.find( mode_id );
+                        if ( mit == pt_re_it->second.end() ) { // no timetable for this mode
+                            return std::numeric_limits<double>::max(); 
+                        }
+                        std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( rinitial_time );
                         if (it == mit->second.end() ) { // nothing before this time
                             return std::numeric_limits<double>::max();
                         }
-                        if ( it->second.end_time >= initial_time ) {
+                        if ( it->second.end_time >= rinitial_time ) {
                             // frequency-based trips are supposed not to overlap
                             // so it means this trip is not in service anymore at initial_time
                             return std::numeric_limits<double>::max();                        
@@ -283,9 +281,9 @@ public:
                             return it->second.travel_time;
                         } 
                         // Else, no connection without transfer found
-                        it = mit->second.upper_bound( initial_time - min_transfer_time_ ); 
+                        it = mit->second.upper_bound( rinitial_time - min_transfer_time_ ); 
                         if ( it != mit->second.end() ) { 
-                            if ( it->second.end_time < initial_time - min_transfer_time_ ) {
+                            if ( it->second.end_time < rinitial_time - min_transfer_time_ ) {
                                 final_trip_id = it->second.trip_id;
                                 wait_time = it->second.headway/2;
                                 return it->second.travel_time + wait_time;
