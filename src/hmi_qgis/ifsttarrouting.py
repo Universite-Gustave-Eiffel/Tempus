@@ -578,11 +578,11 @@ class IfsttarRouting:
 
     def onTabChanged( self, tab ):
         # Plugin tab
-        if tab == 1:
-            self.update_plugin_options( 0 )
+        #if tab == 1:
+        #    self.update_plugin_options( 0 )
 
         # 'Query' tab
-        elif tab == 2:
+        if tab == 2:
                 # prepare for a new query
 #            self.dlg.reset()
             self.dlg.inQuery()
