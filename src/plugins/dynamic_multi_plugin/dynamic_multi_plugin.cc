@@ -205,7 +205,7 @@ void DynamicMultiPlugin::post_build()
     std::ofstream ofs("all_movements_edge_automaton.dot"); // output to graphviz
     Automaton<Road::Edge>::NodeWriter nodeWriter( s_.automaton.automaton_graph_ );
     Automaton<Road::Edge>::ArcWriter arcWriter( s_.automaton.automaton_graph_, road_graph );
-    boost::write_graphviz( ofs, s_.automaton.automaton_graph_, nodeWriter, arcWriter);
+    //    boost::write_graphviz( ofs, s_.automaton.automaton_graph_, nodeWriter, arcWriter);
     std::cout << "Automaton exported to graphviz" << std::endl; 
 }
     
