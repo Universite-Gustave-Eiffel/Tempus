@@ -21,6 +21,7 @@
 #define AUTOMATION_LIB_COST_CALCULATOR_HH
 
 #include "reverse_multimodal_graph.hh"
+#include "speed_profile.hh"
 
 namespace Tempus {
 
@@ -34,13 +35,10 @@ namespace Tempus {
 #define POI_STATION_PENALTY 0.1
 
 template <class RoadGraph>
-double road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, double length, const TransportMode& mode,
+double avg_road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, double length, const TransportMode& mode,
                          double walking_speed = DEFAULT_WALKING_SPEED, double cycling_speed = DEFAULT_CYCLING_SPEED )
 {
-    if ( (road_graph[ road_e ].traffic_rules() & mode.traffic_rules()) == 0 ) { // Not allowed mode 
-        return std::numeric_limits<double>::infinity() ;
-    }
-    else if ( mode.speed_rule() == SpeedRuleCar ) {
+    if ( mode.speed_rule() == SpeedRuleCar ) {
         // FIXME, we take the speed limit for now,
         // but should take the speed profile
         return length / (road_graph[ road_e ].car_speed_limit() * 1000) * 60 ;
@@ -55,6 +53,33 @@ double road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, 
     else {
         return std::numeric_limits<double>::max() ;
     }
+}
+
+
+template <class RoadGraph>
+double road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, double length, double time, const TransportMode& mode,
+                         double walking_speed = DEFAULT_WALKING_SPEED, double cycling_speed = DEFAULT_CYCLING_SPEED, const RoadEdgeSpeedProfile* profile = 0 )
+{
+    if ( (road_graph[ road_e ].traffic_rules() & mode.traffic_rules()) == 0 ) { // Not allowed mode 
+        return std::numeric_limits<double>::infinity() ;
+    }
+    if (profile) {
+        RoadEdgeSpeedProfile::PeriodIterator it, it_end;
+        boost::tie(it, it_end) = profile->periods_after( road_graph[road_e].db_id(), mode.speed_rule(), time );
+        if ( it != it_end ) {
+            double t_end, t_begin, speed = 50000.0/60.0;
+            t_begin = time;
+            while ( (it != it_end) && (length > 0) ) {
+                speed = it->second.speed * 1000.0 / 60.0; // km/h -> m/min
+                t_end = it->first + it->second.length;
+                length -= speed * (t_end - t_begin);
+                t_begin = t_end;
+                it++;
+            }
+            return t_begin + (length / speed) - time;
+        }
+    }
+    return avg_road_travel_time( road_graph, road_e, length, mode, walking_speed, cycling_speed );
 }
 
 // Turning movement penalty function
@@ -91,12 +116,14 @@ public:
     CostCalculator( const TimetableMap& timetable, const TimetableMap& rtimetable, const FrequencyMap& frequency, const FrequencyMap& rfrequency,
                     const std::vector<db_id_t>& allowed_transport_modes, std::map<Multimodal::Vertex, db_id_t>& vehicle_nodes, 
                     double walking_speed, double cycling_speed, 
-                    double min_transfer_time, double car_parking_search_time, boost::optional<Road::Vertex> private_parking ) : 
+                    double min_transfer_time, double car_parking_search_time, boost::optional<Road::Vertex> private_parking,
+                    const RoadEdgeSpeedProfile* profile = 0 ) : 
         timetable_( timetable ), rtimetable_( rtimetable ), frequency_( frequency ), rfrequency_(rfrequency),
         allowed_transport_modes_( allowed_transport_modes ), vehicle_nodes_( vehicle_nodes ), 
         walking_speed_( walking_speed ), cycling_speed_( cycling_speed ), 
         min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time ),
-        private_parking_( private_parking ) { }; 
+        private_parking_( private_parking ),
+        speed_profile_( profile ) { }; 
 		
     // Multimodal travel time function
     template <class Graph>
@@ -113,8 +140,8 @@ public:
         {
             switch ( e.connection_type() ) {  
             case Multimodal::Edge::Road2Road: {
-                double c = road_travel_time( graph.road(), e.road_edge(), graph.road()[ e.road_edge() ].length(), mode,
-                                         walking_speed_, cycling_speed_ ); 
+                double c = road_travel_time( graph.road(), e.road_edge(), graph.road()[ e.road_edge() ].length(), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ); 
                 return c;
             }
                 break;
@@ -136,13 +163,13 @@ public:
 						
                 // if we are coming from the start point of the road
                 if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY + add_cost;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY + add_cost;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
-                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY + add_cost;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY + add_cost;
                 }
             }
                 break; 
@@ -155,13 +182,13 @@ public:
 						
                 // if we are coming from the start point of the road
                 if ( target( road_e, graph.road() ) == e.target().road_vertex() ) {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
-                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) + PT_STATION_PENALTY;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY;
                 }
             } 
                 break;
@@ -300,13 +327,13 @@ public:
 
                 // if we are coming from the start point of the road
                 if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
-                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
                 }
             }
                 break;
@@ -316,13 +343,13 @@ public:
 
                 // if we are coming from the start point of the road
                 if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, mode,
-                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
                 }
                 // otherwise, that is the opposite direction
                 else {
-                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), mode,
-                                             walking_speed_, cycling_speed_ ) + POI_STATION_PENALTY;
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
                 }
             }
                 break;
@@ -428,6 +455,7 @@ protected:
     double min_transfer_time_; 
     double car_parking_search_time_; 
     boost::optional<Road::Vertex> private_parking_;
+    const RoadEdgeSpeedProfile* speed_profile_;
 }; 
 
 }

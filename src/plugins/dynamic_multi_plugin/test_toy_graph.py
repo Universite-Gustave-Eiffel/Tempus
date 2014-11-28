@@ -92,6 +92,80 @@ class TestWPS(unittest.TestCase):
         # FIXME why a difference of 1s ??
         self.assertTrue( (arrival1 - arrival2) ** 2 <= 1 )
 
+    def test_speed_profiles(self):
+        tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
+
+        do_throw = False
+        try:
+            # test error: use profiles, but no time constraint
+            tempus.request( plugin_name = 'dynamic_multi_plugin',
+                            plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : True },
+                            origin = Point( 350840.407710, 6688979.242950 ),
+                            steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ), private_vehicule_at_destination = True) ],
+                            criteria = [Cost.Duration],
+                            allowed_transport_modes = [3] # private car
+                        )
+        except RuntimeError as e:
+            do_throw = True
+        self.assertTrue( do_throw )
+
+        def get_duration( result ):
+            dt = result.starting_date_time
+            start1 = dt.hour * 3600 + dt.minute * 60 + dt.second
+            arrival1 = start1
+            for s in result.steps:
+                arrival1 += s.costs[Cost.Duration]*60
+            duration1 = (arrival1 - start1) / 60.0
+            return duration1
+
+        # without speed profiles
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        origin = Point( 350840.407710, 6688979.242950 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,24), type = 2 ), # after
+                        steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [3] # private car
+        )
+        d1 = get_duration( tempus.results[0] )
+        self.assertTrue( (d1 - 20.7) ** 2 < 0.1)
+
+        # with speed profiles, at 7 am
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : True },
+                        origin = Point( 350840.407710, 6688979.242950 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,7,0), type = 2 ), # after @ 7:00
+                        steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [3] # private car
+        )
+        d2 = get_duration( tempus.results[0] )
+        self.assertTrue( (d2 - 34.8) ** 2 < 0.1 )
+
+        # with speed profiles, at 12:05 am
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : True },
+                        origin = Point( 350840.407710, 6688979.242950 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,12,5), type = 2 ), # after @ 7:00
+                        steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [3] # private car
+        )
+        d3 = get_duration( tempus.results[0] )
+        self.assertTrue( (d3 - 35.1) ** 2 < 0.1 )
+
+        # check that if we set back to no profiles
+        tempus.request( plugin_name = 'dynamic_multi_plugin',
+                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : False },
+                        origin = Point( 350840.407710, 6688979.242950 ),
+                        departure_constraint = Constraint( date_time = DateTime(2014,6,18,12,5), type = 2 ), # after @ 7:00
+                        steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ), private_vehicule_at_destination = True) ],
+                        criteria = [Cost.Duration],
+                        allowed_transport_modes = [3] # private car
+        )
+        d4 = get_duration( tempus.results[0] )
+        self.assertTrue( (d4 - 20.7) ** 2 < 0.1 )
+
 if __name__ == '__main__':
     unittest.main()
 

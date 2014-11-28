@@ -1,5 +1,7 @@
 include_directories(../core)
 
+add_library( cost_lib SHARED cost_lib/speed_profile.cc )
+
 add_library( sample_multi_plugin MODULE sample_multi_plugin/sample_multi_plugin.cc )
 target_link_libraries( sample_multi_plugin tempus )
 
@@ -12,7 +14,7 @@ target_link_libraries( sample_pt_plugin tempus )
 include_directories(.)
 
 add_library( dynamic_multi_plugin MODULE dynamic_multi_plugin/dynamic_multi_plugin.cc )
-target_link_libraries( dynamic_multi_plugin tempus )
+target_link_libraries( dynamic_multi_plugin tempus cost_lib )
 
 if (WIN32)
 install( TARGETS 

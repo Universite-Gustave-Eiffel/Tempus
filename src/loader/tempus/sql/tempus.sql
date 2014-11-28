@@ -68,7 +68,7 @@ CREATE TABLE tempus.road_validity_period
     end_date date
 ); 
 COMMENT ON TABLE tempus.road_validity_period IS 'Periods during which road restrictions and speed profiles apply';
-INSERT INTO tempus.road_validity_period VALUES (0, 'Always', true, true, true, true, true, true, true, true, true, true, true, NULL, NULL); 
+INSERT INTO tempus.road_validity_period VALUES (0, 'Always', true, true, true, true, true, true, true, true, true, true, true, NULL, NULL);
 
 /*
 CREATE TABLE tempus.seasonal_ticket
@@ -175,18 +175,30 @@ COMMENT ON COLUMN tempus.road_section.length IS 'In meters';
 COMMENT ON COLUMN tempus.road_section.car_speed_limit IS 'In km/h'; 
 COMMENT ON COLUMN tempus.road_section.ramp IS 'Or sliproad'; 
 
+CREATE TABLE tempus.road_daily_profile
+(
+    profile_id integer NOT NULL,
+    begin_time integer NOT NULL,
+    speed_rule integer NOT NULL,
+    end_time  integer NOt NULL,
+    average_speed double precision NOT NULL, -- In km/h
+    PRIMARY KEY (profile_id, speed_rule, begin_time)
+);
+COMMENT ON COLUMN tempus.road_daily_profile.begin_time IS 'When the period begins. Number of minutes since midnight'; 
+COMMENT ON COLUMN tempus.road_daily_profile.end_time IS 'When the period ends. Number of minutes since midnight'; 
+COMMENT ON COLUMN tempus.road_daily_profile.speed_rule IS 'Speed rule: car, truck, bike, etc.'; 
+COMMENT ON COLUMN tempus.road_daily_profile.average_speed IS 'Speed value in km/h'; 
 
 CREATE TABLE tempus.road_section_speed
 (
     road_section_id bigint NOT NULL REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE, 
     period_id integer NOT NULL REFERENCES tempus.road_validity_period ON DELETE CASCADE ON UPDATE CASCADE, 
-    speed_rule integer NOT NULL, 
-    speed_value double precision NOT NULL, -- In km/h
-    PRIMARY KEY (road_section_id, period_id, speed_rule)
+    profile_id integer NOT NULL, -- road_daily_profile
+    PRIMARY KEY (road_section_id, period_id, profile_id)
 ); 
 COMMENT ON TABLE tempus.road_section_speed IS 'Speed, vehicle types and validity period associated to road sections';
 COMMENT ON COLUMN tempus.road_section_speed.period_id IS '0 if always applies'; 
-COMMENT ON COLUMN tempus.road_section_speed.speed_value IS 'Speed value in km/h'; 
+COMMENT ON COLUMN tempus.road_section_speed.profile_id IS 'Reference to tempus.road_daily_profile'; 
 
 
 CREATE TABLE tempus.road_restriction
