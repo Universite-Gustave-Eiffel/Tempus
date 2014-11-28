@@ -11,5 +11,6 @@ TempusV2 is a C++ framework which offers generic graph manipulation abilities in
 
 TempusV2 is distributed under the terms of the GNU LGPLv2+
 
-[Documentation](Documention.md)
+[Documentation](Documentation.md)
+
 [Installation](Installation.md)
