@@ -98,6 +98,7 @@ class StepSelector( QFrame ):
 
         if name != 'Origin':
             self.pvadCheck = QCheckBox( "Private vehicule at destination" )
+            self.pvadCheck.setCheckState( Qt.Checked )
             self.layout.addWidget( self.pvadCheck )
 
     def on_update_constraint( self, idx ):
@@ -175,7 +176,7 @@ class StepSelector( QFrame ):
 
     def get_pvad( self ):
         if self.pvadCheck is None:
-            return False
+            return True
         return self.pvadCheck.checkState() == Qt.Checked
 
     def set_pvad( self, check ):
