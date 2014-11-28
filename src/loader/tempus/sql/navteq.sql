@@ -1,23 +1,25 @@
 -- Tempus - Navteq SQL import Wrapper
 
 -- Handle direction type
-CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, boolean)
+CREATE OR REPLACE FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, character varying, boolean)
 RETURNS integer AS $$
 
-DECLARE 
-	tt integer;
+DECLARE
+        tt integer;
 BEGIN
         tt :=0;
         IF $1 = 'Y' THEN tt := 4; END IF; -- cars
-        IF $2 = 'Y' THEN tt := tt + 2 + 1 ; END IF; -- pedestrians and bicycles
-        IF $3 = 'Y' THEN tt := tt + 8; END IF; -- taxis
+        IF $2 = 'Y' THEN tt := tt + 2 ; END IF; -- bicycles
+        IF ($3 = 'Y' AND $2 = 'N') THEN tt := tt + 2 + 1 ; -- pedestrians and bicycles
+        ELSIF ($3 = 'Y' AND $2 = 'Y') THEN tt := tt + 1 ; END IF ; -- pedestrians only (bicycles already inserted for $2 = 'Y')
+        IF $4 = 'Y' THEN tt := tt + 8; END IF; -- taxis
 
-        IF    (($4 IS NULL) OR ($4='B') OR ($4 = 'F' AND $5) OR ($4 = 'T' AND NOT $5)) THEN RETURN tt;
-        ELSIF (($4='T' AND $5 AND tt & 1 >0) OR ($4 = 'F' AND NOT $5 AND tt & 1 >0)) THEN RETURN 1; -- pedestrians are allowed to go back a one-way street
+        IF    (($5 IS NULL) OR ($5='B') OR ($5 = 'F' AND $6) OR ($5= 'T' AND NOT $6)) THEN RETURN tt;
+        ELSIF (($5='T' AND $6 AND tt & 1 >0) OR ($5 = 'F' AND NOT $6 AND tt & 1 >0)) THEN RETURN 1; -- pedestrians are allowed to go back a one-way street
         ELSE RETURN 0;
-	END IF;
+        END IF;
 
-	RETURN NULL;
+        RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -77,8 +79,8 @@ SELECT
 	ref_in_id AS node_from,
 	nref_in_id AS node_to,
 
-        _tempus_import.navteq_transport_direction(ar_auto, ar_pedest, ar_taxis, dir_travel::character varying, true) AS transport_type_ft,
-        _tempus_import.navteq_transport_direction(ar_auto, ar_pedest, ar_taxis, dir_travel::character varying, false) AS transport_type_tf,
+        _tempus_import.navteq_transport_direction(ar_auto, ar_bus, ar_pedest, ar_taxis, dir_travel::character varying, true) AS transport_type_ft,
+        _tempus_import.navteq_transport_direction(ar_auto, ar_bus, ar_pedest, ar_taxis, dir_travel::character varying, false) AS transport_type_tf,
 
 	ST_Length(geom) AS length,
 	fr_spd_lim AS car_speed_limit,
@@ -114,9 +116,10 @@ ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
 	FOREIGN KEY (node_to) REFERENCES tempus.road_node; 
 
 ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
+        FOREIGN KEY (road_section_id) REFERENCES tempus.road_section
+        ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
+        FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
 
@@ -194,7 +197,7 @@ GROUP BY mcond_id
 ;
 
 --
--- TABLE tempus.road_restriction_cost 
+-- TABLE tempus.road_restriction_time_penalty
 INSERT INTO tempus.road_restriction_time_penalty
 SELECT
         cond_id::bigint as restriction_id,
@@ -209,19 +212,22 @@ FROM
 	_tempus_import.cdms as cdms
 WHERE
         cond_type = 7
-        ORDER BY traffic_rules DESC;
+        AND (ar_pedstrn = 'Y' OR ar_bus = 'Y' or ar_auto = 'Y' or ar_taxis = 'Y');
 
 INSERT INTO tempus.road_restriction_toll
 SELECT
         cond_id::bigint as restriction_id,
         0 as period_id, 
-        case when ar_auto = 'Y' or ar_taxis = 'Y' then 1 else 0 end
-	as toll_rules,
+        case when ar_pedstrn = 'Y' then 1 else 0 end
+        + case when ar_auto = 'Y' then 4 else 0 end
+        + case when ar_taxis = 'Y' then 8 else 0 end
+        as toll_rules,
         NULL AS toll_value
 FROM
 	_tempus_import.cdms as cdms
 WHERE
-        cond_type = 1; 
+        cond_type = 1
+        AND (ar_pedstrn = 'Y' or ar_auto = 'Y' or ar_taxis = 'Y');
 
 -- Updates the road traffic direction with table cdms (cond_type = 5)
 UPDATE tempus.road_section
@@ -238,7 +244,20 @@ SET traffic_rules_ft = traffic_rules_ft
 FROM _tempus_import.cdms as cdms
 WHERE cdms.cond_type = 5 AND cdms.link_id = road_section.id; 
 
--- Delete road sections without traffic rules
+-- TABLE tempus.poi : insert car parks
+INSERT INTO tempus.poi(id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section, geom)
+SELECT poi_id as id,
+        1 as poi_type,
+        poi_name as name,
+        array[3] as parking_transport_modes,
+        link_id as road_section_id,
+        st_LineLocatePoint(road_section.geom, ST_Transform(parking.geom,2154))::double precision as abscissa_road_section,
+        st_force3DZ(st_setsrid(st_transform(parking.geom, 2154), 2154))
+FROM _tempus_import.parking, tempus.road_section
+WHERE road_section.id = parking.link_id;
+
+
+-- Deleting road sections with no traffic rules allowed
 DELETE FROM tempus.road_section
 WHERE traffic_rules_ft=0 AND traffic_rules_tf=0;
 
@@ -290,7 +309,5 @@ DELETE FROM tempus.road_restriction WHERE id IN
 	WHERE node_from is null
 ); 
 
-
-
 -- Removing import function (direction type)
-DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, boolean);
+DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, character varying, boolean);
