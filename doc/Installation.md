@@ -62,7 +62,7 @@ On Windows
 
 A Windows installer is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.
 
-![Image](images/windows_install_animation.gif?raw=true
+![Image](images/windows_install_animation.gif?raw=true)
 
 ([Source images](images/windows_install_steps.zip?raw=true) of the animation)
 
