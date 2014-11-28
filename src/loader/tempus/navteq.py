@@ -32,7 +32,7 @@ from importer import ShpImporter
 class NavstreetsImporter(ShpImporter):
     """This class enables to load Navteq Navstreets data into a PostGIS database."""
     # Shapefile names to load, without the extension and prefix. It will be the table name.
-    SHAPEFILES = ['streets', 'cdms', 'rdms', 'altstreets']
+    SHAPEFILES = ['streets', 'altstreets', 'parking', 'cdms', 'rdms']
     # SQL files to execute before loading shapefiles
     PRELOADSQL = ["reset_import_schema.sql"]
     # SQL files to execute after loading shapefiles 
