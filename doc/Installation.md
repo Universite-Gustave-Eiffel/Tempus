@@ -36,6 +36,7 @@ n the root directory, create a build directory and enter it. Then use a CMake co
 ```
 ccmake ..
 ```
+Set the compilation options as needed (see below). Then, launch the compilation by `make`.
 
 You can launch `make install` (usually as root, with 'sudo' under Ubuntu) to install everything.
 
@@ -49,13 +50,16 @@ Build options (CMake options)
 | Option name          | Default      | Description                                                           |
 |----------------------|--------------|-----------------------------------------------------------------------|
 |CMAKE_INSTALL_PREFIX  | /usr/local   | Specifies where Tempus will be installed when make install is invoked |
-|CMAKE_BUILD_TYPE      |              | Switches between a Release build, specially crafted for speedefficiency and a Debug build, specifically crafted for development. |
+|CMAKE_BUILD_TYPE      |              | Switches between a Release build, specially crafted for speed efficiency and a Debug build, specifically crafted for development. |
 |BUILD_CORE            | ON           | Whether to build the core or not (needed) |
 |BUILD_INTRALYS_PLUGIN | ON           | Whether to build the Intralys QGIS plugin |
 |BUILD_QGIS_PLUGIN     | ON           | Whether to build the routing QGIS plugin or not |
 |BUILD_TEMPUS_PLUGINS  | ON           | Whether to build the sample routing plugins or not |
 |BUILD_TESTS           | ON           | Set to ON to compile unit tests |
 |BUILD_WPS             | ON           | Set to ON to compile the WPS server. |
+
+Note: Tempus uses a lot of C++ templates. It means a 'Debug' build will turn off any optimization (`-O0` for gcc) and will run very slowly compared to a version compiled in 'Release' or
+'RelWithDebInfo' mode, where optimizations (`-O2` or `-O3`) occur. Optimized versions can be something like *20x faster* than the debug versions !
 
 On Windows
 ----------
@@ -160,13 +164,14 @@ Test project /home/hme/src/TempusV2/build
 Total Test time (real) =   8.15 sec
 ```
 
-In order to test the WPS and Python parts, you can run the Python script `test_wps.py` (a WPS with all the sample plugins loaded must be available on 127.0.0.1/wps). Example of output:
+Other unit tests are provided. They are used to test the WPS and Python parts, the loader and plugins.
+A WPS server must be running with all sample plugins loaded on 127.0.0.1/wps in order to launch them.
+In order to test the WPS and Python parts, you can run the Python script `test_wps.py` (a WPS with all the sample plugins loaded must be available on 127.0.0.1/wps).
 
-```
-~/src/TempusV2/src/tests$ python test_wps.py 
-........
-----------------------------------------------------------------------
-Ran 8 tests in 3.497s
+Provided tests are :
 
-OK
-```
+* `test_wps.py` : tests communication with a WPS server
+* `test_loader.py` : tests the loader script. *Note:* must have access to a database named `tempus_unit_test`
+* `test_plugins.py` : launch unit tests for plugins that have such tests.
+* `test_perfs.py` : outputs some computation timing, in order to test performances.
+
