@@ -93,7 +93,7 @@ public:
         const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
         db_id_t network_id = graph_.public_transports().begin()->first;
 
-        PublicTransport::Vertex departure, arrival;
+        PublicTransport::Vertex departure = 0, arrival = 0;
 
         // if stops are given by the corresponding options, get them
         int departure_id, arrival_id;

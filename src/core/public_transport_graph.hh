@@ -126,7 +126,7 @@ public:
 /// used as an Edge in a PublicTransportGraph
 struct Section {
 public:
-    Section() : graph_(0) {}
+    Section() : graph_(0), network_id_(0) {}
 
     /// Shortcut to the public transport graph where this edge belongs
     /// Can be null

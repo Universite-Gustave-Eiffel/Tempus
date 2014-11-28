@@ -608,7 +608,7 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
         for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t restr_id;
             int transports;
-            double cost;
+            double cost = 0.0;
 
             res[i][0] >> restr_id;
             res[i][1] >> transports;
