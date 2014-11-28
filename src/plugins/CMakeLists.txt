@@ -1,6 +1,10 @@
 include_directories(../core)
 
-add_library( cost_lib SHARED cost_lib/speed_profile.cc )
+if (WIN32)
+  add_library( cost_lib STATIC cost_lib/speed_profile.hh cost_lib/speed_profile.cc )
+else()
+  add_library( cost_lib SHARED cost_lib/speed_profile.cc )
+endif()
 
 add_library( sample_multi_plugin MODULE sample_multi_plugin/sample_multi_plugin.cc )
 target_link_libraries( sample_multi_plugin tempus )
