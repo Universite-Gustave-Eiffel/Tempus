@@ -18,7 +18,7 @@ OSM2SHP
 The Tempus loader for OSM data has been originally designed to work with OSM shapefiles exports from CloudMade.
 Unfortunately this shapefile provider no longer delivers shapefile extracts.
 
-The small 'osm2shp' utility then allows to convert a native OSM file to a shapefile readable by the Tempus loader.
+The small 'osm2shp' utility then allows to convert a native OSM file to a shapefile readable by the Tempus loader (can be found in `build/bin`).
 
 OSM native file formats are:
 * .osm, xml based file format
