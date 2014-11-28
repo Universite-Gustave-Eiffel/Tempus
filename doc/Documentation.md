@@ -43,7 +43,7 @@ WPS Server
 
 A WPS server is part of Tempus. It will load the user plugins as well as road and public transport data found in a given PostgreSQL/PostGIS database and allows a user to request path planning through a web server.
 
-The WPS server uderstands XML requests. Those can be written directly, using a python script or using QGIS via the provided plugin.
+The WPS server understands XML requests. Those can be written directly, using a python script or using QGIS via the provided plugin.
 
 Python generated requests
 -------------------------
@@ -72,6 +72,13 @@ A client for QGIS is shipped with Tempus. It can be installed as a QGIS Python p
 It first requires a WPS server to connect to.
 
 ![Image](images/qgis_1.png?raw=true)
+
+The upper part of the tab is used to connect to an existing WPS server.
+
+For test purposes, a WPS server can be launched manually from a console (see the [installation](Installation.md) section).
+For convenience, the lower part of the tab allows to directly launch a WPS server with a GUI for options. The server will be launched in a new window when clicking on '(Re)Start'.
+
+![Image](images/wps_launch.png?raw=true)
 
 Once connected, the user has to select the plugin to use and the corresponding options.
 
