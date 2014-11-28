@@ -69,6 +69,6 @@ Example
 
 Some examples of loading public data (OSM and OpenData) on some cities are given in xxx_data.txt.
 There are currently examples for:
-- [Nantes](nantes_data.txt)
-- [Bordeaux](bordeaux_data.txt)
+- [Nantes](nantes_data.md)
+- [Bordeaux](bordeaux_data.md)
 
