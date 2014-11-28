@@ -138,17 +138,10 @@ BOOST_AUTO_TEST_CASE( testConsistency )
         n_road_edges = res[0][0].as<long>();
     }
     {
-        // get the number of edges with distinct (node_from, node_to), excluding cycles (first column)
-        // and number of oriented edges (second column)
-        Db::Result res( importer->query( "with subset as "
-                                         "(select distinct on (node_from, node_to) * from tempus.road_section "
-                                         "where node_from != node_to) "
-                                         "select (select count(*) from subset), "
-                                         "count(*) from subset as s1 left join subset as s2 "
-                                         "on s1.node_from = s2.node_to and s1.node_to = s2.node_from where s2.id is not null" ) );
+        // get the number of simple edges
+        Db::Result res( importer->query( "select count(*) from tempus.road_section where traffic_rules_ft <> traffic_rules_tf" ) );
         BOOST_CHECK_EQUAL( res.size(), 1 );
-        n_road_edges = res[0][0].as<long>();
-        n_road_oriented_edges = res[0][1].as<long>();
+        n_road_oriented_edges = res[0][0].as<long>();
     }
     std::cout << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges;
     std::cout << " n_road_oriented_edges = " << n_road_oriented_edges << std::endl;
@@ -664,11 +657,11 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
     importer->import_constants( *graph, progression );
 
     // restriction nodes
-    db_id_t expected_nodes[][4] = { { 22814, 22783, 22512, 0 },
-                                    { 21906, 21934, 21993, 21987 },
+    db_id_t expected_nodes[][4] = { { 15097, 15073, 14849, 0 },
+                                    { 14360, 14371, 14423, 14415 },
                                     // forbidden u-turn :
-                                    { 21934, 21906, 21934, 0 },
-                                    { 21906, 21934, 21906, 0 }
+                                    { 14360, 14371, 14360, 0 },
+                                    { 14371, 14360, 14371, 0 }
     };
     Road::Restrictions restrictions( importer->import_turn_restrictions( graph->road() ) );
 

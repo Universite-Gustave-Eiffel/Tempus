@@ -56,6 +56,6 @@ class POIImporter(ShpImporter):
             raise StandardError("The given source file does not exist")
 
     def get_shapefiles(self):
-        self.shapefiles = [self.source]
+        self.shapefiles = [("poi", self.source)]
         return
     

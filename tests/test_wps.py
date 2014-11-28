@@ -209,7 +209,7 @@ class TestWPS(unittest.TestCase):
         tempus.request( plugin_name = 'sample_multi_plugin',
                         origin = Point( ox, oy ),
                         steps = [ RequestStep(destination = Point(dx, dy)) ] )
-        self.assertEqual( len(tempus.results[0].steps), 7 )
+        self.assertEqual( len(tempus.results[0].steps), 8 )
 
     def test_pt_plugin( self ):
 
