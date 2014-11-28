@@ -16,6 +16,14 @@ The Tempus SQL schema can be found [here](../src/loader/tempus/sql/tempus.sql)
 
 Path planning algorithms are designed to be written as user plugins. The [Plugin base class](../src/core/plugin.hh) gives access to some callbacks. Please have a look at the three different sample plugins shipped with TempusV2: [Tempus::RoadPlugin](../src/plugins/sample_road_plugin), [Tempus::PtPlugin](../src/plugins/sample_pt_plugin) and [Tempus::MultiPlugin](../src/plugins/sample_multi_plugin/).
 
+For a more advanced plugin, have a look at the [dynamic_multi_plugin](../src/plugins/dynamic_multi_plugin) that is able to find realistic multimodal trips with 
+
+* public transport networks
+* shared bikes and cars
+* complex turn restrictions
+* speed profiles
+* 'arrive before' requests, using a [reverse graph adaptor](../src/core/reverse_multimodal_graph.hh)
+
 User plugins respond to path planning requests stored in the [Request](../src/core/request.hh) class and should return one or more [roadmaps](../src/core/roadmap.hh).
 
 The internal API is exposed to other programs and languages through a WPS server.
