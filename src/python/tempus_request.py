@@ -480,7 +480,6 @@ class TempusRequest:
     def request( self, plugin_name = 'sample_road_plugin',
                  plugin_options = {},
                  origin = Point(),
-                 departure_constraint = Constraint(),
                  steps = [RequestStep()],
                  allowed_transport_modes = [1], # at least pedestrian
                  criteria = [Cost.Distance, Cost.Duration], # list of optimizing criteria
@@ -492,7 +491,6 @@ class TempusRequest:
         args['plugin'] = ['plugin', {'name' : plugin_name } ]
         args['request'] = ['request',
                            origin.to_pson( 'origin' ),
-                           ['departure_constraint', { 'type': departure_constraint.type, 'date_time': str(departure_constraint.date_time) } ]
                            ]
 
         # parking location

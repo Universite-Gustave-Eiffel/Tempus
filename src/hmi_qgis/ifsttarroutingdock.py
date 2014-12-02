@@ -299,7 +299,7 @@ class IfsttarRoutingDock(QDockWidget):
             n += 1
 
     def get_constraints( self ):
-        c = [ [self.ui.origin.get_constraint_type(), self.ui.origin.get_constraint()] ]
+        c = []
         n = self.nsteps()
         for i in range(0, n):
             t = self.ui.stepBox.itemAt( i ).widget().get_constraint_type()
@@ -308,8 +308,6 @@ class IfsttarRoutingDock(QDockWidget):
         return c
 
     def set_constraints( self, constraints ):
-        self.ui.origin.set_constraint_type( constraints[0][0] )
-        self.ui.origin.set_constraint( constraints[0][1] )
         i = 0
         for constraint in constraints[1:]:
             self.ui.stepBox.itemAt( i ).widget().set_constraint_type( constraint[0] )

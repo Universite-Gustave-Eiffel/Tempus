@@ -1131,14 +1131,12 @@ class IfsttarRouting:
         [ox, oy] = coords[0]
         criteria = self.dlg.get_selected_criteria()
         constraints = self.dlg.get_constraints()
-        has_constraint = False
+        has_constraint = sum([ x for x,_ in constraints ]) > 0
         for i in range(len(constraints)-1):
             ci, ti = constraints[i]
             cj, tj = constraints[i+1]
             dti = datetime.strptime(ti, "%Y-%m-%dT%H:%M:%S")
             dtj = datetime.strptime(tj, "%Y-%m-%dT%H:%M:%S")
-            if ci != 0 or cj != 0:
-                has_constraint = True
             if ci == 2 and cj == 1 and dtj < dti:
                 QMessageBox.warning( self.dlg, "Warning", "Impossible constraint : " + tj + " < " + ti )
                 return
@@ -1165,9 +1163,9 @@ class IfsttarRouting:
         currentPlugin = str(self.dlg.ui.pluginCombo.currentText())
 
         steps = []
-        for i in range(1, len(constraints)):
-            steps.append( Tempus.RequestStep( private_vehicule_at_destination = pvads[i-1],
-                                destination = Tempus.Point( coords[i][0], coords[i][1] ),
+        for i in range(0, len(constraints)):
+            steps.append( Tempus.RequestStep( private_vehicule_at_destination = pvads[i],
+                                              destination = Tempus.Point( coords[i+1][0], coords[i+1][1] ),
                                 constraint = Tempus.Constraint( type = constraints[i][0], date_time = constraints[i][1] )
                                 )
                           )
@@ -1176,8 +1174,6 @@ class IfsttarRouting:
             select_xml = self.wps.request( plugin_name = currentPlugin,
                                            plugin_options = self.plugin_options[currentPlugin],
                                            origin = Tempus.Point(ox, oy),
-                                           departure_constraint = Tempus.Constraint( type = constraints[0][0],
-                                                                                     date_time = constraints[0][1] ),
                                            allowed_transport_modes = transports,
                                            parking_location = None if parking == [] else Tempus.Point(parking[0], parking[1]),
                                            criteria = criteria,

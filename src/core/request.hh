@@ -38,7 +38,9 @@ public:
     struct TimeConstraint {
         enum TimeConstraintType {
             NoConstraint = 0,
+            /// Arrive before
             ConstraintBefore,
+            /// Depart after
             ConstraintAfter,
             LastValue = ConstraintAfter
         };
@@ -52,6 +54,9 @@ public:
     /// Class used to represent destinations of a request and constraints of the step
     struct Step {
         DECLARE_RW_PROPERTY( location, Road::Vertex );
+        ///
+        /// Time constraint.
+        /// @warning Should be ignored for the first step (origin)
         DECLARE_RW_PROPERTY( constraint, TimeConstraint );
         ///
         /// Whether the private vehicule must reach the destination

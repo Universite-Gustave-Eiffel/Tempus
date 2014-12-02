@@ -58,6 +58,8 @@ class StepSelector( QFrame ):
         self.setFrameStyle( QFrame.Box )
 
         self.pvadCheck = None
+        self.constraint_types = [ (0, "No constraint"), (1, "Arrive before"), (2, "Depart after") ]
+        self.dateEdit = None
         if coordinates_only:
             return
 
@@ -73,30 +75,29 @@ class StepSelector( QFrame ):
                 self.hlayout.addWidget( self.minusBtn )
                 QObject.connect( self.minusBtn, SIGNAL("clicked()"), self.onRemove )
 
-        n = datetime.now()
-        self.dateEdit = QDateTimeEdit( QDateTime.currentDateTime(), self )
-        self.dateEdit.setCalendarPopup( True )
-        self.constraintBox = QComboBox()
-
-        self.constraint_types = [ (0, "No constraint"), (1, "Before"), (2, "After") ]
-        for i,e in enumerate(self.constraint_types):
-            self.constraintBox.insertItem( i, e[1] )
-
-        self.constraintBox.currentIndexChanged[int].connect( self.on_update_constraint )
-        self.constraintBox.setCurrentIndex(0)
-        self.on_update_constraint(0)
-
-        self.hlayout2 = QHBoxLayout()
-        self.hlayout2.setMargin( 0 )
-        self.hlayout2.addWidget( self.constraintBox )
-        self.hlayout2.addWidget( QLabel("Date and time") )
-        self.hlayout2.addWidget( self.dateEdit )
-
-        self.layout.addLayout( self.hlayout2 )
-
         self.coordinates.textChanged.connect( self.on_coordinates_changed )
 
         if name != 'Origin':
+            n = datetime.now()
+            self.dateEdit = QDateTimeEdit( QDateTime.currentDateTime(), self )
+            self.dateEdit.setCalendarPopup( True )
+            self.constraintBox = QComboBox()
+
+            for i,e in enumerate(self.constraint_types):
+                self.constraintBox.insertItem( i, e[1] )
+
+            self.constraintBox.currentIndexChanged[int].connect( self.on_update_constraint )
+            self.constraintBox.setCurrentIndex(0)
+            self.on_update_constraint(0)
+
+            self.hlayout2 = QHBoxLayout()
+            self.hlayout2.setMargin( 0 )
+            self.hlayout2.addWidget( self.constraintBox )
+            self.hlayout2.addWidget( QLabel("Date and time") )
+            self.hlayout2.addWidget( self.dateEdit )
+
+            self.layout.addLayout( self.hlayout2 )
+
             self.pvadCheck = QCheckBox( "Private vehicule at destination" )
             self.pvadCheck.setCheckState( Qt.Checked )
             self.layout.addWidget( self.pvadCheck )
@@ -134,15 +135,19 @@ class StepSelector( QFrame ):
         self.coordinates.setText( "%f, %f" % ( xy[0], xy[1] ) )
 
     def get_constraint_type( self ):
+        if self.dateEdit is None:
+            return 0
         return self.constraint_types[self.constraintBox.currentIndex()][0]
 
     def set_constraint_type( self, idx ):
+        if self.dateEdit is None:
+            return
         for i, e in enumerate(self.constraint_types):
             if e[0] == idx:
                 self.constraintBox.setCurrentIndex( i )
 
     def set_depart_after_support( self, enabled ):
-        k = (2,"After")
+        k = (2,"Depart after")
         if enabled:
             if k not in self.constraint_types:
                 self.constraint_types.append(k)
@@ -150,12 +155,13 @@ class StepSelector( QFrame ):
             if k in self.constraint_types:
                 self.constraint_types.remove(k)
 
-        self.constraintBox.clear()
-        for i,e in enumerate(self.constraint_types):
-            self.constraintBox.insertItem( i, e[1] )
+        if self.dateEdit is not None:
+            self.constraintBox.clear()
+            for i,e in enumerate(self.constraint_types):
+                self.constraintBox.insertItem( i, e[1] )
 
     def set_arrive_before_support( self, enabled ):
-        k = (1,"Before")
+        k = (1,"Arrive before")
         if enabled:
             if k not in self.constraint_types:
                 self.constraint_types.append(k)
@@ -163,14 +169,19 @@ class StepSelector( QFrame ):
             if k in self.constraint_types:
                 self.constraint_types.remove(k)
 
-        self.constraintBox.clear()
-        for i,e in enumerate(self.constraint_types):
-            self.constraintBox.insertItem( i, e[1] )
+        if self.dateEdit is not None:
+            self.constraintBox.clear()
+            for i,e in enumerate(self.constraint_types):
+                self.constraintBox.insertItem( i, e[1] )
 
     def get_constraint( self ):
+        if self.dateEdit is None:
+            return None
         return self.dateEdit.dateTime().toString(Qt.ISODate)
 
     def set_constraint( self, str ):
+        if self.dateEdit is None:
+            return
         datetime = QDateTime.fromString( str, Qt.ISODate )
         self.dateEdit.setDateTime( datetime )
 

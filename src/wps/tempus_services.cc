@@ -439,13 +439,6 @@ public:
             Request::Step origin;
             origin.set_location( get_road_vertex_from_point_and_mode( field, db, request.allowed_modes()[0] ) );
             
-            // departure_constraint
-            field = XML::get_next_nontext( field->next );
-            {
-                Request::TimeConstraint constraint;
-                parse_constraint( field, constraint );
-                origin.set_constraint( constraint );
-            }
             request.set_origin( origin );
 
             // parking location id, optional

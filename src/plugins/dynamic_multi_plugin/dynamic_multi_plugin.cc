@@ -267,20 +267,13 @@ void DynamicMultiPlugin::pre_process( Request& request )
         }
     }
 
-    if ( pt_allowed ) {
-        if ( (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintBefore) ||
-             (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter) ) {
-            throw std::runtime_error( "Unsupported time constraint" );
-        }
-    }
-
-    if ( use_speed_profiles_ && (request_.steps()[0].constraint().type() != Request::TimeConstraint::ConstraintAfter) ) {
+    if ( use_speed_profiles_ && (request_.steps()[1].constraint().type() != Request::TimeConstraint::ConstraintAfter) ) {
         throw std::runtime_error( "A 'depart after' constraint must be specified for speed profiles" );
     }
         
     // If current date changed, reload timetable / frequency
-    if ( (( (request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
-           (s_.current_day != request_.steps()[0].constraint().date_time().date()) ) ||
+    if ( (( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
+           (s_.current_day != request_.steps()[1].constraint().date_time().date()) ) ||
          ( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore) &&
            (s_.current_day != request_.steps()[1].constraint().date_time().date()) ))
          )  {
@@ -288,8 +281,8 @@ void DynamicMultiPlugin::pre_process( Request& request )
         if ( pt_allowed && (graph_.public_transports().size() > 0) ) {
             const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
             std::cout << "Load timetable" << std::endl;
-            if ( request_.steps()[0].constraint().type() == Request::TimeConstraint::ConstraintAfter ) {
-                s_.current_day = request_.steps()[0].constraint().date_time().date();
+            if ( request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter ) {
+                s_.current_day = request_.steps()[1].constraint().date_time().date();
             }
             if ( request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore ) {
                 s_.current_day = request_.steps()[1].constraint().date_time().date();
@@ -474,13 +467,7 @@ void DynamicMultiPlugin::process()
     // Initialize the predecessor map
     boost::associative_property_map< PredecessorMap > pred_pmap( pred_map_ );  // adaptation to a property map
 
-    double start_time;
-    if ( reversed ) {
-        start_time = request_.steps()[1].constraint().date_time().time_of_day().total_seconds()/60;
-    }
-    else {
-        start_time = request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60;
-    }
+    double start_time = request_.steps()[1].constraint().date_time().time_of_day().total_seconds()/60;
 
     if ( !reversed ) {
         put( potential_pmap, origin_o, start_time ) ;
@@ -734,10 +721,10 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
         wait_map_ = new_wait_map;
     }
     else {
-        start_time = request_.steps()[0].constraint().date_time().time_of_day().total_seconds()/60;
+        start_time = request_.steps()[1].constraint().date_time().time_of_day().total_seconds()/60;
     }
 
-    roadmap.set_starting_date_time( request_.steps()[0].constraint().date_time() );
+    roadmap.set_starting_date_time( request_.steps()[1].constraint().date_time() );
     std::cout << "resulting start_time: " << sec2hm(start_time) << std::endl;
 
     std::cout << it->vertex << "\tP: " << sec2hm(potential_map_[*it]) << " W: " << sec2hm(wait_map_[*it]) << std::endl;

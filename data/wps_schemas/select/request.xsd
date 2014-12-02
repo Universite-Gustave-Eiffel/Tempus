@@ -20,7 +20,6 @@
   <xs:complexType name="Request">
     <xs:sequence>
       <xs:element name="origin" type="Point" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="departure_constraint" type="TimeConstraint" minOccurs="1" maxOccurs="1"/>
       <xs:element name="parking_location" type="Point" minOccurs="0" maxOccurs="1"/>
       <xs:element name="optimizing_criterion" type="xs:int" minOccurs="1" maxOccurs="unbounded"/>
       <xs:element name="allowed_network" type="xs:long" minOccurs="0" maxOccurs="unbounded"/>
