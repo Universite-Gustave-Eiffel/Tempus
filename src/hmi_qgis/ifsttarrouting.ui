@@ -42,7 +42,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -215,11 +215,7 @@
          <widget class="QComboBox" name="pluginCombo"/>
         </item>
         <item>
-         <layout class="QFormLayout" name="optionsLayout">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-          </property>
-         </layout>
+         <layout class="QVBoxLayout" name="optionsLayout"/>
         </item>
         <item>
          <spacer name="verticalSpacer_2">

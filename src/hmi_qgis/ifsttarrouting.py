@@ -86,21 +86,13 @@ NEW_API = 'commitChanges' in dir(QgsVectorLayer)
 # clears a FormLayout
 def clearLayout( lay ):
     # clean the widget list
-    rc = lay.rowCount()
-    if rc > 0:
-        for row in range(0, rc):
-            l1 = lay.itemAt( rc-row-1, QFormLayout.LabelRole )
-            l2 = lay.itemAt( rc-row-1, QFormLayout.FieldRole )
-            if l1 is not None:
-                lay.removeItem( l1 )
-                w1 = l1.widget()
-                lay.removeWidget( w1 )
-                w1.close()
-            if l2 is not None:
-                lay.removeItem( l2 )
-                w2 = l2.widget()
-                lay.removeWidget( w2 )
-                w2.close()
+    for r in range(lay.count()):
+        l = lay.takeAt(0)
+        if l is not None:
+            w = l.widget()
+            if w is not None:
+                w.setParent(None)
+                w.deleteLater()
 
 #
 # clears a BoxLayout
@@ -979,48 +971,80 @@ class IfsttarRouting:
     # and fill the 'plugin' tab
     #
     def displayPlugins( self, plugins ):
+        self.dlg.ui.pluginCombo.blockSignals( True )
         self.dlg.ui.pluginCombo.clear()
         self.options_desc = {}
         for name, plugin in plugins.iteritems():
             self.dlg.ui.pluginCombo.insertItem(0, name )
+        self.dlg.ui.pluginCombo.blockSignals( False )
+        self.update_plugin_options(0)
 
     #
     # Take XML tree of 'options' and a dict 'option_values'
     # and fill the options part of the 'plugin' tab
     #
     def displayPluginOptions( self, plugin_name ):
-        lay = self.dlg.ui.optionsLayout
-        clearLayout( lay )
+        vlay = self.dlg.ui.optionsLayout
+        clearLayout( vlay )
 
-        row = 0
+        # sort options by category
+        options_by_cat = {}
         for name, option in self.plugins[plugin_name].options.iteritems():
-            lbl = QLabel( self.dlg )
-            lbl.setText( option.description )
-            lay.setWidget( row, QFormLayout.LabelRole, lbl )
-            
-            t = option.type()
-            
-            val = self.plugin_options[plugin_name][name]
-            if t == Tempus.OptionType.Bool:
-                widget = QCheckBox( self.dlg )
-                if val == True:
-                    widget.setCheckState( Qt.Checked )
-                else:
-                    widget.setCheckState( Qt.Unchecked )
-                QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, checked ) )
+            s = name.split("/")
+            if len(s)>1:
+                cat_name = s[0]
+                option_name = s[1]
             else:
-                widget = QLineEdit( self.dlg )
-                if t == Tempus.OptionType.Int:
-                    valid = QIntValidator( widget )
-                    widget.setValidator( valid )
-                if t == Tempus.OptionType.Float:
-                    valid = QDoubleValidator( widget )
-                    widget.setValidator( valid )
-                widget.setText( str(val) )
-                QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, text ) )
-            lay.setWidget( row, QFormLayout.FieldRole, widget )
-            
-            row += 1
+                cat_name = ""
+                option_name = name
+            if options_by_cat.get( cat_name ) is None:
+                options_by_cat[cat_name] = []
+            options_by_cat[cat_name].append( (option_name, option) )
+
+        for cat_name, options in options_by_cat.iteritems():
+
+            if cat_name != "":
+                q = QGroupBox( cat_name )
+            else:
+                q = QWidget()
+
+            lay = QFormLayout( q )
+            vlay.addWidget( q )
+
+            row = 0
+            for name, option in options:
+                if cat_name != "":
+                    complete_name = cat_name + "/" + name
+                else:
+                    complete_name = name
+
+                lbl = QLabel()
+                lbl.setText( option.description )
+                lay.setWidget( row, QFormLayout.LabelRole, lbl )
+
+                t = option.type()
+
+                val = self.plugin_options[plugin_name][complete_name]
+                if t == Tempus.OptionType.Bool:
+                    widget = QCheckBox()
+                    if val == True:
+                        widget.setCheckState( Qt.Checked )
+                    else:
+                        widget.setCheckState( Qt.Unchecked )
+                    QObject.connect(widget, SIGNAL("toggled(bool)"), lambda checked, name=complete_name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, checked ) )
+                else:
+                    widget = QLineEdit( self.dlg )
+                    if t == Tempus.OptionType.Int:
+                        valid = QIntValidator( widget )
+                        widget.setValidator( valid )
+                    if t == Tempus.OptionType.Float:
+                        valid = QDoubleValidator( widget )
+                        widget.setValidator( valid )
+                    widget.setText( str(val) )
+                    QObject.connect(widget, SIGNAL("textChanged(const QString&)"), lambda text, name=complete_name, t=t, pname=plugin_name: self.onOptionChanged( pname, name, t, text ) )
+                lay.setWidget( row, QFormLayout.FieldRole, widget )
+
+                row += 1
 
         self.dlg.set_supported_criteria( self.plugins[plugin_name].supported_criteria )
         self.dlg.set_intermediate_steps_support( self.plugins[plugin_name].intermediate_steps )
