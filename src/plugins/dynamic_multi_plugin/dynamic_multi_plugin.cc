@@ -166,15 +166,16 @@ struct NullHeuristic
 
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
-    Plugin::OptionDescriptionList odl; 
-    odl.declare_option( "with_forbidden_turning_movements", "With forbidden turning movements", true); 
-    odl.declare_option( "timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", 0);         
+    Plugin::OptionDescriptionList odl;
+    odl.declare_option( "with_forbidden_turning_movements", "With forbidden turning movements", true);
+    odl.declare_option( "timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", 0);
     odl.declare_option( "verbose_algo", "Verbose algorithm: vertices and edges traversal", false);
-    odl.declare_option( "verbose", "Verbose general processing", true); 
-    odl.declare_option( "min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", 2); 
-    odl.declare_option( "walking_speed", "Average walking speed (km/h)", 3.6); 
-    odl.declare_option( "cycling_speed", "Average cycling speed (km/h)", 12); 
-    odl.declare_option( "car_parking_search_time", "Car parking search time (min)", 5); 
+    odl.declare_option( "verbose", "Verbose general processing", true);
+    odl.declare_option( "enable_trace", "Produce a trace (warning: cpu and time consuming)", false );
+    odl.declare_option( "min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", 2);
+    odl.declare_option( "walking_speed", "Average walking speed (km/h)", 3.6);
+    odl.declare_option( "cycling_speed", "Average cycling speed (km/h)", 12);
+    odl.declare_option( "car_parking_search_time", "Car parking search time (min)", 5);
     odl.declare_option( "heuristic", "Use an heuristic based on euclidian distance", false );
     odl.declare_option( "speed_heuristic", "Max speed (km/h) to use in the heuristic", 0.06 );
     odl.declare_option( "multi_destinations", "Destination list (road vertex id, comma separated)", std::string("") );
@@ -234,6 +235,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
     // Get plugin options 		
     get_option( "verbose", verbose_ ); 
     get_option( "verbose_algo", verbose_algo_ ); 
+    get_option( "enable_trace", enable_trace_ );
     get_option( "timetable_frequency", timetable_frequency_ ); 
     get_option( "min_transfer_time", min_transfer_time_ ); 
     get_option( "walking_speed", walking_speed_ ); 
@@ -806,7 +808,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
     }
 
     // populate the path parts, if needed
-    if (verbose_) {
+    if (enable_trace_) {
         PathTrace trace;
         for ( PredecessorMap::const_iterator vit = pred_map_.begin(); vit != pred_map_.end(); vit++ ) {
             if ( vit->second.vertex == vit->first.vertex ) {

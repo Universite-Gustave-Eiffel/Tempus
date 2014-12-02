@@ -84,6 +84,7 @@ protected:
     double timetable_frequency_; // travel time calculation mode
     bool verbose_algo_; // verbose vertex and edge traversal 
     bool verbose_; // Verbose processing (except algorithm)
+    bool enable_trace_;
     double min_transfer_time_; // Minimum time necessary for a transfer to be done (in minutes) 
     double walking_speed_; // Average walking speed
     double cycling_speed_; // Average cycling speed 
