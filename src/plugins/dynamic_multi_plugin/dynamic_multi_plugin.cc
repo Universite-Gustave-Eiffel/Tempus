@@ -272,21 +272,15 @@ void DynamicMultiPlugin::pre_process( Request& request )
     }
         
     // If current date changed, reload timetable / frequency
-    if ( (( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter) &&
-           (s_.current_day != request_.steps()[1].constraint().date_time().date()) ) ||
-         ( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore) &&
-           (s_.current_day != request_.steps()[1].constraint().date_time().date()) ))
-         )  {
-
+    if (
+        ( (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter) ||
+          (request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore) ) && 
+        (s_.current_day != request_.steps()[1].constraint().date_time().date())
+        ) {
         if ( pt_allowed && (graph_.public_transports().size() > 0) ) {
             const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
             std::cout << "Load timetable" << std::endl;
-            if ( request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintAfter ) {
-                s_.current_day = request_.steps()[1].constraint().date_time().date();
-            }
-            if ( request_.steps()[1].constraint().type() == Request::TimeConstraint::ConstraintBefore ) {
-                s_.current_day = request_.steps()[1].constraint().date_time().date();
-            }
+            s_.current_day = request_.steps()[1].constraint().date_time().date();
 
             // cache graph id to descriptor
             // FIXME - integrate the cache into the graphs ?
@@ -415,22 +409,20 @@ void DynamicMultiPlugin::pre_process( Request& request )
         std::cout << "Load speed profiles" << std::endl;
         // load speed profiles
         // FIXME: must take day into account
-        if ( use_speed_profiles_ ) {
-            Db::Result res = db_.exec("SELECT road_section_id, speed_rule, begin_time, end_time, average_speed FROM\n"
-                                      "tempus.road_section_speed as ss,\n"
-                                      "tempus.road_daily_profile as p\n"
-                                      "WHERE\n"
-                                      "p.profile_id = ss.profile_id");
+        Db::Result res = db_.exec("SELECT road_section_id, speed_rule, begin_time, end_time, average_speed FROM\n"
+                                  "tempus.road_section_speed as ss,\n"
+                                  "tempus.road_daily_profile as p\n"
+                                  "WHERE\n"
+                                  "p.profile_id = ss.profile_id");
             
-            for ( size_t i = 0; i < res.size(); i++ ) {
-                db_id_t road_section = res[i][0].as<db_id_t>();
-                int speed_rule = res[i][1].as<int>();
-                double begin_time = res[i][2].as<double>();
-                double end_time = res[i][3].as<double>();
-                double speed = res[i][4].as<double>();
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            db_id_t road_section = res[i][0].as<db_id_t>();
+            int speed_rule = res[i][1].as<int>();
+            double begin_time = res[i][2].as<double>();
+            double end_time = res[i][3].as<double>();
+            double speed = res[i][4].as<double>();
             
-                s_.speed_profile.add_period( road_section, static_cast<TransportModeSpeedRule>(speed_rule), begin_time, end_time-begin_time, speed );
-            }
+            s_.speed_profile.add_period( road_section, static_cast<TransportModeSpeedRule>(speed_rule), begin_time, end_time-begin_time, speed );
         }
     }
         
