@@ -83,7 +83,13 @@ public:
     public:
         ArcWriter( const Graph& agraph, const Tempus::Road::Graph& graph ) : agraph_(agraph), graph_(graph) {}
         void operator() ( std::ostream& ostr, const Transition& e) const {
-            ostr << "[label=\"" << graph_[agraph_[e].symbol].db_id() << " = " << agraph_[e].symbol << "\"]"; 		
+            Symbol s = agraph_[e].symbol;
+            if ( source( s, graph_ ) == graph_.null_vertex() ) {
+                std::cout << "Automaton: can't find edge " << e << std::endl;
+            }
+            else {
+                ostr << "[label=\"" << graph_[agraph_[e].symbol].db_id() << " = " << agraph_[e].symbol << "\"]";
+            }
         }
     private:
         const Graph& agraph_;
