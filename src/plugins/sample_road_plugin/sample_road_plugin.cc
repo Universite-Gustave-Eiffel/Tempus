@@ -200,7 +200,7 @@ public:
         result_.push_back( Roadmap() );
         Roadmap& roadmap = result_.back();
 
-        roadmap.set_starting_date_time( request_.steps()[0].constraint().date_time() );
+        roadmap.set_starting_date_time( request_.steps()[1].constraint().date_time() );
 
         std::auto_ptr<Roadmap::Step> step;
 

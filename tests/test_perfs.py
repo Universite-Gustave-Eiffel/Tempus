@@ -115,7 +115,6 @@ class TestPerfs(unittest.TestCase):
             tempus.request( plugin_name = 'dynamic_multi_plugin',
                             plugin_options = { 'verbose_algo' : False, "verbose" : False, "car_parking_search_time" : 0 },
                             origin = Point( 355873.900102, 6687910.974614 ),
-                            departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
                             steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = False) ],
                             criteria = [Cost.Duration],
                             allowed_transport_modes = [1, 3], # walking, private car
@@ -136,7 +135,6 @@ class TestPerfs(unittest.TestCase):
             tempus.request( plugin_name = 'dynamic_multi_plugin',
                             plugin_options = { 'verbose_algo' : False, "verbose" : False },
                             origin = Point( 353512.189791, 6688532.281363 ),
-                            departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
                             steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ), private_vehicule_at_destination = False) ],
                             criteria = [Cost.Duration],
                             allowed_transport_modes = [1, 5, 6] # walking, bus, tram
@@ -156,7 +154,6 @@ class TestPerfs(unittest.TestCase):
             tempus.request( plugin_name = 'dynamic_multi_plugin',
                             plugin_options = { 'verbose_algo' : False, "verbose" : False },
                             origin = Point( 353512.189791, 6688532.281363 ),
-                            departure_constraint = Constraint( date_time = DateTime(2014,6,18,16,06) ),
                             steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ), private_vehicule_at_destination = False) ],
                             criteria = [Cost.Duration],
                             allowed_transport_modes = [1, 3, 5, 6] # walking, private car, bus, tram
