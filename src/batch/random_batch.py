@@ -98,7 +98,7 @@ if __name__ == "__main__":
         except RuntimeError as e:
             if e[1].find('No path found') > -1:
                 # ignore error when no path has been found
-                pass
+                continue
             else:
                 print e[1]
                 exit(1)
