@@ -113,8 +113,6 @@ class IfsttarRoutingDock(QDockWidget):
         for child in pson[1:]:
             if child[0] == 'origin':
                 origin = child
-            elif child[0] == 'departure_constraint':
-                dep = child
             elif child[0] == 'parking_location':
                 parking = child
             elif child[0] == 'optimizing_criterion':
@@ -138,7 +136,7 @@ class IfsttarRoutingDock(QDockWidget):
         self.set_steps( len(steps) )
 
         coords = [ readCoords(origin) ]
-        constraints = [ [int(dep[1]['type']), dep[1]['date_time'] ] ]
+        constraints = []
         pvads = []
         for step in steps:
             for p in step[2:]:
