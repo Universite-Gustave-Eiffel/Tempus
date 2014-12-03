@@ -408,6 +408,9 @@ Result& Plugin::result()
 
         Roadmap::StepIterator it = roadmap.begin();
         Roadmap::StepIterator next = it;
+		if ( it == roadmap.end() ) {
+			continue;
+		}
         next++;
 
         for ( ; it != roadmap.end(); it++ ) {
@@ -637,7 +640,7 @@ Result& Plugin::result()
         }
 
         *rit = new_roadmap;
-    }
+	}
 
     return result_;
 }
