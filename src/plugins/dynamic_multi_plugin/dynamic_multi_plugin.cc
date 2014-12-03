@@ -236,7 +236,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
     get_option( "Debug/verbose", verbose_ ); 
     get_option( "Debug/verbose_algo", verbose_algo_ ); 
     get_option( "Debug/enable_trace", enable_trace_ );
-    get_option( "Time/timetable_frequency", timetable_frequency_ ); 
+    get_option( "Features/timetable_frequency", timetable_frequency_ ); 
     get_option( "Time/min_transfer_time", min_transfer_time_ ); 
     get_option( "Time/walking_speed", walking_speed_ ); 
     get_option( "Time/cycling_speed", cycling_speed_ ); 
