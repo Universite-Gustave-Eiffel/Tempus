@@ -34,7 +34,7 @@ WPS_HOST = '127.0.0.1'
 WPS_PATH = '/wps'
 
 
-class TestWPS(unittest.TestCase):
+class Test(unittest.TestCase):
 
     def setUp(self):
         self.client = HttpCgiConnection( WPS_HOST, WPS_PATH )
@@ -55,31 +55,6 @@ class TestWPS(unittest.TestCase):
                         )
         # the resulting sequence should involve more sections
         self.assertEqual( len(tempus.results[0].steps), 3 )
-
-        # FIXME
-        # road sections here are not allowed to bikes and pedestrian, find other ones
-        if False:
-            # we request the same U_turn, but with a bike
-            # (allowed)
-            tempus.request( plugin_name = 'dynamic_multi_plugin',
-                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
-                            origin = Point( 355956.316044, 6688240.140580 ),
-                            steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 ), private_vehicule_at_destination = True) ],
-                            criteria = [Cost.Duration],
-                            allowed_transport_modes = [2] # bike
-                            )
-            self.assertEqual( len(tempus.results[0].steps), 3 )
-
-            # we request the same U_turn, but walking
-            # there is a shortcut in that case
-            tempus.request( plugin_name = 'dynamic_multi_plugin',
-                            plugin_options = { 'verbose_algo' : False, "verbose" : False },
-                            origin = Point( 355956.316044, 6688240.140580 ),
-                            steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 )) ],
-                            criteria = [Cost.Duration],
-                            allowed_transport_modes = [1] # pedestrian
-                            )
-            self.assertEqual( len(tempus.results[0].steps), 2 )
 
     def test_modes( self ):
 
@@ -122,7 +97,7 @@ class TestWPS(unittest.TestCase):
                         )
         self.assertEqual(isinstance(tempus.results[0].steps[4], PublicTransportStep), True )
         self.assertEqual(tempus.results[0].steps[4].mode, 6) # BUS
-        self.assertEqual( len(tempus.results[0].steps), 12 )
+        self.assertEqual( len(tempus.results[0].steps), 13 )
 
         # request public transports with frequency-based scheduling
         tempus.request( plugin_name = 'dynamic_multi_plugin',
@@ -148,7 +123,7 @@ class TestWPS(unittest.TestCase):
                         )
         self.assertEqual(isinstance(tempus.results[0].steps[4], PublicTransportStep), True )
         self.assertEqual(tempus.results[0].steps[4].mode, 6) # BUS
-        self.assertEqual( len(tempus.results[0].steps), 12 )
+        self.assertEqual( len(tempus.results[0].steps), 13 )
 
         # request a shared bike
         # Use a shared bike
@@ -242,9 +217,9 @@ class TestWPS(unittest.TestCase):
         self.assertEqual(isinstance(tempus.results[0].steps[4], PublicTransportStep), True )
         self.assertEqual(tempus.results[0].steps[4].mode, 5) # TRAM
         self.assertEqual(tempus.results[0].steps[4].route[0], '3') # Line 3
-        self.assertEqual(isinstance(tempus.results[0].steps[9], PublicTransportStep), True )
-        self.assertEqual(tempus.results[0].steps[9].mode, 5) # TRAM
-        self.assertEqual(tempus.results[0].steps[9].route[0], '1') # Line 1
+        self.assertEqual(isinstance(tempus.results[0].steps[13], PublicTransportStep), True )
+        self.assertEqual(tempus.results[0].steps[13].mode, 5) # TRAM
+        self.assertEqual(tempus.results[0].steps[13].route[0], '1') # Line 1
 
         # path with 2 PT involved, reverted
         tempus.request( plugin_name = 'dynamic_multi_plugin',

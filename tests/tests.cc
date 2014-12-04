@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     }
     {
         // get the number of simple edges
-        Db::Result res( importer->query( "select count(*) from tempus.road_section where traffic_rules_ft <> traffic_rules_tf" ) );
+        Db::Result res( importer->query( "select count(*) from tempus.road_section where traffic_rules_tf = 0" ) );
         BOOST_CHECK_EQUAL( res.size(), 1 );
         n_road_oriented_edges = res[0][0].as<long>();
     }
