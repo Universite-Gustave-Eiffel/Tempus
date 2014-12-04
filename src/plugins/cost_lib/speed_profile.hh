@@ -45,7 +45,7 @@ public:
 
     typedef std::map<double, SpeedTimePeriod>::const_iterator PeriodIterator;
 
-    std::pair<PeriodIterator, PeriodIterator> periods_after( db_id_t section_id, TransportModeSpeedRule speed_rule, double begin_time ) const;
+    std::pair<PeriodIterator, PeriodIterator> periods_after( db_id_t section_id, TransportModeSpeedRule speed_rule, double begin_time, bool& found ) const;
 
     void add_period( db_id_t section_id, TransportModeSpeedRule speed_rule, double begin_time, double length, double speed );
 private:

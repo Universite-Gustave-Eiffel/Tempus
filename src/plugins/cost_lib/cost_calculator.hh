@@ -65,8 +65,9 @@ double road_travel_time( const RoadGraph& road_graph, const Road::Edge& road_e, 
     }
     if (profile) {
         RoadEdgeSpeedProfile::PeriodIterator it, it_end;
-        boost::tie(it, it_end) = profile->periods_after( road_graph[road_e].db_id(), mode.speed_rule(), time );
-        if ( it != it_end ) {
+		bool found = false;
+        boost::tie(it, it_end) = profile->periods_after( road_graph[road_e].db_id(), mode.speed_rule(), time, found );
+        if ( found ) {
             double t_end, t_begin, speed = 50000.0/60.0;
             t_begin = time;
             while ( (it != it_end) && (length > 0) ) {

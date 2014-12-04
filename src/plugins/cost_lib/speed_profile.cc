@@ -34,7 +34,7 @@ void RoadEdgeSpeedProfile::add_period( db_id_t section_id, TransportModeSpeedRul
     tit->second.speed = speed;
 }
 
-std::pair<RoadEdgeSpeedProfile::PeriodIterator, RoadEdgeSpeedProfile::PeriodIterator> RoadEdgeSpeedProfile::periods_after( db_id_t section_id, TransportModeSpeedRule speed_rule, double begin_time ) const
+std::pair<RoadEdgeSpeedProfile::PeriodIterator, RoadEdgeSpeedProfile::PeriodIterator> RoadEdgeSpeedProfile::periods_after( db_id_t section_id, TransportModeSpeedRule speed_rule, double begin_time, bool& found ) const
 {
     RoadEdgeSpeedProfileMap::const_iterator sit = speed_profile_.find( section_id );
     if ( sit != speed_profile_.end() ) {
@@ -44,9 +44,11 @@ std::pair<RoadEdgeSpeedProfile::PeriodIterator, RoadEdgeSpeedProfile::PeriodIter
             // we suppose we cover 24h of speed profile
             BOOST_ASSERT( mit != it->second.end() );
             mit--;
+			found = true;
             return std::make_pair( mit, it->second.end() );
         }
     }
+	// inconsistent return value
     return std::make_pair( PeriodIterator(), PeriodIterator() );
 }
 
