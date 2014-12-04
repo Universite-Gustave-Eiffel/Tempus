@@ -103,7 +103,10 @@ select
 		else 32+16+8+4+2+1
 	end as traffic_rules_ft
 	, case
-		when oneway::text in ('true', 'yes', '1') then 0 -- one way
+		when oneway::text in ('true', 'yes', '1') then
+                  case when hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link', 'cycleway') then 0 -- nothing here
+                       else 1 -- only pedestrian is allowed
+                  end
 		else
                   case
                         when hw."type" in ('motorway', 'motorway_Link', 'trunk', 'trunk_Link', 'primary', 'primary_Link') then 4+8+16+32 -- car + taxi + carpool + truck
