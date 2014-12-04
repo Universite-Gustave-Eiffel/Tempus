@@ -100,7 +100,7 @@ class TestWPS(unittest.TestCase):
         try:
             # test error: use profiles, but no time constraint
             tempus.request( plugin_name = 'dynamic_multi_plugin',
-                            plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : True },
+                            plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Time/use_speed_profiles" : True },
                             origin = Point( 350840.407710, 6688979.242950 ),
                             steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ), private_vehicule_at_destination = True) ],
                             criteria = [Cost.Duration],
@@ -121,7 +121,7 @@ class TestWPS(unittest.TestCase):
 
         # without speed profiles
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 350840.407710, 6688979.242950 ),
                         steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,24), type = 2 ), # after
@@ -134,7 +134,7 @@ class TestWPS(unittest.TestCase):
 
         # with speed profiles, at 7 am
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : True },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Time/use_speed_profiles" : True },
                         origin = Point( 350840.407710, 6688979.242950 ),
                         steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,7,0), type = 2 ), # after @ 7:00
@@ -147,7 +147,7 @@ class TestWPS(unittest.TestCase):
 
         # with speed profiles, at 12:05 am
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : True },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Time/use_speed_profiles" : True },
                         origin = Point( 350840.407710, 6688979.242950 ),
                         steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,12,5), type = 2 ), # after 12:05
@@ -160,7 +160,7 @@ class TestWPS(unittest.TestCase):
 
         # check that if we set back to no profiles
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "use_speed_profiles" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Time/use_speed_profiles" : False },
                         origin = Point( 350840.407710, 6688979.242950 ),
                         steps = [ RequestStep(destination = Point( 355705.027259, 6688986.750080 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,12,5), type = 2 ), # after 12:05

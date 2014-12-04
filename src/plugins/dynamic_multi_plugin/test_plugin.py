@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
         # where a restriction forbids U-turn to cars
         tempus.request( plugin_name = 'dynamic_multi_plugin',
                         origin = Point( 355956.316044, 6688240.140580 ),
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         steps = [ RequestStep(destination = Point( 355942.525170, 6688324.111680 ), private_vehicule_at_destination = True) ],
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [3] # car
@@ -62,7 +62,7 @@ class Test(unittest.TestCase):
 
         # request public transports
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356171.238242, 6687756.369824 ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,06), type = 2 )) ], # after
@@ -75,7 +75,7 @@ class Test(unittest.TestCase):
 
         # 3 minutes later, should be the same result
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356171.238242, 6687756.369824 ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,9), type = 2 )) ], # after
@@ -88,7 +88,7 @@ class Test(unittest.TestCase):
 
         # request public transports
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356171.238242, 6687756.369824 ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,9), type = 2 )) ], # after
@@ -101,7 +101,7 @@ class Test(unittest.TestCase):
 
         # request public transports with frequency-based scheduling
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Features/timetable_frequency" : 1 },
                         origin = Point( 356171.238242, 6687756.369824 ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,06), type = 2  )) ], # after
@@ -114,7 +114,7 @@ class Test(unittest.TestCase):
 
         # request public transports with frequency-based scheduling
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Features/timetable_frequency" : 1 },
                         origin = Point( 356171.238242, 6687756.369824 ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,9), type = 2  )) ], # after
@@ -128,7 +128,7 @@ class Test(unittest.TestCase):
         # request a shared bike
         # Use a shared bike
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point(355943.384642, 6687666.979354),
                         steps = [ RequestStep(destination = Point( 355410.137514, 6688374.297960 )) ],
                         criteria = [Cost.Duration],
@@ -145,7 +145,7 @@ class Test(unittest.TestCase):
 
         # request public transports
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356171.238242, 6687756.369820 ),
                         steps = [ RequestStep(destination = Point( 355467.660265, 6689901.461590 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,07), type = 2 )) ], # after
@@ -165,7 +165,7 @@ class Test(unittest.TestCase):
 
         # request public transports
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356172.860489, 6687751.207350 ),
                         steps = [ RequestStep(destination = Point( 355396.434795, 6689302.821110 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,16,16,04), type = 2 )) ], # after
@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
 
         # arrive before
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356172.860489, 6687751.207350 ),
                         steps = [ RequestStep(destination = Point( 355396.434795, 6689302.821110 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,16,16,20), type = 1 )) ], # before
@@ -194,7 +194,7 @@ class Test(unittest.TestCase):
 
         # arrive before with frequency-based trip
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "timetable_frequency" : 1 },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Features/timetable_frequency" : 1 },
                         origin = Point( 356171.238242, 6687756.369824 ),
                         steps = [ RequestStep(destination = Point( 355559.445002, 6689088.179658 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,20), type = 1 )) ], # before
@@ -207,7 +207,7 @@ class Test(unittest.TestCase):
 
         # path with 2 PT involved
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356172.860489, 6687751.207350 ),
                         steps = [ RequestStep(destination = Point( 357137.197048, 6689740.983045 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,16,16,07), type = 2 )) ], # after
@@ -223,7 +223,7 @@ class Test(unittest.TestCase):
 
         # path with 2 PT involved, reverted
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 356172.860489, 6687751.207350 ),
                         steps = [ RequestStep(destination = Point( 357137.197048, 6689740.983045 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,16,16,36), type = 1 )) ], # before
@@ -244,7 +244,7 @@ class Test(unittest.TestCase):
         # private car
         # only private car, at destination
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 355873.900102, 6687910.974614 ),
                         steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = True) ],
                         criteria = [Cost.Duration],
@@ -254,7 +254,7 @@ class Test(unittest.TestCase):
 
         # walking and private car, at destination
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 355873.900102, 6687910.974614 ),
                         steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = True) ],
                         criteria = [Cost.Duration],
@@ -266,7 +266,7 @@ class Test(unittest.TestCase):
 
         # walking and private car, at destination, with a private parking on the path
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 355873.900102, 6687910.974614 ),
                         steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = True) ],
                         criteria = [Cost.Duration],
@@ -281,7 +281,7 @@ class Test(unittest.TestCase):
         # walking and private car, with a private parking on the path, but must park before reaching destination
         # car_park_search_time is artificially set to 0
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False, "car_parking_search_time" : 0 },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False, "Time/car_parking_search_time" : 0 },
                         origin = Point( 355873.900102, 6687910.974614 ),
                         steps = [ RequestStep(destination = Point( 354712.155537, 6688427.796341 ), private_vehicule_at_destination = False) ],
                         criteria = [Cost.Duration],
@@ -298,7 +298,7 @@ class Test(unittest.TestCase):
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
 
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 353512.189791, 6688532.281363 ),
                         steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,06), type = 2 ), # after
@@ -309,7 +309,7 @@ class Test(unittest.TestCase):
         duration1 = tempus.results[0].costs[Cost.Duration]
 
         tempus.request( plugin_name = 'dynamic_multi_plugin',
-                        plugin_options = { 'verbose_algo' : False, "verbose" : False },
+                        plugin_options = { 'Debug/verbose_algo' : False, "Debug/verbose" : False },
                         origin = Point( 353512.189791, 6688532.281363 ),
                         steps = [ RequestStep(destination = Point( 360870.494259, 6694129.762149 ),
                                               constraint = Constraint( date_time = DateTime(2014,6,18,16,06), type = 2 ), # after
