@@ -1,7 +1,0 @@
-<RCC>
-  <qresource prefix="/plugins/intralys">
-    <file>entpe.gif</file>
-    <file>IFSTTAR_logo.png</file>
-    <file>icon.png</file>
-  </qresource>
-</RCC>
