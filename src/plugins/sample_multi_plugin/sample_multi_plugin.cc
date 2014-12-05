@@ -84,7 +84,7 @@ public:
         Db::Result res = db.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
 
         for ( size_t i = 0; i < res.size(); ++i ) {
-            db_id_t stop_from, stop_to;
+            db_id_t stop_from = 0, stop_to = 0;
             double length = 0.0;
             res[i][0] >> stop_from;
             res[i][1] >> stop_to;
