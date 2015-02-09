@@ -58,6 +58,8 @@
 #define MAX_DBF_FIELDS 16
 #define MAX_SHAPEFILES 16
 
+#define TO_INT64(x) strtoll((x), NULL, 10)
+
 struct Coord { // struct to allow cpy
     double& operator[]( int i ) {
         return coord[i];
@@ -77,15 +79,15 @@ struct RelationMember {
         MEMBER_RELATION
     };
     Type type;
-    int ref;
+    int64_t ref;
 };
 
-std::map<int,Coord> node_storage;
+std::map<int64_t,Coord> node_storage;
 std::map<std::string,std::string> current_tags;
-int current_nodes[MAX_NODES_PER_WAY];
+int64_t current_nodes[MAX_NODES_PER_WAY];
 int current_node_count = 0;
 bool too_many_nodes_warning_issued = false;
-int current_id;
+int64_t current_id;
 char* current_timestamp;
 Coord current_latlon;
 std::vector<RelationMember> current_members;
@@ -219,7 +221,7 @@ void shapefile_add_dbf( int slot, int entity, bool, va_list ap )
                 DBFWriteStringAttribute( shape->dbfh, entity, i, buffer );
             }
             else {
-                warn( "UTF to ISO conversion failed for tag value '%s' of %s #%d",
+                warn( "UTF to ISO conversion failed for tag value '%s' of %s #%lld",
                       in, way ? "way" : "node", current_id );
             }
 
@@ -280,14 +282,14 @@ void shapefile_add_way( int slot, ... )
     }
 
     for ( i=0; i<current_node_count; i++ ) {
-        std::map<int,Coord>::const_iterator found = node_storage.find( *( current_nodes+i ) );
+        std::map<int64_t,Coord>::const_iterator found = node_storage.find( *( current_nodes+i ) );
 
         if ( found != node_storage.end() ) {
             lat[j]   = found->second[0];
             lon[j++] = found->second[1];
         }
         else {
-            warn( "way #%d references undefined node #%d", current_id, *( current_nodes+i ) );
+            warn( "way #%lld references undefined node #%lld", current_id, *( current_nodes+i ) );
         }
     }
 
@@ -313,7 +315,7 @@ void shapefile_add_polygon( int slot, ... )
     }
 
     for ( i=0; i<current_node_count; i++ ) {
-        std::map<int,Coord>::const_iterator found = node_storage.find( *( current_nodes+i ) );
+        std::map<int64_t,Coord>::const_iterator found = node_storage.find( *( current_nodes+i ) );
         lat[i] = found->second[0];
         lon[i] = found->second[1];
     }
@@ -376,7 +378,7 @@ void open_element( xmlTextReaderPtr reader, const xmlChar* name )
         assert( xid );
         assert( xlon );
         assert( xlat );
-        current_id = strtol( ( char* )xid, NULL, 10 );
+        current_id = TO_INT64( ( char* )xid );
         current_timestamp = ( char* ) xts;
         current_latlon[0] = strtod( ( char* )xlat, NULL );
         current_latlon[1] = strtod( ( char* )xlon, NULL );
@@ -397,14 +399,14 @@ void open_element( xmlTextReaderPtr reader, const xmlChar* name )
         xid  = xmlTextReaderGetAttribute( reader, ( const xmlChar* )"id" );
         xts  = xmlTextReaderGetAttribute( reader, ( const xmlChar* )"timestamp" );
         assert( xid );
-        current_id = strtol( ( char* )xid, NULL, 10 );
+        current_id = TO_INT64( ( char* )xid );
         current_timestamp = ( char* ) xts;
         xmlFree( xid );
     }
     else if ( xmlStrEqual( name, ( const xmlChar* )"relation" ) ) {
         xid  = xmlTextReaderGetAttribute( reader, ( const xmlChar* )"id" );
         assert( xid );
-        current_id = strtol( ( char* )xid, NULL, 10 );
+        current_id = TO_INT64( ( char* )xid );
         xmlFree( xid );
     }
     else if ( xmlStrEqual( name, ( const xmlChar* )"member" ) ) {
@@ -425,7 +427,7 @@ void open_element( xmlTextReaderPtr reader, const xmlChar* name )
         else if ( typestr == "relation" ) {
             m.type = RelationMember::MEMBER_RELATION;
         }
-        m.ref = strtol( ( char* )xref, NULL, 10 );
+        m.ref = TO_INT64( ( char* )xref );
         current_members.push_back( m );
         xmlFree( xtype );
         xmlFree( xref );
@@ -437,13 +439,13 @@ void open_element( xmlTextReaderPtr reader, const xmlChar* name )
 
         if ( current_node_count == MAX_NODES_PER_WAY ) {
             if ( !too_many_nodes_warning_issued ) {
-                warn( "too many nodes in way #%d", current_id );
+                warn( "too many nodes in way #%lld", current_id );
             }
 
             too_many_nodes_warning_issued = true;
         }
         else if ( current_node_count < MAX_NODES_PER_WAY ) {
-            current_nodes[current_node_count++] = strtol( ( const char* )xid, NULL, 10 );
+            current_nodes[current_node_count++] = TO_INT64( ( const char* )xid );
         }
 
         xmlFree( xid );
