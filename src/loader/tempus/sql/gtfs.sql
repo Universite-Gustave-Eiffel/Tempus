@@ -15,7 +15,7 @@ create table _tempus_import.pt_stop_idmap
 );
 
 select setval('_tempus_import.pt_stop_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_stop), false);
-insert into _tempus_import.pt_stop_idmap (vendor_id) 
+insert into _tempus_import.pt_stop_idmap (vendor_id)
        select stop_id from _tempus_import.stops;
 create index pt_stop_idmap_vendor_idx on _tempus_import.pt_stop_idmap(vendor_id);
 
@@ -27,21 +27,21 @@ create table _tempus_import.pt_route_idmap
         vendor_id varchar
 );
 select setval('_tempus_import.pt_route_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_route), false);
-insert into _tempus_import.pt_route_idmap (vendor_id) 
+insert into _tempus_import.pt_route_idmap (vendor_id)
        select route_id from _tempus_import.routes;
 create index pt_route_idmap_vendor_idx on _tempus_import.pt_route_idmap(vendor_id);
 
 -- pt_agency_id_map
-drop table if exists _tempus_import.pt_agency_idmap; 
+drop table if exists _tempus_import.pt_agency_idmap;
 create table _tempus_import.pt_agency_idmap
 (
-	id serial primary key, 
+	id serial primary key,
 	vendor_id varchar
-); 
-select setval('_tempus_import.pt_agency_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_agency), false); 
+);
+select setval('_tempus_import.pt_agency_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_agency), false);
 insert into _tempus_import.pt_agency_idmap(vendor_id)
-	select agency_id from _tempus_import.agency; 
-	create index pt_agency_idmap_vendor_idx on _tempus_import.pt_agency_idmap(vendor_id); 
+	select agency_id from _tempus_import.agency;
+	create index pt_agency_idmap_vendor_idx on _tempus_import.pt_agency_idmap(vendor_id);
 
 -- pt_trip_id_map
 drop table if exists _tempus_import.pt_trip_idmap;
@@ -51,20 +51,20 @@ create table _tempus_import.pt_trip_idmap
         vendor_id varchar
 );
 select setval('_tempus_import.pt_trip_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_trip), false);
-insert into _tempus_import.pt_trip_idmap (vendor_id) 
+insert into _tempus_import.pt_trip_idmap (vendor_id)
        select trip_id from _tempus_import.trips;
 create index pt_trip_idmap_vendor_idx on _tempus_import.pt_trip_idmap(vendor_id);
 
 -- pt_service_id_map
-drop table if exists _tempus_import.pt_service_idmap; 
+drop table if exists _tempus_import.pt_service_idmap;
 create table _tempus_import.pt_service_idmap
 (
-	id serial primary key, 
+	id serial primary key,
 	vendor_id varchar
-); 
-select setval('_tempus_import.pt_service_idmap_id_seq', (select case when max(service_id) is null then 1 else max(service_id)+1 end from ((select service_id from tempus.pt_calendar) union (select service_id from tempus.pt_calendar_date)) r ), false); 
+);
+select setval('_tempus_import.pt_service_idmap_id_seq', (select case when max(service_id) is null then 1 else max(service_id)+1 end from ((select service_id from tempus.pt_calendar) union (select service_id from tempus.pt_calendar_date)) r ), false);
 insert into _tempus_import.pt_service_idmap( vendor_id )
-	select service_id from _tempus_import.calendar union select service_id from _tempus_import.calendar_dates; 
+	select service_id from _tempus_import.calendar union select service_id from _tempus_import.calendar_dates;
 create index pt_service_idmap_vendor_idx on _tempus_import.pt_service_idmap(vendor_id);
 
 -- copy to pt_service
@@ -80,7 +80,7 @@ create table _tempus_import.pt_fare_idmap
         vendor_id varchar
 );
 select setval('_tempus_import.pt_fare_idmap_id_seq', (select case when max(id) is null then 1 else max(id)+1 end from tempus.pt_fare_attribute));
-insert into _tempus_import.pt_fare_idmap (vendor_id) 
+insert into _tempus_import.pt_fare_idmap (vendor_id)
        select fare_id from _tempus_import.fare_attributes;
 create index pt_fare_idmap_vendor_idx on _tempus_import.pt_fare_idmap(vendor_id);
 
@@ -90,27 +90,27 @@ raise notice '==== PT network ====';
 end$$;
 /* ==== PT network ==== */
 -- insert a new network (with null name for now) FIXME get the name from the command line
-insert into tempus.pt_network(pnname) 
-select '%(network)'; 
+insert into tempus.pt_network(pnname)
+select '%(network)';
 
 insert into
 	tempus.pt_agency (id, paname, network_id)
 select
 	(select id from _tempus_import.pt_agency_idmap where vendor_id=agency_id) as id,
-	agency_name, 
+	agency_name,
 	(select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
 from
 	_tempus_import.agency;
-	
+
 /* ==== Stops ==== */
 
 -- add geometry index on stops import table
--- geometries should have been created in stops table 
+-- geometries should have been created in stops table
 -- during importation with 2154 srid from x, y latlon fields
 -- st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), 2154)
 drop table if exists _tempus_import.stops_geom;
-create table 
-	_tempus_import.stops_geom as 
+create table
+	_tempus_import.stops_geom as
 select
 	stop_id
 	, st_force_3DZ(st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), 2154)) as geom
@@ -126,7 +126,7 @@ create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 
 -- remove constraint on tempus stops and dependencies
 alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
-alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey; 
+alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey;
 alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;
@@ -168,7 +168,7 @@ select
 ) as t;
 
 insert into tempus.road_node
-select 
+select
    nn.node_id as id,
    false as bifurcation,
    st_force3DZ( st_translate(geom,-10,0,0) ) as geom
@@ -177,7 +177,7 @@ select
    where
         nn.stop_id = sg.stop_id
 union
-select 
+select
    nn.node_id2 as id,
    false as bifurcation,
    st_force3DZ( st_translate(geom,10,0,0) ) as geom
@@ -192,8 +192,8 @@ create sequence tempus.seq_road_section_id start with 1;
 select setval('tempus.seq_road_section_id', (select max(id) from tempus.road_section));
 
 insert into tempus.road_section
-select 
-   nextval('tempus.seq_road_section_id')::bigint as id, 
+select
+   nextval('tempus.seq_road_section_id')::bigint as id,
    1 as road_type, -- ??
    node_id as node_from,
    node_id2 as node_to,
@@ -224,7 +224,7 @@ end$$;
 
 insert into
 	tempus.pt_stop
-select 
+select
 	(select id from _tempus_import.pt_stop_idmap where vendor_id=stop_id) as id,
         stop_id as vendor_id
 	, stop_name as psname
@@ -258,7 +258,7 @@ select
 		-- select the nearest road geometry for each stop
 		nearest as (partition by stops.stop_id order by st_distance(stops_geom.geom, rs.geom))
 ) as stops_ratt
-where 
+where
 	-- only take one rattachement
 	nth = 1;
 
@@ -298,7 +298,7 @@ CREATE TABLE _tempus_import.transport_mode
   name character varying, -- Description of the mode
   public_transport boolean NOT NULL,
   gtfs_route_type integer -- Reference to the equivalent GTFS code (for PT only)
-); 
+);
 
 drop sequence if exists _tempus_import.transport_mode_id;
 create sequence _tempus_import.transport_mode_id start with 1;
@@ -316,27 +316,27 @@ SELECT
         when r.route_type = 5 then 'Cable-car (%(network))'
         when r.route_type = 6 then 'Suspended Cable-Car (%(network))'
         when r.route_type = 7 then 'Funicular (%(network))'
-        end, 
-	TRUE, 
+        end,
+	TRUE,
 	r.route_type
 FROM (SELECT DISTINCT route_type FROM _tempus_import.routes) r
 ;
 
 INSERT INTO tempus.transport_mode(id, name, public_transport, gtfs_route_type)
-SELECT 
+SELECT
 	id, name, public_transport, gtfs_route_type
-FROM _tempus_import.transport_mode; 
+FROM _tempus_import.transport_mode;
 
 do $$
 begin
 raise notice '==== PT routes ====';
 end$$;
 /* ==== GTFS routes ==== */
--- drop constraints 
+-- drop constraints
 alter table tempus.pt_route drop CONSTRAINT pt_route_agency_id_fkey;
 
 insert into tempus.pt_route( id, vendor_id, short_name, long_name, transport_mode, agency_id )
-select * from 
+select * from
 (select
 	(select id from _tempus_import.pt_route_idmap where vendor_id=route_id) as id
         , route_id as vendor_id
@@ -453,7 +453,7 @@ begin
 raise notice '==== PT trips ====';
 end$$;
 -- drop constraints
-alter table tempus.pt_trip drop constraint if exists pt_trip_route_id_fkey;; 
+alter table tempus.pt_trip drop constraint if exists pt_trip_route_id_fkey;;
 
 insert into tempus.pt_trip(id, vendor_id, route_id, service_id, short_name)
 	select * from
@@ -470,7 +470,7 @@ insert into tempus.pt_trip(id, vendor_id, route_id, service_id, short_name)
 
 -- restore constraints
 alter table tempus.pt_trip add constraint pt_trip_route_id_fkey FOREIGN KEY(route_id)
-	REFERENCES tempus.pt_route(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;; 
+	REFERENCES tempus.pt_route(id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE;;
 
 do $$
 begin
@@ -537,7 +537,7 @@ end$$;
 -- Update network begin and end calendar dates
 UPDATE tempus.pt_network
 SET calendar_begin = req.min, calendar_end = req.max
-FROM 
+FROM
 (
 	WITH req_min AS (
 	SELECT service_id, min(calendar_date)
@@ -549,7 +549,7 @@ FROM
 	) r
 	GROUP BY service_id
 	ORDER BY service_id
-	), 
+	),
 	req_max AS (
 	SELECT service_id, max(calendar_date)
 	FROM
@@ -563,11 +563,11 @@ FROM
 	)
 	SELECT pt_agency.network_id, min(req_min.min), max(req_max.max)
 	  FROM tempus.pt_trip, tempus.pt_route, tempus.pt_agency, req_min, req_max
-	  WHERE pt_agency.id = pt_route.agency_id AND pt_route.id = pt_trip.route_id AND pt_trip.service_id = req_min.service_id AND pt_trip.service_id = req_max.service_id 
+	  WHERE pt_agency.id = pt_route.agency_id AND pt_route.id = pt_trip.route_id AND pt_trip.service_id = req_min.service_id AND pt_trip.service_id = req_max.service_id
 	  GROUP BY pt_agency.network_id
 	  ORDER BY network_id
 ) req
-WHERE req.network_id = pt_network.id; 
+WHERE req.network_id = pt_network.id;
 
 do $$
 begin
@@ -649,7 +649,7 @@ t;
 insert into
 	tempus.road_section
 select
-   nextval('tempus.seq_road_section_id')::bigint as id, 
+   nextval('tempus.seq_road_section_id')::bigint as id,
    5 as road_type, -- "other"
    node1.id as node_from,
    node2.id as node_to,
@@ -715,3 +715,5 @@ where
 ;
 
 
+-- Vacuuming database
+VACUUM FULL ANALYSE;

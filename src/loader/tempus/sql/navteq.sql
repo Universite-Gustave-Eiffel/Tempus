@@ -330,3 +330,8 @@ DELETE FROM tempus.road_restriction WHERE id IN
 
 -- Removing import function (direction type)
 DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, character varying, boolean);
+
+-- Vacuuming database
+VACUUM FULL ANALYSE;
+
+

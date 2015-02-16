@@ -27,14 +27,14 @@ end$$;
 drop sequence if exists tempus.seq_road_node_id;
 create sequence tempus.seq_road_node_id start with 1;
 
-insert into 
+insert into
 	tempus.road_node
 select
 	nextval('tempus.seq_road_node_id')::bigint as id
 	, false as bifurcation
 	, st_force_3DZ(nodes.gnode) as geom
 from (
-	select 
+	select
 		st_transform(st_startpoint(geom), 2154) as gnode
 	from
 		_tempus_import.highway
@@ -92,7 +92,7 @@ select
 		when hw."type" = 'service' then 5
 		when hw."type" = 'track' then 5
 		when hw."type" = 'unclassified' then 4
-		else 4		
+		else 4
 	end as road_type
 	, nf.id as node_from
 	, nt.id as node_to
@@ -133,7 +133,7 @@ select
 		when hw."type" = 'unclassified' then 50
 		when hw."type" = 'footway' then 0
 		else 50
-	end as car_speed_limit	
+	end as car_speed_limit
 	, hw."name" as road_name
 	, hw.lanes as lane
 	, false as roundabout
@@ -157,7 +157,7 @@ on
 -- Restore constraints and index
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 	PRIMARY KEY (id);
-ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
+ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey
 	FOREIGN KEY (node_from) REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
 	FOREIGN KEY (node_to) REFERENCES tempus.road_node(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -190,3 +190,6 @@ begin
   end if;
 end$$;
 
+
+-- Vacuuming database
+VACUUM FULL ANALYSE;
