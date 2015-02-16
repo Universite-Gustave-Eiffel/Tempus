@@ -24,12 +24,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- TABLE road_node 
+-- TABLE road_node
 INSERT INTO tempus.road_node
 	SELECT
                 DISTINCT id,
                 false as bifurcation
-        FROM 
+        FROM
 		(SELECT ref_in_id AS id  FROM _tempus_import.streets
 		 UNION
                  SELECT nref_in_id AS id FROM _tempus_import.streets) as t;
@@ -51,28 +51,28 @@ where
         id = nref_in_id;
 
 
--- TABLE road_section 
+-- TABLE road_section
 
 -- Begin to remove all related constraints and index (performances concern)
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_from_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_to_fkey;
-ALTER TABLE tempus.road_section_speed DROP CONSTRAINT road_section_speed_road_section_id_fkey; 
+ALTER TABLE tempus.road_section_speed DROP CONSTRAINT road_section_speed_road_section_id_fkey;
 ALTER TABLE tempus.poi DROP CONSTRAINT poi_road_section_id_fkey;
 ALTER TABLE tempus.pt_stop DROP CONSTRAINT pt_stop_road_section_id_fkey;
-ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey; 
+ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey;
 
 -- Proceed to INSERT
-INSERT INTO tempus.road_section 
+INSERT INTO tempus.road_section
 
-SELECT 
+SELECT
 	link_id AS id,
 
         CASE func_class
 		WHEN '1' THEN 1
 		WHEN '2' THEN 1
 		WHEN '3' THEN 2
-                WHEN '4' THEN 3 
-                WHEN '5' THEN 4 
+                WHEN '4' THEN 3
+                WHEN '5' THEN 4
 		ELSE 5 -- others
 	END AS road_type,
 
@@ -110,10 +110,10 @@ FROM _tempus_import.streets AS st;
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_pkey
 	PRIMARY KEY (id);
 
-ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey 
-	FOREIGN KEY (node_from) REFERENCES tempus.road_node; 
+ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_from_fkey
+	FOREIGN KEY (node_from) REFERENCES tempus.road_node;
 ALTER TABLE tempus.road_section ADD CONSTRAINT road_section_node_to_fkey
-	FOREIGN KEY (node_to) REFERENCES tempus.road_node; 
+	FOREIGN KEY (node_to) REFERENCES tempus.road_node;
 
 ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_section_id_fkey
         FOREIGN KEY (road_section_id) REFERENCES tempus.road_section
@@ -121,30 +121,49 @@ ALTER TABLE tempus.road_section_speed ADD CONSTRAINT road_section_speed_road_sec
 ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
         FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
-	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section; 
+	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
+
+
+
+INSERT INTO tempus.road_daily_profile
+(
+    SELECT row_number() over ( ORDER BY speed_cat ) as id,
+                0 as begin_time,
+                5 as speed_rule,
+                24*60-1 as end_time,
+                CASE streets.speed_cat::integer
+                WHEN 1 THEN 130
+                WHEN 2 THEN 115
+                WHEN 3 THEN 95
+                WHEN 4 THEN 80
+                WHEN 5 THEN 60
+                WHEN 6 THEN 40
+                WHEN 7 THEN 20
+                WHEN 8 THEN 10
+                ELSE NULL
+               END AS average_speed
+    FROM _tempus_import.streets
+    GROUP BY speed_cat
+    ORDER BY speed_cat
+);
+
+
 
 INSERT INTO tempus.road_section_speed
 (
-SELECT link_id,0, 5, 
-CASE speed_cat::integer
-		WHEN 1 THEN 130 
-		WHEN 2 THEN 115
-		WHEN 3 THEN 95
-		WHEN 4 THEN 80
-		WHEN 5 THEN 60
-		WHEN 6 THEN 40
-		WHEN 7 THEN 20
-		WHEN 8 THEN 8
-		ELSE NULL 
-	END AS car_average_speed
-	FROM _tempus_import.streets);
+    SELECT link_id as road_section_id,
+            0 as period_id,
+            speed_cat::integer as road_daily_profile
+    FROM _tempus_import.streets
+);
+
 
 
 -- Set bifurcation flag
 update tempus.road_node
 set
         bifurcation = true
-where id in 
+where id in
 (
         select
                 rn.id as id
@@ -177,7 +196,7 @@ FROM
 	FROM _tempus_import.cdms AS cdms
 	JOIN _tempus_import.rdms AS rdms
 	ON cdms.cond_id = rdms.cond_id
-	WHERE (cond_type = 7 OR cond_type = 1) -- 7 for driving manoeuvres, 1 for tolls 
+	WHERE (cond_type = 7 OR cond_type = 1) -- 7 for driving manoeuvres, 1 for tolls
 		AND seq_number = 1 -- only select the first item of the sequence
 	)
 	UNION
@@ -201,7 +220,7 @@ GROUP BY mcond_id
 INSERT INTO tempus.road_restriction_time_penalty
 SELECT
         cond_id::bigint as restriction_id,
-        0 as period_id, 
+        0 as period_id,
         case when ar_pedstrn = 'Y' then 1 else 0 end
         + case when ar_bus = 'Y' then 2 else 0 end  -- restrictions applied to buses, are considered applied to bicycles
         + case when ar_auto = 'Y' then 4 else 0 end
@@ -217,7 +236,7 @@ WHERE
 INSERT INTO tempus.road_restriction_toll
 SELECT
         cond_id::bigint as restriction_id,
-        0 as period_id, 
+        0 as period_id,
         case when ar_pedstrn = 'Y' then 1 else 0 end
         + case when ar_auto = 'Y' then 4 else 0 end
         + case when ar_taxis = 'Y' then 8 else 0 end
@@ -242,7 +261,7 @@ SET traffic_rules_ft = traffic_rules_ft
         + case when ar_auto = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 4) = 0) then 4 else 0 end
         + case when ar_taxis = 'Y' and ((cond_val1 = 'BOTH DIRECTIONS') OR (cond_val1 = 'TO REFERENCE NODE')) AND ((traffic_rules_tf & 8) = 0) then 8 else 0 end
 FROM _tempus_import.cdms as cdms
-WHERE cdms.cond_type = 5 AND cdms.link_id = road_section.id; 
+WHERE cdms.cond_type = 5 AND cdms.link_id = road_section.id;
 
 -- TABLE tempus.poi : insert car parks
 INSERT INTO tempus.poi(id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section, geom)
@@ -261,21 +280,21 @@ WHERE road_section.id = parking.link_id;
 DELETE FROM tempus.road_section
 WHERE traffic_rules_ft=0 AND traffic_rules_tf=0;
 
--- Deleting road restrictions associated to unreferenced road sections 
+-- Deleting road restrictions associated to unreferenced road sections
 DELETE FROM tempus.road_restriction_time_penalty WHERE restriction_id IN
 (
 	SELECT distinct id
 	FROM
 	(
 		SELECT q.id, q.road_section, q.rang, s.node_from, s.node_to
-		FROM 
+		FROM
 		(SELECT road_restriction.id, unnest(road_restriction.sections) as road_section, tempus.array_search(unnest(road_restriction.sections), sections) as rang
 		  FROM tempus.road_restriction) as q
 		LEFT JOIN tempus.road_section as s
 			ON s.id=q.road_section
 	) t
-	WHERE node_from IS NULL 
-); 
+	WHERE node_from IS NULL
+);
 
 DELETE FROM tempus.road_restriction_toll WHERE restriction_id IN
 (
@@ -283,7 +302,7 @@ DELETE FROM tempus.road_restriction_toll WHERE restriction_id IN
 	FROM
 	(
 		SELECT q.id, q.road_section, q.rang, s.node_from, s.node_to
-		FROM 
+		FROM
 		(
 		SELECT road_restriction.id, unnest(road_restriction.sections) as road_section, tempus.array_search(unnest(road_restriction.sections), sections) as rang
 		  FROM tempus.road_restriction) as q
@@ -291,7 +310,7 @@ DELETE FROM tempus.road_restriction_toll WHERE restriction_id IN
 			ON s.id=q.road_section
 	) t
 	WHERE node_from is null
-); 
+);
 
 DELETE FROM tempus.road_restriction WHERE id IN
 (
@@ -299,7 +318,7 @@ DELETE FROM tempus.road_restriction WHERE id IN
 	FROM
 	(
 		SELECT q.id, q.road_section, q.rang, s.node_from, s.node_to
-		FROM 
+		FROM
 		(
 		SELECT road_restriction.id, unnest(road_restriction.sections) as road_section, tempus.array_search(unnest(road_restriction.sections), sections) as rang
 		  FROM tempus.road_restriction) as q
@@ -307,7 +326,7 @@ DELETE FROM tempus.road_restriction WHERE id IN
 			ON s.id=q.road_section
 	) t
 	WHERE node_from is null
-); 
+);
 
 -- Removing import function (direction type)
 DROP FUNCTION _tempus_import.navteq_transport_direction(character varying, character varying, character varying, character varying, character varying, boolean);

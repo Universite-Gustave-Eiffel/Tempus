@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -29,9 +29,9 @@ namespace Tempus {
 // Data structure used to label vertices : (vertex, automaton state, mode)
 struct Triple {
     Multimodal::Vertex vertex;
-    Automaton<Road::Edge>::Graph::vertex_descriptor state; 
-    db_id_t mode; 
-	
+    Automaton<Road::Edge>::Graph::vertex_descriptor state;
+    db_id_t mode;
+
     bool operator==( const Tempus::Triple& t ) const {
         return (vertex == t.vertex) && (state == t.state) && (mode == t.mode);
     }
@@ -47,8 +47,8 @@ struct Triple {
 
 typedef std::list<Triple> Path;
 
-typedef std::map< Triple, double > PotentialMap; 
-typedef std::map< Triple, db_id_t > TripMap; 
+typedef std::map< Triple, double > PotentialMap;
+typedef std::map< Triple, db_id_t > TripMap;
 typedef std::map< Triple, Triple > PredecessorMap;
 
 // variables to retain between two requests
@@ -78,45 +78,45 @@ public:
 
     virtual ~DynamicMultiPlugin() {
     }
-    
+
 protected:
     // Plugin options
     double timetable_frequency_; // travel time calculation mode
-    bool verbose_algo_; // verbose vertex and edge traversal 
+    bool verbose_algo_; // verbose vertex and edge traversal
     bool verbose_; // Verbose processing (except algorithm)
     bool enable_trace_;
-    double min_transfer_time_; // Minimum time necessary for a transfer to be done (in minutes) 
+    double min_transfer_time_; // Minimum time necessary for a transfer to be done (in minutes)
     double walking_speed_; // Average walking speed
-    double cycling_speed_; // Average cycling speed 
+    double cycling_speed_; // Average cycling speed
     double car_parking_search_time_; // Parking search time for cars
     bool use_speed_profiles_;
-    
+
     // Plugin metrics
     int iterations_; // Number of iterations
-    double time_; // Time elapsed for pre_process() and process() 
+    double time_; // Time elapsed for pre_process() and process()
     double time_algo_; // Time elapsed for process()
-    
+
     // Other attributes
-    Multimodal::Vertex destination_; // Current request destination 
-    std::map< Multimodal::Vertex, db_id_t > available_vehicles_; 
-    PotentialMap potential_map_;     
-    PredecessorMap pred_map_; 
-    PotentialMap wait_map_; 
-    PotentialMap shift_map_; 
-    TripMap trip_map_; 
+    Multimodal::Vertex destination_; // Current request destination
+    std::map< Multimodal::Vertex, db_id_t > available_vehicles_;
+    PotentialMap potential_map_;
+    PredecessorMap pred_map_;
+    PotentialMap wait_map_;
+    PotentialMap shift_map_;
+    TripMap trip_map_;
 
     Road::Vertex parking_location_;
 
     static StaticVariables s_;
 
-public: 
+public:
     static void post_build();
     virtual void pre_process( Request& request );
     virtual void process();
 private:
     Path reorder_path( Triple departure, Triple arrival, bool reverse = false );
     void add_roadmap( const Path& path, bool reverse = false );
-}; 
+};
 
 }
 
