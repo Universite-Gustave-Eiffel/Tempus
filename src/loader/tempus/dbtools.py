@@ -91,8 +91,6 @@ class PsqlLoader:
             command.append("--port=%s" % self.dbparams['port'])
         if self.dbparams.has_key('dbname'):
             command.append("--dbname=%s" % self.dbparams['dbname'])
-        # single transaction
-        command.append("-1")
         if self.logfile:
             try:
                 out = open(self.logfile, "a")
