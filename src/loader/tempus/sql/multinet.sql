@@ -44,7 +44,6 @@ SELECT
                 WHEN 8 THEN 7
 		ELSE NULL
 	END AS road_type,
-	netbclass AS hierarchy_level,
 	f_jnctid AS node_from,
 	t_jnctid AS node_to,
 	CASE
