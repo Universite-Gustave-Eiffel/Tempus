@@ -9,7 +9,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -33,6 +33,13 @@ class MultinetImporter(ShpImporter):
     SHAPEFILES = ['nw', 'jc', 'mn', 'cf', '2r', 'rn', 'mp', 'is', 'ig', 'rs', 'td', 'sr']
     # SQL files to execute before loading shapefiles
     PRELOADSQL = ["reset_import_schema.sql"]
-    # SQL files to execute after loading shapefiles 
+    # SQL files to execute after loading shapefiles
     POSTLOADSQL = ["multinet.sql"]
+
+# Module to load TomTom road data (Multinet)
+class MultinetImporter1409(MultinetImporter):
+    """This class enables to load TomTom Multinet data into a PostGIS database."""
+    # SQL files to execute after loading shapefiles
+    POSTLOADSQL = ["multinet1409.sql"]
+
 

@@ -9,7 +9,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -29,20 +29,22 @@ from tools import ShpLoader
 from dbtools import PsqlLoader
 from config import *
 
+
 # Base class for data importer
 class DataImporter(object):
-    """This class is a parent class which enable loading data to a PostgreSQL/PostGIS
+    """
+    This class is a parent class which enable loading data to a PostgreSQL/PostGIS
     database. It loads nothing by default."""
     # SQL files to execute before loading data
     PRELOADSQL = []
     # SQL files to execute after loading data
     POSTLOADSQL = []
 
-    def __init__(self, source = "", dbstring = "", logfile = None, doclean = True):
+    def __init__(self, source="", dbstring="", logfile=None, doclean=True):
         self.source = source
         self.dbstring = dbstring
         self.logfile = logfile
-        self.ploader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
+        self.ploader = PsqlLoader(dbstring=self.dbstring, logfile=self.logfile)
         self.doclean = doclean
 
     def check_input(self):
@@ -58,7 +60,7 @@ class DataImporter(object):
         try:
             self.check_input()
         except StandardError as e:
-            sys.stderr.write("During import: %s\n" % e.message )
+            sys.stderr.write("During import: %s\n" % e.message)
             return False
 
         ret = self.preload_sql()
@@ -99,7 +101,7 @@ class DataImporter(object):
                 if is_template:
                     f = open(filename, 'r')
                     template = f.read()
-                    self.ploader.set_from_template( template, values )
+                    self.ploader.set_from_template(template, values)
                 else:
                     self.ploader.set_sqlfile(filename)
                 ret = self.ploader.load()
@@ -119,12 +121,12 @@ class DataImporter(object):
 class ShpImporter(DataImporter):
     """This class enables to load shapefile data into a PostGIS database."""
     # Shapefile names to load, without the extension and prefix. It will be the table name.
-    SHAPEFILES = [] 
+    SHAPEFILES = []
     # Optional shapefiles
-    OPT_SHAPEFILES = [] 
+    OPT_SHAPEFILES = []
     # SQL files to execute before loading shapefiles
     PRELOADSQL = []
-    # SQL files to execute after loading shapefiles 
+    # SQL files to execute after loading shapefiles
     POSTLOADSQL = []
 
     def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
@@ -138,7 +140,7 @@ class ShpImporter(DataImporter):
 
     def check_input(self):
         """Check if data input is ok : we have the required number of shapefiles."""
-        res = set(self.SHAPEFILES).issubset( set([ s for s,_ in self.shapefiles]) )
+        res = set(self.SHAPEFILES).issubset(set([s for s,_ in self.shapefiles]))
         if not res:
             raise StandardError ("Some input files missing. Check data source.")
 
@@ -155,7 +157,7 @@ class ShpImporter(DataImporter):
                 ret = self.sloader.load()
         return ret
 
-    def set_dbparams(self, dbstring = ""):
+    def set_dbparams(self, dbstring=""):
         super(ShpImporter, self).set_dbparams(dbstring)
         self.sloader.set_dbparams(dbstring)
 
@@ -194,30 +196,30 @@ class ShpImporter(DataImporter):
         notfound = []
 
         baseDir = os.path.realpath(self.source)
-        ls = os.listdir( baseDir )
+        ls = os.listdir(baseDir)
         for shp in self.OPT_SHAPEFILES:
             filenameShp = self.prefix + shp + ".shp"
             filenameDbf = self.prefix + shp + ".dbf"
-            lsLower = [ x.lower() for x in ls ]
+            lsLower = [x.lower() for x in ls]
             if filenameShp in lsLower:
-                i = lsLower.index( filenameShp )
-                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
+                i = lsLower.index(filenameShp)
+                self.shapefiles.append((shp, os.path.join(baseDir, ls[i])))
             elif filenameDbf in lsLower:
-                i = lsLower.index( filenameDbf )
-                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
+                i = lsLower.index(filenameDbf)
+                self.shapefiles.append((shp, os.path.join(baseDir, ls[i])))
         for shp in self.SHAPEFILES:
             filenameShp = self.prefix + shp + ".shp"
             filenameDbf = self.prefix + shp + ".dbf"
-            lsLower = [ x.lower() for x in ls ]
+            lsLower = [x.lower() for x in ls]
             if filenameShp in lsLower:
-                i = lsLower.index( filenameShp )
-                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
+                i = lsLower.index(filenameShp)
+                self.shapefiles.append((shp, os.path.join(baseDir, ls[i])))
             elif filenameDbf in lsLower:
-                i = lsLower.index( filenameDbf )
-                self.shapefiles.append( (shp, os.path.join( baseDir, ls[i] )) )
+                i = lsLower.index(filenameDbf)
+                self.shapefiles.append((shp, os.path.join(baseDir, ls[i])))
             else:
-                notfound.append( filenameDbf )
+                notfound.append(filenameDbf)
                 sys.stderr.write("Warning : file for table %s not found.\n"\
-                                     "%s not found\n" % (shp, filenameDbf) )
+                                     "%s not found\n" % (shp, filenameDbf))
         return notfound
 

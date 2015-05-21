@@ -20,6 +20,7 @@
 """
 
 from tomtom import MultinetImporter
+from tomtom import MultinetImporter1409
 from navteq import NavstreetsImporter
 from osm import OSMImporter
 from pt import GTFSImporter
