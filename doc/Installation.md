@@ -21,7 +21,7 @@ On Ubuntu
 
 On an Ubuntu system, dependencies correspond to the following packages :
 
-````
+```
 nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev
 libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
 ```
