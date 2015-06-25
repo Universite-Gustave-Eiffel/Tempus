@@ -7,6 +7,7 @@ import argparse
 import tempus
 import sys
 
+
 def import_tomtom(args, shape_options):
     """Load Tomtom (Multinet) data into a PostGIS database."""
     Importer = {
@@ -16,73 +17,104 @@ def import_tomtom(args, shape_options):
     mni = Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     return mni.load()
 
+
 def import_pt(args, substitutions):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
     gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean, substitutions)
     return gtfsi.load()
+
 
 def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
     ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     return ntqi.load()
 
+
 def import_route120(args, shape_options):
     """Load IGN (Route120) data into a PostGIS database."""
     igni = tempus.IGNRoute120Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     return igni.load()
+
 
 def import_route500(args, shape_options):
     """Load IGN (Route500) data into a PostGIS database."""
     igni = tempus.IGNRoute500Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     return igni.load()
 
+
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
     osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     return osmi.load()
+
 
 def import_poi(args, shape_options, poi_type, substitutions):
     """Load a point shapefile into a PostGIS database."""
     poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type, substitutions)
     return poii.load()
 
+
 def reset_db(args):
     r = tempus.ResetImporter('', '', args.dbstring, args.logfile, '', False)
     return r.load()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     shape_options = {}
     parser = argparse.ArgumentParser(description='Tempus data loader')
-    parser.add_argument('-s', '--source', required=True,
-            help='The source directory/file to load data from')
-    parser.add_argument('-S', '--srid', required=False,
-            help="Set the SRID for geometries. Defaults to 4326 (lat/lon).")
-    parser.add_argument('-R', '--reset', required=False,
-                        help='Reset the database before importing',
-                        action='store_true', dest='doreset', default=False)
-    parser.add_argument('-t', '--type', required=True,
-                        help='The data type (tomtom, navteq, osm, gtfs, poi, route120, route500)')
     parser.add_argument(
-            '-m', '--model-version', required=False, default=None, dest='model_version',
+        '-s', '--source',
+        required=True,
+        help='The source directory/file to load data from')
+    parser.add_argument(
+        '-S', '--srid',
+        required=False,
+        help="Set the SRID for geometries. Defaults to 4326 (lat/lon).")
+    parser.add_argument(
+        '-R', '--reset',
+        required=False,
+        help='Reset the database before importing',
+        action='store_true', dest='doreset', default=False)
+    parser.add_argument(
+        '-t', '--type',
+        required=True,
+        help='The data type (tomtom, navteq, osm, gtfs, poi, route120, route500)')
+    parser.add_argument(
+        '-m', '--model-version',
+        required=False, default=None, dest='model_version',
         help='The data model version (tomtom version)')
-    parser.add_argument('-d', '--dbstring', required=False,
-            help='The database connexion string')
-    parser.add_argument('-p', '--prefix', required=False,
-            help='Prefix for shapefile names', default="")
-    parser.add_argument('-l', '--logfile', required=False,
-            help='Log file for loading and SQL output')
-    parser.add_argument('-i', '--insert', required=False,
-            help='Use insert for SQL mode (default to COPY)',
-            action='store_false', dest='copymode', default=True)
-    parser.add_argument('-W', '--encoding', required=False,
-            help="Specify the character encoding of Shape's attribute column.")
-    parser.add_argument('-n', '--noclean', required=False,
-            action='store_true', default = False,
-            help="Do not clean temporary SQL file after loading.")
-    parser.add_argument('-y', '--poitype', required=False,
-            default = 5, help = "Poi type (1: Car park, 2: shared car, 3: Cycle, 4:Shared cycle, 5:user)")
-    parser.add_argument('-v', '--substitution', required=False, nargs='+',
-            default = '', help = "List of column name substitution name:value. See poi.sql and gtfs.sql")
+    parser.add_argument(
+        '-d', '--dbstring',
+        required=False,
+        help='The database connexion string')
+    parser.add_argument(
+        '-p', '--prefix',
+        required=False,
+        help='Prefix for shapefile names', default="")
+    parser.add_argument(
+        '-l', '--logfile',
+        required=False,
+        help='Log file for loading and SQL output')
+    parser.add_argument(
+        '-i', '--insert',
+        required=False, action='store_false', dest='copymode', default=True,
+        help='Use insert for SQL mode (default to COPY)')
+    parser.add_argument(
+        '-W', '--encoding',
+        required=False,
+        help="Specify the character encoding of Shape's attribute column.")
+    parser.add_argument(
+        '-n', '--noclean',
+        required=False, action='store_true', default=False,
+        help="Do not clean temporary SQL file after loading.")
+    parser.add_argument(
+        '-y', '--poitype',
+        required=False, default=5,
+        help="Poi type (1: Car park, 2: shared car, 3: Cycle, 4:Shared cycle, 5:user)")
+    parser.add_argument(
+        '-v', '--substitution',
+        required=False, nargs='+', default='',
+        help="List of column name substitution name:value. See poi.sql and gtfs.sql")
     args = parser.parse_args()
 
     substitutions = {}
@@ -90,7 +122,7 @@ if __name__ == "__main__":
         [var, value] = v.split(':')
         substitutions[var] = value
 
-    if args.type in ['tomtom', 'navteq', 'poi', 'osm' ]:
+    if args.type in {'tomtom', 'navteq', 'poi', 'osm'}:
         if not args.srid:
             sys.stderr.write("SRID needed for %s data type. Assuming EPSG:4326.\n" % args.type)
             shape_options['s'] = 4326
@@ -112,7 +144,7 @@ if __name__ == "__main__":
 
     # first reset if needed
     if args.doreset:
-        reset_db( args )
+        reset_db(args)
 
     r = None
     if args.type == 'tomtom':
@@ -141,4 +173,3 @@ if __name__ == "__main__":
         print "Error during import !"
         sys.exit(1)
     sys.exit(0)
-

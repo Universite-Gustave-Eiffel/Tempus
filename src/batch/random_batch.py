@@ -9,7 +9,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -28,24 +28,28 @@ import sys
 
 # add ../../python to the include dir
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-wps_path = os.path.abspath( script_path + '/../python' )
+wps_path = os.path.abspath(script_path + '/../python')
 sys.path.insert(0, wps_path)
+
 from tempus_request import *
 from history_file import *
 
-dbstring="dbname=tempus_test_db"
-wpsurl="http://127.0.0.1/wps"
-npts=100
+dbstring = "dbname=tempus_test_db"
+wpsurl = "http://127.0.0.1/wps"
+npts = 100
 
 # test command line arguments
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tempus batch')
-    parser.add_argument('-d', '--dbstring', required=False,
-            help='The database connection string')
-    parser.add_argument('-w', '--wpsurl', required=False,
-            help='The WPS server URL')
-    parser.add_argument('-n', '--npts', required=False,
-            help='Number of point pairs to test')
+    parser.add_argument(
+        '-d', '--dbstring', required=False,
+        help='The database connection string')
+    parser.add_argument(
+        '-w', '--wpsurl', required=False,
+        help='The WPS server URL')
+    parser.add_argument(
+        '-n', '--npts', required=False,
+        help='Number of point pairs to test')
 
     args = parser.parse_args()
 
@@ -56,33 +60,33 @@ if __name__ == "__main__":
     if args.npts:
         npts = int(args.npts)
 
-    tempus = TempusRequest( wpsurl )
+    tempus = TempusRequest(wpsurl)
 
     # connection to db
-    conn = psycopg2.connect( dbstring )
+    conn = psycopg2.connect(dbstring)
     cur = conn.cursor()
 
     # get every road node
-    cur.execute( "SELECT id, st_x(geom) as x, st_y(geom) as y FROM tempus.road_node" )
+    cur.execute("SELECT id, st_x(geom) as x, st_y(geom) as y FROM tempus.road_node")
     points = []
     for pt in cur:
-        points.append( Point(vertex=int(pt[0])) )
+        points.append(Point(vertex=int(pt[0])))
 
     random.seed()
 
     server_state_xml = tempus.server_state()
-    history = ZipHistoryFile( "history.save" )
+    history = ZipHistoryFile("history.save")
 
     times = []
     distances = []
     total_time = 0
     total_rtime = 0
-    for i in range(0,npts):
+    for i in range(0, npts):
 
         # pick two points at random and ask for an itinerary
         n = len(points)
-        dep = points[ random.randrange(n) ]
-        arr = points[ random.randrange(n) ]
+        dep = points[random.randrange(n)]
+        arr = points[random.randrange(n)]
 
         # distance computation
         dist = (dep.x-arr.x)**2 + (dep.y-arr.y)**2
@@ -91,10 +95,12 @@ if __name__ == "__main__":
 
         # the actual request
         try:
-            req_xml = tempus.request( plugin_name = "sample_road_plugin",
-                                      plugin_options = { 'prepare_result' : True },
-                                      origin = dep,
-                                      steps = [RequestStep(destination = arr)] )
+            req_xml = tempus.request(
+                plugin_name="sample_road_plugin",
+                plugin_options={'prepare_result': True},
+                origin=dep,
+                steps=[RequestStep(destination=arr)]
+            )
         except RuntimeError as e:
             if e[1].find('No path found') > -1:
                 # ignore error when no path has been found
@@ -114,7 +120,7 @@ if __name__ == "__main__":
         # total cost
         rDistance = 0.0
         if len(tempus.results) > 0:
-            rDistance =  tempus.results[0].costs[Cost.Distance]
+            rDistance = tempus.results[0].costs[Cost.Distance]
 
         print "i=%d, t=%f, r=%f, d=%f" % (i, t, r, rDistance)
 
@@ -122,7 +128,7 @@ if __name__ == "__main__":
         distances.append(rDistance)
 
         # save request
-        history.addRecord( '<record>' + req_xml + server_state_xml + '</record>' )
+        history.addRecord('<record>' + req_xml + server_state_xml + '</record>')
 
     print "Total time spend by plugin: %.2fs" % total_time
     print "Total time (with wps communication): %.2fs" % total_rtime
