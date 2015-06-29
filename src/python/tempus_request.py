@@ -331,7 +331,7 @@ def parse_option_value(opt):
     elif opt.tag == 'string_value':
         optval = opt.attrib['value']
         type = OptionType.String
-    return OptionValue(value=optval, type=type)
+    return OptionValue(value=optval, otype=type)
 
 
 def parse_plugins(output):
