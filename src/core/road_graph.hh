@@ -74,10 +74,6 @@ enum RoadType
 /// Used as Vertex.
 /// Refers to the 'road_node' DB's table
 struct Node : public Base {
-    /// This is a shortcut to the vertex index in the corresponding graph, if any.
-    /// Needed to speedup access to a graph's vertex from a Node.
-    /// Can be null
-    DECLARE_RW_PROPERTY( vertex, boost::optional<Vertex> );
 
     /// Total number of incident edges > 2
     DECLARE_RW_PROPERTY( is_bifurcation, bool );
@@ -92,26 +88,36 @@ public:
 /// Used as Directed Edge.
 /// Refers to the 'road_section' DB's table
 struct Section : public Base {
-    /// This is a shortcut to the edge index in the corresponding graph, if any.
-    /// Needed to speedup access to a graph's edge from a Section.
-    /// Can be null
-    DECLARE_RW_PROPERTY( edge, Edge );
+
+    DECLARE_RW_PROPERTY( length, float );
+    DECLARE_RW_PROPERTY( car_speed_limit, float );
+    DECLARE_RW_PROPERTY( traffic_rules, uint16_t );
+
+    /// Type of parking available on this section
+    /// This is to be used for parking on the streets
+    /// Special parks are represented using a POI
+    /// This is a bitfield value composeed of TransportModeTrafficRules
+    DECLARE_RW_PROPERTY( parking_traffic_rules, uint16_t );
+
+    DECLARE_RW_PROPERTY( lane, uint8_t );
+
+    bool is_roundabout() const { return road_flags_ & RoadIsRoundAbout; }
+    bool is_bridge() const { return road_flags_ & RoadIsBridge; }
+    bool is_tunnel() const { return road_flags_ & RoadIsTunnel; }
+    bool is_ramp() const { return road_flags_ & RoadIsRamp; }
+    bool is_tollway() const { return road_flags_ & RoadIsTollway; }
+
+    void set_is_roundabout(bool b) { road_flags_ |= b ? RoadIsRoundAbout : 0; }
+    void set_is_bridge(bool b) { road_flags_ |= b ? RoadIsBridge : 0; }
+    void set_is_tunnel(bool b) { road_flags_ |= b ? RoadIsTunnel : 0; }
+    void set_is_ramp(bool b) { road_flags_ |= b ? RoadIsRamp : 0; }
+    void set_is_tollway(bool b) { road_flags_ |= b ? RoadIsTollway : 0; }
 
     DECLARE_RW_PROPERTY( road_type, RoadType );
 
     /// name of the road.
     /// FIXME should be replaced by a reference to a 'road' table
     DECLARE_RW_PROPERTY( road_name, std::string );
-
-    DECLARE_RW_PROPERTY( traffic_rules, int );
-    DECLARE_RW_PROPERTY( length, double );
-    DECLARE_RW_PROPERTY( car_speed_limit, double );
-    DECLARE_RW_PROPERTY( lane, int );
-    DECLARE_RW_PROPERTY( is_roundabout, bool );
-    DECLARE_RW_PROPERTY( is_bridge, bool );
-    DECLARE_RW_PROPERTY( is_tunnel, bool );
-    DECLARE_RW_PROPERTY( is_ramp, bool );
-    DECLARE_RW_PROPERTY( is_tollway, bool );
 
     /// list of pointers to public transport steps referenced on this edge
     DECLARE_RO_PROPERTY( stops, std::vector<const PublicTransport::Stop*> );
@@ -125,14 +131,19 @@ struct Section : public Base {
     /// add a link to a POI
     void add_poi_ref( const POI* );
 
-    /// Type of parking available on this section
-    /// This is to be used for parking on the streets
-    /// Special parks are represented using a POI
-    /// This is a bitfield value composeed of TransportModeTrafficRules
-    DECLARE_RW_PROPERTY( parking_traffic_rules, int );
-
 public:
-    Section() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0), parking_traffic_rules_(0) {}
+    Section() : length_(0.0), car_speed_limit_(0.0), traffic_rules_(0), parking_traffic_rules_(0), road_flags_(0) {}
+
+private:
+    uint8_t road_flags_;
+    enum RoadFlag
+    {
+        RoadIsRoundAbout = 1 << 0,
+        RoadIsBridge =     1 << 1,
+        RoadIsTunnel =     1 << 2,
+        RoadIsRamp =       1 << 3,
+        RoadIsTollway =    1 << 4
+    };
 };
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;

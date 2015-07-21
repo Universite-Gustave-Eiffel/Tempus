@@ -21,14 +21,14 @@
 namespace Tempus
 {
 
-double distance( const Point2D& a, const Point2D& b )
+float distance( const Point2D& a, const Point2D& b )
 {
     return sqrt(
                 (a.x() - b.x()) * (a.x() - b.x()) +
                 (a.y() - b.y()) * (a.y() - b.y()) );
 }
 
-double distance( const Point3D& a, const Point3D& b )
+float distance( const Point3D& a, const Point3D& b )
 {
     return sqrt(
                 (a.x() - b.x()) * (a.x() - b.x()) +

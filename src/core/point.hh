@@ -27,20 +27,20 @@ namespace Tempus
 ///
 /// 2D Points
 struct Point2D {
-    DECLARE_RW_PROPERTY( x, double );
-    DECLARE_RW_PROPERTY( y, double );
+    DECLARE_RW_PROPERTY( x, float );
+    DECLARE_RW_PROPERTY( y, float );
 };
 
 ///
 /// 3D Points
 struct Point3D {
-    DECLARE_RW_PROPERTY( x, double );
-    DECLARE_RW_PROPERTY( y, double );
-    DECLARE_RW_PROPERTY( z, double );
+    DECLARE_RW_PROPERTY( x, float );
+    DECLARE_RW_PROPERTY( y, float );
+    DECLARE_RW_PROPERTY( z, float );
 };
 
-double distance( const Point3D& a, const Point3D& b );
-double distance( const Point2D& a, const Point2D& b );
+float distance( const Point3D& a, const Point3D& b );
+float distance( const Point2D& a, const Point2D& b );
 
 }
 

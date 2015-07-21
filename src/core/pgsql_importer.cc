@@ -203,7 +203,6 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             Road::Vertex v = boost::add_vertex( node, *road_graph );
 
             road_nodes_map[ node.db_id() ] = v;
-            (*road_graph)[v].set_vertex( v );
 
             progression( static_cast<float>( ( i + 0. ) / res.size() / 4.0 ) );
         }
@@ -255,7 +254,8 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             section.set_is_tunnel( res[i][j++] );
             section.set_is_ramp( res[i][j++] );
             section.set_is_tollway( res[i][j++] );
-            section.set_road_name( res[i][j++] );
+            //section.set_road_name( res[i][j++] );
+            j++;
 
             if ( ! res[i][j].is_null() ) {
                 //
@@ -301,7 +301,6 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
                 boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, *road_graph );
                 BOOST_ASSERT( is_added );
-                (*road_graph)[e].set_edge( e );
                 // link the road_section to this edge
                 road_sections_map[ section.db_id() ] = e;
             }
@@ -315,7 +314,6 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
                 boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, *road_graph );
                 BOOST_ASSERT( is_added );
-                (*road_graph)[e].set_edge( e );
             }
 
             progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
