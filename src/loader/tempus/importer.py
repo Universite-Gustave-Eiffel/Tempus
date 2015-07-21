@@ -133,8 +133,15 @@ class ShpImporter(DataImporter):
             options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True):
         super(ShpImporter, self).__init__(source, dbstring, logfile, doclean)
         self.shapefiles = []
-        self.prefix = self.get_prefix(prefix)
-        self.get_shapefiles()
+        if isinstance(self.source, list):
+            for source in self.source:
+                print "Importing source {}".format(source)
+                self.prefix = self.get_prefix(source, prefix)
+                self.get_shapefiles(source)
+        else:
+            self.prefix = self.get_prefix(self.source, prefix)
+            self.get_shapefiles(source)
+            pass
         self.sloader = ShpLoader(dbstring = dbstring, schema = IMPORTSCHEMA,
                 logfile = self.logfile, options = options, doclean = doclean)
 
@@ -147,6 +154,7 @@ class ShpImporter(DataImporter):
     def load_data(self):
         """Load all given shapefiles into the database."""
         ret = True
+        created_tables = set()
         for i, s in enumerate(self.shapefiles):
             shp, rshp = s
             # if one shapefile failed, stop there
@@ -154,6 +162,11 @@ class ShpImporter(DataImporter):
                 self.sloader.set_shapefile(rshp)
                 # the table name is the shapefile name without extension
                 self.sloader.set_table(shp)
+                if shp in created_tables:
+                    self.sloader.options['mode'] = 'a'
+                else:
+                    self.sloader.options['mode'] = 'c'                    
+                    created_tables.add(shp)
                 ret = self.sloader.load()
         return ret
 
@@ -161,18 +174,19 @@ class ShpImporter(DataImporter):
         super(ShpImporter, self).set_dbparams(dbstring)
         self.sloader.set_dbparams(dbstring)
 
-    def get_prefix(self, prefix = ""):
+    def get_prefix(self, source, prefix = ""):
         """Get prefix for shapefiles. If given prefix is empty, try to find it browsing the directory."""
         myprefix = ""
         if prefix:
             myprefix = prefix
         else:
             # prefix has not been given, try to deduce it from files
-            if self.source:
+            if source:
                 prefixes = []
-                if not os.path.isdir(self.source):
+                if not os.path.isdir(source):
+                    print "{} n'est pas un dir".format(source)
                     return ''
-                for filename in os.listdir(self.source):
+                for filename in os.listdir(source):
                     for shp in self.SHAPEFILES:
                         # if we find the table name at the end of the file name (w/o ext), add prefix to the list
                         # only check dbf and shp
@@ -191,11 +205,10 @@ class ShpImporter(DataImporter):
                     return ''
         return myprefix
 
-    def get_shapefiles(self):
-        self.shapefiles = []
+    def get_shapefiles(self, source):
         notfound = []
 
-        baseDir = os.path.realpath(self.source)
+        baseDir = os.path.realpath(source)
         ls = os.listdir(baseDir)
         for shp in self.OPT_SHAPEFILES:
             filenameShp = self.prefix + shp + ".shp"

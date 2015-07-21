@@ -14,6 +14,7 @@ def import_tomtom(args, shape_options):
         '1409': tempus.MultinetImporter1409,
         None: tempus.MultinetImporter
     }[args.model_version]
+    shape_options['I'] = False
     mni = Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
     return mni.load()
 
@@ -65,6 +66,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-s', '--source',
         required=True,
+        nargs='+',
         help='The source directory/file to load data from')
     parser.add_argument(
         '-S', '--srid',

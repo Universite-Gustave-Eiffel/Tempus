@@ -96,7 +96,7 @@ class ShpLoader:
                 self.options['I'] = False
             else:
                 self.options['n'] = False
-                self.options['I'] = True
+                #self.options['I'] = True
 
             # setup shp2pgsql command line
             command = [SHP2PGSQL]
