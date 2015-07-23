@@ -57,8 +57,8 @@ public:
 
     static const PluginCapabilities plugin_capabilities() {
         PluginCapabilities params;
-        params.optimization_criteria().push_back( CostDistance );
-        params.optimization_criteria().push_back( CostDuration );
+        params.optimization_criteria().push_back( CostId::CostDistance );
+        params.optimization_criteria().push_back( CostId::CostDuration );
         params.set_depart_after( true );
         params.set_arrive_before( false );
         return params;
@@ -75,7 +75,7 @@ public:
         REQUIRE( graph_.public_transports().size() >= 1 );
         REQUIRE( request.steps().size() == 2 );
 
-        if ( ( request.optimizing_criteria()[0] != CostDuration ) && ( request.optimizing_criteria()[0] != CostDistance ) ) {
+        if ( ( request.optimizing_criteria()[0] != CostId::CostDuration ) && ( request.optimizing_criteria()[0] != CostId::CostDistance ) ) {
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
@@ -239,7 +239,7 @@ public:
             ptstep->set_arrival_stop( *it );
             ptstep->set_network_id( network_id );
             ptstep->set_transport_mode( 1 );
-            ptstep->set_cost( CostDistance, distance_map[*it] );
+            ptstep->set_cost( CostId::CostDistance, distance_map[*it] );
 
             previous = *it;
 

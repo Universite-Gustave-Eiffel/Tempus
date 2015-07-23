@@ -29,7 +29,7 @@ Request::Request()
 {
     steps_.push_back( Step() ); // origin
     steps_.push_back( Step() ); // destination
-    optimizing_criteria_.push_back( CostDistance ); // default criterion
+    optimizing_criteria_.push_back( CostId::CostDistance ); // default criterion
 }
 
 Request::Request( const Step& o, const Step& d )
@@ -39,7 +39,7 @@ Request::Request( const Step& o, const Step& d )
     if ( !check_timing_() ) {
         throw BadRequestTiming();
     }
-    optimizing_criteria_.push_back( CostDistance ); // default criterion
+    optimizing_criteria_.push_back( CostId::CostDistance ); // default criterion
 }
 
 void Request::add_intermediary_step( const Step& step )
@@ -95,7 +95,7 @@ void Request::set_optimizing_criterion( unsigned idx, const CostId& c )
 
 void Request::set_optimizing_criterion( unsigned idx, int cost )
 {
-    BOOST_ASSERT( cost >= FirstValue && cost <= LastValue );
+    BOOST_ASSERT( cost >= int(CostId::FirstValue) && cost <= int(CostId::LastValue) );
     set_optimizing_criterion( idx, static_cast<CostId>(cost) );
 }
 

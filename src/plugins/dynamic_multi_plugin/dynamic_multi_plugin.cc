@@ -186,7 +186,7 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
 const DynamicMultiPlugin::PluginCapabilities DynamicMultiPlugin::plugin_capabilities()
 {
     Plugin::PluginCapabilities caps;
-    caps.optimization_criteria().push_back( CostDuration );
+    caps.optimization_criteria().push_back( CostId::CostDuration );
     caps.set_depart_after( true );
     caps.set_arrive_before( true );
     return caps;
@@ -245,7 +245,7 @@ void DynamicMultiPlugin::pre_process( Request& request )
     REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
     request_ = request;
 
-    if ( request.optimizing_criteria()[0] != CostDuration )
+    if ( request.optimizing_criteria()[0] != CostId::CostDuration )
         throw std::invalid_argument( "Unsupported optimizing criterion" );
 
     if ( verbose_ ) cout << "Road origin node ID = " << graph_.road()[request_.origin()].db_id() << ", road destination node ID = " << graph_.road()[request_.destination()].db_id() << endl;
@@ -753,7 +753,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
 
             step->set_road_edge( e );
             step->set_transport_mode( it->mode );
-            step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
+            step->set_cost( CostId::CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
         }
 
         else if ( it->vertex.type() == Multimodal::Vertex::PublicTransport && next->vertex.type() == Multimodal::Vertex::PublicTransport ) {
@@ -776,7 +776,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
                     break;
                 }
             }
-            step->set_cost( CostDuration, step->arrival_time() - step->departure_time() );
+            step->set_cost( CostId::CostDuration, step->arrival_time() - step->departure_time() );
         }
         else {
             // Make a multimodal edge and copy it into the roadmap as a 'generic' step
@@ -784,9 +784,9 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>(mstep.get());
             step->set_transport_mode( it->mode );
             step->set_final_mode( next->mode );
-            step->set_cost( CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
+            step->set_cost( CostId::CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
         }
-        total_duration += mstep->cost( CostDuration );
+        total_duration += mstep->cost( CostId::CostDuration );
 
         roadmap.add_step( mstep );
     }

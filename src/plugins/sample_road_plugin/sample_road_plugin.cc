@@ -58,7 +58,7 @@ public:
 
     static const PluginCapabilities plugin_capabilities() {
         PluginCapabilities params;
-        params.optimization_criteria().push_back( CostDistance );
+        params.optimization_criteria().push_back( CostId::CostDistance );
         return params;
     }
 
@@ -85,7 +85,7 @@ public:
         REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
         REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
 
-        if ( ( request.optimizing_criteria()[0] != CostDistance ) ) {
+        if ( ( request.optimizing_criteria()[0] != CostId::CostDistance ) ) {
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
@@ -223,7 +223,7 @@ public:
             }
 
             step.reset( new Roadmap::RoadStep() );
-            step->set_cost(CostDistance, road_graph[e].length());
+            step->set_cost(CostId::CostDistance, road_graph[e].length());
             step->set_transport_mode(1);
             Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
             rstep->set_road_edge( e );

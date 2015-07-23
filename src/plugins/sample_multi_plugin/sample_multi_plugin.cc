@@ -53,8 +53,8 @@ public:
 
     static const PluginCapabilities plugin_capabilities() {
         PluginCapabilities params;
-        params.optimization_criteria().push_back( CostDistance );
-        params.optimization_criteria().push_back( CostDuration );
+        params.optimization_criteria().push_back( CostId::CostDistance );
+        params.optimization_criteria().push_back( CostId::CostDuration );
         params.set_intermediate_steps( true );
         params.set_depart_after( true );
         params.set_arrive_before( false );
@@ -181,7 +181,7 @@ public:
         request_ = request;
 
         for ( size_t i = 0; i < request.optimizing_criteria().size(); ++i ) {
-            REQUIRE( request.optimizing_criteria()[i] == CostDistance || request.optimizing_criteria()[i] == CostDuration );
+            REQUIRE( request.optimizing_criteria()[i] == CostId::CostDistance || request.optimizing_criteria()[i] == CostId::CostDuration );
         }
 
         result_.clear();
@@ -259,8 +259,8 @@ public:
             // we don't use edge() since it will loop over the whole graph each time
             // we assume the edge exists in these maps
             Multimodal::Edge me( *previous, *it );
-            mstep->set_cost(CostDistance, distances[me]);
-            mstep->set_cost(CostDuration, durations[me]);
+            mstep->set_cost(CostId::CostDistance, distances[me]);
+            mstep->set_cost(CostId::CostDuration, durations[me]);
             mstep->set_transport_mode( 1 );
 
             roadmap.add_step( std::auto_ptr<Roadmap::Step>(mstep) );
@@ -288,7 +288,7 @@ public:
     /// Try to find the shortest path between origin and destination, optimizing the passed criterion
     /// The given path is not cleared
     /// The bool returned is false if no path has been found
-    bool find_path( const Multimodal::Vertex& origin, const Multimodal::Vertex& destination, int optimizing_criterion, Path& path ) {
+    bool find_path( const Multimodal::Vertex& origin, const Multimodal::Vertex& destination, CostId optimizing_criterion, Path& path ) {
         size_t n = num_vertices( graph_ );
         std::vector<boost::default_color_type> color_map( n );
         std::vector<Multimodal::Vertex> pred_map( n );
@@ -300,7 +300,7 @@ public:
         Tempus::PluginGraphVisitor vis( this );
         destination_ = destination;
         try {
-            if ( optimizing_criterion == CostDistance ) {
+            if ( optimizing_criterion == CostId::CostDistance ) {
                 boost::dijkstra_shortest_paths( graph_,
                                                 origin,
                                                 boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
@@ -315,7 +315,7 @@ public:
                                                 boost::make_iterator_property_map( color_map.begin(), vertex_index )
                                                 );
             }
-            else if ( optimizing_criterion == CostDuration ) {
+            else if ( optimizing_criterion == CostId::CostDuration ) {
                 boost::dijkstra_shortest_paths( graph_,
                                                 origin,
                                                 boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
