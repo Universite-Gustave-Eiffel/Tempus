@@ -91,6 +91,94 @@ std::vector<Tempus::db_id_t> Value::as< std::vector<Tempus::db_id_t> >() const
     }
     return res;
 }
+
+ResultIterator::ResultIterator( PGconn* conn ) : conn_( conn ), res_(0) {
+    BOOST_ASSERT( conn_ );
+    this->operator++(0);
+}
+
+ResultIterator::ResultIterator() : conn_(0), res_(0)
+{
+}
+
+ResultIterator::ResultIterator( ResultIterator&& other )
+{
+    conn_ = other.conn_;
+    res_ = other.res_;
+    other.res_ = 0;
+}
+
+ResultIterator& ResultIterator::operator=( ResultIterator&& other )
+{
+    if ( res_ && res_ != other.res_ )
+    {
+        PQclear( res_ );
+    }
+    conn_ = other.conn_;
+    res_ = other.res_;
+    other.res_ = 0;
+    return *this;
+}
+
+bool ResultIterator::operator==( const ResultIterator& other ) const
+{
+    return res_ == other.res_;
+}
+
+bool ResultIterator::operator!=( const ResultIterator& other ) const
+{
+    return res_ != other.res_;
+}
+
+ResultIterator::~ResultIterator()
+{
+    if ( res_ )
+    {
+        PQclear( res_ );
+    }
+}
+
+RowValue ResultIterator::operator* () const
+{
+    return RowValue( res_, 0 );
+}
+
+void ResultIterator::operator++(int)
+{
+    if (res_)
+    {
+        PQclear( res_ );
+        res_ = 0;
+    }
+    res_ = PQgetResult( conn_ );
+    if ( PQresultStatus(res_) != PGRES_SINGLE_TUPLE )
+    {
+        if ( res_ ) PQclear( res_ );
+        res_ = PQgetResult(conn_); // to achieve the command
+        if ( res_ ) PQclear( res_ );        
+        res_ = 0;
+    }
+}
+
+ResultIterator Connection::exec_it( const std::string& query ) throw (std::runtime_error)
+{
+    int ret;
+    ret = PQsendQuery( conn_, query.c_str() );
+    if ( !ret )
+    {
+        std::string err = std::string("sendQuery: ") + PQerrorMessage( conn_ );
+        throw std::runtime_error( err.c_str() );
+    }
+    ret = PQsetSingleRowMode( conn_ );
+    if ( !ret )
+    {
+        std::string err = std::string("setSingleMode: ") + PQerrorMessage( conn_ );
+        throw std::runtime_error( err.c_str() );
+    }
+
+    return ResultIterator( conn_ );
+}
+
 }
 
 

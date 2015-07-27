@@ -185,26 +185,28 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //   Road nodes
     //------------------
     {
-        Db::Result res( connection_.exec( (boost::format("SELECT id, bifurcation, st_x(geom), st_y(geom), st_z(geom) FROM %1%.road_node") % schema_name).str() ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        Db::ResultIterator res_it = connection_.exec_it( (boost::format("SELECT id, bifurcation, st_x(geom), st_y(geom), st_z(geom) FROM %1%.road_node") % schema_name).str() );
+        Db::ResultIterator it_end;
+        for ( ; res_it != it_end; res_it++ )
+        {
+            Db::RowValue res_i = *res_it;
             Road::Node node;
 
-            node.set_db_id( res[i][0] );
+            node.set_db_id( res_i[0] );
             // only overwritten if not null
-            node.set_is_bifurcation( res[i][1] );
+            node.set_is_bifurcation( res_i[1] );
 
             Point3D p;
-            p.set_x( res[i][2] );
-            p.set_y( res[i][3] );
-            p.set_z( res[i][4] );
+            p.set_x( res_i[2] );
+            p.set_y( res_i[3] );
+            p.set_z( res_i[4] );
             node.set_coordinates(p);
 
             Road::Vertex v = boost::add_vertex( node, *road_graph );
 
             road_nodes_map[ node.db_id() ] = v;
 
-            progression( static_cast<float>( ( i + 0. ) / res.size() / 4.0 ) );
+            //progression( static_cast<float>( ( i + 0. ) / res.size() / 4.0 ) );
         }
     }
 
@@ -224,54 +226,54 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                                                   "FROM %1%.road_section AS rs1 "
                                                   "LEFT JOIN %1%.road_section AS rs2 "
                                                   "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from ") % schema_name).str();
-        Db::Result res( connection_.exec( qquery ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        Db::ResultIterator res_it = connection_.exec_it( qquery );
+        Db::ResultIterator it_end;
+        for ( ; res_it != it_end; res_it++ )
+        {
+            Db::RowValue res_i = *res_it;
             Road::Section section;
             Road::Section section2;
 
-            section.set_db_id( res[i][0].as<db_id_t>() );
+            section.set_db_id( res_i[0].as<db_id_t>() );
             BOOST_ASSERT( section.db_id() > 0 );
 
-            if ( !res[i][1].is_null() ) {
-                section.set_road_type( static_cast<Road::RoadType>(res[i][1].as<int>()) );
+            if ( !res_i[1].is_null() ) {
+                section.set_road_type( static_cast<Road::RoadType>(res_i[1].as<int>()) );
             }
 
-            db_id_t node_from_id = res[i][2].as<db_id_t>();
-            db_id_t node_to_id = res[i][3].as<db_id_t>();
+            db_id_t node_from_id = res_i[2].as<db_id_t>();
+            db_id_t node_to_id = res_i[3].as<db_id_t>();
             BOOST_ASSERT( node_from_id > 0 );
             BOOST_ASSERT( node_to_id > 0 );
 
             int j = 4;
-            int traffic_rules_ft = res[i][j++];
-            int traffic_rules_tf = res[i][j++];
+            int traffic_rules_ft = res_i[j++];
+            int traffic_rules_tf = res_i[j++];
             section.set_traffic_rules( traffic_rules_ft );
-            section.set_length( res[i][j++] );
-            section.set_car_speed_limit( res[i][j++] );
-            section.set_lane( res[i][j++] );
-            section.set_is_roundabout( res[i][j++] );
-            section.set_is_bridge( res[i][j++] );
-            section.set_is_tunnel( res[i][j++] );
-            section.set_is_ramp( res[i][j++] );
-            section.set_is_tollway( res[i][j++] );
-            //section.set_road_name( res[i][j++] );
-            j++;
+            section.set_length( res_i[j++] );
+            section.set_car_speed_limit( res_i[j++] );
+            section.set_lane( res_i[j++] );
+            section.set_is_roundabout( res_i[j++] );
+            section.set_is_bridge( res_i[j++] );
+            section.set_is_tunnel( res_i[j++] );
+            section.set_is_ramp( res_i[j++] );
+            section.set_is_tollway( res_i[j++] );
 
-            if ( ! res[i][j].is_null() ) {
+            if ( ! res_i[j].is_null() ) {
                 //
                 // If the opposite section exists, take it
-                section2.set_db_id( res[i][j++].as<db_id_t>());
-                section2.set_road_type( static_cast<Road::RoadType>(res[i][j++].as<int>()) );
+                section2.set_db_id( res_i[j++].as<db_id_t>());
+                section2.set_road_type( static_cast<Road::RoadType>(res_i[j++].as<int>()) );
                 // overwrite transport_type_tf here
-                traffic_rules_tf = res[i][j++];
-                section.set_length( res[i][j++] );
-                section.set_car_speed_limit( res[i][j++] );
-                section.set_lane( res[i][j++] );
-                section.set_is_roundabout( res[i][j++] );
-                section.set_is_bridge( res[i][j++] );
-                section.set_is_tunnel( res[i][j++] );
-                section.set_is_ramp( res[i][j++] );
-                section.set_is_tollway( res[i][j++] );
+                traffic_rules_tf = res_i[j++];
+                section.set_length( res_i[j++] );
+                section.set_car_speed_limit( res_i[j++] );
+                section.set_lane( res_i[j++] );
+                section.set_is_roundabout( res_i[j++] );
+                section.set_is_bridge( res_i[j++] );
+                section.set_is_tunnel( res_i[j++] );
+                section.set_is_ramp( res_i[j++] );
+                section.set_is_tollway( res_i[j++] );
             }
             else {
                 // else create an opposite section from this one
@@ -316,7 +318,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 BOOST_ASSERT( is_added );
             }
 
-            progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
+            //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
         }
     }
 
@@ -343,31 +345,32 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     {
 
-        Db::Result res( connection_.exec( (boost::format("select distinct on (n.id) "
-                                                         "s.network_id, n.id, n.name, n.location_type, "
-                                                         "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
-                                                         ",st_x(n.geom), st_y(n.geom), st_z(n.geom) "
-                                                         "from %1%.pt_stop as n, %1%.pt_section as s "
-                                                         "where s.stop_from = n.id or s.stop_to = n.id") % schema_name).str() ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        Db::ResultIterator res_it( connection_.exec_it( (boost::format("select distinct on (n.id) "
+                                                                    "s.network_id, n.id, n.name, n.location_type, "
+                                                                    "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
+                                                                    ",st_x(n.geom), st_y(n.geom), st_z(n.geom) "
+                                                                    "from %1%.pt_stop as n, %1%.pt_section as s "
+                                                                    "where s.stop_from = n.id or s.stop_to = n.id") % schema_name).str() ) );
+        Db::ResultIterator it_end;
+        for ( ; res_it != it_end; res_it++ ) {
+            Db::RowValue res_i = *res_it;
 
             int j = 0;
             Tempus::db_id_t network_id;
-            res[i][j++] >> network_id;
+            res_i[j++] >> network_id;
             BOOST_ASSERT( network_id > 0 );
             BOOST_ASSERT( networks.find( network_id ) != networks.end() );
             BOOST_ASSERT( pt_graphs.find( network_id ) != pt_graphs.end() );
             PublicTransport::Graph& pt_graph = pt_graphs[network_id];
             PublicTransport::Stop stop;
 
-            stop.set_db_id( res[i][j++] );
+            stop.set_db_id( res_i[j++] );
             BOOST_ASSERT( stop.db_id() > 0 );
-            stop.set_name( res[i][j++] );
-            stop.set_is_station( res[i][j++] );
+            stop.set_name( res_i[j++] );
+            stop.set_is_station( res_i[j++] );
 
             {
-                Db::Value v(res[i][j++]);
+                Db::Value v(res_i[j++]);
                 if ( ! v.is_null() ) {
                     Tempus::db_id_t p_id = v;
                     if ( pt_nodes_map[network_id].find( p_id ) != pt_nodes_map[network_id].end() ) {
@@ -377,7 +380,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             }
 
             Tempus::db_id_t road_section;
-            res[i][j++] >> road_section;
+            res_i[j++] >> road_section;
             BOOST_ASSERT( road_section > 0 );
 
             if ( road_sections_map.find( road_section ) == road_sections_map.end() ) {
@@ -398,13 +401,13 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 }
             }
 
-            stop.set_zone_id( res[i][j++] );
-            stop.set_abscissa_road_section( res[i][j++] );
+            stop.set_zone_id( res_i[j++] );
+            stop.set_abscissa_road_section( res_i[j++] );
 
             Point3D p;
-            p.set_x( res[i][j++] );
-            p.set_y( res[i][j++] );
-            p.set_z( res[i][j++] );
+            p.set_x( res_i[j++] );
+            p.set_y( res_i[j++] );
+            p.set_z( res_i[j++] );
             stop.set_coordinates(p);
 
             PublicTransport::Vertex v = boost::add_vertex( stop, pt_graph );
@@ -412,7 +415,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             pt_graph[v].set_vertex( v );
             pt_graph[v].set_graph( &pt_graph );
 
-            progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.5 ) );
+            //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.5 ) );
         }
     }
 
@@ -436,18 +439,19 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     }
 
     {
-        Db::Result res( connection_.exec( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section") % schema_name).str() ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section") % schema_name).str() ) );
+        Db::ResultIterator it_end;
+        for ( ; res_it != it_end; res_it++ ) {
+            Db::RowValue res_i = *res_it;
             Tempus::db_id_t network_id;
-            res[i][0] >> network_id;
+            res_i[0] >> network_id;
             BOOST_ASSERT( network_id > 0 );
             BOOST_ASSERT( pt_graphs.find( network_id ) != pt_graphs.end() );
             PublicTransport::Graph& pt_graph = pt_graphs[ network_id ];
 
             Tempus::db_id_t stop_from_id, stop_to_id;
-            res[i][1] >> stop_from_id;
-            res[i][2] >> stop_to_id;
+            res_i[1] >> stop_from_id;
+            res_i[2] >> stop_to_id;
             BOOST_ASSERT( stop_from_id > 0 );
             BOOST_ASSERT( stop_to_id > 0 );
 
@@ -471,7 +475,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             pt_graph[e].set_graph( &pt_graph );
             pt_graph[e].set_network_id( network_id );
 
-            progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.75 ) );
+            //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.75 ) );
         }
     }
 
@@ -480,22 +484,23 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //-------------
     boost::ptr_map<db_id_t, POI> pois;
     {
-        Db::Result res( connection_.exec( (boost::format("SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section "
-                                                         ", st_x(geom), st_y(geom), st_z(geom) FROM %1%.poi") % schema_name).str() ) );
-
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section "
+                                                                    ", st_x(geom), st_y(geom), st_z(geom) FROM %1%.poi") % schema_name).str() ) );
+        Db::ResultIterator it_end;
+        for ( ; res_it != it_end; res_it++ ) {
+            Db::RowValue res_i = *res_it;
             POI poi;
 
-            poi.set_db_id( res[i][0] );
+            poi.set_db_id( res_i[0] );
             BOOST_ASSERT( poi.db_id() > 0 );
 
-            poi.set_poi_type( static_cast<POI::PoiType>(res[i][1].as<int>()) );
-            poi.set_name( res[i][2] );
+            poi.set_poi_type( static_cast<POI::PoiType>(res_i[1].as<int>()) );
+            poi.set_name( res_i[2] );
 
-            poi.set_parking_transport_modes( res[i][3].as< std::vector<db_id_t> >() );
+            poi.set_parking_transport_modes( res_i[3].as< std::vector<db_id_t> >() );
 
             db_id_t road_section_id;
-            res[i][4] >> road_section_id;
+            res_i[4] >> road_section_id;
             BOOST_ASSERT( road_section_id > 0 );
 
             if ( road_sections_map.find( road_section_id ) == road_sections_map.end() ) {
@@ -516,12 +521,12 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 }
             }
 
-            poi.set_abscissa_road_section( res[i][5] );
+            poi.set_abscissa_road_section( res_i[5] );
 
             Point3D p;
-            p.set_x( res[i][6] );
-            p.set_y( res[i][7] );
-            p.set_z( res[i][8] );
+            p.set_x( res_i[6] );
+            p.set_y( res_i[7] );
+            p.set_z( res_i[8] );
             poi.set_coordinates( p );
 
             pois.insert( poi.db_id(), std::auto_ptr<POI>(new POI( poi )) );
@@ -560,7 +565,8 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     EdgesMap edges_map;
 
     {
-        Db::Result res( connection_.exec( (boost::format("SELECT id, sections FROM %1%.road_restriction") % schema_name).str() ) );
+        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT id, sections FROM %1%.road_restriction") % schema_name).str() ) );
+        Db::ResultIterator res_it_end;
 
         std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
         Road::EdgeIterator it, it_end;
@@ -570,15 +576,16 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             road_sections_map[ graph[ *it ].db_id() ] = *it;
         }
 
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        for ( ; res_it != res_it_end; res_it++ ) {
+            Db::RowValue res_i = *res_it;
             db_id_t db_id;
 
-            res[i][0] >> db_id;
+            res_i[0] >> db_id;
             BOOST_ASSERT( db_id > 0 );
 
             bool invalid = false;
             Road::Restriction::EdgeSequence edges;
-            std::vector<db_id_t> sections = res[i][1].as<std::vector<db_id_t> >();
+            std::vector<db_id_t> sections = res_i[1].as<std::vector<db_id_t> >();
             for ( size_t j = 0; j < sections.size(); j++ ) {
                 db_id_t id = sections[j];
                 if ( road_sections_map.find( id ) == road_sections_map.end() ) {
@@ -601,16 +608,18 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
 
     // get restriction costs
     {
-        Db::Result res( connection_.exec( (boost::format("SELECT restriction_id, traffic_rules, time_value FROM %1%.road_restriction_time_penalty") % schema_name).str() ) );
+        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT restriction_id, traffic_rules, time_value FROM %1%.road_restriction_time_penalty") % schema_name).str() ) );
+        Db::ResultIterator it_end;
         std::map<db_id_t, Road::Restriction::CostPerTransport> costs;
-        for ( size_t i = 0; i < res.size(); i++ ) {
+        for ( ; res_it != it_end; res_it++ ) {
+            Db::RowValue res_i = *res_it;
             db_id_t restr_id;
             int transports;
             double cost = 0.0;
 
-            res[i][0] >> restr_id;
-            res[i][1] >> transports;
-            res[i][2] >> cost;
+            res_i[0] >> restr_id;
+            res_i[1] >> transports;
+            res_i[2] >> cost;
 
             if ( edges_map.find( restr_id ) == edges_map.end() ) {
                 CERR << "Cannot find road_restriction of ID " << restr_id << std::endl;

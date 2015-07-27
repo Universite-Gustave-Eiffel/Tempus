@@ -172,6 +172,31 @@ private:
 };
 
 ///
+/// Class representing a result iterator
+class ResultIterator {
+public:
+    ResultIterator();
+    ResultIterator( PGconn* conn );
+    ~ResultIterator();
+
+    // a result iterator is moveable
+    ResultIterator( ResultIterator&& other );
+    ResultIterator& operator=( ResultIterator&& other );
+
+    bool operator==( const ResultIterator& other ) const;
+    bool operator!=( const ResultIterator& other ) const;
+    RowValue operator* () const;
+    void operator++(int);
+private:
+    // non copyable
+    ResultIterator( const ResultIterator& other );
+    ResultIterator& operator=( const ResultIterator& other );
+
+    PGconn* conn_;
+    PGresult* res_;
+};
+
+///
 /// Class representing connection to a database.
 class Connection: boost::noncopyable {
 public:
@@ -247,6 +272,8 @@ public:
 
         return res;
     }
+
+    ResultIterator exec_it( const std::string& query ) throw ( std::runtime_error );
 protected:
     PGconn* conn_;
     static boost::mutex mutex;
