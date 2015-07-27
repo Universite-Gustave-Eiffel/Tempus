@@ -225,7 +225,11 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                                                   "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
                                                   "FROM %1%.road_section AS rs1 "
                                                   "LEFT JOIN %1%.road_section AS rs2 "
-                                                  "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from ") % schema_name).str();
+                                                  "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from "
+                                                  // we add this constraint to avoid duplicates of ways such as (a,b) and (b,a)
+                                                  // this assumes id are always positive numbers
+                                                  "WHERE rs1.id > coalesce(rs2.id, -1)" 
+                                                  ) % schema_name).str();
         Db::ResultIterator res_it = connection_.exec_it( qquery );
         Db::ResultIterator it_end;
         for ( ; res_it != it_end; res_it++ )
@@ -251,8 +255,18 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             int traffic_rules_tf = res_i[j++];
             section.set_traffic_rules( traffic_rules_ft );
             section.set_length( res_i[j++] );
-            section.set_car_speed_limit( res_i[j++] );
-            section.set_lane( res_i[j++] );
+
+            Db::Value car_speed_limit = res_i[j++];
+            float car_speed_limit_f = car_speed_limit;
+            if (car_speed_limit.is_null())
+                car_speed_limit_f = 50;
+            section.set_car_speed_limit( car_speed_limit_f );
+
+            Db::Value lane = res_i[j++];
+            if ( !lane.is_null() )
+                section.set_lane( lane.as<int>() );
+            else
+                section.set_lane( 1 );
             section.set_is_roundabout( res_i[j++] );
             section.set_is_bridge( res_i[j++] );
             section.set_is_tunnel( res_i[j++] );
@@ -266,20 +280,31 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 section2.set_road_type( static_cast<Road::RoadType>(res_i[j++].as<int>()) );
                 // overwrite transport_type_tf here
                 traffic_rules_tf = res_i[j++];
-                section.set_length( res_i[j++] );
-                section.set_car_speed_limit( res_i[j++] );
-                section.set_lane( res_i[j++] );
-                section.set_is_roundabout( res_i[j++] );
-                section.set_is_bridge( res_i[j++] );
-                section.set_is_tunnel( res_i[j++] );
-                section.set_is_ramp( res_i[j++] );
-                section.set_is_tollway( res_i[j++] );
+                section2.set_length( res_i[j++] );
+
+                Db::Value car_speed_limit_r = res_i[j++];
+                car_speed_limit_f = car_speed_limit_r;
+                if (car_speed_limit_r.is_null())
+                    car_speed_limit_f = 50;
+                section2.set_car_speed_limit( car_speed_limit_f );
+
+                Db::Value lane2 = res_i[j++];
+                if ( !lane2.is_null() )
+                    section2.set_lane( lane2.as<int>() );
+                else
+                    section2.set_lane( 1 );
+                section2.set_is_roundabout( res_i[j++] );
+                section2.set_is_bridge( res_i[j++] );
+                section2.set_is_tunnel( res_i[j++] );
+                section2.set_is_ramp( res_i[j++] );
+                section2.set_is_tollway( res_i[j++] );
             }
             else {
                 // else create an opposite section from this one
                 section2 = section;
-                section2.set_traffic_rules( traffic_rules_tf );
             }
+            section2.set_traffic_rules( traffic_rules_tf );
+
             // Assert that corresponding nodes exist
             BOOST_ASSERT_MSG( road_nodes_map.find( node_from_id ) != road_nodes_map.end(),
                               ( boost::format( "Non existing node_from %1% on road_section %2%" ) % node_from_id % section.db_id() ).str().c_str() );
@@ -295,11 +320,10 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
             if ( traffic_rules_ft > 0 ) {
                 Road::Edge e;
-                bool is_added, found;
-                boost::tie( e, found ) = boost::edge( v_from, v_to, *road_graph );
-                /*if ( found ) {
-                    continue;
-                }*/
+                bool is_added;
+
+                // this edge should not exist
+                BOOST_ASSERT( edge( v_from, v_to, *road_graph ).second == false );
 
                 boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, *road_graph );
                 BOOST_ASSERT( is_added );
@@ -308,14 +332,15 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             }
             if ( traffic_rules_tf > 0 ) {
                 Road::Edge e;
-                bool is_added, found;
-                boost::tie( e, found ) = boost::edge( v_to, v_from, *road_graph );
-                /*if ( found ) {
-                    continue;
-                }*/
+                bool is_added;
+
+                // this edge should not exist
+                BOOST_ASSERT( edge( v_to, v_from, *road_graph ).second == false );
 
                 boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, *road_graph );
                 BOOST_ASSERT( is_added );
+                // link the road_section to this edge
+                road_sections_map[ section2.db_id() ] = e;
             }
 
             //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );

@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     importer->import_constants( *graph, progression );
 
     // get the number of vertices in the graph
-    long n_road_vertices, n_road_edges, n_road_oriented_edges;
+    long n_road_vertices;
     {
         Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.road_node" ) );
         BOOST_CHECK_EQUAL( res.size(), 1 );
@@ -132,22 +132,129 @@ BOOST_AUTO_TEST_CASE( testConsistency )
 
     // get the number of road edges in the DB
     // and compute the number of edges in the graph
+    size_t n_two_way, n_separate_two_way, n_one_way;
+    // number of two-way roads
     {
-        Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.road_section" ) );
+        Db::Result res( importer->query( "select count(*) from tempus.road_section as rs1 left join tempus.road_section as rs2 "
+                                         "on rs1.node_from = rs2.node_to and rs1.node_to = rs2.node_from "
+                                         "where rs2.id is null AND rs1.traffic_rules_tf > 0") );
         BOOST_CHECK_EQUAL( res.size(), 1 );
-        n_road_edges = res[0][0].as<long>();
+        n_two_way = res[0][0].as<long>();
+    }
+    // number of two-way roads, with each way on a separate section
+    {
+        Db::Result res( importer->query( "select count(*) from tempus.road_section as rs1 left join tempus.road_section as rs2 "
+                                         "on rs1.node_from = rs2.node_to and rs1.node_to = rs2.node_from "
+                                         "where rs2.id is not null and rs1.id < rs2.id") );
+        BOOST_CHECK_EQUAL( res.size(), 1 );
+        n_separate_two_way = res[0][0].as<long>();
     }
     {
         // get the number of simple edges
         Db::Result res( importer->query( "select count(*) from tempus.road_section where traffic_rules_tf = 0" ) );
         BOOST_CHECK_EQUAL( res.size(), 1 );
-        n_road_oriented_edges = res[0][0].as<long>();
+        n_one_way = res[0][0].as<long>();
     }
-    std::cout << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges;
-    std::cout << " n_road_oriented_edges = " << n_road_oriented_edges << std::endl;
+    std::cout << "n_road_vertices = " << n_road_vertices;
+    std::cout << " n_two_way = " << n_two_way << " n_separate_two_way = " << n_separate_two_way << " n_one_way = " << n_one_way << std::endl;
     std::cout << "num_vertices = " << boost::num_vertices( graph->road() ) << " num_edges = " << boost::num_edges( graph->road() ) << std::endl;
     BOOST_CHECK_EQUAL( n_road_vertices, boost::num_vertices( graph->road() ) );
-    BOOST_CHECK_EQUAL( n_road_edges * 2 - n_road_oriented_edges, boost::num_edges( graph->road() ) );
+    BOOST_CHECK_EQUAL( (n_two_way + n_separate_two_way) * 2 + n_one_way, boost::num_edges( graph->road() ) );
+
+    std::cout << "======== test opposite sections ============" << std::endl;
+    // check that opposite sections are correctly stored
+    {
+        std::map<db_id_t, Road::Vertex> vertex_id_map;
+        Road::VertexIterator vit, vitend;
+        boost::tie( vit, vitend ) = vertices( graph->road() );
+        for ( ; vit != vitend; vit++ ) {
+            vertex_id_map[ graph->road()[*vit].db_id() ] = *vit;
+        }
+        
+        // select sections that are different in the two directions
+        Db::Result res( importer->query( "SELECT "
+                                         "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
+                                         "rs1.traffic_rules_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
+                                         "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
+                                         "rs2.id, rs2.road_type, "
+                                         "rs2.traffic_rules_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
+                                         "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
+                                         "FROM tempus.road_section AS rs1 "
+                                         "LEFT JOIN tempus.road_section AS rs2 "
+                                         "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from "
+                                         "WHERE rs2.id IS NOT NULL AND rs1.id < rs2.id" ) );
+        std::cout << "res: " << res.size() << std::endl;
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            int j = 0;
+            db_id_t s1_id = res[i][j++];
+            int s1_road_type = res[i][j++];
+            db_id_t node_from = res[i][j++];
+            db_id_t node_to = res[i][j++];
+            int s1_traffic_rules_ft = res[i][j++];
+            int s1_traffic_rules_tf = res[i][j++];
+            float s1_length = res[i][j++];
+            float s1_car_speed_limit = res[i][j++];
+            Db::Value s1_lane = res[i][j++];
+            bool s1_roundabout = res[i][j++];
+            bool s1_bridge = res[i][j++];
+            bool s1_tunnel = res[i][j++];
+            bool s1_ramp = res[i][j++];
+            bool s1_tollway = res[i][j++];
+
+            db_id_t s2_id = res[i][j++];
+            int s2_road_type = res[i][j++];
+            int s2_traffic_rules_ft = res[i][j++];
+            float s2_length = res[i][j++];
+            float s2_car_speed_limit = res[i][j++];
+            Db::Value s2_lane = res[i][j++];
+            bool s2_roundabout = res[i][j++];
+            bool s2_bridge = res[i][j++];
+            bool s2_tunnel = res[i][j++];
+            bool s2_ramp = res[i][j++];
+            bool s2_tollway = res[i][j++];
+
+            BOOST_CHECK( vertex_id_map.find( node_from ) != vertex_id_map.end() );
+            BOOST_CHECK( vertex_id_map.find( node_to ) != vertex_id_map.end() );
+            Road::Vertex from = vertex_id_map[node_from];
+            Road::Vertex to = vertex_id_map[node_to];
+
+            bool found = false;
+            Road::Edge edge1, edge2;
+            boost::tie( edge1, found ) = edge( from, to, graph->road() );
+            BOOST_CHECK( found );
+            boost::tie( edge2, found ) = edge( to, from, graph->road() );
+            BOOST_CHECK( found );
+
+            Road::Section s1 = graph->road()[edge1];
+            Road::Section s2 = graph->road()[edge2];
+
+            BOOST_CHECK_EQUAL( s1.db_id(), s1_id );
+            BOOST_CHECK_EQUAL( s1.road_type(), s1_road_type );
+            BOOST_CHECK_EQUAL( s1.traffic_rules(), s1_traffic_rules_ft );
+            BOOST_CHECK_EQUAL( s1.length(), s1_length );
+            BOOST_CHECK_EQUAL( s1.car_speed_limit(), s1_car_speed_limit );
+            BOOST_CHECK_EQUAL( s1.lane(), s1_lane.is_null() ? 1 : s1_lane.as<int>() );
+            BOOST_CHECK_EQUAL( s1.is_roundabout(), s1_roundabout );
+            BOOST_CHECK_EQUAL( s1.is_bridge(), s1_bridge );
+            BOOST_CHECK_EQUAL( s1.is_tunnel(), s1_tunnel );
+            BOOST_CHECK_EQUAL( s1.is_ramp(), s1_ramp );
+            BOOST_CHECK_EQUAL( s1.is_tollway(), s1_tollway );
+
+            BOOST_CHECK_EQUAL( s2.db_id(), s2_id );
+            BOOST_CHECK_EQUAL( s2.road_type(), s2_road_type );
+            BOOST_CHECK_EQUAL( s2.traffic_rules(), s2_traffic_rules_ft );
+            BOOST_CHECK_EQUAL( s2.length(), s2_length );
+            BOOST_CHECK_EQUAL( s2.car_speed_limit(), s2_car_speed_limit );
+            BOOST_CHECK_EQUAL( s2.lane(), s2_lane.is_null() ? 1 : s2_lane.as<int>() );
+            BOOST_CHECK_EQUAL( s2.is_roundabout(), s2_roundabout );
+            BOOST_CHECK_EQUAL( s2.is_bridge(), s2_bridge );
+            BOOST_CHECK_EQUAL( s2.is_tunnel(), s2_tunnel );
+            BOOST_CHECK_EQUAL( s2.is_ramp(), s2_ramp );
+            BOOST_CHECK_EQUAL( s2.is_tollway(), s2_tollway );
+
+            BOOST_CHECK_EQUAL( s2_traffic_rules_ft, s1_traffic_rules_tf );
+        }
+    }
 
     // number of PT networks
     {
