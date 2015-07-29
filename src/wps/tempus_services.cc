@@ -546,7 +546,7 @@ public:
                     const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
                     step_node = XML::new_node( "road_step" );
 
-                    XML::set_prop( step_node, "road", graph_.road()[step->road_edge()].road_name() );
+                    XML::set_prop( step_node, "road", step->road_name() );
                     XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
                 }
                 else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
@@ -585,7 +585,7 @@ public:
 
                     const PublicTransport::Graph* pt_graph = 0;
                     bool road_transport = false;
-                    road_name = graph_.road()[edge->road_edge()].road_name();
+                    road_name = step->road_name();
                     if ( edge->connection_type() == Multimodal::Edge::Road2Transport ) {
                         pt_graph = edge->target().pt_graph();
                         stop_name = ( *pt_graph )[edge->target().pt_vertex()].name();

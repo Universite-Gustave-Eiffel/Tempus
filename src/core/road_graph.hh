@@ -115,10 +115,6 @@ struct Section : public Base {
 
     DECLARE_RW_PROPERTY( road_type, RoadType );
 
-    /// name of the road.
-    /// FIXME should be replaced by a reference to a 'road' table
-    DECLARE_RW_PROPERTY( road_name, std::string );
-
     /// list of pointers to public transport steps referenced on this edge
     DECLARE_RO_PROPERTY( stops, std::vector<const PublicTransport::Stop*> );
 

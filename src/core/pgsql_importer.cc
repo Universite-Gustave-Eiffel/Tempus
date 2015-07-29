@@ -217,7 +217,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
         const std::string qquery = (boost::format("SELECT "
                                                   "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
                                                   "rs1.traffic_rules_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
-                                                  "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, rs1.road_name, "
+                                                  "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
                                                   "rs2.id, rs2.road_type, "
                                                   "rs2.traffic_rules_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
                                                   "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "

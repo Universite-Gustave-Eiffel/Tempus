@@ -29,6 +29,10 @@ namespace Tempus {
 /**
    A Roadmap is an object used to model steps involved in a multimodal route.
    It is a base for result values of a request.
+
+   Some of the fields may stay empty and will be filled by a request on the
+   auxiliary storage (db), since there is no need for them to be always present
+   in memory (geometries, names, etc.). They are marked as "retrieved from db"
 */
 class Roadmap {
 public:
@@ -54,7 +58,7 @@ public:
         DECLARE_RW_PROPERTY( transport_mode, db_id_t );
 
         /// Geometry of the step, described as a WKB, for visualization purpose
-        /// May be empty.
+        /// Retrieved from the db
         DECLARE_RW_PROPERTY( geometry_wkb, std::string );
 
         Step( StepType type ) : step_type_( type ) {}
@@ -74,6 +78,9 @@ public:
         ///
         /// The road section where to start from
         DECLARE_RW_PROPERTY( road_edge, Road::Edge );
+
+        /// Name of the road - retrieved from the db
+        DECLARE_RW_PROPERTY( road_name, std::string );
 
         ///
         /// Distance to walk/drive (in km). -1 if we have to go until the end of the section
@@ -122,12 +129,13 @@ public:
 
         /// Of which trip this step is part of
         DECLARE_RW_PROPERTY( trip_id, db_id_t );
-        /// Name of the route
-        DECLARE_RW_PROPERTY( route, std::string );
         /// PT stop on where to depart
         DECLARE_RW_PROPERTY( departure_stop, PublicTransport::Vertex );
         /// PT stop on where to arrive
         DECLARE_RW_PROPERTY( arrival_stop, PublicTransport::Vertex );
+
+        /// Name of the route - retrieved from the db
+        DECLARE_RW_PROPERTY( route, std::string );
 
         virtual PublicTransportStep* clone() const {
             return new PublicTransportStep( *this );
@@ -144,6 +152,9 @@ public:
 
         /// Final transport mode id
         DECLARE_RW_PROPERTY( final_mode, db_id_t );
+
+        /// Name of the road - retrieved from the db
+        DECLARE_RW_PROPERTY( road_name, std::string );
 
         virtual TransferStep* clone() const {
             return new TransferStep( *this );

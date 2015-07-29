@@ -25,6 +25,7 @@
 #include "../multimodal_graph.hh"
 #include "../db.hh"
 #include "../point.hh"
+#include "../roadmap.hh"
 
 namespace Tempus {
 ///
@@ -78,6 +79,10 @@ Point2D coordinates( const POI* poi, Db::Connection& db );
 Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& graph );
 
 ///
-/// Get geometry WKB of a Multimodal edge, from the database
-std::string geometry_wkb( const Multimodal::Edge& e, Db::Connection& db );
+/// Get geometry WKB and road name of a Multimodal edge, from the database
+void get_edge_info_from_db( const Multimodal::Edge& e, Db::Connection& db, std::string& wkb, std::string& road_name );
+
+///
+/// Fill a roadmap with elements stored in DB (road names, geometries)
+void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, Db::Connection& db, const Multimodal::Graph& graph );
 }

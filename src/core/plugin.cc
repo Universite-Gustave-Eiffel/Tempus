@@ -406,20 +406,19 @@ Result& Plugin::result()
         // cost accumulator
         Costs accum_costs;
 
+        // retrieve data from db
+        fill_from_db( roadmap.begin(), roadmap.end(), db_, graph_ );
+
         Roadmap::StepIterator it = roadmap.begin();
         Roadmap::StepIterator next = it;
-		if ( it == roadmap.end() ) {
-			continue;
-		}
+        if ( it == roadmap.end() ) {
+            continue;
+        }
         next++;
 
         for ( ; it != roadmap.end(); it++ ) {
             if ( it->step_type() == Roadmap::Step::TransferStep ) {
                 Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>( &*it );
-                Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
-
-                step->set_geometry_wkb( geometry_wkb( *edge, db_ ) );
-
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
@@ -446,6 +445,7 @@ Result& Plugin::result()
                 }
 
                 // retrieval of the step's geometry
+                // TODO: do not call postgis just to merge geometries
                 std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
                 for ( size_t i = 0; i < accum_pt.size(); i++ ) {
                     q += (boost::format("ARRAY[%1%,%2%]") % pt_graph[accum_pt[i].first].db_id() % pt_graph[accum_pt[i].second].db_id() ).str();
@@ -462,19 +462,9 @@ Result& Plugin::result()
                 // get rid of the heading '\x'
                 step->set_geometry_wkb( wkb.substr( 2 ) );
 
-                // get the route name
-                q = (boost::format("SELECT r.short_name, r.long_name, r.transport_mode from tempus.pt_trip as t, tempus.pt_route as r where t.id=%1% and t.route_id = r.id")
-                     % step->trip_id() ).str();
-                Db::Result res2 = db_.exec( q );
-                if ( ! res2.size() ) {
-                    throw std::runtime_error("No result for " + q);
-                }
-                std::string short_name = res2[0][0].as<std::string>();
-                std::string long_name = res2[0][1].as<std::string>();
-                step->set_transport_mode( res2[0][2].as<db_id_t>() );
-                step->set_route( short_name + " - " + long_name );
-
                 // copy info from the first step
+                step->set_transport_mode( pt_first->transport_mode() );
+                step->set_route( pt_first->route() );
                 step->set_departure_stop( pt_first->departure_stop() );
                 step->set_departure_time( pt_first->departure_time() );
                 step->set_wait( pt_first->wait() );
@@ -503,9 +493,9 @@ Result& Plugin::result()
 
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::RoadStep ) {
                     Roadmap::RoadStep* next_step = static_cast<Roadmap::RoadStep*>( &*next );
-                    if ( road_graph[next_step->road_edge()].road_name() == 
-                         road_graph[step->road_edge()].road_name() ) {
-						if ( next != roadmap.end() ) next++;
+                    if ( next_step->road_name() == step->road_name() ) {
+                        if ( next != roadmap.end() )
+                            next++;
                         continue;
                     }
                 }
@@ -513,6 +503,7 @@ Result& Plugin::result()
                 //
                 // retrieval of the step's geometry
                 {
+                    // TODO: do not call postgis just to merge geometries
                     std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.road_section WHERE id IN (";
                     for ( size_t i = 0; i < accum_road.size(); i++ ) {
                         q += (boost::format("%1%") % accum_road[i]).str();
@@ -560,6 +551,7 @@ Result& Plugin::result()
                 }
 
                 if ( previous_section && !on_roundabout && !action ) {
+                    // TODO: do not call postgis just to compute an angle
                     std::string q1 = ( boost::format( "SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
                                                       "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge()].db_id() ).str();
                     Db::Result res = db_.exec( q1 );
@@ -633,7 +625,9 @@ Result& Plugin::result()
             PathTrace new_trace;
             for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
                 ValuedEdge ve = roadmap.trace()[i];
-                ve.set_geometry_wkb( geometry_wkb( ve, db_ ) );
+                std::string wkb, road_name;
+                get_edge_info_from_db( ve, db_, wkb, road_name );
+                ve.set_geometry_wkb( wkb );
                 new_trace.push_back( ve );
             }
             new_roadmap.set_trace( new_trace );
