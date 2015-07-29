@@ -1,29 +1,38 @@
 set( HEADER_FILES
-    common.hh
-    cast.hh
-    cost.hh
-    io.hh
-    property.hh
-    base.hh
-    datetime.hh
-    progression.hh
-    abscissa.hh
-    road_graph.hh
-    public_transport_graph.hh
-    poi.hh
-    point.hh
-    transport_modes.hh
-    multimodal_graph.hh 
-    reverse_multimodal_graph.hh
-    request.hh
-    roadmap.hh
-    application.hh plugin.hh 
-    pgsql_importer.hh 
-    plugin.hh 
-    db.hh 
-    utils/graph_db_link.hh 
-    variant.hh
-    )
+  abscissa.hh
+  application.hh
+  base.hh
+  cast.hh
+  common.hh
+  cost.hh
+  datetime.hh
+  db.hh
+  io.hh
+  multimodal_graph.hh
+  path_trace.hh
+  pgsql_importer.hh
+  plugin.hh
+  poi.hh
+  point.hh
+  progression.hh
+  property.hh
+  public_transport_graph.hh
+  request.hh
+  reverse_multimodal_graph.hh
+  road_graph.hh
+  roadmap.hh
+  sub_map.hh
+  transport_modes.hh
+  variant.hh
+)
+
+set( UTILS_HEADER_FILES
+  utils/associative_property_map_default_value.hh
+  utils/field_property_accessor.hh
+  utils/function_property_accessor.hh
+  utils/graph_db_link.hh
+  utils/timer.hh
+)
 
 set( SOURCE_FILES 
     io.cc
@@ -47,7 +56,7 @@ set( SOURCE_FILES
     )
 
 if (WIN32)
-    add_library( tempus STATIC ${HEADER_FILES} ${SOURCE_FILES} )
+    add_library( tempus STATIC ${HEADER_FILES} ${UTILS_HEADER_FILES} ${SOURCE_FILES} )
 else ()
     add_library( tempus SHARED ${SOURCE_FILES} )
 endif ()
@@ -58,5 +67,6 @@ add_executable( sample_app sample_app.cc )
 target_link_libraries( sample_app tempus )
 
 install(TARGETS tempus DESTINATION lib)
-install(FILES ${HEADER_FILES} DESTINATION include)
+install(FILES ${HEADER_FILES} DESTINATION include/tempus)
+install(FILES ${UTILS_HEADER_FILES} DESTINATION include/tempus/utils)
 

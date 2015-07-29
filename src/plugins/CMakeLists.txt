@@ -36,6 +36,6 @@ install( TARGETS
     sample_pt_plugin 
     dynamic_multi_plugin
     cost_lib
-    LIBRARY DESTINATION lib
+    LIBRARY DESTINATION lib/tempus
     )
 endif()
