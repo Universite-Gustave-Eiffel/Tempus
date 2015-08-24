@@ -4,7 +4,7 @@ set geom=geomz
 from
 (
 select
-	id, st_setsrid(st_makepoint(st_x(pt.geom), st_y(pt.geom), st_value( rast, pt.geom )), 2154) as geomz
+	id, st_setsrid(st_makepoint(st_x(pt.geom), st_y(pt.geom), st_value( rast, pt.geom )), %(native_srid)) as geomz
 from
 	dem
 join
@@ -30,7 +30,7 @@ select
 select
 	id,
 	st_makeline( 
-	st_setsrid(st_makepoint(st_x(geom), st_y(geom), st_value(rast, geom)), 2154)
+	st_setsrid(st_makepoint(st_x(geom), st_y(geom), st_value(rast, geom)), %(native_srid))
 	) as geomz
 from
 	pts

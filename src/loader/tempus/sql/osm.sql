@@ -35,12 +35,12 @@ select
 	, st_force_3DZ(nodes.gnode) as geom
 from (
 	select
-		st_transform(st_startpoint(geom), 2154) as gnode
+		st_transform(st_startpoint(geom), %(native_srid)) as gnode
 	from
 		_tempus_import.highway
 	union
 	select
-		st_transform(st_endpoint(geom), 2154) as gnode
+		st_transform(st_endpoint(geom), %(native_srid)) as gnode
 	from
 		_tempus_import.highway
 ) as nodes;
@@ -115,7 +115,7 @@ select
 		        else 32+16+8+4+2+1
                   end
 	end as traffic_rules_tf
-	, st_length(st_transform(hw.geom, 2154)) as length
+	, st_length(st_transform(hw.geom, %(native_srid))) as length
 	, case
 		-- FIXME : check type correspondance with
 		-- http://wiki.openstreetmap.org/wiki/Routing
@@ -141,17 +141,17 @@ select
 	, hw.tunnel > 0 as tunnel
 	, false as ramp
 	, false as tollway
-	, st_force_3DZ(st_transform(hw.geom, 2154)) as geom
+	, st_force_3DZ(st_transform(hw.geom, %(native_srid))) as geom
 from
 	_tempus_import.highway as hw
 join
 	tempus.road_node as nf
 on
-	st_intersects(st_transform(st_startpoint(hw.geom), 2154), nf.geom)
+	st_intersects(st_transform(st_startpoint(hw.geom), %(native_srid)), nf.geom)
 join
 	tempus.road_node as nt
 on
-	st_intersects(st_transform(st_endpoint(hw.geom), 2154), nt.geom)
+	st_intersects(st_transform(st_endpoint(hw.geom), %(native_srid)), nt.geom)
 ;
 
 -- Restore constraints and index

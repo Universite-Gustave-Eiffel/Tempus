@@ -40,15 +40,12 @@ class POIImporter(ShpImporter):
 
     def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
             options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True, poi_type = 5, subs = {}):
-        ShpImporter.__init__(self, source, prefix, dbstring, logfile, options, doclean)
-
         if not 'name' in subs.keys():
             subs['name'] = 'pname'
         if not 'filter' in subs.keys():
             subs['filter'] = 'true'
         subs['poi_type'] = poi_type
-
-        self.POSTLOADSQL = [('poi.sql', subs)]
+        ShpImporter.__init__(self, source, prefix, dbstring, logfile, options, doclean, subs)
 
     def check_input(self):
         """Check if input is ok : given shape file exists."""

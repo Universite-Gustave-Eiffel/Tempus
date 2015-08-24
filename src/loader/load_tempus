@@ -15,48 +15,56 @@ def import_tomtom(args, shape_options):
         None: tempus.MultinetImporter
     }[args.model_version]
     shape_options['I'] = False
-    mni = Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    subs = { 'native_srid' : args.native_srid }
+    mni = Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
     return mni.load()
 
 
 def import_pt(args, substitutions):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
+    substitutions['native_srid'] = args.native_srid
     gtfsi = tempus.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean, substitutions)
     return gtfsi.load()
 
 
 def import_navteq(args, shape_options):
     """Load Navteq (Navstreets) data into a PostGIS database."""
-    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    subs = { 'native_srid' : args.native_srid }
+    ntqi = tempus.NavstreetsImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
     return ntqi.load()
 
 
 def import_route120(args, shape_options):
     """Load IGN (Route120) data into a PostGIS database."""
-    igni = tempus.IGNRoute120Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    subs = { 'native_srid' : args.native_srid }
+    igni = tempus.IGNRoute120Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
     return igni.load()
 
 
 def import_route500(args, shape_options):
     """Load IGN (Route500) data into a PostGIS database."""
-    igni = tempus.IGNRoute500Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    subs = { 'native_srid' : args.native_srid }
+    igni = tempus.IGNRoute500Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
     return igni.load()
 
 
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
-    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean)
+    subs = { 'native_srid' : args.native_srid }
+    osmi = tempus.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
     return osmi.load()
 
 
 def import_poi(args, shape_options, poi_type, substitutions):
     """Load a point shapefile into a PostGIS database."""
+    substitutions['native_srid'] = args.native_srid
     poii = tempus.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type, substitutions)
     return poii.load()
 
 
 def reset_db(args):
-    r = tempus.ResetImporter('', '', args.dbstring, args.logfile, '', False)
+    subs = {'native_srid' : args.native_srid}
+    r = tempus.ResetImporter(source='', dbstring=args.dbstring, logfile=args.logfile, options={}, doclean=False, subs=subs)
     return r.load()
 
 
@@ -65,7 +73,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tempus data loader')
     parser.add_argument(
         '-s', '--source',
-        required=True,
+        required=False,
         nargs='+',
         help='The source directory/file to load data from')
     parser.add_argument(
@@ -73,13 +81,18 @@ if __name__ == '__main__':
         required=False,
         help="Set the SRID for geometries. Defaults to 4326 (lat/lon).")
     parser.add_argument(
+        '-N', '--native-srid',
+        required=False,
+        help="Set the SRID for the tempus db. Defaults to 2154. To be used when creating/reseting the base",
+        default=2154)
+    parser.add_argument(
         '-R', '--reset',
         required=False,
         help='Reset the database before importing',
         action='store_true', dest='doreset', default=False)
     parser.add_argument(
         '-t', '--type',
-        required=True,
+        required=False,
         help='The data type (tomtom, navteq, osm, gtfs, poi, route120, route500)')
     parser.add_argument(
         '-m', '--model-version',
@@ -88,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-d', '--dbstring',
         required=False,
-        help='The database connexion string')
+        help='The database connection string')
     parser.add_argument(
         '-p', '--prefix',
         required=False,
@@ -147,31 +160,43 @@ if __name__ == '__main__':
     # first reset if needed
     if args.doreset:
         reset_db(args)
+    else:
+        # retrieve srid from database
+        native_srid = int(tempus.dbtools.exec_sql(args.dbstring, "select value from tempus.metadata where key='srid'"))
+        print "Got %d as native SRID from the DB" % native_srid
+        args.native_srid = native_srid
+        
+    if args.type is not None and args.source is not None:
+        r = None
+        if args.type == 'tomtom':
+            r = import_tomtom(args, shape_options)
+        elif args.type == 'osm':
+            args.source = args.source[0]
+            r = import_osm(args, shape_options)
+        elif args.type == 'navteq':
+            r = import_navteq(args, shape_options)
+        elif args.type == 'route120':
+            r = import_route120(args, shape_options)
+        elif args.type == 'route500':
+            r = import_route500(args, shape_options)
+        elif args.type == 'gtfs':
+            args.source = args.source[0]
+            r = import_pt(args, substitutions)
+        elif args.type == 'poi':
+            try:
+                poi_type = int(args.poitype)
+                if poi_type not in range(1, 6):
+                    raise ValueError
+            except ValueError:
+                print "Wrong poi type. Assuming User type (5). Correct values are in range 1-5."
+                poi_type = 5
+            r = import_poi(args, shape_options, poi_type, substitutions)
 
-    r = None
-    if args.type == 'tomtom':
-        r = import_tomtom(args, shape_options)
-    elif args.type == 'osm':
-        r = import_osm(args, shape_options)
-    elif args.type == 'navteq':
-        r = import_navteq(args, shape_options)
-    elif args.type == 'route120':
-        r = import_route120(args, shape_options)
-    elif args.type == 'route500':
-        r = import_route500(args, shape_options)
-    elif args.type == 'gtfs':
-        r = import_pt(args, substitutions)
-    elif args.type == 'poi':
-        try:
-            poi_type = int(args.poitype)
-            if poi_type not in range(1, 6):
-                raise ValueError
-        except ValueError:
-            print "Wrong poi type. Assuming User type (5). Correct values are in range 1-5."
-            poi_type = 5
-        r = import_poi(args, shape_options, poi_type, substitutions)
-
-    if not r:
-        print "Error during import !"
+        if not r:
+            print "Error during import !"
+            sys.exit(1)
+    elif not args.doreset:
+        sys.stderr.write("Source and type needed !")
         sys.exit(1)
+
     sys.exit(0)

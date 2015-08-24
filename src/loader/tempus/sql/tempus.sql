@@ -15,6 +15,14 @@ DELETE FROM public.geometry_columns WHERE f_table_schema='tempus';
 --
 CREATE SCHEMA tempus;
 
+CREATE TABLE tempus.metadata
+(
+   key text primary key,
+   value text
+);
+
+INSERT INTO tempus.metadata VALUES ( 'srid', '%(native_srid)' );
+
 CREATE TABLE tempus.transport_mode
 (
     id serial PRIMARY KEY,
@@ -235,7 +243,7 @@ CREATE TABLE tempus.road_restriction_toll
 COMMENT ON TABLE tempus.road_restriction_toll IS 'Tolls applied to road restrictions';
 COMMENT ON COLUMN tempus.road_restriction_toll.period_id IS 'NULL if always applies';
 COMMENT ON COLUMN tempus.road_restriction_toll.toll_rules IS 'References tempus.transport_mode_toll_rule => Bitfield value, defines the type of vehicles to which it applies';
-COMMENT ON COLUMN tempus.road_restriction_toll.toll_value IS 'In €, can be NULL if unknown';
+COMMENT ON COLUMN tempus.road_restriction_toll.toll_value IS 'In euros, can be NULL if unknown';
 
 --
 -- POI
@@ -482,15 +490,14 @@ COMMENT ON COLUMN tempus.pt_fare_rule.contains_id IS 'Zone ID referenced in temp
 --
 -- PostGIS geometry
 --
-SELECT AddGeometryColumn('tempus', 'road_section', 'geom', 2154, 'LINESTRING', 3);
-SELECT AddGeometryColumn('tempus', 'road_node', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'poi', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', 2154, 'POINT', 3);
-SELECT AddGeometryColumn('tempus', 'pt_route', 'geom', 2154, 'LINESTRING', 3);
-SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', 2154, 'LINESTRING', 3);
+SELECT AddGeometryColumn('tempus', 'road_section', 'geom', %(native_srid), 'LINESTRING', 3);
+SELECT AddGeometryColumn('tempus', 'road_node', 'geom', %(native_srid), 'POINT', 3);
+SELECT AddGeometryColumn('tempus', 'poi', 'geom', %(native_srid), 'POINT', 3);
+SELECT AddGeometryColumn('tempus', 'pt_stop', 'geom', %(native_srid), 'POINT', 3);
+SELECT AddGeometryColumn('tempus', 'pt_route', 'geom', %(native_srid), 'LINESTRING', 3);
+SELECT AddGeometryColumn('tempus', 'pt_section', 'geom', %(native_srid), 'LINESTRING', 3);
 -- TODO Check not empty geom
 -- TODO Check valid geom
--- NOTA: EPSG:2154 means Lambert 93
 
 --
 -- Utilitary functions
@@ -502,9 +509,9 @@ create or replace function tempus.road_node_id_from_coordinates( float8, float8 
 as '
 with rs as (
 select id, node_from, node_to from tempus.road_section
-order by geom <-> st_setsrid(st_point($1, $2), 2154) limit 1
+order by geom <-> st_setsrid(st_point($1, $2), %(native_srid)) limit 1
 )
-select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), 2154)) < st_distance( p2.geom, st_setsrid(st_point($1,$2), 2154)) then p1.id else p2.id end
+select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), %(native_srid))) < st_distance( p2.geom, st_setsrid(st_point($1,$2), %(native_srid))) then p1.id else p2.id end
 from rs, tempus.road_node as p1, tempus.road_node as p2
 where
 rs.node_from = p1.id and rs.node_to = p2.id
@@ -520,9 +527,9 @@ where
   (transport_mode.traffic_rules & traffic_rules_ft = transport_mode.traffic_rules
    or
   transport_mode.traffic_rules & traffic_rules_tf = transport_mode.traffic_rules)
-order by geom <-> st_setsrid(st_point($1, $2), 2154) limit 1
+order by geom <-> st_setsrid(st_point($1, $2), %(native_srid)) limit 1
 )
-select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), 2154)) < st_distance( p2.geom, st_setsrid(st_point($1,$2), 2154)) then p1.id else p2.id end
+select case when st_distance( p1.geom, st_setsrid(st_point($1,$2), %(native_srid))) < st_distance( p2.geom, st_setsrid(st_point($1,$2), %(native_srid))) then p1.id else p2.id end
 from rs, tempus.road_node as p1, tempus.road_node as p2
 where
 rs.node_from = p1.id and rs.node_to = p2.id
@@ -614,7 +621,7 @@ CREATE TABLE tempus.subset
         schema_name text NOT NULL
 );
 -- polygon that has been used to define the subset
-SELECT AddGeometryColumn('tempus', 'subset', 'geom', 2154, 'POLYGON', 2);
+SELECT AddGeometryColumn('tempus', 'subset', 'geom', %(native_srid), 'POLYGON', 2);
 
 CREATE OR REPLACE FUNCTION tempus.create_subset(msubset text, polygon text) RETURNS void AS $$
 DECLARE

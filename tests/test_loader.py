@@ -78,6 +78,36 @@ class TestTempusLoader(unittest.TestCase):
         # number of transfers
         self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section WHERE road_type=5")), 4)
 
+class TestTempusLoaderProjection(unittest.TestCase):
+
+    def setUp(self):
+        cmd = [PSQL, dbstring, '-t', '-c', "CREATE EXTENSION IF NOT EXISTS postgis;DROP SCHEMA tempus CASCADE;"]
+        subprocess.call( cmd )
+
+    def test_init(self):
+        # create a 4326 db
+        r = subprocess.call( [loader, '-d', dbstring, '-R', '-N', '4326'] )
+        self.assertEqual(r, 0)
+
+        r = subprocess.call( [loader, '-t', 'osm', '-s', data_path, '-d', dbstring] )
+        self.assertEqual(r, 0)
+
+        n_road_nodes = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node"))
+        self.assertEqual(3176, n_road_nodes)
+
+        n_road_sections = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section"))
+        self.assertEqual(4032, n_road_sections)
+
+        # GTFS loading without road
+        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring] )
+        self.assertEqual(r, 0)
+
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop")), 141)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_section")), 69)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_trip")), 3)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop_time")), 80)
+        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_route")), 2)
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Tempus data loader')

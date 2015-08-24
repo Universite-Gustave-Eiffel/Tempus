@@ -28,7 +28,7 @@ create table _tempus_import.shape_points as
 select 
   shape_id,
   shape_pt_sequence,
-  st_transform(('srid=4326;point(' || shape_pt_lon || ' ' || shape_pt_lat || ')')::geometry, 2154) as geom
+  st_transform(('srid=4326;point(' || shape_pt_lon || ' ' || shape_pt_lat || ')')::geometry, %(native_srid)) as geom
 from
   _tempus_import.shapes;
 create index on _tempus_import.shape_points using gist(geom);

@@ -40,12 +40,13 @@ class DataImporter(object):
     # SQL files to execute after loading data
     POSTLOADSQL = []
 
-    def __init__(self, source="", dbstring="", logfile=None, doclean=True):
+    def __init__(self, source="", dbstring="", logfile=None, doclean=True, subs = {}):
         self.source = source
         self.dbstring = dbstring
         self.logfile = logfile
         self.ploader = PsqlLoader(dbstring=self.dbstring, logfile=self.logfile)
         self.doclean = doclean
+        self.substitutions = subs
 
     def check_input(self):
         """Check if data input is ok."""
@@ -84,24 +85,19 @@ class DataImporter(object):
     def postload_sql(self):
         return self.load_sqlfiles(self.POSTLOADSQL)
 
-    def load_sqlfiles(self, files):
+    def load_sqlfiles(self, files, substitute = True):
         """Load some SQL files to the defined database.
         Stop if one was wrong."""
         ret = True
+        is_template = substitute and len(self.substitutions) > 0
         for sqlfile in files:
-            is_template = False
-            if isinstance(sqlfile, tuple):
-                values = sqlfile[1]
-                sqlfile = sqlfile[0]
-                is_template = True
-
             filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sql', sqlfile)
             # Stop if one SQL execution was wrong
             if ret and os.path.isfile(filename):
                 if is_template:
                     f = open(filename, 'r')
                     template = f.read()
-                    self.ploader.set_from_template(template, values)
+                    self.ploader.set_from_template(template, self.substitutions)
                 else:
                     self.ploader.set_sqlfile(filename)
                 ret = self.ploader.load()
@@ -130,8 +126,8 @@ class ShpImporter(DataImporter):
     POSTLOADSQL = []
 
     def __init__(self, source = "", prefix = "", dbstring = "", logfile = None,
-            options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True):
-        super(ShpImporter, self).__init__(source, dbstring, logfile, doclean)
+                 options = {'g':'geom', 'D':True, 'I':True, 'S':True}, doclean = True, subs = {}):
+        super(ShpImporter, self).__init__(source, dbstring, logfile, doclean, subs)
         self.shapefiles = []
         if isinstance(self.source, list):
             for source in self.source:
