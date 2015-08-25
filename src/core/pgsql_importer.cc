@@ -39,6 +39,28 @@ Db::Result PQImporter::query( const std::string& query_str )
 
 void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression, const std::string& /*schema_name*/ )
 {
+    {
+        // check that the metadata exists
+        bool has_metadata = false;
+        {
+            Db::Result r( connection_.exec( "select * from information_schema.tables where table_name='metadata' and table_schema='tempus'" ) );
+            has_metadata = r.size() == 1;
+        }
+        if ( has_metadata ) {
+            Db::Result res( connection_.exec( "SELECT key, value FROM tempus.metadata" ) );
+            for ( size_t i = 0; i < res.size(); i++ ) {
+                std::string k, v;
+                res[i][0] >> k;
+                res[i][1] >> v;
+                graph.set_metadata( k, v );
+            }
+        }
+        else
+        {
+            // for versions of tempus databases before metadata have been introduced
+            graph.set_metadata( "srid", "2154" );
+        }
+    }
     Multimodal::Graph::TransportModes modes;
     {
         Db::Result res( connection_.exec( "SELECT id, name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle FROM tempus.transport_mode" ) );

@@ -390,6 +390,9 @@ def parse_transport_modes(output):
 def parse_transport_networks(output):
     return [TransportNetwork(id=int(x.attrib['id']), name=x.attrib['name']) for x in output]
 
+def parse_metadata(output):
+    return dict( (x.attrib['key'], x.attrib['value']) for x in output )
+
 
 def parse_metrics(metrics):
     m = {}
@@ -544,10 +547,18 @@ class TempusRequest:
         outputs = self.wps.execute('constant_list', {})
         for k, v in outputs.iteritems():
             self.save[k] = v
-        return (
-            parse_transport_modes(outputs['transport_modes']),
-            parse_transport_networks(outputs['transport_networks'])
-        )
+        if outputs.has_key("metadata"):
+            return (
+                parse_transport_modes(outputs['transport_modes']),
+                parse_transport_networks(outputs['transport_networks']),
+                parse_metadata(outputs['metadata'])
+            )
+        else:
+            # previous version
+            return (
+                parse_transport_modes(outputs['transport_modes']),
+                parse_transport_networks(outputs['transport_networks'])
+            )
 
     def request(
         self,
@@ -631,5 +642,6 @@ class TempusRequest:
         r = "<server_state>" + ET.tostring(self.save['plugins']) \
             + ET.tostring(self.save['transport_modes']) \
             + ET.tostring(self.save['transport_networks']) \
+            + (ET.tostring(self.save['metadata']) if self.save.has_key("metadata") else "") \
             + "</server_state>"
         return r

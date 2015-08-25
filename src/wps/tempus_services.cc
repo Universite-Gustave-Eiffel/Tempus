@@ -148,6 +148,7 @@ public:
     ConstantListService() : Service( "constant_list" ) {
         add_output_parameter( "transport_modes" );
         add_output_parameter( "transport_networks" );
+        add_output_parameter( "metadata" );
     };
     Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const {
         ParameterMap output_parameters;
@@ -188,6 +189,18 @@ public:
             }
 
             output_parameters[ "transport_networks" ] = root_node;
+        }
+
+        {
+            xmlNode* root_node = XML::new_node( "metadata" );
+            for ( auto kv : graph.metadata() ) {
+                xmlNode* node = XML::new_node( "m" );
+                XML::new_prop( node, "key", kv.first );
+                XML::new_prop( node, "value", kv.second );
+                XML::add_child( root_node, node );
+            }
+
+            output_parameters[ "metadata" ] = root_node;
         }
 
         return output_parameters;

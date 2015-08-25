@@ -11,6 +11,7 @@
 
   <xs:include schemaLocation="constant_list/transport_modes.xsd"/>
   <xs:include schemaLocation="constant_list/transport_networks.xsd"/>
+  <xs:include schemaLocation="constant_list/metadata.xsd"/>
 
   <xs:complexType name="Record">
     <xs:sequence>
@@ -31,6 +32,7 @@
             <xs:element name="plugins" type="Plugins"/>
             <xs:element name="transport_modes" type="TransportModes"/>
             <xs:element name="transport_networks" type="TransportNetworks"/>
+            <xs:element name="metadata" type="Metadata" minOccurs="0" maxOccurs="1"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

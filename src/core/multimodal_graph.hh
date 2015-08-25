@@ -330,11 +330,22 @@ public:
     /// the second element of the pair tells if the mode exists
     boost::optional<TransportMode> transport_mode( const std::string& name ) const;
 
+    /// access to a metadata
+    std::string metadata( const std::string& key ) const;
+    /// modification of a graph's metadata
+    void set_metadata( const std::string& key, const std::string& value );
+    /// access to all the metadata (read only)
+    const std::map<std::string, std::string>& metadata() const;
+
 private:
     typedef std::map<std::string, Tempus::db_id_t> NameToId;
     ///
     /// Associative array that maps a transport type name to a transport type id
     NameToId transport_mode_from_name_;
+
+    ///
+    /// Graph metadata
+    std::map<std::string, std::string> metadata_;
 };
 
 ///

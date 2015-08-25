@@ -1179,6 +1179,25 @@ void Graph::set_pois( PoiList& p )
     pois_.transfer( p );
 }
 
+std::string Graph::metadata( const std::string& key ) const
+{
+    auto it = metadata_.find( key );
+    if ( it == metadata_.end() ) {
+        return "";
+    }
+    return it->second;
+}
+
+const std::map<std::string, std::string>& Graph::metadata() const
+{
+    return metadata_;
+}
+
+void Graph::set_metadata( const std::string& key, const std::string& value )
+{
+    metadata_[key] = value;
+}
+
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
 {
     if ( v.type() == Multimodal::Vertex::Road ) {
