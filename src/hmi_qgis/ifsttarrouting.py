@@ -172,6 +172,8 @@ class IfsttarRouting:
         # array of Tempus.TransportNetwork
         self.networks = []
 
+        self.metadata = {}
+
         # plugin descriptions
         # dict plugin_name =>  Tempus.Plugin
         self.plugins = {}
@@ -408,7 +410,7 @@ class IfsttarRouting:
             return
 
         geom = QgsGeometry(feature.geometry())
-        trans = QgsCoordinateTransform(layer.crs(), QgsCoordinateReferenceSystem( "EPSG:2154" ) )
+        trans = QgsCoordinateTransform(layer.crs(), QgsCoordinateReferenceSystem( "EPSG:%d" % self.native_srid() ) )
         geom.transform( trans )
         polygon_wkt = geom.exportToWkt()
 
@@ -429,7 +431,7 @@ class IfsttarRouting:
     def doPolygonSubset( self, wkt, db_params ):
         schema, ok = QInputDialog.getText(None, "Name of the subset to create (schema)", "Schema name")
 
-        sql = "SELECT tempus.create_subset('%s','SRID=2154;%s');" % (schema, wkt)
+        sql = "SELECT tempus.create_subset('%s','SRID=%d;%s');" % (schema, self.native_srid(), wkt)
 
         dlg = QDialog(self.dlg)
         v = QVBoxLayout()
@@ -512,6 +514,7 @@ class IfsttarRouting:
 
             self.getConstants()
             self.displayTransportAndNetworks()
+            self.dlg.set_native_srid( self.native_srid() )
         
             self.dlg.ui.pluginCombo.setEnabled( True )
             self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
@@ -550,7 +553,12 @@ class IfsttarRouting:
         if self.wps is None:
             return
         try:
-            (transport_modes, transport_networks) = self.wps.constant_list()
+            constants = self.wps.constant_list()
+            if len(constants) == 3:
+                transport_modes, transport_networks, metadata = constants
+            elif len(constants) == 2:
+                transport_modes, transport_networks = constants
+                metadata = { "srid" : "2154" }
         except RuntimeError as e:
             displayError( e.args[1] )
             return
@@ -560,6 +568,14 @@ class IfsttarRouting:
                 self.transport_modes_dict[t.id] = t
 
         self.networks = transport_networks
+
+        self.metadata = metadata
+
+    def native_srid( self ):
+        if self.metadata.get('srid') is not None:
+            return int(self.metadata.get('srid'))
+        else:
+            return 2154
 
     def update_plugin_options( self, plugin_idx ):
         if plugin_idx == -1:
@@ -638,7 +654,7 @@ class IfsttarRouting:
 
         lname = "%s%d" % (ROADMAP_LAYER_NAME, lid)
         # create a new vector layer
-        vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
+        vl = QgsVectorLayer("LineString?crs=epsg:%d" % self.native_srid(), lname, "memory")
 
         pr = vl.dataProvider()
 
@@ -716,7 +732,7 @@ class IfsttarRouting:
         if vl is None:
             lname = "%s%d" % ( TRACE_LAYER_NAME, lid )
             # create a new vector layer
-            vl = QgsVectorLayer("LineString?crs=epsg:2154", lname, "memory")
+            vl = QgsVectorLayer("LineString?crs=epsg:%d" % self.native_srid(), lname, "memory")
             QgsMapLayerRegistry.instance().addMapLayers( [vl] )
 
         pr = vl.dataProvider()
@@ -1227,10 +1243,17 @@ class IfsttarRouting:
 
         # save the request and the server state
         xml_record = '<record>' + select_xml
-        server_state = to_xml([ 'server_state',
-                                etree.tostring(self.wps.save['plugins']),
-                                etree.tostring(self.wps.save['transport_modes']),
-                                etree.tostring(self.wps.save['transport_networks']) ] )
+        if self.wps.save.has_key("metadata"):
+            server_state = to_xml([ 'server_state',
+                                    etree.tostring(self.wps.save['plugins']),
+                                    etree.tostring(self.wps.save['transport_modes']),
+                                    etree.tostring(self.wps.save['transport_networks']),
+                                    etree.tostring(self.wps.save['metadata']) ] )
+        else:
+            server_state = to_xml([ 'server_state',
+                                    etree.tostring(self.wps.save['plugins']),
+                                    etree.tostring(self.wps.save['transport_modes']),
+                                    etree.tostring(self.wps.save['transport_networks']) ] )
         xml_record += server_state + '</record>'
         self.historyFile.addRecord( xml_record )
 
@@ -1290,8 +1313,12 @@ class IfsttarRouting:
         for t in self.transport_modes:
                 self.transport_modes_dict[t.id] = t
         self.networks = Tempus.parse_transport_networks( loaded['server_state'][2] )
-
         self.displayTransportAndNetworks()
+        if len(loaded['server_state'])>3: # has metadata
+            self.metadata = Tempus.parse_metadata( loaded['server_state'][3] )
+        else:
+            self.metadata = {'srid' : '2154'}
+        self.dlg.set_native_srid( self.native_srid() )
 
         self.dlg.loadFromXML( loaded['select'][1] )
         self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )
