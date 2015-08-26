@@ -24,6 +24,7 @@ set( HEADER_FILES
   sub_map.hh
   transport_modes.hh
   variant.hh
+  segment_allocator.hh
 )
 
 set( UTILS_HEADER_FILES
@@ -53,6 +54,7 @@ set( SOURCE_FILES
     db.cc 
     utils/graph_db_link.cc 
     variant.cc
+    segment_allocator.cc
     )
 
 if (WIN32)

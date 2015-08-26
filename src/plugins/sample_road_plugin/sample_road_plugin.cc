@@ -76,7 +76,7 @@ protected:
 
     Road::Vertex destination_;
 
-    int iterations_;
+    size_t iterations_;
 
 public:
     static void post_build() { }

@@ -23,7 +23,7 @@ Variant::Variant( bool b ) : type_( BoolVariant )
 {
     str_ = b ? "true" : "false";
 }
-Variant::Variant( int i ) : type_( IntVariant )
+Variant::Variant( size_t i ) : type_( IntVariant )
 {
     std::ostringstream ostr;
     ostr << i;

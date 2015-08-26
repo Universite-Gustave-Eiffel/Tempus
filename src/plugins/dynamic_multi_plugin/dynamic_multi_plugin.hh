@@ -92,7 +92,7 @@ protected:
     bool use_speed_profiles_;
 
     // Plugin metrics
-    int iterations_; // Number of iterations
+    size_t iterations_; // Number of iterations
     double time_; // Time elapsed for pre_process() and process()
     double time_algo_; // Time elapsed for process()
 

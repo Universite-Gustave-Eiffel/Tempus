@@ -57,7 +57,7 @@ enum VariantType {
 class Variant {
 public:
     Variant( bool b );
-    Variant( int i = 0 );
+    Variant( size_t i = 0 );
     Variant( double f );
     Variant( const std::string& s, VariantType = StringVariant );
     

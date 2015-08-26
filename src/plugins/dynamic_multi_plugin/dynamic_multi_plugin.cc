@@ -55,7 +55,7 @@ public:
                                 const std::vector<Road::Vertex>& destinations,
                                 bool pvad,
                                 bool verbose,
-                                int& iterations) :
+                                size_t& iterations) :
         graph_(graph),
         pvad_(pvad),
         verbose_(verbose),
@@ -132,7 +132,7 @@ private:
     // private vehicule at destination
     bool pvad_;
     bool verbose_;
-    int& iterations_;
+    size_t& iterations_;
 };
 
 template <class Graph>
@@ -168,14 +168,14 @@ const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descr
 {
     Plugin::OptionDescriptionList odl;
     odl.declare_option( "Features/with_forbidden_turning_movements", "With forbidden turning movements", true);
-    odl.declare_option( "Features/timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", 0);
+    odl.declare_option( "Features/timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", size_t(0));
     odl.declare_option( "Debug/verbose_algo", "Verbose algorithm: vertices and edges traversal", false);
     odl.declare_option( "Debug/verbose", "Verbose general processing", true);
     odl.declare_option( "Debug/enable_trace", "Produce a trace (warning: cpu and time consuming)", false );
-    odl.declare_option( "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", 2);
+    odl.declare_option( "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", size_t(2));
     odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", 3.6);
-    odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", 12);
-    odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", 5);
+    odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", size_t(12));
+    odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", size_t(5));
     odl.declare_option( "AStar/heuristic", "Use an heuristic based on euclidian distance", false );
     odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", 0.06 );
     odl.declare_option( "Time/use_speed_profiles", "Use road speed profiles", false );
@@ -819,10 +819,10 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
 
             ValuedEdge ve( o.vertex, d.vertex );
             ve.set_value( "duration", potential_map_[d] );
-            ve.set_value( "imode", int(o.mode) );
-            ve.set_value( "fmode", int(d.mode) );
-            ve.set_value( "istate", int(o.state) );
-            ve.set_value( "fstate", int(d.state) );
+            ve.set_value( "imode", size_t(o.mode) );
+            ve.set_value( "fmode", size_t(d.mode) );
+            ve.set_value( "istate", size_t(o.state) );
+            ve.set_value( "fstate", size_t(d.state) );
             trace.push_back( ve );
         }
         roadmap.set_trace( trace );

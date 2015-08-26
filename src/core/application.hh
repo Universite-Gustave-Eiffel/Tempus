@@ -24,6 +24,7 @@
 
 #include "multimodal_graph.hh"
 #include "db.hh"
+#include "variant.hh"
 
 namespace Tempus {
 struct PluginFactory;
@@ -35,6 +36,8 @@ public:
     ///
     /// Access to the singleton instance
     static Application* instance();
+
+    ~Application();
 
     ///
     /// Used to represent the application state
@@ -78,6 +81,10 @@ public:
     /// Method to call to pre build the graph in memory
     void pre_build_graph();
 
+
+    void set_option( const std::string& key, const Variant& value );
+    Variant option( const std::string& ) const;
+
     ///
     /// Build the graph in memory (import from the database and wake up plugins)
     void build_graph( bool consistency_check = false, const std::string& schema_name = "tempus" );
@@ -97,14 +104,15 @@ public:
 
 protected:
     // private constructor
-    Application()
-    {}
+    Application();
 
     std::string db_options_;
     std::string schema_name_;
     std::auto_ptr<Multimodal::Graph> graph_;
 
     State state_;
+
+    std::map<std::string, Variant> options_;
 };
 }
 

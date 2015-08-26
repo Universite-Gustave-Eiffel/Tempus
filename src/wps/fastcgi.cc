@@ -113,6 +113,8 @@ int main( int argc, char* argv[] )
     string dbstring = "dbname=tempus_test_db";
     string schema_name = "tempus";
     bool consistency_check = true;
+    std::string dump_file = "";
+    size_t segment_size = 0;
 #ifndef WIN32
     bool daemon = false;
     ( void )daemon;
@@ -163,6 +165,25 @@ int main( int argc, char* argv[] )
             else if ( arg == "-X" ) {
                 consistency_check = false;
             }
+            else if ( arg == "-f" ) {
+                if ( argc > i+1 ) {
+                    dump_file = argv[++i];
+                }
+            }
+            else if ( arg == "-S" ) {
+                if ( argc > i+1 ) {
+                    std::string s = argv[++i];
+                    if (s[s.size()-1] == 'M') {
+                        segment_size = atoi(s.substr(0,s.size()-1).c_str()) * 1024LL * 1024LL;
+                    }
+                    else if (s[s.size()-1] == 'G') {
+                        segment_size = atoi(s.substr(0,s.size()-1).c_str()) * 1024LL * 1024LL * 1024LL;
+                    }
+                    else {
+                        segment_size = atoi(s.c_str());
+                    }
+                }
+            }
             else {
                 std::cout << "Options: " << endl
                           << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl
@@ -175,6 +196,8 @@ int main( int argc, char* argv[] )
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
 #endif
+                          << "\t-f\tdump file" << endl
+                          << "\t-S\tsegment size 0 or unspecified to load from the dump file" << endl
                           ;
                 return ( arg == "-h" ) ? EXIT_SUCCESS : EXIT_FAILURE;
             }
@@ -234,6 +257,9 @@ int main( int argc, char* argv[] )
         Tempus::Application::instance()->connect( dbstring );
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
+        
+        Tempus::Application::instance()->set_option( "dump_file", dump_file );
+        Tempus::Application::instance()->set_option( "segment_size", segment_size );
         Tempus::Application::instance()->build_graph( consistency_check, schema_name );
 
         // load plugins

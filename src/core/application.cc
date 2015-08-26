@@ -24,6 +24,8 @@
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h>
+#else
+#include "segment_allocator.hh"
 #endif
 
 Tempus::Application* get_application_instance_()
@@ -32,6 +34,16 @@ Tempus::Application* get_application_instance_()
 }
 
 namespace Tempus {
+
+Application::Application()
+{
+}
+
+Application::~Application()
+{
+    SegmentAllocator::release();
+}
+
 Application* Application::instance()
 {
     // On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
@@ -72,15 +84,55 @@ void Application::pre_build_graph()
     state_ = GraphPreBuilt;
 }
 
+void Application::set_option( const std::string& key, const Variant& value )
+{
+    options_[key] = value;
+}
+
+Variant Application::option( const std::string& key ) const
+{
+    auto it = options_.find( key );
+    if ( it == options_.end() ) {
+        return "";
+    }
+    return it->second;
+}
+
 void Application::build_graph( bool consistency_check, const std::string& schema )
 {
     // request the database
     PQImporter importer( db_options_ );
     TextProgression progression( 50 );
     COUT << "Loading graph from database: " << std::endl;
-    graph_ = importer.import_graph( progression, consistency_check, schema );
+
+    size_t segment_size = 0;
+    if ( option("segment_size").str() != "" ) {
+        segment_size = option("segment_size").as<size_t>();
+    }
+    std::string dump_file = option("dump_file").str();
+    bool from_file = dump_file != "" && segment_size == 0;
+
+    if ( !from_file ) {
+        if ( segment_size ) {
+            SegmentAllocator::init( segment_size );
+            SegmentAllocator::enable( true );
+        }
+
+        graph_ = importer.import_graph( progression, consistency_check, schema );
+
+        if ( segment_size ) {
+            SegmentAllocator::enable( false );
+            SegmentAllocator::dump( dump_file, graph_.get() );
+        }
+    }
+    else {
+        void* addr = SegmentAllocator::init( dump_file );
+        graph_.reset( (Multimodal::Graph*)addr );
+    }
+
     COUT << "Importing constants ..." << std::endl;
     importer.import_constants( *graph_, progression, schema );
+
     state_ = GraphBuilt;
     schema_name_ = schema;
 }

@@ -400,7 +400,7 @@ public:
             path.push_front( Multimodal::Vertex( &graph_.road(), request_.origin() ) );
 
             metrics_[ "time_s" ] = timer.elapsed();
-            metrics_["iterations"] = iterations_;
+            metrics_["iterations"] = size_t(iterations_);
 
             // convert the path to a roadmap
             add_roadmap( path );

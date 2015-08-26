@@ -279,7 +279,7 @@ Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
 {
     // default metrics
     metrics_[ "time_s" ] = ( double )0.0;
-    metrics_[ "iterations" ] = ( int )0;
+    metrics_[ "iterations" ] = ( size_t )0;
 }
 
 template <class T>
