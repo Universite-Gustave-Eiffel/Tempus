@@ -37,9 +37,14 @@ SHP2PGSQL=BINPATH + ""
 # DO NOT MODIFY UNDER THIS LINE
 # Autoconfiguration attempts
 import os
+import sys
 
 def is_exe(fpath):
-    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    print "is_exe", fpath
+    if sys.platform.startswith('linux'):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    else:
+        return os.path.isfile(fpath)
 
 def which(program):
     fpath, fname = os.path.split(program)
@@ -55,10 +60,10 @@ def which(program):
     return None
 
 if not is_exe(PSQL):
-    PSQL = which("psql")
+    PSQL = which("psql" + ".exe" if sys.platform.startswith('win') else '')
 
 if not is_exe(SHP2PGSQL):
-    SHP2PGSQL = which("shp2pgsql")
+    SHP2PGSQL = which("shp2pgsql" + ".exe" if sys.platform.startswith('win') else '')
 
 if PSQL is None or SHP2PGSQL is None:
     raise OSError("Could not find psql and shp2pgsql.")
