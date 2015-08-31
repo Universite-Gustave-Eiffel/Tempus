@@ -1,4 +1,5 @@
 set( HEADER_FILES
+  config.hh
   abscissa.hh
   application.hh
   base.hh
@@ -24,7 +25,6 @@ set( HEADER_FILES
   sub_map.hh
   transport_modes.hh
   variant.hh
-  segment_allocator.hh
 )
 
 set( UTILS_HEADER_FILES
@@ -54,8 +54,12 @@ set( SOURCE_FILES
     db.cc 
     utils/graph_db_link.cc 
     variant.cc
-    segment_allocator.cc
-    )
+)
+
+if (ENABLE_SEGMENT_ALLOCATOR)
+  set( SOURCE_FILES ${SOURCE_FILES} utils/segment_allocator.cc )
+  set( UTILS_HEADER_FILES ${UTILS_HEADER_FILES} utils/segment_allocator.hh )
+endif ()
 
 if (WIN32)
     add_library( tempus STATIC ${HEADER_FILES} ${UTILS_HEADER_FILES} ${SOURCE_FILES} )

@@ -42,6 +42,7 @@
 #include "wps_request.hh"
 #include "application.hh"
 #include "xml_helper.hh"
+#include "config.hh"
 
 
 #define DEBUG_TRACE if(1) std::cout << " debug: "
@@ -113,8 +114,10 @@ int main( int argc, char* argv[] )
     string dbstring = "dbname=tempus_test_db";
     string schema_name = "tempus";
     bool consistency_check = true;
+#if ENABLE_SEGMENT_ALLOCATOR
     std::string dump_file = "";
     size_t segment_size = 0;
+#endif
 #ifndef WIN32
     bool daemon = false;
     ( void )daemon;
@@ -165,6 +168,7 @@ int main( int argc, char* argv[] )
             else if ( arg == "-X" ) {
                 consistency_check = false;
             }
+#if ENABLE_SEGMENT_ALLOCATOR
             else if ( arg == "-f" ) {
                 if ( argc > i+1 ) {
                     dump_file = argv[++i];
@@ -184,6 +188,7 @@ int main( int argc, char* argv[] )
                     }
                 }
             }
+#endif
             else {
                 std::cout << "Options: " << endl
                           << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl
@@ -196,8 +201,10 @@ int main( int argc, char* argv[] )
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
 #endif
+#if ENABLE_SEGMENT_ALLOCATOR
                           << "\t-f\tdump file" << endl
                           << "\t-S\tsegment size 0 or unspecified to load from the dump file" << endl
+#endif
                           ;
                 return ( arg == "-h" ) ? EXIT_SUCCESS : EXIT_FAILURE;
             }
@@ -258,8 +265,10 @@ int main( int argc, char* argv[] )
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
         
+#if ENABLE_SEGMENT_ALLOCATOR
         Tempus::Application::instance()->set_option( "dump_file", dump_file );
         Tempus::Application::instance()->set_option( "segment_size", segment_size );
+#endif
         Tempus::Application::instance()->build_graph( consistency_check, schema_name );
 
         // load plugins

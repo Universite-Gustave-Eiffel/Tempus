@@ -5,6 +5,20 @@ set( BUILD_QGIS_PLUGIN ON CACHE BOOL "Build QGIS plugin ?" )
 set( BUILD_TEMPUS_PLUGINS ON CACHE BOOL "Build Tempus plugins ?" )
 set( BUILD_OSM2SHP ON CACHE BOOL "Build osm2shp ?" )
 
+if (NOT WIN32)
+  set( ENABLE_SEGMENT_ALLOCATOR OFF CACHE BOOL "Allow to use a segment allocator ?" )
+endif()
+
+if ( ENABLE_SEGMENT_ALLOCATOR )
+  set ( ENABLE_SEGMENT_ALLOCATOR_B 1 )
+else()
+  set ( ENABLE_SEGMENT_ALLOCATOR_B 0 )
+endif()
+
+configure_file( config.hh.in config.hh )
+
+include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
+
 if(BUILD_CORE)
   add_subdirectory( core )
 endif()

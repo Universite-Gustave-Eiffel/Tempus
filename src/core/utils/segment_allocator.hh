@@ -17,6 +17,17 @@
 
 #include <string>
 
+///
+/// This set of functions are used to easily seggregate dynamic memory allocations
+/// in a fixed contiguous segment of memory.
+/// Once enabled, global new/delete operators are overloaded such that new allocations are made
+/// in this segment of memory. It can then be dumped directyl to a file.
+/// The segment is reloaded to the very same memory address (thanks to mmap).
+/// This way, raw pointers can be handled easily.
+///
+/// It relies on the fact that there is a very low probability on a 64bit architecture that
+/// a segment cannot be mapped to a fixed given address
+
 namespace SegmentAllocator
 {
 

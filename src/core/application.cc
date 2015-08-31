@@ -20,12 +20,15 @@
 #include "application.hh"
 #include "common.hh"
 #include "pgsql_importer.hh"
+#include "config.hh"
 
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h>
-#else
-#include "segment_allocator.hh"
+#endif
+
+#if ENABLE_SEGMENT_ALLOCATOR
+#include "utils/segment_allocator.hh"
 #endif
 
 Tempus::Application* get_application_instance_()
@@ -41,7 +44,9 @@ Application::Application()
 
 Application::~Application()
 {
+#if ENABLE_SEGMENT_ALLOCATOR
     SegmentAllocator::release();
+#endif
 }
 
 Application* Application::instance()
@@ -105,6 +110,7 @@ void Application::build_graph( bool consistency_check, const std::string& schema
     TextProgression progression( 50 );
     COUT << "Loading graph from database: " << std::endl;
 
+#if ENABLE_SEGMENT_ALLOCATOR
     size_t segment_size = 0;
     if ( option("segment_size").str() != "" ) {
         segment_size = option("segment_size").as<size_t>();
@@ -129,6 +135,9 @@ void Application::build_graph( bool consistency_check, const std::string& schema
         void* addr = SegmentAllocator::init( dump_file );
         graph_.reset( (Multimodal::Graph*)addr );
     }
+#else
+    graph_ = importer.import_graph( progression, consistency_check, schema );
+#endif
 
     COUT << "Importing constants ..." << std::endl;
     importer.import_constants( *graph_, progression, schema );
