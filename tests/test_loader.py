@@ -34,21 +34,22 @@ import tempus
 from tempus.config import *
 
 loader = loader_path + "/load_tempus"
-dbstring = "dbname=tempus_unit_test"
+dbstring = os.environ.get('DBSTRING') or "dbname=tempus_unit_test"
 
 def get_sql_output( dbstring, sql ):
-    cmd = [PSQL, dbstring, '-t', '-c', sql]
+    cmd = [PSQL, '-d', dbstring, '-t', '-c', sql]
     p = subprocess.Popen(cmd, stdout = subprocess.PIPE )
     return p.stdout.read()
 
 class TestTempusLoader(unittest.TestCase):
 
     def setUp(self):
-        cmd = [PSQL, dbstring, '-t', '-c', "CREATE EXTENSION IF NOT EXISTS postgis;DROP SCHEMA tempus CASCADE;"]
+        cmd = [PSQL, '-d', dbstring, '-t', '-c', "CREATE EXTENSION IF NOT EXISTS postgis;DROP SCHEMA tempus CASCADE;"]
+        print cmd
         subprocess.call( cmd )
 
     def test_osm_loading( self ):
-        r = subprocess.call( [loader, '-t', 'osm', '-s', data_path, '-d', dbstring, '-R'] )
+        r = subprocess.call( ['python', loader, '-t', 'osm', '-s', data_path, '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
 
         n_road_nodes = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node"))
@@ -59,7 +60,8 @@ class TestTempusLoader(unittest.TestCase):
 
     def test_gtfs_loading( self ):
         # GTFS loading without road
-        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring, '-R'] )
+        cmd = ['python', loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring, '-R']
+        r = subprocess.call( cmd )
         self.assertEqual(r, 0)
 
         self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node")), 282)
@@ -72,7 +74,7 @@ class TestTempusLoader(unittest.TestCase):
 
     def test_gtfs_transfers_loading( self ):
         # GTFS loading without road
-        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min_with_transfers.zip', '-d', dbstring, '-R'] )
+        r = subprocess.call( ['python', loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min_with_transfers.zip', '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
 
         # number of transfers
