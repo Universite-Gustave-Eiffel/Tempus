@@ -30,6 +30,6 @@ BINPATH=""
 
 import sys
 
-PSQL="psql" + ".exe" if sys.platform.startswith('win') else ""
-SHP2PGSQL="shp2pgsql" + ".exe" if sys.platform.startswith('win') else ""
+PSQL="psql" + (".exe" if sys.platform.startswith('win') else "")
+SHP2PGSQL="shp2pgsql" + (".exe" if sys.platform.startswith('win') else "")
 
