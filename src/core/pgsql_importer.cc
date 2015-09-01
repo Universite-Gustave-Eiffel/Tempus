@@ -345,24 +345,26 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 bool is_added;
 
                 // this edge should not exist
-                BOOST_ASSERT( edge( v_from, v_to, *road_graph ).second == false );
-
-                boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, *road_graph );
-                BOOST_ASSERT( is_added );
-                // link the road_section to this edge
-                road_sections_map[ section.db_id() ] = e;
+                // if it already exists, it means duplicate sections (multigraph) are present
+                // and then ... ignored
+                if ( edge( v_from, v_to, *road_graph ).second == false ) {
+                    boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, *road_graph );
+                    BOOST_ASSERT( is_added );
+                    // link the road_section to this edge
+                    road_sections_map[ section.db_id() ] = e;
+                }
             }
             if ( traffic_rules_tf > 0 ) {
                 Road::Edge e;
                 bool is_added;
 
                 // this edge should not exist
-                BOOST_ASSERT( edge( v_to, v_from, *road_graph ).second == false );
-
-                boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, *road_graph );
-                BOOST_ASSERT( is_added );
-                // link the road_section to this edge
-                road_sections_map[ section2.db_id() ] = e;
+                if ( edge( v_to, v_from, *road_graph ).second == false ) {
+                    boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, *road_graph );
+                    BOOST_ASSERT( is_added );
+                    // link the road_section to this edge
+                    road_sections_map[ section2.db_id() ] = e;
+                }
             }
 
             //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
