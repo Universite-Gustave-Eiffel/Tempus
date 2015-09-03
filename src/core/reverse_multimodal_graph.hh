@@ -27,14 +27,11 @@ namespace Tempus {
 /// This is inspired by boost::reverse_graph
 /// But this one does not create a new type for vertex / edge descriptors for the reverse graph
 /// which simplifies things
-template <class OGraph >
+template <typename OGraph, typename VertexProperty, typename EdgeProperty >
 class ReverseGraphT
 {
 public:
     explicit ReverseGraphT( const OGraph& g ) : graph_(g) {}
-
-    typedef typename OGraph::vertex_property_type Node;
-    typedef typename OGraph::edge_property_type Section;
 
     typedef typename boost::graph_traits<OGraph>::vertex_descriptor vertex_descriptor;
     typedef typename boost::graph_traits<OGraph>::vertex_descriptor Vertex;
@@ -65,10 +62,10 @@ public:
 
     const OGraph& graph() const { return graph_; }
 
-    const Node& operator[]( Vertex v ) const {
+    const VertexProperty& operator[]( Vertex v ) const {
         return graph_[v];
     }
-    const Section& operator[]( Edge e ) const {
+    const EdgeProperty& operator[]( Edge e ) const {
         return graph_[e];
     }
 
@@ -76,80 +73,80 @@ private:
     const OGraph& graph_;
 };
 
-template <class G>
-size_t num_vertices( const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+size_t num_vertices( const ReverseGraphT<G, VP, EP>& graph )
 {
     return num_vertices( graph.graph() );
 }
-template <class G>
-size_t num_edges( const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+size_t num_edges( const ReverseGraphT<G, VP, EP>& graph )
 {
     return num_edges( graph.graph() );
 }
-template <class G>
-typename ReverseGraphT<G>::Vertex source( const typename ReverseGraphT<G>::Edge& e, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+typename ReverseGraphT<G, VP, EP>::Vertex source( const typename ReverseGraphT<G, VP, EP>::Edge& e, const ReverseGraphT<G, VP, EP>& graph )
 {
     return target( e, graph.graph() );
 }
-template <class G>
-typename ReverseGraphT<G>::Vertex target( const typename ReverseGraphT<G>::Edge& e, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+typename ReverseGraphT<G, VP, EP>::Vertex target( const typename ReverseGraphT<G, VP, EP>::Edge& e, const ReverseGraphT<G, VP, EP>& graph )
 {
     return source( e, graph.graph() );
 }
-template <class G>
-std::pair<typename ReverseGraphT<G>::vertex_iterator,
-          typename ReverseGraphT<G>::vertex_iterator>
-vertices( const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+std::pair<typename ReverseGraphT<G, VP, EP>::vertex_iterator,
+          typename ReverseGraphT<G, VP, EP>::vertex_iterator>
+vertices( const ReverseGraphT<G, VP, EP>& graph )
 {
     return vertices( graph.graph() );
 }
-template <class G>
-std::pair<typename ReverseGraphT<G>::edge_iterator,
-          typename ReverseGraphT<G>::edge_iterator>
-edges( const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+std::pair<typename ReverseGraphT<G, VP, EP>::edge_iterator,
+          typename ReverseGraphT<G, VP, EP>::edge_iterator>
+edges( const ReverseGraphT<G, VP, EP>& graph )
 {
     return edges( graph.graph() );
 }
-template <class G>
-std::pair<typename ReverseGraphT<G>::out_edge_iterator,
-          typename ReverseGraphT<G>::out_edge_iterator>
-out_edges( const typename ReverseGraphT<G>::Vertex& v, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+std::pair<typename ReverseGraphT<G, VP, EP>::out_edge_iterator,
+          typename ReverseGraphT<G, VP, EP>::out_edge_iterator>
+out_edges( const typename ReverseGraphT<G, VP, EP>::Vertex& v, const ReverseGraphT<G, VP, EP>& graph )
 {
     // inversion
     return in_edges( v, graph.graph() );
 }
-template <class G>
-std::pair<typename ReverseGraphT<G>::in_edge_iterator,
-          typename ReverseGraphT<G>::in_edge_iterator>
-in_edges( const typename ReverseGraphT<G>::Vertex& v, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+std::pair<typename ReverseGraphT<G, VP, EP>::in_edge_iterator,
+          typename ReverseGraphT<G, VP, EP>::in_edge_iterator>
+in_edges( const typename ReverseGraphT<G, VP, EP>::Vertex& v, const ReverseGraphT<G, VP, EP>& graph )
 {
     // inversion
     return out_edges( v, graph.graph() );
 }
-template <class G>
-size_t out_degree( const typename ReverseGraphT<G>::Vertex& v, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+size_t out_degree( const typename ReverseGraphT<G, VP, EP>::Vertex& v, const ReverseGraphT<G, VP, EP>& graph )
 {
     // inversion
     return in_degree( v, graph.graph() );
 }
-template <class G>
-size_t in_degree( const typename ReverseGraphT<G>::Vertex& v, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+size_t in_degree( const typename ReverseGraphT<G, VP, EP>::Vertex& v, const ReverseGraphT<G, VP, EP>& graph )
 {
     // inversion
     return out_degree( v, graph.graph() );
 }
-template <class G>
-size_t degree( const typename ReverseGraphT<G>::Vertex& v, const ReverseGraphT<G>& graph )
+template <class G, typename VP, typename EP>
+size_t degree( const typename ReverseGraphT<G, VP, EP>::Vertex& v, const ReverseGraphT<G, VP, EP>& graph )
 {
     return degree( v, graph.graph() );
 }
 
 namespace Road {
-typedef ReverseGraphT<Road::Graph> ReverseGraph;
+typedef ReverseGraphT<Road::Graph, Road::Node, Road::Section> ReverseGraph;
 }
 
 namespace PublicTransport {
-typedef ReverseGraphT<PublicTransport::Graph> ReverseGraph;
+typedef ReverseGraphT<PublicTransport::Graph, PublicTransport::Stop, PublicTransport::Section> ReverseGraph;
 }
 
 namespace Multimodal {
