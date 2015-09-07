@@ -95,9 +95,6 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
 std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
 {
-    Road::Graph* road_graph = new Road::Graph();
-    std::auto_ptr<Road::Graph> sm_road_graph( road_graph );
-
     if ( consistency_check ) {
         //
         // check road section consistency
@@ -206,6 +203,13 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //------------------
     //   Road nodes
     //------------------
+    std::vector<Road::Node> nodes;
+    {
+        Db::Result res = connection_.exec( (boost::format("SELECT COUNT(*) FROM %1%.road_node") % schema_name).str() );
+        size_t count = 0;
+        res[0][0] >> count;
+        nodes.reserve( count );
+    }
     {
         Db::ResultIterator res_it = connection_.exec_it( (boost::format("SELECT id, bifurcation, st_x(geom), st_y(geom), st_z(geom) FROM %1%.road_node") % schema_name).str() );
         Db::ResultIterator it_end;
@@ -224,9 +228,8 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             p.set_z( res_i[4] );
             node.set_coordinates(p);
 
-            Road::Vertex v = boost::add_vertex( node, *road_graph );
-
-            road_nodes_map[ node.db_id() ] = v;
+            road_nodes_map[ node.db_id() ] = nodes.size();
+            nodes.push_back( node );
 
             //progression( static_cast<float>( ( i + 0. ) / res.size() / 4.0 ) );
         }
@@ -235,6 +238,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //------------------
     //   Road sections
     //------------------
+    std::map<std::pair<Road::Vertex, Road::Vertex>, Road::Section> sections;
     {
         //
         // Get a road section and its opposite, if present
@@ -341,39 +345,60 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             }
 
             if ( traffic_rules_ft > 0 ) {
-                Road::Edge e;
-                bool is_added;
-
                 // this edge should not exist
                 // if it already exists, it means duplicate sections (multigraph) are present
                 // and then ... ignored
-                if ( edge( v_from, v_to, *road_graph ).second == false ) {
-                    boost::tie( e, is_added ) = boost::add_edge( v_from, v_to, section, *road_graph );
-                    BOOST_ASSERT( is_added );
-                    // link the road_section to this edge
-                    road_sections_map[ section.db_id() ] = e;
+                if ( sections.find( std::make_pair( v_from, v_to ) ) == sections.end() ) {
+                    sections[std::make_pair( v_from, v_to )] = section;
                 }
             }
             if ( traffic_rules_tf > 0 ) {
-                Road::Edge e;
-                bool is_added;
-
                 // this edge should not exist
-                if ( edge( v_to, v_from, *road_graph ).second == false ) {
-                    boost::tie( e, is_added ) = boost::add_edge( v_to, v_from, section2, *road_graph );
-                    BOOST_ASSERT( is_added );
-                    // link the road_section to this edge
-                    road_sections_map[ section2.db_id() ] = e;
+                if ( sections.find( std::make_pair( v_to, v_from ) ) == sections.end() ) {
+                    sections[std::make_pair( v_to, v_from )] = section2;
                 }
             }
 
             //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.25 ) );
         }
+
+        
     }
+
+    std::cout << "CSR ..." << std::endl;
+    auto l = [](decltype(sections)::value_type& p) { return p.first; };
+    auto s_it_begin = boost::make_transform_iterator( sections.begin(), l );
+    auto s_it_end = boost::make_transform_iterator( sections.end(), l );
+    std::auto_ptr<Road::Graph> sm_road_graph( new Road::Graph(boost::edges_are_unsorted_multi_pass,
+                                                              s_it_begin, s_it_end,
+                                                              nodes.size()) );
+
+    std::cout << "Assigning nodes ..." << std::endl;
+    {
+        size_t i = 0;
+        for ( const Road::Node& n : nodes ) {
+            (*sm_road_graph)[i] = n;
+            i++;
+        }
+    }
+    nodes.clear();
+
+    std::cout << "Assigning sections ..." << std::endl;
+    for ( auto sit : sections ) {
+        Road::Edge e;
+        bool found;
+        std::pair<Road::Vertex, Road::Vertex> p = sit.first;
+        boost::tie(e, found) = edge( p.first, p.second, *sm_road_graph );
+        BOOST_ASSERT( found );
+        // populate road_sections_map
+        road_sections_map[ sit.second.db_id() ] = e;
+        (*sm_road_graph)[e] = sit.second;
+    }
+    sections.clear();
 
     // build the multimodal graph
     std::auto_ptr<Multimodal::Graph> graph( new Multimodal::Graph( sm_road_graph ) );
-    road_graph = &graph->road();
+    Road::Graph *road_graph = &graph->road();
 
     boost::ptr_map<db_id_t, PublicTransport::Graph> pt_graphs;
     Multimodal::Graph::NetworkMap networks;

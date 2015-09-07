@@ -101,3 +101,15 @@ void Section::add_poi_ref( const POI* poi )
 
 }
 }
+
+namespace boost {
+namespace detail {
+std::ostream& operator<<( std::ostream& ostr, const Tempus::Road::Edge& e )
+{
+    ostr << "(" << e.src << "+" << e.idx << ")";
+    return ostr;
+}
+}
+}
+
+

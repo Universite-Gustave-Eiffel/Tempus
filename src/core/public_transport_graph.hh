@@ -19,6 +19,7 @@
 #define TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 
 #include <boost/optional.hpp>
+#include <boost/graph/adjacency_list.hpp>
 #include "common.hh"
 #include "road_graph.hh"
 

@@ -18,8 +18,10 @@
 #ifndef TEMPUS_ROAD_GRAPH_HH
 #define TEMPUS_ROAD_GRAPH_HH
 
+#include <iosfwd>
+
 #include <boost/optional.hpp>
-#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/compressed_sparse_row_graph.hpp>
 #include "common.hh"
 #include "point.hh"
 
@@ -40,23 +42,15 @@ struct POI;
    Road::Node and Road::Section classes are used to build a BGL road graph as "bundled" edge and vertex properties
 */
 namespace Road {
-///
-/// Storage types used to make a road graph
-typedef boost::vecS VertexListType;
-typedef boost::vecS EdgeListType;
-
-///
-/// To make a long line short: VertexDescriptor is either typedef'd to size_t or to a pointer,
-/// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
-typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
-/// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::bidirectional_tag, Vertex> Edge;
 
 struct Node;
 struct Section;
 ///
 /// The final road graph type
-typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Node, Section > Graph;
+/// vertex and edge indices are stored in a uin32_t, which means there is maximum of 4G vertices or arcs
+typedef boost::compressed_sparse_row_graph<boost::bidirectionalS, Node, Section, /*GraphProperty = */ boost::no_property, uint32_t, uint32_t> Graph;
+typedef Graph::vertex_descriptor Vertex;
+typedef Graph::edge_descriptor Edge;
 
 /// Road types
 enum RoadType
@@ -194,8 +188,15 @@ private:
     /// Pointer to the underlying road graph
     const Graph* road_graph_;
 };
+
 }  // Road namespace
 
 } // Tempus namespace
+
+namespace boost {
+namespace detail {
+std::ostream& operator<<( std::ostream& ostr, const Tempus::Road::Edge& e );
+}
+}
 
 #endif
