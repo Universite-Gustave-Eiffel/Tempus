@@ -4,6 +4,7 @@ set( BUILD_WPS ON CACHE BOOL "Build WPS server ?" )
 set( BUILD_QGIS_PLUGIN ON CACHE BOOL "Build QGIS plugin ?" )
 set( BUILD_TEMPUS_PLUGINS ON CACHE BOOL "Build Tempus plugins ?" )
 set( BUILD_OSM2SHP ON CACHE BOOL "Build osm2shp ?" )
+set( BUILD_TOOLS ON CACHE BOOL "Build tools ?" )
 
 if (NOT WIN32)
   set( ENABLE_SEGMENT_ALLOCATOR OFF CACHE BOOL "Allow to use a segment allocator ?" )
@@ -37,6 +38,10 @@ endif()
 
 if(BUILD_OSM2SHP)
   add_subdirectory( loader )
+endif()
+
+if(BUILD_TOOLS)
+  add_subdirectory( tools )
 endif()
 
 if(WIN32)
