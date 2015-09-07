@@ -317,10 +317,18 @@ public:
     /// Set POIs (take ownership)
     void set_pois( boost::ptr_map<db_id_t, POI>& );
 
+    void add_poi_ref( const Road::Edge& e, const POI* );
+
+    const std::vector<const POI*> edge_pois( const Road::Edge& e ) const;
+
     typedef std::map<db_id_t, TransportMode> TransportModes;
     DECLARE_RO_PROPERTY( transport_modes, TransportModes );
 
     void set_transport_modes( const TransportModes& );
+
+    void add_stop_ref( const Road::Edge& e, const PublicTransport::Stop* );
+
+    const std::vector<const PublicTransport::Stop*> edge_stops( const Road::Edge& ) const;
 
     /// access to a transportmode, given its id
     /// the second element of the pair tells if the mode exists
@@ -346,6 +354,12 @@ private:
     ///
     /// Graph metadata
     std::map<std::string, std::string> metadata_;
+
+    typedef std::map<Road::Edge, std::vector<const PublicTransport::Stop*>> RoadEdgeStops;
+    RoadEdgeStops road_edge_stops_;
+
+    typedef std::map<Road::Edge, std::vector<const POI*>> RoadEdgePOIs;
+    RoadEdgePOIs road_edge_pois_;
 };
 
 ///

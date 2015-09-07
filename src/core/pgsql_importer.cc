@@ -503,11 +503,11 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
             Road::Edge rs = g[ *vi ].road_edge();
-            (*road_graph)[ rs ].add_stop_ref( &g[*vi] );
+            graph->add_stop_ref( rs, &g[*vi] );
             // add a ref to the opposite road edge, if any
             if (g[*vi].opposite_road_edge()) {
                 rs = g[*vi].opposite_road_edge().get();
-                (*road_graph)[rs].add_stop_ref( &g[*vi] );
+                graph->add_stop_ref( rs, &g[*vi] );
             }
         }
     }
@@ -613,10 +613,10 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     for ( pit = pois.begin(); pit != pois.end(); pit++ ) {
         Road::Edge rs = pit->second->road_edge();
-        (*road_graph)[ rs ].add_poi_ref( &*pit->second );
+        graph->add_poi_ref( rs, &*pit->second );
         if ( pit->second->opposite_road_edge() ) {
             rs = pit->second->opposite_road_edge().get();
-            (*road_graph)[ rs ].add_poi_ref( &*pit->second );
+            graph->add_poi_ref( rs, &*pit->second );
         }
     }
 

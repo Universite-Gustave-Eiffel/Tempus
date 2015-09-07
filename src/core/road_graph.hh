@@ -109,18 +109,6 @@ struct Section : public Base {
 
     DECLARE_RW_PROPERTY( road_type, RoadType );
 
-    /// list of pointers to public transport steps referenced on this edge
-    DECLARE_RO_PROPERTY( stops, std::vector<const PublicTransport::Stop*> );
-
-    /// add a link to a public transport step
-    void add_stop_ref( const PublicTransport::Stop* );
-
-    /// list of pointers to POIs referenced on this edge
-    DECLARE_RO_PROPERTY( pois, std::vector<const POI*> );
-
-    /// add a link to a POI
-    void add_poi_ref( const POI* );
-
 public:
     Section() : length_(0.0), car_speed_limit_(0.0), traffic_rules_(0), parking_traffic_rules_(0), road_flags_(0) {}
 

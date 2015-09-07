@@ -529,15 +529,15 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         BOOST_ASSERT( road_it_ != road_it_end_ );
         Road::Vertex r_target = boost::target( *road_it_, graph_->road() );
 
-        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road()[ *road_it_ ].stops().size() ) {
+        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             size_t idx = road2stop_connection_;
-            const PublicTransport::Graph* pt_graph = graph_->road()[ *road_it_ ].stops()[ idx ]->graph();
-            PublicTransport::Vertex v = *(graph_->road()[ *road_it_ ].stops()[ idx ]->vertex());
+            const PublicTransport::Graph* pt_graph = graph_->edge_stops( *road_it_ )[ idx ]->graph();
+            PublicTransport::Vertex v = *(graph_->edge_stops( *road_it_ )[ idx ]->vertex());
             edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), pt_graph, v );
         }
-        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road()[ *road_it_ ].pois().size() ) {
+        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             size_t idx = road2poi_connection_;
-            const POI* poi = graph_->road()[ *road_it_ ].pois()[ idx ];
+            const POI* poi = graph_->edge_pois( *road_it_ )[ idx ];
             edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), poi );
         }
         else {
@@ -580,10 +580,10 @@ void OutEdgeIterator::increment()
     BOOST_ASSERT( graph_ != 0 );
 
     if ( source_.type() == Vertex::Road ) {
-        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road()[*road_it_].stops().size() ) {
+        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             road2stop_connection_++;
         }
-        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road()[*road_it_].pois().size() ) {
+        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             road2poi_connection_++;
         }
         else {
@@ -702,15 +702,15 @@ Multimodal::Edge InEdgeIterator::dereference() const
     if ( source_.type() == Vertex::Road ) {
         BOOST_ASSERT( road_it_ != road_it_end_ );
 
-        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->road()[ *road_it_ ].stops().size() ) {
+        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             size_t idx = road_from_stop_connection_;
-            const PublicTransport::Graph* pt_graph = graph_->road()[ *road_it_ ].stops()[ idx ]->graph();
-            PublicTransport::Vertex v = *(graph_->road()[ *road_it_ ].stops()[ idx ]->vertex());
+            const PublicTransport::Graph* pt_graph = graph_->edge_stops( *road_it_ )[ idx ]->graph();
+            PublicTransport::Vertex v = *(graph_->edge_stops( *road_it_ )[ idx ]->vertex());
             edge = Multimodal::Edge( pt_graph, v, source_.road_graph(), source_.road_vertex() );
         }
-        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->road()[ *road_it_ ].pois().size() ) {
+        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             size_t idx = road_from_poi_connection_;
-            const POI* poi = graph_->road()[ *road_it_ ].pois()[ idx ];
+            const POI* poi = graph_->edge_pois( *road_it_ )[ idx ];
             edge = Multimodal::Edge( poi, source_.road_graph(), source_.road_vertex() );
         }
         else {
@@ -754,10 +754,10 @@ void InEdgeIterator::increment()
     BOOST_ASSERT( graph_ != 0 );
 
     if ( source_.type() == Vertex::Road ) {
-        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->road()[*road_it_].stops().size() ) {
+        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             road_from_stop_connection_++;
         }
-        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->road()[*road_it_].pois().size() ) {
+        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             road_from_poi_connection_++;
         }
         else {
@@ -981,7 +981,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
         // M POis (given by pois.size())
         // the out edge (+1)
         for ( boost::tie( ei, ei_end ) = out_edges( v.road_vertex(), graph.road() ); ei != ei_end; ei++ ) {
-            sum += graph.road()[ *ei ].stops().size() + graph.road()[ *ei ].pois().size() + 1;
+            sum += graph.edge_stops( *ei ).size() + graph.edge_pois( *ei ).size() + 1;
         }
 
         return sum;
@@ -1009,7 +1009,7 @@ size_t in_degree( const Vertex& v, const Graph& graph )
         // M POis (given by pois.size())
         // the out edge (+1)
         for ( boost::tie( ei, ei_end ) = in_edges( v.road_vertex(), graph.road() ); ei != ei_end; ei++ ) {
-            sum += graph.road()[ *ei ].stops().size() + graph.road()[ *ei ].pois().size() + 1;
+            sum += graph.edge_stops( *ei ).size() + graph.edge_pois( *ei ).size() + 1;
         }
 
         return sum;
@@ -1177,6 +1177,50 @@ void Graph::set_pois( PoiList& p )
 {
     pois_.clear();
     pois_.transfer( p );
+}
+
+void Graph::add_poi_ref( const Road::Edge& e, const POI* poi )
+{
+    auto it = road_edge_pois_.find(e);
+    if ( it == road_edge_pois_.end() ) {
+        std::vector<const POI*> v(1);
+        v[0] = poi;
+        road_edge_pois_.insert( std::make_pair(e, v) );
+    }
+    else {
+        it->second.push_back( poi );
+    }
+}
+
+const std::vector<const POI*> Graph::edge_pois( const Road::Edge& e ) const
+{
+    auto it = road_edge_pois_.find( e );
+    if ( it != road_edge_pois_.end() ) {
+        return it->second;
+    }
+    return std::vector<const POI*>();
+}
+
+void Graph::add_stop_ref( const Road::Edge& e, const PublicTransport::Stop* stop )
+{
+    auto it = road_edge_stops_.find(e);
+    if ( it == road_edge_stops_.end() ) {
+        std::vector<const PublicTransport::Stop*> v(1);
+        v[0] = stop;
+        road_edge_stops_.insert( std::make_pair(e, v) );
+    }
+    else {
+        it->second.push_back( stop );
+    }
+}
+
+const std::vector<const PublicTransport::Stop*> Graph::edge_stops( const Road::Edge& e ) const
+{
+    auto it = road_edge_stops_.find( e );
+    if ( it != road_edge_stops_.end() ) {
+        return it->second;
+    }
+    return std::vector<const PublicTransport::Stop*>();
 }
 
 std::string Graph::metadata( const std::string& key ) const
