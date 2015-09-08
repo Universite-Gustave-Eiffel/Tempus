@@ -200,8 +200,8 @@ struct ReverseGraph: boost::noncopyable {
     boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
     
     /// Access to a particular graph
-    boost::optional<PublicTransport::Graph> public_transport( db_id_t ) const;
-    boost::optional<PublicTransport::ReverseGraph> reverse_public_transport( db_id_t ) const;
+    boost::optional<PublicTransport::Graph> public_transport( Multimodal::PublicTransportGraphIndex ) const;
+    boost::optional<PublicTransport::ReverseGraph> reverse_public_transport( Multimodal::PublicTransportGraphIndex ) const;
 
     ///
     /// Point of interests

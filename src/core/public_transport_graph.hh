@@ -86,11 +86,11 @@ typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectional
 /// Refers to the 'pt_stop' DB's table
 struct Stop : public Base {
 public:
-    Stop() : Base(), graph_(0) {}
+    Stop() : Base() {}
  
     /// Shortcut to the public transport where this stop belongs
     /// Can be null
-    DECLARE_RW_PROPERTY( graph, const Graph* );
+    DECLARE_RW_PROPERTY( graph, Optional<uint16_t> );
 
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.

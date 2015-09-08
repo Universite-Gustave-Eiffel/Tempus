@@ -85,13 +85,14 @@ public:
 
     virtual void pt_vertex_accessor( const PublicTransport::Vertex& v, int access_type ) {
         if ( access_type == Plugin::ExamineAccess ) {
-            const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
+            const PublicTransport::Graph& pt_graph = *(*graph_.public_transports().begin()).second;
             CERR << "Examining vertex " << pt_graph[v].db_id() << endl;
         }
     }
     virtual void process() {
-        const PublicTransport::Graph& pt_graph = *graph_.public_transports().begin()->second;
-        db_id_t network_id = graph_.public_transports().begin()->first;
+        auto p = *graph_.public_transports().begin();
+        const PublicTransport::Graph& pt_graph = *p.second;
+        db_id_t network_id = p.first;
 
         PublicTransport::Vertex departure = 0, arrival = 0;
 

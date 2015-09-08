@@ -565,11 +565,11 @@ public:
                 else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
                     const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
 
-                    if ( graph_.public_transports().find( step->network_id() ) == graph_.public_transports().end() ) {
+                    if ( !graph_.public_transport_index( step->network_id() ) ) {
                         throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
                     }
 
-                    const PublicTransport::Graph& pt_graph = *graph_.public_transport( step->network_id() );
+                    const PublicTransport::Graph& pt_graph = graph_.public_transport( *graph_.public_transport_index(step->network_id()) );
 
                     step_node = XML::new_node( "public_transport_step" );
 
@@ -613,11 +613,9 @@ public:
                     if ( road_transport ) {
                         db_id_t network_id = 0;
 
-                        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin();
-                              nit != graph_.public_transports().end();
-                              ++nit ) {
-                            if ( nit->second == pt_graph ) {
-                                network_id = nit->first;
+                        for ( auto p : graph_.public_transports() ) {
+                            if ( p.second == pt_graph ) {
+                                network_id = p.first;
                                 break;
                             }
                         }

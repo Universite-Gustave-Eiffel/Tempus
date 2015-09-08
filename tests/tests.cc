@@ -265,9 +265,8 @@ BOOST_AUTO_TEST_CASE( testConsistency )
         BOOST_CHECK_EQUAL( ( size_t )n_networks, graph->network_map().size() );
     }
 
-    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
-    for ( it = graph->public_transports().begin(); it != graph->public_transports().end(); it++ ) {
-        const PublicTransport::Graph& pt_graph = *it->second;
+    for ( auto p : graph->public_transports() ) {
+        const PublicTransport::Graph& pt_graph = *p.second;
 
         long n_pt_vertices, n_pt_edges;
         {
@@ -276,13 +275,13 @@ BOOST_AUTO_TEST_CASE( testConsistency )
                                                             "select distinct n.id from tempus.pt_stop as n, "
                                                             "tempus.pt_section as s "
                                                             "WHERE s.network_id = %1% AND (s.stop_from = n.id "
-                                                            "OR s.stop_to = n.id ) ) t" ) % it->first ).str() ) );
+                                                            "OR s.stop_to = n.id ) ) t" ) % p.first ).str() ) );
             BOOST_CHECK( res.size() == 1 );
             n_pt_vertices = res[0][0].as<long>();
         }
 
         {
-            Db::Result res( importer->query( (boost::format("SELECT COUNT(*) FROM tempus.pt_section WHERE network_id = %1%") % it->first).str() ));
+            Db::Result res( importer->query( (boost::format("SELECT COUNT(*) FROM tempus.pt_section WHERE network_id = %1%") % p.first).str() ));
             BOOST_CHECK( res.size() == 1 );
             n_pt_edges = res[0][0].as<long>();
         }
@@ -331,7 +330,7 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
         }
     }
 
-    const PublicTransport::Graph& pt_graph = *graph->public_transports().begin()->second;
+    const PublicTransport::Graph& pt_graph = *(*graph->public_transports().begin()).second;
     std::cout << "nv = " << nv << std::endl;
     std::cout << "n_road_vertices = " << n_road_vertices << " num_vertices(road) = " << num_vertices( graph->road() ) << std::endl;
     std::cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt) = " << num_vertices( pt_graph ) << std::endl;
@@ -541,11 +540,9 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
             // get the maximum pt id
             db_id_t max_id = 0;
 
-            for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph->public_transports().begin();
-                  it != graph->public_transports().end();
-                    it++ ) {
-                if ( it->first > max_id ) {
-                    max_id = it->first;
+            for ( auto p : graph->public_transports() ) {
+                if ( p.first > max_id ) {
+                    max_id = p.first;
                 }
             }
 
@@ -553,9 +550,9 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
             size_t n_edges = num_edges( *graph );
 
             // insert a new pt that is a copy of the first
-            boost::ptr_map<db_id_t, PublicTransport::Graph> pt_copy;
-            pt_copy.insert( 1, std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) ) );
-            pt_copy.insert( 2, std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) ) );
+            std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>> pt_copy;
+            pt_copy.insert( std::make_pair(1, std::unique_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) )) );
+            pt_copy.insert( std::make_pair(2, std::unique_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) )) );
 
             graph->set_public_transports( pt_copy );
 

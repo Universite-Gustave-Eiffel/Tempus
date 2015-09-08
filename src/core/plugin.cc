@@ -423,7 +423,7 @@ Result& Plugin::result()
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-                const PublicTransport::Graph& pt_graph = *graph_.public_transport(step->network_id());
+                const PublicTransport::Graph& pt_graph = graph_.public_transport(*graph_.public_transport_index(step->network_id()));
 
                 // store stops
                 accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );

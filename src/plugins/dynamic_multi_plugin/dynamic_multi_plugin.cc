@@ -289,11 +289,9 @@ void DynamicMultiPlugin::pre_process( Request& request )
         if ( pt_allowed && (graph_.public_transports().size() > 0) ) {
             s_.current_day = request_.steps()[1].constraint().date_time().date();
 
-            for ( Multimodal::Graph::PublicTransportGraphList::const_iterator pt_graph_it = graph_.public_transports().begin();
-                  pt_graph_it != graph_.public_transports().end();
-                  pt_graph_it++ ) {
-                const PublicTransport::Graph& pt_graph = *pt_graph_it->second;
-                std::cout << "Load timetable for PT graph #" << pt_graph_it->first << std::endl;
+            for ( auto p : graph_.public_transports() ) {
+                const PublicTransport::Graph& pt_graph = *p.second;
+                std::cout << "Load timetable for PT graph #" << p.first << std::endl;
 
                 // cache graph id to descriptor
                 // FIXME - integrate the cache into the graphs ?
@@ -770,9 +768,9 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             step->set_wait(wait_map_[ *next ]);
 
             // find the network_id
-            for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin(); nit != graph_.public_transports().end(); ++nit ) {
-                if ( it->vertex.pt_graph() == nit->second ) {
-                    step->set_network_id(nit->first);
+            for ( auto p : graph_.public_transports() ) {
+                if ( it->vertex.pt_graph() == p.second ) {
+                    step->set_network_id(p.first);
                     break;
                 }
             }

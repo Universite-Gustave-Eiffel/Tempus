@@ -157,7 +157,7 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
         }
         else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
             Roadmap::PublicTransportStep* pt_step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-            const PublicTransport::Graph& pt_graph = graph.public_transport( pt_step->network_id() ).get();
+            const PublicTransport::Graph& pt_graph = graph.public_transport( *graph.public_transport_index(pt_step->network_id()) );
             db_id_t from_id = pt_graph[pt_step->departure_stop()].db_id();
             db_id_t to_id = pt_graph[pt_step->arrival_stop()].db_id();
             pt_steps[from_id][to_id] = pt_step;

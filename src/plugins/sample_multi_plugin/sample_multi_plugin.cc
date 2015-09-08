@@ -243,9 +243,9 @@ public:
                 step->set_trip_id( 1 );
 
                 // find the network_id
-                for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin(); nit != graph_.public_transports().end(); ++nit ) {
-                    if ( it->pt_graph() == nit->second ) {
-                        step->set_network_id( nit->first );
+                for ( auto p : graph_.public_transports() ) {
+                    if ( it->pt_graph() == p.second ) {
+                        step->set_network_id( p.first );
                         break;
                     }
                 }

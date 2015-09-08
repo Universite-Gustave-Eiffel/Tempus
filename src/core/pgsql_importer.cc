@@ -420,7 +420,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     // network_id -> pt_node_id -> vertex
     std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
 
-    boost::ptr_map<db_id_t, PublicTransport::Graph> pt_graphs;
+    std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>> pt_graphs;
     Multimodal::Graph::NetworkMap networks;
     {
         Db::Result res( connection_.exec( "SELECT id, pnname FROM tempus.pt_network" ) );
@@ -433,7 +433,8 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             network.set_name( res[i][1] );
 
             networks[network.db_id()] = network;
-            pt_graphs.insert(network.db_id(), std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph()));
+            std::cout << "insert " << network.db_id() << std::endl;
+            pt_graphs[network.db_id()].reset(new PublicTransport::Graph());
         }
     }
 
@@ -455,7 +456,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             BOOST_ASSERT( network_id > 0 );
             BOOST_ASSERT( networks.find( network_id ) != networks.end() );
             BOOST_ASSERT( pt_graphs.find( network_id ) != pt_graphs.end() );
-            PublicTransport::Graph& pt_graph = pt_graphs[network_id];
+            PublicTransport::Graph& pt_graph = *pt_graphs[network_id];
             PublicTransport::Stop stop;
 
             stop.set_db_id( res_i[j++] );
@@ -514,9 +515,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     //
     // For all public transport nodes, add a reference to the attached road section
-    boost::ptr_map<db_id_t, PublicTransport::Graph>::iterator it;
-
-    for ( it = pt_graphs.begin(); it != pt_graphs.end(); it++ ) {
+    for ( auto it = pt_graphs.begin(); it != pt_graphs.end(); it++ ) {
         PublicTransport::Graph& g = *it->second;
         PublicTransport::VertexIterator vi, vi_end;
 
@@ -532,7 +531,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     }
 
     {
-        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section") % schema_name).str() ) );
+        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section ORDER BY network_id") % schema_name).str() ) );
         Db::ResultIterator it_end;
         for ( ; res_it != it_end; res_it++ ) {
             Db::RowValue res_i = *res_it;
@@ -540,7 +539,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             res_i[0] >> network_id;
             BOOST_ASSERT( network_id > 0 );
             BOOST_ASSERT( pt_graphs.find( network_id ) != pt_graphs.end() );
-            PublicTransport::Graph& pt_graph = pt_graphs[ network_id ];
+            PublicTransport::Graph& pt_graph = *pt_graphs[ network_id ];
 
             Tempus::db_id_t stop_from_id, stop_to_id;
             res_i[1] >> stop_from_id;
@@ -567,6 +566,15 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             pt_graph[e].set_network_id( network_id );
 
             //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.75 ) );
+        }
+
+        // assign graph index to stops
+        size_t graph_idx = 0;
+        for ( auto p : pt_nodes_map ) {
+            for ( auto p2 : p.second ) {
+                (*pt_graphs[p.first])[p2.second].set_graph( graph_idx );
+            }
+            graph_idx++;
         }
     }
 

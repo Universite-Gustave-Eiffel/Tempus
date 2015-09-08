@@ -237,6 +237,9 @@ struct Edge {
 /// else, return false
 std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
 
+/// Type used to index a public transport graph
+typedef uint16_t PublicTransportGraphIndex;
+
 ///
 /// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
 struct Graph: boost::noncopyable {
@@ -289,19 +292,59 @@ public:
     /// Access to a particular network
     boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
     
-    ///
-    /// Public transports graphs
-    /// network_id -> PublicTransport::Graph
-    /// This a sub_map that can thus be filtered to select only a subset
-    /// Public transport graphs are owned by this class
-    /// FIXME find a smart pointer class that work with sub_map
-    typedef sub_map< db_id_t, const PublicTransport::Graph* > PublicTransportGraphList;
-    DECLARE_RO_PROPERTY( public_transports, PublicTransportGraphList );
+private:
+    typedef std::map<db_id_t, PublicTransportGraphIndex> PublicTransportGraphIdxMap;
+    PublicTransportGraphIdxMap public_transport_graph_idx_map_;
+    std::set<db_id_t> selected_transport_graphs_;
+    typedef std::vector<std::unique_ptr<PublicTransport::Graph>> PublicTransportGraphs;
+    PublicTransportGraphs public_transport_graphs_;
 
-    /// Access to a particular graph
-    boost::optional<const PublicTransport::Graph&> public_transport( db_id_t ) const;
+public:
+    // FIXME use boost::transform_iterator ?
+    class PublicTransportIterator
+    {
+    public:
+        PublicTransportIterator( std::set<db_id_t>::const_iterator it, const PublicTransportGraphs& g, const PublicTransportGraphIdxMap& idxmap ) : it_(it), g_(g), idxmap_(idxmap) {}
+        typedef std::pair<db_id_t, const PublicTransport::Graph*> value_type;
+        bool operator==( const PublicTransportIterator& other ) const { return other.it_ == it_; }
+        bool operator!=( const PublicTransportIterator& other ) const { return other.it_ != it_; }
+        value_type operator*() const { return std::make_pair( *it_, g_[idxmap_.find(*it_)->second].get() ); }
+        void operator++() { it_++; }
+        void operator++(int) { it_++; }
+    private:
+        std::set<db_id_t>::const_iterator it_;
+        const PublicTransportGraphs& g_;
+        const PublicTransportGraphIdxMap& idxmap_;
+    };
+
+    class PublicTransportGraphList
+    {
+    public:
+        PublicTransportGraphList( const std::set<db_id_t>& s, const PublicTransportGraphs& g, const PublicTransportGraphIdxMap& idxmap ) :
+            s_( s ),
+            itbegin_( s.begin(), g, idxmap ),
+            itend_( s.end(), g, idxmap ) {}
+        PublicTransportIterator begin() { return itbegin_; }
+        PublicTransportIterator end() { return itend_; }
+        size_t size() const { return s_.size(); }
+    private:
+        const std::set<db_id_t> s_;
+        const PublicTransportIterator itbegin_, itend_;
+    };
+
+    /// Returns a public transport graph index given a db id
+    boost::optional<PublicTransportGraphIndex> public_transport_index( db_id_t ) const;
+
+    /// Returns a public transport given an index
+    /// No bound checking is done on the index
+    const PublicTransport::Graph& public_transport( PublicTransportGraphIndex ) const;
+
+    /// Returns an object that carry begin and end iterator over public transport graphs
+    /// It can be used inside a range-based for loop
+    PublicTransportGraphList public_transports() const;
+
     /// take ownership (move)
-    void set_public_transports( boost::ptr_map<db_id_t, PublicTransport::Graph>& );
+    void set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>>& );
 
     /// Select public transports
     void select_public_transports( const std::set<db_id_t>& );
@@ -401,7 +444,7 @@ public:
 
 protected:
     Road::VertexIterator road_it_, road_it_end_;
-    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator pt_graph_it_, pt_graph_it_end_;
+    Multimodal::PublicTransportGraphIndex pt_graph_it_, pt_graph_it_end_;
     Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
     PublicTransport::VertexIterator pt_it_, pt_it_end_;
     const Multimodal::Graph* graph_;
