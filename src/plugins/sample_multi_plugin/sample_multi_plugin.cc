@@ -120,7 +120,7 @@ public:
                     CERR << "Can't find pt edge" << *ei << std::endl;
                 }
 
-                distances[*ei] = pt_lengths[ std::make_pair( get_stop_from(pt_graph[e]).db_id(), get_stop_to(pt_graph[e]).db_id() ) ];
+                distances[*ei] = pt_lengths[ std::make_pair( get_stop_from(pt_graph, e).db_id(), get_stop_to(pt_graph, e).db_id() ) ];
                 // average public transport speed : 25 km / h
                 durations[*ei] = distances[*ei] / 25000.0 * 60.0;
             }

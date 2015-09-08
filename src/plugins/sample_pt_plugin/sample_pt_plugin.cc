@@ -36,7 +36,7 @@ public:
     // TODO - possible improvement: cache length
     double operator()( const PublicTransport::Graph& graph, const PublicTransport::Edge& e ) {
         Db::Result res = db_.exec( ( boost::format( "SELECT ST_Length(geom) FROM tempus.pt_section WHERE stop_from = %1% AND stop_to = %2%" )
-                                     % get_stop_from(graph[e]).db_id() % get_stop_to(graph[e]).db_id() ).str() );
+                                     % get_stop_from(graph, e).db_id() % get_stop_to(graph, e).db_id() ).str() );
         BOOST_ASSERT( res.size() > 0 );
         double l = res[0][0].as<double>();
         return l;

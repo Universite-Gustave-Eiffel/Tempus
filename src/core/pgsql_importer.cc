@@ -507,7 +507,6 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             PublicTransport::Vertex v = boost::add_vertex( stop, pt_graph );
             pt_nodes_map[network_id][ stop.db_id() ] = v;
             pt_graph[v].set_vertex( v );
-            pt_graph[v].set_graph( &pt_graph );
 
             //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.5 ) );
         }
@@ -565,8 +564,6 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             bool is_added;
             boost::tie( e, is_added ) = boost::add_edge( stop_from, stop_to, pt_graph );
             BOOST_ASSERT( is_added );
-            pt_graph[e].set_edge( e );
-            pt_graph[e].set_graph( &pt_graph );
             pt_graph[e].set_network_id( network_id );
 
             //progression( static_cast<float>( ( ( i + 0. ) / res.size() / 4.0 ) + 0.75 ) );

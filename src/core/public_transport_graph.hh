@@ -128,16 +128,7 @@ public:
 /// used as an Edge in a PublicTransportGraph
 struct Section {
 public:
-    Section() : graph_(0), network_id_(0) {}
-
-    /// Shortcut to the public transport graph where this edge belongs
-    /// Can be null
-    DECLARE_RW_PROPERTY( graph, const Graph* );
-
-    /// This is a shortcut to the edge index in the corresponding graph, if any.
-    /// Needed to speedup access to a graph's edge from a Section
-    /// Can be null
-    DECLARE_RW_PROPERTY( edge, boost::optional<Edge> );
+    Section() : network_id_(0) {}
 
     /// must not be null
     DECLARE_RW_PROPERTY( network_id, db_id_t );
@@ -145,16 +136,16 @@ public:
 
 ///
 /// Convenience function - Get the departure stop of a public transport section
-inline Stop get_stop_from( const Section& s )
+inline Stop get_stop_from( const Graph& g, const Edge& e )
 {
-    return (*s.graph())[source( *s.edge(), *s.graph() )];
+    return g[source( e, g )];
 }
 
 ///
 /// Convenience function - Get the arrival stop of a public transport section
-inline Stop get_stop_to( const Section& s )
+inline Stop get_stop_to( const Graph& g, const Edge& e )
 {
-    return (*s.graph())[target( *s.edge(), *s.graph() )];
+    return g[target( e, g )];
 }
 
 
