@@ -114,8 +114,9 @@ int main( int argc, char* argv[] )
     string dbstring = "dbname=tempus_test_db";
     string schema_name = "tempus";
     bool consistency_check = true;
-#if ENABLE_SEGMENT_ALLOCATOR
     std::string dump_file = "";
+    bool load_from_dump = false;
+#if ENABLE_SEGMENT_ALLOCATOR
     size_t segment_size = 0;
 #endif
 #ifndef WIN32
@@ -168,12 +169,15 @@ int main( int argc, char* argv[] )
             else if ( arg == "-X" ) {
                 consistency_check = false;
             }
-#if ENABLE_SEGMENT_ALLOCATOR
             else if ( arg == "-f" ) {
                 if ( argc > i+1 ) {
                     dump_file = argv[++i];
                 }
             }
+            else if ( arg == "-L" ) {
+                load_from_dump = true;
+            }
+#if ENABLE_SEGMENT_ALLOCATOR
             else if ( arg == "-S" ) {
                 if ( argc > i+1 ) {
                     std::string s = argv[++i];
@@ -201,8 +205,9 @@ int main( int argc, char* argv[] )
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
 #endif
-#if ENABLE_SEGMENT_ALLOCATOR
                           << "\t-f\tdump file" << endl
+                          << "\t-L\tload road graph from dump file" << endl
+#if ENABLE_SEGMENT_ALLOCATOR
                           << "\t-S\tsegment size 0 or unspecified to load from the dump file" << endl
 #endif
                           ;
@@ -265,8 +270,10 @@ int main( int argc, char* argv[] )
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
         
-#if ENABLE_SEGMENT_ALLOCATOR
         Tempus::Application::instance()->set_option( "dump_file", dump_file );
+        Tempus::Application::instance()->set_option( "load_road_graph_from_file", load_from_dump );
+
+#if ENABLE_SEGMENT_ALLOCATOR
         Tempus::Application::instance()->set_option( "segment_size", segment_size );
 #endif
         Tempus::Application::instance()->build_graph( consistency_check, schema_name );

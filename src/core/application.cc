@@ -16,6 +16,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 
 #include "application.hh"
 #include "common.hh"
@@ -136,7 +137,22 @@ void Application::build_graph( bool consistency_check, const std::string& schema
         graph_.reset( (Multimodal::Graph*)addr );
     }
 #else
-    graph_ = importer.import_graph( progression, consistency_check, schema );
+    std::auto_ptr<Road::Graph> road_graph;
+    std::string dump_file = option("dump_file").str();
+    if ( option("load_road_graph_from_file").as<bool>() )
+    {
+        std::cout << "Loading from " << dump_file << "..." << std::endl;
+        road_graph.reset(new Road::Graph());
+        std::ifstream ifs( dump_file );
+        unserialize( ifs, *road_graph, binary_serialization_t() );
+    }
+    graph_ = importer.import_graph( progression, consistency_check, schema, road_graph );
+    if ( dump_file != "" )
+    {
+        std::cout << "Dumping to " << dump_file << "..." << std::endl;
+        std::ofstream ofs( dump_file );
+        serialize( ofs, graph_->road(), binary_serialization_t() );
+    }
 #endif
 
     COUT << "Importing constants ..." << std::endl;

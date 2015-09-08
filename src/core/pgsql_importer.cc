@@ -18,6 +18,7 @@
 #include <libpq-fe.h>
 
 #include <iostream>
+#include <fstream>
 
 #include <boost/mpl/vector.hpp>
 #include <boost/format.hpp>
@@ -91,11 +92,9 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
     }
 }
 
-///
-/// Function used to import the road and public transport graphs from a PostgreSQL database.
-std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
+std::auto_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, std::map<Tempus::db_id_t, Road::Edge>& road_sections_map )
 {
-    if ( consistency_check ) {
+   if ( consistency_check ) {
         //
         // check road section consistency
         {
@@ -196,9 +195,6 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     // locally maps db ID to Node or Section
     std::map<Tempus::db_id_t, Road::Vertex> road_nodes_map;
-    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
-    // network_id -> pt_node_id -> vertex
-    std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
 
     //------------------
     //   Road nodes
@@ -369,36 +365,60 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     auto l = [](decltype(sections)::value_type& p) { return p.first; };
     auto s_it_begin = boost::make_transform_iterator( sections.begin(), l );
     auto s_it_end = boost::make_transform_iterator( sections.end(), l );
-    std::auto_ptr<Road::Graph> sm_road_graph( new Road::Graph(boost::edges_are_unsorted_multi_pass,
-                                                              s_it_begin, s_it_end,
-                                                              nodes.size()) );
+    std::auto_ptr<Road::Graph> road_graph( new Road::Graph(boost::edges_are_unsorted_multi_pass,
+                                                           s_it_begin, s_it_end,
+                                                           nodes.size()) );
 
     std::cout << "Assigning nodes ..." << std::endl;
     {
         size_t i = 0;
         for ( const Road::Node& n : nodes ) {
-            (*sm_road_graph)[i] = n;
+            (*road_graph)[i] = n;
             i++;
         }
     }
-    nodes.clear();
 
     std::cout << "Assigning sections ..." << std::endl;
     for ( auto sit : sections ) {
         Road::Edge e;
         bool found;
         std::pair<Road::Vertex, Road::Vertex> p = sit.first;
-        boost::tie(e, found) = edge( p.first, p.second, *sm_road_graph );
+        boost::tie(e, found) = edge( p.first, p.second, *road_graph );
         BOOST_ASSERT( found );
         // populate road_sections_map
         road_sections_map[ sit.second.db_id() ] = e;
-        (*sm_road_graph)[e] = sit.second;
+        (*road_graph)[e] = sit.second;
     }
-    sections.clear();
 
-    // build the multimodal graph
-    std::auto_ptr<Multimodal::Graph> graph( new Multimodal::Graph( sm_road_graph ) );
-    Road::Graph *road_graph = &graph->road();
+    return road_graph;
+}
+
+///
+/// Function used to import the road and public transport graphs from a PostgreSQL database.
+std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name,
+                                                           std::auto_ptr<Road::Graph> aroad_graph )
+{
+    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
+    std::auto_ptr<Multimodal::Graph> graph;
+    if ( !aroad_graph.get() ) {
+
+        std::auto_ptr<Road::Graph> sm_road_graph( import_road_graph_( progression, consistency_check, schema_name, road_sections_map ) );
+
+        // build the multimodal graph
+        graph.reset( new Multimodal::Graph( sm_road_graph ) );
+    }
+    else {
+        // rebuild road_sections_map
+        Road::EdgeIterator it, it_end;
+        for ( boost::tie(it, it_end) = edges( *aroad_graph ); it != it_end; it++ ) {
+            road_sections_map[ (*aroad_graph)[*it].db_id() ] = *it;
+        }
+        graph.reset( new Multimodal::Graph( aroad_graph ) );
+    }
+    Road::Graph* road_graph = &graph->road();
+
+    // network_id -> pt_node_id -> vertex
+    std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
 
     boost::ptr_map<db_id_t, PublicTransport::Graph> pt_graphs;
     Multimodal::Graph::NetworkMap networks;

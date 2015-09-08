@@ -25,6 +25,7 @@ set( HEADER_FILES
   sub_map.hh
   transport_modes.hh
   variant.hh
+  serializers.hh
 )
 
 set( UTILS_HEADER_FILES
@@ -54,6 +55,7 @@ set( SOURCE_FILES
     db.cc 
     utils/graph_db_link.cc 
     variant.cc
+    serializers.cc
 )
 
 if (ENABLE_SEGMENT_ALLOCATOR)

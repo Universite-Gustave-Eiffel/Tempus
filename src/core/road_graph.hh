@@ -24,6 +24,7 @@
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include "common.hh"
 #include "point.hh"
+#include "serializers.hh"
 
 namespace Tempus {
 // forward declaration
@@ -76,6 +77,9 @@ struct Node : public Base {
     DECLARE_RW_PROPERTY( coordinates, Point3D );
 public:
     Node() : is_bifurcation_(false) {}
+
+    friend std::ostream& Tempus::serialize( std::ostream&, const Road::Node&, binary_serialization_t );
+    friend void Tempus::unserialize( std::istream&, Road::Node&, binary_serialization_t );
 };
 
 ///
@@ -122,6 +126,9 @@ private:
         RoadIsRamp =       1 << 3,
         RoadIsTollway =    1 << 4
     };
+
+    friend std::ostream& Tempus::serialize( std::ostream&, const Road::Section&, binary_serialization_t );
+    friend void Tempus::unserialize( std::istream&, Road::Section&, binary_serialization_t );
 };
 
 typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
@@ -178,6 +185,9 @@ private:
 };
 
 }  // Road namespace
+
+std::ostream& serialize( std::ostream& ostr, const Road::Graph&, binary_serialization_t );
+void unserialize( std::istream& istr, Road::Graph&, binary_serialization_t );
 
 } // Tempus namespace
 

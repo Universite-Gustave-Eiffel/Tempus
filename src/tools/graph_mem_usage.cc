@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -109,5 +110,8 @@ int main( int argc, char* argv[] )
 
         float frag = (1.0 - float(heap_usage) / info.rss) * 100.0;
         std::cerr << "Fragmentation: " << frag << "%" << std::endl;
+
+        std::ofstream ofs( "dump.bin" );
+        serialize( ofs, graph->road(), binary_serialization_t() );
     }
 }
