@@ -118,7 +118,7 @@ public:
 
     ///
     /// Fare zone ID of this stop
-    DECLARE_RW_PROPERTY( zone_id, int );
+    DECLARE_RW_PROPERTY( zone_id, uint16_t );
 
     ///
     /// coordinates
