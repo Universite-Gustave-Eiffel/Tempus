@@ -23,6 +23,7 @@
 #include "common.hh"
 #include "road_graph.hh"
 #include "abscissa.hh"
+#include "optional.hh"
 
 namespace Tempus {
 /**
@@ -94,14 +95,14 @@ public:
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    DECLARE_RW_PROPERTY( vertex, boost::optional<Vertex> );
+    DECLARE_RW_PROPERTY( vertex, Optional<Vertex> );
 
     DECLARE_RW_PROPERTY( name, std::string );
     DECLARE_RW_PROPERTY( is_station, bool );
 
     ///
     /// link to a possible parent station, or null
-    DECLARE_RW_PROPERTY( parent_station, boost::optional<Vertex> );
+    DECLARE_RW_PROPERTY( parent_station, Optional<Vertex> );
 
     /// link to a road edge
     DECLARE_RW_PROPERTY( road_edge, Road::Edge );
