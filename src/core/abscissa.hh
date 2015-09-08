@@ -28,14 +28,12 @@ namespace Tempus
 class Abscissa
 {
 public:
-    Abscissa() : v_(0.0) {}
-    Abscissa( double v ) {
-        BOOST_ASSERT( (v>=0.0)&&(v<=1.0) );
-        v_ = v;
-    }
-    operator double() const { return v_; }
+    Abscissa();
+    Abscissa( float v );
+    operator float() const;
 private:
-    double v_;
+    // stored on 16 bits
+    uint16_t d_;
 };
 
 std::istream& operator>>( std::istream& istr, Abscissa& a );

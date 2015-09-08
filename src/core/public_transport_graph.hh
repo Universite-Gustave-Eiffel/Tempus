@@ -22,6 +22,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include "common.hh"
 #include "road_graph.hh"
+#include "abscissa.hh"
 
 namespace Tempus {
 /**
@@ -112,7 +113,7 @@ public:
 
     ///
     /// Number between 0 and 1 : position of the stop on the main road section
-    DECLARE_RW_PROPERTY( abscissa_road_section, double );
+    DECLARE_RW_PROPERTY( abscissa_road_section, Abscissa );
 
     ///
     /// Fare zone ID of this stop
