@@ -42,6 +42,7 @@ set( SOURCE_FILES
     cost.cc
     abscissa.cc
     road_graph.cc
+    public_transport_graph.cc
     multimodal_graph.cc 
     reverse_multimodal_graph.cc
     poi.cc

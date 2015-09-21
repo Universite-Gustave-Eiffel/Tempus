@@ -209,12 +209,21 @@ void ResultIterator::operator++(int)
         res_ = 0;
     }
     res_ = PQgetResult( conn_ );
-    if ( PQresultStatus(res_) != PGRES_SINGLE_TUPLE )
+    int r = PQresultStatus(res_);
+    if ( r == PGRES_TUPLES_OK )
     {
+        // no rows left
         if ( res_ ) PQclear( res_ );
         res_ = PQgetResult(conn_); // to achieve the command
         if ( res_ ) PQclear( res_ );        
         res_ = 0;
+        return;
+    }
+    if ( r != PGRES_SINGLE_TUPLE )
+    {
+        if ( res_ ) PQclear( res_ );
+        res_ = 0;
+        throw std::runtime_error( PQerrorMessage( conn_ ) );
     }
 }
 

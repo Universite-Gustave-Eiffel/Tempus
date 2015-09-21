@@ -109,7 +109,6 @@ void Application::build_graph( bool consistency_check, const std::string& schema
     // request the database
     PQImporter importer( db_options_ );
     TextProgression progression( 50 );
-    COUT << "Loading graph from database: " << std::endl;
 
 #if ENABLE_SEGMENT_ALLOCATOR
     size_t segment_size = 0;
@@ -137,27 +136,32 @@ void Application::build_graph( bool consistency_check, const std::string& schema
         graph_.reset( (Multimodal::Graph*)addr );
     }
 #else
-    std::auto_ptr<Road::Graph> road_graph;
-    std::string dump_file = option("dump_file").str();
-    if ( option("load_road_graph_from_file").as<bool>() )
+    std::string load_from = option("load_from").str();
+    std::string dump_to = option("dump_to").str();
+    if ( load_from != "" )
     {
-        std::cout << "Loading from " << dump_file << "..." << std::endl;
-        road_graph.reset(new Road::Graph());
-        std::ifstream ifs( dump_file );
-        unserialize( ifs, *road_graph, binary_serialization_t() );
+        std::cout << "Loading from " << load_from << "..." << std::endl;
+        std::auto_ptr<Road::Graph> rg;
+        graph_.reset( new Multimodal::Graph(rg) );
+        std::ifstream ifs( load_from );
+        unserialize( ifs, *graph_, binary_serialization_t() );
     }
-    graph_ = importer.import_graph( progression, consistency_check, schema, road_graph );
-    if ( dump_file != "" )
+    else {
+        COUT << "Loading graph from database: " << std::endl;
+
+        graph_ = importer.import_graph( progression, consistency_check, schema );
+
+        COUT << "Importing constants ..." << std::endl;
+        importer.import_constants( *graph_, progression, schema );
+    }
+
+    if ( dump_to != "" )
     {
-        std::cout << "Dumping to " << dump_file << "..." << std::endl;
-        std::ofstream ofs( dump_file );
-        serialize( ofs, graph_->road(), binary_serialization_t() );
+        std::cout << "Dumping to " << dump_to << "..." << std::endl;
+        std::ofstream ofs( dump_to );
+        serialize( ofs, *graph_ , binary_serialization_t() );
     }
 #endif
-
-    COUT << "Importing constants ..." << std::endl;
-    importer.import_constants( *graph_, progression, schema );
-
     state_ = GraphBuilt;
     schema_name_ = schema;
 }
