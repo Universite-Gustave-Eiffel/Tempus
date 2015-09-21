@@ -44,17 +44,17 @@ boost::optional<const PublicTransport::Network&> ReverseGraph::network( db_id_t 
     return graph_.network( id );
 }
 
-boost::optional<PublicTransport::Graph> ReverseGraph::public_transport( Multimodal::PublicTransportGraphIndex id ) const
+boost::optional<PublicTransport::Graph> ReverseGraph::public_transport( PublicTransportGraphIndex id ) const
 {
     return graph_.public_transport(id);
 }
 
-boost::optional<PublicTransport::ReverseGraph> ReverseGraph::reverse_public_transport( Multimodal::PublicTransportGraphIndex id ) const
+boost::optional<PublicTransport::ReverseGraph> ReverseGraph::reverse_public_transport( PublicTransportGraphIndex id ) const
 {
     return PublicTransport::ReverseGraph( graph_.public_transport(id) );
 }
 
-ReverseGraph::PoiList ReverseGraph::pois() const
+Graph::POIList ReverseGraph::pois() const
 {
     return graph_.pois();
 }

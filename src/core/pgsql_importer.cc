@@ -395,26 +395,14 @@ std::auto_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& 
 
 ///
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
-std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name,
-                                                           std::auto_ptr<Road::Graph> aroad_graph )
+std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
 {
     std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
     std::auto_ptr<Multimodal::Graph> graph;
-    if ( !aroad_graph.get() ) {
+    std::auto_ptr<Road::Graph> sm_road_graph( import_road_graph_( progression, consistency_check, schema_name, road_sections_map ) );
 
-        std::auto_ptr<Road::Graph> sm_road_graph( import_road_graph_( progression, consistency_check, schema_name, road_sections_map ) );
-
-        // build the multimodal graph
-        graph.reset( new Multimodal::Graph( sm_road_graph ) );
-    }
-    else {
-        // rebuild road_sections_map
-        Road::EdgeIterator it, it_end;
-        for ( boost::tie(it, it_end) = edges( *aroad_graph ); it != it_end; it++ ) {
-            road_sections_map[ (*aroad_graph)[*it].db_id() ] = *it;
-        }
-        graph.reset( new Multimodal::Graph( aroad_graph ) );
-    }
+    // build the multimodal graph
+    graph.reset( new Multimodal::Graph( sm_road_graph ) );
     Road::Graph* road_graph = &graph->road();
 
     // network_id -> pt_node_id -> vertex
@@ -515,17 +503,18 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
 
     //
     // For all public transport nodes, add a reference to the attached road section
-    for ( auto it = pt_graphs.begin(); it != pt_graphs.end(); it++ ) {
+    size_t gidx = 0;
+    for ( auto it = pt_graphs.begin(); it != pt_graphs.end(); it++, gidx++ ) {
         PublicTransport::Graph& g = *it->second;
         PublicTransport::VertexIterator vi, vi_end;
 
         for ( boost::tie( vi, vi_end ) = boost::vertices( g ); vi != vi_end; vi++ ) {
             Road::Edge rs = g[ *vi ].road_edge();
-            graph->add_stop_ref( rs, &g[*vi] );
+            graph->add_stop_ref( rs, gidx, *vi );
             // add a ref to the opposite road edge, if any
             if (g[*vi].opposite_road_edge()) {
                 rs = g[*vi].opposite_road_edge().get();
-                graph->add_stop_ref( rs, &g[*vi] );
+                graph->add_stop_ref( rs, gidx, *vi );
             }
         }
     }
@@ -581,12 +570,19 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
     //-------------
     //    POI
     //-------------
-    boost::ptr_map<db_id_t, POI> pois;
+    std::vector<POI> pois;
+    {
+        Db::Result res = connection_.exec( (boost::format("SELECT COUNT(*) FROM %1%.poi") % schema_name).str() );
+        size_t count = 0;
+        res[0][0] >> count;
+        pois.reserve( count );
+    }
     {
         Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section "
                                                                     ", st_x(geom), st_y(geom), st_z(geom) FROM %1%.poi") % schema_name).str() ) );
         Db::ResultIterator it_end;
-        for ( ; res_it != it_end; res_it++ ) {
+        size_t pidx = 0;
+        for ( ; res_it != it_end; res_it++, pidx++ ) {
             Db::RowValue res_i = *res_it;
             POI poi;
 
@@ -607,7 +603,9 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                 continue;
             }
 
-            poi.set_road_edge( road_sections_map[ road_section_id ] );
+            Road::Edge re = road_sections_map[ road_section_id ];
+            poi.set_road_edge( re );
+            graph->add_poi_ref( re, pidx );
             // look for an opposite road edge
             {
                 Road::Edge opposite_edge;
@@ -617,6 +615,7 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
                                                            *road_graph );
                 if ( found && (graph->road()[poi.road_edge()].db_id() == graph->road()[opposite_edge].db_id()) ) {
                     poi.set_opposite_road_edge( opposite_edge );
+                    graph->add_poi_ref( opposite_edge, pidx );
                 }
             }
 
@@ -628,27 +627,14 @@ std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& 
             p.set_z( res_i[8] );
             poi.set_coordinates( p );
 
-            pois.insert( poi.db_id(), std::auto_ptr<POI>(new POI( poi )) );
-        }
-    }
-
-    //
-    // For all POIs, add a reference to the attached road section
-    Multimodal::Graph::PoiList::iterator pit;
-
-    for ( pit = pois.begin(); pit != pois.end(); pit++ ) {
-        Road::Edge rs = pit->second->road_edge();
-        graph->add_poi_ref( rs, &*pit->second );
-        if ( pit->second->opposite_road_edge() ) {
-            rs = pit->second->opposite_road_edge().get();
-            graph->add_poi_ref( rs, &*pit->second );
+            pois.push_back( poi );
         }
     }
 
     /// assign to the multimodal graph
     graph->set_network_map( networks );
-    graph->set_public_transports( pt_graphs );
-    graph->set_pois( pois );
+    graph->set_public_transports( std::move(pt_graphs) );
+    graph->set_pois( std::move(pois) );
 
     progression( 1.0, /* finished = */ true );
 

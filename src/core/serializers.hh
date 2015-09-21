@@ -24,26 +24,39 @@ namespace Tempus
 
 struct Point2D;
 struct Point3D;
+class TransportMode;
 
 namespace Road
 {
 struct Node;
 struct Section;
 }
+namespace PublicTransport
+{
+struct Stop;
+struct Section;
+}
+namespace Multimodal
+{
+struct Graph;
+}
 
 struct binary_serialization_t {};
 
-std::ostream& serialize( std::ostream& ostr, const Point2D& pt, binary_serialization_t );
+void serialize( std::ostream& ostr, const Point2D& pt, binary_serialization_t );
 void unserialize( std::istream& istr, Point2D& pt, binary_serialization_t );
 
-std::ostream& serialize( std::ostream& ostr, const Point3D& pt, binary_serialization_t );
+void serialize( std::ostream& ostr, const Point3D& pt, binary_serialization_t );
 void unserialize( std::istream& istr, Point3D& pt, binary_serialization_t );
 
-std::ostream& serialize( std::ostream& ostr, const Road::Node& node, binary_serialization_t );
-void unserialize( std::istream& istr, Road::Node& node, binary_serialization_t );
+void serialize( std::ostream& ostr, const PublicTransport::Stop&, binary_serialization_t );
+void unserialize( std::istream& istr, PublicTransport::Stop&, binary_serialization_t );
 
-std::ostream& serialize( std::ostream& ostr, const Road::Section&, binary_serialization_t );
-void unserialize( std::istream& istr, Road::Section&, binary_serialization_t );
+void serialize( std::ostream& ostr, const TransportMode&, binary_serialization_t );
+void unserialize( std::istream& istr, TransportMode&, binary_serialization_t );
+
+void serialize( std::ostream& ostr, const Multimodal::Graph&, binary_serialization_t );
+void unserialize( std::istream& istr, Multimodal::Graph&, binary_serialization_t );
 
 } // namespace Tempus
 

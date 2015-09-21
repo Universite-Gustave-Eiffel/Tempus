@@ -448,8 +448,8 @@ void DynamicMultiPlugin::process()
     Timer timer;
 
     // Get origin and destination nodes
-    Multimodal::Vertex origin = Multimodal::Vertex( &graph_.road(), request_.origin() );
-    destination_ = Multimodal::Vertex( &graph_.road(), request_.destination() );
+    Multimodal::Vertex origin = Multimodal::Vertex( graph_, request_.origin(), Multimodal::Vertex::road_t() );
+    destination_ = Multimodal::Vertex( graph_, request_.destination(), Multimodal::Vertex::road_t() );
 
     bool reversed = request_.steps().back().constraint().type() == Request::TimeConstraint::ConstraintBefore;
 
@@ -778,7 +778,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
         }
         else {
             // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-            mstep.reset( new Roadmap::TransferStep( Multimodal::Edge( it->vertex, next->vertex ) ) );
+            mstep.reset( new Roadmap::TransferStep( Multimodal::Edge( graph_, it->vertex, next->vertex ) ) );
             Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>(mstep.get());
             step->set_transport_mode( it->mode );
             step->set_final_mode( next->mode );
@@ -815,7 +815,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
                 d = vit->first;
             }
 
-            ValuedEdge ve( o.vertex, d.vertex );
+            ValuedEdge ve( graph_, o.vertex, d.vertex );
             ve.set_value( "duration", potential_map_[d] );
             ve.set_value( "imode", size_t(o.mode) );
             ve.set_value( "fmode", size_t(d.mode) );

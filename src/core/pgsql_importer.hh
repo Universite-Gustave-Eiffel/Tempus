@@ -39,8 +39,7 @@ public:
 
     ///
     /// Import the multimodal graph
-    std::auto_ptr<Multimodal::Graph> import_graph( ProgressionCallback& callback = null_progression_callback, bool consistency_check = true, const std::string& schema_name = "tempus",
-                                                   std::auto_ptr<Road::Graph> = std::auto_ptr<Road::Graph>() );
+    std::auto_ptr<Multimodal::Graph> import_graph( ProgressionCallback& callback = null_progression_callback, bool consistency_check = true, const std::string& schema_name = "tempus" );
 
     ///
     /// Import constants transport modes

@@ -39,7 +39,8 @@ private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
   const remove_const<TYPE>::type& NAME() const { return NAME ## _; } \
-  void set_##NAME( const remove_const<TYPE>::type& a ) { NAME ## _ = a; }
+  void set_##NAME( const remove_const<TYPE>::type& a ) { NAME ## _ = a; } \
+  void set_##NAME( remove_const<TYPE>::type&& a ) { NAME ## _ = a; }
 
 ///
 /// Macro used to declare a class property and its getter
@@ -55,7 +56,8 @@ public:                                                \
 private:                                               \
   TYPE NAME ## _;                                      \
 public:                                                \
-  void set_##NAME( const TYPE& a ) { NAME ## _ = a; }
+  void set_##NAME( const TYPE& a ) { NAME ## _ = a; }  \
+  void set_##NAME( TYPE&& a ) { NAME ## _ = a; }
 
 }
 

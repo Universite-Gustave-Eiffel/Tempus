@@ -123,6 +123,9 @@ public:
     ///
     /// coordinates
     DECLARE_RW_PROPERTY( coordinates, Point3D );
+
+    friend void Tempus::serialize( std::ostream& ostr, const PublicTransport::Stop&, binary_serialization_t );
+    friend void Tempus::unserialize( std::istream& istr, PublicTransport::Stop&, binary_serialization_t );
 };
 
 ///
@@ -156,6 +159,10 @@ typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
 } // PublicTransport namespace
+
+void serialize( std::ostream& ostr, const PublicTransport::Graph&, binary_serialization_t );
+void unserialize( std::istream& istr, PublicTransport::Graph&, binary_serialization_t );
+
 } // Tempus namespace
 
 #endif

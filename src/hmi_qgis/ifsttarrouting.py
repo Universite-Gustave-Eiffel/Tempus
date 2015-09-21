@@ -1091,7 +1091,7 @@ class IfsttarRouting:
 
         listModel.itemChanged.connect( on_transport_changed )
         self.dlg.ui.transportList.setModel( listModel )
-        on_transport_changed( item )
+        #on_transport_changed( item )
 
     #
     # Take an XML tree from the WPS 'results'

@@ -60,7 +60,7 @@ Point2D coordinates( const POI* poi, Db::Connection& db )
 Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Multimodal::Graph& )
 {
     if ( v.type() == Multimodal::Vertex::Road ) {
-        return coordinates( v.road_vertex(), db, *v.road_graph() );
+        return coordinates( v.road_vertex(), db, v.graph()->road() );
     }
     else if ( v.type() == Multimodal::Vertex::PublicTransport ) {
     return coordinates( v.pt_vertex(), db, *v.pt_graph() );

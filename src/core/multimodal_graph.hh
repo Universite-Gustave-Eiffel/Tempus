@@ -49,12 +49,18 @@ std::ostream& operator<<( std::ostream& ostr, const EdgeIterator& it );
 }
 
 namespace Tempus {
+
+/// Type used to index a public transport graph
+typedef uint16_t PublicTransportGraphIndex;
+
 ///
 /// Multimodal namespace
 ///
 /// A Multimodal::Graph is a Road::Graph, a list of PublicTransport::Graph and a list of POIs
 ///
 namespace Multimodal {
+
+struct Graph;
 
 class VertexIndexProperty;
 ///
@@ -67,17 +73,22 @@ public:
     bool operator!=( const Vertex& v ) const;
     bool operator<( const Vertex& v ) const;
 
+    struct road_t {};
+    struct pt_t {};
+    struct poi_t {};
+
     /// A null vertex
     Vertex();
     /// A road vertex
-    Vertex( const Road::Graph* graph, Road::Vertex vertex );
+    Vertex( const Graph&, Road::Vertex vertex, road_t );
     /// A public transport vertex
-    Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex );
+    Vertex( const Graph&, PublicTransportGraphIndex idx, PublicTransport::Vertex vertex, pt_t = pt_t() );
     /// A POI vertex
-    explicit Vertex( const POI* poi );
+    Vertex( const Graph&, POIIndex, poi_t );
 
     enum VertexType {
-        Road = 0,        /// This vertex is a road vertex
+        Null = 0,
+        Road,        /// This vertex is a road vertex
         PublicTransport, /// This vertex is a public transport stop
         Poi              /// This vertex is a POI
     };
@@ -87,77 +98,41 @@ public:
 
     /// Access to the underlying road graph
     /// @returns the road graph or 0 if it's not a road vertex
+    const Graph* graph() const;
     const Road::Graph* road_graph() const;
+
     /// @returns the road vertex on the road graph if it's a road vertex
     Road::Vertex road_vertex() const;
 
     /// @returns the public transport graph or 0 if it's not a pt vertex
+    PublicTransportGraphIndex pt_graph_idx() const;
     const PublicTransport::Graph* pt_graph() const;
+
     /// @returns the pt vertex on the pt graph if it's a pt vertex
     PublicTransport::Vertex pt_vertex() const;
 
     /// @returns the POI, if it's a POI, or 0
+    POIIndex poi_idx() const;
     const POI* poi() const;
 
     /// @returns the coordinates, whatever the vertex type
     Point3D coordinates() const;
 
 private:
-    struct RoadVertex_
+    const Graph* graph_;
+
+    union
     {
-        const Road::Graph* graph;
         Road::Vertex vertex;
-        RoadVertex_() : graph(0) {}
-        RoadVertex_( const Road::Graph* g, const Road::Vertex& v ) : graph(g), vertex(v) {}
-        bool operator==( const RoadVertex_& other ) const {
-            return graph == other.graph && vertex == other.vertex;
-        }
-        bool operator< (const RoadVertex_& other ) const {
-            return graph == other.graph ? vertex < other.vertex : graph < other.graph;
-        }
-    };
-    struct PtVertex_
-    {
-        const PublicTransport::Graph* graph;
-        PublicTransport::Vertex vertex;
-        PtVertex_() : graph(0) {}
-        PtVertex_( const PublicTransport::Graph* g, const PublicTransport::Vertex& v) : graph(g), vertex(v) {}
-        bool operator==( const PtVertex_& other ) const {
-            return graph == other.graph && vertex == other.vertex;
-        }
-        bool operator< (const PtVertex_& other ) const {
-            return graph == other.graph ? vertex < other.vertex : graph < other.graph;
-        }
-    };
-
-    template <class T, class Visitor>
-    struct ProxyVisitor : public boost::static_visitor<T>
-    {
-        Visitor visitor_;
-        ProxyVisitor( Visitor visitor ) : visitor_(visitor) {}
-        T operator()(const RoadVertex_& r ) const
+        struct
         {
-            return visitor_( *r.graph, r.vertex );
-        }
-        T operator()(const PtVertex_& r ) const
-        {
-            return visitor_( *r.graph, r.vertex );
-        }
-        T operator()(const POI* p ) const
-        {
-            return visitor_( *p );
-        }
-    };
+            PublicTransportGraphIndex index;
+            PublicTransport::Vertex vertex;
+        } pt;
+        POIIndex poi;
+    } data_;
 
-    template <class T, class Visitor>
-    T apply_visitor_( Visitor v ) const
-    {
-        ProxyVisitor<T,Visitor> pv(v);
-        return boost::apply_visitor( pv, union_ );
-    }
-
-    bool is_null_;
-    boost::variant< RoadVertex_, PtVertex_, const POI * > union_;
+    VertexType type_;
 
     friend class VertexIndexProperty;
 };
@@ -210,22 +185,28 @@ struct Edge {
     Edge() {}
     /// Generic constructor
     /// Warning try to call more specialized, faster constructors
-    Edge( const Multimodal::Vertex& s, const Multimodal::Vertex& t );
+    Edge( const Multimodal::Graph& g, const Multimodal::Vertex& s, const Multimodal::Vertex& t );
 
     /// Road2Road constructor
-    Edge( const Road::Graph* graph, const Road::Vertex& s, const Road::Vertex& t );
+    struct road2road_t {};
+    Edge( const Multimodal::Graph&, const Road::Vertex& s, const Road::Vertex& t, road2road_t );
     /// Transport2Road constructor
-    Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s,
-          const Road::Graph* graph, const Road::Vertex& t );
+    Edge( const Multimodal::Graph&,
+          PublicTransportGraphIndex pt_graph, const PublicTransport::Vertex& s,
+          const Road::Vertex& t );
     /// Road2Transport constructor
-    Edge( const Road::Graph* graph, const Road::Vertex& s,
-          const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& t );
+    Edge( const Multimodal::Graph&,
+          const Road::Vertex& s,
+          PublicTransportGraphIndex pt_graph, const PublicTransport::Vertex& t );
     /// Transport2Transport constructor
-    Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s, const PublicTransport::Vertex& t );
+    Edge( const Multimodal::Graph&,
+          PublicTransportGraphIndex pt_graph, const PublicTransport::Vertex& s, const PublicTransport::Vertex& t );
     /// Road2Poi constructor
-    Edge( const Road::Graph* graph, const Road::Vertex& s, const POI* t );
+    struct road2poi_t {};
+    Edge( const Graph&, const Road::Vertex& s, POIIndex t, road2poi_t );
     /// Poi2Road constructor
-    Edge( const POI* s, const Road::Graph* graph, const Road::Vertex& t );
+    struct poi2road_t {};
+    Edge( const Graph&, POIIndex s, const Road::Vertex& t, poi2road_t );
 
     bool operator==( const Multimodal::Edge& e ) const;
     bool operator!=( const Multimodal::Edge& e ) const;
@@ -236,9 +217,6 @@ struct Edge {
 /// Get the public transport edge if the given edge is a Transport2Transport
 /// else, return false
 std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal::Edge& e );
-
-/// Type used to index a public transport graph
-typedef uint16_t PublicTransportGraphIndex;
 
 ///
 /// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
@@ -328,7 +306,7 @@ public:
         PublicTransportIterator end() { return itend_; }
         size_t size() const { return s_.size(); }
     private:
-        const std::set<db_id_t> s_;
+        const std::set<db_id_t>& s_;
         const PublicTransportIterator itbegin_, itend_;
     };
 
@@ -344,7 +322,7 @@ public:
     PublicTransportGraphList public_transports() const;
 
     /// take ownership (move)
-    void set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>>& );
+    void set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>>&& );
 
     /// Select public transports
     void select_public_transports( const std::set<db_id_t>& );
@@ -353,25 +331,44 @@ public:
 
     ///
     /// Point of interests
-    typedef boost::ptr_map<db_id_t, POI> PoiList;
-    DECLARE_RO_PROPERTY( pois, PoiList );
-    /// Access to a particular poi
-    boost::optional<const POI&> poi( db_id_t ) const;
+    typedef std::vector<POI> POIList;
+private:
+    POIList pois_;
+    typedef std::map<db_id_t, POIIndex> POIIndexMap;
+    POIIndexMap poi_index_map_;
+public:
+    boost::optional<POIIndex> poi_index( db_id_t ) const;
+
+    const POI& poi( POIIndex ) const;
+    POI& poi( POIIndex );
+
     /// Set POIs (take ownership)
-    void set_pois( boost::ptr_map<db_id_t, POI>& );
+    void set_pois( std::vector<POI>&& );
 
-    void add_poi_ref( const Road::Edge& e, const POI* );
+    POIList pois() const { return pois_; }
 
-    const std::vector<const POI*> edge_pois( const Road::Edge& e ) const;
+    void add_poi_ref( const Road::Edge& e, POIIndex );
+
+    typedef std::vector<POIIndex> EdgePois;
+    const EdgePois& edge_pois( const Road::Edge& e ) const;
 
     typedef std::map<db_id_t, TransportMode> TransportModes;
     DECLARE_RO_PROPERTY( transport_modes, TransportModes );
 
     void set_transport_modes( const TransportModes& );
 
-    void add_stop_ref( const Road::Edge& e, const PublicTransport::Stop* );
+    void add_stop_ref( const Road::Edge& e, const PublicTransportGraphIndex&, const PublicTransport::Vertex& );
 
-    const std::vector<const PublicTransport::Stop*> edge_stops( const Road::Edge& ) const;
+    struct StopIndex
+    {
+        StopIndex() {}
+        StopIndex( PublicTransportGraphIndex graph, PublicTransport::Vertex vertex ) : graph_(graph), vertex_(vertex) {}
+
+        DECLARE_RO_PROPERTY( graph, PublicTransportGraphIndex );
+        DECLARE_RO_PROPERTY( vertex, PublicTransport::Vertex );
+    };
+    typedef std::vector<StopIndex> EdgeStops;
+    const EdgeStops& edge_stops( const Road::Edge& ) const;
 
     /// access to a transportmode, given its id
     /// the second element of the pair tells if the mode exists
@@ -398,11 +395,18 @@ private:
     /// Graph metadata
     std::map<std::string, std::string> metadata_;
 
-    typedef std::map<Road::Edge, std::vector<const PublicTransport::Stop*>> RoadEdgeStops;
+    typedef std::map<Road::Edge, EdgeStops> RoadEdgeStops;
     RoadEdgeStops road_edge_stops_;
+    // just to be able to return a reference to empty
+    EdgeStops empty_edge_stops_;
 
-    typedef std::map<Road::Edge, std::vector<const POI*>> RoadEdgePOIs;
+    typedef std::map<Road::Edge, EdgePois> RoadEdgePOIs;
     RoadEdgePOIs road_edge_pois_;
+    // just to be able to return a reference to empty
+    EdgePois empty_edge_pois_;
+
+    friend void Tempus::serialize( std::ostream& ostr, const Graph& graph, binary_serialization_t );
+    friend void Tempus::unserialize( std::istream& istr, Graph& graph, binary_serialization_t );
 };
 
 ///
@@ -444,8 +448,8 @@ public:
 
 protected:
     Road::VertexIterator road_it_, road_it_end_;
-    Multimodal::PublicTransportGraphIndex pt_graph_it_, pt_graph_it_end_;
-    Multimodal::Graph::PoiList::const_iterator poi_it_, poi_it_end_;
+    PublicTransportGraphIndex pt_graph_it_, pt_graph_it_end_;
+    POIIndex poi_it_, poi_it_end_;
     PublicTransport::VertexIterator pt_it_, pt_it_end_;
     const Multimodal::Graph* graph_;
 

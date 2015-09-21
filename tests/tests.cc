@@ -24,6 +24,7 @@
 #include "utils/graph_db_link.hh"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 
 #include <boost/graph/depth_first_search.hpp>
@@ -115,13 +116,8 @@ std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " 
 
 std::auto_ptr<Multimodal::Graph> graph;
 
-BOOST_AUTO_TEST_CASE( testConsistency )
+void testConsistency_( const Multimodal::Graph* graph )
 {
-    std::cout << "PgImporterTest::testConsistency()" << std::endl;
-    TextProgression progression;
-    graph = importer->import_graph( progression );
-    importer->import_constants( *graph, progression );
-
     // get the number of vertices in the graph
     long n_road_vertices;
     {
@@ -290,6 +286,32 @@ BOOST_AUTO_TEST_CASE( testConsistency )
         std::cout << "n_pt_edges = " << n_pt_edges << " num_edges(pt_graph) = " << num_edges( pt_graph ) << std::endl;
         BOOST_CHECK_EQUAL( n_pt_edges, boost::num_edges( pt_graph ) );
     }
+}
+
+BOOST_AUTO_TEST_CASE( testConsistency )
+{
+    std::cout << "PgImporterTest::testConsistency()" << std::endl;
+    TextProgression progression;
+    graph = importer->import_graph( progression );
+    importer->import_constants( *graph, progression );
+    testConsistency_( graph.get() );
+
+    {
+        std::cout << "dumping ... " << std::endl;
+        std::ofstream ofs( "dump.bin" );
+        serialize( ofs, *graph, binary_serialization_t() );
+    }
+
+    // retry with a fresh loaded from dump file
+    std::auto_ptr<Road::Graph> rg;
+    graph.reset( new Multimodal::Graph(rg) );
+    {
+        std::cout << "reloading ... " << std::endl;
+        std::ifstream ifs("dump.bin");
+        unserialize( ifs, *graph, binary_serialization_t() );
+    }
+
+    testConsistency_( graph.get() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -554,7 +576,7 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
             pt_copy.insert( std::make_pair(1, std::unique_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) )) );
             pt_copy.insert( std::make_pair(2, std::unique_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) )) );
 
-            graph->set_public_transports( pt_copy );
+            graph->set_public_transports( std::move(pt_copy) );
 
             // check that vertices are doubled
             size_t vv = num_vertices( *graph );

@@ -29,7 +29,7 @@ namespace Tempus {
 class ValuedEdge : public Multimodal::Edge
 {
 public:
-    ValuedEdge( const Multimodal::Vertex& o, const Multimodal::Vertex& d ) : Multimodal::Edge(o,d) {}
+    ValuedEdge( const Multimodal::Graph& g, const Multimodal::Vertex& o, const Multimodal::Vertex& d ) : Multimodal::Edge(g,o,d) {}
     ///
     /// Map of arbitrary values. It can be costs or other user-defined values
     DECLARE_RO_PROPERTY( values, VariantMap );

@@ -27,5 +27,3 @@ void Network::add_agency( const Agency& agency )
 
 } // PublicTransport namespace
 } // Tempus namespace
-
-#endif

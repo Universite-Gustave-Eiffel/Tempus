@@ -111,7 +111,15 @@ int main( int argc, char* argv[] )
         float frag = (1.0 - float(heap_usage) / info.rss) * 100.0;
         std::cerr << "Fragmentation: " << frag << "%" << std::endl;
 
-        std::ofstream ofs( "dump.bin" );
-        serialize( ofs, graph->road(), binary_serialization_t() );
+        {
+            std::cout << "dumping ... " << std::endl;
+            std::ofstream ofs( "dump.bin" );
+            serialize( ofs, *graph, binary_serialization_t() );
+        }
+        {
+            std::cout << "reloading ... " << std::endl;
+            std::ifstream ifs("dump.bin");
+            unserialize( ifs, *graph, binary_serialization_t() );
+        }
     }
 }

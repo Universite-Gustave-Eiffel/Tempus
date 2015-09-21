@@ -252,13 +252,13 @@ public:
             }
             else {
                 // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-                mstep = new Roadmap::TransferStep( Multimodal::Edge( *previous, *it ) );
+                mstep = new Roadmap::TransferStep( Multimodal::Edge( graph_, *previous, *it ) );
             }
 
             // build the multimodal edge to find corresponding costs
             // we don't use edge() since it will loop over the whole graph each time
             // we assume the edge exists in these maps
-            Multimodal::Edge me( *previous, *it );
+            Multimodal::Edge me( graph_, *previous, *it );
             mstep->set_cost(CostId::CostDistance, distances[me]);
             mstep->set_cost(CostId::CostDuration, durations[me]);
             mstep->set_transport_mode( 1 );
@@ -369,7 +369,7 @@ public:
             // Run for each intermiadry steps
 
             Multimodal::Vertex vorigin, vdestination;
-            vorigin = Multimodal::Vertex( &graph_.road(), request_.origin() );
+            vorigin = Multimodal::Vertex( graph_, request_.origin(), Multimodal::Vertex::road_t() );
 
             Timer timer;
 
@@ -379,8 +379,8 @@ public:
                 // path of this step
                 Path lpath;
 
-                vorigin = Multimodal::Vertex( &graph_.road(), request_.steps()[j - 1].location() );
-                vdestination = Multimodal::Vertex( &graph_.road(), request_.steps()[j].location() );
+                vorigin = Multimodal::Vertex( graph_, request_.steps()[j - 1].location(), Multimodal::Vertex::road_t() );
+                vdestination = Multimodal::Vertex( graph_, request_.steps()[j].location(), Multimodal::Vertex::road_t() );
 
                 bool found;
                 found = find_path( vorigin, vdestination, request_.optimizing_criteria()[i], lpath );
@@ -397,7 +397,7 @@ public:
                 std::copy( lpath.begin(), lpath.end(), std::back_inserter(path) );
             }
             // add origin back
-            path.push_front( Multimodal::Vertex( &graph_.road(), request_.origin() ) );
+            path.push_front( Multimodal::Vertex( graph_, request_.origin(), Multimodal::Vertex::road_t() ) );
 
             metrics_[ "time_s" ] = timer.elapsed();
             metrics_["iterations"] = size_t(iterations_);
