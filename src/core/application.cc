@@ -137,14 +137,10 @@ void Application::build_graph( bool consistency_check, const std::string& schema
     }
 #else
     std::string load_from = option("load_from").str();
-    std::string dump_to = option("dump_to").str();
     if ( load_from != "" )
     {
         std::cout << "Loading from " << load_from << "..." << std::endl;
-        std::auto_ptr<Road::Graph> rg;
-        graph_.reset( new Multimodal::Graph(rg) );
-        std::ifstream ifs( load_from );
-        unserialize( ifs, *graph_, binary_serialization_t() );
+        graph_ = reload_graph_from_dump( load_from );
     }
     else {
         COUT << "Loading graph from database: " << std::endl;
@@ -155,12 +151,6 @@ void Application::build_graph( bool consistency_check, const std::string& schema
         importer.import_constants( *graph_, progression, schema );
     }
 
-    if ( dump_to != "" )
-    {
-        std::cout << "Dumping to " << dump_to << "..." << std::endl;
-        std::ofstream ofs( dump_to );
-        serialize( ofs, *graph_ , binary_serialization_t() );
-    }
 #endif
     state_ = GraphBuilt;
     schema_name_ = schema;

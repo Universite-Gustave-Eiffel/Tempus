@@ -18,6 +18,7 @@
 #define TEMPUS_GRAPH_SERIALIZERS_HH
 
 #include <iosfwd>
+#include <memory>
 
 namespace Tempus
 {
@@ -57,6 +58,9 @@ void unserialize( std::istream& istr, TransportMode&, binary_serialization_t );
 
 void serialize( std::ostream& ostr, const Multimodal::Graph&, binary_serialization_t );
 void unserialize( std::istream& istr, Multimodal::Graph&, binary_serialization_t );
+
+void dump_graph( const Multimodal::Graph&, const std::string& );
+std::auto_ptr<Multimodal::Graph> reload_graph_from_dump( const std::string& );
 
 } // namespace Tempus
 

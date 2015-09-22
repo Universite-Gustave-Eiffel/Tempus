@@ -114,9 +114,9 @@ int main( int argc, char* argv[] )
     string dbstring = "dbname=tempus_test_db";
     string schema_name = "tempus";
     bool consistency_check = true;
-    std::string dump_file = "";
     std::string load_from = "";
 #if ENABLE_SEGMENT_ALLOCATOR
+    std::string dump_file = "";
     size_t segment_size = 0;
 #endif
 #ifndef WIN32
@@ -169,17 +169,17 @@ int main( int argc, char* argv[] )
             else if ( arg == "-X" ) {
                 consistency_check = false;
             }
-            else if ( arg == "-f" ) {
-                if ( argc > i+1 ) {
-                    dump_file = argv[++i];
-                }
-            }
             else if ( arg == "-L" ) {
                 if ( argc > i+1 ) {
                     load_from = argv[++i];
                 }
             }
 #if ENABLE_SEGMENT_ALLOCATOR
+            else if ( arg == "-f" ) {
+                if ( argc > i+1 ) {
+                    dump_file = argv[++i];
+                }
+            }
             else if ( arg == "-S" ) {
                 if ( argc > i+1 ) {
                     std::string s = argv[++i];
@@ -207,7 +207,6 @@ int main( int argc, char* argv[] )
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
 #endif
-                          << "\t-f\tdump to" << endl
                           << "\t-L\tload graph from dump file" << endl
 #if ENABLE_SEGMENT_ALLOCATOR
                           << "\t-S\tsegment size 0 or unspecified to load from the dump file" << endl
@@ -272,10 +271,10 @@ int main( int argc, char* argv[] )
         Tempus::Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
         
-        Tempus::Application::instance()->set_option( "dump_to", dump_file );
         Tempus::Application::instance()->set_option( "load_from", load_from );
 
 #if ENABLE_SEGMENT_ALLOCATOR
+        Tempus::Application::instance()->set_option( "dump_file", dump_file );
         Tempus::Application::instance()->set_option( "segment_size", segment_size );
 #endif
         Tempus::Application::instance()->build_graph( consistency_check, schema_name );

@@ -1,7 +1,7 @@
 include_directories( ../core )
 
-add_executable(graph_mem_usage graph_mem_usage.cc)
-target_link_libraries( graph_mem_usage tempus )
+add_executable(graph_dumper graph_dumper.cc)
+target_link_libraries( graph_dumper tempus )
 
-install(TARGETS graph_mem_usage DESTINATION bin)
+install(TARGETS graph_dumper DESTINATION bin)
 
