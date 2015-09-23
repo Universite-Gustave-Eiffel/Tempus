@@ -385,7 +385,7 @@ public:
                 bool found;
                 found = find_path( vorigin, vdestination, request_.optimizing_criteria()[i], lpath );
 
-                metrics_[ "time_s" ] = timer.elapsed();
+                metrics_[ "time_s" ] = Variant::fromFloat(timer.elapsed());
 
                 if ( !found ) {
                     std::stringstream err;
@@ -399,8 +399,8 @@ public:
             // add origin back
             path.push_front( Multimodal::Vertex( graph_, request_.origin(), Multimodal::Vertex::road_t() ) );
 
-            metrics_[ "time_s" ] = timer.elapsed();
-            metrics_["iterations"] = size_t(iterations_);
+            metrics_[ "time_s" ] = Variant::fromFloat(timer.elapsed());
+            metrics_["iterations"] = Variant::fromInt(iterations_);
 
             // convert the path to a roadmap
             add_roadmap( path );

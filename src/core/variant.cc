@@ -16,25 +16,114 @@
  */
 
 #include "variant.hh"
+#include "cast.hh"
 
 namespace Tempus {
 
-Variant::Variant( bool b ) : type_( BoolVariant )
+Variant::Variant()
 {
-    str_ = b ? "true" : "false";
 }
-Variant::Variant( size_t i ) : type_( IntVariant )
+
+Variant::Variant( bool b )
+{
+    v_ = b;
+}
+Variant::Variant( int64_t i )
+{
+    v_ = i;
+}
+Variant::Variant( double i )
+{
+    v_ = i;
+}
+
+Variant::Variant( const std::string& s )
+{
+    v_ = s;
+}
+
+Variant Variant::fromBool( bool b )
+{
+    return Variant(b);
+}
+
+Variant Variant::fromInt( int64_t i )
+{
+    return Variant(i);
+}
+
+Variant Variant::fromFloat( double f )
+{
+    return Variant(f);
+}
+
+Variant Variant::fromString( const std::string& s, VariantType t )
+{
+    switch (t)
+    {
+    case BoolVariant:
+        return Variant(s=="true");
+    case IntVariant:
+        return Variant(Tempus::lexical_cast<int64_t>(s));
+    case FloatVariant:
+        return Variant(Tempus::lexical_cast<double>(s));
+    case StringVariant:
+        return Variant(s);
+    }
+    return Variant(s);
+}
+
+VariantType Variant::type() const
+{
+    // the order of the variant is the same as the VariantType enum
+    return VariantType(v_.which());
+}
+
+std::string Variant::str() const
 {
     std::ostringstream ostr;
-    ostr << i;
-    str_ = ostr.str();
+    ostr << v_;
+    return ostr.str();
 }
-Variant::Variant( double i ) : type_( FloatVariant )
+
+void Variant::convertTo( bool& b ) const
 {
-    std::ostringstream ostr;
-    ostr << i;
-    str_ = ostr.str();
+    if (type() == BoolVariant) {
+        b = *boost::get<bool>(&v_);
+    }
+    else {
+        b = str() == "true";
+    }
 }
-Variant::Variant( const std::string& s, VariantType t ) : type_( t ), str_( s ) {}
+
+void Variant::convertTo( int64_t& i ) const
+{
+    if (type() == IntVariant) {
+        i = *boost::get<int64_t>(&v_);
+    }
+    else {
+        i = Tempus::lexical_cast<int64_t>(str());
+    }
+}
+
+void Variant::convertTo( double& f ) const
+{
+    if (type() == FloatVariant) {
+        f = *boost::get<double>(&v_);
+    }
+    else {
+        f = Tempus::lexical_cast<int64_t>(str());
+    }
+}
+
+void Variant::convertTo( std::string& s ) const
+{
+    if (type() == StringVariant) {
+        s = *boost::get<std::string>(&v_);
+    }
+    else {
+        s = str();
+    }
+}
 
 } // namespace Tempus

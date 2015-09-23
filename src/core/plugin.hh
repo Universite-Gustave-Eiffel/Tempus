@@ -79,10 +79,9 @@ public:
     struct OptionDescriptionList: std::map<std::string, OptionDescription> {
         ///
         /// Method used by a plugin to declare an option
-        template <class T>
-        void declare_option( const std::string& nname, const std::string& description, T default_value ) {
+        void declare_option( const std::string& nname, const std::string& description, const Variant& default_value ) {
             ( *this )[nname].description = description;
-            ( *this )[nname].default_value = Variant( default_value );
+            ( *this )[nname].default_value = default_value;
         }
         void set_options_default_value( Plugin* plugin ) {
             for ( iterator i=begin(); i!=end(); i++ ) {

@@ -99,7 +99,7 @@ Variant Application::option( const std::string& key ) const
 {
     auto it = options_.find( key );
     if ( it == options_.end() ) {
-        return "";
+        return Variant(std::string(""));
     }
     return it->second;
 }

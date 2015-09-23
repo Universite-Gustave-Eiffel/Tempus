@@ -167,19 +167,19 @@ struct NullHeuristic
 const DynamicMultiPlugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
     Plugin::OptionDescriptionList odl;
-    odl.declare_option( "Features/with_forbidden_turning_movements", "With forbidden turning movements", true);
-    odl.declare_option( "Features/timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", size_t(0));
-    odl.declare_option( "Debug/verbose_algo", "Verbose algorithm: vertices and edges traversal", false);
-    odl.declare_option( "Debug/verbose", "Verbose general processing", true);
-    odl.declare_option( "Debug/enable_trace", "Produce a trace (warning: cpu and time consuming)", false );
-    odl.declare_option( "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", size_t(2));
-    odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", 3.6);
-    odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", size_t(12));
-    odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", size_t(5));
-    odl.declare_option( "AStar/heuristic", "Use an heuristic based on euclidian distance", false );
-    odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", 0.06 );
-    odl.declare_option( "Time/use_speed_profiles", "Use road speed profiles", false );
-    odl.declare_option( "multi_destinations", "Destination list (road vertex id, comma separated)", std::string("") );
+    odl.declare_option( "Features/with_forbidden_turning_movements", "With forbidden turning movements", Variant::fromBool(true));
+    odl.declare_option( "Features/timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", Variant::fromInt(0));
+    odl.declare_option( "Debug/verbose_algo", "Verbose algorithm: vertices and edges traversal", Variant::fromBool(false));
+    odl.declare_option( "Debug/verbose", "Verbose general processing", Variant::fromBool(true));
+    odl.declare_option( "Debug/enable_trace", "Produce a trace (warning: cpu and time consuming)", Variant::fromBool(false) );
+    odl.declare_option( "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", Variant::fromInt(2));
+    odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", Variant::fromFloat(3.6));
+    odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", Variant::fromInt(12));
+    odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", Variant::fromInt(5));
+    odl.declare_option( "AStar/heuristic", "Use an heuristic based on euclidian distance", Variant::fromBool(false) );
+    odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", Variant::fromFloat(0.06) );
+    odl.declare_option( "Time/use_speed_profiles", "Use road speed profiles", Variant::fromBool(false) );
+    odl.declare_option( "multi_destinations", "Destination list (road vertex id, comma separated)", Variant::fromString("") );
     return odl;
 }
 
@@ -586,12 +586,12 @@ void DynamicMultiPlugin::process()
         path_found = true;
     }
 
-    metrics_[ "iterations" ] = iterations_;
+    metrics_[ "iterations" ] = Variant::fromInt(iterations_);
 
     time_ += timer.elapsed();
     time_algo_ += timer.elapsed();
-    metrics_[ "time_s" ] = time_;
-    metrics_[ "time_algo_s" ] = time_algo_;
+    metrics_[ "time_s" ] = Variant::fromFloat(time_);
+    metrics_[ "time_algo_s" ] = Variant::fromFloat(time_algo_);
 
     if (!path_found) {
         throw std::runtime_error( "No path found" );
@@ -816,11 +816,11 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
             }
 
             ValuedEdge ve( graph_, o.vertex, d.vertex );
-            ve.set_value( "duration", potential_map_[d] );
-            ve.set_value( "imode", size_t(o.mode) );
-            ve.set_value( "fmode", size_t(d.mode) );
-            ve.set_value( "istate", size_t(o.state) );
-            ve.set_value( "fstate", size_t(d.state) );
+            ve.set_value( "duration", Variant::fromFloat(potential_map_[d]) );
+            ve.set_value( "imode", Variant::fromInt(o.mode) );
+            ve.set_value( "fmode", Variant::fromInt(d.mode) );
+            ve.set_value( "istate", Variant::fromInt(o.state) );
+            ve.set_value( "fstate", Variant::fromInt(d.state) );
             trace.push_back( ve );
         }
         roadmap.set_trace( trace );

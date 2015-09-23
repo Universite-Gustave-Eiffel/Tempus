@@ -278,8 +278,8 @@ Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
     db_( db_options ) // create another connection
 {
     // default metrics
-    metrics_[ "time_s" ] = ( double )0.0;
-    metrics_[ "iterations" ] = ( size_t )0;
+    metrics_[ "time_s" ] = Variant::fromFloat(0.0);
+    metrics_[ "iterations" ] = Variant::fromInt(0);
 }
 
 template <class T>
@@ -302,7 +302,7 @@ void Plugin::get_option( const std::string& nname, T& value )
 }
 // template instanciations
 template void Plugin::get_option<bool>( const std::string&, bool& );
-template void Plugin::get_option<int>( const std::string&, int& );
+template void Plugin::get_option<int64_t>( const std::string&, int64_t& );
 template void Plugin::get_option<double>( const std::string&, double& );
 template void Plugin::get_option<std::string>( const std::string&, std::string& );
 
@@ -324,7 +324,7 @@ void Plugin::set_option_from_string( const std::string& nname, const std::string
                                        % t ).str() );
     }
 
-    options_[nname] = Variant( value, t );
+    options_[nname] = Variant::fromString( value, t );
 }
 
 std::string Plugin::option_to_string( const std::string& nname )

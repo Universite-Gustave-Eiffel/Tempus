@@ -104,6 +104,8 @@ private:
 
 int main( int argc, char* argv[] )
 {
+    using namespace Tempus;
+
     xmlInitParser();
     bool standalone = true;
     // the default TCP port to listen to
@@ -267,17 +269,17 @@ int main( int argc, char* argv[] )
 #endif
     {
         std::cout << "connecting to database: " << dbstring << "\n";
-        Tempus::Application::instance()->connect( dbstring );
-        Tempus::Application::instance()->pre_build_graph();
+        Application::instance()->connect( dbstring );
+        Application::instance()->pre_build_graph();
         std::cout << "building the graph...\n";
         
-        Tempus::Application::instance()->set_option( "load_from", load_from );
+        Application::instance()->set_option( "load_from", Variant::fromString(load_from) );
 
 #if ENABLE_SEGMENT_ALLOCATOR
-        Tempus::Application::instance()->set_option( "dump_file", dump_file );
-        Tempus::Application::instance()->set_option( "segment_size", segment_size );
+        Application::instance()->set_option( "dump_file", Variant::fromString(dump_file) );
+        Application::instance()->set_option( "segment_size", Variant::fromInt(segment_size) );
 #endif
-        Tempus::Application::instance()->build_graph( consistency_check, schema_name );
+        Application::instance()->build_graph( consistency_check, schema_name );
 
         // load plugins
         for ( size_t i=0; i< plugins.size(); i++ ) {

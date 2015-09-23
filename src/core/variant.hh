@@ -20,24 +20,7 @@
 
 #include <map>
 #include <string>
-
-#include "cast.hh"
-
-namespace {
-template <typename T>
-struct VariantCast {
-    T operator()( const std::string& str ) {
-        return Tempus::lexical_cast<T>( str );
-    }
-};
-template <>
-struct VariantCast<bool> {
-    bool operator()( const std::string& str ) {
-        return str == "true";
-    }
-};
-}
-
+#include <boost/variant.hpp>
 
 namespace Tempus {
 
@@ -56,26 +39,35 @@ enum VariantType {
 /// FIXME: why not use boost::variant ?
 class Variant {
 public:
-    Variant( bool b );
-    Variant( size_t i = 0 );
-    Variant( double f );
-    Variant( const std::string& s, VariantType = StringVariant );
-    
-    std::string str() const {
-        return str_;
-    }
-    VariantType type() const {
-        return type_;
-    }
+    Variant();
+    explicit Variant( bool b );
+    explicit Variant( int64_t i);
+    explicit Variant( double f );
+    explicit Variant( const std::string& s );
+
+    // return a string representation
+    std::string str() const;
+    VariantType type() const;
+
+    static Variant fromBool( bool b );
+    static Variant fromInt( int64_t i );
+    static Variant fromFloat( double f );
+    static Variant fromString( const std::string& s, VariantType = StringVariant );
 
     template <typename T>
     T as() const {
-        return VariantCast<T>()( str_ );
+        T v;
+        convertTo( v );
+        return v;
     }
 private:
-    VariantType type_;
-    // string representation of the value
-    std::string str_;
+    typedef boost::variant<bool, int64_t, double, std::string> ValueT;
+    ValueT v_;
+
+    void convertTo( bool& b ) const;
+    void convertTo( int64_t& i ) const;
+    void convertTo( double& f ) const;
+    void convertTo( std::string& s ) const;
 };
 
 typedef std::map<std::string, Variant> VariantMap;
