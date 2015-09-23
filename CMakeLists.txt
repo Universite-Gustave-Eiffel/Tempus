@@ -14,6 +14,9 @@ project( tempus )
 cmake_minimum_required(VERSION 2.6)
 enable_testing()
 
+# don't rebuild everything when rules are changed
+set(CMAKE_SKIP_RULE_DEPENDENCY true)
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
