@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE( testConnection )
 {
     std::cout << "DbTest::testConnection()" << std::endl;
 
-    std::auto_ptr<Db::Connection> connection;
+    std::unique_ptr<Db::Connection> connection;
 
     // Connection to an non-existing database
     BOOST_CHECK_THROW( connection.reset( new Db::Connection( g_db_options + " dbname=zorglub" ) ), std::runtime_error );
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE( testConnection )
 BOOST_AUTO_TEST_CASE( testQueries )
 {
     std::cout << "DbTest::testQueries()" << std::endl;
-    std::auto_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
+    std::unique_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
 
     // test bad query
     BOOST_CHECK_THROW( connection->exec( "SELZECT * PHROM zorglub" ),  std::runtime_error );
@@ -112,9 +112,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_PgImporter )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+std::unique_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
-std::auto_ptr<Multimodal::Graph> graph;
+std::unique_ptr<Multimodal::Graph> graph;
 
 void testConsistency_( const Multimodal::Graph* graph )
 {
@@ -303,8 +303,8 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     }
 
     // retry with a fresh loaded from dump file
-    std::auto_ptr<Road::Graph> rg;
-    graph.reset( new Multimodal::Graph(rg) );
+    std::unique_ptr<Road::Graph> rg;
+    graph.reset( new Multimodal::Graph( std::move(rg) ) );
     {
         std::cout << "reloading ... " << std::endl;
         std::ifstream ifs("dump.bin");
@@ -319,9 +319,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_plugin_multimodal )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+std::unique_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
-std::auto_ptr<Multimodal::Graph> graph;
+std::unique_ptr<Multimodal::Graph> graph;
 
 BOOST_AUTO_TEST_CASE( testMultimodal )
 {
@@ -620,9 +620,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_reverse_road )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+std::unique_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
-std::auto_ptr<Multimodal::Graph> graph;
+std::unique_ptr<Multimodal::Graph> graph;
 
 BOOST_AUTO_TEST_CASE( testReverseRoad )
 {
@@ -669,9 +669,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_reverse_multimodal )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+std::unique_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
-std::auto_ptr<Multimodal::Graph> graph;
+std::unique_ptr<Multimodal::Graph> graph;
 
 BOOST_AUTO_TEST_CASE( testReverseMultimodal )
 {
@@ -772,9 +772,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_road_restrictions )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
+std::unique_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
 
-std::auto_ptr<Multimodal::Graph> graph;
+std::unique_ptr<Multimodal::Graph> graph;
 
 BOOST_AUTO_TEST_CASE( testRestrictions )
 {

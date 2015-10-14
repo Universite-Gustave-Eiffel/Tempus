@@ -591,10 +591,10 @@ void dump_graph( const Multimodal::Graph& graph, const std::string& dump_file )
     serialize( ofs, graph, binary_serialization_t() );
 }
 
-std::auto_ptr<Multimodal::Graph> reload_graph_from_dump( const std::string& dump_file )
+std::unique_ptr<Multimodal::Graph> reload_graph_from_dump( const std::string& dump_file )
 {
-    std::auto_ptr<Road::Graph> rgraph;
-    std::auto_ptr<Multimodal::Graph> graph( new Multimodal::Graph(rgraph) );
+    std::unique_ptr<Road::Graph> rgraph;
+    std::unique_ptr<Multimodal::Graph> graph( new Multimodal::Graph(std::move(rgraph)) );
     std::ifstream ifs( dump_file );
     unserialize( ifs, *graph, binary_serialization_t() );
     return graph;

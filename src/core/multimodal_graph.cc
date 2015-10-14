@@ -1122,9 +1122,9 @@ void Graph::set_transport_modes( const TransportModes& tm )
     }
 }
 
-Graph::Graph( std::auto_ptr<Road::Graph> r )
+Graph::Graph( std::unique_ptr<Road::Graph> r )
 {
-    set_road( r );
+    set_road( std::move(r) );
 }
 
 const Road::Graph& Graph::road() const {
@@ -1137,10 +1137,9 @@ Road::Graph& Graph::road() {
     return *road_;
 }
 
-void Graph::set_road( std::auto_ptr<Road::Graph> r )
+void Graph::set_road( std::unique_ptr<Road::Graph> r )
 {
-    // move
-    road_ = r;
+    road_ = std::move(r);
 
     // update vertex and edge map
     road_vertex_map_.clear();

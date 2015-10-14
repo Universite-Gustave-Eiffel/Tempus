@@ -60,7 +60,7 @@ void serialize( std::ostream& ostr, const Multimodal::Graph&, binary_serializati
 void unserialize( std::istream& istr, Multimodal::Graph&, binary_serialization_t );
 
 void dump_graph( const Multimodal::Graph&, const std::string& );
-std::auto_ptr<Multimodal::Graph> reload_graph_from_dump( const std::string& );
+std::unique_ptr<Multimodal::Graph> reload_graph_from_dump( const std::string& );
 
 } // namespace Tempus
 

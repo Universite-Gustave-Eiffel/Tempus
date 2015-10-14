@@ -108,7 +108,7 @@ protected:
 
     std::string db_options_;
     std::string schema_name_;
-    std::auto_ptr<Multimodal::Graph> graph_;
+    std::unique_ptr<Multimodal::Graph> graph_;
 
     State state_;
 

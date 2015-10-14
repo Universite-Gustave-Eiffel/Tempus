@@ -92,7 +92,7 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
     }
 }
 
-std::auto_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, std::map<Tempus::db_id_t, Road::Edge>& road_sections_map )
+std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, std::map<Tempus::db_id_t, Road::Edge>& road_sections_map )
 {
    if ( consistency_check ) {
         //
@@ -365,7 +365,7 @@ std::auto_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& 
     auto l = [](decltype(sections)::value_type& p) { return p.first; };
     auto s_it_begin = boost::make_transform_iterator( sections.begin(), l );
     auto s_it_end = boost::make_transform_iterator( sections.end(), l );
-    std::auto_ptr<Road::Graph> road_graph( new Road::Graph(boost::edges_are_unsorted_multi_pass,
+    std::unique_ptr<Road::Graph> road_graph( new Road::Graph(boost::edges_are_unsorted_multi_pass,
                                                            s_it_begin, s_it_end,
                                                            nodes.size()) );
 
@@ -395,14 +395,14 @@ std::auto_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& 
 
 ///
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
-std::auto_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
+std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
 {
     std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
-    std::auto_ptr<Multimodal::Graph> graph;
-    std::auto_ptr<Road::Graph> sm_road_graph( import_road_graph_( progression, consistency_check, schema_name, road_sections_map ) );
+    std::unique_ptr<Multimodal::Graph> graph;
+    std::unique_ptr<Road::Graph> sm_road_graph( import_road_graph_( progression, consistency_check, schema_name, road_sections_map ) );
 
     // build the multimodal graph
-    graph.reset( new Multimodal::Graph( sm_road_graph ) );
+    graph.reset( new Multimodal::Graph( std::move(sm_road_graph) ) );
     Road::Graph* road_graph = &graph->road();
 
     // network_id -> pt_node_id -> vertex

@@ -249,7 +249,7 @@ struct Graph: boost::noncopyable {
 
     /// Cosntructor
     /// Needs a road graph at a minimum
-    explicit Graph( std::auto_ptr<Road::Graph> );
+    explicit Graph( std::unique_ptr<Road::Graph> );
 
     ~Graph();
 
@@ -260,9 +260,9 @@ struct Graph: boost::noncopyable {
     /// Write access
     Road::Graph& road();
 private:
-    std::auto_ptr<Road::Graph> road_;
+    std::unique_ptr<Road::Graph> road_;
 public:
-    void set_road( std::auto_ptr<Road::Graph> );
+    void set_road( std::unique_ptr<Road::Graph> );
 
 private:
     ///

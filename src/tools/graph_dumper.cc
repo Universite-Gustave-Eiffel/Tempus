@@ -101,7 +101,7 @@ int main( int argc, char* argv[] )
     std::cerr << "Data: " << data_size << "MB" << std::endl;
 
     {
-        std::auto_ptr<Multimodal::Graph> graph;
+        std::unique_ptr<Multimodal::Graph> graph;
 
         using namespace boost::graph;
 
@@ -131,7 +131,7 @@ int main( int argc, char* argv[] )
     }
 
     std::cout << "reloading ... " << std::endl;
-    std::auto_ptr<Multimodal::Graph> graph( reload_graph_from_dump( dump_file ) );
+    std::unique_ptr<Multimodal::Graph> graph( reload_graph_from_dump( dump_file ) );
 
     info = get_memory_usage();
     real_size = info.rss /1024 /1024;
