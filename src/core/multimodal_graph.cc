@@ -1141,6 +1141,16 @@ void Graph::set_road( std::auto_ptr<Road::Graph> r )
 {
     // move
     road_ = r;
+
+    // update vertex and edge map
+    road_vertex_map_.clear();
+    for ( auto it = vertices( *road_ ).first; it != vertices( *road_ ).second; it++ ) {
+        road_vertex_map_[(*road_)[*it].db_id()] = *it;
+    }
+    road_edge_map_.clear();
+    for ( auto it = edges( *road_ ).first; it != edges( *road_ ).second; it++ ) {
+        road_edge_map_[(*road_)[*it].db_id()] = *it;
+    }
 }
 
 boost::optional<const PublicTransport::Network&> Graph::network( db_id_t id ) const
@@ -1293,6 +1303,26 @@ const std::map<std::string, std::string>& Graph::metadata() const
 void Graph::set_metadata( const std::string& key, const std::string& value )
 {
     metadata_[key] = value;
+}
+
+Road::Vertex Graph::road_vertex_from_id( db_id_t id ) const
+{
+    Road::Vertex v = Road::Vertex();
+    auto it = road_vertex_map_.find( id );
+    if ( it != road_vertex_map_.end() ) {
+        v = it->second;
+    }
+    return v;
+}
+
+Road::Edge Graph::road_edge_from_id( db_id_t id ) const
+{
+    Road::Edge e = Road::Edge();
+    auto it = road_edge_map_.find( id );
+    if ( it != road_edge_map_.end() ) {
+        e = it->second;
+    }
+    return e;
 }
 
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )

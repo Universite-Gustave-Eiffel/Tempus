@@ -485,7 +485,7 @@ Result& Plugin::result()
                 Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( &*it );
 
                 // accumulate step sharing the same road name
-                accum_road.push_back( road_graph[step->road_edge()].db_id() );
+                accum_road.push_back( step->road_edge_id() );
                 // accumulate costs
                 for ( Costs::const_iterator cit = step->costs().begin(); cit != step->costs().end(); ++cit ) {
                     accum_costs[cit->first] += cit->second;
@@ -533,7 +533,7 @@ Result& Plugin::result()
                 //
                 movement = Roadmap::RoadStep::GoAhead;
 
-                on_roundabout =  road_graph[step->road_edge()].is_roundabout();
+                on_roundabout = road_graph[graph_.road_edge_from_id(step->road_edge_id())].is_roundabout();
 
                 bool action = false;
 
@@ -553,7 +553,7 @@ Result& Plugin::result()
                 if ( previous_section && !on_roundabout && !action ) {
                     // TODO: do not call postgis just to compute an angle
                     std::string q1 = ( boost::format( "SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
-                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge()].db_id() ).str();
+                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % step->road_edge_id() ).str();
                     Db::Result res = db_.exec( q1 );
                     if ( ! res.size() ) {
                         throw std::runtime_error("No result for " + q1);
@@ -601,7 +601,7 @@ Result& Plugin::result()
                     last_step = 0;
                 }
                 else {
-                    previous_section = road_graph[step->road_edge()].db_id();
+                    previous_section = step->road_edge_id();
                     Roadmap::StepIterator ite = new_roadmap.end();
                     ite--;
                     last_step = static_cast<Roadmap::RoadStep*>(&*ite);

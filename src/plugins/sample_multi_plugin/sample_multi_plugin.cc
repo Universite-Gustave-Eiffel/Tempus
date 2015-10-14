@@ -231,7 +231,7 @@ public:
                     throw std::runtime_error( "Can't find the road edge !" );
                 }
 
-                step->set_road_edge(e);
+                step->set_road_edge_id(graph_.road()[e].db_id());
             }
 
             else if ( previous->type() == Multimodal::Vertex::PublicTransport && it->type() == Multimodal::Vertex::PublicTransport ) {

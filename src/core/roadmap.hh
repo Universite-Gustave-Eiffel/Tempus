@@ -77,7 +77,7 @@ public:
 
         ///
         /// The road section where to start from
-        DECLARE_RW_PROPERTY( road_edge, Road::Edge );
+        DECLARE_RW_PROPERTY( road_edge_id, db_id_t );
 
         /// Name of the road - retrieved from the db
         DECLARE_RW_PROPERTY( road_name, std::string );
