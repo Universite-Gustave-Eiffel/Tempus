@@ -136,14 +136,14 @@ void get_edge_info_from_db( const Multimodal::Edge& e, Db::Connection& db, std::
     Db::Result res = db.exec( query );
     wkb = res[0][0].as<std::string>();
     // get rid of the heading '\x'
-    wkb = wkb.substr( 2 );
+    if ( wkb.size() > 2 ) {
+        wkb = wkb.substr( 2 );
+    }
     road_name = res[0][1].as<std::string>();
 }
 
 void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, Db::Connection& db, const Multimodal::Graph& graph )
 {
-    const Road::Graph& rgraph = graph.road();
-
     // road node id -> road step*
     std::map<db_id_t, Roadmap::RoadStep*> road_steps;
     // pt stop id -> pt step*
@@ -192,7 +192,9 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
             std::string road_name = res[i][1];
             std::string wkb = res[i][2];
             // get rid of the heading '\x'
-            wkb = wkb.substr( 2 );
+            if ( wkb.size() > 2 ) {
+                wkb = wkb.substr( 2 );
+            }
             road_steps[id]->set_road_name( road_name );
             road_steps[id]->set_geometry_wkb( wkb );
         }
@@ -220,7 +222,9 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
             db_id_t to = res[i][1];
             std::string wkb = res[i][2];
             // get rid of the heading '\x'
-            wkb = wkb.substr( 2 );
+            if ( wkb.size() > 2 ) {
+                wkb = wkb.substr( 2 );
+            }
             pt_steps[from][to]->set_geometry_wkb( wkb );
         }
     }
