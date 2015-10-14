@@ -1141,14 +1141,16 @@ void Graph::set_road( std::unique_ptr<Road::Graph> r )
 {
     road_ = std::move(r);
 
-    // update vertex and edge map
     road_vertex_map_.clear();
-    for ( auto it = vertices( *road_ ).first; it != vertices( *road_ ).second; it++ ) {
-        road_vertex_map_[(*road_)[*it].db_id()] = *it;
-    }
     road_edge_map_.clear();
-    for ( auto it = edges( *road_ ).first; it != edges( *road_ ).second; it++ ) {
-        road_edge_map_[(*road_)[*it].db_id()] = *it;
+    if ( road_ ) {
+        // update vertex and edge map
+        for ( auto it = vertices( *road_ ).first; it != vertices( *road_ ).second; it++ ) {
+            road_vertex_map_[(*road_)[*it].db_id()] = *it;
+        }
+        for ( auto it = edges( *road_ ).first; it != edges( *road_ ).second; it++ ) {
+            road_edge_map_[(*road_)[*it].db_id()] = *it;
+        }
     }
 }
 
