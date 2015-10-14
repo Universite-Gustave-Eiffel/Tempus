@@ -109,6 +109,7 @@ public:
     class EdgeDescriptor
     {
     public:
+        EdgeDescriptor() : prop_(nullptr) {}
         EdgeDescriptor( VertexIndex source, VertexIndex target, const EdgeProperty* prop, bool upward ) : source_(source), target_(target), prop_(prop), upward_(upward) {}
         VertexIndex source() const { return source_; }
         VertexIndex target() const { return target_; }
@@ -219,7 +220,10 @@ public:
                 out = false;
             }
             else {
-                source_++;
+                do {
+                    source_++;
+                } while ( (graph_.edge_index_[source_].first_upward_edge == graph_.edge_index_[source_].first_downward_edge) &&
+                          (graph_.edge_index_[source_].first_downward_edge == graph_.edge_index_[source_+1].first_upward_edge) );
             }
             if ( out ) {
                 v_ = EdgeDescriptor( source_, graph_.edges_[edge_].target, &graph_.edges_[edge_].property, true );
@@ -237,6 +241,29 @@ public:
     std::pair<EdgeIterator, EdgeIterator> edges()
     {
         return std::make_pair( EdgeIterator( 0, 0, *this ), EdgeIterator( edge_index_.size()-1, edges_.size(), *this ) );
+    }
+
+    std::pair<EdgeDescriptor, bool> edge( VertexIndex u, VertexIndex v ) const
+    {
+        if ( v > u ) {
+            EdgeIndex s = edge_index_[u].first_upward_edge;
+            EdgeIndex t = edge_index_[u].first_downward_edge;
+            for ( EdgeIndex i = s; i < t; i++ ) {
+                if ( edges_[i].target == v ) {
+                    return std::make_pair(EdgeDescriptor( u, v, &edges_[i].property, true ), true);
+                }
+            }
+        }
+        if ( u > v ) {
+            EdgeIndex s = edge_index_[v].first_downward_edge;
+            EdgeIndex t = edge_index_[v+1].first_upward_edge;
+            for ( EdgeIndex i = s; i < t; i++ ) {
+                if ( edges_[i].target == u ) {
+                    return std::make_pair(EdgeDescriptor( u, v, &edges_[i].property, false ), true);
+                }
+            }
+        }
+        return std::make_pair(EdgeDescriptor( u, v, nullptr, true ), false );
     }
         
 private:
@@ -315,6 +342,15 @@ template <typename EdgeProperty,
 size_t in_degree( VertexIndex v, const CHQueryGraph<EdgeProperty, VertexIndex, EdgeIndex>& graph )
 {
     return graph.in_degree( v );
+}
+
+template <typename EdgeProperty,
+          typename VertexIndex = uint32_t,
+          typename EdgeIndex = uint32_t>
+std::pair<typename CHQueryGraph<EdgeProperty, VertexIndex, EdgeIndex>::EdgeDescriptor, bool>
+edge( VertexIndex u, VertexIndex v, const CHQueryGraph<EdgeProperty, VertexIndex, EdgeIndex>& graph )
+{
+    return graph.edge( u, v );
 }
 
 
