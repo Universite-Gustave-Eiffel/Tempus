@@ -5,8 +5,10 @@
 #include <boost/graph/visitors.hpp>
 #include <boost/graph/dijkstra_shortest_paths_no_color_map.hpp>
 #include <boost/property_map/function_property_map.hpp>
+#include <boost/format.hpp>
 
 #include "utils/associative_property_map_default_value.hh"
+#include "utils/timer.hh"
 
 #include "ch_query_graph.hh"
 
@@ -30,13 +32,15 @@ class CHEdgeProperty
 public:
     uint32_t cost        :31;
     uint32_t is_shortcut :1;
+    db_id_t db_id;
 };
 
-typedef CHQueryGraph<CHEdgeProperty> CHQuery;
+using CHQuery = CHQueryGraph<CHEdgeProperty>;
 
-typedef uint32_t CHVertex;
+using CHVertex = uint32_t;
+using CHEdge = CHQueryGraph<CHEdgeProperty>::edge_descriptor;
 
-typedef std::map<std::pair<CHVertex, CHVertex>, CHVertex> MiddleNodeMap;
+using MiddleNodeMap = std::map<std::pair<CHVertex, CHVertex>, CHVertex>;
 
 template <typename OutIterator>
 void unpack_edge( CHVertex v1, CHVertex v2, const MiddleNodeMap& middle_node, OutIterator out_it )
@@ -75,6 +79,7 @@ struct SPriv
 
     std::unique_ptr<CHQuery> ch_query;
 
+    // node index -> node id
     std::vector<db_id_t> node_id;
 };
 
@@ -86,35 +91,7 @@ void CHPlugin::post_build()
         spriv_ = new SPriv;
     }
     SPriv* spriv = (SPriv*)spriv_;
-#if 0
 
-    const Road::Graph& road_graph = Application::instance()->graph()->road();
-
-    CHGraph& ch_graph = spriv->ch_graph;
-    
-    // vertex sorted by order => vertex
-    std::map<CHVertex,CHVertex> node_map;
-    // copy graph;
-    for ( size_t v = 0; v < num_vertices( road_graph ); v++ ) {
-        add_vertex( ch_graph );
-        ch_graph[v].order = road_graph[v].db_id();
-        ch_graph[v].id = road_graph[v].db_id();
-        node_map[ch_graph[v].order] = v;
-    }
-    for ( auto ei = edges( road_graph ).first; ei != edges( road_graph).second; ei++ ) {
-        CHVertex s = source(*ei, road_graph);
-        CHVertex t = target(*ei, road_graph);
-        auto ne = add_edge( s, t, ch_graph );
-        BOOST_ASSERT(ne.second);
-        // only pedestrian for now
-        ch_graph[ne.first].weight = road_graph[*ei].length();// * 6000 / 60.0;
-    }
-
-    std::cout << num_vertices( ch_graph ) << " " << num_edges( ch_graph ) << std::endl;
-    std::cout << "contracting ..." << std::endl;
-
-    contract_graph( ch_graph, node_map, spriv->middle_node );
-#else
     std::cout << "loading CH graph ..." << std::endl;
     Db::Connection conn( Application::instance()->db_options() );
 
@@ -128,22 +105,26 @@ void CHPlugin::post_build()
         Db::ResultIterator res_it = conn.exec_it( "select * from\n"
                                                   "(\n"
                                                   // the upward part
-                                                  "select o1.id as id1, o2.id as id2, weight, o3.id as mid, 0 as dir\n"
+                                                  "select o1.id as id1, o2.id as id2, weight, o3.id as mid, 0 as dir, rs1.id as eid1, rs2.id as eid2, o1.node_id, o2.node_id, o3.node_id\n"
                                                   "from ch.query_graph\n"
                                                   "left join ch.ordered_nodes as o3 on o3.node_id = contracted_id\n"
+                                                  "left join tempus.road_section as rs1 on rs1.node_from = node_inf and rs1.node_to = node_sup\n"
+                                                  "left join tempus.road_section as rs2 on rs2.node_from = node_sup and rs2.node_to = node_inf\n"
                                                   ", ch.ordered_nodes as o1, ch.ordered_nodes as o2\n"
                                                   "where o1.node_id = node_inf and o2.node_id = node_sup\n"
                                                   "and query_graph.\"constraints\" & 1 > 0\n"
 
                                                   // union with the downward part
                                                   "union all\n"
-                                                  "select o1.id as id1, o2.id as id2, weight, o3.id as mid, 1 as dir\n"
+                                                  "select o1.id as id1, o2.id as id2, weight, o3.id as mid, 1 as dir, rs1.id as eid1, rs2.id as eid2, o1.node_id, o2.node_id, o3.node_id\n"
                                                   "from ch.query_graph\n"
                                                   "left join ch.ordered_nodes as o3 on o3.node_id = contracted_id\n"
+                                                  "left join tempus.road_section as rs1 on rs1.node_from = node_inf and rs1.node_to = node_sup\n"
+                                                  "left join tempus.road_section as rs2 on rs2.node_from = node_sup and rs2.node_to = node_inf\n"
                                                   ", ch.ordered_nodes as o1, ch.ordered_nodes as o2\n"
                                                   "where o1.node_id = node_inf and o2.node_id = node_sup\n"
                                                   "and query_graph.\"constraints\" & 2 > 0\n"
-                                                  ") t order by id1, dir"
+                                                  ") t order by id1, dir, id2, weight asc"
                                                   );
         Db::ResultIterator it_end;
 
@@ -153,30 +134,51 @@ void CHPlugin::post_build()
 
         uint32_t node = 0;
         uint16_t upd = 0;
+        uint32_t old_id1 = 0;
+        uint32_t old_id2 = 0;
+        int old_dir = 0;
         for ( ; res_it != it_end; res_it++ ) {
             Db::RowValue res_i = *res_it;
             uint32_t id1 = res_i[0].as<uint32_t>() - 1;
             uint32_t id2 = res_i[1].as<uint32_t>() - 1;
             int dir = res_i[4];
+            if ( (id1 == old_id1) && (id2 == old_id2) && (dir == old_dir) ) {
+                // we may have the same edges with different costs
+                // we then skip the duplicates and only take
+                // the first one (the one with the smallest weight)
+                continue;
+            }
+            old_id1 = id1;
+            old_id2 = id2;
+            old_dir = dir;
+
+            db_id_t vid1, vid2;
+            res_i[7] >> vid1;
+            res_i[8] >> vid2;
+
+            db_id_t eid = 0;
+            if ( !res_i[5].is_null() ) {
+                res_i[5] >> eid;
+            }
+            else if ( !res_i[6].is_null() ) {
+                res_i[6] >> eid;
+            }
             if ( id1 > node ) {
-                //std::cout << "upd " << upd << std::endl;
                 up_degrees.push_back( upd );
                 node = id1;
                 upd = 0;
             }
-            //std::cout << id1 << "->" << id2;
             if ( dir == 0 ) {
-                //std::cout << "+";
                 upd++;
             }
             CHEdgeProperty p;
             p.cost = res_i[2];
+            p.db_id = eid;
             p.is_shortcut = 0;
             if ( !res_i[3].is_null() ) {
                 uint32_t middle = res_i[3].as<uint32_t>() - 1;
                 // we have a middle node, it is a shortcut
                 p.is_shortcut = 1;
-                //std::cout << " S";
                 if ( dir == 0 ) {
                     spriv->middle_node[std::make_pair(id1, id2)] = middle;
                 }
@@ -218,90 +220,22 @@ void CHPlugin::post_build()
             }
         }
     }
-    
-#endif
-}
-
-void CHPlugin::pre_process( Request& request )
-{
-    REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
-    REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
-
-    request_ = request;
-
-    result_.clear();
-}
-
-std::pair<std::list<Road::Vertex>, float> dijkstra_query( const Road::Graph& graph, Road::Vertex origin, Road::Vertex destination )
-{
-    std::pair<std::list<Road::Vertex>, float> ret;
-
-    const float infinity = std::numeric_limits<float>::max();
-
-    typedef std::vector<float> PotentialMap;
-    PotentialMap potential( num_vertices(graph), infinity );
-
-    std::vector<Road::Vertex> pred_map( num_vertices( graph ) );
-
-    struct DijkstraAbort {};
-
-    struct DijkstraAborter : public boost::base_visitor<DijkstraAborter>
     {
-        typedef boost::on_examine_vertex event_filter;
-        DijkstraAborter( const Road::Vertex& destination ) : destination_(destination) {}
-
-        void operator()( const Road::Vertex& v, const Road::Graph& )
-        {
-            if ( v == destination_ ) {
-                throw DijkstraAbort();
-            }
+        CHQuery& ch = *spriv->ch_query;
+        for ( auto it = edges( ch ).first; it != edges( ch ).second; it++ ) {
+            CHVertex u = source( *it, ch );
+            CHVertex v = target( *it, ch );
+            bool found = false;
+            CHEdge e;
+            boost::tie( e, found ) = edge( u, v, ch );
+            BOOST_ASSERT( found );
+            CHVertex u2 = source( e, ch );
+            CHVertex v2 = target( e, ch );
+            BOOST_ASSERT( u == u2 );
+            BOOST_ASSERT( v == v2 );
+            BOOST_ASSERT( it->property().cost == e.property().cost );
         }
-        Road::Vertex destination_;
-    };
-
-    auto weight_map_fn = [&graph]( const Road::Edge& e ) {
-        if ( (graph[e].traffic_rules() & TrafficRulePedestrian) == 0 ) {
-            return std::numeric_limits<float>::max();
-        }
-        return roundf(graph[e].length() * 100.0);
-    };
-    auto weight_map = boost::make_function_property_map<Road::Edge, float, decltype(weight_map_fn)>( weight_map_fn );
-
-    DijkstraAborter vis( destination );
-    bool path_found = false;
-    try {
-        boost::dijkstra_shortest_paths_no_color_map( graph,
-                                                     origin,
-                                                     &pred_map[0],
-                                                     &potential[0],
-                                                     weight_map,
-                                                     boost::get( boost::vertex_index, graph ),
-                                                     std::less<float>(),
-                                                     boost::closed_plus<float>(),
-                                                     infinity,
-                                                     0.0,
-                                                     boost::make_dijkstra_visitor(vis)
-                                                     );
     }
-    catch ( DijkstraAbort& )
-    {
-        path_found = true;
-    }
-
-    auto& path = ret.first;
-    if ( path_found ) {
-        Road::Vertex current = destination;
-
-        while ( current != origin ) {
-            path.push_front( current );
-            current = pred_map[ current ];
-        }
-        path.push_front( origin );
-    }
-
-    // path cost
-    ret.second = potential[destination];
-    return ret;
 }
 
 template <typename Graph, typename Vertex, typename CostType, typename WeightMap, typename NodeId>
@@ -351,7 +285,6 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
 
         if ( std::min( get_min_pi(dir), get_min_pi(1-dir) ) > total_cost ) {
             // we've reached the best path
-            //std::cout << "end" << std::endl;
             break;
         }
 
@@ -364,19 +297,14 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
         Vertex min_v = vertex_queue[dir].top();
         vertex_queue[dir].pop();
         CostType min_pi = get( potential_map[dir], min_v );
-        //std::cout << dir << " " << min_v << "(" << node_id[min_v] << ") " << min_pi << std::endl;
         
         {
             CostType min_pi2 = get( potential_map[1-dir], min_v );
             // if min_pi2 is not infinity, it means this node has already been seen
             // in the other direction
             // so it is a candidate top node
-            if ( min_pi2 < infinity ) {
-                //std::cout << "*** candidate top node " << node_id[min_v] << std::endl;
-            }
             if ( min_pi + min_pi2 < total_cost ) {
                 top_node = min_v;
-                //std::cout << "*** top node " << node_id[top_node] << std::endl;
                 total_cost = min_pi + min_pi2;
                 path_found = true;
             }
@@ -390,12 +318,10 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
 
                 CostType new_pi = get( potential_map[dir], vv );
                 CostType cost = get( weight_map, *oei );
-                //std::cout << "upward " << vv << "(" << node_id[vv] << ") " << cost << " " << new_pi << std::endl;
                 if ( min_pi + cost < new_pi ) {
                     // relax edge
                     put( potential_map[dir], vv, min_pi + cost );
                     vertex_queue[dir].push( vv );
-                    //std::cout << "up pred of " << node_id[vv] << " = " << node_id[min_v] << std::endl;
                     predecessor[dir][vv] = min_v;
                 }
             }
@@ -408,12 +334,10 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
 
                 CostType new_pi = get( potential_map[dir], vv );
                 CostType cost = get( weight_map, *iei );
-                //std::cout << "downward " << node_id[vv] << " " << cost << " " << new_pi << std::endl;
                 if ( min_pi + cost < new_pi ) {
                     // relax edge
                     put( potential_map[dir], vv, min_pi + cost );
                     vertex_queue[dir].push( vv );
-                    //std::cout << "dn pred of " << node_id[vv] << " = " << node_id[min_v] << std::endl;
                     predecessor[dir][vv] = min_v;
                 }
             }
@@ -421,10 +345,10 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
     }
 
     if ( !path_found ) {
-        std::cout << "NO PATH FOUND" << std::endl;
+        //std::cout << "NO PATH FOUND" << std::endl;
         return returned_path;
     }
-    std::cout << "PATH FOUND" << std::endl;
+    //std::cout << "PATH FOUND" << std::endl;
 
     // path from origin (s) to top node (x)
     // s = p[p[p[p[p[...[x]]]]]] , ..., p[x], x
@@ -461,7 +385,7 @@ std::pair<std::list<CHVertex>, float> ch_query( SPriv* spriv, CHVertex ch_origin
     std::pair<std::list<CHVertex>, float> ret;
 
     auto weight_map_fn = []( const CHQuery::edge_descriptor& e ) {
-        return float(e.property().cost);
+        return float(e.property().cost / 100.0);
     };
     auto weight_map = boost::make_function_property_map<CHQuery::edge_descriptor, float, decltype(weight_map_fn)>( weight_map_fn );
     float ret_cost = std::numeric_limits<float>::max();
@@ -474,65 +398,92 @@ std::pair<std::list<CHVertex>, float> ch_query( SPriv* spriv, CHVertex ch_origin
     return ret;
 }
 
+void CHPlugin::pre_process( Request& request )
+{
+    REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
+    REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
+
+    request_ = request;
+
+    result_.clear();
+}
+
 void CHPlugin::process()
 {
+    Timer timer;
+
     const Road::Graph& graph = graph_.road();
 
     SPriv* spriv = (SPriv*)spriv_;
-#if 1
-    while (true) {
-        CHVertex ch_origin = rand() % spriv->node_id.size();
-        CHVertex ch_destination = rand() % spriv->node_id.size();
-#else
-    {
-        CHVertex ch_origin, ch_destination;
-        for ( size_t i = 0; i < spriv->node_id.size(); i++ ) {
-            if ( spriv->node_id[i] == 26773 ) {
-                ch_origin = i;
-            }
-            else if ( spriv->node_id[i] == 4401 ) {
-                ch_destination = i;
-            }
+    CHVertex ch_origin, ch_destination;
+
+    db_id_t origin_id = graph[request_.origin()].db_id();
+    db_id_t destination_id = graph[request_.destination()].db_id();
+
+    bool origin_found = false;
+    bool destination_found = false;
+    for ( size_t i = 0; i < spriv->node_id.size(); i++ ) {
+        if ( spriv->node_id[i] == origin_id ) {
+            ch_origin = i;
+            origin_found = true;
         }
-#endif
-
-        db_id_t origin_id = spriv->node_id[ch_origin];
-        db_id_t destination_id = spriv->node_id[ch_destination];
-        Road::Vertex origin;
-        Road::Vertex destination;
-        for ( auto it = vertices(graph).first; it != vertices(graph).second; it++ ) {
-            if ( graph[*it].db_id() == origin_id ) {
-                origin = *it;
-            }
-            else if ( graph[*it].db_id() == destination_id ) {
-                destination = *it;
-            }
+        else if ( spriv->node_id[i] == destination_id ) {
+            ch_destination = i;
+            destination_found = true;
         }
+    }
 
-        std::cout << "From " << origin_id << " to " << destination_id << std::endl;
+    if ( !origin_found ) {
+        throw std::runtime_error( (boost::format("Can't find vertex of ID %1") % origin_id).str() );
+    }
+    if ( !destination_found ) {
+        throw std::runtime_error( (boost::format("Can't find vertex of ID %1") % destination_id).str() );
+    }
+    std::cout << "From " << origin_id << " to " << destination_id << std::endl;
 
-        auto ch_ret = ch_query( spriv, ch_origin, ch_destination );
-        auto dijkstra_ret = dijkstra_query( graph, origin, destination );
+    auto ch_ret = ch_query( spriv, ch_origin, ch_destination );
+    auto& ch_graph = *spriv->ch_query;
 
-#if 0
-        std::cout << "Path" << std::endl;
-        auto ch_it = ch_ret.first.begin();
-        auto dj_it = dijkstra_ret.first.begin();
-        for ( ; (ch_it != ch_ret.first.end()) && (dj_it != dijkstra_ret.first.end()); ch_it++, dj_it++ ) {
-            db_id_t ch_id = spriv->node_id[*ch_it];
-            db_id_t dj_id = graph[*dj_it].db_id();
-            if ( ch_id != dj_id ) {
-                std::cout << "Different paths ! CH: " << ch_id << " Dijkstra: " << dj_id << std::endl;
-                //break;
-            }
-            std::cout << ch_id << std::endl;
+    auto& path = ch_ret.first;
+
+    if ( path.empty() ) {
+        throw std::runtime_error( "No path found !" );
+    }
+
+    metrics_[ "time_s" ] = Variant::fromFloat( timer.elapsed() );
+
+    result_.push_back( Roadmap() );
+    Roadmap& roadmap = result_.back();
+
+    roadmap.set_starting_date_time( request_.steps()[1].constraint().date_time() );
+
+    std::auto_ptr<Roadmap::Step> step;
+
+    Road::Edge current_road;
+    auto prev = path.begin();
+    auto it = prev;
+    it++;
+
+    for ( ; it != path.end(); ++it, ++prev) {
+        CHVertex v = *it;
+        CHVertex previous = *prev;
+
+        // Find an edge, based on a source and destination vertex
+        CHEdge e;
+        bool found = false;
+        boost::tie( e, found ) = edge( previous, v, ch_graph );
+
+        if ( !found ) {
+            std::cout << "Cannot find edge (" << spriv->node_id[previous] << "->" << spriv->node_id[v] << ")" << std::endl;
         }
-#endif
+        BOOST_ASSERT( found );
 
-        float ch_cost = ch_ret.second;
-        float dijkstra_cost = dijkstra_ret.second;
-        std::cout << ch_cost << "(CH) - " << dijkstra_cost << "(Dijkstra)" << std::endl;
-        BOOST_ASSERT( fabs((ch_cost - dijkstra_cost) / ch_cost) < 0.01 );
+        step.reset( new Roadmap::RoadStep() );
+        step->set_cost( CostId::CostDistance, e.property().cost / 100.0 );
+        step->set_transport_mode(1);
+        Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
+        rstep->set_road_edge_id( e.property().db_id );
+        roadmap.add_step( step );
     }
 }
 
