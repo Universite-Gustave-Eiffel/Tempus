@@ -38,7 +38,7 @@ namespace Tempus {
     {
     public:
         double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
-            if ( (graph[e].traffic_rules() & TrafficRuleCar) == 0 ) {
+            if ( (graph[e].traffic_rules() & TrafficRulePedestrian) == 0 ) {
                 // allowed transport types do not include car
                 // It is an oversimplification here : it must depends on allowed transport types selected by the user
                 return std::numeric_limits<double>::infinity();
@@ -108,7 +108,17 @@ public:
 
             if ( trace_vertex_ ) {
                 // very slow
-                COUT << "Examining vertex " << v << endl;
+                COUT << "Examining vertex " << graph_.road()[v].db_id() << endl;
+            }
+        }
+    }
+    virtual void road_edge_accessor( const Road::Edge& e, int access_type ) {
+        if ( access_type == Plugin::EdgeRelaxedAccess ) {
+            if ( trace_vertex_ ) {
+                // very slow
+                Road::Vertex u = source( e, graph_.road() );
+                Road::Vertex v = target( e, graph_.road() );
+                COUT << "Edge relaxed " << graph_.road()[u].db_id() << "->" << graph_.road()[v].db_id() << " w: " << graph_.road()[e].length() << endl;
             }
         }
     }
