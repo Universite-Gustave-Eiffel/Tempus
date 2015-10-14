@@ -1,3 +1,21 @@
+/**
+ *   Copyright (C) 2012-2015 Oslandia <infos@oslandia.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 #include "ch_plugin.hh"
 
 #include <boost/heap/d_ary_heap.hpp>
@@ -9,8 +27,6 @@
 
 #include "utils/associative_property_map_default_value.hh"
 #include "utils/timer.hh"
-
-#include "ch_query_graph.hh"
 
 namespace Tempus {
 
@@ -27,20 +43,6 @@ const CHPlugin::PluginCapabilities CHPlugin::plugin_capabilities()
     return caps;
 }
 
-class CHEdgeProperty
-{
-public:
-    uint32_t cost        :31;
-    uint32_t is_shortcut :1;
-    db_id_t db_id;
-};
-
-using CHQuery = CHQueryGraph<CHEdgeProperty>;
-
-using CHVertex = uint32_t;
-using CHEdge = CHQueryGraph<CHEdgeProperty>::edge_descriptor;
-
-using MiddleNodeMap = std::map<std::pair<CHVertex, CHVertex>, CHVertex>;
 
 template <typename OutIterator>
 void unpack_edge( CHVertex v1, CHVertex v2, const MiddleNodeMap& middle_node, OutIterator out_it )
@@ -72,26 +74,10 @@ void unpack_path( InIterator it_begin, InIterator it_end, const MiddleNodeMap& m
 }
 
 
-struct SPriv
-{
-    // middle node of a contraction
-    MiddleNodeMap middle_node;
-
-    std::unique_ptr<CHQuery> ch_query;
-
-    // node index -> node id
-    std::vector<db_id_t> node_id;
-};
-
-void* CHPlugin::spriv_ = nullptr;
+CHPluginStaticData CHPlugin::s_ = CHPluginStaticData();
 
 void CHPlugin::post_build()
 {
-    if ( spriv_ == nullptr ) {
-        spriv_ = new SPriv;
-    }
-    SPriv* spriv = (SPriv*)spriv_;
-
     std::cout << "loading CH graph ..." << std::endl;
     Db::Connection conn( Application::instance()->db_options() );
 
@@ -180,10 +166,10 @@ void CHPlugin::post_build()
                 // we have a middle node, it is a shortcut
                 p.is_shortcut = 1;
                 if ( dir == 0 ) {
-                    spriv->middle_node[std::make_pair(id1, id2)] = middle;
+                    s_.middle_node[std::make_pair(id1, id2)] = middle;
                 }
                 else {
-                    spriv->middle_node[std::make_pair(id2, id1)] = middle;
+                    s_.middle_node[std::make_pair(id2, id1)] = middle;
                 }
             }
             //std::cout << std::endl;
@@ -192,25 +178,25 @@ void CHPlugin::post_build()
         }
         up_degrees.push_back( upd );
 
-        spriv->ch_query.reset( new CHQueryGraph<CHEdgeProperty>( targets.begin(), num_nodes, up_degrees.begin(), properties.begin() ) );
+        s_.ch_query.reset( new CHQueryGraph<CHEdgeProperty>( targets.begin(), num_nodes, up_degrees.begin(), properties.begin() ) );
         std::cout << "OK" << std::endl;
     }
     {
-        spriv->node_id.resize( num_nodes );
+        s_.node_id.resize( num_nodes );
         Db::ResultIterator res_it = conn.exec_it( "select id, node_id from ch.ordered_nodes" );
         Db::ResultIterator it_end;
         for ( ; res_it != it_end; res_it++ ) {
             Db::RowValue res_i = *res_it;
             CHVertex v = res_i[0].as<uint32_t>() - 1;
             db_id_t id = res_i[1];
-            BOOST_ASSERT( v < spriv->node_id.size() );
-            spriv->node_id[v] = id;
+            BOOST_ASSERT( v < s_.node_id.size() );
+            s_.node_id[v] = id;
         }
     }
 
     // check consistency
     {
-        CHQuery& ch = *spriv->ch_query;
+        CHQuery& ch = *s_.ch_query;
         for ( CHVertex v = 0; v < num_vertices(ch); v++ ) {
             for ( auto oeit = out_edges( v, ch ).first; oeit != out_edges( v, ch ).second; oeit++ ) {
                 BOOST_ASSERT( target( *oeit, ch ) > v );
@@ -221,7 +207,7 @@ void CHPlugin::post_build()
         }
     }
     {
-        CHQuery& ch = *spriv->ch_query;
+        CHQuery& ch = *s_.ch_query;
         for ( auto it = edges( ch ).first; it != edges( ch ).second; it++ ) {
             CHVertex u = source( *it, ch );
             CHVertex v = target( *it, ch );
@@ -255,6 +241,8 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
 
     typedef boost::indirect_cmp<PotentialPMap, std::greater<CostType>> Cmp;
 
+    // FIXME is the heap needed ? since the graph is partitioned in two acyclic graphs with a topological order on nodes
+    // There may be a way to be faster: loop over each node in order and relax out edges
     typedef boost::heap::d_ary_heap< Vertex, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;
     Cmp cmp_fw( potential_map[0] );
     Cmp cmp_bw( potential_map[1] );
@@ -380,7 +368,7 @@ std::list<Vertex> bidirectional_ch_dijkstra( const Graph& graph, Vertex origin, 
     return returned_path;
 }
 
-std::pair<std::list<CHVertex>, float> ch_query( SPriv* spriv, CHVertex ch_origin, CHVertex ch_destination )
+std::pair<std::list<CHVertex>, float> ch_query( CHPluginStaticData& spriv, CHVertex ch_origin, CHVertex ch_destination )
 {
     std::pair<std::list<CHVertex>, float> ret;
 
@@ -389,10 +377,10 @@ std::pair<std::list<CHVertex>, float> ch_query( SPriv* spriv, CHVertex ch_origin
     };
     auto weight_map = boost::make_function_property_map<CHQuery::edge_descriptor, float, decltype(weight_map_fn)>( weight_map_fn );
     float ret_cost = std::numeric_limits<float>::max();
-    auto path = bidirectional_ch_dijkstra( *spriv->ch_query, ch_origin, ch_destination, weight_map, ret_cost, spriv->node_id );
+    auto path = bidirectional_ch_dijkstra( *spriv.ch_query, ch_origin, ch_destination, weight_map, ret_cost, spriv.node_id );
 
     auto& ret_path = ret.first;
-    unpack_path( path.begin(), path.end(), spriv->middle_node, std::back_inserter( ret_path ) );
+    unpack_path( path.begin(), path.end(), spriv.middle_node, std::back_inserter( ret_path ) );
     ret.second = ret_cost;
 
     return ret;
@@ -414,7 +402,6 @@ void CHPlugin::process()
 
     const Road::Graph& graph = graph_.road();
 
-    SPriv* spriv = (SPriv*)spriv_;
     CHVertex ch_origin, ch_destination;
 
     db_id_t origin_id = graph[request_.origin()].db_id();
@@ -422,12 +409,12 @@ void CHPlugin::process()
 
     bool origin_found = false;
     bool destination_found = false;
-    for ( size_t i = 0; i < spriv->node_id.size(); i++ ) {
-        if ( spriv->node_id[i] == origin_id ) {
+    for ( size_t i = 0; i < s_.node_id.size(); i++ ) {
+        if ( s_.node_id[i] == origin_id ) {
             ch_origin = i;
             origin_found = true;
         }
-        else if ( spriv->node_id[i] == destination_id ) {
+        else if ( s_.node_id[i] == destination_id ) {
             ch_destination = i;
             destination_found = true;
         }
@@ -441,8 +428,8 @@ void CHPlugin::process()
     }
     std::cout << "From " << origin_id << " to " << destination_id << std::endl;
 
-    auto ch_ret = ch_query( spriv, ch_origin, ch_destination );
-    auto& ch_graph = *spriv->ch_query;
+    auto ch_ret = ch_query( s_, ch_origin, ch_destination );
+    auto& ch_graph = *s_.ch_query;
 
     auto& path = ch_ret.first;
 
@@ -474,7 +461,7 @@ void CHPlugin::process()
         boost::tie( e, found ) = edge( previous, v, ch_graph );
 
         if ( !found ) {
-            std::cout << "Cannot find edge (" << spriv->node_id[previous] << "->" << spriv->node_id[v] << ")" << std::endl;
+            std::cout << "Cannot find edge (" << s_.node_id[previous] << "->" << s_.node_id[v] << ")" << std::endl;
         }
         BOOST_ASSERT( found );
 
