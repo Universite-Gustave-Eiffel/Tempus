@@ -153,7 +153,7 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
     for ( Roadmap::StepIterator it = itbegin; it != itend; it++ ) {
         if ( it->step_type() == Roadmap::Step::RoadStep ) {
             Roadmap::RoadStep* road_step = static_cast<Roadmap::RoadStep*>( &*it );
-            road_steps[ rgraph[ road_step->road_edge() ].db_id() ] = road_step;
+            road_steps[ road_step->road_edge_id() ] = road_step;
         }
         else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
             Roadmap::PublicTransportStep* pt_step = static_cast<Roadmap::PublicTransportStep*>( &*it );

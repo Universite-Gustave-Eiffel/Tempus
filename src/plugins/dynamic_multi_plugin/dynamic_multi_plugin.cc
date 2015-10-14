@@ -749,7 +749,7 @@ void DynamicMultiPlugin::add_roadmap( const Path& path, bool reverse )
                 throw std::runtime_error( (boost::format("Can't find the road edge ! %d %d") % it->vertex.road_vertex() % next->vertex.road_vertex()).str() );
             }
 
-            step->set_road_edge( e );
+            step->set_road_edge_id( graph_.road()[e].db_id() );
             step->set_transport_mode( it->mode );
             step->set_cost( CostId::CostDuration, potential_map_[ *next ] - potential_map_[ *it ] );
         }

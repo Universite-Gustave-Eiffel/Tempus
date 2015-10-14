@@ -226,7 +226,7 @@ public:
             step->set_cost(CostId::CostDistance, road_graph[e].length());
             step->set_transport_mode(1);
             Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
-            rstep->set_road_edge( e );
+            rstep->set_road_edge_id( road_graph[e].db_id() );
             roadmap.add_step( step );
         }
     }

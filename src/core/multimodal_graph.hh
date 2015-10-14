@@ -18,6 +18,8 @@
 #ifndef TEMPUS_MULTIMODAL_GRAPH_HH
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
+#include <unordered_map>
+
 #include <boost/variant.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 
@@ -261,6 +263,23 @@ private:
     std::auto_ptr<Road::Graph> road_;
 public:
     void set_road( std::auto_ptr<Road::Graph> );
+
+private:
+    ///
+    /// Road vertex map. Resetted when the road graph is changed
+    std::unordered_map<db_id_t, Road::Vertex> road_vertex_map_;
+
+    ///
+    /// Road edge map. Resetted when the road graph is changed
+    std::unordered_map<db_id_t, Road::Edge> road_edge_map_;
+public:
+    ///
+    /// @return a Road::Vertex from it's database id in O(1)
+    Road::Vertex road_vertex_from_id( db_id_t id ) const;
+
+    ///
+    /// @return a Road::Edge from it's database id in O(1)
+    Road::Edge road_edge_from_id( db_id_t id ) const;
 
     ///
     /// Public transport networks
