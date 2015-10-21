@@ -30,12 +30,11 @@
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OPTIONS" ) : "";
+static std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OPTIONS" ) : "";
+static std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";
 
 using namespace boost::unit_test ;
 using namespace Tempus;
-
-std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";
 
 Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& lgraph )
 {
@@ -812,3 +811,4 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+

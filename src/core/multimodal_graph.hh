@@ -29,6 +29,7 @@
 #include "public_transport_graph.hh"
 #include "poi.hh"
 #include "sub_map.hh"
+#include "routing_data.hh"
 
 namespace Db {
 class Connection;
@@ -222,7 +223,7 @@ std::pair< PublicTransport::Edge, bool > public_transport_edge( const Multimodal
 
 ///
 /// A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph
-struct Graph: boost::noncopyable {
+struct Graph: boost::noncopyable, public Tempus::RoutingData {
     // declaration for boost::graph
     typedef Tempus::Multimodal::Vertex          vertex_descriptor;
     typedef Tempus::Multimodal::Edge            edge_descriptor;

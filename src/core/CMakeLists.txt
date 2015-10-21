@@ -26,6 +26,9 @@ set( HEADER_FILES
   transport_modes.hh
   variant.hh
   serializers.hh
+  routing_data.hh
+  routing_data_builder.hh
+  multimodal_graph_builder.hh
 )
 
 set( UTILS_HEADER_FILES
@@ -57,6 +60,8 @@ set( SOURCE_FILES
     utils/graph_db_link.cc 
     variant.cc
     serializers.cc
+    routing_data.cc
+    multimodal_graph_builder.cc
 )
 
 if (ENABLE_SEGMENT_ALLOCATOR)
