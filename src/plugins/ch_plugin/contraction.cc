@@ -1,223 +1,187 @@
-struct VertexProperty
+#include "contraction.hh"
+
+#include "common.hh"
+
+#include <queue>
+
+using namespace std;
+
+void add_edge_or_update( CHGraph& graph, CHVertex u, CHVertex v, TCost cost )
 {
-    uint32_t order;
-    db_id_t id;
-};
-
-struct EdgeProperty
-{
-    double weight;
-};
-
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, VertexProperty, EdgeProperty> CHGraph;
-typedef typename boost::graph_traits<CHGraph>::vertex_descriptor CHVertex;
-typedef typename boost::graph_traits<CHGraph>::edge_descriptor CHEdge;
-
-typedef std::map<std::pair<CHVertex, CHVertex>, CHVertex> MiddleNodeMap;
-
-/**
- * Search witness paths for u-v-w from the vertex u to a set of target vertices
- * @param u the predecessor vertex
- * @param v the current vertex to contract
- * @param targets list of successors
- * @param max_cost the maximum cost to consider. If a path longer than that is found, shortcut
- * @returns a vector of shortest path costs for each u-v-target[i]
- */
-std::vector<double> witness_search( const CHGraph& graph, CHVertex u, CHVertex v, const std::vector<CHEdge>& targets, double max_cost = .0 )
-{
-    // shortests paths to target nodes
-    std::vector<double> costs;
-    costs.resize( targets.size() );
-
-    std::list<std::pair<CHVertex, size_t>> remaining_targets;
-    size_t idx = 0;
-    for ( CHEdge e : targets ) {
-        CHVertex w = target( e, graph );
-        if ( w == u ) {
-            // avoid cycles
-            idx++;
-            continue;
-        }
-        remaining_targets.push_back( std::make_pair(w, idx) );
-        costs[idx] = std::numeric_limits<double>::max();
-        idx++;
+    bool found = false;
+    CHEdge e;
+    boost::tie( e, found ) = edge( u, v, graph );
+    if ( !found ) {
+        boost::tie( e, found ) = add_edge( u, v, graph );
     }
-    
-    //
-    // one-to-many dijkstra search
-    // on the upward graph
-    // and excluding the middle node (v)
-    // FIXME: use standard boost dijkstra with an upward graph adaptor ?
-#if 0
-    typedef std::map<CHVertex, double> PotentialMap;
-    PotentialMap potential;
-    associative_property_map_default_value< PotentialMap > potential_map( potential, std::numeric_limits<double>::max() );
+    // update the cost
+    graph[e].weight = cost;
+}
+
+// If set to 1, the graph is really contracted (i.e. a node and its references are removed from the graph after contraction)
+// If set to 0, edges are filtered during the contraction (retaining nodes of upper order)
+// Actually reducing the graph seems a bit faster
+#define REDUCE_GRAPH 1
+
+map<CHVertex, TCost> witness_search(const CHGraph& graph, CHVertex contracted_node, CHVertex source, const TTargetSet& targets, TCost cutoff, int& search_space)
+{
+    struct DijkstraNode
+    {
+        CHVertex node;
+        TCost cost;
+        int hops;
+        int order;
+    };
+
+    class CompareNode
+    {
+    public:
+        bool operator()(const DijkstraNode& node1, const DijkstraNode& node2) const
+        {
+            // node2 has higher priority if it has a smaller cost
+            // (DijkstraNode::order used in case of cost equality, for non-random heap.pop())
+            return node1.cost > node2.cost || (node1.cost == node2.cost && node1.order > node2.order);
+        }
+    };
+
+    // Dijkstra from one source to multiple targets.
+    REQUIRE(!targets.empty());
+
+    TTargetSet found; // targets found
+    map<CHVertex, TCost> relaxed; // minimal costs of relaxed nodes (from 'source')
+    relaxed[source] = 0; // the cost from 'source' to 'source' is 0
+    search_space = 1; // search-space of Dijkstra (used for node-ordering)
+
+    int order = 0;
+#if 1
+    priority_queue<DijkstraNode, vector<DijkstraNode>, CompareNode> heap; // priority queue
 #else
-    typedef std::vector<double> PotentialMap;
-    PotentialMap potential( num_vertices( graph ), std::numeric_limits<double>::max() );
-    typedef double* PotentialPMap;
-    PotentialPMap potential_map = &potential[0];
+    CompareNode cmp;
+    boost::heap::d_ary_heap< DijkstraNode, boost::heap::arity<2>, boost::heap::compare< CompareNode >, boost::heap::mutable_<true> > heap( cmp );
+#endif
+    heap.push( {source, 0, 1, order++} );
+
+    while( !heap.empty() )
+    {
+        // Get less costly node in priority queue:
+        const DijkstraNode& top = heap.top();
+        CHVertex node = top.node;
+        TCost cost = top.cost;
+        int num_hops = top.hops;
+        heap.pop();
+
+        if( targets.find( node ) != targets.end() ) // found one of the targets
+        {
+            found.emplace( node );
+
+            if( found == targets ) // all targets have been found
+            {
+                break;
+            }
+        }
+
+        for ( auto succ : pair_range( out_edges( node, graph ) ) )
+        {
+            CHVertex successor_node = target( succ, graph );
+#if REDUCE_GRAPH
+            if( successor_node == contracted_node ) // ignore contracted node
+                continue;
+#else
+            if( successor_node <= contracted_node ) // ignore contracted node and lower nodes
+                continue;
 #endif
 
-    auto cmp = boost::make_indirect_cmp( std::greater<double>(), potential_map );
-
-    typedef boost::heap::d_ary_heap< CHVertex, boost::heap::arity<4>, boost::heap::compare< decltype(cmp) >, boost::heap::mutable_<true> > VertexQueue;
-    VertexQueue vertex_queue( cmp );
-
-    //std::cout << "witness search " << graph[u].id << " - " << graph[v].id << std::endl;
-
-    vertex_queue.push( u ); 
-    put( potential_map, u, 0.0 );
-
-    while ( !vertex_queue.empty() ) {
-        CHVertex min_v = vertex_queue.top();
-        vertex_queue.pop();
-        double min_pi = get( potential_map, min_v );
-        //std::cout << "min_v " << graph[min_v].id << std::endl;
-
-        // did we reach a target node ?
-        // FIXME optimize
-        auto it = std::find_if( remaining_targets.begin(), remaining_targets.end(),
-                                [&min_v](const std::pair<CHVertex,size_t>& p)
-                                { return p.first == min_v; }
-                                );
-        if ( it != remaining_targets.end() ) {
-            // store the cost to get this target node
-            //std::cout << "witness found on " << graph[u].id << " - " << graph[v].id << " - " << graph[min_v].id << " = " << min_pi << std::endl;
-            costs[it->second] = min_pi;
-            remaining_targets.erase( it );
-        }
-        if ( remaining_targets.empty() ) {
-            // no target node to process anymore, returning
-            return costs;
-        }
-
-        for ( auto oei = out_edges( min_v, graph ).first;
-              oei != out_edges( min_v, graph ).second;
-              oei++ ) {
-            CHVertex vv = target( *oei, graph );
-            //std::cout << graph[vv].id << std::endl;
-            // exclude the middle node
-            if ( vv == v )
-                continue;
-            double new_pi = get( potential_map, vv );
-            double cost = graph[*oei].weight;
-            if ( min_pi + cost > max_cost ) {
+            TCost vu_cost = cost + graph[succ].weight;
+            if(cutoff && vu_cost > cutoff) // do not search beyond 'cutoff'
+            {
                 continue;
             }
 
-            //std::cout << "vv = " << vv << " order = " << graph[vv].order << " min_pi " << min_pi << " cost " << cost << " new_pi " << new_pi << std::endl;
-            if ( min_pi + cost < new_pi ) {
-                // relax edge
-                put( potential_map, vv, min_pi + cost );
-                vertex_queue.push( vv );
+            auto iter = relaxed.find( successor_node );
+            if( iter == relaxed.end() || vu_cost < iter->second )
+            {
+                // Add node to priority queue:
+                heap.push( {successor_node, vu_cost, num_hops + 1, order++} );
+                relaxed[successor_node] = vu_cost;
+
+                if(num_hops + 1 > search_space)
+                    search_space = num_hops + 1;
             }
         }
     }
 
-    //std::cout << "no path" << std::endl;
-
-    return costs;
+    map<CHVertex, TCost> target_costs;
+    for(CHVertex t : found)
+        target_costs.emplace( t, relaxed[t] );
+    return target_costs;
 }
 
-void contract_graph( CHGraph& ch_graph, const std::map<CHVertex,CHVertex>& node_map, MiddleNodeMap& middle_node )
+std::vector<TEdge> get_contraction_shortcuts( const CHGraph& graph, CHVertex v )
 {
-    size_t nshortcuts = 0;
-    std::map<std::pair<CHVertex, CHVertex>, double> shortcuts;
+    // Contraction of 'node'.
 
-    size_t v_idx = 0;
-    for ( auto p : node_map ) {
-        // node_map is sorted by ascending order
-        v_idx++;
-        CHVertex v = p.second;
-        //std::cout << "contracting " << v << " - order " << p.first << std::endl;
+    vector<TEdge> shortcuts;
+    for ( auto uv : pair_range( in_edges( v, graph ) ) )
+        //    if(!successors.empty() && !predecessors.empty() && !(successors.size() == 1 && predecessors.size() == 1 && successors.back().node == predecessors.back().node))
+    {
+        TTargetSet targets;
+        TCost mx = 0;
+        CHVertex u = source( uv, graph );
 
-        // witness search
+#if !REDUCE_GRAPH
+        if ( u < v ) // only consider upper predecessors
+            continue;
+#endif
 
-        std::vector<CHEdge> successors;
-        successors.reserve( out_degree( v, ch_graph ) );
-
-        double max_cost = 0.0;
-        for ( auto oei = out_edges( v, ch_graph ).first; oei != out_edges( v, ch_graph ).second; oei++ ) {
-            auto succ = target( *oei, ch_graph );
-            // only retain successors of higher order
-            if ( ch_graph[succ].order < ch_graph[v].order )
+        //std::cout << s << " " << node << std::endl;
+        for ( auto vw : pair_range( out_edges( v, graph ) ) )
+        {
+            CHVertex w = target( vw, graph );
+            if ( w == u )
                 continue;
-            //std::cout << "succ " << road_graph[succ].db_id() << std::endl;
+#if !REDUCE_GRAPH
+            if ( w < v ) // only consider upper successors
+                continue;
+#endif
 
-            successors.push_back( *oei );
+            targets.emplace( w );
 
-            // get the max cost that will be used for the witness search
-            if ( ch_graph[*oei].weight > max_cost )
-                max_cost = ch_graph[*oei].weight;
+            if ( graph[vw].weight > mx )
+                mx = graph[vw].weight;
         }
 
-        //std::cout << "#successors " << successors.size() << std::endl;
-        if ( successors.empty() )
+        if ( targets.empty() )
             continue;
 
-        for ( auto iei = in_edges( v, ch_graph ).first; iei != in_edges( v, ch_graph ).second; iei++ ) {
-            auto pred = source( *iei, ch_graph );
-            // only retain predecessors of higher order
-            if ( ch_graph[pred].order < ch_graph[v].order )
+        // It is not useful to search shortcuts beyond 'cutoff'
+        TCost cutoff = graph[uv].weight + mx;
+
+        // Perform Dijkstra from 'predecessor' to all 'targets' while ignoring 'node'
+        int _ = 0; // not used
+        auto target_costs = witness_search( graph, v, u, targets, cutoff, _ );
+
+        for ( auto vw : pair_range( out_edges( v, graph ) ) )
+        {
+            CHVertex w = target( vw, graph );
+            if ( w == u )
                 continue;
-
-            double pred_cost = ch_graph[*iei].weight;
-            //std::cout << "u " << ch_graph[pred].id << " v " << ch_graph[v].id << " uv cost " << pred_cost << std::endl;
-
-            std::vector<double> witness_costs = witness_search( ch_graph, pred, v, successors, pred_cost + max_cost );
-            size_t i = 0;
-            for ( auto vw_it = successors.begin(); vw_it != successors.end(); vw_it++, i++ ) {
-                CHVertex w = target( *vw_it, ch_graph );
-                if ( w == pred ) {
-                    continue;
-                }
-                double uvw_cost = pred_cost + ch_graph[*vw_it].weight;
-                if ( witness_costs[i] > uvw_cost ) {
-                    // need to add a shortcut between pred and succ
-                    shortcuts[std::make_pair(pred, w)] = uvw_cost;
-                    if ( v_idx % 100 == 0 ) {
-                        //float p = v_idx / float(num_vertices(ch_graph));
-                        //std::cout << v_idx << " " << p << std::endl;
-                    }
-
-                    middle_node[std::make_pair(pred, w)] = v;
-                }
-            }
-        }
-
-        for ( auto shortcut : shortcuts ) {
-            auto p = shortcut.first;
-            double cost = shortcut.second;
-            bool found;
-            CHEdge e;
-            // update the cost or add a new shortcut
-            std::tie(e, found) = edge( p.first, p.second, ch_graph );
-            if ( found ) {
-                BOOST_ASSERT( ch_graph[e].weight >= cost );
-                ch_graph[e].weight = cost;
-            }
-            else {
-                std::tie(e, found) = add_edge( p.first, p.second, ch_graph );
-                nshortcuts++;
-                BOOST_ASSERT( found );
-                ch_graph[e].weight = cost;
-            }
-        }
-    }
-
-#if 0
-    for ( auto shortcut : shortcuts ) {
-        auto p = shortcut.first;
-        std::cout << "SHORTCUT " << road_graph[p.first].db_id() << "," << road_graph[p.second].db_id() << ","
-                  << road_graph[spriv->middle_node[p]].db_id() << ","
-                  << shortcut.second
-                  << std::endl;
-    }
+#if !REDUCE_GRAPH
+            if ( w < v ) // only consider upper successors
+                continue;
 #endif
 
+            auto iter_shortcut = target_costs.find( w );
+            TCost uvw_cost = graph[uv].weight + graph[vw].weight;
+            if( iter_shortcut == target_costs.end() || iter_shortcut->second > uvw_cost )
+            {
+                // If no shortest path was found from 'predecessor' to 'successor' during the Dijkstra
+                // propagation, then it means the shortest path from 'predecessor' to 'successor' is
+                // <predecessor, node, successor>, and a shortcut must be added.
+                shortcuts.push_back( {u, w, uvw_cost} );
+            }
+        }
+    }
 
-    std::cout << num_vertices( ch_graph ) << " " << num_edges( ch_graph ) << std::endl;
-    std::cout << "# shortcuts " << nshortcuts << std::endl;
+    // cout << "Contracted " << node << "." << endl;
+    return shortcuts;
 }
-
