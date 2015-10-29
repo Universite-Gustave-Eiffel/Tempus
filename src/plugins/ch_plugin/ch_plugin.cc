@@ -215,10 +215,8 @@ void CHPlugin::post_build()
             CHEdge e;
             boost::tie( e, found ) = edge( u, v, ch );
             BOOST_ASSERT( found );
-            CHVertex u2 = source( e, ch );
-            CHVertex v2 = target( e, ch );
-            BOOST_ASSERT( u == u2 );
-            BOOST_ASSERT( v == v2 );
+            BOOST_ASSERT( u == source( e, ch ) );
+            BOOST_ASSERT( v == target( e, ch ) );
             BOOST_ASSERT( it->property().cost == e.property().cost );
         }
     }
