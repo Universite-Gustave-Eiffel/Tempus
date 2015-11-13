@@ -70,67 +70,54 @@ Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Mult
 return coordinates( v.poi(), db );
 }
 
-void get_edge_info_from_db( const Multimodal::Edge& e, Db::Connection& db, std::string& wkb, std::string& road_name )
+void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wkb, std::string& road_name )
 {
     std::string res_wkb;
     std::string query;
-    if ( e.connection_type() == Multimodal::Edge::Road2Road ) {
-        db_id_t id = (*e.source().road_graph())[e.road_edge()].db_id();
-        query = ( boost::format( "SELECT st_asbinary(geom), road_name from "
-                                 "tempus.road_section where id=%1%"
-                                 ) % id ).str();
+    if ( e.source().type() == MMVertex::Road && e.target().type() == MMVertex::Road ) {
+        query = ( boost::format( "select st_asbinary(geom), road_name from "
+                                 "(select geom, road_name from tempus.road_section where node_from=%1% and node_to=%2% "
+                                 "union "
+                                 "select geom, road_name from tempus.road_section where node_to=%1% and node_from=%2%) t"
+                                 "where geom is not null limit 1"
+                                 ) % e.source().id() % e.target().id() ).str();
     }
-    else if ( e.connection_type() == Multimodal::Edge::Road2Transport ) {
-        db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
-        db_id_t d_id = (*e.target().pt_graph())[e.target().pt_vertex()].db_id();
-
+    else if ( e.source().type() == MMVertex::Road && e.target().type() == MMVertex::Transport ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
                                  "(select road_name from tempus.road_section where id=t2.road_section_id) from "
                                  "  (select geom from tempus.road_node where id=%1%) as t1, "
                                  "  (select geom, road_section_id from tempus.pt_stop where id=%2%) as t2 "
-                                 ) % o_id % d_id ).str();
+                                 ) % e.source().id() % e.target().id() ).str();
         
     }
-    else if ( e.connection_type() == Multimodal::Edge::Transport2Road ) {
-        db_id_t o_id = (*e.source().pt_graph())[e.source().pt_vertex()].db_id();
-        db_id_t d_id = (*e.target().road_graph())[e.target().road_vertex()].db_id();
-
+    else if ( e.source().type() == MMVertex::Transport && e.target().type() == MMVertex::Road ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
                                  "(select road_name from tempus.road_section where id=t1.road_section_id) from "
                                  "  (select geom, road_section_id from tempus.pt_stop where id=%1%) as t1, "
                                  "  (select geom from tempus.road_node where id=%2%) as t2 "
-                                 ) % o_id % d_id ).str();
+                                 ) % e.source().id() % e.target().id() ).str();
         
     }
-    else if ( e.connection_type() == Multimodal::Edge::Road2Poi ) {
-        db_id_t o_id = (*e.source().road_graph())[e.source().road_vertex()].db_id();
-        db_id_t d_id = e.target().poi()->db_id();
-
+    else if ( e.source().type() == MMVertex::Road && e.target().type() == MMVertex::Poi ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
                                  "(select road_name from tempus.road_section where id=t2.road_section_id) from "
-                                             "(select geom from tempus.road_node where id=%1%) as t1, "
-                                             "(select geom, road_section_id from tempus.poi where id=%2%) as t2 "
-                                             ) % o_id % d_id ).str();
+                                 "(select geom from tempus.road_node where id=%1%) as t1, "
+                                 "(select geom, road_section_id from tempus.poi where id=%2%) as t2 "
+                                 ) % e.source().id() % e.target().id() ).str();
         
     }
-    else if ( e.connection_type() == Multimodal::Edge::Poi2Road ) {
-        db_id_t o_id = e.source().poi()->db_id();
-        db_id_t d_id = (*e.target().road_graph())[e.target().road_vertex()].db_id();
-
+    else if ( e.source().type() == MMVertex::Poi && e.target().type() == MMVertex::Road ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
                                  "(select road_name from tempus.road_section where id=t1.road_section_id) from "
-                                             "(select geom, road_section_id from tempus.poi where id=%1%) as t1, "
-                                             "(select geom from tempus.road_node where id=%2%) as t2 "
-                                             ) % o_id % d_id ).str();
+                                 "(select geom, road_section_id from tempus.poi where id=%1%) as t1, "
+                                 "(select geom from tempus.road_node where id=%2%) as t2 "
+                                 ) % e.source().id() % e.target().id() ).str();
         
     }
-    else if ( e.connection_type() == Multimodal::Edge::Transport2Transport ) {
-        db_id_t o_id = (*e.source().pt_graph())[e.source().pt_vertex()].db_id();
-        db_id_t d_id = (*e.target().pt_graph())[e.target().pt_vertex()].db_id();
-
+    else if ( e.source().type() == MMVertex::Transport && e.target().type() == MMVertex::Transport ) {
         query = ( boost::format( "SELECT st_asbinary(geom), '' from "
                                  "tempus.pt_section where stop_from=%1% and stop_to=%2%"
-                                 ) % o_id % d_id ).str();
+                                 ) % e.source().id() % e.target().id() ).str();
     }
 
     Db::Result res = db.exec( query );
@@ -169,7 +156,12 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
             std::string road_name;
             // WARNING: transfer steps are here requested one by one
             get_edge_info_from_db( *tr_step, db, wkb, road_name );
-            tr_step->set_road_name( road_name );
+            if ( tr_step->source().type() == MMVertex::Road ) {
+                tr_step->set_initial_name( road_name );
+            }
+            else if ( tr_step->target().type() == MMVertex::Road ) {
+                tr_step->set_final_name( road_name );
+            }
             tr_step->set_geometry_wkb( wkb );
         }
     }

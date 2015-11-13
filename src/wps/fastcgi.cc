@@ -43,6 +43,7 @@
 #include "application.hh"
 #include "xml_helper.hh"
 #include "config.hh"
+#include "plugin_factory.hh"
 
 
 #define DEBUG_TRACE if(1) std::cout << " debug: "
@@ -268,24 +269,19 @@ int main( int argc, char* argv[] )
     try
 #endif
     {
-        std::cout << "connecting to database: " << dbstring << "\n";
-        Application::instance()->connect( dbstring );
-        Application::instance()->pre_build_graph();
-        std::cout << "building the graph...\n";
-        
-        Application::instance()->set_option( "load_from", Variant::fromString(load_from) );
+        VariantMap options;
 
-#if ENABLE_SEGMENT_ALLOCATOR
-        Application::instance()->set_option( "dump_file", Variant::fromString(dump_file) );
-        Application::instance()->set_option( "segment_size", Variant::fromInt(segment_size) );
-#endif
-        Application::instance()->build_graph( consistency_check, schema_name );
+        options["db/options"] = Variant::fromString( dbstring );
+        if ( !load_from.empty() ) {
+            options["load_from"] = Variant::fromString( load_from );
+        }
 
         // load plugins
+        TextProgression progression;
         for ( size_t i=0; i< plugins.size(); i++ ) {
             using namespace Tempus;
-            std::cout << "loading " << plugins[i] << "\n";
-            PluginFactory::instance()->load( plugins[i] );
+            std::cout << "Loading " << plugins[i] << "\n";
+            PluginFactory::instance()->create_plugin( plugins[i], progression, options );
         }
     }
 #ifdef NDEBUG

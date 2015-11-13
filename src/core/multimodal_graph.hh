@@ -150,6 +150,10 @@ Road::Node get_road_node( const Vertex& v );
 /// warning no check is done, could crash
 PublicTransport::Stop get_pt_stop( const Vertex& v );
 
+/// Convenience function
+/// Converts a Multimodal::Vertex to a MMVertex
+MMVertex get_mm_vertex( const Vertex& v );
+
 ///
 /// A multimodal edge is defined with :
 /// * a source vertex
@@ -283,7 +287,7 @@ public:
     Road::Edge road_edge_from_id( db_id_t id ) const;
 
     ///
-    /// Public transport networks
+    /// Public transport netwoks
     typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
     DECLARE_RW_PROPERTY( network_map, NetworkMap );
 
@@ -293,6 +297,10 @@ public:
 private:
     typedef std::map<db_id_t, PublicTransportGraphIndex> PublicTransportGraphIdxMap;
     PublicTransportGraphIdxMap public_transport_graph_idx_map_;
+
+    typedef std::vector<db_id_t> PublicTransportGraphRIdxMap;
+    PublicTransportGraphRIdxMap public_transport_graph_ridx_map_;
+
     std::set<db_id_t> selected_transport_graphs_;
     typedef std::vector<std::unique_ptr<PublicTransport::Graph>> PublicTransportGraphs;
     PublicTransportGraphs public_transport_graphs_;
@@ -332,6 +340,9 @@ public:
 
     /// Returns a public transport graph index given a db id
     boost::optional<PublicTransportGraphIndex> public_transport_index( db_id_t ) const;
+
+    /// Returns a public transport graph db id given it's graph index
+    db_id_t public_transport_rindex( PublicTransportGraphIndex idx ) const;
 
     /// Returns a public transport given an index
     /// No bound checking is done on the index

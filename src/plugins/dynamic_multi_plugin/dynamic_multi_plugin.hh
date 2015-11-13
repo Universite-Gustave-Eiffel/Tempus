@@ -55,7 +55,6 @@ typedef std::map< Triple, Triple > PredecessorMap;
 struct StaticVariables
 {
     Date current_day; // Day for which timetable or frequency data are loaded
-    Automaton<Road::Edge> automaton;
     TimetableMap timetable; // Timetable data for the current request
     FrequencyMap frequency; // Frequency data for the current request
     TimetableMap rtimetable; // Reverse time table
@@ -67,55 +66,48 @@ struct StaticVariables
     {}
 };
 
-class DynamicMultiPlugin : public Plugin {
+class DynamicMultiPlugin : public Plugin
+{
 public:
+    DynamicMultiPlugin( ProgressionCallback& progression, const VariantMap& options );
 
-    static const OptionDescriptionList option_descriptions();
-    static const PluginCapabilities plugin_capabilities();
+    static Plugin::OptionDescriptionList option_descriptions();
+    static Plugin::Capabilities plugin_capabilities();
 
-    DynamicMultiPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
-    }
+    const Automaton<Road::Edge>& automaton() const { return automaton_; }
 
-    virtual ~DynamicMultiPlugin() {
-    }
+    const Multimodal::Graph* graph() const { return graph_; }
 
-protected:
-    // Plugin options
-    double timetable_frequency_; // travel time calculation mode
-    bool verbose_algo_; // verbose vertex and edge traversal
-    bool verbose_; // Verbose processing (except algorithm)
-    bool enable_trace_;
-    double min_transfer_time_; // Minimum time necessary for a transfer to be done (in minutes)
-    double walking_speed_; // Average walking speed
-    double cycling_speed_; // Average cycling speed
-    double car_parking_search_time_; // Parking search time for cars
-    bool use_speed_profiles_;
+public:
+    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
 
-    // Plugin metrics
-    size_t iterations_; // Number of iterations
-    double time_; // Time elapsed for pre_process() and process()
-    double time_algo_; // Time elapsed for process()
+private:
+    const Multimodal::Graph* graph_;
+    Automaton<Road::Edge> automaton_;
+};
 
-    // Other attributes
-    Multimodal::Vertex destination_; // Current request destination
-    std::map< Multimodal::Vertex, db_id_t > available_vehicles_;
-    PotentialMap potential_map_;
-    PredecessorMap pred_map_;
-    PotentialMap wait_map_;
-    PotentialMap shift_map_;
-    TripMap trip_map_;
+class DynamicMultiPluginRequest : public PluginRequest
+{
+public:
+    DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options );
 
-    Road::Vertex parking_location_;
+    virtual std::unique_ptr<Result> process( const Request& request );
+
+private:
+    Path reorder_path( Triple departure, Triple arrival, bool reverse = false );
+    void add_roadmap( const Request& request, Result& r, const Path& path, bool reverse = false );
 
     static StaticVariables s_;
 
-public:
-    static void post_build();
-    virtual void pre_process( Request& request );
-    virtual void process();
-private:
-    Path reorder_path( Triple departure, Triple arrival, bool reverse = false );
-    void add_roadmap( const Path& path, bool reverse = false );
+    PotentialMap potential_map_;
+    PredecessorMap pred_map_;
+    PotentialMap shift_map_;
+    PotentialMap wait_map_;
+    TripMap trip_map_;
+
+    bool enable_trace_;
+
+    const Multimodal::Graph* graph_;
 };
 
 }

@@ -32,7 +32,7 @@ namespace Tempus {
 /// Get a vertex descriptor from its database's id.
 /// This is templated in a way that it is compliant with Road::Vertex, PublicTransport::Vertex
 template <class G>
-std::pair<typename boost::graph_traits<G>::vertex_descriptor, bool> vertex_from_id( Tempus::db_id_t db_id, G& graph )
+std::pair<typename boost::graph_traits<G>::vertex_descriptor, bool> vertex_from_id( db_id_t db_id, G& graph )
 {
     typename boost::graph_traits<G>::vertex_iterator vi, vi_end;
 
@@ -51,7 +51,7 @@ std::pair<typename boost::graph_traits<G>::vertex_descriptor, bool> vertex_from_
 /// This is templated in a way that it is compliant with Road::Edge
 /// A PublicTransport::Edge has no unique id associated.
 template <class G>
-std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id( Tempus::db_id_t db_id, G& graph )
+std::pair< typename boost::graph_traits<G>::edge_descriptor, bool > edge_from_id( db_id_t db_id, G& graph )
 {
     typename boost::graph_traits<G>::edge_iterator vi, vi_end;
 
@@ -80,7 +80,7 @@ Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Mult
 
 ///
 /// Get geometry WKB and road name of a Multimodal edge, from the database
-void get_edge_info_from_db( const Multimodal::Edge& e, Db::Connection& db, std::string& wkb, std::string& road_name );
+void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wkb, std::string& road_name );
 
 ///
 /// Fill a roadmap with elements stored in DB (road names, geometries)

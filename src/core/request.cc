@@ -57,12 +57,12 @@ void Request::add_allowed_mode( db_id_t m )
     std::sort( allowed_modes_.begin(), allowed_modes_.end() );
 }
 
-Road::Vertex Request::origin() const
+db_id_t Request::origin() const
 {
     return steps_.front().location();
 }
 
-void Request::set_origin( const Road::Vertex& v )
+void Request::set_origin( const db_id_t& v )
 {
     steps_[0].set_location( v );
 }
@@ -72,12 +72,12 @@ void Request::set_origin( const Step& s )
     steps_[0] = s;
 }
 
-Road::Vertex Request::destination() const
+db_id_t Request::destination() const
 {
     return steps_.back().location();
 }
 
-void Request::set_destination( const Road::Vertex& v )
+void Request::set_destination( const db_id_t& v )
 {
     steps_.back().set_location( v );
 }

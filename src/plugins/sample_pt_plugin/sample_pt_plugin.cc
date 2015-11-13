@@ -19,7 +19,7 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "plugin.hh"
-#include "pgsql_importer.hh"
+#include "plugin_factory.hh"
 #include "db.hh"
 #include "utils/graph_db_link.hh"
 #include "utils/function_property_accessor.hh"
@@ -55,8 +55,8 @@ public:
         return odl;
     }
 
-    static const PluginCapabilities plugin_capabilities() {
-        PluginCapabilities params;
+    static const Capabilities plugin_capabilities() {
+        Capabilities params;
         params.optimization_criteria().push_back( CostId::CostDistance );
         params.optimization_criteria().push_back( CostId::CostDuration );
         params.set_depart_after( true );
@@ -64,14 +64,49 @@ public:
         return params;
     }
 
-    PtPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
+    PtPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_pt_plugin" ) {
+        // load graph
+        const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
+        graph_ = dynamic_cast<const Multimodal::Graph*>( rd );
+        if ( graph_ == nullptr ) {
+            throw std::runtime_error( "Problem loading the multimodal graph" );
+        }
+
+        schema_name_ = get_option_or_default( options, "db/schema" ).str();
+        db_options_ = get_option_or_default( options, "db/options" ).str();
     }
 
-    virtual ~PtPlugin() {
-    }
+    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
+
+private:
+    const Multimodal::Graph* graph_;
+
+    std::string db_options_;
+    std::string schema_name_;
+
+    friend class PtPluginRequest;
+};
+
+class PtPluginRequest : public PluginRequest
+{
+private:
+    const Multimodal::Graph& graph_;
 
 public:
-    virtual void pre_process( Request& request ) {
+    PtPluginRequest( const PtPlugin* parent, const PluginRequest::OptionValueList& options )
+        : PluginRequest( parent, options ), graph_( *parent->graph_ )
+    {
+    }
+
+    virtual void pt_vertex_accessor( const PublicTransport::Vertex& v, int access_type ) {
+        if ( access_type == PluginRequest::ExamineAccess ) {
+            const PublicTransport::Graph& pt_graph = *(*graph_.public_transports().begin()).second;
+            CERR << "Examining vertex " << pt_graph[v].db_id() << endl;
+        }
+    }
+
+
+    virtual std::unique_ptr<Result> process( const Request& request ) {
         REQUIRE( graph_.public_transports().size() >= 1 );
         REQUIRE( request.steps().size() == 2 );
 
@@ -79,17 +114,8 @@ public:
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
-        request_ = request;
-        result_.clear();
-    }
+        Db::Connection db( static_cast<const PtPlugin*>(plugin_)->db_options_ );
 
-    virtual void pt_vertex_accessor( const PublicTransport::Vertex& v, int access_type ) {
-        if ( access_type == Plugin::ExamineAccess ) {
-            const PublicTransport::Graph& pt_graph = *(*graph_.public_transports().begin()).second;
-            CERR << "Examining vertex " << pt_graph[v].db_id() << endl;
-        }
-    }
-    virtual void process() {
         auto p = *graph_.public_transports().begin();
         const PublicTransport::Graph& pt_graph = *p.second;
         db_id_t network_id = p.first;
@@ -97,7 +123,7 @@ public:
         PublicTransport::Vertex departure = 0, arrival = 0;
 
         // if stops are given by the corresponding options, get them
-        int departure_id, arrival_id;
+        int64_t departure_id, arrival_id;
         get_option( "origin_pt_stop", departure_id );
         get_option( "destination_pt_stop", arrival_id );
 
@@ -119,24 +145,24 @@ public:
         else {
             // else use regular road nodes from the request
             const Road::Graph& road_graph = graph_.road();
-            CERR << "origin = " << road_graph[request_.origin()].db_id() << " dest = " << road_graph[request_.destination()].db_id() << endl;
+            CERR << "origin = " << road_graph[request.origin()].db_id() << " dest = " << road_graph[request.destination()].db_id() << endl;
 
             // for each step in the request, find the corresponding public transport node
             for ( size_t i = 0; i < 2; i++ ) {
                 Road::Vertex node;
 
                 if ( i == 0 ) {
-                    node = request_.origin();
+                    node = request.origin();
                 }
                 else {
-                    node = request_.destination();
+                    node = request.destination();
                 }
 
                 PublicTransport::Vertex found_vertex;
 
                 std::string q = ( boost::format( "select s.id from tempus.road_node as n join tempus.pt_stop as s on st_dwithin( n.geom, s.geom, 100 ) "
                                                  "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % road_graph[node].db_id() ).str();
-                Db::Result res = db_.exec( q );
+                Db::Result res = db.exec( q );
 
                 if ( res.size() < 1 ) {
                     throw std::runtime_error( ( boost::format( "Cannot find node %1%" ) % node ).str() );
@@ -167,7 +193,7 @@ public:
         std::vector<PublicTransport::Vertex> pred_map( boost::num_vertices( pt_graph ) );
         std::vector<double> distance_map( boost::num_vertices( pt_graph ) );
 
-        LengthCalculator length_calculator( db_ );
+        LengthCalculator length_calculator( db );
         FunctionPropertyAccessor<PublicTransport::Graph,
                                  boost::edge_property_tag,
                                  double,
@@ -216,10 +242,11 @@ public:
         //
 
         // we result in only one roadmap
-        result_.push_back( Roadmap() );
-        Roadmap& roadmap = result_.back();
+        std::unique_ptr<Result> result;
+        result->push_back( Roadmap() );
+        Roadmap& roadmap = result->back();
 
-        roadmap.set_starting_date_time( request_.steps()[1].constraint().date_time() );
+        roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 
         bool first_loop = true;
 
@@ -246,17 +273,18 @@ public:
 
             roadmap.add_step( std::auto_ptr<Roadmap::Step>(ptstep) );
         }
+
+        return std::move( result );
     }
-
-    void cleanup() {
-        // nothing special to clean up
-    }
-
-    static void post_build() {}
-
 };
-}
-DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin )
 
+std::unique_ptr<PluginRequest> PtPlugin::request( const PluginRequest::OptionValueList& options ) const
+{
+    return std::unique_ptr<PluginRequest>( new PtPluginRequest( this, options ) );
+}
+
+}
+
+DECLARE_TEMPUS_PLUGIN( "sample_pt_plugin", Tempus::PtPlugin )
 
 

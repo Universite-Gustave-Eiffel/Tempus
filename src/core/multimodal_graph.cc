@@ -142,6 +142,21 @@ PublicTransport::Stop get_pt_stop( const Multimodal::Vertex& v )
     return (*v.pt_graph())[v.pt_vertex()];
 }
 
+MMVertex get_mm_vertex( const Multimodal::Vertex& v )
+{
+    switch ( v.type() ) {
+    case Multimodal::Vertex::Road:
+        return MMVertex( MMVertex::Road, (*v.road_graph())[v.road_vertex()].db_id() );
+    case Multimodal::Vertex::PublicTransport:
+        return MMVertex( (*v.pt_graph())[v.pt_vertex()].db_id(), v.graph()->public_transport_rindex( v.pt_graph_idx() ) );
+    case Multimodal::Vertex::Poi:
+        return MMVertex( MMVertex::Poi, v.poi()->db_id() );
+    default:
+        break;
+    }
+    return MMVertex(MMVertex::Road, 0);
+}
+
 POIIndex Vertex::poi_idx() const
 {
     return data_.poi;
@@ -1122,7 +1137,7 @@ void Graph::set_transport_modes( const TransportModes& tm )
     }
 }
 
-Graph::Graph( std::unique_ptr<Road::Graph> r )
+Graph::Graph( std::unique_ptr<Road::Graph> r ) : RoutingData( "multimodal_graph" )
 {
     set_road( std::move(r) );
 }
@@ -1171,6 +1186,14 @@ boost::optional<PublicTransportGraphIndex> Graph::public_transport_index( db_id_
     return boost::optional<PublicTransportGraphIndex>();
 }
 
+db_id_t Graph::public_transport_rindex( PublicTransportGraphIndex idx ) const
+{
+    if ( idx < public_transport_graph_ridx_map_.size() ) {
+        return public_transport_graph_ridx_map_[idx];
+    }
+    return 0;
+}
+
 const PublicTransport::Graph& Graph::public_transport( PublicTransportGraphIndex idx ) const
 {
     return *public_transport_graphs_[idx];
@@ -1184,6 +1207,7 @@ Graph::PublicTransportGraphList Graph::public_transports() const
 void Graph::set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>>&& nmap )
 {
     public_transport_graph_idx_map_.clear();
+    public_transport_graph_ridx_map_.clear();
     public_transport_graphs_.clear();
     // move
 
@@ -1193,6 +1217,7 @@ void Graph::set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTrans
     for ( auto it = nmap.begin(); it != nmap.end(); it++ ) {
         public_transport_graphs_[i] = std::move(it->second);
         public_transport_graph_idx_map_[it->first] = i;
+        public_transport_graph_ridx_map_.push_back( it->first );
         // By default, all public transport networks are part of the selected subset
         selected_transport_graphs_.insert( it->first );
         i++;

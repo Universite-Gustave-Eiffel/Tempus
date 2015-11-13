@@ -81,9 +81,15 @@ VariantType Variant::type() const
 
 std::string Variant::str() const
 {
-    std::ostringstream ostr;
-    ostr << v_;
-    return ostr.str();
+    if ( type() == StringVariant ) {
+        return boost::get<std::string>( v_ );
+    }
+    if ( !v_.empty() ) {
+        std::ostringstream ostr;
+        ostr << v_;
+        return ostr.str();
+    }
+    return std::string();
 }
 
 void Variant::convertTo( bool& b ) const

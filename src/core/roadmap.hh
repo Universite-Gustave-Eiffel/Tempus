@@ -22,7 +22,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include "common.hh"
-#include "multimodal_graph.hh"
 #include "path_trace.hh"
 
 namespace Tempus {
@@ -117,6 +116,8 @@ public:
     struct PublicTransportStep : public Step {
         PublicTransportStep() : Step( Step::PublicTransportStep ), wait_(0.0) {}
 
+        ///
+        /// Public transport network id
         DECLARE_RW_PROPERTY( network_id, db_id_t );
 
         ///
@@ -130,9 +131,13 @@ public:
         /// Of which trip this step is part of
         DECLARE_RW_PROPERTY( trip_id, db_id_t );
         /// PT stop on where to depart
-        DECLARE_RW_PROPERTY( departure_stop, PublicTransport::Vertex );
+        DECLARE_RW_PROPERTY( departure_stop, db_id_t );
+        /// departure stop name
+        DECLARE_RW_PROPERTY( departure_name, std::string );
         /// PT stop on where to arrive
-        DECLARE_RW_PROPERTY( arrival_stop, PublicTransport::Vertex );
+        DECLARE_RW_PROPERTY( arrival_stop, db_id_t );
+        /// arrival stop name
+        DECLARE_RW_PROPERTY( arrival_name, std::string );
 
         /// Name of the route - retrieved from the db
         DECLARE_RW_PROPERTY( route, std::string );
@@ -144,17 +149,18 @@ public:
 
     ///
     /// A generic step from a vertex to another
-    /// Inherits from Step as well as from Multimodal::Edge
     /// This is used to represent a step from a mode to another (road, public transport, poi, etc)
-    struct TransferStep : public Step, public Multimodal::Edge {
-        TransferStep() : Step( Step::TransferStep ), Multimodal::Edge() {}
-        TransferStep( const Multimodal::Edge& edge ) : Step( Step::TransferStep ), Multimodal::Edge( edge ) {}
+    struct TransferStep : public Step, MMEdge {
+        TransferStep( const MMVertex& v1, const MMVertex& v2 ) : Step( Step::TransferStep ), MMEdge( v1, v2 ) {}
 
         /// Final transport mode id
         DECLARE_RW_PROPERTY( final_mode, db_id_t );
 
-        /// Name of the road - retrieved from the db
-        DECLARE_RW_PROPERTY( road_name, std::string );
+        /// Name of the first part of the transfer - retrieved from the db
+        DECLARE_RW_PROPERTY( initial_name, std::string );
+
+        /// Name of the second part of the transfer - retrieved from the db
+        DECLARE_RW_PROPERTY( final_name, std::string );
 
         virtual TransferStep* clone() const {
             return new TransferStep( *this );

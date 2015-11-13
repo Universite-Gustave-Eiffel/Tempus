@@ -26,7 +26,7 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "plugin.hh"
-#include "pgsql_importer.hh"
+#include "plugin_factory.hh"
 #include "utils/timer.hh"
 #include "utils/function_property_accessor.hh"
 
@@ -34,18 +34,18 @@ using namespace std;
 
 namespace Tempus {
 
-    class WeightCalculator
-    {
-    public:
-        double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
-            if ( (graph[e].traffic_rules() & TrafficRulePedestrian) == 0 ) {
-                // allowed transport types do not include car
-                // It is an oversimplification here : it must depends on allowed transport types selected by the user
-                return std::numeric_limits<double>::infinity();
-            }
-            return graph[e].length();
+class WeightCalculator
+{
+public:
+    double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
+        if ( (graph[e].traffic_rules() & TrafficRulePedestrian) == 0 ) {
+            // allowed transport types do not include car
+            // It is an oversimplification here : it must depends on allowed transport types selected by the user
+            return std::numeric_limits<double>::infinity();
         }
-    };
+        return graph[e].length();
+    }
+};
 
 class RoadPlugin : public Plugin {
 public:
@@ -56,51 +56,53 @@ public:
         return odl;
     }
 
-    static const PluginCapabilities plugin_capabilities() {
-        PluginCapabilities params;
+    static const Capabilities plugin_capabilities() {
+        Capabilities params;
         params.optimization_criteria().push_back( CostId::CostDistance );
         return params;
     }
 
-    RoadPlugin( const std::string& nname, const std::string& db_options ) : Plugin( nname, db_options ) {
-    }
-
-    virtual ~RoadPlugin() {
-    }
-protected:
-    bool trace_vertex_;
-    bool prepare_result_;
-
-    // exception returned to shortcut Dijkstra
-    struct path_found_exception {};
-
-    Road::Vertex destination_;
-
-    size_t iterations_;
-
-public:
-    static void post_build() { }
-
-    virtual void pre_process( Request& request ) {
-        REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
-        REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
-
-        if ( ( request.optimizing_criteria()[0] != CostId::CostDistance ) ) {
-            throw std::invalid_argument( "Unsupported optimizing criterion" );
+    RoadPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_road_plugin" ) {
+        // load graph
+        const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
+        graph_ = dynamic_cast<const Multimodal::Graph*>( rd );
+        if ( graph_ == nullptr ) {
+            throw std::runtime_error( "Problem loading the multimodal graph" );
         }
 
-        request_ = request;
+        schema_name_ = get_option_or_default( options, "db/schema" ).str();
+        db_options_ = get_option_or_default( options, "db/options" ).str();
+    }
 
-        get_option( "trace_vertex", trace_vertex_ );
-        get_option( "prepare_result", prepare_result_ );
+    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
 
-        result_.clear();
+private:
+    const Multimodal::Graph* graph_;
 
-        iterations_ = 0;
+    std::string db_options_;
+    std::string schema_name_;
+
+    friend class RoadPluginRequest;
+};
+
+class RoadPluginRequest : public PluginRequest
+{
+private:
+    const Multimodal::Graph& graph_;
+    bool trace_vertex_;
+    size_t iterations_;
+    Road::Vertex destination_;
+
+    struct path_found_exception {};
+
+public:
+    RoadPluginRequest( const RoadPlugin* parent, const PluginRequest::OptionValueList& options )
+        : PluginRequest( parent, options ), graph_( *parent->graph_ )
+    {
     }
 
     virtual void road_vertex_accessor( const Road::Vertex& v, int access_type ) {
-        if ( access_type == Plugin::ExamineAccess ) {
+        if ( access_type == PluginRequest::ExamineAccess ) {
             iterations_++;
             if ( v == destination_ ) {
                 throw path_found_exception();
@@ -113,7 +115,7 @@ public:
         }
     }
     virtual void road_edge_accessor( const Road::Edge& e, int access_type ) {
-        if ( access_type == Plugin::EdgeRelaxedAccess ) {
+        if ( access_type == PluginRequest::EdgeRelaxedAccess ) {
             if ( trace_vertex_ ) {
                 // very slow
                 Road::Vertex u = source( e, graph_.road() );
@@ -123,7 +125,20 @@ public:
         }
     }
 
-    virtual void process() {
+    virtual std::unique_ptr<Result> process( const Request& request ) {
+        REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
+        REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
+
+        if ( ( request.optimizing_criteria()[0] != CostId::CostDistance ) ) {
+            throw std::invalid_argument( "Unsupported optimizing criterion" );
+        }
+
+        bool prepare_result;
+        get_option( "trace_vertex", trace_vertex_ );
+        get_option( "prepare_result", prepare_result );
+
+        iterations_ = 0;
+
         const Road::Graph& road_graph = graph_.road();
 
         Timer timer;
@@ -145,21 +160,21 @@ public:
         Tempus::PluginRoadGraphVisitor vis( this );
 
         std::list<Road::Vertex> path;
-        Road::Vertex origin = request_.origin();
+        Road::Vertex origin = request.origin();
         // resolve each step, in reverse order
         bool path_found = true;
 
-        for ( size_t ik = request_.steps().size(); ik >= 1; --ik ) {
+        for ( size_t ik = request.steps().size(); ik >= 1; --ik ) {
             size_t i = ik - 1;
 
             if ( i > 0 ) {
-                origin = request_.steps()[i-1].location();
+                origin = request.steps()[i-1].location();
             }
             else {
-                origin = request_.origin();
+                origin = request.origin();
             }
 
-            destination_ = request_.steps()[i].location();
+            destination_ = request.steps()[i].location();
 
             try {
                 boost::dijkstra_shortest_paths( road_graph,
@@ -207,10 +222,11 @@ public:
             throw std::runtime_error( "No path found !" );
         }
 
-        result_.push_back( Roadmap() );
-        Roadmap& roadmap = result_.back();
+        std::unique_ptr<Result> result;
+        result->push_back( Roadmap() );
+        Roadmap& roadmap = result->back();
 
-        roadmap.set_starting_date_time( request_.steps()[1].constraint().date_time() );
+        roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 
         std::auto_ptr<Roadmap::Step> step;
 
@@ -239,22 +255,20 @@ public:
             rstep->set_road_edge_id( road_graph[e].db_id() );
             roadmap.add_step( step );
         }
-    }
 
-    void cleanup() {
-        // nothing special to clean up
-    }
-
-    Result& result() {
-        if ( prepare_result_ ) {
-            return Plugin::result();
+        if ( prepare_result ) {
+            Db::Connection connection( static_cast<const RoadPlugin*>(plugin_)->db_options_ );
+            simple_multimodal_roadmap( *result, connection, graph_ );
         }
-
-        return result_;
+        return std::move( result );
     }
 };
+
+std::unique_ptr<PluginRequest> RoadPlugin::request( const PluginRequest::OptionValueList& options ) const
+{
+    return std::unique_ptr<PluginRequest>( new RoadPluginRequest( this, options ) );
 }
+
+}
+
 DECLARE_TEMPUS_PLUGIN( "sample_road_plugin", Tempus::RoadPlugin )
-
-
-

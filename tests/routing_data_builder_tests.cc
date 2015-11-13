@@ -31,13 +31,13 @@ std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) 
 
 BOOST_AUTO_TEST_CASE( test_routing_data_builder )
 {
-    RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( "multimodal_graph" );
+    const RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( "multimodal_graph" );
     BOOST_CHECK( builder );
 
     TextProgression progression;
-    std::unique_ptr<Tempus::RoutingData> g = builder->pg_import( g_db_options + " dbname=" + g_db_name, progression );
+    std::unique_ptr<const Tempus::RoutingData> g = builder->pg_import( g_db_options + " dbname=" + g_db_name, progression );
 
-    std::unique_ptr<Multimodal::Graph> mm_graph( static_cast<Multimodal::Graph*>(g.release()) );
+    std::unique_ptr<const Multimodal::Graph> mm_graph( static_cast<const Multimodal::Graph*>(g.release()) );
 
     std::cout << num_vertices( *mm_graph ) << std::endl;
 }
@@ -45,10 +45,12 @@ BOOST_AUTO_TEST_CASE( test_routing_data_builder )
 BOOST_AUTO_TEST_CASE( test_routing_data_loading )
 {
     TextProgression progression;
-    const RoutingData* data = load_routing_data_from_db( "multimodal_graph", g_db_options + " dbname=" + g_db_name, progression );
+    VariantMap options;
+    options["db/options"] = Variant::fromString( g_db_options + " dbname=" + g_db_name );
+    const RoutingData* data = load_routing_data( "multimodal_graph", progression, options );
     BOOST_CHECK( data );
     
-    const RoutingData* data2 = load_routing_data_from_db( "multimodal_graph", g_db_options + " dbname=" + g_db_name, progression );
+    const RoutingData* data2 = load_routing_data( "multimodal_graph", progression, options );
     BOOST_CHECK_EQUAL( data, data2 );
 
     const Multimodal::Graph* mm_graph = static_cast<const Multimodal::Graph*>( data );

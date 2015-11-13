@@ -19,17 +19,18 @@
 #define TEMPUS_PATH_TRACE_HH
 
 #include <vector>
-#include "multimodal_graph.hh"
+#include "routing_data.hh"
 #include "variant.hh"
 
 namespace Tempus {
 
 ///
-/// A ValuedEdge is a Multimodal Edge with some arbitrary values attached to it
-class ValuedEdge : public Multimodal::Edge
+/// A ValuedEdge is a MMEdge with some arbitrary values attached to it
+class ValuedEdge : public MMEdge
 {
 public:
-    ValuedEdge( const Multimodal::Graph& g, const Multimodal::Vertex& o, const Multimodal::Vertex& d ) : Multimodal::Edge(g,o,d) {}
+    ValuedEdge( const MMVertex& v1, const MMVertex& v2 ) : MMEdge( v1, v2 ) {}
+    ValuedEdge( MMVertex&& v1, MMVertex&& v2 ) : MMEdge( v1, v2 ) {}
     ///
     /// Map of arbitrary values. It can be costs or other user-defined values
     DECLARE_RO_PROPERTY( values, VariantMap );

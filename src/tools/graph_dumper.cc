@@ -4,10 +4,10 @@
 #include <vector>
 #include <fstream>
 #include <boost/optional.hpp>
+#include <boost/program_options.hpp>
 
-#include "road_graph.hh"
-#include "multimodal_graph.hh"
-#include "pgsql_importer.hh"
+#include "routing_data.hh"
+#include "routing_data_builder.hh"
 
 #include <sys/resource.h>
 #include <malloc.h>
@@ -77,19 +77,53 @@ MemInfo get_memory_usage()
 }
 
 int main( int argc, char* argv[] )
-{
-    std::string dbconn = "dbname=tempus_test_db";
+{ 
+    namespace po = boost::program_options;
+    using namespace std;
+
+    std::string db_options = "dbname=tempus_test_db";
+    std::string schema = "tempus";
     std::string dump_file = "dump.bin";
-    if ( argc == 2 ) {
-        dbconn = argv[1];
-        if ( dbconn == "-h" || dbconn == "--help" ) {
-            std::cout << "Arguments: db_connection_parameters dump_file" << std::endl;
-            return 1;
-        }
+    std::string graph_type = "multimodal_graph";
+
+    po::options_description desc( "Allowed options" );
+    desc.add_options()
+    ( "help", "produce help message" )
+    ( "list", "list the available graph types" )
+    ( "db", po::value<string>(), "set database connection options" )
+    ( "schema", po::value<string>(), "set database schema" )
+    ( "graph", po::value<string>(), "set the graph type to import" )
+    ( "dump_file", po::value<string>(), "set the name of the dump file to create" )
+    ;
+
+    po::variables_map vm;
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
+
+    if ( vm.count( "help" ) ) {
+        std::cout << desc << std::endl;
+        return 1;
     }
-    else if ( argc == 3 ) {
-        dbconn = argv[1];
-        dump_file = argv[2];
+
+    if ( vm.count( "list" ) ) {
+        std::cout << "Available builders:" << std::endl;
+        for ( const std::string& builder : RoutingDataBuilderRegistry::instance().builder_list() ) {
+            std::cout << builder << std::endl;
+        }
+        return 1;
+    }
+
+    if ( vm.count( "db" ) ) {
+        db_options = vm["db"].as<string>();
+    }
+    if ( vm.count( "schema" ) ) {
+        schema = vm["schema"].as<string>();
+    }
+    if ( vm.count( "graph" ) ) {
+        graph_type = vm["graph"].as<string>();
+    }
+    if ( vm.count( "dump_file" ) ) {
+        dump_file = vm["dump_file"].as<string>();
     }
 
     MemInfo info;
@@ -101,16 +135,12 @@ int main( int argc, char* argv[] )
     std::cerr << "Data: " << data_size << "MB" << std::endl;
 
     {
-        std::unique_ptr<Multimodal::Graph> graph;
-
-        using namespace boost::graph;
-
         heap_usage = 0;
         TextProgression progression;
-        {
-            PQImporter importer( dbconn );
-            graph = importer.import_graph( progression, /* consistency = */ false );
-        }
+        VariantMap options;
+        options["db/options"] = Variant::fromString(db_options);
+        options["db/schema"] = Variant::fromString(schema);
+        const RoutingData* rd = load_routing_data( graph_type, progression, options );
 
         info = get_memory_usage();
         real_size = info.rss /1024 /1024;
@@ -127,17 +157,6 @@ int main( int argc, char* argv[] )
 
         
         std::cout << "dumping to " << dump_file << " ... " << std::endl;
-        dump_graph( *graph, dump_file );
+        dump_routing_data( rd, dump_file, progression );
     }
-
-    std::cout << "reloading ... " << std::endl;
-    std::unique_ptr<Multimodal::Graph> graph( reload_graph_from_dump( dump_file ) );
-
-    info = get_memory_usage();
-    real_size = info.rss /1024 /1024;
-    data_size = info.data /1024 /1024;
-    std::cerr << "RSS: " << real_size << "MB" << std::endl;
-    std::cerr << "Data: " << data_size << "MB" << std::endl;
-
-    std::cerr << "Heap usage: " << (heap_usage/1024/1024) << "MB" << std::endl;
 }

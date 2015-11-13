@@ -13,7 +13,12 @@ class RoutingDataBuilder
 public:
     RoutingDataBuilder( const std::string& name ) : name_(name) {}
     virtual ~RoutingDataBuilder() {}
-    virtual std::unique_ptr<RoutingData> pg_import( const std::string& pg_options, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) = 0;
+
+    virtual std::unique_ptr<RoutingData> pg_import( const std::string& pg_options, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;
+    virtual void pg_export( const RoutingData* rd, const std::string& pg_options, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;
+
+    virtual std::unique_ptr<RoutingData> file_import( const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;
+    virtual void file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;
 
     std::string name() const { return name_; }
 private:
@@ -23,30 +28,29 @@ private:
 class RoutingDataBuilderRegistry
 {
 public:
-    void addBuilder( std::unique_ptr<RoutingDataBuilder> builder )
-    {
-        builders_[builder->name()] = std::move(builder);
-    }
+    void addBuilder( std::unique_ptr<RoutingDataBuilder> builder );
 
-    RoutingDataBuilder* builder( const std::string& name )
-    {
-        auto it = builders_.find( name );
-        if ( it != builders_.end() ) {
-            return it->second.get();
-        }
-        return nullptr;
-    }
+    const RoutingDataBuilder* builder( const std::string& name );
 
-    static RoutingDataBuilderRegistry& instance()
-    {
-        static RoutingDataBuilderRegistry b;
-        return b;
-    }
+    std::vector<std::string> builder_list() const;
+
+    static RoutingDataBuilderRegistry& instance();
+
 private:
     RoutingDataBuilderRegistry() {}
     std::map<std::string, std::unique_ptr<RoutingDataBuilder>> builders_;
 };
 
-};
+} // namespace Tempus
+
+#define REGISTER_BUILDER( ClassName ) \
+    static bool register_me() \
+    { \
+    std::unique_ptr<RoutingDataBuilder> builder( new ClassName() ); \
+    RoutingDataBuilderRegistry::instance().addBuilder( std::move(builder) ); \
+    return true; \
+    }\
+    bool init_ = register_me();
+
 
 #endif

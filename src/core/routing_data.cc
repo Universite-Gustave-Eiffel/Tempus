@@ -12,7 +12,7 @@ static RoutingDataRegistry& instance()
     return r;
 }
 
-const RoutingData* load_routing_data_from_db( const std::string& name, const std::string& db_options, ProgressionCallback& progression, const VariantMap& options )
+const RoutingData* load_routing_data( const std::string& name, ProgressionCallback& progression, const VariantMap& options )
 {
     std::string key = name;
     for ( const auto& p : options ) {
@@ -24,13 +24,34 @@ const RoutingData* load_routing_data_from_db( const std::string& name, const std
         return it->second.get();
     }
 
-    RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( name );
+    const RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( name );
     if ( !builder ) {
         return nullptr;
     }
-    std::unique_ptr<RoutingData> d = builder->pg_import( db_options, progression, options );
-    instance()[key] = std::move( d );
+
+    // load from the db or from a file
+    // with priority given to the dump file
+    std::unique_ptr<RoutingData> routing_data;
+    if ( options.find( "from_file" ) != options.end() ) {
+        routing_data.reset( builder->file_import( options.find( "from_file" )->second.str(), progression, options ).release() );
+        
+    }
+    else {
+        std::string db_options;
+        auto fit = options.find( "db/options" );
+        if ( fit != options.end() ) {
+            db_options = fit->second.str();
+        }
+        routing_data.reset( builder->pg_import( db_options, progression, options ).release() );
+    }
+    instance()[key] = std::move( routing_data );
     return instance()[key].get();
+}
+
+void dump_routing_data( const RoutingData* rd, const std::string& filename, ProgressionCallback& progression )
+{
+    const RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( rd->name() );
+    builder->file_export( rd, filename, progression );
 }
 
 } // namespace Tempus

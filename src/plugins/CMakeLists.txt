@@ -20,7 +20,7 @@ include_directories(.)
 add_library( dynamic_multi_plugin MODULE dynamic_multi_plugin/dynamic_multi_plugin.cc )
 target_link_libraries( dynamic_multi_plugin tempus cost_lib )
 
-add_subdirectory( ch_plugin )
+#add_subdirectory( ch_plugin )
 
 if (WIN32)
 install( TARGETS 
