@@ -182,6 +182,8 @@ public:
 
     virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
 
+    const RoutingData* routing_data() const { return graph_; }
+
 private:
     const Multimodal::Graph* graph_;
 
@@ -189,13 +191,13 @@ private:
 
 class MultiPluginRequest : public PluginRequest
 {
-public:
-    MultiPluginRequest( const MultiPlugin* parent, const PluginRequest::OptionValueList& options ) : PluginRequest( parent, options )
-    {
-    }
-
 private:
     const Multimodal::Graph* graph_;
+
+public:
+    MultiPluginRequest( const MultiPlugin* parent, const PluginRequest::OptionValueList& options, const Multimodal::Graph* graph ) : PluginRequest( parent, options ), graph_(graph)
+    {
+    }
 
 public:
     ///
@@ -360,7 +362,7 @@ public:
     /// The main process
     virtual std::unique_ptr<Result> process( const Request& request )
     {
-        std::unique_ptr<Result> result;
+        std::unique_ptr<Result> result( new Result() );
         for ( size_t i = 0; i < request.optimizing_criteria().size(); ++i ) {
             REQUIRE( request.optimizing_criteria()[i] == CostId::CostDistance || request.optimizing_criteria()[i] == CostId::CostDuration );
         }
@@ -419,7 +421,7 @@ public:
 
 std::unique_ptr<PluginRequest> MultiPlugin::request( const PluginRequest::OptionValueList& options ) const
 {
-    return std::unique_ptr<PluginRequest>( new MultiPluginRequest( this, options ) );
+    return std::unique_ptr<PluginRequest>( new MultiPluginRequest( this, options, graph_ ) );
 }
 
 

@@ -53,8 +53,8 @@ std::unique_ptr<Result> PluginRequest::process( const Request& /*request*/ )
     return std::unique_ptr<Result>( new Result );
 }
 
-PluginRequest::PluginRequest( const Plugin* /* plugin */, const OptionValueList& options ) :
-    options_( options )
+PluginRequest::PluginRequest( const Plugin* plugin, const OptionValueList& options ) :
+    plugin_(plugin), options_( options )
 {
     // default metrics
     metrics_[ "time_s" ] = Variant::fromFloat(0.0);

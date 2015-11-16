@@ -24,7 +24,6 @@
 #include <boost/ptr_container/ptr_map.hpp>
 
 #include "common.hh"
-#include "transport_modes.hh"
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
 #include "poi.hh"
@@ -286,14 +285,6 @@ public:
     /// @return a Road::Edge from it's database id in O(1)
     Road::Edge road_edge_from_id( db_id_t id ) const;
 
-    ///
-    /// Public transport netwoks
-    typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
-    DECLARE_RW_PROPERTY( network_map, NetworkMap );
-
-    /// Access to a particular network
-    boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
-    
 private:
     typedef std::map<db_id_t, PublicTransportGraphIndex> PublicTransportGraphIdxMap;
     PublicTransportGraphIdxMap public_transport_graph_idx_map_;
@@ -383,11 +374,6 @@ public:
     typedef std::vector<POIIndex> EdgePois;
     const EdgePois& edge_pois( const Road::Edge& e ) const;
 
-    typedef std::map<db_id_t, TransportMode> TransportModes;
-    DECLARE_RO_PROPERTY( transport_modes, TransportModes );
-
-    void set_transport_modes( const TransportModes& );
-
     void add_stop_ref( const Road::Edge& e, const PublicTransportGraphIndex&, const PublicTransport::Vertex& );
 
     struct StopIndex
@@ -401,31 +387,7 @@ public:
     typedef std::vector<StopIndex> EdgeStops;
     const EdgeStops& edge_stops( const Road::Edge& ) const;
 
-    /// access to a transportmode, given its id
-    /// the second element of the pair tells if the mode exists
-    boost::optional<TransportMode> transport_mode( db_id_t id ) const;
-
-    /// access to a transportmode, given its name
-    /// the second element of the pair tells if the mode exists
-    boost::optional<TransportMode> transport_mode( const std::string& name ) const;
-
-    /// access to a metadata
-    std::string metadata( const std::string& key ) const;
-    /// modification of a graph's metadata
-    void set_metadata( const std::string& key, const std::string& value );
-    /// access to all the metadata (read only)
-    const std::map<std::string, std::string>& metadata() const;
-
 private:
-    typedef std::map<std::string, Tempus::db_id_t> NameToId;
-    ///
-    /// Associative array that maps a transport type name to a transport type id
-    NameToId transport_mode_from_name_;
-
-    ///
-    /// Graph metadata
-    std::map<std::string, std::string> metadata_;
-
     typedef std::map<Road::Edge, EdgeStops> RoadEdgeStops;
     RoadEdgeStops road_edge_stops_;
     // just to be able to return a reference to empty

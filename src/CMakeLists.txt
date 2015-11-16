@@ -49,3 +49,5 @@ if(WIN32)
     install(FILES batch/random_batch.py DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY}/batch)
 endif()
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config.hh DESTINATION include/tempus)
+

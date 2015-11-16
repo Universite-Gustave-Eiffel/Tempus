@@ -251,7 +251,7 @@ public:
 
     ///
     /// Gets access to the underlying routing data
-    virtual RoutingData* routing_data() { return nullptr; }
+    virtual const RoutingData* routing_data() const = 0;
 
     ///
     /// Gets an option value, or the default value if unavailable

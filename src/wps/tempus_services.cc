@@ -136,21 +136,30 @@ public:
 class ConstantListService : public Service {
 public:
     ConstantListService() : Service( "constant_list" ) {
+        add_input_parameter( "plugin" );
         add_output_parameter( "transport_modes" );
         add_output_parameter( "transport_networks" );
         add_output_parameter( "metadata" );
     };
-    Service::ParameterMap execute( const ParameterMap& /*input_parameter_map*/ ) const {
+    Service::ParameterMap execute( const ParameterMap& input_parameter_map ) const {
         ParameterMap output_parameters;
 
-#if 0
-        const Tempus::Multimodal::Graph& graph = *Application::instance()->graph();
+        Service::check_parameters( input_parameter_map, input_parameter_schema_ );
+        const xmlNode* plugin_node = input_parameter_map.find( "plugin" )->second;
+        const std::string plugin_str = XML::get_prop( plugin_node, "name" );
+        Plugin* plugin = PluginFactory::instance()->plugin( plugin_str );
+
+        if ( plugin == nullptr ) {
+            throw std::invalid_argument( "Cannot find plugin " + plugin_str );
+        }
+
+        const RoutingData* rd = plugin->routing_data();
 
         {
             xmlNode* root_node = XML::new_node( "transport_modes" );
             Tempus::Multimodal::Graph::TransportModes::const_iterator it;
 
-            for ( it = graph.transport_modes().begin(); it != graph.transport_modes().end(); it++ ) {
+            for ( it = rd->transport_modes().begin(); it != rd->transport_modes().end(); it++ ) {
                 xmlNode* node = XML::new_node( "transport_mode" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
@@ -172,7 +181,7 @@ public:
             xmlNode* root_node = XML::new_node( "transport_networks" );
             Multimodal::Graph::NetworkMap::const_iterator it;
 
-            for ( it = graph.network_map().begin(); it != graph.network_map().end(); it++ ) {
+            for ( it = rd->network_map().begin(); it != rd->network_map().end(); it++ ) {
                 xmlNode* node = XML::new_node( "transport_network" );
                 XML::new_prop( node, "id", it->first );
                 XML::new_prop( node, "name", it->second.name() );
@@ -184,7 +193,7 @@ public:
 
         {
             xmlNode* root_node = XML::new_node( "metadata" );
-            for ( auto kv : graph.metadata() ) {
+            for ( auto kv : rd->metadata() ) {
                 xmlNode* node = XML::new_node( "m" );
                 XML::new_prop( node, "key", kv.first );
                 XML::new_prop( node, "value", kv.second );
@@ -194,7 +203,6 @@ public:
             output_parameters[ "metadata" ] = root_node;
         }
 
-#endif
         return output_parameters;
     };
 };
@@ -344,6 +352,10 @@ public:
         const xmlNode* plugin_node = input_parameter_map.find( "plugin" )->second;
         const std::string plugin_str = XML::get_prop( plugin_node, "name" );
         Plugin* plugin = PluginFactory::instance()->plugin( plugin_str );
+
+        if ( plugin == nullptr ) {
+            throw std::invalid_argument( "Cannot find plugin " + plugin_str );
+        }
 
         Tempus::Request request;
 
@@ -500,6 +512,8 @@ public:
 
         Tempus::Result::const_iterator rit;
 
+        const RoutingData* rd = plugin->routing_data();
+
         for ( rit = result->begin(); rit != result->end(); ++rit ) {
             const Tempus::Roadmap& roadmap = *rit;
 
@@ -519,16 +533,15 @@ public:
                 else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
                     const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
 
-                    #if 0
-                    // FIXME
-                    if ( !graph_.public_transport_index( step->network_id() ) ) {
+                    if ( ! rd->network( step->network_id() ) ) {
                         throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
                     }
-                    #endif
 
                     step_node = XML::new_node( "public_transport_step" );
 
-                    XML::set_prop( step_node, "network", /* FIXME get name instead*/ to_string(step->network_id()) );
+                    const PublicTransport::Network& network = rd->network( step->network_id() ).get();
+
+                    XML::set_prop( step_node, "network", network.name() );
 
                     XML::set_prop( step_node, "departure_stop", step->departure_name() );
                     XML::set_prop( step_node, "arrival_stop", step->arrival_name() );
@@ -542,17 +555,23 @@ public:
 
                     const Roadmap::TransferStep* step = static_cast<const Roadmap::TransferStep*>( &*sit );
                     if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Transport ) {
+                        if ( ! rd->network( step->target().network_id().get() ) ) {
+                            throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->target().network_id().get() ).str() );
+                        }
                         step_node = XML::new_node( "road_transport_step" );
-                        XML::set_prop( step_node, "type", /*FIXME */ "2" );
+                        XML::set_prop( step_node, "type", "2" );
                         XML::set_prop( step_node, "road", step->initial_name() );
-                        XML::set_prop( step_node, "network", /*FIXME*/ to_string( step->target().network_id().get() ) );
+                        XML::set_prop( step_node, "network", rd->network( step->target().network_id().get() )->name() );
                         XML::set_prop( step_node, "stop", step->final_name() );
                     }
                     else if ( step->source().type() == MMVertex::Transport && step->target().type() == MMVertex::Road ) {
+                        if ( ! rd->network( step->source().network_id().get() ) ) {
+                            throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->source().network_id().get() ).str() );
+                        }
                         step_node = XML::new_node( "road_transport_step" );
                         XML::set_prop( step_node, "type", "3" );
                         XML::set_prop( step_node, "road", step->final_name() );
-                        XML::set_prop( step_node, "network", /*FIXME*/ to_string( step->source().network_id().get() ) );
+                        XML::set_prop( step_node, "network", rd->network( step->source().network_id().get() )->name() );
                         XML::set_prop( step_node, "stop", step->initial_name() );
                     }
                     else if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Poi ) {
@@ -564,7 +583,7 @@ public:
                     }
                     else if ( step->source().type() == MMVertex::Poi && step->target().type() == MMVertex::Road ) {
                         step_node = XML::new_node( "transfer_step" );
-                        XML::set_prop( step_node, "type", /*FIXME*/ "6" );
+                        XML::set_prop( step_node, "type", "6" );
                         XML::set_prop( step_node, "road", step->final_name() );
                         XML::set_prop( step_node, "poi", step->initial_name() );
                         XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );

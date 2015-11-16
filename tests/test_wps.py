@@ -195,7 +195,8 @@ class TestWPS(unittest.TestCase):
 
 
     def test_constants( self ):
-        outputs = self.wps.execute( 'constant_list', {} )
+        outputs = self.wps.execute( 'constant_list', { 'plugin': ['plugin', {'name' : 'sample_road_plugin' } ] } )
+        self.assertEqual( len(outputs['transport_modes']), 9 )
 
     def test_multi_plugin( self ):
 

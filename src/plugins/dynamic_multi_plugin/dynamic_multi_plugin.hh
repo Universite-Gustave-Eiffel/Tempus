@@ -76,7 +76,7 @@ public:
 
     const Automaton<Road::Edge>& automaton() const { return automaton_; }
 
-    const Multimodal::Graph* graph() const { return graph_; }
+    const RoutingData* routing_data() const { return graph_; }
 
 public:
     virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
@@ -89,7 +89,7 @@ private:
 class DynamicMultiPluginRequest : public PluginRequest
 {
 public:
-    DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options );
+    DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options, const Multimodal::Graph* );
 
     virtual std::unique_ptr<Result> process( const Request& request );
 

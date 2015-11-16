@@ -272,6 +272,7 @@ int main( int argc, char* argv[] )
         VariantMap options;
 
         options["db/options"] = Variant::fromString( dbstring );
+        Application::instance()->connect( dbstring );
         if ( !load_from.empty() ) {
             options["load_from"] = Variant::fromString( load_from );
         }

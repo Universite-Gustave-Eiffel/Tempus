@@ -140,12 +140,12 @@ const std::string Application::data_directory() const
 
 void Application::connect( const std::string& options )
 {
-    set_option( "db_options", Variant::fromString( options ) );
+    set_option( "db/options", Variant::fromString( options ) );
 }
 
 const std::string Application::db_options() const
 {
-    auto it = options_.find( "db_options" );
+    auto it = options_.find( "db/options" );
     if ( it == options_.end() ) {
         return "";
     }

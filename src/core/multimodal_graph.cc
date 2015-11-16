@@ -1109,34 +1109,6 @@ std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::
 }
 
 
-boost::optional<TransportMode> Graph::transport_mode( db_id_t id ) const
-{
-    TransportModes::const_iterator fit = transport_modes_.find( id );
-    if ( fit == transport_modes_.end() ) {
-        return boost::optional<TransportMode>();
-    }
-    return fit->second;
-}
-
-boost::optional<TransportMode> Graph::transport_mode( const std::string& name ) const
-{
-    NameToId::const_iterator fit = transport_mode_from_name_.find( name );
-    if ( fit == transport_mode_from_name_.end() ) {
-        return boost::optional<TransportMode>();
-    }
-    return transport_modes_.find(fit->second)->second;
-}
-
-void Graph::set_transport_modes( const TransportModes& tm )
-{
-    transport_modes_ = tm;
-    // cache name to id
-    transport_mode_from_name_.clear();
-    for ( TransportModes::const_iterator it = transport_modes_.begin(); it != transport_modes_.end(); ++it ) {
-        transport_mode_from_name_[ it->second.name() ] = it->first;
-    }
-}
-
 Graph::Graph( std::unique_ptr<Road::Graph> r ) : RoutingData( "multimodal_graph" )
 {
     set_road( std::move(r) );
@@ -1167,15 +1139,6 @@ void Graph::set_road( std::unique_ptr<Road::Graph> r )
             road_edge_map_[(*road_)[*it].db_id()] = *it;
         }
     }
-}
-
-boost::optional<const PublicTransport::Network&> Graph::network( db_id_t id ) const
-{
-    NetworkMap::const_iterator it = network_map_.find(id);
-    if ( it == network_map_.end() ) {
-        return boost::optional<const PublicTransport::Network&>();
-    }
-    return it->second;
 }
 
 boost::optional<PublicTransportGraphIndex> Graph::public_transport_index( db_id_t id ) const
@@ -1310,25 +1273,6 @@ const Graph::EdgeStops& Graph::edge_stops( const Road::Edge& e ) const
         return empty_edge_stops_;
     }
     return it->second;
-}
-
-std::string Graph::metadata( const std::string& key ) const
-{
-    auto it = metadata_.find( key );
-    if ( it == metadata_.end() ) {
-        return "";
-    }
-    return it->second;
-}
-
-const std::map<std::string, std::string>& Graph::metadata() const
-{
-    return metadata_;
-}
-
-void Graph::set_metadata( const std::string& key, const std::string& value )
-{
-    metadata_[key] = value;
 }
 
 Road::Vertex Graph::road_vertex_from_id( db_id_t id ) const

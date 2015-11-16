@@ -1,5 +1,4 @@
 set( HEADER_FILES
-  config.hh
   abscissa.hh
   application.hh
   base.hh

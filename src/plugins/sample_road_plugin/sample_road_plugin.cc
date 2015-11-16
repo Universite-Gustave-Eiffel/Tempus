@@ -74,6 +74,8 @@ public:
         db_options_ = get_option_or_default( options, "db/options" ).str();
     }
 
+    const RoutingData* routing_data() const { return graph_; }
+
     virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
 
 private:
@@ -222,7 +224,7 @@ public:
             throw std::runtime_error( "No path found !" );
         }
 
-        std::unique_ptr<Result> result;
+        std::unique_ptr<Result> result( new Result() );
         result->push_back( Roadmap() );
         Roadmap& roadmap = result->back();
 

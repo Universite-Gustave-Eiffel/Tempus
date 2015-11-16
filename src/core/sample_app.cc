@@ -81,30 +81,18 @@ int main( int argc, char* argv[] )
 
     ///
     /// Plugins
-    try {
-        TextProgression progression;
-        Plugin* plugin = PluginFactory::instance()->create_plugin( plugin_name, progression, options );
+    TextProgression progression;
+    Plugin* plugin = PluginFactory::instance()->create_plugin( plugin_name, progression, options );
 
-        COUT << "[plugin " << plugin->name() << "]" << endl;
+    COUT << "[plugin " << plugin->name() << "]" << endl;
 
-        //
-        // Build the user request
-        const Multimodal::Graph* graph = dynamic_cast<const Multimodal::Graph*>( plugin->routing_data() );
-        if ( graph == nullptr ) {
-            CERR << "Cannot cast to multimodal graph" << std::endl;
-            return 1;
-        }
-        Request req;
+    Request req;
 
-        req.set_origin( origin_id );
-        req.set_destination( destination_id );
+    req.set_origin( origin_id );
+    req.set_destination( destination_id );
 
-        std::unique_ptr<PluginRequest> plugin_request( plugin->request() );
-        std::unique_ptr<Result> result( plugin_request->process( req ) );
-    }
-    catch ( std::exception& e ) {
-        CERR << "Exception: " << e.what() << endl;
-    }
+    std::unique_ptr<PluginRequest> plugin_request( plugin->request() );
+    std::unique_ptr<Result> result( plugin_request->process( req ) );
 
     return 0;
 }

@@ -78,6 +78,8 @@ public:
 
     virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
 
+    const RoutingData* routing_data() const { return graph_; }
+
 private:
     const Multimodal::Graph* graph_;
 
@@ -242,7 +244,7 @@ public:
         //
 
         // we result in only one roadmap
-        std::unique_ptr<Result> result;
+        std::unique_ptr<Result> result( new Result() );
         result->push_back( Roadmap() );
         Roadmap& roadmap = result->back();
 

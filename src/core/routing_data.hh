@@ -5,6 +5,8 @@
 #include "variant.hh"
 #include "base.hh"
 #include "property.hh"
+#include "transport_modes.hh"
+#include "public_transport.hh"
 
 #include <boost/optional.hpp>
 
@@ -64,16 +66,70 @@ public:
 
     virtual ~RoutingData() {}
 
-    // transport modes
-    // transport networks
-    // metadata
-
-    // 
-
+    ///
+    /// Name of the data
     std::string name() const { return name_; }
 
+    typedef std::map<db_id_t, TransportMode> TransportModes;
+    ///
+    /// Access to transport modes
+    const TransportModes& transport_modes() const { return transport_modes_; }
+
+    /// 
+    /// Transport mode setter
+    void set_transport_modes( const TransportModes& );
+
+    ///
+    /// access to a transportmode, given its id
+    boost::optional<TransportMode> transport_mode( db_id_t id ) const;
+
+    ///
+    /// access to a transportmode, given its name
+    boost::optional<TransportMode> transport_mode( const std::string& name ) const;
+
+
+    ///
+    /// access to a metadata
+    std::string metadata( const std::string& key ) const;
+    ///
+    /// modification of a graph's metadata
+    void set_metadata( const std::string& key, const std::string& value );
+    ///
+    /// access to all the metadata (read only)
+    const std::map<std::string, std::string>& metadata() const;
+
+    ///
+    /// Public transport netwoks
+    typedef std::map<db_id_t, PublicTransport::Network> NetworkMap;
+
+    ///
+    /// Access to the network map
+    NetworkMap network_map() const { return network_map_; }
+
+    ///
+    /// Network map setter
+    void set_network_map( const NetworkMap& nm ) { network_map_ = nm; }
+
+    /// Access to a particular network
+    boost::optional<const PublicTransport::Network&> network( db_id_t ) const;
+    
 private:
     std::string name_;
+
+protected:
+    ///
+    /// Graph metadata
+    std::map<std::string, std::string> metadata_;
+
+    TransportModes transport_modes_;
+
+    NetworkMap network_map_;
+
+private:
+    typedef std::map<std::string, Tempus::db_id_t> NameToId;
+    ///
+    /// Associative array that maps a transport type name to a transport type id
+    NameToId transport_mode_from_name_;
 };
 
 ///

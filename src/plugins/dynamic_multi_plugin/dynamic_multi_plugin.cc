@@ -309,11 +309,11 @@ DynamicMultiPlugin::DynamicMultiPlugin( ProgressionCallback& progression, const 
 
 std::unique_ptr<PluginRequest> DynamicMultiPlugin::request( const PluginRequest::OptionValueList& options ) const
 {
-    return std::unique_ptr<PluginRequest>( new DynamicMultiPluginRequest( this, options ) );
+    return std::unique_ptr<PluginRequest>( new DynamicMultiPluginRequest( this, options, graph_ ) );
 }
 
-DynamicMultiPluginRequest::DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options )
-    : PluginRequest( plugin, options )
+DynamicMultiPluginRequest::DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options, const Multimodal::Graph* graph )
+    : PluginRequest( plugin, options ), graph_(graph)
 {
 }
 
@@ -322,9 +322,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     std::unique_ptr<Result> result( new Result );
 
     const DynamicMultiPlugin* parent = static_cast<const DynamicMultiPlugin*>( plugin_ );
-    graph_ = parent->graph();
-    std::string db_options;
-    get_option( "db_options", db_options );
+    std::string db_options = Application::instance()->db_options();
     Db::Connection db_( db_options );
 
     const Automaton<Road::Edge>& automaton_ = parent->automaton();
