@@ -64,16 +64,13 @@ public:
         return params;
     }
 
-    PtPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_pt_plugin" ) {
+    PtPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_pt_plugin", options ) {
         // load graph
         const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
         graph_ = dynamic_cast<const Multimodal::Graph*>( rd );
         if ( graph_ == nullptr ) {
             throw std::runtime_error( "Problem loading the multimodal graph" );
         }
-
-        schema_name_ = get_option_or_default( options, "db/schema" ).str();
-        db_options_ = get_option_or_default( options, "db/options" ).str();
     }
 
     virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
@@ -82,11 +79,6 @@ public:
 
 private:
     const Multimodal::Graph* graph_;
-
-    std::string db_options_;
-    std::string schema_name_;
-
-    friend class PtPluginRequest;
 };
 
 class PtPluginRequest : public PluginRequest
@@ -95,8 +87,8 @@ private:
     const Multimodal::Graph& graph_;
 
 public:
-    PtPluginRequest( const PtPlugin* parent, const PluginRequest::OptionValueList& options )
-        : PluginRequest( parent, options ), graph_( *parent->graph_ )
+    PtPluginRequest( const PtPlugin* parent, const PluginRequest::OptionValueList& options, const Multimodal::Graph* graph )
+        : PluginRequest( parent, options ), graph_( *graph )
     {
     }
 
@@ -116,7 +108,7 @@ public:
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
-        Db::Connection db( static_cast<const PtPlugin*>(plugin_)->db_options_ );
+        Db::Connection db( plugin_->db_options() );
 
         auto p = *graph_.public_transports().begin();
         const PublicTransport::Graph& pt_graph = *p.second;
@@ -280,7 +272,7 @@ public:
 
 std::unique_ptr<PluginRequest> PtPlugin::request( const PluginRequest::OptionValueList& options ) const
 {
-    return std::unique_ptr<PluginRequest>( new PtPluginRequest( this, options ) );
+    return std::unique_ptr<PluginRequest>( new PtPluginRequest( this, options, graph_ ) );
 }
 
 }

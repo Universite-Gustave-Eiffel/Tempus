@@ -397,7 +397,7 @@ public:
 
         // pre_process
         {
-            Db::Connection db( Application::instance()->db_options() );
+            Db::Connection db( plugin->db_options() );
 
             // now extract actual data
             xmlNode* request_node = input_parameter_map.find( "request" )->second;

@@ -42,19 +42,6 @@ public:
     /// Get the directory where data are stored
     const std::string data_directory() const;
 
-    ///
-    /// Convenience function to set db options
-    void connect( const std::string& );
-
-    ///
-    /// Convenience function to get db options
-    const std::string db_options() const;
-
-    ///
-    /// Method to call to pre build the graph in memory
-    void pre_build_graph();
-
-
     void set_option( const std::string& key, const Variant& value );
     Variant option( const std::string& ) const;
 

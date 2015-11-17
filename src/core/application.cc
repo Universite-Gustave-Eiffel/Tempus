@@ -90,37 +90,6 @@ Variant Application::option( const std::string& key ) const
     return it->second;
 }
 
-#if 0
-void Application::build_graph( bool consistency_check, const std::string& schema )
-{
-    TextProgression progression( 50 );
-
-    const RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( "multimodal_graph" );
-    BOOST_ASSERT( builder );
-
-    std::string load_from = option("load_from").str();
-    if ( load_from != "" )
-    {
-        std::cout << "Loading from " << load_from << "..." << std::endl;
-        graph_ = builder->file_import( load_from, progression );
-    }
-    else {
-        // request the database
-        PQImporter importer( db_options_ );
-        COUT << "Loading graph from database: " << std::endl;
-
-        graph_ = builder->pg_import( db_options_, progression );
-
-        graph_ = importer.import_graph( progression, consistency_check, schema );
-
-        COUT << "Importing constants ..." << std::endl;
-        importer.import_constants( *graph_, progression, schema );
-    }
-
-    schema_name_ = schema;
-}
-#endif
-
 const std::string Application::data_directory() const
 {
     const char* data_dir = getenv( "TEMPUS_DATA_DIRECTORY" );
@@ -138,18 +107,5 @@ const std::string Application::data_directory() const
     return dir;
 }
 
-void Application::connect( const std::string& options )
-{
-    set_option( "db/options", Variant::from_string( options ) );
-}
-
-const std::string Application::db_options() const
-{
-    auto it = options_.find( "db/options" );
-    if ( it == options_.end() ) {
-        return "";
-    }
-    return it->second.str();
-}
 
 }
