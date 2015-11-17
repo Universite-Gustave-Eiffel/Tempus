@@ -19,7 +19,8 @@
 #include "ch_plugin.hh"
 #include "plugin_factory.hh"
 
-#include <boost/heap/d_ary_heap.hpp>
+//#include <boost/heap/d_ary_heap.hpp>
+#include <queue>
 #include <boost/pending/indirect_cmp.hpp>
 #include <boost/graph/visitors.hpp>
 #include <boost/graph/dijkstra_shortest_paths_no_color_map.hpp>
@@ -109,7 +110,8 @@ std::list<CHVertex> bidirectional_ch_dijkstra( const CHRoutingData& rd, CHVertex
 
     // FIXME is the heap needed ? since the graph is partitioned in two acyclic graphs with a topological order on nodes
     // There may be a way to be faster: loop over each node in order and relax out edges
-    typedef boost::heap::d_ary_heap< CHVertex, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;
+    //typedef boost::heap::d_ary_heap< CHVertex, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;
+    typedef std::priority_queue<CHVertex, std::vector<CHVertex>, Cmp> VertexQueue;
     Cmp cmp_fw( potential_map[0] );
     Cmp cmp_bw( potential_map[1] );
     VertexQueue vertex_queue[2] = { VertexQueue( cmp_fw ), VertexQueue( cmp_bw ) };
