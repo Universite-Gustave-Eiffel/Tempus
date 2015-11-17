@@ -90,21 +90,33 @@ Variant Application::option( const std::string& key ) const
     return it->second;
 }
 
+void Application::set_data_directory( const std::string& d )
+{
+    set_option( "data_directory", Variant::from_string(d) );
+}
+
 const std::string Application::data_directory() const
 {
-    const char* data_dir = getenv( "TEMPUS_DATA_DIRECTORY" );
+    std::string data_dir;
+    auto it = options_.find( "data_directory" );
+    if ( it != options_.end() ) {
+        data_dir = it->second.str();
+    }
+    else {
+        const char* d = getenv( "TEMPUS_DATA_DIRECTORY" );
 
-    if ( !data_dir ) {
-        const std::string msg = "environment variable TEMPUS_DATA_DIRECTORY is not defined";
-        CERR << msg << "\n";
-        throw std::runtime_error( msg );
+        if ( !d ) {
+            const std::string msg = "environment variable TEMPUS_DATA_DIRECTORY is not defined";
+            CERR << msg << "\n";
+            throw std::runtime_error( msg );
+        }
+        data_dir = d;
     }
 
     // remove trailing space in path (windows will do that for you, an the env var
-    // defined in visual studio has that space wich screws up concatenation)
-    std::string dir( data_dir );
-    dir.erase( dir.find_last_not_of( " " )+1 );
-    return dir;
+    // defined in visual studio has that space which screws up concatenation)
+    data_dir.erase( data_dir.find_last_not_of( " " )+1 );
+    return data_dir;
 }
 
 

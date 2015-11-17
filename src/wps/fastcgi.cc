@@ -44,6 +44,7 @@
 #include "xml_helper.hh"
 #include "config.hh"
 #include "plugin_factory.hh"
+#include "tempus_services.hh"
 
 
 #define DEBUG_TRACE if(1) std::cout << " debug: "
@@ -118,6 +119,7 @@ int main( int argc, char* argv[] )
     string schema_name = "tempus";
     bool consistency_check = true;
     std::string load_from = "";
+    std::string data_dir = "";
 #if ENABLE_SEGMENT_ALLOCATOR
     std::string dump_file = "";
     size_t segment_size = 0;
@@ -177,6 +179,11 @@ int main( int argc, char* argv[] )
                     load_from = argv[++i];
                 }
             }
+            else if ( arg == "--data" ) {
+                if ( argc > i+1 ) {
+                    data_dir = argv[++i];
+                }
+            }
 #if ENABLE_SEGMENT_ALLOCATOR
             else if ( arg == "-f" ) {
                 if ( argc > i+1 ) {
@@ -207,6 +214,7 @@ int main( int argc, char* argv[] )
                           << "\t-d dbstring\tstring used to connect to pgsql" << endl
                           << "\t-s schema\tschema to use (default: tempus)" << endl
                           << "\t-X no consistency check" << endl
+                          << "\t--data dir\tData directory" << endl
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
 #endif
@@ -254,6 +262,16 @@ int main( int argc, char* argv[] )
     }
 
 #endif
+
+    if ( !data_dir.empty() ) {
+        Application::instance()->set_data_directory( data_dir );
+    }
+
+    //
+    // initialize WPS services
+    WPS::PluginListService plugin_list_service;
+    WPS::SelectService select_service;
+    WPS::ConstantListService constant_list_service;
 
     if ( chdir_str != "" ) {
         if( chdir( chdir_str.c_str() ) ) {

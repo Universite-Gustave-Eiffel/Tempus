@@ -42,6 +42,8 @@ public:
     /// Get the directory where data are stored
     const std::string data_directory() const;
 
+    void set_data_directory( const std::string& );
+
     void set_option( const std::string& key, const Variant& value );
     Variant option( const std::string& ) const;
 
