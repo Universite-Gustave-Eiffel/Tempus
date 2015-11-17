@@ -179,9 +179,8 @@ Service::ParameterMap ConstantListService::execute( const ParameterMap& input_pa
 
     {
         xmlNode* root_node = XML::new_node( "transport_networks" );
-        Multimodal::Graph::NetworkMap::const_iterator it;
-
-        for ( it = rd->network_map().begin(); it != rd->network_map().end(); it++ ) {
+        const RoutingData::NetworkMap& nm = rd->network_map();
+        for ( auto it = nm.begin(); it != nm.end(); it++ ) {
             xmlNode* node = XML::new_node( "transport_network" );
             XML::new_prop( node, "id", it->first );
             XML::new_prop( node, "name", it->second.name() );

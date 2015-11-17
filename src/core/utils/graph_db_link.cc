@@ -134,7 +134,7 @@ void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wk
     final_name = res[0][2].as<std::string>();
 }
 
-void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, Db::Connection& db, const Multimodal::Graph& /*graph*/ )
+void fill_roadmap_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, Db::Connection& db  )
 {
     // road node id -> road step*
     std::map<db_id_t, Roadmap::RoadStep*> road_steps;

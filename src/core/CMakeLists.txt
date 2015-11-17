@@ -28,6 +28,7 @@ set( HEADER_FILES
   routing_data.hh
   routing_data_builder.hh
   multimodal_graph_builder.hh
+  ch_routing_data.hh
 )
 
 set( UTILS_HEADER_FILES
@@ -62,6 +63,7 @@ set( SOURCE_FILES
     routing_data.cc
     routing_data_builder.cc
     multimodal_graph_builder.cc
+    ch_routing_data.cc
 )
 
 if (ENABLE_SEGMENT_ALLOCATOR)

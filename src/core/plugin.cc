@@ -172,7 +172,7 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
         Costs accum_costs;
 
         // retrieve data from db
-        fill_from_db( roadmap.begin(), roadmap.end(), db, graph );
+        fill_roadmap_from_db( roadmap.begin(), roadmap.end(), db );
 
         Roadmap::StepIterator it = roadmap.begin();
         Roadmap::StepIterator next = it;

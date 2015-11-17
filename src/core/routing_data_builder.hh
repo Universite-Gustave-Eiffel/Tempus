@@ -1,9 +1,26 @@
+/**
+ *   Copyright (C) 2012-2015 Oslandia <infos@oslandia.com>
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Library General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2 of the License, or (at your option) any later version.
+ *
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Library General Public License for more details.
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef TEMPUS_DATA_BUILDER_HH
 #define TEMPUS_DATA_BUILDER_HH
 
 #include "routing_data.hh"
 #include "variant.hh"
 #include "progression.hh"
+#include "db.hh"
 
 namespace Tempus
 {
@@ -41,16 +58,24 @@ private:
     std::map<std::string, std::unique_ptr<RoutingDataBuilder>> builders_;
 };
 
+///
+/// Method to load metadata from the db
+void load_metadata( RoutingData& rd, Db::Connection& conn );
+
+///
+/// Method to load transport modes from the db
+RoutingData::TransportModes load_transport_modes( Db::Connection& conn );
+
 } // namespace Tempus
 
 #define REGISTER_BUILDER( ClassName ) \
-    static bool register_me() \
+    static bool ClassName ## _register() \
     { \
     std::unique_ptr<RoutingDataBuilder> builder( new ClassName() ); \
     RoutingDataBuilderRegistry::instance().addBuilder( std::move(builder) ); \
     return true; \
     }\
-    bool init_ = register_me();
+    bool ClassName ## _init_ = ClassName ## _register();
 
 
 #endif

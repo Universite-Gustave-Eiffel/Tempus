@@ -3,9 +3,11 @@
 
 #include <boost/property_map/function_property_map.hpp>
 
-#include "application.hh"
-
 #include "contraction.hh"
+#include "common.hh"
+#include "variant.hh"
+#include "routing_data.hh"
+#include "multimodal_graph.hh"
 
 using TNodeContractionCost = int;
 using TRemainingNodeSet = std::unordered_set<CHVertex>;
@@ -174,7 +176,7 @@ inline bool isNodeIndependent(const Graph& graph,
 
     for (const Neighbor& n : neighbors)
     {
-        REQUIRE(n.node < int(nodeCosts.size()));
+        REQUIRE(n.node < nodeCosts.size());
         if (nodeCosts[n.node] < nodeCost)
             return false;
 
@@ -264,7 +266,7 @@ vector<CHVertex> getIndependentNodeSet(const Graph& graph,
         TNodeId nodeID = *nodeIt;
         if (excluded.find(nodeID) != excluded.end())
             continue;
-        REQUIRE(nodeID < int(nodeCosts.size()));
+        REQUIRE(nodeID < nodeCosts.size());
         TNodeContractionCost nodeCost = nodeCosts[nodeID];
 
         const vector<Neighbor>& predecessors = graph.predecessors[nodeID];
@@ -377,7 +379,7 @@ vector<CHVertex> get_independent_node_set( const CHGraph& graph,
         CHVertex nodeID = *nodeIt;
         if (excluded.find(nodeID) != excluded.end())
             continue;
-        REQUIRE(nodeID < int(nodeCosts.size()));
+        REQUIRE(nodeID < nodeCosts.size());
         TNodeContractionCost nodeCost = nodeCosts[nodeID];
 
         if ( !is_node_independent( graph, nodeID, nodeCosts, nodeCost ) )
@@ -541,8 +543,8 @@ void get_ordered_nodes( CHGraph& graph,
     }
 
     cout << "Shortcuts: " << numShortcuts << endl;
-    REQUIRE(int(processedNodes.size()) == num_vertices( graph ));
-    REQUIRE(int(nodeCosts.size()) == num_vertices( graph ));
+    REQUIRE(processedNodes.size() == num_vertices( graph ));
+    REQUIRE(nodeCosts.size() == num_vertices( graph ));
 
     // IDF: 31019ms
     // France: 1237s.
@@ -554,14 +556,12 @@ int main( int argc, char *argv[] )
 
     const std::string& dbstring = argc > 1 ? argv[1] : "dbname=tempus_test_db";
 
-    Application* app = Application::instance();
+    TextProgression progression;
+    VariantMap options;
+    options["db/options"] = Variant::from_string( dbstring );
+    const RoutingData* data = load_routing_data( "multimodal_graph", progression, options );
 
-    app->connect( dbstring );
-    app->pre_build_graph();
-    std::cout << "building the graph...\n";
+    const Multimodal::Graph& graph = *dynamic_cast<const Multimodal::Graph*>(data);
 
-    app->build_graph( /*consistency_check*/ false, "tempus" );
-
-    const Multimodal::Graph& graph = *app->graph();
     const Road::Graph& road_graph = graph.road();
 }

@@ -282,15 +282,12 @@ int main( int argc, char *argv[] )
 
     const std::string& dbstring = argc > 1 ? argv[1] : "dbname=tempus_test_db";
 
-    Application* app = Application::instance();
+    TextProgression progression;
+    VariantMap options;
+    options["db/options"] = Variant::from_string( dbstring );
+    const RoutingData* data = load_routing_data( "multimodal_graph", progression, options );
 
-    app->connect( dbstring );
-    app->pre_build_graph();
-    std::cout << "building the graph...\n";
-
-    app->build_graph( /*consistency_check*/ false, "tempus" );
-
-    const Multimodal::Graph& graph = *app->graph();
+    const Multimodal::Graph& graph = *dynamic_cast<const Multimodal::Graph*>(data);
     const Road::Graph& road_graph = graph.road();
 
 #if 1

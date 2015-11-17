@@ -76,7 +76,6 @@ boost::optional<TransportMode> RoutingData::transport_mode( const std::string& n
 void RoutingData::set_transport_modes( const TransportModes& tm )
 {
     transport_modes_ = tm;
-    std::cout << "set_transport_modes, len=" << transport_modes_.size() << std::endl;
     // cache name to id
     transport_mode_from_name_.clear();
     for ( TransportModes::const_iterator it = transport_modes_.begin(); it != transport_modes_.end(); ++it ) {
