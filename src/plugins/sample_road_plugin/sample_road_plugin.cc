@@ -73,7 +73,7 @@ public:
 
     const RoutingData* routing_data() const { return graph_; }
 
-    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
+    virtual std::unique_ptr<PluginRequest> request( const VariantMap& options = VariantMap() ) const;
 
 private:
     const Multimodal::Graph* graph_;
@@ -90,7 +90,7 @@ private:
     struct path_found_exception {};
 
 public:
-    RoadPluginRequest( const RoadPlugin* parent, const PluginRequest::OptionValueList& options, const Multimodal::Graph* graph )
+    RoadPluginRequest( const RoadPlugin* parent, const VariantMap& options, const Multimodal::Graph* graph )
         : PluginRequest( parent, options ), graph_( *graph )
     {
     }
@@ -259,7 +259,7 @@ public:
     }
 };
 
-std::unique_ptr<PluginRequest> RoadPlugin::request( const PluginRequest::OptionValueList& options ) const
+std::unique_ptr<PluginRequest> RoadPlugin::request( const VariantMap& options ) const
 {
     return std::unique_ptr<PluginRequest>( new RoadPluginRequest( this, options, graph_ ) );
 }

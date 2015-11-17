@@ -360,7 +360,7 @@ public:
         Tempus::Request request;
 
         // get options
-        PluginRequest::OptionValueList options;
+        VariantMap options;
         {
             const xmlNode* options_node = input_parameter_map.find( "options" )->second;
             const xmlNode* field = XML::get_next_nontext( options_node->children );

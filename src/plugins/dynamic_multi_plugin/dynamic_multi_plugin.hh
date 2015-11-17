@@ -79,7 +79,7 @@ public:
     const RoutingData* routing_data() const { return graph_; }
 
 public:
-    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
+    virtual std::unique_ptr<PluginRequest> request( const VariantMap& options = VariantMap() ) const;
 
 private:
     const Multimodal::Graph* graph_;
@@ -89,7 +89,7 @@ private:
 class DynamicMultiPluginRequest : public PluginRequest
 {
 public:
-    DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options, const Multimodal::Graph* );
+    DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const VariantMap& options, const Multimodal::Graph* );
 
     virtual std::unique_ptr<Result> process( const Request& request );
 

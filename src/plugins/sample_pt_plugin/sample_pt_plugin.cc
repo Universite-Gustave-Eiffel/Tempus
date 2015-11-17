@@ -73,7 +73,7 @@ public:
         }
     }
 
-    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const;
+    virtual std::unique_ptr<PluginRequest> request( const VariantMap& options = VariantMap() ) const;
 
     const RoutingData* routing_data() const { return graph_; }
 
@@ -87,7 +87,7 @@ private:
     const Multimodal::Graph& graph_;
 
 public:
-    PtPluginRequest( const PtPlugin* parent, const PluginRequest::OptionValueList& options, const Multimodal::Graph* graph )
+    PtPluginRequest( const PtPlugin* parent, const VariantMap& options, const Multimodal::Graph* graph )
         : PluginRequest( parent, options ), graph_( *graph )
     {
     }
@@ -270,7 +270,7 @@ public:
     }
 };
 
-std::unique_ptr<PluginRequest> PtPlugin::request( const PluginRequest::OptionValueList& options ) const
+std::unique_ptr<PluginRequest> PtPlugin::request( const VariantMap& options ) const
 {
     return std::unique_ptr<PluginRequest>( new PtPluginRequest( this, options, graph_ ) );
 }

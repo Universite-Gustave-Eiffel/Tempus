@@ -57,37 +57,12 @@ class PluginRequest
 {
 public:
     ///
-    /// List of option values
-    typedef std::map<std::string, Variant> OptionValueList;
-
-    ///
     /// Constructor of the request
     /// \param[in] plugin The plugin that has created this request
     /// \param[in] options Option values for this request
-    PluginRequest( const Plugin* plugin, const OptionValueList& options );
+    PluginRequest( const Plugin* plugin, const VariantMap& options );
 
     virtual ~PluginRequest() {}
-
-private:
-    ///
-    /// Method used to get an option value
-    template <class T>
-    void get_option( const std::string& name, T& value ) const;
-
-public:
-    bool get_bool_option( const std::string& name ) const;
-    int64_t get_int_option( const std::string& name ) const;
-    double get_float_option( const std::string& name ) const;
-    std::string get_string_option( const std::string& name ) const;
-
-    ///
-    /// Method used to get an option value, alternative signature.
-    template <class T>
-    T get_option( const std::string& nname ) const {
-        T v;
-        get_option( nname, v );
-        return v;
-    }
 
     ///
     /// A metric is also an OptionValue
@@ -144,10 +119,42 @@ protected:
     const Plugin* plugin_;
 
     /// Plugin option management
-    OptionValueList options_;
+    VariantMap options_;
 
     /// Plugin metrics
     MetricValueList metrics_;
+
+private:
+    ///
+    /// Method used to get an option value
+    template <class T>
+    void get_option( const std::string& name, T& value ) const;
+
+protected:
+    ///
+    /// Convenience method
+    bool get_bool_option( const std::string& name ) const;
+
+    ///
+    /// Convenience method
+    int64_t get_int_option( const std::string& name ) const;
+
+    ///
+    /// Convenience method
+    double get_float_option( const std::string& name ) const;
+
+    ///
+    /// Convenience method
+    std::string get_string_option( const std::string& name ) const;
+
+    ///
+    /// Method used to get an option value, alternative signature.
+    template <class T>
+    T get_option( const std::string& nname ) const {
+        T v;
+        get_option( nname, v );
+        return v;
+    }
 };
 
 
@@ -232,7 +239,7 @@ public:
 
     ///
     /// Create a PluginRequest object
-    virtual std::unique_ptr<PluginRequest> request( const PluginRequest::OptionValueList& options = PluginRequest::OptionValueList() ) const = 0;
+    virtual std::unique_ptr<PluginRequest> request( const VariantMap& options = VariantMap() ) const = 0;
 
     ///
     /// Gets access to the underlying routing data

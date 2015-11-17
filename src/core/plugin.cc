@@ -55,7 +55,7 @@ std::unique_ptr<Result> PluginRequest::process( const Request& /*request*/ )
     return std::unique_ptr<Result>( new Result );
 }
 
-PluginRequest::PluginRequest( const Plugin* plugin, const OptionValueList& options ) :
+PluginRequest::PluginRequest( const Plugin* plugin, const VariantMap& options ) :
     plugin_(plugin), options_( options )
 {
     // default metrics

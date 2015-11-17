@@ -307,12 +307,12 @@ DynamicMultiPlugin::DynamicMultiPlugin( ProgressionCallback& progression, const 
     }
 }
 
-std::unique_ptr<PluginRequest> DynamicMultiPlugin::request( const PluginRequest::OptionValueList& options ) const
+std::unique_ptr<PluginRequest> DynamicMultiPlugin::request( const VariantMap& options ) const
 {
     return std::unique_ptr<PluginRequest>( new DynamicMultiPluginRequest( this, options, graph_ ) );
 }
 
-DynamicMultiPluginRequest::DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const OptionValueList& options, const Multimodal::Graph* graph )
+DynamicMultiPluginRequest::DynamicMultiPluginRequest( const DynamicMultiPlugin* plugin, const VariantMap& options, const Multimodal::Graph* graph )
     : PluginRequest( plugin, options ), graph_(graph)
 {
 }
