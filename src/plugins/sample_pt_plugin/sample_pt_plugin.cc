@@ -125,9 +125,8 @@ public:
         PublicTransport::Vertex departure = 0, arrival = 0;
 
         // if stops are given by the corresponding options, get them
-        int64_t departure_id, arrival_id;
-        get_option( "origin_pt_stop", departure_id );
-        get_option( "destination_pt_stop", arrival_id );
+        db_id_t departure_id = get_int_option( "origin_pt_stop" );
+        db_id_t arrival_id = get_int_option( "destination_pt_stop" );
 
         if ( departure_id != 0 && arrival_id != 0 ) {
             CERR << "departure id " << departure_id << " arrival id " << arrival_id << std::endl;

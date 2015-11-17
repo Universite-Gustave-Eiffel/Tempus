@@ -129,9 +129,8 @@ public:
             throw std::invalid_argument( "Unsupported optimizing criterion" );
         }
 
-        bool prepare_result;
-        get_option( "trace_vertex", trace_vertex_ );
-        get_option( "prepare_result", prepare_result );
+        trace_vertex_  = get_bool_option( "trace_vertex" );
+        bool prepare_result = get_bool_option( "prepare_result" );
 
         iterations_ = 0;
 

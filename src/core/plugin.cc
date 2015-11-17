@@ -107,20 +107,33 @@ template void PluginRequest::get_option<int64_t>( const std::string&, int64_t& )
 template void PluginRequest::get_option<double>( const std::string&, double& ) const;
 template void PluginRequest::get_option<std::string>( const std::string&, std::string& ) const;
 
-#if 0
-std::string PluginRequest::option_to_string( const std::string& nname ) const
+bool PluginRequest::get_bool_option( const std::string& name ) const
 {
-    const Plugin::OptionDescriptionList& desc = plugin_->option_descriptions();
-    auto descIt = desc.find( nname );
-
-    if ( descIt == desc.end() ) {
-        throw std::invalid_argument( "Cannot find option " + nname );
-    }
-
-    const Variant& value = options_.find( nname )->second;
-    return value.str();
+    bool v;
+    get_option( name, v );
+    return v;
 }
-#endif
+
+int64_t PluginRequest::get_int_option( const std::string& name ) const
+{
+    int64_t v;
+    get_option( name, v );
+    return v;
+}
+
+double PluginRequest::get_float_option( const std::string& name ) const
+{
+    double v;
+    get_option( name, v );
+    return v;
+}
+
+std::string PluginRequest::get_string_option( const std::string& name ) const
+{
+    std::string v;
+    get_option( name, v );
+    return v;
+}
 
 std::string PluginRequest::metric_to_string( const std::string& nname ) const
 {

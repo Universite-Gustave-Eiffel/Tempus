@@ -336,24 +336,15 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // Get plugin options
     // Plugin options
-    double timetable_frequency_; // travel time calculation mode
-    bool verbose_algo_; // verbose vertex and edge traversal
-    bool verbose_; // Verbose processing (except algorithm)
-    double min_transfer_time_; // Minimum time necessary for a transfer to be done (in minutes)
-    double walking_speed_; // Average walking speed
-    double cycling_speed_; // Average cycling speed
-    double car_parking_search_time_; // Parking search time for cars
-    bool use_speed_profiles_;
-
-    get_option( "Debug/verbose", verbose_ );
-    get_option( "Debug/verbose_algo", verbose_algo_ );
-    get_option( "Debug/enable_trace", enable_trace_ );
-    get_option( "Features/timetable_frequency", timetable_frequency_ );
-    get_option( "Time/min_transfer_time", min_transfer_time_ );
-    get_option( "Time/walking_speed", walking_speed_ );
-    get_option( "Time/cycling_speed", cycling_speed_ );
-    get_option( "Time/car_parking_search_time", car_parking_search_time_ );
-    get_option( "Time/use_speed_profiles", use_speed_profiles_ );
+    bool verbose_ = get_bool_option( "Debug/verbose" );
+    bool verbose_algo_ = get_bool_option( "Debug/verbose_algo" );
+    enable_trace_ = get_bool_option( "Debug/enable_trace" );
+    double timetable_frequency_ = get_float_option( "Features/timetable_frequency" );
+    double min_transfer_time_ = get_float_option( "Time/min_transfer_time" );
+    double walking_speed_ = get_float_option( "Time/walking_speed" );
+    double cycling_speed_ = get_float_option( "Time/cycling_speed" );
+    double car_parking_search_time_ = get_float_option( "Time/car_parking_search_time" );
+    bool use_speed_profiles_ = get_bool_option( "Time/use_speed_profiles" );
 
     // Check request and clear result
     REQUIRE( request.allowed_modes().size() >= 1 );
@@ -621,8 +612,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     // destinations
     std::vector<Road::Vertex> destinations;
     // if the "multi_destinations" option is here, take destinations from it
-    std::string dest_str;
-    get_option( "multi_destinations", dest_str );
+    std::string dest_str = get_string_option( "multi_destinations" );
     if ( !dest_str.empty() ) {
         while (!dest_str.empty()) {
             std::string car, cdr;
@@ -663,11 +653,9 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     bool path_found = false;
     try {
-        bool use_heuristic;
-        get_option( "AStar/heuristic", use_heuristic );
+        bool use_heuristic = get_bool_option( "AStar/heuristic" );
         if ( use_heuristic ) {
-            double h_speed_max;
-            get_option( "AStar/speed_heuristic", h_speed_max );
+            double h_speed_max = get_float_option( "AStar/speed_heuristic" );
 
             if ( reversed ) {
                 Multimodal::ReverseGraph rgraph( *graph_ );

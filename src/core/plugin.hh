@@ -68,32 +68,17 @@ public:
 
     virtual ~PluginRequest() {}
 
-#if 0
-    ///
-    /// Access to the list of option values
-    OptionValueList& options() {
-        return options_;
-    }
-
-    ///
-    /// Method used to set an option value
-    template <class T>
-    void set_option( const std::string& nname, const T& value ) {
-        options_[nname] = value;
-    }
-
-    ///
-    /// Method used to set an option value from a string. Conversions are made, based on the option description
-    void set_option_from_string( const std::string& name, const std::string& value, VariantType t );
-    ///
-    /// Method used to get a string from an option value
-    std::string option_to_string( const std::string& name ) const;
-#endif
-
+private:
     ///
     /// Method used to get an option value
     template <class T>
     void get_option( const std::string& name, T& value ) const;
+
+public:
+    bool get_bool_option( const std::string& name ) const;
+    int64_t get_int_option( const std::string& name ) const;
+    double get_float_option( const std::string& name ) const;
+    std::string get_string_option( const std::string& name ) const;
 
     ///
     /// Method used to get an option value, alternative signature.
