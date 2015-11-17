@@ -1,54 +1,29 @@
-/**
- *   Copyright (C) 2012-2013 IFSTTAR (http://www.ifsttar.fr)
- *   Copyright (C) 2012-2013 Oslandia <infos@oslandia.com>
- *
- *   This library is free software; you can redistribute it and/or
- *   modify it under the terms of the GNU Library General Public
- *   License as published by the Free Software Foundation; either
- *   version 2 of the License, or (at your option) any later version.
- *
- *   This library is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *   Library General Public License for more details.
- *   You should have received a copy of the GNU Library General Public
- *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
- */
+#include "multimodal_graph_builder.hh"
 
-#include <libpq-fe.h>
-
+#include <boost/format.hpp>
 #include <iostream>
 #include <fstream>
 
-#include <boost/mpl/vector.hpp>
-#include <boost/format.hpp>
+#include "serializers.hh"
+#include "db.hh"
+#include "multimodal_graph.hh"
 
-#include "pgsql_importer.hh"
+namespace Tempus
+{
 
 using namespace std;
 
-namespace Tempus {
-PQImporter::PQImporter( const std::string& pg_options ) :
-    connection_( pg_options )
-{
-}
-
-Db::Result PQImporter::query( const std::string& query_str )
-{
-    return connection_.exec( query_str );
-}
-
-void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback& progression, const std::string& /*schema_name*/ )
+void import_constants( Db::Connection& connection, Multimodal::Graph& graph, ProgressionCallback& progression, const std::string& /*schema_name*/ )
 {
     {
         // check that the metadata exists
         bool has_metadata = false;
         {
-            Db::Result r( connection_.exec( "select * from information_schema.tables where table_name='metadata' and table_schema='tempus'" ) );
+            Db::Result r( connection.exec( "select * from information_schema.tables where table_name='metadata' and table_schema='tempus'" ) );
             has_metadata = r.size() == 1;
         }
         if ( has_metadata ) {
-            Db::Result res( connection_.exec( "SELECT key, value FROM tempus.metadata" ) );
+            Db::Result res( connection.exec( "SELECT key, value FROM tempus.metadata" ) );
             for ( size_t i = 0; i < res.size(); i++ ) {
                 std::string k, v;
                 res[i][0] >> k;
@@ -64,7 +39,7 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
     }
     Multimodal::Graph::TransportModes modes;
     {
-        Db::Result res( connection_.exec( "SELECT id, name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle FROM tempus.transport_mode" ) );
+        Db::Result res( connection.exec( "SELECT id, name, public_transport, gtfs_route_type, traffic_rules, speed_rule, toll_rule, engine_type, need_parking, shared_vehicle, return_shared_vehicle FROM tempus.transport_mode" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t db_id=0; // avoid warning "may be used uninitialized"
@@ -92,7 +67,7 @@ void PQImporter::import_constants( Multimodal::Graph& graph, ProgressionCallback
     }
 }
 
-std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, std::map<Tempus::db_id_t, Road::Edge>& road_sections_map )
+std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, std::map<Tempus::db_id_t, Road::Edge>& road_sections_map )
 {
    if ( consistency_check ) {
         //
@@ -111,7 +86,7 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
                                                  "OR "
                                                  "rn2.id IS NULL") % schema_name ).str();
 
-            Db::Result res( connection_.exec( q ) );
+            Db::Result res( connection.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
             if ( count ) {
@@ -121,7 +96,7 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
         {
             // look for cycles
             const std::string q = (boost::format("SELECT count(*) FROM %1%.road_section WHERE node_from = node_to") % schema_name).str();
-            Db::Result res( connection_.exec( q ) );
+            Db::Result res( connection.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
             if ( count ) {
@@ -154,7 +129,7 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
                                                  "and "
                                                  "poi.id IS NULL") % schema_name).str();
 
-            Db::Result res( connection_.exec( q ) );
+            Db::Result res( connection.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
             if ( count ) {
@@ -184,7 +159,7 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
                                                  "and s2.stop_to is null "
                                                  "and stop_id is null "
                                                  "and pp.parent_station is null" ) % schema_name ).str();
-            Db::Result res( connection_.exec( q ) );
+            Db::Result res( connection.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
             if ( count ) {
@@ -201,13 +176,13 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
     //------------------
     std::vector<Road::Node> nodes;
     {
-        Db::Result res = connection_.exec( (boost::format("SELECT COUNT(*) FROM %1%.road_node") % schema_name).str() );
+        Db::Result res = connection.exec( (boost::format("SELECT COUNT(*) FROM %1%.road_node") % schema_name).str() );
         size_t count = 0;
         res[0][0] >> count;
         nodes.reserve( count );
     }
     {
-        Db::ResultIterator res_it = connection_.exec_it( (boost::format("SELECT id, bifurcation, st_x(geom), st_y(geom), st_z(geom) FROM %1%.road_node") % schema_name).str() );
+        Db::ResultIterator res_it = connection.exec_it( (boost::format("SELECT id, bifurcation, st_x(geom), st_y(geom), st_z(geom) FROM %1%.road_node") % schema_name).str() );
         Db::ResultIterator it_end;
         for ( ; res_it != it_end; res_it++ )
         {
@@ -252,7 +227,7 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
                                                   // this assumes id are always positive numbers
                                                   "WHERE rs1.id > coalesce(rs2.id, -1)" 
                                                   ) % schema_name).str();
-        Db::ResultIterator res_it = connection_.exec_it( qquery );
+        Db::ResultIterator res_it = connection.exec_it( qquery );
         Db::ResultIterator it_end;
         for ( ; res_it != it_end; res_it++ )
         {
@@ -395,11 +370,11 @@ std::unique_ptr<Road::Graph> PQImporter::import_road_graph_( ProgressionCallback
 
 ///
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
-std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
+std::unique_ptr<Multimodal::Graph> import_graph( Db::Connection& connection, ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
 {
     std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
     std::unique_ptr<Multimodal::Graph> graph;
-    std::unique_ptr<Road::Graph> sm_road_graph( import_road_graph_( progression, consistency_check, schema_name, road_sections_map ) );
+    std::unique_ptr<Road::Graph> sm_road_graph( import_road_graph_( connection, progression, consistency_check, schema_name, road_sections_map ) );
 
     // build the multimodal graph
     graph.reset( new Multimodal::Graph( std::move(sm_road_graph) ) );
@@ -411,7 +386,7 @@ std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback
     std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>> pt_graphs;
     Multimodal::Graph::NetworkMap networks;
     {
-        Db::Result res( connection_.exec( "SELECT id, pnname FROM tempus.pt_network" ) );
+        Db::Result res( connection.exec( "SELECT id, pnname FROM tempus.pt_network" ) );
 
         for ( size_t i = 0; i < res.size(); i++ ) {
             PublicTransport::Network network;
@@ -428,7 +403,7 @@ std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback
 
     {
 
-        Db::ResultIterator res_it( connection_.exec_it( (boost::format("select distinct on (n.id) "
+        Db::ResultIterator res_it( connection.exec_it( (boost::format("select distinct on (n.id) "
                                                                     "s.network_id, n.id, n.name, n.location_type, "
                                                                     "n.parent_station, n.road_section_id, n.zone_id, n.abscissa_road_section "
                                                                     ",st_x(n.geom), st_y(n.geom), st_z(n.geom) "
@@ -520,7 +495,7 @@ std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback
     }
 
     {
-        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section ORDER BY network_id") % schema_name).str() ) );
+        Db::ResultIterator res_it( connection.exec_it( (boost::format("SELECT network_id, stop_from, stop_to FROM %1%.pt_section ORDER BY network_id") % schema_name).str() ) );
         Db::ResultIterator it_end;
         for ( ; res_it != it_end; res_it++ ) {
             Db::RowValue res_i = *res_it;
@@ -572,13 +547,13 @@ std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback
     //-------------
     std::vector<POI> pois;
     {
-        Db::Result res = connection_.exec( (boost::format("SELECT COUNT(*) FROM %1%.poi") % schema_name).str() );
+        Db::Result res = connection.exec( (boost::format("SELECT COUNT(*) FROM %1%.poi") % schema_name).str() );
         size_t count = 0;
         res[0][0] >> count;
         pois.reserve( count );
     }
     {
-        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section "
+        Db::ResultIterator res_it( connection.exec_it( (boost::format("SELECT id, poi_type, name, parking_transport_modes, road_section_id, abscissa_road_section "
                                                                     ", st_x(geom), st_y(geom), st_z(geom) FROM %1%.poi") % schema_name).str() ) );
         Db::ResultIterator it_end;
         size_t pidx = 0;
@@ -641,7 +616,10 @@ std::unique_ptr<Multimodal::Graph> PQImporter::import_graph( ProgressionCallback
     return graph;
 }
 
-Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& graph, const std::string& schema_name )
+
+///
+/// Import turn restrictions
+Road::Restrictions import_turn_restrictions( Db::Connection& connection, const Road::Graph& graph, const std::string& schema_name )
 {
     Road::Restrictions restrictions( graph );
 
@@ -650,8 +628,7 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     EdgesMap edges_map;
 
     {
-        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT id, sections FROM %1%.road_restriction") % schema_name).str() ) );
-        Db::ResultIterator res_it_end;
+        Db::Result res( connection.exec( (boost::format("SELECT id, sections FROM %1%.road_restriction") % schema_name).str() ) );
 
         std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
         Road::EdgeIterator it, it_end;
@@ -661,16 +638,15 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
             road_sections_map[ graph[ *it ].db_id() ] = *it;
         }
 
-        for ( ; res_it != res_it_end; res_it++ ) {
-            Db::RowValue res_i = *res_it;
+        for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t db_id;
 
-            res_i[0] >> db_id;
+            res[i][0] >> db_id;
             BOOST_ASSERT( db_id > 0 );
 
             bool invalid = false;
             Road::Restriction::EdgeSequence edges;
-            std::vector<db_id_t> sections = res_i[1].as<std::vector<db_id_t> >();
+            std::vector<db_id_t> sections = res[i][1].as<std::vector<db_id_t> >();
             for ( size_t j = 0; j < sections.size(); j++ ) {
                 db_id_t id = sections[j];
                 if ( road_sections_map.find( id ) == road_sections_map.end() ) {
@@ -693,18 +669,16 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
 
     // get restriction costs
     {
-        Db::ResultIterator res_it( connection_.exec_it( (boost::format("SELECT restriction_id, traffic_rules, time_value FROM %1%.road_restriction_time_penalty") % schema_name).str() ) );
-        Db::ResultIterator it_end;
+        Db::Result res( connection.exec( (boost::format("SELECT restriction_id, traffic_rules, time_value FROM %1%.road_restriction_time_penalty") % schema_name).str() ) );
         std::map<db_id_t, Road::Restriction::CostPerTransport> costs;
-        for ( ; res_it != it_end; res_it++ ) {
-            Db::RowValue res_i = *res_it;
+        for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t restr_id;
             int transports;
             double cost = 0.0;
 
-            res_i[0] >> restr_id;
-            res_i[1] >> transports;
-            res_i[2] >> cost;
+            res[i][0] >> restr_id;
+            res[i][1] >> transports;
+            res[i][2] >> cost;
 
             if ( edges_map.find( restr_id ) == edges_map.end() ) {
                 CERR << "Cannot find road_restriction of ID " << restr_id << std::endl;
@@ -720,4 +694,48 @@ Road::Restrictions PQImporter::import_turn_restrictions( const Road::Graph& grap
     }
     return restrictions;
 }
+
+
+std::unique_ptr<RoutingData> MultimodalGraphBuilder::pg_import( const std::string& pg_options, ProgressionCallback& progression, const VariantMap& options ) const
+{
+    Db::Connection connection( pg_options );
+
+    bool consistency_check = true;
+    auto consistency_it = options.find( "consistency_check" );
+    if ( consistency_it != options.end() ) {
+        consistency_check = consistency_it->second.as<bool>();
+    }
+
+    std::string schema_name = "tempus";
+    auto schema_it = options.find( "schema_name" );
+    if ( schema_it != options.end() ) {
+        schema_name = schema_it->second.str();
+    }
+
+    std::unique_ptr<Multimodal::Graph> mm_graph( import_graph( connection, progression, consistency_check, schema_name ) );
+    import_constants( connection, *mm_graph, progression, schema_name );
+    std::unique_ptr<RoutingData> rgraph( mm_graph.release() );
+    return std::move(rgraph);
 }
+
+std::unique_ptr<RoutingData> MultimodalGraphBuilder::file_import( const std::string& filename, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
+{
+    std::unique_ptr<Road::Graph> rgraph;
+    std::unique_ptr<Multimodal::Graph> graph( new Multimodal::Graph(std::move(rgraph)) );
+    std::ifstream ifs( filename );
+    unserialize( ifs, *graph, binary_serialization_t() );
+    std::unique_ptr<RoutingData> rd( graph.release() );
+    return std::move( rd );
+}
+
+void MultimodalGraphBuilder::file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
+{
+    std::ofstream ofs( filename );
+    // FIXME add signature and version information
+    const Multimodal::Graph* graph = static_cast<const Multimodal::Graph*>( rd );
+    serialize( ofs, *graph, binary_serialization_t() );
+}
+
+REGISTER_BUILDER( MultimodalGraphBuilder );
+
+};

@@ -583,21 +583,4 @@ void unserialize( std::istream& istr, Multimodal::Graph& graph, binary_serializa
     unserialize( istr, graph.road_edge_stops_, t );
 }
 
-
-void dump_graph( const Multimodal::Graph& graph, const std::string& dump_file )
-{
-    std::ofstream ofs( dump_file );
-    // FIXME add signature and version information
-    serialize( ofs, graph, binary_serialization_t() );
-}
-
-std::unique_ptr<Multimodal::Graph> reload_graph_from_dump( const std::string& dump_file )
-{
-    std::unique_ptr<Road::Graph> rgraph;
-    std::unique_ptr<Multimodal::Graph> graph( new Multimodal::Graph(std::move(rgraph)) );
-    std::ifstream ifs( dump_file );
-    unserialize( ifs, *graph, binary_serialization_t() );
-    return graph;
-}
-
 }

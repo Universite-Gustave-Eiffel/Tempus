@@ -142,6 +142,21 @@ PublicTransport::Stop get_pt_stop( const Multimodal::Vertex& v )
     return (*v.pt_graph())[v.pt_vertex()];
 }
 
+MMVertex get_mm_vertex( const Multimodal::Vertex& v )
+{
+    switch ( v.type() ) {
+    case Multimodal::Vertex::Road:
+        return MMVertex( MMVertex::Road, (*v.road_graph())[v.road_vertex()].db_id() );
+    case Multimodal::Vertex::PublicTransport:
+        return MMVertex( (*v.pt_graph())[v.pt_vertex()].db_id(), v.graph()->public_transport_rindex( v.pt_graph_idx() ) );
+    case Multimodal::Vertex::Poi:
+        return MMVertex( MMVertex::Poi, v.poi()->db_id() );
+    default:
+        break;
+    }
+    return MMVertex(MMVertex::Road, 0);
+}
+
 POIIndex Vertex::poi_idx() const
 {
     return data_.poi;
@@ -1094,35 +1109,7 @@ std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::
 }
 
 
-boost::optional<TransportMode> Graph::transport_mode( db_id_t id ) const
-{
-    TransportModes::const_iterator fit = transport_modes_.find( id );
-    if ( fit == transport_modes_.end() ) {
-        return boost::optional<TransportMode>();
-    }
-    return fit->second;
-}
-
-boost::optional<TransportMode> Graph::transport_mode( const std::string& name ) const
-{
-    NameToId::const_iterator fit = transport_mode_from_name_.find( name );
-    if ( fit == transport_mode_from_name_.end() ) {
-        return boost::optional<TransportMode>();
-    }
-    return transport_modes_.find(fit->second)->second;
-}
-
-void Graph::set_transport_modes( const TransportModes& tm )
-{
-    transport_modes_ = tm;
-    // cache name to id
-    transport_mode_from_name_.clear();
-    for ( TransportModes::const_iterator it = transport_modes_.begin(); it != transport_modes_.end(); ++it ) {
-        transport_mode_from_name_[ it->second.name() ] = it->first;
-    }
-}
-
-Graph::Graph( std::unique_ptr<Road::Graph> r )
+Graph::Graph( std::unique_ptr<Road::Graph> r ) : RoutingData( "multimodal_graph" )
 {
     set_road( std::move(r) );
 }
@@ -1154,21 +1141,20 @@ void Graph::set_road( std::unique_ptr<Road::Graph> r )
     }
 }
 
-boost::optional<const PublicTransport::Network&> Graph::network( db_id_t id ) const
-{
-    NetworkMap::const_iterator it = network_map_.find(id);
-    if ( it == network_map_.end() ) {
-        return boost::optional<const PublicTransport::Network&>();
-    }
-    return it->second;
-}
-
 boost::optional<PublicTransportGraphIndex> Graph::public_transport_index( db_id_t id ) const
 {
     if ( selected_transport_graphs_.find( id ) != selected_transport_graphs_.end() ) {
         return public_transport_graph_idx_map_.find(id)->second;
     }
     return boost::optional<PublicTransportGraphIndex>();
+}
+
+db_id_t Graph::public_transport_rindex( PublicTransportGraphIndex idx ) const
+{
+    if ( idx < public_transport_graph_ridx_map_.size() ) {
+        return public_transport_graph_ridx_map_[idx];
+    }
+    return 0;
 }
 
 const PublicTransport::Graph& Graph::public_transport( PublicTransportGraphIndex idx ) const
@@ -1184,6 +1170,7 @@ Graph::PublicTransportGraphList Graph::public_transports() const
 void Graph::set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>>&& nmap )
 {
     public_transport_graph_idx_map_.clear();
+    public_transport_graph_ridx_map_.clear();
     public_transport_graphs_.clear();
     // move
 
@@ -1193,6 +1180,7 @@ void Graph::set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTrans
     for ( auto it = nmap.begin(); it != nmap.end(); it++ ) {
         public_transport_graphs_[i] = std::move(it->second);
         public_transport_graph_idx_map_[it->first] = i;
+        public_transport_graph_ridx_map_.push_back( it->first );
         // By default, all public transport networks are part of the selected subset
         selected_transport_graphs_.insert( it->first );
         i++;
@@ -1287,43 +1275,22 @@ const Graph::EdgeStops& Graph::edge_stops( const Road::Edge& e ) const
     return it->second;
 }
 
-std::string Graph::metadata( const std::string& key ) const
+boost::optional<Road::Vertex> Graph::road_vertex_from_id( db_id_t id ) const
 {
-    auto it = metadata_.find( key );
-    if ( it == metadata_.end() ) {
-        return "";
-    }
-    return it->second;
-}
-
-const std::map<std::string, std::string>& Graph::metadata() const
-{
-    return metadata_;
-}
-
-void Graph::set_metadata( const std::string& key, const std::string& value )
-{
-    metadata_[key] = value;
-}
-
-Road::Vertex Graph::road_vertex_from_id( db_id_t id ) const
-{
-    Road::Vertex v = Road::Vertex();
     auto it = road_vertex_map_.find( id );
     if ( it != road_vertex_map_.end() ) {
-        v = it->second;
+        return it->second;
     }
-    return v;
+    return boost::optional<Road::Vertex>();
 }
 
-Road::Edge Graph::road_edge_from_id( db_id_t id ) const
+boost::optional<Road::Edge> Graph::road_edge_from_id( db_id_t id ) const
 {
-    Road::Edge e = Road::Edge();
     auto it = road_edge_map_.find( id );
     if ( it != road_edge_map_.end() ) {
-        e = it->second;
+        return it->second;
     }
-    return e;
+    return boost::optional<Road::Edge>();
 }
 
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )

@@ -20,7 +20,6 @@
 
 #include "application.hh"
 #include "common.hh"
-#include "pgsql_importer.hh"
 #include "config.hh"
 
 #ifdef _WIN32
@@ -64,7 +63,6 @@ Application* Application::instance()
 
         if ( main_get_instance == &get_application_instance_ ) {
             instance_ = new Application();
-            instance_->state_ = Started;
         }
         else {
             instance_ = main_get_instance();
@@ -72,22 +70,10 @@ Application* Application::instance()
 
 #else
         instance_ = new Application();
-        instance_->state_ = Started;
 #endif
     }
 
     return instance_;
-}
-
-void Application::connect( const std::string& ddb_options )
-{
-    db_options_ = ddb_options;
-    state_ = Connected;
-}
-
-void Application::pre_build_graph()
-{
-    state_ = GraphPreBuilt;
 }
 
 void Application::set_option( const std::string& key, const Variant& value )
@@ -102,63 +88,6 @@ Variant Application::option( const std::string& key ) const
         return Variant(std::string(""));
     }
     return it->second;
-}
-
-void Application::build_graph( bool consistency_check, const std::string& schema )
-{
-    // request the database
-    PQImporter importer( db_options_ );
-    TextProgression progression( 50 );
-
-#if ENABLE_SEGMENT_ALLOCATOR
-    size_t segment_size = 0;
-    if ( option("segment_size").str() != "" ) {
-        segment_size = option("segment_size").as<size_t>();
-    }
-    std::string dump_file = option("dump_file").str();
-    bool from_file = dump_file != "" && segment_size == 0;
-
-    if ( !from_file ) {
-        if ( segment_size ) {
-            SegmentAllocator::init( segment_size );
-            SegmentAllocator::enable( true );
-        }
-
-        graph_ = importer.import_graph( progression, consistency_check, schema );
-
-        if ( segment_size ) {
-            SegmentAllocator::enable( false );
-            SegmentAllocator::dump( dump_file, graph_.get() );
-        }
-    }
-    else {
-        void* addr = SegmentAllocator::init( dump_file );
-        graph_.reset( (Multimodal::Graph*)addr );
-    }
-#else
-    std::string load_from = option("load_from").str();
-    if ( load_from != "" )
-    {
-        std::cout << "Loading from " << load_from << "..." << std::endl;
-        graph_ = reload_graph_from_dump( load_from );
-    }
-    else {
-        COUT << "Loading graph from database: " << std::endl;
-
-        graph_ = importer.import_graph( progression, consistency_check, schema );
-
-        COUT << "Importing constants ..." << std::endl;
-        importer.import_constants( *graph_, progression, schema );
-    }
-
-#endif
-    state_ = GraphBuilt;
-    schema_name_ = schema;
-}
-
-std::string Application::schema_name() const
-{
-    return schema_name_;
 }
 
 const std::string Application::data_directory() const
@@ -177,4 +106,6 @@ const std::string Application::data_directory() const
     dir.erase( dir.find_last_not_of( " " )+1 );
     return dir;
 }
+
+
 }

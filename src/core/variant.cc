@@ -42,22 +42,22 @@ Variant::Variant( const std::string& s )
     v_ = s;
 }
 
-Variant Variant::fromBool( bool b )
+Variant Variant::from_bool( bool b )
 {
     return Variant(b);
 }
 
-Variant Variant::fromInt( int64_t i )
+Variant Variant::from_int( int64_t i )
 {
     return Variant(i);
 }
 
-Variant Variant::fromFloat( double f )
+Variant Variant::from_float( double f )
 {
     return Variant(f);
 }
 
-Variant Variant::fromString( const std::string& s, VariantType t )
+Variant Variant::from_string( const std::string& s, VariantType t )
 {
     switch (t)
     {
@@ -81,12 +81,18 @@ VariantType Variant::type() const
 
 std::string Variant::str() const
 {
-    std::ostringstream ostr;
-    ostr << v_;
-    return ostr.str();
+    if ( type() == StringVariant ) {
+        return boost::get<std::string>( v_ );
+    }
+    if ( !v_.empty() ) {
+        std::ostringstream ostr;
+        ostr << v_;
+        return ostr.str();
+    }
+    return std::string();
 }
 
-void Variant::convertTo( bool& b ) const
+void Variant::convert_to( bool& b ) const
 {
     if (type() == BoolVariant) {
         b = *boost::get<bool>(&v_);
@@ -96,7 +102,7 @@ void Variant::convertTo( bool& b ) const
     }
 }
 
-void Variant::convertTo( int64_t& i ) const
+void Variant::convert_to( int64_t& i ) const
 {
     if (type() == IntVariant) {
         i = *boost::get<int64_t>(&v_);
@@ -106,7 +112,7 @@ void Variant::convertTo( int64_t& i ) const
     }
 }
 
-void Variant::convertTo( double& f ) const
+void Variant::convert_to( double& f ) const
 {
     if (type() == FloatVariant) {
         f = *boost::get<double>(&v_);
@@ -116,7 +122,7 @@ void Variant::convertTo( double& f ) const
     }
 }
 
-void Variant::convertTo( std::string& s ) const
+void Variant::convert_to( std::string& s ) const
 {
     if (type() == StringVariant) {
         s = *boost::get<std::string>(&v_);

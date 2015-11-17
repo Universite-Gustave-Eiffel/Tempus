@@ -1,5 +1,4 @@
 set( HEADER_FILES
-  config.hh
   abscissa.hh
   application.hh
   base.hh
@@ -11,8 +10,8 @@ set( HEADER_FILES
   io.hh
   multimodal_graph.hh
   path_trace.hh
-  pgsql_importer.hh
   plugin.hh
+  plugin_factory.hh
   poi.hh
   point.hh
   progression.hh
@@ -26,6 +25,9 @@ set( HEADER_FILES
   transport_modes.hh
   variant.hh
   serializers.hh
+  routing_data.hh
+  routing_data_builder.hh
+  multimodal_graph_builder.hh
 )
 
 set( UTILS_HEADER_FILES
@@ -50,13 +52,16 @@ set( SOURCE_FILES
     transport_modes.cc
     request.cc
     roadmap.cc
-    application.cc plugin.cc 
-    pgsql_importer.cc 
-    plugin.cc 
+    application.cc
+    plugin.cc
+    plugin_factory.cc
     db.cc 
     utils/graph_db_link.cc 
     variant.cc
     serializers.cc
+    routing_data.cc
+    routing_data_builder.cc
+    multimodal_graph_builder.cc
 )
 
 if (ENABLE_SEGMENT_ALLOCATOR)

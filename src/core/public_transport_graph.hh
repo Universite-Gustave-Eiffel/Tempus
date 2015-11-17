@@ -24,6 +24,7 @@
 #include "road_graph.hh"
 #include "abscissa.hh"
 #include "optional.hh"
+#include "public_transport.hh"
 
 namespace Tempus {
 /**
@@ -36,32 +37,6 @@ namespace Tempus {
    PublicTransport::Stop and PublicTransport::Section classes are used to build a BGL public transport graph.
 */
 namespace PublicTransport {
-
-///
-/// Public transport agency
-class Agency : public Base
-{
-public:
-    DECLARE_RW_PROPERTY( name, std::string );
-};
-typedef std::vector<Agency> AgencyList;
-
-///
-/// Public transport networks. A network can be made of several agencies
-struct Network : public Base {
-    DECLARE_RW_PROPERTY( name, std::string );
-
-public:
-    ///
-    /// Get the list of agencies of this network
-    const AgencyList& agencies() const { return agencies_; }
-
-    ///
-    /// Add an agency to this network
-    void add_agency( const Agency& agency );
-private:
-    AgencyList agencies_;
-};
 
 ///
 /// storage types used to make a road graph

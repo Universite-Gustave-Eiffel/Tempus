@@ -512,10 +512,6 @@ class IfsttarRouting:
             self.initPluginOptions()
             self.displayPlugins( self.plugins )
 
-            self.getConstants()
-            self.displayTransportAndNetworks()
-            self.dlg.set_native_srid( self.native_srid() )
-        
             self.dlg.ui.pluginCombo.setEnabled( True )
             self.dlg.ui.verticalTabWidget.setTabEnabled( 1, True )
             self.dlg.ui.verticalTabWidget.setTabEnabled( 2, True )
@@ -549,11 +545,11 @@ class IfsttarRouting:
                 optval[k] = v.default_value.value
             self.plugin_options[name] = optval
 
-    def getConstants( self ):
+    def getConstants( self, plugin_name ):
         if self.wps is None:
             return
         try:
-            constants = self.wps.constant_list()
+            constants = self.wps.constant_list(plugin_name)
             if len(constants) == 3:
                 transport_modes, transport_networks, metadata = constants
             elif len(constants) == 2:
@@ -583,6 +579,10 @@ class IfsttarRouting:
 
         plugin_name = str(self.dlg.ui.pluginCombo.currentText())
         self.displayPluginOptions( plugin_name )
+
+        self.getConstants(plugin_name)
+        self.displayTransportAndNetworks()
+        self.dlg.set_native_srid( self.native_srid() )
 
     def onTabChanged( self, tab ):
         # Plugin tab

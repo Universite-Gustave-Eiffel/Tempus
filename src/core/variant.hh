@@ -49,25 +49,25 @@ public:
     std::string str() const;
     VariantType type() const;
 
-    static Variant fromBool( bool b );
-    static Variant fromInt( int64_t i );
-    static Variant fromFloat( double f );
-    static Variant fromString( const std::string& s, VariantType = StringVariant );
+    static Variant from_bool( bool b );
+    static Variant from_int( int64_t i );
+    static Variant from_float( double f );
+    static Variant from_string( const std::string& s, VariantType = StringVariant );
 
     template <typename T>
     T as() const {
         T v;
-        convertTo( v );
+        convert_to( v );
         return v;
     }
 private:
     typedef boost::variant<bool, int64_t, double, std::string> ValueT;
     ValueT v_;
 
-    void convertTo( bool& b ) const;
-    void convertTo( int64_t& i ) const;
-    void convertTo( double& f ) const;
-    void convertTo( std::string& s ) const;
+    void convert_to( bool& b ) const;
+    void convert_to( int64_t& i ) const;
+    void convert_to( double& f ) const;
+    void convert_to( std::string& s ) const;
 };
 
 typedef std::map<std::string, Variant> VariantMap;
