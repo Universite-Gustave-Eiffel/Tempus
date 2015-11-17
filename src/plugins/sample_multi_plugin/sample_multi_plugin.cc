@@ -64,7 +64,7 @@ public:
     }
 
 
-    MultiPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_multi_plugin" )
+    MultiPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_multi_plugin", options )
     {
         // load graph
         const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
@@ -186,7 +186,6 @@ public:
 
 private:
     const Multimodal::Graph* graph_;
-
 };
 
 class MultiPluginRequest : public PluginRequest
@@ -378,7 +377,7 @@ public:
             // Run for each intermiadry steps
 
             Multimodal::Vertex vorigin, vdestination;
-            vorigin = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.origin()), Multimodal::Vertex::road_t() );
+            vorigin = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
 
             Timer timer;
 
@@ -388,8 +387,8 @@ public:
                 // path of this step
                 Path lpath;
 
-                vorigin = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.steps()[j - 1].location()), Multimodal::Vertex::road_t() );
-                vdestination = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.steps()[j].location()), Multimodal::Vertex::road_t() );
+                vorigin = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.steps()[j - 1].location()).get(), Multimodal::Vertex::road_t() );
+                vdestination = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.steps()[j].location()).get(), Multimodal::Vertex::road_t() );
 
                 bool found;
                 found = find_path( vorigin, vdestination, request.optimizing_criteria()[i], lpath );
@@ -406,14 +405,16 @@ public:
                 std::copy( lpath.begin(), lpath.end(), std::back_inserter(path) );
             }
             // add origin back
-            path.push_front( Multimodal::Vertex( graph, request.origin(), Multimodal::Vertex::road_t() ) );
+            path.push_front( Multimodal::Vertex( graph, graph.road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() ) );
 
             metrics_[ "time_s" ] = Variant::fromFloat(timer.elapsed());
             metrics_["iterations"] = Variant::fromInt(iterations_);
 
             // convert the path to a roadmap
-            add_roadmap( request, *result, path );   
+            add_roadmap( request, *result, path );
         }
+        Db::Connection connection( plugin_->db_options() );
+        simple_multimodal_roadmap( *result, connection, graph );
 
         return std::move(result);
     }

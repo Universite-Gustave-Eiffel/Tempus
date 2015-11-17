@@ -32,9 +32,11 @@
 namespace Tempus
 {
 
-Plugin::Plugin( const std::string& nname ) :
+Plugin::Plugin( const std::string& nname, const VariantMap& options ) :
     name_( nname )
 {
+    schema_name_ = get_option_or_default( options, "db/schema" ).str();
+    db_options_ = get_option_or_default( options, "db/options" ).str();
 }
 
 Plugin::OptionDescriptionList Plugin::common_option_descriptions()
@@ -173,7 +175,6 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-                const PublicTransport::Graph& pt_graph = graph.public_transport(*graph.public_transport_index(step->network_id()));
 
                 // store stops
                 accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );
@@ -185,7 +186,7 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
                     pt_first = step;
                 }
 
-                // accumulate step sharing the same trip
+                // accumulate steps sharing the same trip
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
                     Roadmap::PublicTransportStep* next_step = static_cast<Roadmap::PublicTransportStep*>( &*next );
                     if ( next_step->trip_id() == step->trip_id() ) {
@@ -198,7 +199,7 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
                 // TODO: do not call postgis just to merge geometries
                 std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
                 for ( size_t i = 0; i < accum_pt.size(); i++ ) {
-                    q += (boost::format("ARRAY[%1%,%2%]") % pt_graph[accum_pt[i].first].db_id() % pt_graph[accum_pt[i].second].db_id() ).str();
+                    q += (boost::format("ARRAY[%1%,%2%]") % accum_pt[i].first % accum_pt[i].second ).str();
                     if ( i != accum_pt.size()-1 ) {
                         q += ",";
                     }
@@ -210,7 +211,9 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
                 }
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
-                step->set_geometry_wkb( wkb.substr( 2 ) );
+                if ( wkb.size() > 2 )
+                    wkb = wkb.substr( 2 );
+                step->set_geometry_wkb( wkb );
 
                 // copy info from the first step
                 step->set_transport_mode( pt_first->transport_mode() );
@@ -283,7 +286,7 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
                 //
                 movement = Roadmap::RoadStep::GoAhead;
 
-                on_roundabout = road_graph[graph.road_edge_from_id(step->road_edge_id())].is_roundabout();
+                on_roundabout = road_graph[graph.road_edge_from_id(step->road_edge_id()).get()].is_roundabout();
 
                 bool action = false;
 
@@ -375,8 +378,8 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
             PathTrace new_trace;
             for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
                 ValuedEdge ve = roadmap.trace()[i];
-                std::string wkb, road_name;
-                get_edge_info_from_db( ve, db, wkb, road_name );
+                std::string wkb, name1, name2;
+                get_edge_info_from_db( ve, db, wkb, name1, name2 );
                 ve.set_geometry_wkb( wkb );
                 new_trace.push_back( ve );
             }

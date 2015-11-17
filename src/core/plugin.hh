@@ -239,7 +239,7 @@ public:
 
     ///
     /// Ctor
-    Plugin( const std::string& name );
+    Plugin( const std::string& name, const VariantMap& = VariantMap() );
 
     ///
     /// Called when the plugin is unloaded from memory (uninstall)
@@ -257,12 +257,18 @@ public:
     /// Gets an option value, or the default value if unavailable
     Variant get_option_or_default( const VariantMap& options, const std::string& key ) const;
 
+    std::string db_options() const { return db_options_; }
+    std::string schema_name() const { return schema_name_; }
+
 private:
     /// Name of the dll this plugin comes from
     std::string name_;
 
     OptionDescriptionList option_descriptions_;
     Capabilities capabilities_;
+
+    std::string db_options_;
+    std::string schema_name_;
 };
 
 

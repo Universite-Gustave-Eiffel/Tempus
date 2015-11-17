@@ -588,6 +588,13 @@ public:
                         XML::set_prop( step_node, "poi", step->initial_name() );
                         XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
                     }
+                    else if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Road ) {
+                        step_node = XML::new_node( "transfer_step" );
+                        XML::set_prop( step_node, "type", "1" );
+                        XML::set_prop( step_node, "road", step->final_name() );
+                        XML::set_prop( step_node, "poi", "0" );
+                        XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
+                    }
                 }
 
                 BOOST_ASSERT( step_node );

@@ -80,7 +80,7 @@ Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Mult
 
 ///
 /// Get geometry WKB and road name of a Multimodal edge, from the database
-void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wkb, std::string& road_name );
+void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wkb, std::string& initial_name, std::string& final_name );
 
 ///
 /// Fill a roadmap with elements stored in DB (road names, geometries)

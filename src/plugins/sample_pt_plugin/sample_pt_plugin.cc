@@ -146,12 +146,11 @@ public:
         }
         else {
             // else use regular road nodes from the request
-            const Road::Graph& road_graph = graph_.road();
-            CERR << "origin = " << road_graph[request.origin()].db_id() << " dest = " << road_graph[request.destination()].db_id() << endl;
+            CERR << "origin = " << request.origin() << " dest = " << request.destination() << endl;
 
             // for each step in the request, find the corresponding public transport node
             for ( size_t i = 0; i < 2; i++ ) {
-                Road::Vertex node;
+                db_id_t node;
 
                 if ( i == 0 ) {
                     node = request.origin();
@@ -163,7 +162,7 @@ public:
                 PublicTransport::Vertex found_vertex;
 
                 std::string q = ( boost::format( "select s.id from tempus.road_node as n join tempus.pt_stop as s on st_dwithin( n.geom, s.geom, 100 ) "
-                                                 "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % road_graph[node].db_id() ).str();
+                                                 "where n.id = %1% order by st_distance( n.geom, s.geom) asc limit 1" ) % node ).str();
                 Db::Result res = db.exec( q );
 
                 if ( res.size() < 1 ) {
@@ -265,8 +264,8 @@ public:
             Roadmap::PublicTransportStep* ptstep = new Roadmap::PublicTransportStep();
 
             ptstep->set_trip_id(1);
-            ptstep->set_departure_stop( previous );
-            ptstep->set_arrival_stop( *it );
+            ptstep->set_departure_stop( pt_graph[previous].db_id() );
+            ptstep->set_arrival_stop( pt_graph[*it].db_id() );
             ptstep->set_network_id( network_id );
             ptstep->set_transport_mode( 1 );
             ptstep->set_cost( CostId::CostDistance, distance_map[*it] );

@@ -543,8 +543,8 @@ class TempusRequest:
         self.save['plugins'] = outputs['plugins']
         return parse_plugins(outputs['plugins'])
 
-    def constant_list(self):
-        outputs = self.wps.execute('constant_list', {})
+    def constant_list(self, plugin_name):
+        outputs = self.wps.execute('constant_list', {'plugin': ['plugin', {'name': plugin_name}] } )
         for k, v in outputs.iteritems():
             self.save[k] = v
         if outputs.has_key("metadata"):

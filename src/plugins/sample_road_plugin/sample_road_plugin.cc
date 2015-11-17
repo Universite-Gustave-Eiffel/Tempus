@@ -62,16 +62,13 @@ public:
         return params;
     }
 
-    RoadPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_road_plugin" ) {
+    RoadPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_road_plugin", options ) {
         // load graph
         const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
         graph_ = dynamic_cast<const Multimodal::Graph*>( rd );
         if ( graph_ == nullptr ) {
             throw std::runtime_error( "Problem loading the multimodal graph" );
         }
-
-        schema_name_ = get_option_or_default( options, "db/schema" ).str();
-        db_options_ = get_option_or_default( options, "db/options" ).str();
     }
 
     const RoutingData* routing_data() const { return graph_; }
@@ -80,11 +77,6 @@ public:
 
 private:
     const Multimodal::Graph* graph_;
-
-    std::string db_options_;
-    std::string schema_name_;
-
-    friend class RoadPluginRequest;
 };
 
 class RoadPluginRequest : public PluginRequest
@@ -98,8 +90,8 @@ private:
     struct path_found_exception {};
 
 public:
-    RoadPluginRequest( const RoadPlugin* parent, const PluginRequest::OptionValueList& options )
-        : PluginRequest( parent, options ), graph_( *parent->graph_ )
+    RoadPluginRequest( const RoadPlugin* parent, const PluginRequest::OptionValueList& options, const Multimodal::Graph* graph )
+        : PluginRequest( parent, options ), graph_( *graph )
     {
     }
 
@@ -128,8 +120,10 @@ public:
     }
 
     virtual std::unique_ptr<Result> process( const Request& request ) {
-        REQUIRE( vertex_exists( request.origin(), graph_.road() ) );
-        REQUIRE( vertex_exists( request.destination(), graph_.road() ) );
+        REQUIRE( graph_.road_vertex_from_id( request.origin() ) );
+        for ( size_t i = 0; i < request.steps().size(); i++ ) {
+            REQUIRE( graph_.road_vertex_from_id(request.steps()[i].location()) );
+        }
 
         if ( ( request.optimizing_criteria()[0] != CostId::CostDistance ) ) {
             throw std::invalid_argument( "Unsupported optimizing criterion" );
@@ -162,7 +156,7 @@ public:
         Tempus::PluginRoadGraphVisitor vis( this );
 
         std::list<Road::Vertex> path;
-        Road::Vertex origin = request.origin();
+        Road::Vertex origin = graph_.road_vertex_from_id( request.origin() ).get();
         // resolve each step, in reverse order
         bool path_found = true;
 
@@ -170,13 +164,13 @@ public:
             size_t i = ik - 1;
 
             if ( i > 0 ) {
-                origin = request.steps()[i-1].location();
+                origin = graph_.road_vertex_from_id(request.steps()[i-1].location()).get();
             }
             else {
-                origin = request.origin();
+                origin = graph_.road_vertex_from_id(request.origin()).get();
             }
 
-            destination_ = request.steps()[i].location();
+            destination_ = graph_.road_vertex_from_id(request.steps()[i].location()).get();
 
             try {
                 boost::dijkstra_shortest_paths( road_graph,
@@ -196,7 +190,7 @@ public:
                 // Dijkstra has been short cut
             }
 
-            // reorder the path, could have been better included ...
+            // reorder the path
             Road::Vertex current = destination_;
 
             while ( current != origin ) {
@@ -259,7 +253,7 @@ public:
         }
 
         if ( prepare_result ) {
-            Db::Connection connection( static_cast<const RoadPlugin*>(plugin_)->db_options_ );
+            Db::Connection connection( plugin_->db_options() );
             simple_multimodal_roadmap( *result, connection, graph_ );
         }
         return std::move( result );
@@ -268,7 +262,7 @@ public:
 
 std::unique_ptr<PluginRequest> RoadPlugin::request( const PluginRequest::OptionValueList& options ) const
 {
-    return std::unique_ptr<PluginRequest>( new RoadPluginRequest( this, options ) );
+    return std::unique_ptr<PluginRequest>( new RoadPluginRequest( this, options, graph_ ) );
 }
 
 }

@@ -279,11 +279,11 @@ private:
 public:
     ///
     /// @return a Road::Vertex from it's database id in O(1)
-    Road::Vertex road_vertex_from_id( db_id_t id ) const;
+    boost::optional<Road::Vertex> road_vertex_from_id( db_id_t id ) const;
 
     ///
     /// @return a Road::Edge from it's database id in O(1)
-    Road::Edge road_edge_from_id( db_id_t id ) const;
+    boost::optional<Road::Edge> road_edge_from_id( db_id_t id ) const;
 
 private:
     typedef std::map<db_id_t, PublicTransportGraphIndex> PublicTransportGraphIdxMap;

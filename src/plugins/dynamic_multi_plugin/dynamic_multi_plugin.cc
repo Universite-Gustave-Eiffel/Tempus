@@ -274,7 +274,7 @@ Plugin::Capabilities DynamicMultiPlugin::plugin_capabilities()
     return caps;
 }
 
-DynamicMultiPlugin::DynamicMultiPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "dynamic_multi_plugin" )
+DynamicMultiPlugin::DynamicMultiPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "dynamic_multi_plugin", options )
 {
     // load graph
     const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
@@ -322,8 +322,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     std::unique_ptr<Result> result( new Result );
 
     const DynamicMultiPlugin* parent = static_cast<const DynamicMultiPlugin*>( plugin_ );
-    std::string db_options = Application::instance()->db_options();
-    Db::Connection db_( db_options );
+    Db::Connection db_( plugin_->db_options() );
 
     const Automaton<Road::Edge>& automaton_ = parent->automaton();
 
@@ -358,13 +357,13 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // Check request and clear result
     REQUIRE( request.allowed_modes().size() >= 1 );
-    REQUIRE( vertex_exists( request.origin(), graph_->road() ) );
-    REQUIRE( vertex_exists( request.destination(), graph_->road() ) );
+    REQUIRE( graph_->road_vertex_from_id( request.origin() ) );
+    REQUIRE( graph_->road_vertex_from_id( request.destination() ) );
 
     if ( request.optimizing_criteria()[0] != CostId::CostDuration )
         throw std::invalid_argument( "Unsupported optimizing criterion" );
 
-    if ( verbose_ ) cout << "Road origin node ID = " << graph_->road()[request.origin()].db_id() << ", road destination node ID = " << graph_->road()[request.destination()].db_id() << endl;
+    if ( verbose_ ) cout << "Road origin node ID = " << request.origin() << ", road destination node ID = " << request.destination() << endl;
 
 
     // look for public transports in allowed modes
@@ -381,14 +380,14 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
         }
     }
     // resolve private parking location
-    db_id_t parking_location_;
+    Road::Vertex parking_location_;
     if ( private_mode ) {
         if ( request.parking_location() ) {
-            parking_location_ = request.parking_location().get();
+            parking_location_ = graph_->road_vertex_from_id(request.parking_location().get()).get();
         }
         else {
             // place the private parking at the origin
-            parking_location_ = request.origin();
+            parking_location_ = graph_->road_vertex_from_id(request.origin()).get();
         }
     }
 
@@ -568,8 +567,8 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     std::map< Multimodal::Vertex, db_id_t > available_vehicles_;
 
     // Get origin and destination nodes
-    Multimodal::Vertex origin = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.origin()), Multimodal::Vertex::road_t() );
-    destination_ = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.destination()), Multimodal::Vertex::road_t() );
+    Multimodal::Vertex origin = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
+    destination_ = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.destination()).get(), Multimodal::Vertex::road_t() );
 
     bool reversed = request.steps().back().constraint().type() == Request::TimeConstraint::ConstraintBefore;
 
@@ -642,22 +641,20 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
             catch (std::exception&) {
                 throw std::runtime_error("Cannot parse " + car );
             }
-            bool found;
-            Road::Vertex v;
-            boost::tie(v, found) = vertex_from_id( vidx, graph_->road() );
-            if ( !found ) {
+            boost::optional<Road::Vertex> vv = graph_->road_vertex_from_id( vidx );
+            if ( !vv ) {
                 throw std::runtime_error("Cannot find vertex from " + car );
             }
-            destinations.push_back(v);
+            destinations.push_back(vv.get());
             dest_str = cdr;
         }
     }
     else {
         if (!reversed) {
-            destinations.push_back( request.destination() );
+            destinations.push_back( graph_->road_vertex_from_id(request.destination()).get() );
         }
         else {
-            destinations.push_back( request.origin() );
+            destinations.push_back( graph_->road_vertex_from_id(request.origin()).get() );
         }
     }
 
@@ -725,6 +722,9 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
         Path path = reorder_path( destination_o, origin_o, /* reverse */ true );
         add_roadmap( request, *result, path, /* reverse */ true );
     }
+
+    Db::Connection connection( plugin_->db_options() );
+    simple_multimodal_roadmap( *result, connection, *graph_ );
 
     return result;
 }
@@ -881,8 +881,8 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
             Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep.get() );
 
             step->set_transport_mode( it->mode );
-            step->set_departure_stop( it->vertex.pt_vertex() );
-            step->set_arrival_stop( next->vertex.pt_vertex() );
+            step->set_departure_stop( (*it->vertex.pt_graph())[it->vertex.pt_vertex()].db_id() );
+            step->set_arrival_stop( (*next->vertex.pt_graph())[next->vertex.pt_vertex()].db_id() );
 
             step->set_departure_time( potential_map_[*it] );
             step->set_arrival_time( potential_map_[*next] );

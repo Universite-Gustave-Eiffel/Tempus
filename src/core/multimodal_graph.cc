@@ -1275,24 +1275,22 @@ const Graph::EdgeStops& Graph::edge_stops( const Road::Edge& e ) const
     return it->second;
 }
 
-Road::Vertex Graph::road_vertex_from_id( db_id_t id ) const
+boost::optional<Road::Vertex> Graph::road_vertex_from_id( db_id_t id ) const
 {
-    Road::Vertex v = Road::Vertex();
     auto it = road_vertex_map_.find( id );
     if ( it != road_vertex_map_.end() ) {
-        v = it->second;
+        return it->second;
     }
-    return v;
+    return boost::optional<Road::Vertex>();
 }
 
-Road::Edge Graph::road_edge_from_id( db_id_t id ) const
+boost::optional<Road::Edge> Graph::road_edge_from_id( db_id_t id ) const
 {
-    Road::Edge e = Road::Edge();
     auto it = road_edge_map_.find( id );
     if ( it != road_edge_map_.end() ) {
-        e = it->second;
+        return it->second;
     }
-    return e;
+    return boost::optional<Road::Edge>();
 }
 
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )

@@ -181,7 +181,7 @@ class TestWPS(unittest.TestCase):
                         plugin_options = { 'trace_vertex' : True },
                         origin = Point( ox, oy ),
                         steps = [ RequestStep(destination = Point(dx, dy)) ] )
-        self.assertEqual( len(tempus.results[0].steps), 5 )
+        self.assertEqual( len(tempus.results[0].steps), 13 )
 
         # run without options
         is_ex = False
@@ -220,7 +220,7 @@ class TestWPS(unittest.TestCase):
                                            'destination_pt_stop' : 1318 },
                         origin = Point( vertex = 0 ),
                         steps = [ RequestStep(destination = Point( vertex = 0 )) ] )
-        self.assertEqual( len(tempus.results[0].steps), 1 )
+        self.assertEqual( len(tempus.results[0].steps), 6 )
 
 if __name__ == '__main__':
     unittest.main()

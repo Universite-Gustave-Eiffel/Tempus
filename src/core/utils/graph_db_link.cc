@@ -70,21 +70,22 @@ Point2D coordinates( const Multimodal::Vertex& v, Db::Connection& db, const Mult
 return coordinates( v.poi(), db );
 }
 
-void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wkb, std::string& road_name )
+void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wkb, std::string& initial_name, std::string& final_name )
 {
     std::string res_wkb;
     std::string query;
     if ( e.source().type() == MMVertex::Road && e.target().type() == MMVertex::Road ) {
-        query = ( boost::format( "select st_asbinary(geom), road_name from "
+        query = ( boost::format( "select st_asbinary(geom), road_name, road_name from "
                                  "(select geom, road_name from tempus.road_section where node_from=%1% and node_to=%2% "
                                  "union "
-                                 "select geom, road_name from tempus.road_section where node_to=%1% and node_from=%2%) t"
+                                 "select geom, road_name from tempus.road_section where node_to=%1% and node_from=%2%) t "
                                  "where geom is not null limit 1"
                                  ) % e.source().id() % e.target().id() ).str();
     }
     else if ( e.source().type() == MMVertex::Road && e.target().type() == MMVertex::Transport ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
-                                 "(select road_name from tempus.road_section where id=t2.road_section_id) from "
+                                 "(select road_name from tempus.road_section where id=t2.road_section_id), "
+                                 "(select name from tempus.pt_stop where id=%2%) from "
                                  "  (select geom from tempus.road_node where id=%1%) as t1, "
                                  "  (select geom, road_section_id from tempus.pt_stop where id=%2%) as t2 "
                                  ) % e.source().id() % e.target().id() ).str();
@@ -92,6 +93,7 @@ void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wk
     }
     else if ( e.source().type() == MMVertex::Transport && e.target().type() == MMVertex::Road ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
+                                 "(select name from tempus.pt_stop where id=%1%), "
                                  "(select road_name from tempus.road_section where id=t1.road_section_id) from "
                                  "  (select geom, road_section_id from tempus.pt_stop where id=%1%) as t1, "
                                  "  (select geom from tempus.road_node where id=%2%) as t2 "
@@ -100,7 +102,8 @@ void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wk
     }
     else if ( e.source().type() == MMVertex::Road && e.target().type() == MMVertex::Poi ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
-                                 "(select road_name from tempus.road_section where id=t2.road_section_id) from "
+                                 "(select road_name from tempus.road_section where id=t2.road_section_id), "
+                                 "(select name from tempus.poi where id=%2%) from "
                                  "(select geom from tempus.road_node where id=%1%) as t1, "
                                  "(select geom, road_section_id from tempus.poi where id=%2%) as t2 "
                                  ) % e.source().id() % e.target().id() ).str();
@@ -108,6 +111,7 @@ void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wk
     }
     else if ( e.source().type() == MMVertex::Poi && e.target().type() == MMVertex::Road ) {
         query = ( boost::format( "SELECT st_asbinary(st_makeline(t1.geom, t2.geom)), "
+                                 "(select name from tempus.poi where id=%1%), "
                                  "(select road_name from tempus.road_section where id=t1.road_section_id) from "
                                  "(select geom, road_section_id from tempus.poi where id=%1%) as t1, "
                                  "(select geom from tempus.road_node where id=%2%) as t2 "
@@ -115,7 +119,7 @@ void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wk
         
     }
     else if ( e.source().type() == MMVertex::Transport && e.target().type() == MMVertex::Transport ) {
-        query = ( boost::format( "SELECT st_asbinary(geom), '' from "
+        query = ( boost::format( "SELECT st_asbinary(geom), (select name from tempus.pt_stop where id=%1%), (select name from tempus.pt_stop where id=%2%) from "
                                  "tempus.pt_section where stop_from=%1% and stop_to=%2%"
                                  ) % e.source().id() % e.target().id() ).str();
     }
@@ -126,10 +130,11 @@ void get_edge_info_from_db( const MMEdge& e, Db::Connection& db, std::string& wk
     if ( wkb.size() > 2 ) {
         wkb = wkb.substr( 2 );
     }
-    road_name = res[0][1].as<std::string>();
+    initial_name = res[0][1].as<std::string>();
+    final_name = res[0][2].as<std::string>();
 }
 
-void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, Db::Connection& db, const Multimodal::Graph& graph )
+void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, Db::Connection& db, const Multimodal::Graph& /*graph*/ )
 {
     // road node id -> road step*
     std::map<db_id_t, Roadmap::RoadStep*> road_steps;
@@ -144,24 +149,19 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
         }
         else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
             Roadmap::PublicTransportStep* pt_step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-            const PublicTransport::Graph& pt_graph = graph.public_transport( *graph.public_transport_index(pt_step->network_id()) );
-            db_id_t from_id = pt_graph[pt_step->departure_stop()].db_id();
-            db_id_t to_id = pt_graph[pt_step->arrival_stop()].db_id();
+            db_id_t from_id = pt_step->departure_stop();
+            db_id_t to_id = pt_step->arrival_stop();
             pt_steps[from_id][to_id] = pt_step;
             pt_route[pt_step->trip_id()].push_back( pt_step );
         }
         else if ( it->step_type() == Roadmap::Step::TransferStep ) {
             auto tr_step = static_cast<Roadmap::TransferStep*>( &*it );
             std::string wkb;
-            std::string road_name;
+            std::string name1, name2;
             // WARNING: transfer steps are here requested one by one
-            get_edge_info_from_db( *tr_step, db, wkb, road_name );
-            if ( tr_step->source().type() == MMVertex::Road ) {
-                tr_step->set_initial_name( road_name );
-            }
-            else if ( tr_step->target().type() == MMVertex::Road ) {
-                tr_step->set_final_name( road_name );
-            }
+            get_edge_info_from_db( *tr_step, db, wkb, name1, name2 );
+            tr_step->set_initial_name( name1 );
+            tr_step->set_final_name( name2 );
             tr_step->set_geometry_wkb( wkb );
         }
     }
@@ -193,9 +193,10 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
     }
 
     //
-    // PT steps geometry
+    // PT steps geometry and stop names
     if ( !pt_steps.empty() ) {
-        std::string q = "SELECT stop_from, stop_to, ST_AsBinary(geom) FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
+        std::string q = "SELECT stop_from, stop_to, (select name from tempus.pt_stop where id=stop_from), (select name from tempus.pt_stop where id=stop_to), ST_AsBinary(geom) "
+            "FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
         size_t l = 0;
         for ( auto p : pt_steps ) {
             for ( auto p2 : p.second ) {
@@ -212,11 +213,15 @@ void fill_from_db( Roadmap::StepIterator itbegin, Roadmap::StepIterator itend, D
         for ( size_t i = 0; i < res.size(); i++ ) {
             db_id_t from = res[i][0];
             db_id_t to = res[i][1];
-            std::string wkb = res[i][2];
+            std::string from_name = res[i][2];
+            std::string to_name = res[i][3];
+            std::string wkb = res[i][4];
             // get rid of the heading '\x'
             if ( wkb.size() > 2 ) {
                 wkb = wkb.substr( 2 );
             }
+            pt_steps[from][to]->set_departure_name( from_name );
+            pt_steps[from][to]->set_arrival_name( to_name );
             pt_steps[from][to]->set_geometry_wkb( wkb );
         }
     }
