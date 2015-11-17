@@ -77,7 +77,7 @@ int main( int argc, char* argv[] )
     }
 
     VariantMap options;
-    options["db/options"] = Variant::fromString( db_options );
+    options["db/options"] = Variant::from_string( db_options );
 
     ///
     /// Plugins

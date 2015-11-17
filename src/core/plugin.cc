@@ -42,8 +42,8 @@ Plugin::Plugin( const std::string& nname, const VariantMap& options ) :
 Plugin::OptionDescriptionList Plugin::common_option_descriptions()
 {
     Plugin::OptionDescriptionList opt;
-    opt.declare_option( "db/options", "DB connection options", Variant::fromString(""));
-    opt.declare_option( "db/schema", "DB schema name", Variant::fromString("tempus"));
+    opt.declare_option( "db/options", "DB connection options", Variant::from_string(""));
+    opt.declare_option( "db/schema", "DB schema name", Variant::from_string("tempus"));
     return opt;
 }
 
@@ -59,8 +59,8 @@ PluginRequest::PluginRequest( const Plugin* plugin, const OptionValueList& optio
     plugin_(plugin), options_( options )
 {
     // default metrics
-    metrics_[ "time_s" ] = Variant::fromFloat(0.0);
-    metrics_[ "iterations" ] = Variant::fromInt(0);
+    metrics_[ "time_s" ] = Variant::from_float(0.0);
+    metrics_[ "iterations" ] = Variant::from_int(0);
 }
 
 Plugin::OptionDescriptionList option_descriptions( const Plugin* plugin )

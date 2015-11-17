@@ -138,8 +138,8 @@ int main( int argc, char* argv[] )
         heap_usage = 0;
         TextProgression progression;
         VariantMap options;
-        options["db/options"] = Variant::fromString(db_options);
-        options["db/schema"] = Variant::fromString(schema);
+        options["db/options"] = Variant::from_string(db_options);
+        options["db/schema"] = Variant::from_string(schema);
         const RoutingData* rd = load_routing_data( graph_type, progression, options );
 
         info = get_memory_usage();

@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE( test_routing_data_loading )
 {
     TextProgression progression;
     VariantMap options;
-    options["db/options"] = Variant::fromString( g_db_options + " dbname=" + g_db_name );
+    options["db/options"] = Variant::from_string( g_db_options + " dbname=" + g_db_name );
     const RoutingData* data = load_routing_data( "multimodal_graph", progression, options );
     BOOST_CHECK( data );
     

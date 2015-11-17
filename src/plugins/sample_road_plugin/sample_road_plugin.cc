@@ -51,8 +51,8 @@ class RoadPlugin : public Plugin {
 public:
     static const OptionDescriptionList option_descriptions() {
         OptionDescriptionList odl;
-        odl.declare_option( "trace_vertex", "Trace vertex traversal", Variant::fromBool(false) );
-        odl.declare_option( "prepare_result", "Prepare result", Variant::fromBool(true) );
+        odl.declare_option( "trace_vertex", "Trace vertex traversal", Variant::from_bool(false) );
+        odl.declare_option( "prepare_result", "Prepare result", Variant::from_bool(true) );
         return odl;
     }
 
@@ -211,8 +211,8 @@ public:
 
         path.push_front( origin );
 
-        metrics_[ "time_s" ] = Variant::fromFloat(timer.elapsed());
-        metrics_["iterations"] = Variant::fromInt(iterations_);
+        metrics_[ "time_s" ] = Variant::from_float(timer.elapsed());
+        metrics_["iterations"] = Variant::from_int(iterations_);
 
         if ( !path_found ) {
             throw std::runtime_error( "No path found !" );

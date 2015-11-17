@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     std::cout << "PgImporterTest::testConsistency()" << std::endl;
     TextProgression progression;
     VariantMap options;
-    options["db/options"] = Variant::fromString(g_db_options + " dbname = " + g_db_name);
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
     const Multimodal::Graph* graph( dynamic_cast<const Tempus::Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
     testConsistency_( graph );
 
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
     std::cout << "PgImporterTest::testMultimodal()" << std::endl;
     TextProgression progression;
     VariantMap options;
-    options["db/options"] = Variant::fromString(g_db_options + " dbname = " + g_db_name);
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
     const Multimodal::Graph* graph( dynamic_cast<const Tempus::Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
 
     size_t nv = 0;
@@ -623,7 +623,7 @@ BOOST_AUTO_TEST_CASE( testReverseRoad )
     std::cout << "PgImporterTest::testReverseRoad()" << std::endl;
     TextProgression progression;
     VariantMap options;
-    options["db/options"] = Variant::fromString(g_db_options + " dbname = " + g_db_name);
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
     const Multimodal::Graph* graph( dynamic_cast<const Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
 
     Road::ReverseGraph rroad( graph->road() );
@@ -669,7 +669,7 @@ BOOST_AUTO_TEST_CASE( testReverseMultimodal )
     std::cout << "PgImporterTest::testReverseMultimodal()" << std::endl;
     TextProgression progression;
     VariantMap options;
-    options["db/options"] = Variant::fromString(g_db_options + " dbname = " + g_db_name);
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
     const Multimodal::Graph* graph( dynamic_cast<const Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
 
     Multimodal::ReverseGraph rgraph( *graph );
@@ -768,7 +768,7 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
 {
     TextProgression progression;
     VariantMap options;
-    options["db/options"] = Variant::fromString(g_db_options + " dbname = " + g_db_name);
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
     const Multimodal::Graph* graph( dynamic_cast<const Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
     Db::Connection connection( g_db_options + " dbname = " + g_db_name );
 

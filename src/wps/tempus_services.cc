@@ -387,7 +387,7 @@ public:
                 const std::string value = XML::get_prop( value_node, "value" );
 
                 
-                options[name] = Variant::fromString( value, t );
+                options[name] = Variant::from_string( value, t );
 
                 field = XML::get_next_nontext( field->next );
             }
