@@ -48,44 +48,50 @@ db_id_t CHRoutingData::vertex_id( CHVertex v ) const
     return node_id_[v];
 }
 
-std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string& pg_options, ProgressionCallback&, const VariantMap& /*options*/ ) const
+std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string& pg_options, ProgressionCallback&, const VariantMap& options ) const
 {
     std::unique_ptr<CHQuery> ch_query;
     MiddleNodeMap middle_node;
     std::vector<db_id_t> node_id;
+
+    std::string schema = "ch";
+    if ( options.find( "ch/schema" ) != options.end() ) {
+        schema = options.find( "ch/schema" )->second.str();
+    }
+    std::cout << "schema : " << schema << std::endl;
     
     Db::Connection conn( pg_options );
 
     size_t num_nodes = 0;
     {
-        Db::Result r( conn.exec( "select count(*) from ch.ordered_nodes" ) );
+        Db::Result r( conn.exec( (boost::format("select count(*) from %1%.ordered_nodes") % schema).str() ) );
         BOOST_ASSERT( r.size() == 1 );
         r[0][0] >> num_nodes;
     }
     {
-        Db::ResultIterator res_it = conn.exec_it( "select * from\n"
-                                                  "(\n"
+        Db::ResultIterator res_it = conn.exec_it( (boost::format( "select * from\n"
+                                                                  "(\n"
                                                   // the upward part
-                                                  "select o1.id as id1, o2.id as id2, weight, o3.id as mid, 0 as dir, rs1.id as eid1, rs2.id as eid2, o1.node_id, o2.node_id, o3.node_id\n"
-                                                  "from ch.query_graph\n"
-                                                  "left join ch.ordered_nodes as o3 on o3.node_id = contracted_id\n"
+                                                  "select o1.sort_order as id1, o2.sort_order as id2, weight, o3.sort_order as mid, 0 as dir, rs1.id as eid1, rs2.id as eid2, o1.node_id, o2.node_id, o3.node_id\n"
+                                                  "from %1%.query_graph\n"
+                                                  "left join %1%.ordered_nodes as o3 on o3.node_id = contracted_id\n"
                                                   "left join tempus.road_section as rs1 on rs1.node_from = node_inf and rs1.node_to = node_sup\n"
                                                   "left join tempus.road_section as rs2 on rs2.node_from = node_sup and rs2.node_to = node_inf\n"
-                                                  ", ch.ordered_nodes as o1, ch.ordered_nodes as o2\n"
+                                                  ", %1%.ordered_nodes as o1, %1%.ordered_nodes as o2\n"
                                                   "where o1.node_id = node_inf and o2.node_id = node_sup\n"
                                                   "and query_graph.\"constraints\" & 1 > 0\n"
 
                                                   // union with the downward part
                                                   "union all\n"
-                                                  "select o1.id as id1, o2.id as id2, weight, o3.id as mid, 1 as dir, rs1.id as eid1, rs2.id as eid2, o1.node_id, o2.node_id, o3.node_id\n"
-                                                  "from ch.query_graph\n"
-                                                  "left join ch.ordered_nodes as o3 on o3.node_id = contracted_id\n"
+                                                  "select o1.sort_order as id1, o2.sort_order as id2, weight, o3.sort_order as mid, 1 as dir, rs1.id as eid1, rs2.id as eid2, o1.node_id, o2.node_id, o3.node_id\n"
+                                                  "from %1%.query_graph\n"
+                                                  "left join %1%.ordered_nodes as o3 on o3.node_id = contracted_id\n"
                                                   "left join tempus.road_section as rs1 on rs1.node_from = node_inf and rs1.node_to = node_sup\n"
                                                   "left join tempus.road_section as rs2 on rs2.node_from = node_sup and rs2.node_to = node_inf\n"
-                                                  ", ch.ordered_nodes as o1, ch.ordered_nodes as o2\n"
+                                                  ", %1%.ordered_nodes as o1, %1%.ordered_nodes as o2\n"
                                                   "where o1.node_id = node_inf and o2.node_id = node_sup\n"
                                                   "and query_graph.\"constraints\" & 2 > 0\n"
-                                                  ") t order by id1, dir, id2, weight asc"
+                                                                 ") t order by id1, dir, id2, weight asc" ) % schema).str()
                                                   );
         Db::ResultIterator it_end;
 
@@ -100,8 +106,8 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
         int old_dir = 0;
         for ( ; res_it != it_end; res_it++ ) {
             Db::RowValue res_i = *res_it;
-            uint32_t id1 = res_i[0].as<uint32_t>() - 1;
-            uint32_t id2 = res_i[1].as<uint32_t>() - 1;
+            uint32_t id1 = res_i[0].as<uint32_t>();
+            uint32_t id2 = res_i[1].as<uint32_t>();
             int dir = res_i[4];
             if ( (id1 == old_id1) && (id2 == old_id2) && (dir == old_dir) ) {
                 // we may have the same edges with different costs
@@ -137,7 +143,7 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
             p.db_id = eid;
             p.is_shortcut = 0;
             if ( !res_i[3].is_null() ) {
-                uint32_t middle = res_i[3].as<uint32_t>() - 1;
+                uint32_t middle = res_i[3].as<uint32_t>();
                 // we have a middle node, it is a shortcut
                 p.is_shortcut = 1;
                 if ( dir == 0 ) {
@@ -158,12 +164,12 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
     }
     {
         node_id.resize( num_nodes );
-        Db::ResultIterator res_it = conn.exec_it( "select id, node_id from ch.ordered_nodes" );
+        Db::ResultIterator res_it = conn.exec_it( (boost::format("select node_id from %1%.ordered_nodes order by id asc") % schema).str() );
         Db::ResultIterator it_end;
-        for ( ; res_it != it_end; res_it++ ) {
+        uint32_t v = 0;
+        for ( ; res_it != it_end; res_it++, v++ ) {
             Db::RowValue res_i = *res_it;
-            CHVertex v = res_i[0].as<uint32_t>() - 1;
-            db_id_t id = res_i[1];
+            db_id_t id = res_i[0];
             BOOST_ASSERT( v < node_id.size() );
             node_id[v] = id;
         }

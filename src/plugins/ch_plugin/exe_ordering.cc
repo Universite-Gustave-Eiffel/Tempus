@@ -8,6 +8,7 @@
 #include "variant.hh"
 #include "routing_data.hh"
 #include "multimodal_graph.hh"
+#include "db.hh"
 
 using TNodeContractionCost = int;
 using TRemainingNodeSet = std::unordered_set<CHVertex>;
@@ -363,8 +364,7 @@ void apply_on_2_neighbourhood( const CHGraph& graph, CHVertex node, Foo foo )
 vector<CHVertex> get_independent_node_set( const CHGraph& graph,
                                            vector<CHVertex>::const_iterator nodeBeginIt,
                                            int numNodes,
-                                           const vector<TNodeContractionCost>& nodeCosts,
-                                           const vector<TNodeId64>& /*nodeIds64*/ )
+                                           const vector<TNodeContractionCost>& nodeCosts )
 {
     // Get all independent nodes from the sequence [nodeBeginIt : NodeBeginIt+numNodes]
 
@@ -404,7 +404,7 @@ vector<CHVertex> get_independent_node_set( const CHGraph& graph,
 void get_ordered_nodes( CHGraph& graph,
                         vector<CHVertex>& processedNodes,
                         vector<TNodeContractionCost>& nodeCosts,
-                        const vector<TNodeId64>& nodeIds64)
+                        const std::function<TNodeId64(CHVertex)>& node_id )
 {
     // preconditions : these two variables are only to return
     REQUIRE(processedNodes.size()==0);
@@ -426,13 +426,13 @@ void get_ordered_nodes( CHGraph& graph,
     TRemainingNodeSet remainingNodes;
 
     // Parallel processing of node costs:
-    #pragma omp parallel
+    //#pragma omp parallel
     {
-        #pragma omp for schedule(dynamic)
+        //#pragma omp for schedule(dynamic)
         //for (TNodeId node=0; node<graph.maxNode; ++node)
         for ( CHVertex node = 0; node < num_vertices( graph ); node++ )
         {
-            nodeCosts[node] = get_node_cost( graph, node, hierarchyDepths, nodeIds64[node] );
+            nodeCosts[node] = get_node_cost( graph, node, hierarchyDepths, node_id(node) );
         }
     }
 
@@ -470,7 +470,7 @@ void get_ordered_nodes( CHGraph& graph,
         // begin and end of each group.
         // The routine is applied again to the first group.
         // So we allocate only one vector for all the process.
-        vector<CHVertex> nextNodes = get_independent_node_set(graph, sortedNodes.cbegin(), step, nodeCosts, nodeIds64);
+        vector<CHVertex> nextNodes = get_independent_node_set(graph, sortedNodes.cbegin(), step, nodeCosts );
         REQUIRE(!nextNodes.empty());
 
         cout << "Contracting " << nextNodes.size()
@@ -528,13 +528,13 @@ void get_ordered_nodes( CHGraph& graph,
 
         // Parallel update of node costs:
         vector<CHVertex> impactedNeighbors1(impactedNeighbors.begin(), impactedNeighbors.end());
-        #pragma omp parallel
+        //#pragma omp parallel
         {
-            #pragma omp for schedule(dynamic)
+            //#pragma omp for schedule(dynamic)
             for (int i=0; i<int(impactedNeighbors1.size()); ++i)
             {
                 CHVertex updateNode = impactedNeighbors1[i];
-                nodeCosts[updateNode] = get_node_cost(graph, updateNode, hierarchyDepths, nodeIds64[updateNode]);
+                nodeCosts[updateNode] = get_node_cost(graph, updateNode, hierarchyDepths, node_id( updateNode ));
             }
         }
 
@@ -564,4 +564,48 @@ int main( int argc, char *argv[] )
     const Multimodal::Graph& graph = *dynamic_cast<const Multimodal::Graph*>(data);
 
     const Road::Graph& road_graph = graph.road();
+
+    CHGraph ch_graph;
+
+    // copy to ch_graph
+    for ( Road::Vertex v : pair_range( vertices( road_graph ) ) ) {
+            CHVertex new_v = add_vertex( ch_graph );
+            ch_graph[new_v].id = road_graph[v].db_id();
+    }
+
+    for ( Road::Edge e : pair_range( edges( road_graph )) ) {
+            if ( (road_graph[e].traffic_rules() & TrafficRulePedestrian) == 0 ) {
+                continue;
+            }
+
+            CHVertex v1 = source( e, road_graph );
+            CHVertex v2 = target( e, road_graph );
+            bool added = false;
+            CHEdge new_e;
+            boost::tie( new_e, added ) = add_edge( v1, v2, ch_graph );
+
+            BOOST_ASSERT( added );
+            ch_graph[new_e].weight = int(road_graph[e].length() * 100.0);
+    }
+
+    std::vector<CHVertex> ordered_nodes;
+    std::vector<TNodeContractionCost> node_costs;
+    get_ordered_nodes( ch_graph, ordered_nodes, node_costs, [&ch_graph](CHVertex v){ return ch_graph[v].id; } );
+
+
+    Db::Connection conn( dbstring );
+    conn.exec( "CREATE SCHEMA IF NOT EXISTS ch2" );
+    conn.exec( "DROP TABLE IF EXISTS ch2.ordered_nodes CASCADE" );
+    conn.exec( "CREATE TABLE ch2.ordered_nodes (id SERIAL PRIMARY KEY, node_id BIGINT NOT NULL, sort_order INT NOT NULL)" );
+
+    conn.exec( "BEGIN" );
+    uint32_t i = 0;
+    for ( CHVertex v : ordered_nodes )
+    {
+            std::ostringstream ostr;
+            ostr << "INSERT INTO ch2.ordered_nodes (node_id, sort_order) VALUES (" << ch_graph[v].id << "," << i << ")";
+            conn.exec( ostr.str() );
+            i++;
+    }
+    conn.exec( "COMMIT" );
 }

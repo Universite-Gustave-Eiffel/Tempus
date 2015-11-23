@@ -49,6 +49,7 @@
 
 #define DEBUG_TRACE if(1) std::cout << " debug: "
 using namespace std;
+using namespace Tempus;
 
 ///
 /// This is the main WPS server. It is designed to be called by a FastCGI-aware web server
