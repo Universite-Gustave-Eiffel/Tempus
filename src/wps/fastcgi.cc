@@ -104,6 +104,62 @@ private:
     const int _listen_socket;
 };
 
+void add_str_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        options[key] = Variant::from_string(value);
+    }
+}
+
+void add_int_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        int64_t i;
+        std::istringstream istr(value);
+        istr >> i;
+        options[key] = Variant::from_int(i);
+    }
+}
+
+void add_float_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        double i;
+        std::istringstream istr(value);
+        istr >> i;
+        options[key] = Variant::from_float(i);
+    }
+}
+
+void add_bool_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        if ( value == "true" ) {
+            options[key] = Variant::from_bool(true);
+        }
+        else if ( value == "false" ) {
+            options[key] = Variant::from_bool(false);
+        }
+        else {
+            int i;
+            std::istringstream istr(value);
+            istr >> i;
+            options[key] = Variant::from_bool(i);
+        }
+    }
+}
 
 int main( int argc, char* argv[] )
 {
@@ -129,6 +185,7 @@ int main( int argc, char* argv[] )
     bool daemon = false;
     ( void )daemon;
 #endif
+    VariantMap options;
 
     if ( argc > 1 ) {
         for ( int i = 1; i < argc; i++ ) {
@@ -183,6 +240,26 @@ int main( int argc, char* argv[] )
             else if ( arg == "--data" ) {
                 if ( argc > i+1 ) {
                     data_dir = argv[++i];
+                }
+            }
+            else if ( arg == "--str" ) {
+                if ( argc > i+1 ) {
+            add_str_option( options, argv[++i] );
+                }
+            }
+            else if ( arg == "--int" ) {
+                if ( argc > i+1 ) {
+            add_int_option( options, argv[++i] );
+                }
+            }
+            else if ( arg == "--bool" ) {
+                if ( argc > i+1 ) {
+            add_bool_option( options, argv[++i] );
+                }
+            }
+            else if ( arg == "--float" ) {
+                if ( argc > i+1 ) {
+            add_float_option( options, argv[++i] );
                 }
             }
 #if ENABLE_SEGMENT_ALLOCATOR
@@ -288,8 +365,6 @@ int main( int argc, char* argv[] )
     try
 #endif
     {
-        VariantMap options;
-
         options["db/options"] = Variant::from_string( dbstring );
         if ( !load_from.empty() ) {
             options["load_from"] = Variant::from_string( load_from );
