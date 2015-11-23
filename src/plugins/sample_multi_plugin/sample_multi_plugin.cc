@@ -82,8 +82,7 @@ public:
         typedef std::map< std::pair<db_id_t, db_id_t>, double > PtLength;
         PtLength pt_lengths;
 
-        std::string db_options = get_option_or_default( options, "db/options" ).str();
-        Db::Connection db( db_options );
+        Db::Connection db( db_options() );
         Db::Result res = db.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
 
         for ( size_t i = 0; i < res.size(); ++i ) {

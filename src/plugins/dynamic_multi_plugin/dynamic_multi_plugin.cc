@@ -286,9 +286,7 @@ DynamicMultiPlugin::DynamicMultiPlugin( ProgressionCallback& progression, const 
     const Road::Graph& road_graph = graph_->road();
 
     // Importing turn restrictions
-    std::string schema_name = get_option_or_default( options, "db/schema" ).str();
-    std::string db_options = get_option_or_default( options, "db/options" ).str();
-    Road::Restrictions restrictions = import_turn_restrictions( road_graph, db_options, schema_name );
+    Road::Restrictions restrictions = import_turn_restrictions( road_graph, db_options(), schema_name() );
     std::cout << "Turn restrictions imported" << std::endl;
 
     // Building automaton from turn restrictions
