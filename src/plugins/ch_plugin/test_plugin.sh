@@ -83,7 +83,7 @@ and
 
     random.seed()
 
-    server_state_xml = tempus.server_state()
+    #server_state_xml = tempus.server_state()
     history = ZipHistoryFile("history.save")
 
     times = []
@@ -95,6 +95,7 @@ and
     path = {}
     t_dijkstra = 0
     t_ch = 0
+    print("Randomly choosing %d pairs of points and comparing Dijkstra and CH results" % npts)
     for i in range(0, npts):
 
         # pick two points at random and ask for an itinerary
@@ -137,7 +138,7 @@ and
             #print plugin, rDistance, t
             distance[plugin] = rDistance
 
-            history.addRecord('<record>' + req_xml + server_state_xml + '</record>')
+            #history.addRecord('<record>' + req_xml + server_state_xml + '</record>')
 
         print 'Dijkstra:', distance['sample_road_plugin'], 'CH:', distance['ch_plugin']
         if distance['sample_road_plugin'] == 0.0:
@@ -156,7 +157,10 @@ and
                 print pi[i].road, pj[i].road
             break
 
-    print t_dijkstra, t_ch, t_dijkstra / t_ch
+    print
+    print("Dijkstra average time: %.3fs" % (t_dijkstra / npts))
+    print("CH average time: %.3fs" % (t_ch / npts))
+    print("CH is %.1f faster than Dijkstra on average" % (t_dijkstra / t_ch))
 
 
 

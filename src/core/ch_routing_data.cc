@@ -17,14 +17,16 @@
 #include "ch_routing_data.hh"
 #include "db.hh"
 
+#include <boost/format.hpp>
+
 namespace Tempus
 {
 
-CHRoutingData::CHRoutingData( std::unique_ptr<CHQuery> ch_query, MiddleNodeMap&& middle_node, std::vector<db_id_t>&& node_id) :
+CHRoutingData::CHRoutingData( std::unique_ptr<CHQuery> a_ch_query, MiddleNodeMap&& a_middle_node, std::vector<db_id_t>&& a_node_id) :
     RoutingData( "ch_graph" ),
-    ch_query_( std::move(ch_query) ),
-    middle_node_( middle_node ),
-    node_id_( node_id )
+    ch_query_( std::move(a_ch_query) ),
+    middle_node_( a_middle_node ),
+    node_id_( a_node_id )
 {
     // update the reverse id map
     for ( size_t i = 0; i < node_id_.size(); i++ ) {
@@ -186,7 +188,7 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
             CHVertex v = target( *it, ch );
             bool found = false;
             CHEdge e;
-            boost::tie( e, found ) = edge( u, v, ch );
+            std::tie( e, found ) = edge( u, v, ch );
             BOOST_ASSERT( found );
             BOOST_ASSERT( u == source( e, ch ) );
             BOOST_ASSERT( v == target( e, ch ) );
@@ -215,6 +217,6 @@ void CHRoutingDataBuilder::file_export( const RoutingData* /*rd*/, const std::st
 {
 }
 
-REGISTER_BUILDER( CHRoutingDataBuilder );
+REGISTER_BUILDER( CHRoutingDataBuilder )
 
 } // namespace Tempus

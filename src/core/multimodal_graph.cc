@@ -33,18 +33,18 @@ Vertex::Vertex() : graph_(0), type_(Null)
 {
 }
 
-Vertex::Vertex( const Graph& graph, Road::Vertex vertex, road_t ) : graph_(&graph), type_(Road)
+Vertex::Vertex( const Graph& a_graph, Road::Vertex vertex, road_t ) : graph_(&a_graph), type_(Road)
 {
     data_.vertex = vertex;
 }
 
-Vertex::Vertex( const Graph& graph, PublicTransportGraphIndex idx, PublicTransport::Vertex vertex, pt_t ) : graph_(&graph), type_(PublicTransport)
+Vertex::Vertex( const Graph& a_graph, PublicTransportGraphIndex idx, PublicTransport::Vertex vertex, pt_t ) : graph_(&a_graph), type_(PublicTransport)
 {
     data_.pt.index = idx;
     data_.pt.vertex = vertex;
 }
 
-Vertex::Vertex( const Graph& graph, POIIndex idx, poi_t ) : graph_(&graph), type_(Poi)
+Vertex::Vertex( const Graph& a_graph, POIIndex idx, poi_t ) : graph_(&a_graph), type_(Poi)
 {
     data_.poi = idx;
 }

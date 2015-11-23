@@ -64,9 +64,9 @@ boost::optional<TransportMode> RoutingData::transport_mode( db_id_t id ) const
     return fit->second;
 }
 
-boost::optional<TransportMode> RoutingData::transport_mode( const std::string& name ) const
+boost::optional<TransportMode> RoutingData::transport_mode( const std::string& a_name ) const
 {
-    NameToId::const_iterator fit = transport_mode_from_name_.find( name );
+    NameToId::const_iterator fit = transport_mode_from_name_.find( a_name );
     if ( fit == transport_mode_from_name_.end() ) {
         return boost::optional<TransportMode>();
     }

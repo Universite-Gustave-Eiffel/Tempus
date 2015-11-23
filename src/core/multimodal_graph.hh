@@ -379,7 +379,7 @@ public:
     struct StopIndex
     {
         StopIndex() {}
-        StopIndex( PublicTransportGraphIndex graph, PublicTransport::Vertex vertex ) : graph_(graph), vertex_(vertex) {}
+        StopIndex( PublicTransportGraphIndex gph, PublicTransport::Vertex vtx ) : graph_(gph), vertex_(vtx) {}
 
         DECLARE_RO_PROPERTY( graph, PublicTransportGraphIndex );
         DECLARE_RO_PROPERTY( vertex, PublicTransport::Vertex );

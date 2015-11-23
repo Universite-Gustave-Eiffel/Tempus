@@ -51,7 +51,7 @@ public:
     // @param ep iterator pointing to the edge property of each edge
     template <typename VertexPairIterator, typename DegreeIterator, typename EdgePropertyIterator>
     CHQueryGraph( VertexPairIterator vp,
-                  size_t num_vertices,
+                  size_t n_vertices,
                   DegreeIterator up_it,
                   EdgePropertyIterator ep)
     {
@@ -59,9 +59,9 @@ public:
         static_assert( std::is_convertible<typename std::iterator_traits<DegreeIterator>::value_type, size_t>::value, "Wrong DegreeIterator type" );
         static_assert( std::is_same<typename std::iterator_traits<EdgePropertyIterator>::value_type, EdgeProperty>::value, "Wrong EdgePropertyIterator type" );
 
-        edge_index_.resize( num_vertices + 1 );
+        edge_index_.resize( n_vertices + 1 );
 
-        for ( VI v = 0; v < num_vertices; v++ ) {
+        for ( VI v = 0; v < n_vertices; v++ ) {
             edge_index_[v].first_upward_edge = edges_.size();
             if ( vp->first == v ) {
                 // for all upward edges
@@ -84,8 +84,8 @@ public:
                 }
             }
         }
-        edge_index_[num_vertices].first_upward_edge = edges_.size();
-        edge_index_[num_vertices].first_downward_edge = edges_.size();
+        edge_index_[n_vertices].first_upward_edge = edges_.size();
+        edge_index_[n_vertices].first_downward_edge = edges_.size();
     }
 
     void debug_print( std::ostream& ostr )
@@ -110,7 +110,7 @@ public:
     {
     public:
         EdgeDescriptor() : prop_(nullptr) {}
-        EdgeDescriptor( VertexIndex source, VertexIndex target, const EdgeProperty* prop, bool upward ) : source_(source), target_(target), prop_(prop), upward_(upward) {}
+        EdgeDescriptor( VertexIndex src, VertexIndex tgt, const EdgeProperty* prop, bool upward ) : source_(src), target_(tgt), prop_(prop), upward_(upward) {}
         VertexIndex source() const { return source_; }
         VertexIndex target() const { return target_; }
         const EdgeProperty& property() const { return *prop_; }
@@ -354,6 +354,6 @@ edge( VertexIndex u, VertexIndex v, const CHQueryGraph<EdgeProperty, VertexIndex
 }
 
 
-};
+}
 
 #endif

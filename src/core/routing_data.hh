@@ -38,8 +38,8 @@ public:
         return boost::optional<db_id_t>();
     }
 
-    MMVertex( Type type, db_id_t id ) : type_(type), id_(id) {}
-    MMVertex( db_id_t id, db_id_t network_id ) : type_(Transport), id_(id), network_id_(network_id) {}
+    MMVertex( Type t, db_id_t idx ) : type_(t), id_(idx) {}
+    MMVertex( db_id_t idx, db_id_t network_idx ) : type_(Transport), id_(idx), network_id_(network_idx) {}
 
 private:
     db_id_t network_id_;
@@ -62,7 +62,7 @@ public:
 class RoutingData
 {
 public:
-    RoutingData( const std::string& name ) : name_(name) {}
+    RoutingData( const std::string& n ) : name_(n) {}
 
     virtual ~RoutingData() {}
 

@@ -130,9 +130,9 @@ std::list<CHVertex> bidirectional_ch_dijkstra( const CHRoutingData& rd, CHVertex
     CostType total_cost = infinity;
     bool path_found = false;
 
-    auto get_min_pi = [&vertex_queue,&potential_map]( int dir ) {
-        if ( !vertex_queue[dir].empty() ) {
-            return get( potential_map[dir], vertex_queue[dir].top() );
+    auto get_min_pi = [&vertex_queue,&potential_map]( int ldir ) {
+        if ( !vertex_queue[ldir].empty() ) {
+            return get( potential_map[ldir], vertex_queue[ldir].top() );
         }
         return std::numeric_limits<CostType>::max();
     };

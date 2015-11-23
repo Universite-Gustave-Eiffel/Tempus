@@ -28,7 +28,7 @@ namespace Tempus
 class RoutingDataBuilder
 {
 public:
-    RoutingDataBuilder( const std::string& name ) : name_(name) {}
+    RoutingDataBuilder( const std::string& a_name ) : name_(a_name) {}
     virtual ~RoutingDataBuilder() {}
 
     virtual std::unique_ptr<RoutingData> pg_import( const std::string& pg_options, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;

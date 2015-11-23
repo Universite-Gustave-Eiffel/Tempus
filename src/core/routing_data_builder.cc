@@ -4,9 +4,9 @@ namespace Tempus
 {
 
 
-void RoutingDataBuilderRegistry::addBuilder( std::unique_ptr<RoutingDataBuilder> builder )
+void RoutingDataBuilderRegistry::addBuilder( std::unique_ptr<RoutingDataBuilder> a_builder )
 {
-    builders_[builder->name()] = std::move(builder);
+    builders_[a_builder->name()] = std::move(a_builder);
 }
 
 const RoutingDataBuilder* RoutingDataBuilderRegistry::builder( const std::string& name )

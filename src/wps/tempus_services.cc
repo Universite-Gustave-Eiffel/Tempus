@@ -46,7 +46,7 @@ namespace WPS {
 ///
 PluginListService::PluginListService() : Service( "plugin_list" ) {
     add_output_parameter( "plugins" );
-};
+}
 
 Service::ParameterMap PluginListService::execute( const ParameterMap& /*input_parameter_map*/ ) const
 {
@@ -125,7 +125,7 @@ Service::ParameterMap PluginListService::execute( const ParameterMap& /*input_pa
 
     output_parameters[ "plugins" ] = root_node;
     return output_parameters;
-};
+}
 
 ///
 /// "constant_list" service, outputs list of constants contained in the database (road type, transport type, transport networks).
@@ -138,7 +138,7 @@ ConstantListService::ConstantListService() : Service( "constant_list" ) {
     add_output_parameter( "transport_modes" );
     add_output_parameter( "transport_networks" );
     add_output_parameter( "metadata" );
-};
+}
 
 Service::ParameterMap ConstantListService::execute( const ParameterMap& input_parameter_map ) const
 {
@@ -203,7 +203,7 @@ Service::ParameterMap ConstantListService::execute( const ParameterMap& input_pa
     }
 
     return output_parameters;
-};
+}
 
 Tempus::db_id_t road_vertex_id_from_coordinates( Db::Connection& db, double x, double y )
 {
