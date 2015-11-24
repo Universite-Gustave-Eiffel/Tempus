@@ -461,9 +461,9 @@ vector<CHVertex> order_graph( CHGraph& graph, std::function<db_id_t(CHVertex)> n
     TRemainingNodeSet remaining_nodes;
 
     // Parallel processing of node costs:
-    //#pragma omp parallel
+    #pragma omp parallel
     {
-        //#pragma omp for schedule(dynamic)
+        #pragma omp for schedule(dynamic)
         for ( CHVertex node = 0; node < num_vertices( graph ); node++ )
         {
             node_costs[node] = get_node_cost( graph, node, hierarchy_depths, node_id(node) );
@@ -537,9 +537,9 @@ vector<CHVertex> order_graph( CHGraph& graph, std::function<db_id_t(CHVertex)> n
 
         // Parallel update of node costs:
         vector<CHVertex> impacted_neighbors1(impacted_neighbors.begin(), impacted_neighbors.end());
-        //#pragma omp parallel
+        #pragma omp parallel
         {
-            //#pragma omp for schedule(dynamic)
+            #pragma omp for schedule(dynamic)
             for (int i=0; i<int(impacted_neighbors1.size()); ++i)
             {
                 CHVertex update_node = impacted_neighbors1[i];
