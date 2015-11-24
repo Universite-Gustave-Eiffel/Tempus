@@ -1246,14 +1246,20 @@ class IfsttarRouting:
         if self.wps.save.has_key("metadata"):
             server_state = to_xml([ 'server_state',
                                     etree.tostring(self.wps.save['plugins']),
-                                    etree.tostring(self.wps.save['transport_modes']),
-                                    etree.tostring(self.wps.save['transport_networks']),
-                                    etree.tostring(self.wps.save['metadata']) ] )
+                                    [ 'plugin_info', [ 'plugin', {'name': currentPlugin} ],
+                                      etree.tostring(self.wps.save[currentPlugin+'/transport_modes']),
+                                      etree.tostring(self.wps.save[currentPlugin+'/transport_networks']),
+                                      etree.tostring(self.wps.save[currentPlugin+'/metadata'])
+                                      ]
+                                    ])
         else:
             server_state = to_xml([ 'server_state',
                                     etree.tostring(self.wps.save['plugins']),
-                                    etree.tostring(self.wps.save['transport_modes']),
-                                    etree.tostring(self.wps.save['transport_networks']) ] )
+                                    [ 'plugin_info', [ 'plugin', {'name': currentPlugin} ],
+                                      etree.tostring(self.wps.save[currentPlugin+'/transport_modes']),
+                                      etree.tostring(self.wps.save[currentPlugin+'/transport_networks'])
+                                  ]
+                                ])
         xml_record += server_state + '</record>'
         self.historyFile.addRecord( xml_record )
 
@@ -1308,17 +1314,25 @@ class IfsttarRouting:
         idx = self.dlg.ui.pluginCombo.findText( currentPlugin )
         self.dlg.ui.pluginCombo.setCurrentIndex( idx )
 
-        self.transport_modes = Tempus.parse_transport_modes( loaded['server_state'][1] )
-        self.transport_modes_dict = {}
-        for t in self.transport_modes:
+        plugin_infos = loaded['server_state'][1:]
+        for plugin_info in plugin_infos:
+            pn = plugin_info[0].attrib['name']
+            print pn
+            if pn != currentPlugin:
+                continue
+
+            # select the current plugin info
+            self.transport_modes = Tempus.parse_transport_modes( plugin_info[1] )
+            self.transport_modes_dict = {}
+            for t in self.transport_modes:
                 self.transport_modes_dict[t.id] = t
-        self.networks = Tempus.parse_transport_networks( loaded['server_state'][2] )
-        self.displayTransportAndNetworks()
-        if len(loaded['server_state'])>3: # has metadata
-            self.metadata = Tempus.parse_metadata( loaded['server_state'][3] )
-        else:
-            self.metadata = {'srid' : '2154'}
-        self.dlg.set_native_srid( self.native_srid() )
+            self.networks = Tempus.parse_transport_networks( plugin_info[2] )
+            self.displayTransportAndNetworks()
+            if len(plugin_info)>3: # has metadata
+                self.metadata = Tempus.parse_metadata( plugin_info[3] )
+            else:
+                self.metadata = {'srid' : '2154'}
+            self.dlg.set_native_srid( self.native_srid() )
 
         self.dlg.loadFromXML( loaded['select'][1] )
         self.displayMetrics( Tempus.parse_metrics(loaded['select'][4]) )

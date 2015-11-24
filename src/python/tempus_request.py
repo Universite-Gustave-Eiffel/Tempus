@@ -546,7 +546,7 @@ class TempusRequest:
     def constant_list(self, plugin_name):
         outputs = self.wps.execute('constant_list', {'plugin': ['plugin', {'name': plugin_name}] } )
         for k, v in outputs.iteritems():
-            self.save[k] = v
+            self.save[plugin_name + "/" + k] = v
         if outputs.has_key("metadata"):
             return (
                 parse_transport_modes(outputs['transport_modes']),
@@ -636,12 +636,15 @@ class TempusRequest:
 
     def server_state(self):
         """Retrieve current server state and return a XML string"""
-        self.plugin_list()
-        self.constant_list()
+        plugins = self.plugin_list()
+        p_str = ""
+        for p in plugins:
+            self.constant_list(p.name)
+            p_str += '<plugin_info><plugin name="%s"/>' % p.name
+            p_str += ET.tostring(self.save[p.name + "/transport_modes"]) + ET.tostring(self.save[p.name + "/transport_networks"])
+            if self.save.has_key(p.name+"/metadata"):
+                p_str += ET.tostring(self.save[p.name + "/metadata"])
+            p_str += '</plugin_info>'
 
-        r = "<server_state>" + ET.tostring(self.save['plugins']) \
-            + ET.tostring(self.save['transport_modes']) \
-            + ET.tostring(self.save['transport_networks']) \
-            + (ET.tostring(self.save['metadata']) if self.save.has_key("metadata") else "") \
-            + "</server_state>"
+        r = "<server_state>" + ET.tostring(self.save["plugins"]) + p_str + "</server_state>"
         return r

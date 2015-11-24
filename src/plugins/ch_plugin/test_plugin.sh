@@ -83,7 +83,7 @@ and
 
     random.seed()
 
-    #server_state_xml = tempus.server_state()
+    server_state_xml = tempus.server_state()
     history = ZipHistoryFile("history.save")
 
     times = []
@@ -138,7 +138,7 @@ and
             #print plugin, rDistance, t
             distance[plugin] = rDistance
 
-            #history.addRecord('<record>' + req_xml + server_state_xml + '</record>')
+            history.addRecord('<record>' + req_xml + server_state_xml + '</record>')
 
         print 'Dijkstra:', distance['sample_road_plugin'], 'CH:', distance['ch_plugin']
         if distance['sample_road_plugin'] == 0.0:
