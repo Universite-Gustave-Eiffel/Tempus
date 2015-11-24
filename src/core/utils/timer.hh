@@ -18,13 +18,7 @@
 #ifndef TEMPUS_UTILS_TIMER_HH
 #define TEMPUS_UTILS_TIMER_HH
 
-#include <sys/timeb.h>
-#include <time.h>
-
-#ifdef _WIN32
-#define ftime(x) _ftime(x)
-#define timeb _timeb
-#endif
+#include <chrono>
 
 ///
 /// RAII Timer class
@@ -39,20 +33,25 @@ public:
 
     void restart()
     {
-        ftime( &t_start );
+        t_start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     }
 
     ///
     /// Get elapsed number of seconds since construction
     double elapsed()
     {
-        ftime( &t_stop );
-        double sstart = t_start.time + t_start.millitm / 1000.0;
-        double sstop = t_stop.time + t_stop.millitm / 1000.0;
-        return sstop - sstart;
+        return elapsed_ms() / 1000;
+    }
+
+    ///
+    /// Get elapsed number of milliseconds since construction
+    double elapsed_ms()
+    {
+        auto t_stop = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        return (t_stop - t_start).count();
     }
 private:
-    timeb t_start, t_stop;
+    std::chrono::milliseconds t_start;
 };
 
 #endif
