@@ -366,9 +366,11 @@ int main( int argc, char* argv[] )
 #endif
     {
         options["db/options"] = Variant::from_string( dbstring );
+        options["db/schema"] = Variant::from_string( schema_name );
         if ( !load_from.empty() ) {
-            options["load_from"] = Variant::from_string( load_from );
+            options["from_file"] = Variant::from_string( load_from );
         }
+        options["consistency_check"] = Variant::from_bool( consistency_check );
 
         // load plugins
         TextProgression progression;
