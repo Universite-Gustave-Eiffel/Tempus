@@ -241,7 +241,7 @@ std::pair<std::list<CHVertex>, float> ch_query( const CHRoutingData& rd, CHVerte
     std::pair<std::list<CHVertex>, float> ret;
 
     auto weight_map_fn = []( const CHQuery::edge_descriptor& e ) {
-        return float(e.property().cost / 100.0);
+        return float(e.property().b.cost / 100.0);
     };
     auto weight_map = boost::make_function_property_map<CHQuery::edge_descriptor, float, decltype(weight_map_fn)>( weight_map_fn );
     float ret_cost = std::numeric_limits<float>::max();
@@ -317,7 +317,7 @@ public:
             BOOST_ASSERT( found );
 
             step.reset( new Roadmap::RoadStep() );
-            step->set_cost( CostId::CostDistance, e.property().cost / 100.0 );
+            step->set_cost( CostId::CostDistance, e.property().b.cost / 100.0 );
             step->set_transport_mode(1);
             Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
             rstep->set_road_edge_id( e.property().db_id );

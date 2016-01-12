@@ -33,7 +33,7 @@ struct CHEdgeProperty
         struct {
             uint32_t cost        :31;
             uint32_t is_shortcut :1;
-        };
+        } b;
         uint32_t data;
     };
     db_id_t db_id;

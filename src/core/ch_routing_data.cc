@@ -140,13 +140,13 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
                 upd++;
             }
             CHEdgeProperty p;
-            p.cost = res_i[2];
+            p.b.cost = res_i[2];
             p.db_id = eid;
-            p.is_shortcut = 0;
+            p.b.is_shortcut = 0;
             if ( !res_i[3].is_null() ) {
                 uint32_t middle = res_i[3].as<uint32_t>();
                 // we have a middle node, it is a shortcut
-                p.is_shortcut = 1;
+                p.b.is_shortcut = 1;
                 if ( dir == 0 ) {
                     middle_node[std::make_pair(id1, id2)] = middle;
                 }
@@ -199,7 +199,7 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
             BOOST_ASSERT( found );
             BOOST_ASSERT( u == source( e, ch ) );
             BOOST_ASSERT( v == target( e, ch ) );
-            BOOST_ASSERT( it->property().cost == e.property().cost );
+            BOOST_ASSERT( it->property().b.cost == e.property().b.cost );
         }
     }
 
