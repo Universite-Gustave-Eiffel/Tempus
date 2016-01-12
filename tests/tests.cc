@@ -776,8 +776,8 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
     db_id_t expected_nodes[][4] = { { 15097, 15073, 14849, 0 },
                                     { 14360, 14371, 14423, 14415 },
                                     // forbidden u-turn :
-                                    { 14360, 14371, 14360, 0 },
-                                    { 14371, 14360, 14371, 0 }
+                                    { 14331, 14265, 14331, 0 },
+                                    { 14265, 14331, 14265, 0 }
     };
     Road::Restrictions restrictions( import_turn_restrictions( connection, graph->road() ) );
 
