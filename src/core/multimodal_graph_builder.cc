@@ -679,6 +679,12 @@ std::unique_ptr<RoutingData> MultimodalGraphBuilder::file_import( const std::str
     std::unique_ptr<Road::Graph> rgraph;
     std::unique_ptr<Multimodal::Graph> graph( new Multimodal::Graph(std::move(rgraph)) );
     std::ifstream ifs( filename );
+    if ( ifs.fail() ) {
+        throw std::runtime_error( "Problem opening input file " + filename );
+    }
+
+    read_header( ifs );
+
     unserialize( ifs, *graph, binary_serialization_t() );
     std::unique_ptr<RoutingData> rd( graph.release() );
     return std::move( rd );
@@ -687,7 +693,9 @@ std::unique_ptr<RoutingData> MultimodalGraphBuilder::file_import( const std::str
 void MultimodalGraphBuilder::file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
 {
     std::ofstream ofs( filename );
-    // FIXME add signature and version information
+
+    write_header( ofs );
+
     const Multimodal::Graph* graph = static_cast<const Multimodal::Graph*>( rd );
     serialize( ofs, *graph, binary_serialization_t() );
 }

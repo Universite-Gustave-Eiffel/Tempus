@@ -16,7 +16,6 @@
 
 #include "serializers.hh"
 
-#include <type_traits>
 #include <fstream>
 
 #include "point.hh"
@@ -37,56 +36,33 @@ void unserialize( std::istream& istr, char* ptr, size_t s, binary_serialization_
 }
 
 template <typename T>
-struct serialize_as_raw
+void serialize( std::ostream& ostr, const Optional<T>& o, binary_serialization_t t )
 {
-    enum { value = false };
-};
-template <typename T> struct serialize_as_raw<Optional<T>> { enum { value = true }; };
-template <> struct serialize_as_raw<Road::Edge> { enum { value = true }; };
-template <> struct serialize_as_raw<Abscissa> { enum { value = true }; };
-
+    serialize( ostr, (const char*)&o, sizeof(o), t );
+}
 template <typename T>
-void serialize( std::ostream& ostr, const T& t, binary_serialization_t b )
+void unserialize( std::istream& istr, Optional<T>& o, binary_serialization_t t )
 {
-    // for POD
-    static_assert( std::is_integral<T>::value || serialize_as_raw<T>::value, "serialize() not overloaded for non-integral type" );
-    serialize( ostr, (const char*)&t, sizeof(t), b );
+    unserialize( istr, (char*)&o, sizeof(o), t );
 }
 
-template <typename T>
-void unserialize( std::istream& istr, T& t, binary_serialization_t b )
+void serialize( std::ostream& ostr, const Road::Edge& o, binary_serialization_t t )
 {
-    // for POD only
-    static_assert( std::is_integral<T>::value || serialize_as_raw<T>::value, "unserialize() not overloaded for non-integral type" );
-    unserialize( istr, (char*)&t, sizeof(t), b );
+    serialize( ostr, (const char*)&o, sizeof(o), t );
+}
+void unserialize( std::istream& istr, Road::Edge& o, binary_serialization_t t )
+{
+    unserialize( istr, (char*)&o, sizeof(o), t );
 }
 
-void serialize( std::ostream& ostr, const std::string& t, binary_serialization_t );
-void unserialize( std::istream& istr, std::string& t, binary_serialization_t );
-void serialize( std::ostream& ostr, const Point2D& pt, binary_serialization_t );
-void unserialize( std::istream& istr, Point2D& pt, binary_serialization_t );
-void serialize( std::ostream& ostr, const Point3D& pt, binary_serialization_t );
-void unserialize( std::istream& istr, Point3D& pt, binary_serialization_t );
-void serialize( std::ostream& ostr, const Road::Graph& graph, binary_serialization_t );
-void unserialize( std::istream& istr, Road::Graph& graph, binary_serialization_t );
-void serialize( std::ostream& ostr, const PublicTransport::Stop& stop, binary_serialization_t t );
-void unserialize( std::istream& istr, PublicTransport::Stop& stop, binary_serialization_t t );
-void serialize( std::ostream& ostr, const PublicTransport::Section& section, binary_serialization_t t );
-void unserialize( std::istream& istr, PublicTransport::Section& section, binary_serialization_t t );
-void serialize( std::ostream& ostr, const PublicTransport::Graph& graph, binary_serialization_t t );
-void unserialize( std::istream& istr, PublicTransport::Graph& graph, binary_serialization_t t );
-void serialize( std::ostream& ostr, const Multimodal::Graph::StopIndex& s, binary_serialization_t t );
-void unserialize( std::istream& istr, Multimodal::Graph::StopIndex& s, binary_serialization_t t );
-void serialize( std::ostream& ostr, const POI& poi, binary_serialization_t t );
-void unserialize( std::istream& istr, POI& poi, binary_serialization_t t );
-void serialize( std::ostream& ostr, const PublicTransport::Agency& agency, binary_serialization_t t );
-void unserialize( std::istream& istr, PublicTransport::Agency& agency, binary_serialization_t t );
-void serialize( std::ostream& ostr, const PublicTransport::Network& network, binary_serialization_t t );
-void unserialize( std::istream& istr, PublicTransport::Network network, binary_serialization_t t );
-void serialize( std::ostream& ostr, const POI::PoiType& poit, binary_serialization_t t );
-void unserialize( std::istream& istr, POI::PoiType& poit, binary_serialization_t t );
-void serialize( std::ostream& ostr, const Multimodal::Graph& graph, binary_serialization_t t );
-void unserialize( std::istream& istr, Multimodal::Graph& graph, binary_serialization_t t );
+void serialize( std::ostream& ostr, const Abscissa& o, binary_serialization_t t )
+{
+    serialize( ostr, (const char*)&o, sizeof(o), t );
+}
+void unserialize( std::istream& istr, Abscissa& o, binary_serialization_t t )
+{
+    unserialize( istr, (char*)&o, sizeof(o), t );
+}
 
 void serialize( std::ostream& ostr, const POI::PoiType& poit, binary_serialization_t t )
 {
@@ -134,105 +110,6 @@ void unserialize( std::istream& istr, TransportModeRouteType& e, binary_serializ
     e = TransportModeRouteType(v);
 }
 
-
-// templated versions of (un)serialize
-// make sure to declare them after all the other
-// so that serialize(vector<T>) can call the correct serialize(T)
-
-template <typename K, typename V>
-void serialize( std::ostream& ostr, const std::map<K,V>& m, binary_serialization_t t )
-{
-    size_t s = m.size();
-    serialize( ostr, s, t );
-    for ( auto p : m ) {
-        serialize( ostr, p.first, t );
-        serialize( ostr, p.second, t );
-    }
-}
-
-template <typename K, typename V>
-void unserialize( std::istream& istr, std::map<K,V>& m, binary_serialization_t t )
-{
-    m.clear();
-    size_t s;
-    unserialize( istr, s, t );
-    for ( size_t i = 0; i < s; i++ ) {
-        K k;
-        V v;
-        unserialize( istr, k, t );
-        unserialize( istr, v, t );
-        m.insert( std::make_pair(k, std::move(v)) );
-    }
-}
-
-template <typename T>
-void serialize( std::ostream& ostr, const boost::optional<T>& opt, binary_serialization_t t )
-{
-    if (opt) {
-        ostr << "1";
-        serialize( ostr, *opt, t );
-    }
-    else {
-        ostr << "0";
-    }
-}
-
-template <typename T>
-void unserialize( std::istream& istr, boost::optional<T>& opt, binary_serialization_t t )
-{
-    char ok;
-    istr >> ok;
-    if (ok == '1') {
-        T obj;
-        unserialize( istr, obj, t );
-        opt = obj;
-    }
-}
-
-template <typename T>
-void serialize( std::ostream& ostr, const std::set<T>& s, binary_serialization_t t )
-{
-    serialize( ostr, s.size(), t );
-    for ( auto e : s ) {
-        serialize( ostr, e, t );
-    }
-}
-
-template <typename T>
-void unserialize( std::istream& istr, std::set<T>& s, binary_serialization_t t )
-{
-    s.clear();
-    size_t n;
-    unserialize( istr, n, t );
-    for ( size_t i = 0; i < n; i++ ) {
-        T obj;
-        unserialize( istr, obj, t );
-        s.insert( std::move(obj) );
-    }
-}
-
-template <typename T>
-void serialize( std::ostream& ostr, const std::vector<T>& s, binary_serialization_t t )
-{
-    serialize( ostr, s.size(), t );
-    for ( auto e : s ) {
-        serialize( ostr, e, t );
-    }
-}
-
-template <typename T>
-void unserialize( std::istream& istr, std::vector<T>& s, binary_serialization_t t )
-{
-    s.clear();
-    size_t n;
-    unserialize( istr, n, t );
-    s.reserve(n);
-    for ( size_t i = 0; i < n; i++ ) {
-        T e;
-        unserialize( istr, e, t );
-        s.push_back( std::move(e) );
-    }
-}
 
 void serialize( std::ostream& ostr, const std::string& t, binary_serialization_t )
 {

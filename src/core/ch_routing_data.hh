@@ -22,15 +22,32 @@
 #include "ch_query_graph.hh"
 #include "routing_data.hh"
 #include "routing_data_builder.hh"
+#include "serializers.hh"
 
 namespace Tempus
 {
 
 struct CHEdgeProperty
 {
-    uint32_t cost        :31;
-    uint32_t is_shortcut :1;
+    union {
+        struct {
+            uint32_t cost        :31;
+            uint32_t is_shortcut :1;
+        };
+        uint32_t data;
+    };
     db_id_t db_id;
+
+    void serialize( std::ostream& ostr, binary_serialization_t t ) const
+    {
+        Tempus::serialize( ostr, data, t );
+        Tempus::serialize( ostr, db_id, t );
+    }
+    void unserialize( std::istream& istr, binary_serialization_t t )
+    {
+        Tempus::unserialize( istr, data, t );
+        Tempus::unserialize( istr, db_id, t );
+    }
 };
 
 using CHQuery = CHQueryGraph<CHEdgeProperty>;
@@ -70,6 +87,8 @@ private:
 
     // node id -> index
     std::map<db_id_t, size_t> rnode_id_;
+
+    friend class CHRoutingDataBuilder;
 };
 
 class CHRoutingDataBuilder : public RoutingDataBuilder
@@ -81,6 +100,8 @@ public:
 
     virtual std::unique_ptr<RoutingData> file_import( const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const override;
     virtual void file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const override;
+
+    uint32_t version() const { return 1; }
 };
 
 } // namespace Tempus

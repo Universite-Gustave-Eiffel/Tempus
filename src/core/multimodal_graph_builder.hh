@@ -30,6 +30,8 @@ public:
 
     virtual std::unique_ptr<RoutingData> file_import( const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const override;
     virtual void file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const override;
+
+    uint32_t version() const { return 1; }
 };
 
 Road::Restrictions import_turn_restrictions( Db::Connection& connection, const Road::Graph& graph, const std::string& schema_name = "tempus" );

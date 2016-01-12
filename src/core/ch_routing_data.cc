@@ -17,6 +17,7 @@
 #include "ch_routing_data.hh"
 #include "db.hh"
 
+#include <fstream>
 #include <boost/format.hpp>
 
 namespace Tempus
@@ -214,13 +215,45 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
     return std::move( rd );
 }
 
-std::unique_ptr<RoutingData> CHRoutingDataBuilder::file_import( const std::string& /*filename*/, ProgressionCallback& /*progression**/, const VariantMap& /*options*/ ) const
+std::unique_ptr<RoutingData> CHRoutingDataBuilder::file_import( const std::string& filename, ProgressionCallback& /*progression**/, const VariantMap& /*options*/ ) const
 {
-    return std::unique_ptr<RoutingData>();
+    std::ifstream ifs( filename );
+    if ( ifs.fail() ) {
+        throw std::runtime_error( "Problem opening input file " + filename );
+    }
+
+    read_header( ifs );
+
+    std::cout << "read graph" << std::endl;
+    std::unique_ptr<CHQuery> query( new CHQuery() );
+    query->unserialize( ifs, binary_serialization_t() );
+
+    std::cout << "read middle node" << std::endl;
+    MiddleNodeMap middle_node;
+    unserialize( ifs, middle_node, binary_serialization_t() );
+
+    std::cout << "read node id" << std::endl;
+    std::vector<db_id_t> node_id;
+    unserialize( ifs, node_id, binary_serialization_t() );
+
+    std::unique_ptr<RoutingData> rd( new CHRoutingData( std::move( query ), std::move( middle_node ), std::move( node_id ) ) );
+    return rd;
 }
 
-void CHRoutingDataBuilder::file_export( const RoutingData* /*rd*/, const std::string& /*filename*/, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
+void CHRoutingDataBuilder::file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
 {
+    std::ofstream ofs( filename );
+
+    write_header( ofs );
+
+    const CHRoutingData* mrd = static_cast<const CHRoutingData*>( rd );
+
+    // serialize the graph
+    mrd->ch_query_->serialize( ofs, binary_serialization_t() );
+
+    // middle node
+    serialize( ofs, mrd->middle_node_, binary_serialization_t() );
+    serialize( ofs, mrd->node_id_, binary_serialization_t() );
 }
 
 REGISTER_BUILDER( CHRoutingDataBuilder )

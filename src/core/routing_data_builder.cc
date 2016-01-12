@@ -33,6 +33,39 @@ RoutingDataBuilderRegistry& RoutingDataBuilderRegistry::instance()
     return b;
 }
 
+const char TEMPUS_DUMP_FILE_MAGIC[4] = { 'T', 'D', 'B', 'F' };
+
+void RoutingDataBuilder::write_header( std::ostream& ostr ) const
+{
+    ostr.write( TEMPUS_DUMP_FILE_MAGIC, sizeof( TEMPUS_DUMP_FILE_MAGIC ) );
+    char nname[256] = {0};
+    strncpy( nname, name().c_str(), name().size() );
+    ostr.write( nname, 256 );
+    uint32_t v = version();
+    ostr.write( reinterpret_cast<const char*>( &v ), sizeof( uint32_t ) );
+}
+
+void RoutingDataBuilder::read_header( std::istream& istr ) const
+{
+    char magic[5];
+    istr.read( magic, 4 );
+    magic[4] = 0;
+    if ( std::string( magic ) != std::string( TEMPUS_DUMP_FILE_MAGIC ) ) {
+        throw std::runtime_error( std::string( "Unrecognized header " ) + magic );
+    }
+    char nname[256];
+    istr.read( nname, 256 );
+    if ( std::string( nname ) != name() ) {
+        throw std::runtime_error( "Bad routing data type " + std::string( nname ) + ", expected " + name() );
+    }
+    uint32_t v;
+    istr.read( reinterpret_cast<char*>( &v ), sizeof( uint32_t ) );
+    if ( v > version() ) {
+        throw std::runtime_error( "Wrong version" );
+    }
+    std::cout << "Read header of type " << name() << std::endl;
+}
+
 std::unique_ptr<RoutingData> RoutingDataBuilder::pg_import( const std::string& /*pg_options*/, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
 {
     return std::unique_ptr<RoutingData>();

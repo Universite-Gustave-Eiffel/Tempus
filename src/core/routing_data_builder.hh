@@ -37,7 +37,20 @@ public:
     virtual std::unique_ptr<RoutingData> file_import( const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;
     virtual void file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const;
 
+    /** Name (graph type) of this routing data builder */
     std::string name() const { return name_; }
+
+    /** Version of the dump file format */
+    virtual uint32_t version() const { return 1; }
+
+    /** Write a serialization header to the given output stream */
+    void write_header( std::ostream& ostr ) const;
+
+    /** Read a serialization header from the given input stream.
+     * Will throw on errors
+     */
+    void read_header( std::istream& istr ) const;
+
 private:
     const std::string name_;
 };

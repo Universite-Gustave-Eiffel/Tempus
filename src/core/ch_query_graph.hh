@@ -19,6 +19,7 @@
 
 #include <type_traits>
 #include <iterator>
+#include "serializers.hh"
 
 namespace Tempus
 {
@@ -43,6 +44,9 @@ public:
     typedef VI VertexIndex;
     typedef EI EdgeIndex;
     typedef EP EdgeProperty;
+
+    // default constructor
+    CHQueryGraph() {}
 
     //
     // @param vp iterator pointing to target nodes
@@ -104,6 +108,16 @@ public:
     {
         VertexIndex target;
         EdgeProperty property;
+        void serialize( std::ostream& ostr, binary_serialization_t t ) const
+        {
+            Tempus::serialize( ostr, target, t );
+            Tempus::serialize( ostr, property, t );
+        }
+        void unserialize( std::istream& istr, binary_serialization_t t )
+        {
+            Tempus::unserialize( istr, target, t );
+            Tempus::unserialize( istr, property, t );
+        }
     };
 
     class EdgeDescriptor
@@ -265,7 +279,30 @@ public:
         }
         return std::make_pair(EdgeDescriptor( u, v, nullptr, true ), false );
     }
+
+    void serialize( std::ostream& ostr, binary_serialization_t t ) const
+    {
+        EdgeIndex n = edge_index_.size();
+        Tempus::serialize( ostr, n, t );
+        Tempus::serialize( ostr, reinterpret_cast<const char*>( &edge_index_[0] ), n * sizeof( FirstEdgeIndex ), t );
+        EdgeIndex m = edges_.size();
+        Tempus::serialize( ostr, m, t );
+        for ( EdgeIndex i = 0; i < m; i++ )
+            Tempus::serialize( ostr, edges_[i], t );
+    }
         
+    void unserialize( std::istream& istr, binary_serialization_t t )
+    {
+        EdgeIndex n = 0;
+        Tempus::unserialize( istr, n, t );
+        edge_index_.resize( n );
+        Tempus::unserialize( istr, reinterpret_cast<char*>( &edge_index_[0] ), n * sizeof( FirstEdgeIndex ), t );
+        EdgeIndex m = 0;
+        Tempus::unserialize( istr, m, t );
+        edges_.resize( m );
+        for ( EdgeIndex i = 0; i < m; i++ )
+            Tempus::unserialize( istr, edges_[i], t );
+    }
 private:
     //FIXME : only one index and a local linear search for out_edges and in_edges may be sufficient
     struct FirstEdgeIndex {
