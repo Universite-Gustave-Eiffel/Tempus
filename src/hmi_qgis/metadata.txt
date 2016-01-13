@@ -11,7 +11,7 @@
 [general]
 name=IFSTTAR routing plugin
 qgisMinimumVersion=1.8
-qgisMaximumVersion=2.9
+qgisMaximumVersion=2.99
 description=Get routing informations with various algorithms
 version=1.0
 
