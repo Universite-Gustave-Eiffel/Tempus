@@ -96,10 +96,10 @@ Server installation
 
 The idea is to use the standalone mode of the WPS server and an httpd server (like nginx or Apache2) that just "passes" execution to this executable.
 
-You have to launch the "wps" executable from a command line, for example like this:
+You have to launch the "tempus_wps" executable from a command line, for example like this:
 
 ```
-hme@socompa:~/build$ TEMPUS_DATA_DIRECTORY=../data/ ./bin/wps -c ./lib -p 9000 -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4
+hme@socompa:~/build$ ./bin/tempus_wps --data ../data -c ./lib -p 9000 -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4
 ```
 
 Options used:

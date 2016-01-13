@@ -48,11 +48,11 @@ echo "test database configured"
 
 echo "installing tempus wps service"
     # install wps service and start it
-    sudo cp $TEMPUS/script/wps /etc/init.d/wps &&
-    sudo update-rc.d wps defaults 80 
-    sudo mkdir /var/log/wps
-    sudo chown daemon /var/log/wps
-    sudo /etc/init.d/wps restart || die "cannot start wps service"
+    sudo cp $TEMPUS/script/tempus_wps /etc/init.d/tempus_wps &&
+    sudo update-rc.d tempus_wps defaults 80 
+    sudo mkdir /var/log/tempus_wps
+    sudo chown daemon /var/log/tempus_wps
+    sudo /etc/init.d/tempus_wps restart || die "cannot start wps service"
 echo "tempus wps service has been successfully installed"
 
 echo "configuring nginx web server for wps service on 127.0.0.1/wps"
