@@ -1,4 +1,7 @@
 #include "plugin_factory.hh"
+#ifdef _WIN32
+#include <strsafe.h>
+#endif
 
 Tempus::PluginFactory* get_plugin_factory_instance_()
 {
