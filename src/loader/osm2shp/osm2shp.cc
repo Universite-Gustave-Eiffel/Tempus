@@ -38,6 +38,8 @@
 #include <shapefil.h>
 #ifdef WIN32
 #   define strcasecmp _stricmp
+typedef __int64 int64_t;
+#define strtoll _strtoi64
 #else
 #   include <unistd.h>
 #endif

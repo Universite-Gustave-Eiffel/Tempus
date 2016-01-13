@@ -26,7 +26,6 @@ install( TARGETS
     sample_road_plugin 
     sample_pt_plugin 
     dynamic_multi_plugin
-    cost_lib
     LIBRARY DESTINATION bin
     )
 else()
