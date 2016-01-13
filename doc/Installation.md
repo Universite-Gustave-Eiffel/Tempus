@@ -64,7 +64,7 @@ Note: Tempus uses a lot of C++ templates. It means a 'Debug' build will turn off
 On Windows
 ----------
 
-A [Windows installer](http://91.121.102.10/install_tempus/) is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.
+A [Windows installer](https://github.com/Ifsttar/Tempus/releases/download/v1.2.1/tempus-1.2.1-win32-vc9.exe) is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.
 
 ![Image](images/windows_install_animation.gif?raw=true)
 
