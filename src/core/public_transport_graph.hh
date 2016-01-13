@@ -43,18 +43,14 @@ namespace PublicTransport {
 typedef boost::vecS VertexListType;
 typedef boost::vecS EdgeListType;
 
-///
-/// To make a long line short: VertexDescriptor is either typedef'd to size_t or to a pointer,
-/// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
-typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
-/// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::bidirectional_tag, Vertex> Edge;
-
 struct Stop;
 struct Section;
+
 ///
 /// Definition of a public transport graph
 typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section> Graph;
+typedef Graph::vertex_descriptor Vertex;
+typedef Graph::edge_descriptor Edge;
 
 ///
 /// Used as a vertex in a PublicTransportGraph.
