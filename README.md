@@ -1,5 +1,9 @@
-#Tempus
 
+Master [![Build Status](https://travis-ci.org/Ifsttar/Tempus.svg?branch=master)](https://travis-ci.org/Ifsttar/Tempus)
+
+Dev branch [![Build Status](https://travis-ci.org/Ifsttar/Tempus.svg?branch=dev)](https://travis-ci.org/Ifsttar/Tempus)
+
+#Tempus
 
 ##Tempus presentation
 
