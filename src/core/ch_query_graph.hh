@@ -49,7 +49,7 @@ public:
     CHQueryGraph() {}
 
     //
-    // @param vp iterator pointing to target nodes
+    // @param vp iterator pointing to pair of nodes, sorted
     // @param num_vertices number of vertices
     // @param up_it iterator pointing to the number of upward edges for each vertex
     // @param ep iterator pointing to the edge property of each edge
@@ -75,8 +75,8 @@ public:
                     data.property = *ep;
                     edges_.emplace_back( data );
                 }
-                up_it++;
             }
+            up_it++;
 
             edge_index_[v].first_downward_edge = edges_.size();
             if ( vp->first == v ) {
@@ -227,18 +227,19 @@ public:
         void update_()
         {
             bool out = true;
-            if ( edge_ < graph_.edge_index_[source_].first_downward_edge ) {
-                out = true;
+            while ( source_ < graph_.edge_index_.size() ) {
+                if ( edge_ < graph_.edge_index_[source_].first_downward_edge ) {
+                    out = true;
+                    break;
+                }
+                else if ( edge_ < graph_.edge_index_[source_+1].first_upward_edge ) {
+                    out = false;
+                    break;
+                }
+                // else
+                source_++;
             }
-            else if ( edge_ < graph_.edge_index_[source_+1].first_upward_edge ) {
-                out = false;
-            }
-            else {
-                do {
-                    source_++;
-                } while ( (graph_.edge_index_[source_].first_upward_edge == graph_.edge_index_[source_].first_downward_edge) &&
-                          (graph_.edge_index_[source_].first_downward_edge == graph_.edge_index_[source_+1].first_upward_edge) );
-            }
+
             if ( out ) {
                 v_ = EdgeDescriptor( source_, graph_.edges_[edge_].target, &graph_.edges_[edge_].property, true );
             }
