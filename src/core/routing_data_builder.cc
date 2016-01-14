@@ -33,11 +33,11 @@ RoutingDataBuilderRegistry& RoutingDataBuilderRegistry::instance()
     return b;
 }
 
-const char TEMPUS_DUMP_FILE_MAGIC[4] = { 'T', 'D', 'B', 'F' };
+const char TEMPUS_DUMP_FILE_MAGIC[] = "TDBF";
 
 void RoutingDataBuilder::write_header( std::ostream& ostr ) const
 {
-    ostr.write( TEMPUS_DUMP_FILE_MAGIC, sizeof( TEMPUS_DUMP_FILE_MAGIC ) );
+    ostr.write( TEMPUS_DUMP_FILE_MAGIC, 4 );
     char nname[256] = {0};
     strncpy( nname, name().c_str(), name().size() );
     ostr.write( nname, 256 );
