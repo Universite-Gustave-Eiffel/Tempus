@@ -369,7 +369,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
         }
     }
     // resolve private parking location
-    Road::Vertex parking_location_;
+    Road::Vertex parking_location_ = Road::Vertex();
     if ( private_mode ) {
         if ( request.parking_location() ) {
             parking_location_ = graph_->road_vertex_from_id(request.parking_location().get()).get();
