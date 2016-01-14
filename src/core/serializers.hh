@@ -17,7 +17,7 @@
 #ifndef TEMPUS_GRAPH_SERIALIZERS_HH
 #define TEMPUS_GRAPH_SERIALIZERS_HH
 
-#include <iosfwd>
+#include <iostream>
 #include <memory>
 #include <map>
 #include <set>
