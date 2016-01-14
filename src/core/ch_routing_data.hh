@@ -50,6 +50,12 @@ struct CHEdgeProperty
     }
 };
 
+inline std::ostream& operator<<( std::ostream& ostr, const CHEdgeProperty& e )
+{
+    ostr << "cost: " << e.b.cost << " shortcut: " << e.b.is_shortcut;
+    return ostr;
+}
+
 using CHQuery = CHQueryGraph<CHEdgeProperty>;
 
 using CHVertex = uint32_t;

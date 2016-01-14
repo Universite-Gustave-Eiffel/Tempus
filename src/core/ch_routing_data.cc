@@ -160,7 +160,7 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
         }
         up_degrees.push_back( upd );
 
-        ch_query.reset( new CHQueryGraph<CHEdgeProperty>( targets.begin(), num_nodes, up_degrees.begin(), properties.begin() ) );
+        ch_query.reset( new CHQueryGraph<CHEdgeProperty>( targets.begin(), targets.end(), num_nodes, up_degrees.begin(), properties.begin() ) );
         std::cout << "OK" << std::endl;
     }
     {

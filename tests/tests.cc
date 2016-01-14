@@ -815,7 +815,7 @@ void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_ve
         props.push_back( p );
     }
     
-    CHQuery graph( edges_.begin(), n_vertices, degrees, &props[0] );
+    CHQuery graph( edges_.begin(), edges_.end(), n_vertices, degrees, &props[0] );
 
     graph.debug_print( std::cout );
 
@@ -865,12 +865,13 @@ BOOST_AUTO_TEST_CASE( testCHQuery )
     {
         std::vector<std::pair<uint32_t, uint32_t>> edges;
         edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(1) ) );
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(3) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
         edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
         edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(3) ) );
-        edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(1) ) );
         edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(3) ) );
-        edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(0) ) );
-        int degrees[] = { 0, 1, 2, 0 };
+
+        int degrees[] = { 0, 1, 1, 0 };
         int costs[] = { 10, 20, 30, 40, 50, 60 };
 
         test_ch( edges, 4, degrees, costs );
@@ -879,14 +880,26 @@ BOOST_AUTO_TEST_CASE( testCHQuery )
     {
         std::vector<std::pair<uint32_t, uint32_t>> edges;
         // two connected components (islands)
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(3) ) );
         edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
         edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(4) ) );
-        edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(0) ) );
 
         int degrees[] = { 0, 1, 0, 1, 0 };
         int costs[] = { 10, 20, 30 };
 
         test_ch( edges, 5, degrees, costs );
+    }
+
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> edges;
+        // two connected components (islands)
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(1) ) );
+        edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(3) ) );
+
+        int degrees[] = { 0, 0, 0, 0 };
+        int costs[] = { 10, 20 };
+
+        test_ch( edges, 4, degrees, costs );
     }
 }
 

@@ -35,6 +35,8 @@ namespace Tempus
 //
 // EdgeProperty: data type of each edge (usually a cost and a shortcut flag)
 // EdgeIndex: type of an index in the edge array
+//
+// Vertex are represented by their CH ordering number
 template <typename EP,
           typename VI = uint32_t,
           typename EI = uint32_t>
@@ -48,13 +50,27 @@ public:
     // default constructor
     CHQueryGraph() {}
 
-    //
-    // @param vp iterator pointing to pair of nodes, sorted
-    // @param num_vertices number of vertices
-    // @param up_it iterator pointing to the number of upward edges for each vertex
-    // @param ep iterator pointing to the edge property of each edge
+    /**
+     * @param vp iterator pointing to pairs of vertices
+     * @param vp_end iterator pointing to the end of the pairs of vertices
+     * @param num_vertices number of vertices
+     * @param up_it iterator pointing to the number of upward edges for each vertex
+     * @param ep iterator pointing to the edge property of each edge
+     *
+     * Vertices are represented by their CH ordering
+     * Edges are organized in the following way: pairs of vertices are sorted in ascending order by the first element of the pair.
+     * All upward edges are grouped together first and then all downward edges
+     * up_it points to a sequence representing the number of upward edges for each vertex
+     *
+     * Example:
+     * if vp points to the following sequence : (0,1)(0,2)(0,1)(1,2)(1,2)
+     * if up_it points to the following sequence : (2,1,0)
+     * with n_vertices = 3
+     * then it corresponds to the following edges: 0->1, 0->2, 1->0, 1->2, 2->1
+     */
     template <typename VertexPairIterator, typename DegreeIterator, typename EdgePropertyIterator>
     CHQueryGraph( VertexPairIterator vp,
+                  VertexPairIterator vp_end,
                   size_t n_vertices,
                   DegreeIterator up_it,
                   EdgePropertyIterator ep)
@@ -65,25 +81,27 @@ public:
 
         edge_index_.resize( n_vertices + 1 );
 
-        for ( VI v = 0; v < n_vertices; v++ ) {
+        for ( VI v = 0; v < n_vertices; v++, up_it++ ) {
             edge_index_[v].first_upward_edge = edges_.size();
-            if ( vp->first == v ) {
+            BOOST_ASSERT( vp == vp_end || vp->first < vp->second ); // always u < v
+            BOOST_ASSERT( vp == vp_end || v <= vp->first ); // edges must be sorted
+            if ( vp != vp_end && vp->first == v ) {
                 // for all upward edges
                 for ( size_t j = 0; j < *up_it; j++, vp++, ep++ ) {
+                    BOOST_ASSERT( vp->first == v ); // check the upward degree is ok
                     EdgeData data;
                     data.target = vp->second;
                     data.property = *ep;
                     edges_.emplace_back( data );
                 }
             }
-            up_it++;
 
             edge_index_[v].first_downward_edge = edges_.size();
-            if ( vp->first == v ) {
+            if ( vp != vp_end && vp->first == v ) {
                 for ( ; v == vp->first; vp++, ep++ ) {
+                    BOOST_ASSERT( vp->first == v ); // check the downward degreee is ok
                     EdgeData data;
                     data.target = vp->second;
-                    data.property = *ep;
                     edges_.emplace_back( data );
                 }
             }
@@ -260,7 +278,7 @@ public:
 
     std::pair<EdgeDescriptor, bool> edge( VertexIndex u, VertexIndex v ) const
     {
-        if ( v > u ) {
+        if ( v > u ) { // we are looking for an upward edge
             EdgeIndex s = edge_index_[u].first_upward_edge;
             EdgeIndex t = edge_index_[u].first_downward_edge;
             for ( EdgeIndex i = s; i < t; i++ ) {
@@ -269,7 +287,7 @@ public:
                 }
             }
         }
-        if ( u > v ) {
+        else { // downward edge
             EdgeIndex s = edge_index_[v].first_downward_edge;
             EdgeIndex t = edge_index_[v+1].first_upward_edge;
             for ( EdgeIndex i = s; i < t; i++ ) {
