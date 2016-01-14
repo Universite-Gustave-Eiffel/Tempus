@@ -806,20 +806,24 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_ch_query )
 
-void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges, int n_vertices, int* degrees )
+void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_vertices, int* degrees, int* costs )
 {
     std::vector<CHEdgeProperty> props;
-    props.resize( n_vertices );
+    for ( size_t i = 0; i < edges_.size(); i++ ) {
+        CHEdgeProperty p;
+        p.b.cost = costs[i];
+        props.push_back( p );
+    }
     
-    CHQuery graph( edges.begin(), n_vertices, degrees, &props[0] );
+    CHQuery graph( edges_.begin(), n_vertices, degrees, &props[0] );
 
     graph.debug_print( std::cout );
 
-    auto oit = edges.begin();
+    auto oit = edges_.begin();
     uint32_t lastv = 0;
     int upd = 0;
-    auto eit = graph.edges().first;
-    auto eit_end = graph.edges().second;
+    auto eit = edges( graph ).first;
+    auto eit_end = edges( graph ).second;
     for ( ; eit != eit_end; eit++, oit++ ) {
         if ( oit->first != lastv )
         {
@@ -828,6 +832,8 @@ void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges, int n_ver
             upd = 0;
         }
         std::cout << oit->first << " - " << oit->second << (eit->is_upward()? "+" : "-") << std::endl;
+        BOOST_CHECK_EQUAL( eit->source(), source( *eit, graph ) );
+        BOOST_CHECK_EQUAL( eit->target(), target( *eit, graph ) );
         if ( eit->is_upward() ) {
             BOOST_CHECK_EQUAL( eit->source(), oit->first );
             BOOST_CHECK_EQUAL( eit->target(), oit->second );
@@ -837,6 +843,13 @@ void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges, int n_ver
             BOOST_CHECK_EQUAL( eit->target(), oit->first );
             BOOST_CHECK_EQUAL( eit->source(), oit->second );
         }
+
+        bool found = false;
+        CHEdge e;
+        boost::tie( e, found ) = edge( eit->source(), eit->target(), graph );
+        BOOST_CHECK( found );
+        BOOST_CHECK_EQUAL( e.property().b.cost, eit->property().b.cost );
+        
         lastv = oit->first;
     }
     if ( oit->first != lastv )
@@ -858,8 +871,9 @@ BOOST_AUTO_TEST_CASE( testCHQuery )
         edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(3) ) );
         edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(0) ) );
         int degrees[] = { 0, 1, 2, 0 };
+        int costs[] = { 10, 20, 30, 40, 50, 60 };
 
-        test_ch( edges, 4, degrees );
+        test_ch( edges, 4, degrees, costs );
     }
 
     {
@@ -870,8 +884,9 @@ BOOST_AUTO_TEST_CASE( testCHQuery )
         edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(0) ) );
 
         int degrees[] = { 0, 1, 0, 1, 0 };
+        int costs[] = { 10, 20, 30 };
 
-        test_ch( edges, 5, degrees );
+        test_ch( edges, 5, degrees, costs );
     }
 }
 
