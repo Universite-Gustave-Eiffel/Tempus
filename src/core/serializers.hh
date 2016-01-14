@@ -122,12 +122,15 @@ void unserialize( std::istream& istr, std::map<K,V>& m, binary_serialization_t t
 template <typename T>
 void serialize( std::ostream& ostr, const boost::optional<T>& opt, binary_serialization_t t )
 {
+    char c;
     if (opt) {
-        ostr << "1";
+        c = '1';
+        ostr.write( &c, 1 );
         serialize( ostr, *opt, t );
     }
     else {
-        ostr << "0";
+        c = '0';
+        ostr.write( &c, 1 );
     }
 }
 
@@ -135,7 +138,7 @@ template <typename T>
 void unserialize( std::istream& istr, boost::optional<T>& opt, binary_serialization_t t )
 {
     char ok;
-    istr >> ok;
+    istr.read( &ok, 1 );
     if (ok == '1') {
         T obj;
         unserialize( istr, obj, t );
