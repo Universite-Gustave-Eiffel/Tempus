@@ -432,8 +432,9 @@ void unserialize( std::istream& istr, Multimodal::Graph& graph, binary_serializa
     // transport mode
     unserialize( istr, graph.transport_modes_, t );
     // road
-    graph.road_.reset( new Road::Graph() );
-    unserialize( istr, *graph.road_, t );
+    std::unique_ptr<Road::Graph> rd( new Road::Graph() );
+    unserialize( istr, *rd, t );
+    graph.set_road( std::move( rd ) );
     // pois
     unserialize( istr, graph.pois_, t );
     // pt networks

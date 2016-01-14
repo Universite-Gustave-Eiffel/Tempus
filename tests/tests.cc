@@ -161,9 +161,24 @@ void testConsistency_( const Multimodal::Graph* graph )
         std::map<db_id_t, Road::Vertex> vertex_id_map;
         Road::VertexIterator vit, vitend;
         boost::tie( vit, vitend ) = vertices( graph->road() );
+        uint32_t ne = 0;
         for ( ; vit != vitend; vit++ ) {
             vertex_id_map[ graph->road()[*vit].db_id() ] = *vit;
+            int noe = 0;
+            int nie = 0;
+            auto oeit_end = out_edges( *vit, graph->road() ).second;
+            for ( auto oeit = out_edges( *vit, graph->road() ).first; oeit != oeit_end; oeit++ ) {
+                noe++;
+            }
+            BOOST_CHECK_EQUAL( noe, out_degree( *vit, graph->road() ) );
+            auto ieit_end = in_edges( *vit, graph->road() ).second;
+            for ( auto ieit = in_edges( *vit, graph->road() ).first; ieit != ieit_end; ieit++ ) {
+                nie++;
+            }
+            BOOST_CHECK_EQUAL( nie, in_degree( *vit, graph->road() ) );
+            ne += noe;
         }
+        BOOST_CHECK_EQUAL( ne, num_edges( graph->road() ) );
         
         // select sections that are different in the two directions
         Db::Result res( connection.exec( "SELECT "
@@ -295,22 +310,14 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     const Multimodal::Graph* graph( dynamic_cast<const Tempus::Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
     testConsistency_( graph );
 
-    {
-        std::cout << "dumping ... " << std::endl;
-        std::ofstream ofs( "dump.bin" );
-        serialize( ofs, *graph, binary_serialization_t() );
-    }
+    MultimodalGraphBuilder builder;
+    std::cout << "dumping ... " << std::endl;
+    builder.file_export( graph, "dump.bin", progression );
 
     // retry with a fresh loaded from dump file
-    std::unique_ptr<Road::Graph> rg;
-    std::unique_ptr<Multimodal::Graph> graph2( new Multimodal::Graph( std::move(rg) ) );
-    {
-        std::cout << "reloading ... " << std::endl;
-        std::ifstream ifs("dump.bin");
-        unserialize( ifs, *graph2, binary_serialization_t() );
-    }
-
-    testConsistency_( graph );
+    std::unique_ptr<RoutingData> rd2 = builder.file_import( "dump.bin", progression );
+    const Multimodal::Graph* graph2( dynamic_cast<const Tempus::Multimodal::Graph*>( rd2.get() ) );
+    testConsistency_( graph2 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
