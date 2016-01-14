@@ -164,7 +164,6 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
                     middle_node[std::make_pair(id2, id1)] = middle;
                 }
             }
-            //std::cout << std::endl;
             properties.emplace_back( p );
             targets.emplace_back( std::make_pair(id1, id2) );
         }

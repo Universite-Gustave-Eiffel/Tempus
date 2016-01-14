@@ -102,6 +102,7 @@ public:
                     BOOST_ASSERT( vp->first == v ); // check the downward degreee is ok
                     EdgeData data;
                     data.target = vp->second;
+                    data.property = *ep;
                     edges_.emplace_back( data );
                 }
             }
