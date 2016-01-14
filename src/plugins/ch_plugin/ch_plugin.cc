@@ -271,10 +271,10 @@ public:
         boost::optional<CHVertex> destination = rd_.vertex_from_id( request.destination() );
 
         if ( !origin ) {
-            throw std::runtime_error( (boost::format("Can't find vertex of ID %1") % request.origin()).str() );
+            throw std::runtime_error( (boost::format("Can't find vertex of ID %1%") % request.origin()).str() );
         }
         if ( !destination ) {
-            throw std::runtime_error( (boost::format("Can't find vertex of ID %1") % request.destination()).str() );
+            throw std::runtime_error( (boost::format("Can't find vertex of ID %1%") % request.destination()).str() );
         }
         std::cout << "From " << request.origin() << " to " << request.destination() << std::endl;
 
