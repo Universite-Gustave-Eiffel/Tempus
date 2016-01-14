@@ -63,7 +63,7 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
     
     Db::Connection conn( pg_options );
 
-    size_t num_nodes = 0;
+    uint32_t num_nodes = 0;
     {
         Db::Result r( conn.exec( (boost::format("select count(*) from %1%.ordered_nodes") % schema).str() ) );
         BOOST_ASSERT( r.size() == 1 );
@@ -100,21 +100,36 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
         std::vector<CHEdgeProperty> properties;
         std::vector<uint16_t> up_degrees;
 
-        uint32_t node = 0;
         uint16_t upd = 0;
         uint32_t old_id1 = 0;
         uint32_t old_id2 = 0;
         int old_dir = 0;
+        bool first = true;
         for ( ; res_it != it_end; res_it++ ) {
             Db::RowValue res_i = *res_it;
             uint32_t id1 = res_i[0].as<uint32_t>();
             uint32_t id2 = res_i[1].as<uint32_t>();
             int dir = res_i[4];
-            if ( (id1 == old_id1) && (id2 == old_id2) && (dir == old_dir) ) {
-                // we may have the same edges with different costs
-                // we then skip the duplicates and only take
-                // the first one (the one with the smallest weight)
-                continue;
+            if ( first ) {
+                first = false;
+            }
+            else {
+                if ( (id1 == old_id1) && (id2 == old_id2) && (dir == old_dir) ) {
+                    // we may have the same edges with different costs
+                    // we then skip the duplicates and only take
+                    // the first one (the one with the smallest weight)
+                    continue;
+                }
+                if ( id1 > old_id1 ) {
+                    up_degrees.push_back( upd );
+                    if ( id1 > old_id1 + 1 ) {
+                        // update up_degrees for vertex without outgoing edges
+                        for ( uint32_t i = 0; i < id1 - old_id1 - 1; i++ ) {
+                            up_degrees.push_back( 0 );
+                        }
+                    }
+                    upd = 0;
+                }
             }
             old_id1 = id1;
             old_id2 = id2;
@@ -130,11 +145,6 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
             }
             else if ( !res_i[6].is_null() ) {
                 res_i[6] >> eid;
-            }
-            if ( id1 > node ) {
-                up_degrees.push_back( upd );
-                node = id1;
-                upd = 0;
             }
             if ( dir == 0 ) {
                 upd++;
@@ -159,6 +169,10 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
             targets.emplace_back( std::make_pair(id1, id2) );
         }
         up_degrees.push_back( upd );
+
+        for ( uint32_t i = 0; i < num_nodes - up_degrees.size(); i++ ) {
+            up_degrees.push_back( 0 );
+        }
 
         ch_query.reset( new CHQueryGraph<CHEdgeProperty>( targets.begin(), targets.end(), num_nodes, up_degrees.begin(), properties.begin() ) );
         std::cout << "OK" << std::endl;
