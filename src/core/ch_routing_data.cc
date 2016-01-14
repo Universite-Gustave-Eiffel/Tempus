@@ -190,7 +190,8 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
     }
     {
         CHQuery& ch = *ch_query;
-        for ( auto it = edges( ch ).first; it != edges( ch ).second; it++ ) {
+        auto it_end = edges( ch ).second;
+        for ( auto it = edges( ch ).first; it != it_end; it++ ) {
             CHVertex u = source( *it, ch );
             CHVertex v = target( *it, ch );
             bool found = false;

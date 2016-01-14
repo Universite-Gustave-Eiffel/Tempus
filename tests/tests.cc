@@ -22,6 +22,7 @@
 #include "reverse_multimodal_graph.hh"
 #include "utils/graph_db_link.hh"
 #include "multimodal_graph_builder.hh"
+#include "ch_routing_data.hh"
 
 #include <iostream>
 #include <fstream>
@@ -799,6 +800,79 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
         }
     }
     BOOST_CHECK_EQUAL(i, 4);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( tempus_ch_query )
+
+void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges, int n_vertices, int* degrees )
+{
+    std::vector<CHEdgeProperty> props;
+    props.resize( n_vertices );
+    
+    CHQuery graph( edges.begin(), n_vertices, degrees, &props[0] );
+
+    graph.debug_print( std::cout );
+
+    auto oit = edges.begin();
+    uint32_t lastv = 0;
+    int upd = 0;
+    auto eit = graph.edges().first;
+    auto eit_end = graph.edges().second;
+    for ( ; eit != eit_end; eit++, oit++ ) {
+        if ( oit->first != lastv )
+        {
+            std::cout << "deg " << degrees[lastv] << " =? " << upd << std::endl;
+            BOOST_CHECK_EQUAL( degrees[lastv], upd );
+            upd = 0;
+        }
+        std::cout << oit->first << " - " << oit->second << (eit->is_upward()? "+" : "-") << std::endl;
+        if ( eit->is_upward() ) {
+            BOOST_CHECK_EQUAL( eit->source(), oit->first );
+            BOOST_CHECK_EQUAL( eit->target(), oit->second );
+            upd++;
+        }
+        else {
+            BOOST_CHECK_EQUAL( eit->target(), oit->first );
+            BOOST_CHECK_EQUAL( eit->source(), oit->second );
+        }
+        lastv = oit->first;
+    }
+    if ( oit->first != lastv )
+    {
+        std::cout << "deg " << degrees[lastv] << " =? " << upd << std::endl;
+        BOOST_CHECK_EQUAL( degrees[lastv], upd );
+        upd = 0;
+    }
+}
+
+BOOST_AUTO_TEST_CASE( testCHQuery )
+{
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> edges;
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(1) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(3) ) );
+        edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(1) ) );
+        edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(3) ) );
+        edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(0) ) );
+        int degrees[] = { 0, 1, 2, 0 };
+
+        test_ch( edges, 4, degrees );
+    }
+
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> edges;
+        // two connected components (islands)
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
+        edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(4) ) );
+        edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(0) ) );
+
+        int degrees[] = { 0, 1, 0, 1, 0 };
+
+        test_ch( edges, 5, degrees );
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
