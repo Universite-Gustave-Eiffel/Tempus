@@ -14,4 +14,4 @@ done
 cd -
 
 # launch unit tests
-ctest
+ctest -VV
