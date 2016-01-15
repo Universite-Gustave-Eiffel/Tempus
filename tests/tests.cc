@@ -165,18 +165,14 @@ void testConsistency_( const Multimodal::Graph* graph )
         uint32_t ne = 0;
         for ( ; vit != vitend; vit++ ) {
             vertex_id_map[ graph->road()[*vit].db_id() ] = *vit;
-#if 0 // FIXME appears to freeze travis build ...
+#if 1 // FIXME appears to freeze travis build ...
             int noe = 0;
             int nie = 0;
-            auto oeit_end = out_edges( *vit, graph->road() ).second;
-            for ( auto oeit = out_edges( *vit, graph->road() ).first; oeit != oeit_end; oeit++ ) {
-                noe++;
-            }
+            auto outp = out_edges( *vit, graph->road() );
+            noe += outp.second - outp.first;
+            auto inp = in_edges( *vit, graph->road() );
+            nie += inp.second - inp.first;
             BOOST_CHECK_EQUAL( noe, out_degree( *vit, graph->road() ) );
-            auto ieit_end = in_edges( *vit, graph->road() ).second;
-            for ( auto ieit = in_edges( *vit, graph->road() ).first; ieit != ieit_end; ieit++ ) {
-                nie++;
-            }
             BOOST_CHECK_EQUAL( nie, in_degree( *vit, graph->road() ) );
             ne += noe;
 #endif
