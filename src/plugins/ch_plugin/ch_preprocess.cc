@@ -464,8 +464,9 @@ vector<CHVertex> order_graph( CHGraph& graph, std::function<db_id_t(CHVertex)> n
     #pragma omp parallel
     {
         #pragma omp for schedule(dynamic)
-        for ( CHVertex node = 0; node < num_vertices( graph ); node++ )
+        for ( int node_i = 0; node_i < int(num_vertices( graph )); node_i++ )
         {
+            CHVertex node = CHVertex( node_i );
             node_costs[node] = get_node_cost( graph, node, hierarchy_depths, node_id(node) );
         }
     }
