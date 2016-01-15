@@ -8,6 +8,10 @@ os:
 compiler:
   - g++
 
+branches:
+  except:
+    - test_av
+
 addons:
   postgresql: "9.3"
 
