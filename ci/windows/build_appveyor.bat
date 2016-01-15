@@ -12,15 +12,6 @@ echo Running cmake...
 cd c:\projects\tempus
 cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DOC=OFF -DBUILD_OSM2SHP=OFF -DBUILD_QGIS_PLUGIN=OFF -DBUILD_WPS=OFF
 
-echo Populating test db ...
-psql -U postgres -c "create database tempus_test_db;"
-psql -U postgres -c "create extension postgis;" tempus_test_db
-7z x data\tempus\tempus_test_db\tempus_test_db.sql.zip -o tempus_test_db.sql -y
-psql -U postgres tempus_test_db < tempus_test_db.sql
-psql -U postgres tempus_test_db < data\tempus\tempus_test_db\patch.001.sql
-psql -U postgres tempus_test_db < data\tempus\tempus_test_db\patch.002.sql
-psql -U postgres tempus_test_db < data\tempus\tempus_test_db\patch.003.sql
-
 nmake
 
 GOTO DONE
@@ -34,7 +25,7 @@ SET EL=%ERRORLEVEL%
 
 :DONE
 ECHO ~~~~~~~~~~~~~~~~~~~~~~ DONE %~f0 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ECHO build started^: %NODE_GDAL_BUILD_START_TIME%
-ECHO build finished^: %NODE_GDAL_BUILD_FINISH_TIME%
+ECHO build started
+ECHO build finished
 
 EXIT /b %EL%
