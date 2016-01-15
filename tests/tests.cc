@@ -161,6 +161,7 @@ void testConsistency_( const Multimodal::Graph* graph )
         std::map<db_id_t, Road::Vertex> vertex_id_map;
         Road::VertexIterator vit, vitend;
         boost::tie( vit, vitend ) = vertices( graph->road() );
+        std::cout << "n_vertices: " << (vitend-vit) << std::endl;
         uint32_t ne = 0;
         for ( ; vit != vitend; vit++ ) {
             vertex_id_map[ graph->road()[*vit].db_id() ] = *vit;
