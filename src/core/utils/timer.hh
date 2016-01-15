@@ -48,7 +48,7 @@ public:
     double elapsed_ms()
     {
         auto t_stop = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-        return (t_stop - t_start).count();
+        return double((t_stop - t_start).count());
     }
 private:
     std::chrono::milliseconds t_start;

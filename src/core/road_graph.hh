@@ -95,11 +95,11 @@ struct Section : public Base {
 
     DECLARE_RW_PROPERTY( lane, uint8_t );
 
-    bool is_roundabout() const { return road_flags_ & RoadIsRoundAbout; }
-    bool is_bridge() const { return road_flags_ & RoadIsBridge; }
-    bool is_tunnel() const { return road_flags_ & RoadIsTunnel; }
-    bool is_ramp() const { return road_flags_ & RoadIsRamp; }
-    bool is_tollway() const { return road_flags_ & RoadIsTollway; }
+    bool is_roundabout() const { return (road_flags_ & RoadIsRoundAbout) != 0; }
+    bool is_bridge() const { return (road_flags_ & RoadIsBridge) != 0; }
+    bool is_tunnel() const { return (road_flags_ & RoadIsTunnel) != 0; }
+    bool is_ramp() const { return (road_flags_ & RoadIsRamp) != 0; }
+    bool is_tollway() const { return (road_flags_ & RoadIsTollway) != 0; }
 
     void set_is_roundabout(bool b) { road_flags_ |= b ? RoadIsRoundAbout : 0; }
     void set_is_bridge(bool b) { road_flags_ |= b ? RoadIsBridge : 0; }
