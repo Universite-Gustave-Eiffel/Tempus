@@ -150,30 +150,30 @@ endif()
 include(CPack)
 
 if (WIN32)
-   find_file( MSVCR71 NAME msvcr71.dll
-     PATHS
-     $ENV{OSGEO4W_ROOT}/bin
-	 $ENV{MSVCR71_DLL}
-   )
-   if (MSVCR71)
-   else()
-        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
-	endif()
+#   find_file( MSVCR71 NAME msvcr71.dll
+#     PATHS
+#     $ENV{OSGEO4W_ROOT}/bin
+#	 $ENV{MSVCR71_DLL}
+#   )
+#   if (MSVCR71)
+#   else()
+#        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
+#	endif()
    
-   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
-   file(GLOB iconvdll ${PostgreSQL_LIBRARY_DIRS}/../bin/*iconv*.dll)
+#   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
+#   file(GLOB iconvdll ${PostgreSQL_LIBRARY_DIRS}/../bin/*iconv*.dll)
    install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_wps_service_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat win32/unzip.vbs DESTINATION .)
-   install(FILES 
-      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
-      ${intldll}
-	  ${iconvdll}
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
-      ${MSVCR71}
-      DESTINATION bin)
+#   install(FILES 
+#      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
+#      ${intldll}
+#	  ${iconvdll}
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
+#      ${MSVCR71}
+#      DESTINATION bin)
 else()
   install(FILES script/install-qgis-plugins.sh DESTINATION share/tempus)
 endif()
