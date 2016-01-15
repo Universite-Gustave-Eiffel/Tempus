@@ -180,6 +180,7 @@ void testConsistency_( const Multimodal::Graph* graph )
         }
         BOOST_CHECK_EQUAL( ne, num_edges( graph->road() ) );
         
+        std::cout << "db request" << std::endl;
         // select sections that are different in the two directions
         Db::Result res( connection.exec( "SELECT "
                                          "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
@@ -267,6 +268,7 @@ void testConsistency_( const Multimodal::Graph* graph )
 
     // number of PT networks
     {
+        std::cout << "pt networks" << std::endl;
         Db::Result res( connection.exec( "SELECT COUNT(*) FROM tempus.pt_network" ) );
         long n_networks = res[0][0].as<long>();
 
@@ -274,6 +276,7 @@ void testConsistency_( const Multimodal::Graph* graph )
         BOOST_CHECK_EQUAL( ( size_t )n_networks, graph->network_map().size() );
     }
 
+    std::cout << "pt graphs" << std::endl;
     for ( auto p : graph->public_transports() ) {
         const PublicTransport::Graph& pt_graph = *p.second;
 
