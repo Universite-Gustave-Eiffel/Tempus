@@ -28,8 +28,14 @@
 #include <fstream>
 #include <string>
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 static std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OPTIONS" ) : "";
 static std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";

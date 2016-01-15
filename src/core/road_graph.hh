@@ -20,7 +20,13 @@
 
 #include <iosfwd>
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/graph/compressed_sparse_row_graph.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 #include "common.hh"
 #include "point.hh"
 #include "serializers.hh"

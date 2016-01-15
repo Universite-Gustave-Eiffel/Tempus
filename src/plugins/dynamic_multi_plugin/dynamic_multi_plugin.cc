@@ -18,9 +18,15 @@
  */
 
 #include "dynamic_multi_plugin.hh"
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "utils/timer.hh"
 #include "utils/field_property_accessor.hh"

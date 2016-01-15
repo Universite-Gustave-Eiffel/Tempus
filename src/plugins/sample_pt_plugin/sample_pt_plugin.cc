@@ -15,8 +15,14 @@
  *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "plugin.hh"
 #include "plugin_factory.hh"

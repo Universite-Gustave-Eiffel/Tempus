@@ -18,8 +18,14 @@
 #ifndef TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 #define TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/optional.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 #include "common.hh"
 #include "road_graph.hh"
 #include "abscissa.hh"

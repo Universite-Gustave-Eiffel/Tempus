@@ -27,9 +27,15 @@
    If the request contains multiple criteria, a result is added for each criterion.
  */
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "plugin.hh"
 #include "plugin_factory.hh"

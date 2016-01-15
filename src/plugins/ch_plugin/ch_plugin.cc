@@ -20,12 +20,18 @@
 #include "plugin_factory.hh"
 
 //#include <boost/heap/d_ary_heap.hpp>
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <queue>
 #include <boost/pending/indirect_cmp.hpp>
 #include <boost/graph/visitors.hpp>
 #include <boost/graph/dijkstra_shortest_paths_no_color_map.hpp>
 #include <boost/property_map/function_property_map.hpp>
 #include <boost/format.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "utils/associative_property_map_default_value.hh"
 #include "utils/timer.hh"
