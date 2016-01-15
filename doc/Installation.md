@@ -150,8 +150,8 @@ Unit tests
 You can test your installation by running some unit tests. Within the build directory, you can run ctest in order to test the core components. Example of output:
 
 ```
-~/src/TempusV2/build$ ctest
-Test project /home/hme/src/TempusV2/build
+~/src/Tempus/build$ ctest
+Test project /home/hme/src/Tempus/build
     Start 1: test_core
 1/3 Test #1: test_core ........................   Passed    8.00 sec
     Start 2: test_osm2shp

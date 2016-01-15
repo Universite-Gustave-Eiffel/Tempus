@@ -1,7 +1,7 @@
 Documentation
 =============
 
-Tempus is designed around a core set of C++ classes based on boost::graph. Main classes processed by TempusV2 are:
+Tempus is designed around a core set of C++ classes based on boost::graph. Main classes processed by Tempus are:
 
 * Tempus::Road::Graph representing the road graph
 * Tempus::PublicTransport::Graph representing a public transport graph
@@ -14,7 +14,7 @@ These graphs are filled up with data coming from a PostgreSQL/PostGIS database. 
 
 The Tempus SQL schema can be found [here](../src/loader/tempus/sql/tempus.sql)
 
-Path planning algorithms are designed to be written as user plugins. The [Plugin base class](../src/core/plugin.hh) gives access to some callbacks. Please have a look at the three different sample plugins shipped with TempusV2: [Tempus::RoadPlugin](../src/plugins/sample_road_plugin), [Tempus::PtPlugin](../src/plugins/sample_pt_plugin) and [Tempus::MultiPlugin](../src/plugins/sample_multi_plugin/).
+Path planning algorithms are designed to be written as user plugins. The [Plugin base class](../src/core/plugin.hh) gives access to some callbacks. Please have a look at the three different sample plugins shipped with Tempus: [Tempus::RoadPlugin](../src/plugins/sample_road_plugin), [Tempus::PtPlugin](../src/plugins/sample_pt_plugin) and [Tempus::MultiPlugin](../src/plugins/sample_multi_plugin/).
 
 For a more advanced plugin, have a look at the [dynamic_multi_plugin](../src/plugins/dynamic_multi_plugin) that is able to find realistic multimodal trips with 
 

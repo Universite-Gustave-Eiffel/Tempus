@@ -23,13 +23,13 @@
 #define TEMPUS_COMMON_HH
 
 ///
-/// @mainpage TempusV2 API
+/// @mainpage Tempus API
 ///
-/// TempusV2 is a framework which offers generic graph manipulation abilities in order to develop multimodal
+/// Tempus is a framework which offers generic graph manipulation abilities in order to develop multimodal
 /// path planning requests.
 ///
 /// It is designed around a core, whose documentation is detailed here.
-/// Main classes processed by TempusV2 are:
+/// Main classes processed by Tempus are:
 /// - Tempus::Road::Graph representing the road graph
 /// - Tempus::PublicTransport::Graph representing a public transport graph
 /// - Tempus::POI representing points of interest on the road graph
@@ -39,7 +39,7 @@
 /// Especially have a look at the Tempus::PQImporter class.
 ///
 /// Path planning algorithms are designed to be written as user plugins. The Plugin base class gives access to some callbacks.
-/// Please have a look at the three different sample plugins shipped with TempusV2: Tempus::RoadPlugin, Tempus::PtPlugin and Tempus::MultiPlugin.
+/// Please have a look at the three different sample plugins shipped with Tempus: Tempus::RoadPlugin, Tempus::PtPlugin and Tempus::MultiPlugin.
 ///
 /// The internal API is exposed to other programs and languages through a WPS server.
 /// Have a look at the WPS::Service class and at its derived classes.
