@@ -174,8 +174,8 @@ public:
             try {
                 boost::dijkstra_shortest_paths( road_graph,
                                                 origin,
-                                                &pred_map[0],
-                                                &distance_map[0],
+                                                boost::make_iterator_property_map( pred_map.begin(), get( boost::vertex_index, road_graph ) ),
+                                                boost::make_iterator_property_map( distance_map.begin(), get( boost::vertex_index, road_graph ) ),
                                                 weight_map,
                                                 boost::get( boost::vertex_index, road_graph ),
                                                 std::less<double>(),
