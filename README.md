@@ -16,7 +16,7 @@ Please refer to the following sections :
 * [Documentation](doc/Documentation.md)
 * [Installation](doc/Installation.md)
 
-## Linux compilation status
+## Compilation status
 
 | Environment              | Branch | Status        |
 | ------------------------ |--------|:-------------:|
