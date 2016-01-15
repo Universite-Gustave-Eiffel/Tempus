@@ -31,9 +31,15 @@
 #include <string>
 #include <stdexcept>
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/assert.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #ifdef DB_TIMING
 #   include <boost/timer/timer.hpp>

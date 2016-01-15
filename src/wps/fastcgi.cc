@@ -22,7 +22,15 @@
 #include <fstream>
 
 #include <string>
+
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 
 
 #ifdef _WIN32

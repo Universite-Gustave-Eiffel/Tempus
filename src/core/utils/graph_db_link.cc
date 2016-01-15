@@ -30,8 +30,8 @@ Point2D coordinates( const Road::Vertex& v, Db::Connection& db, const Road::Grap
     Db::Result res = db.exec( q );
     BOOST_ASSERT( res.size() > 0 );
     Point2D p;
-    p.set_x( res[0][0].as<double>() );
-    p.set_y( res[0][1].as<double>() );
+    p.set_x( res[0][0].as<float>() );
+    p.set_y( res[0][1].as<float>() );
     return p;
 }
 
@@ -41,8 +41,8 @@ Point2D coordinates( const PublicTransport::Vertex& v, Db::Connection& db, const
     Db::Result res = db.exec( q );
     BOOST_ASSERT( res.size() > 0 );
     Point2D p;
-    p.set_x( res[0][0].as<double>() );
-    p.set_y( res[0][1].as<double>() );
+    p.set_x( res[0][0].as<float>() );
+    p.set_y( res[0][1].as<float>() );
     return p;
 }
 
@@ -52,8 +52,8 @@ Point2D coordinates( const POI* poi, Db::Connection& db )
     Db::Result res = db.exec( q );
     BOOST_ASSERT( res.size() > 0 );
     Point2D p;
-    p.set_x( res[0][0].as<double>() );
-    p.set_y( res[0][1].as<double>() );
+    p.set_x( res[0][0].as<float>() );
+    p.set_y( res[0][1].as<float>() );
     return p;
 }
 

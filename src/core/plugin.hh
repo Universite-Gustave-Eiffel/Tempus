@@ -22,7 +22,13 @@
 #include <iostream>
 #include <stdexcept>
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "multimodal_graph.hh"
 #include "request.hh"

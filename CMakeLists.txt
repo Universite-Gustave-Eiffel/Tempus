@@ -52,7 +52,7 @@ if(MSVC)
 	
 	
 	# Disable verbose warnings
-	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290" )
+	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290 /wd4267" )
 	
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 

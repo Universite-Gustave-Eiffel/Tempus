@@ -15,8 +15,17 @@
  *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/format.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #include "db.hh"
 #include "multimodal_graph.hh"
 #include "reverse_multimodal_graph.hh"
@@ -27,15 +36,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
-#ifdef _WIN32
-#pragma warning(push, 0)
-#endif
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 static std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OPTIONS" ) : "";
 static std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";
