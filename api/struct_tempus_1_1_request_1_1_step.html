@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::Request::Step Struct Reference</title>
+<title>Tempus: Tempus::Request::Step Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -101,11 +102,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a86215c343522dbd9376daae1ccfcb582"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a86215c343522dbd9376daae1ccfcb582"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RW_PROPERTY</b> (location, <a class="el" href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Road::Vertex</a>)</td></tr>
-<tr class="separator:a86215c343522dbd9376daae1ccfcb582"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94bd418cd96104bc71d1bb2f1a172b1d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a94bd418cd96104bc71d1bb2f1a172b1d"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RW_PROPERTY</b> (constraint, <a class="el" href="struct_tempus_1_1_request_1_1_time_constraint.html">TimeConstraint</a>)</td></tr>
+<tr class="memitem:a0c290dd46340e28cfc0793e042144e86"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c290dd46340e28cfc0793e042144e86"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RW_PROPERTY</b> (location, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>)</td></tr>
+<tr class="separator:a0c290dd46340e28cfc0793e042144e86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94bd418cd96104bc71d1bb2f1a172b1d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_request_1_1_step.html#a94bd418cd96104bc71d1bb2f1a172b1d">DECLARE_RW_PROPERTY</a> (constraint, <a class="el" href="struct_tempus_1_1_request_1_1_time_constraint.html">TimeConstraint</a>)</td></tr>
 <tr class="separator:a94bd418cd96104bc71d1bb2f1a172b1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a60440a85d7533b81afdbb618433711"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a60440a85d7533b81afdbb618433711"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_request_1_1_step.html#a1a60440a85d7533b81afdbb618433711">DECLARE_RW_PROPERTY</a> (private_vehicule_at_destination, bool)</td></tr>
@@ -114,13 +114,42 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Class used to represent destinations of a request and constraints of the step. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="request_8hh_source.html">request.hh</a></li>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a94bd418cd96104bc71d1bb2f1a172b1d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Tempus::Request::Step::DECLARE_RW_PROPERTY </td>
+          <td>(</td>
+          <td class="paramtype">constraint&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="struct_tempus_1_1_request_1_1_time_constraint.html">TimeConstraint</a>&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p><a class="el" href="struct_tempus_1_1_time.html" title="Time is the number of seconds since 00:00. ">Time</a> constraint. </p>
+<dl class="section warning"><dt>Warning</dt><dd>Should be ignored for the first step (origin) </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="request_8hh_source.html">request.hh</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

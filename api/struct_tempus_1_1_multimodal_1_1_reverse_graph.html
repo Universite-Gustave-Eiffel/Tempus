@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::Multimodal::ReverseGraph Struct Reference</title>
+<title>Tempus: Tempus::Multimodal::ReverseGraph Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -158,11 +159,6 @@ typedef std::map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638e
 <a class="el" href="struct_tempus_1_1_public_transport_1_1_network.html">PublicTransport::Network</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#aa295a009164815c65b00cf3519085cde">NetworkMap</a></td></tr>
 <tr class="memdesc:aa295a009164815c65b00cf3519085cde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public transport networks. <br/></td></tr>
 <tr class="separator:aa295a009164815c65b00cf3519085cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf7c9a2b77782f4663f72f5d4fe6b173"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf7c9a2b77782f4663f72f5d4fe6b173"></a>
-typedef boost::ptr_map<br class="typebreak"/>
-&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#aaf7c9a2b77782f4663f72f5d4fe6b173">PoiList</a></td></tr>
-<tr class="memdesc:aaf7c9a2b77782f4663f72f5d4fe6b173"><td class="mdescLeft">&#160;</td><td class="mdescRight">Point of interests. <br/></td></tr>
-<tr class="separator:aaf7c9a2b77782f4663f72f5d4fe6b173"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae935c10cb2897dfdb9f9d9ef2dc81c6e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae935c10cb2897dfdb9f9d9ef2dc81c6e"></a>
 typedef std::map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <br class="typebreak"/>
 <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#ae935c10cb2897dfdb9f9d9ef2dc81c6e">TransportModes</a></td></tr>
@@ -174,7 +170,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5b0ae92eae34133b5a2420f9c678e691"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#a5b0ae92eae34133b5a2420f9c678e691">ReverseGraph</a> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a> &amp;<a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#a5222a646e6cc9ddf405729a2df749016">graph</a>)</td></tr>
 <tr class="separator:a5b0ae92eae34133b5a2420f9c678e691"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa12426c94c53b1c904ae22bb1d1769f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa12426c94c53b1c904ae22bb1d1769f"></a>
-const <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Road::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#aaa12426c94c53b1c904ae22bb1d1769f">road</a> () const </td></tr>
+const <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#aaa12426c94c53b1c904ae22bb1d1769f">road</a> () const </td></tr>
 <tr class="memdesc:aaa12426c94c53b1c904ae22bb1d1769f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The road graph. <br/></td></tr>
 <tr class="separator:aaa12426c94c53b1c904ae22bb1d1769f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a740a883c6329117eeea22a132d23c4cf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a740a883c6329117eeea22a132d23c4cf"></a>
@@ -188,22 +184,19 @@ boost::optional&lt; const <br class="typebreak"/>
 <a class="el" href="struct_tempus_1_1_public_transport_1_1_network.html">PublicTransport::Network</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#a5e143ade66a070393d99190a5bd2aec6">network</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
 <tr class="memdesc:a5e143ade66a070393d99190a5bd2aec6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular network. <br/></td></tr>
 <tr class="separator:a5e143ade66a070393d99190a5bd2aec6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb76447c550058e61a872759ce6fd5cf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adb76447c550058e61a872759ce6fd5cf"></a>
+<tr class="memitem:aed58ab5ddc85c963c0dbd627c1dde2f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed58ab5ddc85c963c0dbd627c1dde2f2"></a>
 boost::optional<br class="typebreak"/>
-&lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#adb76447c550058e61a872759ce6fd5cf">public_transport</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
-<tr class="memdesc:adb76447c550058e61a872759ce6fd5cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular graph. <br/></td></tr>
-<tr class="separator:adb76447c550058e61a872759ce6fd5cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e8e67774c8349c0da56e747a4ee5881"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9e8e67774c8349c0da56e747a4ee5881"></a>
+&lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#aed58ab5ddc85c963c0dbd627c1dde2f2">public_transport</a> (<a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a>) const </td></tr>
+<tr class="memdesc:aed58ab5ddc85c963c0dbd627c1dde2f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular graph. <br/></td></tr>
+<tr class="separator:aed58ab5ddc85c963c0dbd627c1dde2f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62e20f216d282e58924644eff5db9a86"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a62e20f216d282e58924644eff5db9a86"></a>
 boost::optional<br class="typebreak"/>
-&lt; <a class="el" href="class_tempus_1_1_reverse_graph_t.html">PublicTransport::ReverseGraph</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>reverse_public_transport</b> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
-<tr class="separator:a9e8e67774c8349c0da56e747a4ee5881"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a65007f32b21141b8fb398a2121ed40ad"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a65007f32b21141b8fb398a2121ed40ad"></a>
-<a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#aaf7c9a2b77782f4663f72f5d4fe6b173">PoiList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pois</b> () const </td></tr>
-<tr class="separator:a65007f32b21141b8fb398a2121ed40ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a003ad1bf2cbd8aab633e58a17341541a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a003ad1bf2cbd8aab633e58a17341541a"></a>
-boost::optional&lt; const <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#a003ad1bf2cbd8aab633e58a17341541a">poi</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
-<tr class="memdesc:a003ad1bf2cbd8aab633e58a17341541a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular poi. <br/></td></tr>
-<tr class="separator:a003ad1bf2cbd8aab633e58a17341541a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+&lt; <a class="el" href="class_tempus_1_1_reverse_graph_t.html">PublicTransport::ReverseGraph</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>reverse_public_transport</b> (<a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a>) const </td></tr>
+<tr class="separator:a62e20f216d282e58924644eff5db9a86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a407bb846148ddad1315872688a6321"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6a407bb846148ddad1315872688a6321"></a>
+<a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ac638ffc3f5f97563b2d0656ece89197e">Graph::POIList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#a6a407bb846148ddad1315872688a6321">pois</a> () const </td></tr>
+<tr class="memdesc:a6a407bb846148ddad1315872688a6321"><td class="mdescLeft">&#160;</td><td class="mdescRight">Point of interests. <br/></td></tr>
+<tr class="separator:a6a407bb846148ddad1315872688a6321"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa3f94c4732f610cba461f94671a46ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa3f94c4732f610cba461f94671a46ea"></a>
 <a class="el" href="struct_tempus_1_1_multimodal_1_1_reverse_graph.html#ae935c10cb2897dfdb9f9d9ef2dc81c6e">TransportModes</a>&#160;</td><td class="memItemRight" valign="bottom"><b>transport_modes</b> () const </td></tr>
 <tr class="separator:aaa3f94c4732f610cba461f94671a46ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -286,13 +279,13 @@ static <a class="el" href="struct_tempus_1_1_multimodal_1_1_vertex.html">vertex_
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following files:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="reverse__multimodal__graph_8hh_source.html">reverse_multimodal_graph.hh</a></li>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/reverse_multimodal_graph.cc</li>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="reverse__multimodal__graph_8hh_source.html">reverse_multimodal_graph.hh</a></li>
+<li>/home/hme/src/tempus/src/core/reverse_multimodal_graph.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

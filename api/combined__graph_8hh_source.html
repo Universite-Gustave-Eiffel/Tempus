@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/plugins/aurelie/combined_graph.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/plugins/aurelie/combined_graph.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -104,7 +105,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <span class="keyword">typedef</span> RoadGraph graph_type;</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    <span class="keyword">typedef</span> AutomatonGraph automaton_type;</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    <span class="keyword">typedef</span> <span class="keyword">typename</span> RoadGraph::vertex_descriptor GVertex;</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    <span class="keyword">typedef</span> <span class="keyword">typename</span> RoadGraph::edge_descriptor GEdge; </div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    <span class="keyword">typedef</span> <span class="keyword">typename</span> RoadGraph::edge_descriptor GEdge;</div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <span class="keyword">typedef</span> <span class="keyword">typename</span> RoadGraph::out_edge_iterator GEdgeIterator;</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    <span class="comment">// types not used by dijkstra, but needed by compilation</span></div>
@@ -137,8 +138,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;            graph_( 0 ),</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;            automaton_( 0 ),</div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;            u( 0 ),</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;            q( 0 )</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        {}</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;            q( 0 ) {</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        }</div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <a class="code" href="class_combined_graph_adaptor_1_1out__edge__iterator.html">out_edge_iterator</a>( <span class="keyword">const</span> RoadGraph&amp; graph, <span class="keyword">const</span> AutomatonGraph&amp; automaton, vertex_descriptor source ) :</div>
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;            graph_( &amp;graph ),</div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;            automaton_( &amp;automaton ),</div>
@@ -155,8 +156,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;        <span class="keywordtype">void</span> update_edge() {</div>
 <div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;            GVertex v = target( *out_edge, *graph_ );</div>
 <div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;            <span class="keyword">typename</span> AutomatonGraph::vertex_descriptor qp;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        <span class="keywordtype">bool</span> found;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        boost::tie( qp, found ) = find_transition( *automaton_, q, *out_edge );</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;            <span class="keywordtype">bool</span> found;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;            boost::tie( qp, found ) = find_transition( *automaton_, q, *out_edge );</div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;            edge_ = std::make_pair( std::make_pair( u, q ), std::make_pair( v, qp ) );</div>
 <div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        }</div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
@@ -202,7 +203,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> G, <span class="keyword">class</span> A&gt;</div>
 <div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;std::pair&lt;typename CombinedGraphAdaptor&lt;G,A&gt;::out_edge_iterator,</div>
 <div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;    <span class="keyword">typename</span> <a class="code" href="class_combined_graph_adaptor_1_1out__edge__iterator.html">CombinedGraphAdaptor&lt;G,A&gt;::out_edge_iterator</a>&gt;</div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;    <a class="code" href="namespace_tempus_1_1_multimodal.html#a360063357b3168c5d9f4aa73de9be529">out_edges</a>( <span class="keyword">const</span> <span class="keyword">typename</span> CombinedGraphAdaptor&lt;G,A&gt;::vertex_descriptor&amp; v, <span class="keyword">const</span> <a class="code" href="class_combined_graph_adaptor.html">CombinedGraphAdaptor&lt;G,A&gt;</a>&amp; g )</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;    out_edges( <span class="keyword">const</span> <span class="keyword">typename</span> CombinedGraphAdaptor&lt;G,A&gt;::vertex_descriptor&amp; v, <span class="keyword">const</span> <a class="code" href="class_combined_graph_adaptor.html">CombinedGraphAdaptor&lt;G,A&gt;</a>&amp; g )</div>
 <div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;{</div>
 <div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;    <span class="keyword">typedef</span> <span class="keyword">typename</span> <a class="code" href="class_combined_graph_adaptor_1_1out__edge__iterator.html">CombinedGraphAdaptor&lt;G,A&gt;::out_edge_iterator</a> oe_iterator;</div>
 <div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;    oe_iterator it( g.graph_, g.automaton_, v );</div>
@@ -260,8 +261,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;    <a class="code" href="struct_combined_weight_map.html">CombinedWeightMap</a>( <span class="keyword">const</span> CombinedGraph&amp; graph, WeightMap&amp; wmap, PenaltyMap&amp; pmap ) :</div>
 <div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;        graph_( graph ),</div>
 <div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;        wmap_( wmap ),</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        pmap_( pmap )</div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;    {}</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        pmap_( pmap ) {</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;    }</div>
 <div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
 <div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;    value_type <span class="keyword">get</span>( <span class="keyword">const</span> key_type&amp; k ) <span class="keyword">const</span> {</div>
 <div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> CombinedGraph::vertex_descriptor Vertex;</div>
@@ -291,11 +292,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="ttc" id="struct_combined_weight_map_html"><div class="ttname"><a href="struct_combined_weight_map.html">CombinedWeightMap</a></div><div class="ttdef"><b>Definition:</b> combined_graph.hh:181</div></div>
 <div class="ttc" id="class_combined_graph_adaptor_1_1out__edge__iterator_html"><div class="ttname"><a href="class_combined_graph_adaptor_1_1out__edge__iterator.html">CombinedGraphAdaptor::out_edge_iterator</a></div><div class="ttdef"><b>Definition:</b> combined_graph.hh:58</div></div>
 <div class="ttc" id="class_combined_graph_adaptor_html"><div class="ttname"><a href="class_combined_graph_adaptor.html">CombinedGraphAdaptor</a></div><div class="ttdef"><b>Definition:</b> combined_graph.hh:29</div></div>
-<div class="ttc" id="namespace_tempus_1_1_multimodal_html_a360063357b3168c5d9f4aa73de9be529"><div class="ttname"><a href="namespace_tempus_1_1_multimodal.html#a360063357b3168c5d9f4aa73de9be529">Tempus::Multimodal::out_edges</a></div><div class="ttdeci">pair&lt; OutEdgeIterator, OutEdgeIterator &gt; out_edges(const Vertex &amp;v, const Graph &amp;graph)</div><div class="ttdoc">Returns a range of EdgeIterator that allows to iterate on out edges of a vertex. Constant time...</div><div class="ttdef"><b>Definition:</b> multimodal_graph.cc:958</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

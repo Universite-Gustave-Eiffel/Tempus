@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/db.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/core/db.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -91,225 +92,182 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor">#ifndef TEMPUS_DB_HH</span></div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define TEMPUS_DB_HH</span></div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#include &lt;libpq-fe.h&gt;</span></div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#include &lt;boost/assert.hpp&gt;</span></div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#include &lt;boost/noncopyable.hpp&gt;</span></div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#include &lt;boost/thread.hpp&gt;</span></div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#   include &lt;boost/timer/timer.hpp&gt;</span></div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#pragma warning(push, 0)</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#include &lt;boost/assert.hpp&gt;</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#include &lt;boost/noncopyable.hpp&gt;</span></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="preprocessor">#include &lt;boost/thread.hpp&gt;</span></div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#pragma warning(pop)</span></div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="preprocessor">#include &quot;common.hh&quot;</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keyword">namespace </span>Db {</div>
-<div class="line"><a name="l00049"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html">   49</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_value.html">Value</a> {</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    <a class="code" href="class_db_1_1_value.html">Value</a>( <span class="keyword">const</span> <span class="keywordtype">char</span>* value, <span class="keywordtype">size_t</span> len, <span class="keywordtype">bool</span> isnull ) : value_( value ), len_( len ), isnull_( isnull ) {</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    }</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a name="l00059"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#aa42f2ee18ee117e42ba88234d1cffe47">   59</a></span>&#160;    T <a class="code" href="class_db_1_1_value.html#aa42f2ee18ee117e42ba88234d1cffe47">as</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        T obj;</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        std::istringstream istr( value_ );</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        istr &gt;&gt; obj;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        <span class="keywordflow">return</span> obj;</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    }</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a name="l00069"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#aca54964e61dc9c509f6f257e0029d9e7">   69</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_db_1_1_value.html#aca54964e61dc9c509f6f257e0029d9e7">operator &gt;&gt; </a>( T&amp; obj ) {</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keywordflow">if</span> ( !isnull_ ) {</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;            obj = as&lt;T&gt;();</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        }</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    }</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a name="l00078"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#a58417c110124c380f13dd588c1f32855">   78</a></span>&#160;    <span class="keyword">operator</span> T () {</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;        <span class="keywordflow">return</span> as&lt;T&gt;();</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#   include &lt;boost/timer/timer.hpp&gt;</span></div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="preprocessor">#include &quot;common.hh&quot;</span></div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">struct </span>pg_result;</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="keyword">struct </span>pg_conn;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="keyword">namespace </span>Db {</div>
+<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html">   56</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_value.html">Value</a> {</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <a class="code" href="class_db_1_1_value.html">Value</a>( <span class="keyword">const</span> <span class="keywordtype">char</span>* value, <span class="keywordtype">size_t</span> len, <span class="keywordtype">bool</span> isnull ) : value_( value ), len_( len ), isnull_( isnull ) {</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    }</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
+<div class="line"><a name="l00066"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#aa42f2ee18ee117e42ba88234d1cffe47">   66</a></span>&#160;    T <a class="code" href="class_db_1_1_value.html#aa42f2ee18ee117e42ba88234d1cffe47">as</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        T obj;</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        std::istringstream istr( value_ );</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        istr &gt;&gt; obj;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keywordflow">return</span> obj;</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    }</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
+<div class="line"><a name="l00076"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#aca54964e61dc9c509f6f257e0029d9e7">   76</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_db_1_1_value.html#aca54964e61dc9c509f6f257e0029d9e7">operator &gt;&gt; </a>( T&amp; obj ) {</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;        <span class="keywordflow">if</span> ( !isnull_ ) {</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;            obj = as&lt;T&gt;();</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;        }</div>
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    }</div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
-<div class="line"><a name="l00084"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150">   84</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150">is_null</a>() {</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <span class="keywordflow">return</span> isnull_;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    }</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">char</span>* value_;</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;    <span class="keywordtype">size_t</span> len_;</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;    <span class="keywordtype">bool</span> isnull_;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;};</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="comment">// List of conversion specializations</span></div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="keywordtype">bool</span> Value::as&lt;bool&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;std::string Value::as&lt;std::string&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<a class="code" href="struct_tempus_1_1_time.html">Tempus::Time</a> Value::as&lt;Tempus::Time&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;<span class="keywordtype">long</span> <span class="keywordtype">long</span> Value::as&lt;long long&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="keywordtype">int</span> Value::as&lt;int&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="keywordtype">float</span> Value::as&lt;float&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="keywordtype">double</span> Value::as&lt;double&gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;std::vector&lt;Tempus::db_id_t&gt; Value::as&lt;std::vector&lt;Tempus::db_id_t&gt; &gt;() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;</div>
-<div class="line"><a name="l00114"></a><span class="lineno"><a class="line" href="class_db_1_1_row_value.html">  114</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_row_value.html">RowValue</a> {</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    <a class="code" href="class_db_1_1_row_value.html">RowValue</a>( PGresult* res, <span class="keywordtype">size_t</span> nrow ) : res_( res ), nrow_( nrow ) {</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    }</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
+<div class="line"><a name="l00085"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#a58417c110124c380f13dd588c1f32855">   85</a></span>&#160;    <span class="keyword">operator</span> T () {</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        <span class="keywordflow">return</span> as&lt;T&gt;();</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    }</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
+<div class="line"><a name="l00091"></a><span class="lineno"><a class="line" href="class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150">   91</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150">is_null</a>() {</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="keywordflow">return</span> isnull_;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    }</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">char</span>* value_;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <span class="keywordtype">size_t</span> len_;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    <span class="keywordtype">bool</span> isnull_;</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;};</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;<span class="comment">// List of conversion specializations</span></div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;<span class="keywordtype">bool</span> Value::as&lt;bool&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;std::string Value::as&lt;std::string&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;<a class="code" href="struct_tempus_1_1_time.html">Tempus::Time</a> Value::as&lt;Tempus::Time&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;<span class="keywordtype">long</span> <span class="keywordtype">long</span> Value::as&lt;long long&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;<span class="keywordtype">int</span> Value::as&lt;int&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;<span class="keywordtype">float</span> Value::as&lt;float&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;<span class="keywordtype">double</span> Value::as&lt;double&gt;() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="keyword">template</span> &lt;&gt;</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;std::vector&lt;Tempus::db_id_t&gt; Value::as&lt;std::vector&lt;Tempus::db_id_t&gt; &gt;() <span class="keyword">const</span>;</div>
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
-<div class="line"><a name="l00121"></a><span class="lineno"><a class="line" href="class_db_1_1_row_value.html#af3d36250e817ba5d456f8f9209961d30">  121</a></span>&#160;    <a class="code" href="class_db_1_1_value.html">Value</a> <a class="code" href="class_db_1_1_row_value.html#af3d36250e817ba5d456f8f9209961d30">operator [] </a>( <span class="keywordtype">size_t</span> fn ) {</div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;        BOOST_ASSERT( fn &lt; ( <span class="keywordtype">size_t</span> )PQnfields( res_ ) );</div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="class_db_1_1_value.html">Value</a>( PQgetvalue( res_, nrow_, fn ),</div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;                      PQgetlength( res_, nrow_, fn ),</div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;                      PQgetisnull( res_, nrow_, fn ) != 0 ? <span class="keyword">true</span> : <span class="keyword">false</span></div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;                    );</div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;    }</div>
-<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;<span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    PGresult* res_;</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    <span class="keywordtype">size_t</span> nrow_;</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;};</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;</div>
-<div class="line"><a name="l00135"></a><span class="lineno"><a class="line" href="class_db_1_1_result.html">  135</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_result.html">Result</a> {</div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>( PGresult* res ) : res_( res ) {</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;        BOOST_ASSERT( res_ );</div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;    }</div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;    <span class="comment">// default cpu ctor is ok and allowed only to be able to return by value</span></div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;    <span class="comment">// ideally (c++11) we would use the move ctor</span></div>
+<div class="line"><a name="l00121"></a><span class="lineno"><a class="line" href="class_db_1_1_row_value.html">  121</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_row_value.html">RowValue</a> {</div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    <a class="code" href="class_db_1_1_row_value.html">RowValue</a>( pg_result* res, <span class="keywordtype">size_t</span> nrow );</div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;    <a class="code" href="class_db_1_1_value.html">Value</a> <a class="code" href="class_db_1_1_row_value.html#af3d36250e817ba5d456f8f9209961d30">operator [] </a>( <span class="keywordtype">size_t</span> fn );</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;<span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    pg_result* res_;</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;    <span class="keywordtype">size_t</span> nrow_;</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;};</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;</div>
+<div class="line"><a name="l00136"></a><span class="lineno"><a class="line" href="class_db_1_1_result.html">  136</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_result.html">Result</a> {</div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>( pg_result* res );</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;</div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;    <span class="comment">// Result is only movable</span></div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>( <a class="code" href="class_db_1_1_result.html">Result</a>&amp;&amp; other );</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>&amp; operator=( <a class="code" href="class_db_1_1_result.html">Result</a>&amp;&amp; other );</div>
 <div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;    <span class="keyword">virtual</span> ~<a class="code" href="class_db_1_1_result.html">Result</a>() {</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;        PQclear( res_ );</div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;    }</div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;</div>
-<div class="line"><a name="l00150"></a><span class="lineno"><a class="line" href="class_db_1_1_result.html#af1edfc4fe04c62f0b4787287821dc58f">  150</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="class_db_1_1_result.html#af1edfc4fe04c62f0b4787287821dc58f">size</a>() {</div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        <span class="keywordflow">return</span> PQntuples( res_ );</div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;    }</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;    ~<a class="code" href="class_db_1_1_result.html">Result</a>();</div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="class_db_1_1_result.html#acb812995d2a27d5e6ea4dd9b5bdfde92">size</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="class_db_1_1_result.html#a30072b3ab44abcb262f742f4ba6ed59c">columns</a>() <span class="keyword">const</span>;</div>
 <div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;</div>
-<div class="line"><a name="l00156"></a><span class="lineno"><a class="line" href="class_db_1_1_result.html#a76a595bbe3299ebf5c2818ccc66a1c12">  156</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="class_db_1_1_result.html#a76a595bbe3299ebf5c2818ccc66a1c12">columns</a>() {</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;        <span class="keywordflow">return</span> PQnfields( res_ );</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;    }</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
-<div class="line"><a name="l00162"></a><span class="lineno"><a class="line" href="class_db_1_1_result.html#acb929e6def469795b888cfe672ce34ec">  162</a></span>&#160;    <a class="code" href="class_db_1_1_row_value.html">RowValue</a> <a class="code" href="class_db_1_1_result.html#acb929e6def469795b888cfe672ce34ec">operator [] </a>( <span class="keywordtype">size_t</span> idx ) {</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;        BOOST_ASSERT( idx &lt; <a class="code" href="class_db_1_1_result.html#af1edfc4fe04c62f0b4787287821dc58f">size</a>() );</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="class_db_1_1_row_value.html">RowValue</a>( res_, idx );</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;    }</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;<span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    PGresult* res_;</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>&amp; operator=( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result.html">Result</a>&amp; ); <span class="comment">// we don&#39;t really want copies</span></div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;</div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;};</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;    <a class="code" href="class_db_1_1_row_value.html">RowValue</a> <a class="code" href="class_db_1_1_result.html#a46ce183c864aae917e6b53f9b40638d8">operator [] </a>( <span class="keywordtype">size_t</span> idx ) <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;<span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    pg_result* res_;</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;    <span class="comment">// non copyable</span></div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result.html">Result</a>&amp; other );</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a>&amp; operator=( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result.html">Result</a>&amp; );</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;};</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;</div>
+<div class="line"><a name="l00168"></a><span class="lineno"><a class="line" href="class_db_1_1_result_iterator.html">  168</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a> {</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>();</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>( pg_conn* conn );</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;    ~<a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>();</div>
 <div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;</div>
-<div class="line"><a name="l00176"></a><span class="lineno"><a class="line" href="class_db_1_1_connection.html">  176</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_connection.html">Connection</a>: boost::noncopyable {</div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    <a class="code" href="class_db_1_1_connection.html">Connection</a>()</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;        : conn_( 0 ) {</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;    }</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;    <a class="code" href="class_db_1_1_connection.html">Connection</a>( <span class="keyword">const</span> std::string&amp; db_options )</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;        : conn_( 0 )</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;        <span class="comment">//, db_options_(db_options) initialized by connect</span></div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;    {</div>
-<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;        assert( PQisthreadsafe() );</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;        connect( db_options );</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;    }</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;    <span class="keywordtype">void</span> connect( <span class="keyword">const</span> std::string&amp; db_options ) {</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="preprocessor"></span>        timer_.start();</div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;        boost::timer::nanosecond_type start = timer_.elapsed().wall;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;<span class="preprocessor"></span>        boost::lock_guard&lt;boost::mutex&gt; lock( mutex );</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;        conn_ = PQconnectdb( db_options.c_str() );</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;</div>
-<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        <span class="keywordflow">if</span> ( conn_ == NULL || PQstatus( conn_ ) != CONNECTION_OK ) {</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;            std::string msg = <span class="stringliteral">&quot;Database connection problem: &quot;</span>;</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;            msg += PQerrorMessage( conn_ );</div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;            PQfinish( conn_ ); <span class="comment">// otherwise leak</span></div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;            <span class="keywordflow">throw</span> std::runtime_error( msg.c_str() );</div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;        }</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;    <span class="comment">// a result iterator is moveable</span></div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>( <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp;&amp; other );</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp; operator=( <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp;&amp; other );</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    <span class="keywordtype">bool</span> operator==( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp; other ) <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;    <span class="keywordtype">bool</span> operator!=( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp; other ) <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;    <a class="code" href="class_db_1_1_row_value.html">RowValue</a> operator* () <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;    <span class="keywordtype">void</span> operator++(<span class="keywordtype">int</span>);</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;    <span class="comment">// non copyable</span></div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp; other );</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp; operator=( <span class="keyword">const</span> <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a>&amp; other );</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;    pg_conn* conn_;</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;    pg_result* res_;</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;};</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;</div>
+<div class="line"><a name="l00193"></a><span class="lineno"><a class="line" href="class_db_1_1_connection.html">  193</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_db_1_1_connection.html">Connection</a>: boost::noncopyable {</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;    <a class="code" href="class_db_1_1_connection.html">Connection</a>();</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;    <a class="code" href="class_db_1_1_connection.html">Connection</a>( <span class="keyword">const</span> std::string&amp; db_options );</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;    ~<a class="code" href="class_db_1_1_connection.html">Connection</a>();</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;    <span class="keywordtype">void</span> connect( <span class="keyword">const</span> std::string&amp; db_options );</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a> <a class="code" href="class_db_1_1_connection.html#a8952aef62024223849f623f5588b5549">exec</a>( <span class="keyword">const</span> std::string&amp; query ) <span class="keywordflow">throw</span> ( std::runtime_error );</div>
 <div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;</div>
-<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;<span class="preprocessor"></span>        std::cout &lt;&lt; conn_ &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; ( timer_.elapsed().wall - start )*1.e-9 &lt;&lt; <span class="stringliteral">&quot;s in connection\n&quot;</span>;</div>
-<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;        timer_.stop();</div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;<span class="preprocessor"></span>    }</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;    <span class="keyword">virtual</span> ~<a class="code" href="class_db_1_1_connection.html">Connection</a>() {</div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;<span class="preprocessor"></span>        timer_.resume();</div>
-<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;        boost::timer::nanosecond_type start = timer_.elapsed().wall;</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;    <a class="code" href="class_db_1_1_result_iterator.html">ResultIterator</a> <a class="code" href="class_db_1_1_connection.html#a13af47507b6e5fb4c16d67d9db260ea8">exec_it</a>( <span class="keyword">const</span> std::string&amp; query ) <span class="keywordflow">throw</span> ( std::runtime_error );</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;<span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;    pg_conn* conn_;</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;    <span class="keyword">static</span> boost::mutex mutex;</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;<span class="preprocessor"></span>    boost::timer::cpu_timer timer_;</div>
 <div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;<span class="preprocessor"></span>        PQfinish( conn_ );</div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;<span class="preprocessor"></span>        std::cout &lt;&lt; conn_ &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; ( timer_.elapsed().wall - start )*1.e-9 &lt;&lt; <span class="stringliteral">&quot;s in finish\n&quot;</span>;</div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;        timer_.stop();</div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;        std::cout &lt;&lt; conn_ &lt;&lt; <span class="stringliteral">&quot; total elapsed &quot;</span> &lt;&lt; timer_.elapsed().wall*1.e-9 &lt;&lt; <span class="stringliteral">&quot;s\n&quot;</span>;</div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;    }</div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;</div>
-<div class="line"><a name="l00227"></a><span class="lineno"><a class="line" href="class_db_1_1_connection.html#a8952aef62024223849f623f5588b5549">  227</a></span>&#160;    <a class="code" href="class_db_1_1_result.html">Result</a> <a class="code" href="class_db_1_1_connection.html#a8952aef62024223849f623f5588b5549">exec</a>( <span class="keyword">const</span> std::string&amp; query ) <span class="keywordflow">throw</span> ( std::runtime_error ) {</div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;<span class="preprocessor"></span>        timer_.resume();</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;        boost::timer::nanosecond_type start = timer_.elapsed().wall;</div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;        PGresult* res = PQexec( conn_, query.c_str() );</div>
-<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;        ExecStatusType ret = PQresultStatus( res );</div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;</div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;        <span class="keywordflow">if</span> ( ( ret != PGRES_COMMAND_OK ) &amp;&amp; ( ret != PGRES_TUPLES_OK ) ) {</div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;            std::string msg = <span class="stringliteral">&quot;Problem on database query: &quot;</span>;</div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;            msg += PQresultErrorMessage( res );</div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;            PQclear( res );</div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;            <span class="keywordflow">throw</span> std::runtime_error( msg.c_str() );</div>
-<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;        }</div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;</div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;<span class="preprocessor"></span>        std::cout &lt;&lt; conn_ &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; ( timer_.elapsed().wall - start )*1.e-9 &lt;&lt; <span class="stringliteral">&quot;s in query: &quot;</span> &lt;&lt; query &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;        timer_.stop();</div>
-<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;        <span class="keywordflow">return</span> res;</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    }</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;<span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;    PGconn* conn_;</div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;    <span class="keyword">static</span> boost::mutex mutex;</div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;</div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;<span class="preprocessor">#ifdef DB_TIMING</span></div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;<span class="preprocessor"></span>    boost::timer::cpu_timer timer_;</div>
-<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;<span class="preprocessor"></span>};</div>
-<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;}</div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;</div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="class_db_1_1_result_html_acb929e6def469795b888cfe672ce34ec"><div class="ttname"><a href="class_db_1_1_result.html#acb929e6def469795b888cfe672ce34ec">Db::Result::operator[]</a></div><div class="ttdeci">RowValue operator[](size_t idx)</div><div class="ttdoc">Access to a row of a result, by row number. </div><div class="ttdef"><b>Definition:</b> db.hh:162</div></div>
-<div class="ttc" id="class_db_1_1_value_html"><div class="ttname"><a href="class_db_1_1_value.html">Db::Value</a></div><div class="ttdoc">Class representing an atomic value stored in a database. </div><div class="ttdef"><b>Definition:</b> db.hh:49</div></div>
-<div class="ttc" id="class_db_1_1_connection_html_a8952aef62024223849f623f5588b5549"><div class="ttname"><a href="class_db_1_1_connection.html#a8952aef62024223849f623f5588b5549">Db::Connection::exec</a></div><div class="ttdeci">Result exec(const std::string &amp;query)</div><div class="ttdoc">Query execution. Returns a Db::Result. Throws a std::runtime_error on problem. </div><div class="ttdef"><b>Definition:</b> db.hh:227</div></div>
-<div class="ttc" id="class_db_1_1_value_html_aca54964e61dc9c509f6f257e0029d9e7"><div class="ttname"><a href="class_db_1_1_value.html#aca54964e61dc9c509f6f257e0029d9e7">Db::Value::operator&gt;&gt;</a></div><div class="ttdeci">void operator&gt;&gt;(T &amp;obj)</div><div class="ttdoc">Conversion operator. Does nothing if the underlying object is null (which is a special value in a dat...</div><div class="ttdef"><b>Definition:</b> db.hh:69</div></div>
-<div class="ttc" id="class_db_1_1_value_html_aa42f2ee18ee117e42ba88234d1cffe47"><div class="ttname"><a href="class_db_1_1_value.html#aa42f2ee18ee117e42ba88234d1cffe47">Db::Value::as</a></div><div class="ttdeci">T as() const </div><div class="ttdef"><b>Definition:</b> db.hh:59</div></div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;<span class="preprocessor"></span>};</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;}</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="class_db_1_1_value_html"><div class="ttname"><a href="class_db_1_1_value.html">Db::Value</a></div><div class="ttdoc">Class representing an atomic value stored in a database. </div><div class="ttdef"><b>Definition:</b> db.hh:56</div></div>
+<div class="ttc" id="class_db_1_1_connection_html_a8952aef62024223849f623f5588b5549"><div class="ttname"><a href="class_db_1_1_connection.html#a8952aef62024223849f623f5588b5549">Db::Connection::exec</a></div><div class="ttdeci">Result exec(const std::string &amp;query)</div><div class="ttdoc">Query execution. Returns a Db::Result. Throws a std::runtime_error on problem. </div><div class="ttdef"><b>Definition:</b> db.cc:297</div></div>
+<div class="ttc" id="class_db_1_1_result_html_acb812995d2a27d5e6ea4dd9b5bdfde92"><div class="ttname"><a href="class_db_1_1_result.html#acb812995d2a27d5e6ea4dd9b5bdfde92">Db::Result::size</a></div><div class="ttdeci">size_t size() const </div><div class="ttdoc">Number of rows. </div><div class="ttdef"><b>Definition:</b> db.cc:137</div></div>
+<div class="ttc" id="class_db_1_1_value_html_aca54964e61dc9c509f6f257e0029d9e7"><div class="ttname"><a href="class_db_1_1_value.html#aca54964e61dc9c509f6f257e0029d9e7">Db::Value::operator&gt;&gt;</a></div><div class="ttdeci">void operator&gt;&gt;(T &amp;obj)</div><div class="ttdoc">Conversion operator. Does nothing if the underlying object is null (which is a special value in a dat...</div><div class="ttdef"><b>Definition:</b> db.hh:76</div></div>
+<div class="ttc" id="class_db_1_1_value_html_aa42f2ee18ee117e42ba88234d1cffe47"><div class="ttname"><a href="class_db_1_1_value.html#aa42f2ee18ee117e42ba88234d1cffe47">Db::Value::as</a></div><div class="ttdeci">T as() const </div><div class="ttdef"><b>Definition:</b> db.hh:66</div></div>
 <div class="ttc" id="struct_tempus_1_1_time_html"><div class="ttname"><a href="struct_tempus_1_1_time.html">Tempus::Time</a></div><div class="ttdoc">Time is the number of seconds since 00:00. </div><div class="ttdef"><b>Definition:</b> datetime.hh:29</div></div>
-<div class="ttc" id="class_db_1_1_result_html"><div class="ttname"><a href="class_db_1_1_result.html">Db::Result</a></div><div class="ttdoc">Class representing result of a query. </div><div class="ttdef"><b>Definition:</b> db.hh:135</div></div>
-<div class="ttc" id="class_db_1_1_row_value_html"><div class="ttname"><a href="class_db_1_1_row_value.html">Db::RowValue</a></div><div class="ttdoc">Class used to represent a row in a result. </div><div class="ttdef"><b>Definition:</b> db.hh:114</div></div>
-<div class="ttc" id="class_db_1_1_row_value_html_af3d36250e817ba5d456f8f9209961d30"><div class="ttname"><a href="class_db_1_1_row_value.html#af3d36250e817ba5d456f8f9209961d30">Db::RowValue::operator[]</a></div><div class="ttdeci">Value operator[](size_t fn)</div><div class="ttdoc">Access to a value by column number. </div><div class="ttdef"><b>Definition:</b> db.hh:121</div></div>
-<div class="ttc" id="class_db_1_1_result_html_a76a595bbe3299ebf5c2818ccc66a1c12"><div class="ttname"><a href="class_db_1_1_result.html#a76a595bbe3299ebf5c2818ccc66a1c12">Db::Result::columns</a></div><div class="ttdeci">size_t columns()</div><div class="ttdoc">Number of columns. </div><div class="ttdef"><b>Definition:</b> db.hh:156</div></div>
-<div class="ttc" id="class_db_1_1_value_html_a18c7c038ab535e513b47065515da3150"><div class="ttname"><a href="class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150">Db::Value::is_null</a></div><div class="ttdeci">bool is_null()</div><div class="ttdoc">Tests if the underlying object is null. </div><div class="ttdef"><b>Definition:</b> db.hh:84</div></div>
-<div class="ttc" id="class_db_1_1_result_html_af1edfc4fe04c62f0b4787287821dc58f"><div class="ttname"><a href="class_db_1_1_result.html#af1edfc4fe04c62f0b4787287821dc58f">Db::Result::size</a></div><div class="ttdeci">size_t size()</div><div class="ttdoc">Number of rows. </div><div class="ttdef"><b>Definition:</b> db.hh:150</div></div>
-<div class="ttc" id="class_db_1_1_connection_html"><div class="ttname"><a href="class_db_1_1_connection.html">Db::Connection</a></div><div class="ttdoc">Class representing connection to a database. </div><div class="ttdef"><b>Definition:</b> db.hh:176</div></div>
+<div class="ttc" id="class_db_1_1_result_html"><div class="ttname"><a href="class_db_1_1_result.html">Db::Result</a></div><div class="ttdoc">Class representing result of a query. </div><div class="ttdef"><b>Definition:</b> db.hh:136</div></div>
+<div class="ttc" id="class_db_1_1_result_html_a46ce183c864aae917e6b53f9b40638d8"><div class="ttname"><a href="class_db_1_1_result.html#a46ce183c864aae917e6b53f9b40638d8">Db::Result::operator[]</a></div><div class="ttdeci">RowValue operator[](size_t idx) const </div><div class="ttdoc">Access to a row of a result, by row number. </div><div class="ttdef"><b>Definition:</b> db.cc:147</div></div>
+<div class="ttc" id="class_db_1_1_result_iterator_html"><div class="ttname"><a href="class_db_1_1_result_iterator.html">Db::ResultIterator</a></div><div class="ttdoc">Class representing a result iterator. </div><div class="ttdef"><b>Definition:</b> db.hh:168</div></div>
+<div class="ttc" id="class_db_1_1_result_html_a30072b3ab44abcb262f742f4ba6ed59c"><div class="ttname"><a href="class_db_1_1_result.html#a30072b3ab44abcb262f742f4ba6ed59c">Db::Result::columns</a></div><div class="ttdeci">size_t columns() const </div><div class="ttdoc">Number of columns. </div><div class="ttdef"><b>Definition:</b> db.cc:142</div></div>
+<div class="ttc" id="class_db_1_1_row_value_html"><div class="ttname"><a href="class_db_1_1_row_value.html">Db::RowValue</a></div><div class="ttdoc">Class used to represent a row in a result. </div><div class="ttdef"><b>Definition:</b> db.hh:121</div></div>
+<div class="ttc" id="class_db_1_1_connection_html_a13af47507b6e5fb4c16d67d9db260ea8"><div class="ttname"><a href="class_db_1_1_connection.html#a13af47507b6e5fb4c16d67d9db260ea8">Db::Connection::exec_it</a></div><div class="ttdeci">ResultIterator exec_it(const std::string &amp;query)</div><div class="ttdoc">Query execution using a cursor. </div><div class="ttdef"><b>Definition:</b> db.cc:230</div></div>
+<div class="ttc" id="class_db_1_1_row_value_html_af3d36250e817ba5d456f8f9209961d30"><div class="ttname"><a href="class_db_1_1_row_value.html#af3d36250e817ba5d456f8f9209961d30">Db::RowValue::operator[]</a></div><div class="ttdeci">Value operator[](size_t fn)</div><div class="ttdoc">Access to a value by column number. </div><div class="ttdef"><b>Definition:</b> db.cc:104</div></div>
+<div class="ttc" id="class_db_1_1_value_html_a18c7c038ab535e513b47065515da3150"><div class="ttname"><a href="class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150">Db::Value::is_null</a></div><div class="ttdeci">bool is_null()</div><div class="ttdoc">Tests if the underlying object is null. </div><div class="ttdef"><b>Definition:</b> db.hh:91</div></div>
+<div class="ttc" id="class_db_1_1_connection_html"><div class="ttname"><a href="class_db_1_1_connection.html">Db::Connection</a></div><div class="ttdoc">Class representing connection to a database. </div><div class="ttdef"><b>Definition:</b> db.hh:193</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

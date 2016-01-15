@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/plugins/automaton_lib/automaton.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/plugins/automaton_lib/automaton.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -139,215 +140,221 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    <span class="keyword">class </span>ArcWriter</div>
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;    {</div>
 <div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        ArcWriter( <span class="keyword">const</span> Graph&amp; agraph, <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Tempus::Road::Graph</a>&amp; graph ) : agraph_(agraph), graph_(graph) {}</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        ArcWriter( <span class="keyword">const</span> Graph&amp; agraph, <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Tempus::Road::Graph</a>&amp; graph ) : agraph_(agraph), graph_(graph) {}</div>
 <div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <span class="keywordtype">void</span> operator() ( std::ostream&amp; ostr, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_automaton.html#ac5ae8940c4375686d65e2d4db0c5088b">Transition</a>&amp; e)<span class="keyword"> const </span>{</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;            ostr &lt;&lt; <span class="stringliteral">&quot;[label=\&quot;&quot;</span> &lt;&lt; graph_[agraph_[e].symbol].db_id() &lt;&lt; <span class="stringliteral">&quot; = &quot;</span> &lt;&lt; agraph_[e].symbol &lt;&lt; <span class="stringliteral">&quot;\&quot;]&quot;</span>;        </div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        }</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <span class="keyword">private</span>:</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a>&amp; agraph_;</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Tempus::Road::Graph</a>&amp; graph_;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;    }; </div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        </div>
-<div class="line"><a name="l00093"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">   93</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">MyArcWriter</a></div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    {</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        <a class="code" href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">MyArcWriter</a>( <span class="keyword">const</span> Graph&amp; agraph ) : agraph_(agraph) {}</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        <span class="keywordtype">void</span> operator() ( std::ostream&amp; ostr, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_automaton.html#ac5ae8940c4375686d65e2d4db0c5088b">Transition</a>&amp; e)<span class="keyword"> const </span>{</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;            ostr &lt;&lt; <span class="stringliteral">&quot;[label=\&quot;&quot;</span> &lt;&lt; agraph_[e].symbol &lt;&lt; <span class="stringliteral">&quot;\&quot;]&quot;</span>;</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        }</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <span class="keyword">private</span>:</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;        <span class="keyword">const</span> Graph&amp; agraph_;</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    }; </div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    <span class="comment">// Attributes   </span></div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    Graph automaton_graph_;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> initial_state_; </div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    </div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="comment">// Constructor</span></div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html">Automaton</a>() {}</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;        </div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    <span class="comment">// Methods</span></div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <span class="keywordtype">void</span> build_graph( <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html">Road::Restrictions</a> sequences )</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    {</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;        automaton_graph_.clear(); </div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;            </div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;        initial_state_ = boost::add_vertex( automaton_graph_ ); </div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    </div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;        <span class="keywordflow">for</span> ( std::list&lt;Road::Restriction&gt;::const_iterator it=sequences.restrictions().begin();</div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;              it!=sequences.restrictions().end();</div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;              it++ ) {</div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;            add_sequence(it-&gt;road_edges(), it-&gt;cost_per_transport()); </div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;        } </div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;            Symbol s = agraph_[e].symbol;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;            <span class="keywordflow">if</span> ( source( s, graph_ ) == graph_.null_vertex() ) {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;                std::cout &lt;&lt; <span class="stringliteral">&quot;Automaton: can&#39;t find edge &quot;</span> &lt;&lt; e &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;            }</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;            <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;                ostr &lt;&lt; <span class="stringliteral">&quot;[label=\&quot;&quot;</span> &lt;&lt; graph_[agraph_[e].symbol].db_id() &lt;&lt; <span class="stringliteral">&quot; = &quot;</span> &lt;&lt; agraph_[e].symbol &lt;&lt; <span class="stringliteral">&quot;\&quot;]&quot;</span>;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;            }</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        }</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a>&amp; agraph_;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Tempus::Road::Graph</a>&amp; graph_;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    }; </div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;        </div>
+<div class="line"><a name="l00099"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">   99</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">MyArcWriter</a></div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    {</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        <a class="code" href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">MyArcWriter</a>( <span class="keyword">const</span> Graph&amp; agraph ) : agraph_(agraph) {}</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        <span class="keywordtype">void</span> operator() ( std::ostream&amp; ostr, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_automaton.html#ac5ae8940c4375686d65e2d4db0c5088b">Transition</a>&amp; e)<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;            ostr &lt;&lt; <span class="stringliteral">&quot;[label=\&quot;&quot;</span> &lt;&lt; agraph_[e].symbol &lt;&lt; <span class="stringliteral">&quot;\&quot;]&quot;</span>;</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;        }</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;        <span class="keyword">const</span> Graph&amp; agraph_;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    }; </div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="comment">// Attributes   </span></div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    Graph automaton_graph_;</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> initial_state_; </div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    </div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <span class="comment">// Constructor</span></div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html">Automaton</a>() {}</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;        </div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <span class="comment">// Methods</span></div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;    <span class="keywordtype">void</span> build_graph( <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html">Road::Restrictions</a> sequences )</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;    {</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;        automaton_graph_.clear(); </div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;            </div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;        initial_state_ = boost::add_vertex( automaton_graph_ ); </div>
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    </div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;        <span class="comment">// The automaton graph is modified to represent the &quot;next&quot; function, the &quot;failure&quot; function is used to operate this transformation. </span></div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;        build_shortcuts( build_failure_function() );</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    }</div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
-<div class="line"><a name="l00131"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#acb54cc82ced931901ea2c4a7f67b8548">  131</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_automaton.html#acb54cc82ced931901ea2c4a7f67b8548">add_sequence</a>( <span class="keyword">const</span> std::vector&lt; Symbol &gt;&amp; symbol_sequence, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Road::Restriction::CostPerTransport</a>&amp; penalty_per_mode )</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;    {</div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> current_state = initial_state_ ;</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;        <span class="comment">// Iterating over forbidden road sequences </span></div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;        <span class="keywordflow">for</span> ( <span class="keywordtype">size_t</span> j = 0; j &lt; symbol_sequence.size(); j++ ) {</div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;            std::pair&lt; State, bool &gt; transition_result = <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( current_state, symbol_sequence[j] );</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;                </div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;            <span class="keywordflow">if</span> ( transition_result.second == <span class="keyword">true</span> )  {<span class="comment">// this state already exists</span></div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;                current_state = transition_result.first;</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;            }</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;            <span class="keywordflow">else</span> { <span class="comment">// this state needs to be inserted</span></div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;                <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = boost::add_vertex( automaton_graph_ );</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;                add_transition_( current_state, s, symbol_sequence[j], automaton_graph_ );</div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;</div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;                <span class="keywordflow">if</span> ( j == symbol_sequence.size()-1 ) {</div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;                    automaton_graph_[ s ].penalty_per_mode = penalty_per_mode;</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;                }</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;                current_state = s; </div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;            } </div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        }</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;    } </div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;</div>
-<div class="line"><a name="l00156"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#a85b2b357da82b05a6c832cad90033e6f">  156</a></span>&#160;    std::map &lt; State, State &gt; <a class="code" href="class_tempus_1_1_automaton.html#a85b2b357da82b05a6c832cad90033e6f">build_failure_function</a>()</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    {</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;failure function&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;        std::map&lt; State, State &gt; failure_function_; </div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;        failure_function_.clear(); </div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;        std::list&lt; State &gt; q; </div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;                </div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;        <span class="comment">// All successors of the initial state return to initial state when failing</span></div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;        BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;            <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a>&amp; s = target( edge, automaton_graph_ );</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;            q.push_back( s );</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;            failure_function_[ s ] = initial_state_;</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;        } </div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;                </div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;        <span class="comment">// Iterating over the list of states which do not have failure state</span></div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> r, state;</div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;        <span class="keywordflow">while</span> ( ! q.empty() ) {</div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;            r = q.front();</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;            q.pop_front();</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;            BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;                <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;                Symbol a = automaton_graph_[edge].symbol;</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;                q.push_back( s );</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;                state = failure_function_[ s ];</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;                <span class="keywordflow">while</span> ( <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( state, a ).second == <span class="keyword">false</span> &amp;&amp; state != initial_state_ ) {</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;                    state = failure_function_[ state ];</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;                }</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;                std::pair&lt;State,bool&gt; t = <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( state, a );</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;                <span class="keywordflow">if</span> ( t.second == <span class="keyword">true</span> ) {</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;                    failure_function_[ s ] = t.first;</div>
-<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;                }</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;                <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;                    failure_function_[ s ] = initial_state_;</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;                }</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;            } </div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        }</div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;end of failure&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;        <span class="keywordflow">return</span> failure_function_;</div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;    }</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;</div>
-<div class="line"><a name="l00198"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#a464d1d7f859f1e3d1266d26de80d0b0d">  198</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_automaton.html#a464d1d7f859f1e3d1266d26de80d0b0d">build_shortcuts</a>(<span class="keyword">const</span> std::map &lt; State, State &gt;&amp; failure_function_)</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;    {</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;        <span class="keyword">using namespace </span>boost;</div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;</div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;        <span class="comment">// copy vertices</span></div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;        Graph automaton_copy;</div>
-<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;        BGL_FORALL_VERTICES_T( v, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;            <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = add_vertex(automaton_copy);</div>
-<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;            automaton_copy[s].penalty_per_mode = automaton_graph_[s].penalty_per_mode;</div>
-<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;        }</div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;</div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;        std::list&lt; State &gt; q;</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;        BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;            BOOST_ASSERT( edge.get_property() );</div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;            <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
-<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;            Symbol a = automaton_graph_[edge].symbol;</div>
-<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;</div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;            q.push_back( s );</div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;            add_transition_( initial_state_, s, a, automaton_copy );</div>
-<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;        }</div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;</div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;build shortcuts&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;        std::map&lt;State, State&gt; next;</div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> r; </div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;        <span class="keywordflow">while</span> ( ! q.empty() ) {</div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;            r = q.front();</div>
-<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;            q.pop_front();</div>
-<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;</div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;            <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> f = initial_state_;</div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;            <span class="keyword">typename</span> std::map&lt;State,State&gt;::const_iterator fit = failure_function_.find(r);</div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;            BOOST_ASSERT( fit != failure_function_.end() );</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;            f = fit-&gt;second;</div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;            <span class="keywordflow">if</span> ( f != initial_state_ ) {</div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;                BOOST_ASSERT( f != r ); <span class="comment">// f != r, unless the failure function is not built correctly</span></div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;</div>
-<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;                BGL_FORALL_OUTEDGES_T( f, edge, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;                    <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;                    Symbol a = automaton_graph_[edge].symbol;</div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;</div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                    <span class="comment">// we add an edge from r to s in the copy</span></div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;                    <span class="comment">// warning: it only works because vertices are stored as indices, not addresses (vecS)</span></div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;                    add_transition_( r, s, a, automaton_copy );</div>
-<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                }</div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;            }</div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;            BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;                Symbol a = automaton_graph_[edge].symbol;</div>
-<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;</div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;                q.push_back( target( edge, automaton_graph_ ) );</div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;                add_transition_( r, s, a, automaton_copy );</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;            }</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;        }</div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;        <span class="comment">// the new automaton is ready, replace</span></div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;        automaton_graph_ = automaton_copy;</div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;end shortcuts&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;    }</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;        </div>
-<div class="line"><a name="l00259"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">  259</a></span>&#160;    std::pair&lt; State, bool &gt; <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> q, Symbol e )<span class="keyword"> const</span></div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;<span class="keyword">    </span>{</div>
-<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;        BGL_FORALL_OUTEDGES_T( q, edge, automaton_graph_, Graph ) {</div>
-<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;            <span class="keywordflow">if</span> ( automaton_graph_[ edge ].symbol == e ) {</div>
-<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;                <span class="keywordflow">return</span> std::make_pair( target( edge, automaton_graph_ ), <span class="keyword">true</span> );</div>
-<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;            }</div>
-<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;        }</div>
-<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;        <span class="comment">// If transition not found</span></div>
-<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;        <span class="keywordflow">return</span> std::make_pair( 0, <span class="keyword">false</span> );</div>
-<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;    }</div>
-<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;</div>
-<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;    <span class="comment">// helper function</span></div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;    <span class="keywordtype">void</span> add_transition_( <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> r, <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s, Symbol a, Graph&amp; graph )</div>
-<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;    {</div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#ac5ae8940c4375686d65e2d4db0c5088b">Transition</a> e;</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;        <span class="keywordtype">bool</span> ok;</div>
-<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;        tie(e, ok) = add_edge( r, s, graph );</div>
-<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;        BOOST_ASSERT( ok );</div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;        graph[e].symbol = a;</div>
-<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;    }</div>
-<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;};</div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;</div>
-<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;} <span class="comment">// namespace Tempus</span></div>
-<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;</div>
-<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;        <span class="keywordflow">for</span> ( std::list&lt;Road::Restriction&gt;::const_iterator it=sequences.restrictions().begin();</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;              it!=sequences.restrictions().end();</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;              it++ ) {</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;            add_sequence(it-&gt;road_edges(), it-&gt;cost_per_transport()); </div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        } </div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    </div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;        <span class="comment">// The automaton graph is modified to represent the &quot;next&quot; function, the &quot;failure&quot; function is used to operate this transformation. </span></div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        build_shortcuts( build_failure_function() );</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;    }</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;</div>
+<div class="line"><a name="l00137"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#acb54cc82ced931901ea2c4a7f67b8548">  137</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_automaton.html#acb54cc82ced931901ea2c4a7f67b8548">add_sequence</a>( <span class="keyword">const</span> std::vector&lt; Symbol &gt;&amp; symbol_sequence, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Road::Restriction::CostPerTransport</a>&amp; penalty_per_mode )</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;    {</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> current_state = initial_state_ ;</div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;        <span class="comment">// Iterating over forbidden road sequences </span></div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;        <span class="keywordflow">for</span> ( <span class="keywordtype">size_t</span> j = 0; j &lt; symbol_sequence.size(); j++ ) {</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;            std::pair&lt; State, bool &gt; transition_result = <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( current_state, symbol_sequence[j] );</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;                </div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;            <span class="keywordflow">if</span> ( transition_result.second == <span class="keyword">true</span> )  {<span class="comment">// this state already exists</span></div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;                current_state = transition_result.first;</div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;            }</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;            <span class="keywordflow">else</span> { <span class="comment">// this state needs to be inserted</span></div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;                <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = boost::add_vertex( automaton_graph_ );</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;                add_transition_( current_state, s, symbol_sequence[j], automaton_graph_ );</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;                <span class="keywordflow">if</span> ( j == symbol_sequence.size()-1 ) {</div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;                    automaton_graph_[ s ].penalty_per_mode = penalty_per_mode;</div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;                }</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;                current_state = s; </div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;            } </div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;        }</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    } </div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;</div>
+<div class="line"><a name="l00162"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#a85b2b357da82b05a6c832cad90033e6f">  162</a></span>&#160;    std::map &lt; State, State &gt; <a class="code" href="class_tempus_1_1_automaton.html#a85b2b357da82b05a6c832cad90033e6f">build_failure_function</a>()</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;    {</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;failure function&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;        std::map&lt; State, State &gt; failure_function_; </div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;        failure_function_.clear(); </div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;        std::list&lt; State &gt; q; </div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;                </div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;        <span class="comment">// All successors of the initial state return to initial state when failing</span></div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;        BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;            <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a>&amp; s = target( edge, automaton_graph_ );</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;            q.push_back( s );</div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;            failure_function_[ s ] = initial_state_;</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;        } </div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;                </div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;        <span class="comment">// Iterating over the list of states which do not have failure state</span></div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> r, state;</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;        <span class="keywordflow">while</span> ( ! q.empty() ) {</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;            r = q.front();</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;            q.pop_front();</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;            BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;                <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;                Symbol a = automaton_graph_[edge].symbol;</div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;                q.push_back( s );</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;                state = failure_function_[ s ];</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;                <span class="keywordflow">while</span> ( <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( state, a ).second == <span class="keyword">false</span> &amp;&amp; state != initial_state_ ) {</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;                    state = failure_function_[ state ];</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;                }</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;                std::pair&lt;State,bool&gt; t = <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( state, a );</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;                <span class="keywordflow">if</span> ( t.second == <span class="keyword">true</span> ) {</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;                    failure_function_[ s ] = t.first;</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;                }</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;                <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;                    failure_function_[ s ] = initial_state_;</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;                }</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;            } </div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;        }</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;end of failure&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;        <span class="keywordflow">return</span> failure_function_;</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;    }</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;</div>
+<div class="line"><a name="l00204"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#a464d1d7f859f1e3d1266d26de80d0b0d">  204</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_automaton.html#a464d1d7f859f1e3d1266d26de80d0b0d">build_shortcuts</a>(<span class="keyword">const</span> std::map &lt; State, State &gt;&amp; failure_function_)</div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;    {</div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;        <span class="keyword">using namespace </span>boost;</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;        <span class="comment">// copy vertices</span></div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;        Graph automaton_copy;</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;        BGL_FORALL_VERTICES_T( v, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;            <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = add_vertex(automaton_copy);</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;            automaton_copy[s].penalty_per_mode = automaton_graph_[s].penalty_per_mode;</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;        }</div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;</div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;        std::list&lt; State &gt; q;</div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;        BGL_FORALL_OUTEDGES_T( initial_state_, edge, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;            BOOST_ASSERT( edge.get_property() );</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;            <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;            Symbol a = automaton_graph_[edge].symbol;</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;            q.push_back( s );</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;            add_transition_( initial_state_, s, a, automaton_copy );</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;        }</div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;</div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;build shortcuts&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;        std::map&lt;State, State&gt; next;</div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> r; </div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;        <span class="keywordflow">while</span> ( ! q.empty() ) {</div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;            r = q.front();</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;            q.pop_front();</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;            <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> f = initial_state_;</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;            <span class="keyword">typename</span> std::map&lt;State,State&gt;::const_iterator fit = failure_function_.find(r);</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;            BOOST_ASSERT( fit != failure_function_.end() );</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;            f = fit-&gt;second;</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;            <span class="keywordflow">if</span> ( f != initial_state_ ) {</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                BOOST_ASSERT( f != r ); <span class="comment">// f != r, unless the failure function is not built correctly</span></div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;</div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;                BGL_FORALL_OUTEDGES_T( f, edge, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                    <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;                    Symbol a = automaton_graph_[edge].symbol;</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                    <span class="comment">// we add an edge from r to s in the copy</span></div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;                    <span class="comment">// warning: it only works because vertices are stored as indices, not addresses (vecS)</span></div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;                    add_transition_( r, s, a, automaton_copy );</div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;                }</div>
+<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;            }</div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;            BGL_FORALL_OUTEDGES_T( r, edge, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;                <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s = target( edge, automaton_graph_ );</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;                Symbol a = automaton_graph_[edge].symbol;</div>
+<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;</div>
+<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;                q.push_back( target( edge, automaton_graph_ ) );</div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;                add_transition_( r, s, a, automaton_copy );</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;            }</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;        }</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;        <span class="comment">// the new automaton is ready, replace</span></div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;        automaton_graph_ = automaton_copy;</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;end shortcuts&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;    }</div>
+<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;        </div>
+<div class="line"><a name="l00265"></a><span class="lineno"><a class="line" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">  265</a></span>&#160;    std::pair&lt; State, bool &gt; <a class="code" href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">find_transition</a>( <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> q, Symbol e )<span class="keyword"> const</span></div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;<span class="keyword">    </span>{</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;        BGL_FORALL_OUTEDGES_T( q, edge, automaton_graph_, Graph ) {</div>
+<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;            <span class="keywordflow">if</span> ( automaton_graph_[ edge ].symbol == e ) {</div>
+<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;                <span class="keywordflow">return</span> std::make_pair( target( edge, automaton_graph_ ), <span class="keyword">true</span> );</div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;            }</div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;        }</div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;        <span class="comment">// If transition not found</span></div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;        <span class="keywordflow">return</span> std::make_pair( 0, <span class="keyword">false</span> );</div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;    }</div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;</div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;    <span class="comment">// helper function</span></div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;    <span class="keywordtype">void</span> add_transition_( <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> r, <a class="code" href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">State</a> s, Symbol a, Graph&amp; graph )</div>
+<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;    {</div>
+<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;        <a class="code" href="class_tempus_1_1_automaton.html#ac5ae8940c4375686d65e2d4db0c5088b">Transition</a> e;</div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;        <span class="keywordtype">bool</span> ok;</div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;        tie(e, ok) = add_edge( r, s, graph );</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;        BOOST_ASSERT( ok );</div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;        graph[e].symbol = a;</div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;    }</div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;};</div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;</div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;} <span class="comment">// namespace Tempus</span></div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="class_tempus_1_1_automaton_html_ac5ae8940c4375686d65e2d4db0c5088b"><div class="ttname"><a href="class_tempus_1_1_automaton.html#ac5ae8940c4375686d65e2d4db0c5088b">Tempus::Automaton::Transition</a></div><div class="ttdeci">Graph::edge_descriptor Transition</div><div class="ttdoc">Edge of the graph, i.e. transition. </div><div class="ttdef"><b>Definition:</b> automaton.hh:62</div></div>
 <div class="ttc" id="class_tempus_1_1_automaton_html"><div class="ttname"><a href="class_tempus_1_1_automaton.html">Tempus::Automaton</a></div><div class="ttdef"><b>Definition:</b> automaton.hh:23</div></div>
-<div class="ttc" id="class_tempus_1_1_road_1_1_restriction_html_afe0bf390592d65819860e3be8ad477d1"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Tempus::Road::Restriction::CostPerTransport</a></div><div class="ttdeci">std::map&lt; int, double &gt; CostPerTransport</div><div class="ttdef"><b>Definition:</b> road_graph.hh:152</div></div>
-<div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html">Tempus::Road::Restrictions</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:167</div></div>
-<div class="ttc" id="class_tempus_1_1_automaton_html_a85b2b357da82b05a6c832cad90033e6f"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a85b2b357da82b05a6c832cad90033e6f">Tempus::Automaton::build_failure_function</a></div><div class="ttdeci">std::map&lt; State, State &gt; build_failure_function()</div><div class="ttdoc">Build the failure function (see Aho &amp; al.) </div><div class="ttdef"><b>Definition:</b> automaton.hh:156</div></div>
-<div class="ttc" id="class_tempus_1_1_automaton_html_acb54cc82ced931901ea2c4a7f67b8548"><div class="ttname"><a href="class_tempus_1_1_automaton.html#acb54cc82ced931901ea2c4a7f67b8548">Tempus::Automaton::add_sequence</a></div><div class="ttdeci">void add_sequence(const std::vector&lt; Symbol &gt; &amp;symbol_sequence, const Road::Restriction::CostPerTransport &amp;penalty_per_mode)</div><div class="ttdef"><b>Definition:</b> automaton.hh:131</div></div>
+<div class="ttc" id="class_tempus_1_1_road_1_1_restriction_html_afe0bf390592d65819860e3be8ad477d1"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Tempus::Road::Restriction::CostPerTransport</a></div><div class="ttdeci">std::map&lt; int, double &gt; CostPerTransport</div><div class="ttdef"><b>Definition:</b> road_graph.hh:147</div></div>
+<div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html">Tempus::Road::Restrictions</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:162</div></div>
+<div class="ttc" id="class_tempus_1_1_automaton_html_a85b2b357da82b05a6c832cad90033e6f"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a85b2b357da82b05a6c832cad90033e6f">Tempus::Automaton::build_failure_function</a></div><div class="ttdeci">std::map&lt; State, State &gt; build_failure_function()</div><div class="ttdoc">Build the failure function (see Aho &amp; al.) </div><div class="ttdef"><b>Definition:</b> automaton.hh:162</div></div>
+<div class="ttc" id="class_tempus_1_1_automaton_html_acb54cc82ced931901ea2c4a7f67b8548"><div class="ttname"><a href="class_tempus_1_1_automaton.html#acb54cc82ced931901ea2c4a7f67b8548">Tempus::Automaton::add_sequence</a></div><div class="ttdeci">void add_sequence(const std::vector&lt; Symbol &gt; &amp;symbol_sequence, const Road::Restriction::CostPerTransport &amp;penalty_per_mode)</div><div class="ttdef"><b>Definition:</b> automaton.hh:137</div></div>
 <div class="ttc" id="class_tempus_1_1_automaton_html_a7b15cb0bf020a4340d2bc8b2093aeeda"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a7b15cb0bf020a4340d2bc8b2093aeeda">Tempus::Automaton::State</a></div><div class="ttdeci">Graph::vertex_descriptor State</div><div class="ttdoc">Vertex of the graph, i.e. state of the automaton. </div><div class="ttdef"><b>Definition:</b> automaton.hh:60</div></div>
-<div class="ttc" id="class_tempus_1_1_automaton_1_1_my_arc_writer_html"><div class="ttname"><a href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">Tempus::Automaton::MyArcWriter</a></div><div class="ttdef"><b>Definition:</b> automaton.hh:93</div></div>
-<div class="ttc" id="class_tempus_1_1_automaton_html_a464d1d7f859f1e3d1266d26de80d0b0d"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a464d1d7f859f1e3d1266d26de80d0b0d">Tempus::Automaton::build_shortcuts</a></div><div class="ttdeci">void build_shortcuts(const std::map&lt; State, State &gt; &amp;failure_function_)</div><div class="ttdoc">corresponds to building the &quot;next&quot; function </div><div class="ttdef"><b>Definition:</b> automaton.hh:198</div></div>
-<div class="ttc" id="namespace_tempus_1_1_public_transport_html_ad5c0369f1ca3480c876fd96285344534"><div class="ttname"><a href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Tempus::PublicTransport::Graph</a></div><div class="ttdeci">boost::adjacency_list&lt; VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section &gt; Graph</div><div class="ttdoc">Definition of a public transport graph. </div><div class="ttdef"><b>Definition:</b> public_transport_graph.hh:76</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_a423688e17dbdc2a999bf5cefb80a7cb2"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Tempus::Road::Graph</a></div><div class="ttdeci">boost::adjacency_list&lt; VertexListType, EdgeListType, boost::bidirectionalS, Node, Section &gt; Graph</div><div class="ttdoc">The final road graph type. </div><div class="ttdef"><b>Definition:</b> road_graph.hh:56</div></div>
-<div class="ttc" id="class_tempus_1_1_automaton_html_a08a0de285e8e04fe71886afa3cddc8c7"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">Tempus::Automaton::find_transition</a></div><div class="ttdeci">std::pair&lt; State, bool &gt; find_transition(State q, Symbol e) const </div><div class="ttdef"><b>Definition:</b> automaton.hh:259</div></div>
+<div class="ttc" id="class_tempus_1_1_automaton_1_1_my_arc_writer_html"><div class="ttname"><a href="class_tempus_1_1_automaton_1_1_my_arc_writer.html">Tempus::Automaton::MyArcWriter</a></div><div class="ttdef"><b>Definition:</b> automaton.hh:99</div></div>
+<div class="ttc" id="class_tempus_1_1_automaton_html_a464d1d7f859f1e3d1266d26de80d0b0d"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a464d1d7f859f1e3d1266d26de80d0b0d">Tempus::Automaton::build_shortcuts</a></div><div class="ttdeci">void build_shortcuts(const std::map&lt; State, State &gt; &amp;failure_function_)</div><div class="ttdoc">corresponds to building the &quot;next&quot; function </div><div class="ttdef"><b>Definition:</b> automaton.hh:204</div></div>
+<div class="ttc" id="namespace_tempus_1_1_road_html_ab8b311f360f20ca940df189832da915d"><div class="ttname"><a href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Tempus::Road::Graph</a></div><div class="ttdeci">boost::compressed_sparse_row_graph&lt; boost::bidirectionalS, Node, Section, boost::no_property, uint32_t, uint32_t &gt; Graph</div><div class="ttdef"><b>Definition:</b> road_graph.hh:53</div></div>
+<div class="ttc" id="namespace_tempus_1_1_public_transport_html_ad5c0369f1ca3480c876fd96285344534"><div class="ttname"><a href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Tempus::PublicTransport::Graph</a></div><div class="ttdeci">boost::adjacency_list&lt; VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section &gt; Graph</div><div class="ttdoc">Definition of a public transport graph. </div><div class="ttdef"><b>Definition:</b> public_transport_graph.hh:53</div></div>
+<div class="ttc" id="class_tempus_1_1_automaton_html_a08a0de285e8e04fe71886afa3cddc8c7"><div class="ttname"><a href="class_tempus_1_1_automaton.html#a08a0de285e8e04fe71886afa3cddc8c7">Tempus::Automaton::find_transition</a></div><div class="ttdeci">std::pair&lt; State, bool &gt; find_transition(State q, Symbol e) const </div><div class="ttdef"><b>Definition:</b> automaton.hh:265</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

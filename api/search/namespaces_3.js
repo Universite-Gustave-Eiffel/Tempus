@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['xml',['XML',['../namespace_x_m_l.html',1,'']]]
+  ['wps',['WPS',['../namespace_w_p_s.html',1,'']]]
 ];

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::Multimodal::Graph Struct Reference</title>
+<title>Tempus: Tempus::Multimodal::Graph Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -87,16 +88,18 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="struct_tempus_1_1_multimodal_1_1_graph-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">Tempus::Multimodal::Graph Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>A MultimodalGraph is basically a <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2" title="The final road graph type. ">Road::Graph</a> associated with a list of <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534" title="Definition of a public transport graph. ">PublicTransport::Graph</a>.  
+<p>A MultimodalGraph is basically a <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> associated with a list of <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534" title="Definition of a public transport graph. ">PublicTransport::Graph</a>.  
  <a href="struct_tempus_1_1_multimodal_1_1_graph.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="multimodal__graph_8hh_source.html">multimodal_graph.hh</a>&gt;</code></p>
@@ -106,9 +109,19 @@ Inheritance diagram for Tempus::Multimodal::Graph:</div>
  <div class="center">
   <img src="struct_tempus_1_1_multimodal_1_1_graph.png" usemap="#Tempus::Multimodal::Graph_map" alt=""/>
   <map id="Tempus::Multimodal::Graph_map" name="Tempus::Multimodal::Graph_map">
+<area href="class_tempus_1_1_routing_data.html" alt="Tempus::RoutingData" shape="rect" coords="172,0,334,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_multimodal_1_1_graph_1_1_public_transport_graph_list.html">PublicTransportGraphList</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_multimodal_1_1_graph_1_1_public_transport_iterator.html">PublicTransportIterator</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph_1_1_stop_index.html">StopIndex</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:ab43f407d1ee7e100c9f708e512b85abb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab43f407d1ee7e100c9f708e512b85abb"></a>
@@ -156,59 +169,63 @@ typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>degree_size
 <tr class="memitem:a31759be02750fb7e833324b0ed50a30f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a31759be02750fb7e833324b0ed50a30f"></a>
 typedef void&#160;</td><td class="memItemRight" valign="bottom"><b>adjacency_iterator</b></td></tr>
 <tr class="separator:a31759be02750fb7e833324b0ed50a30f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7351d1d4d114b0b1f6808cf615fba5b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af7351d1d4d114b0b1f6808cf615fba5b"></a>
-typedef std::map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <br class="typebreak"/>
-<a class="el" href="struct_tempus_1_1_public_transport_1_1_network.html">PublicTransport::Network</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#af7351d1d4d114b0b1f6808cf615fba5b">NetworkMap</a></td></tr>
-<tr class="memdesc:af7351d1d4d114b0b1f6808cf615fba5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public transport networks. <br/></td></tr>
-<tr class="separator:af7351d1d4d114b0b1f6808cf615fba5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada5a80461f1dd42d3d7564778203af48"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classsub__map.html">sub_map</a>&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <br class="typebreak"/>
-const <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ada5a80461f1dd42d3d7564778203af48">PublicTransportGraphList</a></td></tr>
-<tr class="separator:ada5a80461f1dd42d3d7564778203af48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0cb961aaf1fd697be7c6f56fc3c95c54"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0cb961aaf1fd697be7c6f56fc3c95c54"></a>
-typedef boost::ptr_map<br class="typebreak"/>
-&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a0cb961aaf1fd697be7c6f56fc3c95c54">PoiList</a></td></tr>
-<tr class="memdesc:a0cb961aaf1fd697be7c6f56fc3c95c54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Point of interests. <br/></td></tr>
-<tr class="separator:a0cb961aaf1fd697be7c6f56fc3c95c54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb90904b8012c33dc521f9a9776977aa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adb90904b8012c33dc521f9a9776977aa"></a>
+<tr class="memitem:ac638ffc3f5f97563b2d0656ece89197e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac638ffc3f5f97563b2d0656ece89197e"></a>
+typedef std::vector&lt; <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ac638ffc3f5f97563b2d0656ece89197e">POIList</a></td></tr>
+<tr class="memdesc:ac638ffc3f5f97563b2d0656ece89197e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Point of interests. <br/></td></tr>
+<tr class="separator:ac638ffc3f5f97563b2d0656ece89197e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62cc2697c47b3b021a591aeaf1024893"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a62cc2697c47b3b021a591aeaf1024893"></a>
+typedef std::vector&lt; POIIndex &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>EdgePois</b></td></tr>
+<tr class="separator:a62cc2697c47b3b021a591aeaf1024893"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad21d527d4e8478e749a86dc8ddcd4184"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad21d527d4e8478e749a86dc8ddcd4184"></a>
+typedef std::vector&lt; <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph_1_1_stop_index.html">StopIndex</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>EdgeStops</b></td></tr>
+<tr class="separator:ad21d527d4e8478e749a86dc8ddcd4184"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_class_tempus_1_1_routing_data"><td colspan="2" onclick="javascript:toggleInherit('pub_types_class_tempus_1_1_routing_data')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="class_tempus_1_1_routing_data.html">Tempus::RoutingData</a></td></tr>
+<tr class="memitem:a8f5314b33aff382bcf1f1edb68e4cc78 inherit pub_types_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8f5314b33aff382bcf1f1edb68e4cc78"></a>
 typedef std::map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <br class="typebreak"/>
 <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>TransportModes</b></td></tr>
-<tr class="separator:adb90904b8012c33dc521f9a9776977aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a8f5314b33aff382bcf1f1edb68e4cc78 inherit pub_types_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34c76ace52610c84ca29524da1f15dbc inherit pub_types_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a34c76ace52610c84ca29524da1f15dbc"></a>
+typedef std::map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <br class="typebreak"/>
+<a class="el" href="struct_tempus_1_1_public_transport_1_1_network.html">PublicTransport::Network</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a34c76ace52610c84ca29524da1f15dbc">NetworkMap</a></td></tr>
+<tr class="memdesc:a34c76ace52610c84ca29524da1f15dbc inherit pub_types_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public transport netwoks. <br/></td></tr>
+<tr class="separator:a34c76ace52610c84ca29524da1f15dbc inherit pub_types_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a72f69f1ef0bd8c7fbc26a6761466c6a5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a72f69f1ef0bd8c7fbc26a6761466c6a5">Graph</a> (std::auto_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Road::Graph</a> &gt;)</td></tr>
-<tr class="separator:a72f69f1ef0bd8c7fbc26a6761466c6a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad981e0c8bdfbb46fd2b64698cd42fa03"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ad981e0c8bdfbb46fd2b64698cd42fa03">Graph</a> (std::unique_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &gt;)</td></tr>
+<tr class="separator:ad981e0c8bdfbb46fd2b64698cd42fa03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47ca68d4dea550cae78d28b204ee7eb8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47ca68d4dea550cae78d28b204ee7eb8"></a>
-const <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Road::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a47ca68d4dea550cae78d28b204ee7eb8">road</a> () const </td></tr>
+const <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a47ca68d4dea550cae78d28b204ee7eb8">road</a> () const </td></tr>
 <tr class="memdesc:a47ca68d4dea550cae78d28b204ee7eb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">The road graph. <br/></td></tr>
 <tr class="separator:a47ca68d4dea550cae78d28b204ee7eb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac77ac98aa4c5c34c2e23785ebc635d32"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac77ac98aa4c5c34c2e23785ebc635d32"></a>
-<a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Road::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ac77ac98aa4c5c34c2e23785ebc635d32">road</a> ()</td></tr>
+<a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ac77ac98aa4c5c34c2e23785ebc635d32">road</a> ()</td></tr>
 <tr class="memdesc:ac77ac98aa4c5c34c2e23785ebc635d32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write access. <br/></td></tr>
 <tr class="separator:ac77ac98aa4c5c34c2e23785ebc635d32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acca510e77fdc9fd249e56addb43ae725"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acca510e77fdc9fd249e56addb43ae725"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_road</b> (std::auto_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Road::Graph</a> &gt;)</td></tr>
-<tr class="separator:acca510e77fdc9fd249e56addb43ae725"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0d52944bb756090b2f02fa166eb2d10"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0d52944bb756090b2f02fa166eb2d10"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RW_PROPERTY</b> (network_map, <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#af7351d1d4d114b0b1f6808cf615fba5b">NetworkMap</a>)</td></tr>
-<tr class="separator:ac0d52944bb756090b2f02fa166eb2d10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73bbffe764b7a46e7ecdab9434ef71ad"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73bbffe764b7a46e7ecdab9434ef71ad"></a>
-boost::optional&lt; const <br class="typebreak"/>
-<a class="el" href="struct_tempus_1_1_public_transport_1_1_network.html">PublicTransport::Network</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a73bbffe764b7a46e7ecdab9434ef71ad">network</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
-<tr class="memdesc:a73bbffe764b7a46e7ecdab9434ef71ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular network. <br/></td></tr>
-<tr class="separator:a73bbffe764b7a46e7ecdab9434ef71ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7ce719ab18bb95057ee7cf1061bbeb9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af7ce719ab18bb95057ee7cf1061bbeb9"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RO_PROPERTY</b> (public_transports, <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ada5a80461f1dd42d3d7564778203af48">PublicTransportGraphList</a>)</td></tr>
-<tr class="separator:af7ce719ab18bb95057ee7cf1061bbeb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af24dc5be46116e5cc6c5706f9e77e77e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af24dc5be46116e5cc6c5706f9e77e77e"></a>
-boost::optional&lt; const <br class="typebreak"/>
-<a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#af24dc5be46116e5cc6c5706f9e77e77e">public_transport</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
-<tr class="memdesc:af24dc5be46116e5cc6c5706f9e77e77e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular graph. <br/></td></tr>
-<tr class="separator:af24dc5be46116e5cc6c5706f9e77e77e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afae903af1250f06ef82716727f489419"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afae903af1250f06ef82716727f489419"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#afae903af1250f06ef82716727f489419">set_public_transports</a> (boost::ptr_map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &gt; &amp;)</td></tr>
-<tr class="memdesc:afae903af1250f06ef82716727f489419"><td class="mdescLeft">&#160;</td><td class="mdescRight">take ownership (move) <br/></td></tr>
-<tr class="separator:afae903af1250f06ef82716727f489419"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfea4017f4bd00bd01bc436bc0fedb70"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acfea4017f4bd00bd01bc436bc0fedb70"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_road</b> (std::unique_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &gt;)</td></tr>
+<tr class="separator:acfea4017f4bd00bd01bc436bc0fedb70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb3829182a3d96ed83404029c31f511f"><td class="memItemLeft" align="right" valign="top">boost::optional&lt; Road::Vertex &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#adb3829182a3d96ed83404029c31f511f">road_vertex_from_id</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> id) const </td></tr>
+<tr class="separator:adb3829182a3d96ed83404029c31f511f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81757b4f6b123f08627c472afd581624"><td class="memItemLeft" align="right" valign="top">boost::optional&lt; Road::Edge &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a81757b4f6b123f08627c472afd581624">road_edge_from_id</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> id) const </td></tr>
+<tr class="separator:a81757b4f6b123f08627c472afd581624"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3960b487e6549ece1812ca565d51a31e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3960b487e6549ece1812ca565d51a31e"></a>
+boost::optional<br class="typebreak"/>
+&lt; <a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a3960b487e6549ece1812ca565d51a31e">public_transport_index</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
+<tr class="memdesc:a3960b487e6549ece1812ca565d51a31e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a public transport graph index given a db id. <br/></td></tr>
+<tr class="separator:a3960b487e6549ece1812ca565d51a31e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b534cfabfca00f037050f8af2a4b981"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6b534cfabfca00f037050f8af2a4b981"></a>
+<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a6b534cfabfca00f037050f8af2a4b981">public_transport_rindex</a> (<a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a> idx) const </td></tr>
+<tr class="memdesc:a6b534cfabfca00f037050f8af2a4b981"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a public transport graph db id given it's graph index. <br/></td></tr>
+<tr class="separator:a6b534cfabfca00f037050f8af2a4b981"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae00183bc204103d0056083b1a063bac2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ae00183bc204103d0056083b1a063bac2">public_transport</a> (<a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a>) const </td></tr>
+<tr class="separator:ae00183bc204103d0056083b1a063bac2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab57385c9ada25ef970c78d38edbda3d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_tempus_1_1_multimodal_1_1_graph_1_1_public_transport_graph_list.html">PublicTransportGraphList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ab57385c9ada25ef970c78d38edbda3d1">public_transports</a> () const </td></tr>
+<tr class="separator:ab57385c9ada25ef970c78d38edbda3d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c8c4fa6763a62c166eb3750e8678da0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c8c4fa6763a62c166eb3750e8678da0"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a5c8c4fa6763a62c166eb3750e8678da0">set_public_transports</a> (std::map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, std::unique_ptr&lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &gt;&gt; &amp;&amp;)</td></tr>
+<tr class="memdesc:a5c8c4fa6763a62c166eb3750e8678da0"><td class="mdescLeft">&#160;</td><td class="mdescRight">take ownership (move) <br/></td></tr>
+<tr class="separator:a5c8c4fa6763a62c166eb3750e8678da0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05635e4aa24a60aebda5f4d0df0958d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a05635e4aa24a60aebda5f4d0df0958d3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a05635e4aa24a60aebda5f4d0df0958d3">select_public_transports</a> (const std::set&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt; &amp;)</td></tr>
 <tr class="memdesc:a05635e4aa24a60aebda5f4d0df0958d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select public transports. <br/></td></tr>
@@ -217,52 +234,117 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="stru
 std::set&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ad274d33c198fc5cc4185ede6a9f558bb">public_transport_selection</a> () const </td></tr>
 <tr class="memdesc:ad274d33c198fc5cc4185ede6a9f558bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current public transport selection. <br/></td></tr>
 <tr class="separator:ad274d33c198fc5cc4185ede6a9f558bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e6da12c124c3278cbf3f9f7bb6b2819"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6e6da12c124c3278cbf3f9f7bb6b2819"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RO_PROPERTY</b> (pois, <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a0cb961aaf1fd697be7c6f56fc3c95c54">PoiList</a>)</td></tr>
-<tr class="separator:a6e6da12c124c3278cbf3f9f7bb6b2819"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a442f54905ab9b2098a3f9954186ce03b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a442f54905ab9b2098a3f9954186ce03b"></a>
-boost::optional&lt; const <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a442f54905ab9b2098a3f9954186ce03b">poi</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
-<tr class="memdesc:a442f54905ab9b2098a3f9954186ce03b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular poi. <br/></td></tr>
-<tr class="separator:a442f54905ab9b2098a3f9954186ce03b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c1ef41e81a7d9eb7ff19915f96f7a13"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c1ef41e81a7d9eb7ff19915f96f7a13"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a6c1ef41e81a7d9eb7ff19915f96f7a13">set_pois</a> (boost::ptr_map&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &gt; &amp;)</td></tr>
-<tr class="memdesc:a6c1ef41e81a7d9eb7ff19915f96f7a13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set POIs (take ownership) <br/></td></tr>
-<tr class="separator:a6c1ef41e81a7d9eb7ff19915f96f7a13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adbcf69cea8bcfb97b7751dd407a43e58"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adbcf69cea8bcfb97b7751dd407a43e58"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DECLARE_RO_PROPERTY</b> (transport_modes, TransportModes)</td></tr>
-<tr class="separator:adbcf69cea8bcfb97b7751dd407a43e58"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4cbf009e55a9228823dab0510ef2176"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4cbf009e55a9228823dab0510ef2176"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_transport_modes</b> (const TransportModes &amp;)</td></tr>
-<tr class="separator:ae4cbf009e55a9228823dab0510ef2176"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af5b20b8ba4f695e11700699943d7a930"><td class="memItemLeft" align="right" valign="top">boost::optional&lt; <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#af5b20b8ba4f695e11700699943d7a930">transport_mode</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> id) const </td></tr>
-<tr class="separator:af5b20b8ba4f695e11700699943d7a930"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a041d3f35ea23ba46cdd08dc086ca9094"><td class="memItemLeft" align="right" valign="top">boost::optional&lt; <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a041d3f35ea23ba46cdd08dc086ca9094">transport_mode</a> (const std::string &amp;name) const </td></tr>
-<tr class="separator:a041d3f35ea23ba46cdd08dc086ca9094"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86c0d31fd37af570405c0f49ff7af063"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a86c0d31fd37af570405c0f49ff7af063"></a>
+boost::optional&lt; POIIndex &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>poi_index</b> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
+<tr class="separator:a86c0d31fd37af570405c0f49ff7af063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ecbaec8a574afe6ca4e4518cb2bf8a4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ecbaec8a574afe6ca4e4518cb2bf8a4"></a>
+const <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>poi</b> (POIIndex) const </td></tr>
+<tr class="separator:a5ecbaec8a574afe6ca4e4518cb2bf8a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1030d06ad76726d6399fc319dc06937"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad1030d06ad76726d6399fc319dc06937"></a>
+<a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>poi</b> (POIIndex)</td></tr>
+<tr class="separator:ad1030d06ad76726d6399fc319dc06937"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d1d65f8ac2b5e99e989d2fe4d619844"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d1d65f8ac2b5e99e989d2fe4d619844"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#a0d1d65f8ac2b5e99e989d2fe4d619844">set_pois</a> (std::vector&lt; <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &gt; &amp;&amp;)</td></tr>
+<tr class="memdesc:a0d1d65f8ac2b5e99e989d2fe4d619844"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set POIs (take ownership) <br/></td></tr>
+<tr class="separator:a0d1d65f8ac2b5e99e989d2fe4d619844"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8ec7be9518058e7cdef71f83ddfc798"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8ec7be9518058e7cdef71f83ddfc798"></a>
+<a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ac638ffc3f5f97563b2d0656ece89197e">POIList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pois</b> () const </td></tr>
+<tr class="separator:ab8ec7be9518058e7cdef71f83ddfc798"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a803502ad208b43f5660a280c7568e0d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a803502ad208b43f5660a280c7568e0d1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>add_poi_ref</b> (const Road::Edge &amp;e, POIIndex)</td></tr>
+<tr class="separator:a803502ad208b43f5660a280c7568e0d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f1fa5900f2abeaf4ea590c05181b1c2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8f1fa5900f2abeaf4ea590c05181b1c2"></a>
+const EdgePois &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>edge_pois</b> (const Road::Edge &amp;e) const </td></tr>
+<tr class="separator:a8f1fa5900f2abeaf4ea590c05181b1c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbd65e4500d9884f0c22a3da1170e5b8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acbd65e4500d9884f0c22a3da1170e5b8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>add_stop_ref</b> (const Road::Edge &amp;e, const <a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a> &amp;, const PublicTransport::Vertex &amp;)</td></tr>
+<tr class="separator:acbd65e4500d9884f0c22a3da1170e5b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bc7d1cbbb26a4d64629f399ea2304b3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8bc7d1cbbb26a4d64629f399ea2304b3"></a>
+const EdgeStops &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>edge_stops</b> (const Road::Edge &amp;) const </td></tr>
+<tr class="separator:a8bc7d1cbbb26a4d64629f399ea2304b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_tempus_1_1_routing_data"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_tempus_1_1_routing_data')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_tempus_1_1_routing_data.html">Tempus::RoutingData</a></td></tr>
+<tr class="memitem:a4e079718e23ff7d99a6b9695306c6947 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e079718e23ff7d99a6b9695306c6947"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>RoutingData</b> (const std::string &amp;n)</td></tr>
+<tr class="separator:a4e079718e23ff7d99a6b9695306c6947 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acff07d1bfa3a01f70ab9589aa3536093 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acff07d1bfa3a01f70ab9589aa3536093"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#acff07d1bfa3a01f70ab9589aa3536093">name</a> () const </td></tr>
+<tr class="memdesc:acff07d1bfa3a01f70ab9589aa3536093 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Name of the data. <br/></td></tr>
+<tr class="separator:acff07d1bfa3a01f70ab9589aa3536093 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac27c29696f414392fbe119c692f062c8 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac27c29696f414392fbe119c692f062c8"></a>
+const TransportModes &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#ac27c29696f414392fbe119c692f062c8">transport_modes</a> () const </td></tr>
+<tr class="memdesc:ac27c29696f414392fbe119c692f062c8 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to transport modes. <br/></td></tr>
+<tr class="separator:ac27c29696f414392fbe119c692f062c8 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2df3131dee45dba2032a7a22ae97f0ad inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a2df3131dee45dba2032a7a22ae97f0ad">set_transport_modes</a> (const TransportModes &amp;)</td></tr>
+<tr class="separator:a2df3131dee45dba2032a7a22ae97f0ad inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d5081dc032197c632a858fafce47670 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d5081dc032197c632a858fafce47670"></a>
+boost::optional&lt; <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a9d5081dc032197c632a858fafce47670">transport_mode</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> id) const </td></tr>
+<tr class="memdesc:a9d5081dc032197c632a858fafce47670 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">access to a transportmode, given its id <br/></td></tr>
+<tr class="separator:a9d5081dc032197c632a858fafce47670 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51191d65acc272363cf6f3a3891963fa inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a51191d65acc272363cf6f3a3891963fa"></a>
+boost::optional&lt; <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a51191d65acc272363cf6f3a3891963fa">transport_mode</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_routing_data.html#acff07d1bfa3a01f70ab9589aa3536093">name</a>) const </td></tr>
+<tr class="memdesc:a51191d65acc272363cf6f3a3891963fa inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">access to a transportmode, given its name <br/></td></tr>
+<tr class="separator:a51191d65acc272363cf6f3a3891963fa inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7effc684b64620f5ca734c5b5f37d98 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7effc684b64620f5ca734c5b5f37d98"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#ab7effc684b64620f5ca734c5b5f37d98">metadata</a> (const std::string &amp;key) const </td></tr>
+<tr class="memdesc:ab7effc684b64620f5ca734c5b5f37d98 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">access to a metadata <br/></td></tr>
+<tr class="separator:ab7effc684b64620f5ca734c5b5f37d98 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a486aa4a35c5e642808994eb8de13e45a inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a486aa4a35c5e642808994eb8de13e45a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a486aa4a35c5e642808994eb8de13e45a">set_metadata</a> (const std::string &amp;key, const std::string &amp;value)</td></tr>
+<tr class="memdesc:a486aa4a35c5e642808994eb8de13e45a inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">modification of a graph's metadata <br/></td></tr>
+<tr class="separator:a486aa4a35c5e642808994eb8de13e45a inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92a9f1b7cf094566d5adc4ec6658ee06 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a92a9f1b7cf094566d5adc4ec6658ee06"></a>
+const std::map&lt; std::string, <br class="typebreak"/>
+std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a92a9f1b7cf094566d5adc4ec6658ee06">metadata</a> () const </td></tr>
+<tr class="memdesc:a92a9f1b7cf094566d5adc4ec6658ee06 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">access to all the metadata (read only) <br/></td></tr>
+<tr class="separator:a92a9f1b7cf094566d5adc4ec6658ee06 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c84f492eb1fd22a6a503c8b3f412059 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c84f492eb1fd22a6a503c8b3f412059"></a>
+<a class="el" href="class_tempus_1_1_routing_data.html#a34c76ace52610c84ca29524da1f15dbc">NetworkMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a4c84f492eb1fd22a6a503c8b3f412059">network_map</a> () const </td></tr>
+<tr class="memdesc:a4c84f492eb1fd22a6a503c8b3f412059 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to the network map. <br/></td></tr>
+<tr class="separator:a4c84f492eb1fd22a6a503c8b3f412059 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bad06bff401dab8fa63666bb78e5259 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2bad06bff401dab8fa63666bb78e5259"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a2bad06bff401dab8fa63666bb78e5259">set_network_map</a> (const <a class="el" href="class_tempus_1_1_routing_data.html#a34c76ace52610c84ca29524da1f15dbc">NetworkMap</a> &amp;nm)</td></tr>
+<tr class="memdesc:a2bad06bff401dab8fa63666bb78e5259 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Network map setter. <br/></td></tr>
+<tr class="separator:a2bad06bff401dab8fa63666bb78e5259 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af29a96cd9a82fc0cef6ee230483be477 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af29a96cd9a82fc0cef6ee230483be477"></a>
+boost::optional&lt; const <br class="typebreak"/>
+<a class="el" href="struct_tempus_1_1_public_transport_1_1_network.html">PublicTransport::Network</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#af29a96cd9a82fc0cef6ee230483be477">network</a> (<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>) const </td></tr>
+<tr class="memdesc:af29a96cd9a82fc0cef6ee230483be477 inherit pub_methods_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a particular network. <br/></td></tr>
+<tr class="separator:af29a96cd9a82fc0cef6ee230483be477 inherit pub_methods_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ab1a1e84ea1eb6e0b5b545cb576d51bf1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1a1e84ea1eb6e0b5b545cb576d51bf1"></a>
 static <a class="el" href="struct_tempus_1_1_multimodal_1_1_vertex.html">vertex_descriptor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>null_vertex</b> ()</td></tr>
 <tr class="separator:ab1a1e84ea1eb6e0b5b545cb576d51bf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a712e608ebbe3e2b547b3d3df4f403d40"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a712e608ebbe3e2b547b3d3df4f403d40"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Tempus::serialize</b> (std::ostream &amp;ostr, const <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Graph</a> &amp;graph, <a class="el" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a>)</td></tr>
+<tr class="separator:a712e608ebbe3e2b547b3d3df4f403d40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a331d781516ccd92082a07b7cd8d7cff3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a331d781516ccd92082a07b7cd8d7cff3"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Tempus::unserialize</b> (std::istream &amp;istr, <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Graph</a> &amp;graph, <a class="el" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a>)</td></tr>
+<tr class="separator:a331d781516ccd92082a07b7cd8d7cff3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_attribs_class_tempus_1_1_routing_data"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_tempus_1_1_routing_data')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_tempus_1_1_routing_data.html">Tempus::RoutingData</a></td></tr>
+<tr class="memitem:a15de42d65a574c54fe5ac00a18fe5774 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a15de42d65a574c54fe5ac00a18fe5774"></a>
+std::map&lt; std::string, <br class="typebreak"/>
+std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_routing_data.html#a15de42d65a574c54fe5ac00a18fe5774">metadata_</a></td></tr>
+<tr class="memdesc:a15de42d65a574c54fe5ac00a18fe5774 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Graph metadata. <br/></td></tr>
+<tr class="separator:a15de42d65a574c54fe5ac00a18fe5774 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af925c76a7da7689baaf482d0316a6247 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af925c76a7da7689baaf482d0316a6247"></a>
+TransportModes&#160;</td><td class="memItemRight" valign="bottom"><b>transport_modes_</b></td></tr>
+<tr class="separator:af925c76a7da7689baaf482d0316a6247 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49571a9ba04edafbfa4c539a41156b04 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49571a9ba04edafbfa4c539a41156b04"></a>
+<a class="el" href="class_tempus_1_1_routing_data.html#a34c76ace52610c84ca29524da1f15dbc">NetworkMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>network_map_</b></td></tr>
+<tr class="separator:a49571a9ba04edafbfa4c539a41156b04 inherit pro_attribs_class_tempus_1_1_routing_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A MultimodalGraph is basically a <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2" title="The final road graph type. ">Road::Graph</a> associated with a list of <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534" title="Definition of a public transport graph. ">PublicTransport::Graph</a>. </p>
-</div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a class="anchor" id="ada5a80461f1dd42d3d7564778203af48"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef <a class="el" href="classsub__map.html">sub_map</a>&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>, const <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a>* &gt; <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html#ada5a80461f1dd42d3d7564778203af48">Tempus::Multimodal::Graph::PublicTransportGraphList</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Public transports graphs network_id -&gt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534" title="Definition of a public transport graph. ">PublicTransport::Graph</a> This a <a class="el" href="classsub__map.html">sub_map</a> that can thus be filtered to select only a subset Public transport graphs are owned by this class FIXME find a smart pointer class that work with <a class="el" href="classsub__map.html">sub_map</a> </p>
-
-</div>
-</div>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a72f69f1ef0bd8c7fbc26a6761466c6a5"></a>
+<div class="textblock"><p>A MultimodalGraph is basically a <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> associated with a list of <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534" title="Definition of a public transport graph. ">PublicTransport::Graph</a>. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="ad981e0c8bdfbb46fd2b64698cd42fa03"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -272,7 +354,7 @@ static <a class="el" href="struct_tempus_1_1_multimodal_1_1_vertex.html">vertex_
         <tr>
           <td class="memname">Tempus::Multimodal::Graph::Graph </td>
           <td>(</td>
-          <td class="paramtype">std::auto_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Road::Graph</a> &gt;&#160;</td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &gt;&#160;</td>
           <td class="paramname"><em>r</em></td><td>)</td>
           <td></td>
         </tr>
@@ -288,12 +370,45 @@ static <a class="el" href="struct_tempus_1_1_multimodal_1_1_vertex.html">vertex_
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="af5b20b8ba4f695e11700699943d7a930"></a>
+<a class="anchor" id="ae00183bc204103d0056083b1a063bac2"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">boost::optional&lt; <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt; Tempus::Multimodal::Graph::transport_mode </td>
+          <td class="memname">const <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &amp; Tempus::Multimodal::Graph::public_transport </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_tempus.html#a6e8d3dd8170b62eac3f4a4ed24764502">PublicTransportGraphIndex</a>&#160;</td>
+          <td class="paramname"><em>idx</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns a public transport given an index No bound checking is done on the index </p>
+
+</div>
+</div>
+<a class="anchor" id="ab57385c9ada25ef970c78d38edbda3d1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_tempus_1_1_multimodal_1_1_graph_1_1_public_transport_graph_list.html">Graph::PublicTransportGraphList</a> Tempus::Multimodal::Graph::public_transports </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns an object that carry begin and end iterator over public transport graphs It can be used inside a range-based for loop </p>
+
+</div>
+</div>
+<a class="anchor" id="a81757b4f6b123f08627c472afd581624"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::optional&lt; Road::Edge &gt; Tempus::Multimodal::Graph::road_edge_from_id </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>&#160;</td>
           <td class="paramname"><em>id</em></td><td>)</td>
@@ -301,35 +416,35 @@ static <a class="el" href="struct_tempus_1_1_multimodal_1_1_vertex.html">vertex_
         </tr>
       </table>
 </div><div class="memdoc">
-<p>access to a transportmode, given its id the second element of the pair tells if the mode exists </p>
+<dl class="section return"><dt>Returns</dt><dd>a Road::Edge from it's database id in O(1) </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="a041d3f35ea23ba46cdd08dc086ca9094"></a>
+<a class="anchor" id="adb3829182a3d96ed83404029c31f511f"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">boost::optional&lt; <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &gt; Tempus::Multimodal::Graph::transport_mode </td>
+          <td class="memname">boost::optional&lt; Road::Vertex &gt; Tempus::Multimodal::Graph::road_vertex_from_id </td>
           <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>access to a transportmode, given its name the second element of the pair tells if the mode exists </p>
+<dl class="section return"><dt>Returns</dt><dd>a Road::Vertex from it's database id in O(1) </dd></dl>
 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following files:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="multimodal__graph_8hh_source.html">multimodal_graph.hh</a></li>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/multimodal_graph.cc</li>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="multimodal__graph_8hh_source.html">multimodal_graph.hh</a></li>
+<li>/home/hme/src/tempus/src/core/multimodal_graph.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

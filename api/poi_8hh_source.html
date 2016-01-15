@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/poi.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/core/poi.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -115,30 +116,35 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
 <div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="struct_tempus_1_1_p_o_i.html#aad1158432b3a44c8b0d63d223c5157ff">has_parking_transport_mode</a>( <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> <span class="keywordtype">id</span> ) <span class="keyword">const</span>;</div>
 <div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    DECLARE_RW_PROPERTY( road_edge, <a class="code" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Road::Edge</a> );</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    DECLARE_RW_PROPERTY( road_edge, Road::Edge );</div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    DECLARE_RW_PROPERTY( opposite_road_edge, boost::optional&lt;Road::Edge&gt; );</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    DECLARE_RW_PROPERTY( abscissa_road_section, <a class="code" href="class_tempus_1_1_abscissa.html">Abscissa</a> );</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    DECLARE_RW_PROPERTY( <a class="code" href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">coordinates</a>, <a class="code" href="struct_tempus_1_1_point3_d.html">Point3D</a> );</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;};</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;}</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="keyword">friend</span> <span class="keywordtype">void</span> serialize( std::ostream&amp; ostr, <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_p_o_i.html">POI</a>&amp;, <a class="code" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a> );</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <span class="keyword">friend</span> <span class="keywordtype">void</span> unserialize( std::istream&amp; istr, <a class="code" href="struct_tempus_1_1_p_o_i.html">POI</a>&amp;, <a class="code" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a> );</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;};</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="keyword">typedef</span> uint32_t POIIndex;</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;}</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="struct_tempus_1_1_point3_d_html"><div class="ttname"><a href="struct_tempus_1_1_point3_d.html">Tempus::Point3D</a></div><div class="ttdoc">3D Points </div><div class="ttdef"><b>Definition:</b> point.hh:36</div></div>
 <div class="ttc" id="class_tempus_1_1_abscissa_html"><div class="ttname"><a href="class_tempus_1_1_abscissa.html">Tempus::Abscissa</a></div><div class="ttdoc">double in the [0,1] range </div><div class="ttdef"><b>Definition:</b> abscissa.hh:28</div></div>
 <div class="ttc" id="class_tempus_1_1_base_html"><div class="ttname"><a href="class_tempus_1_1_base.html">Tempus::Base</a></div><div class="ttdoc">The base class of all classes with a database ID. </div><div class="ttdef"><b>Definition:</b> base.hh:32</div></div>
-<div class="ttc" id="namespace_tempus_html_a3027132e51c674c3f37449b079a46068"><div class="ttname"><a href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">Tempus::coordinates</a></div><div class="ttdeci">Point2D coordinates(const Road::Vertex &amp;v, Db::Connection &amp;db, const Road::Graph &amp;graph)</div><div class="ttdoc">Get 2D coordinates of a road vertex, from the database. </div><div class="ttdef"><b>Definition:</b> graph_db_link.cc:26</div></div>
+<div class="ttc" id="namespace_tempus_html_a3027132e51c674c3f37449b079a46068"><div class="ttname"><a href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">Tempus::coordinates</a></div><div class="ttdeci">Point2D coordinates(const Road::Vertex &amp;v, Db::Connection &amp;db, const Road::Graph &amp;graph)</div><div class="ttdoc">Get 2D coordinates of a road vertex, from the database. </div><div class="ttdef"><b>Definition:</b> graph_db_link.cc:27</div></div>
+<div class="ttc" id="struct_tempus_1_1binary__serialization__t_html"><div class="ttname"><a href="struct_tempus_1_1binary__serialization__t.html">Tempus::binary_serialization_t</a></div><div class="ttdef"><b>Definition:</b> serializers.hh:51</div></div>
 <div class="ttc" id="struct_tempus_1_1_p_o_i_html"><div class="ttname"><a href="struct_tempus_1_1_p_o_i.html">Tempus::POI</a></div><div class="ttdoc">refers to the &#39;poi&#39; DB&#39;s table </div><div class="ttdef"><b>Definition:</b> poi.hh:31</div></div>
 <div class="ttc" id="namespace_tempus_html_a04e36446d6db638eb8b0de649ba35fe5"><div class="ttname"><a href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">Tempus::db_id_t</a></div><div class="ttdeci">unsigned long long int db_id_t</div><div class="ttdef"><b>Definition:</b> base.hh:28</div></div>
 <div class="ttc" id="struct_tempus_1_1_p_o_i_html_aad1158432b3a44c8b0d63d223c5157ff"><div class="ttname"><a href="struct_tempus_1_1_p_o_i.html#aad1158432b3a44c8b0d63d223c5157ff">Tempus::POI::has_parking_transport_mode</a></div><div class="ttdeci">bool has_parking_transport_mode(db_id_t id) const </div><div class="ttdoc">Test if a parking mode transport is present. </div><div class="ttdef"><b>Definition:</b> poi.cc:23</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_a8db854706be2c1c19d1ce6344b129980"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Tempus::Road::Edge</a></div><div class="ttdeci">boost::detail::edge_desc_impl&lt; boost::bidirectional_tag, Vertex &gt; Edge</div><div class="ttdoc">see adjacency_list.hpp </div><div class="ttdef"><b>Definition:</b> road_graph.hh:53</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

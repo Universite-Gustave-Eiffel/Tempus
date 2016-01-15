@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: WPS Namespace Reference</title>
+<title>Tempus: WPS Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -82,8 +83,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">WPS Namespace Reference</div>  </div>
 </div><!--header-->
@@ -106,36 +106,36 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ad16665e5e9a319941659f7031b835f6c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad16665e5e9a319941659f7031b835f6c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>ensure_minimum_state</b> (int state)</td></tr>
-<tr class="separator:ad16665e5e9a319941659f7031b835f6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f8fe8e18c3e6bbe6e2f3a60bf24605c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f8fe8e18c3e6bbe6e2f3a60bf24605c"></a>
 <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">Tempus::db_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>road_vertex_id_from_coordinates</b> (<a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;db, double x, double y)</td></tr>
 <tr class="separator:a7f8fe8e18c3e6bbe6e2f3a60bf24605c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6778cf994e513d22cc44e2a5e3eb9141"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6778cf994e513d22cc44e2a5e3eb9141"></a>
 <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">Tempus::db_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>road_vertex_id_from_coordinates_and_modes</b> (<a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;db, double x, double y, const std::vector&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt; &amp;modes)</td></tr>
 <tr class="separator:a6778cf994e513d22cc44e2a5e3eb9141"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:ac1d11bfbc7a598d6dc948f6f5bf5efe6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1d11bfbc7a598d6dc948f6f5bf5efe6"></a>
-static <a class="el" href="class_w_p_s_1_1_plugin_list_service.html">PluginListService</a>&#160;</td><td class="memItemRight" valign="bottom"><b>plugin_list_service</b></td></tr>
-<tr class="separator:ac1d11bfbc7a598d6dc948f6f5bf5efe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa9ff4c9a46590f0cb0d7d6d8c4370a0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa9ff4c9a46590f0cb0d7d6d8c4370a0"></a>
-static <a class="el" href="class_w_p_s_1_1_select_service.html">SelectService</a>&#160;</td><td class="memItemRight" valign="bottom"><b>select_service</b></td></tr>
-<tr class="separator:aaa9ff4c9a46590f0cb0d7d6d8c4370a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04ca6fdf332985ca46530518f3064287"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a04ca6fdf332985ca46530518f3064287"></a>
-static <a class="el" href="class_w_p_s_1_1_constant_list_service.html">ConstantListService</a>&#160;</td><td class="memItemRight" valign="bottom"><b>constant_list_service</b></td></tr>
-<tr class="separator:a04ca6fdf332985ca46530518f3064287"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e67e812a3e9c7cf45ef791c0c312135"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e67e812a3e9c7cf45ef791c0c312135"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>parse_constraint</b> (const xmlNode *node, <a class="el" href="struct_tempus_1_1_request_1_1_time_constraint.html">Tempus::Request::TimeConstraint</a> &amp;constraint)</td></tr>
+<tr class="separator:a8e67e812a3e9c7cf45ef791c0c312135"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98029e7040b3d111dd14af9e05a56cfb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a98029e7040b3d111dd14af9e05a56cfb"></a>
+<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>get_vertex_id_from_point</b> (const xmlNode *node, <a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;db)</td></tr>
+<tr class="separator:a98029e7040b3d111dd14af9e05a56cfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb9c3343814831c7d14686d5e9273020"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adb9c3343814831c7d14686d5e9273020"></a>
+<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>get_vertex_id_from_point_and_modes</b> (const xmlNode *node, <a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;db, const std::vector&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt; modes)</td></tr>
+<tr class="separator:adb9c3343814831c7d14686d5e9273020"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7183c9efaa4d88fa0eedd1ba6917281d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7183c9efaa4d88fa0eedd1ba6917281d"></a>
+<a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>get_vertex_id_from_point_and_mode</b> (const xmlNode *node, <a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;db, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> mode)</td></tr>
+<tr class="separator:a7183c9efaa4d88fa0eedd1ba6917281d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Copyright (C) 2012-2013 IFSTTAR (<a href="http://www.ifsttar.fr">http://www.ifsttar.fr</a>) Copyright (C) 2012-2013 Oslandia <a href="#" onclick="location.href='mai'+'lto:'+'inf'+'os'+'@os'+'la'+'ndi'+'a.'+'com'; return false;">infos<span style="display: none;">.nosp@m.</span>@osl<span style="display: none;">.nosp@m.</span>andia<span style="display: none;">.nosp@m.</span>.com</a></p>
+<p>This library is free software; you can redistribute it and/or modify it under the terms of the GNU Library General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</p>
+<p>This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Library General Public License for more details. You should have received a copy of the GNU Library General Public License along with this library; if not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
+<p>Copyright (C) 2012-2013 IFSTTAR (<a href="http://www.ifsttar.fr">http://www.ifsttar.fr</a>) Copyright (C) 2012-2013 Oslandia <a href="#" onclick="location.href='mai'+'lto:'+'inf'+'os'+'@os'+'la'+'ndi'+'a.'+'com'; return false;">infos<span style="display: none;">.nosp@m.</span>@osl<span style="display: none;">.nosp@m.</span>andia<span style="display: none;">.nosp@m.</span>.com</a></p>
 <p>This library is free software; you can redistribute it and/or modify it under the terms of the GNU Library General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</p>
 <p>This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Library General Public License for more details. You should have received a copy of the GNU Library General Public License along with this library; if not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. A <a class="el" href="namespace_w_p_s.html">WPS</a> <a class="el" href="class_w_p_s_1_1_service.html" title="Function callable from a WPS &#39;Execute&#39; operation. ">Service</a> is a generic process callable through the 'Execute' <a class="el" href="namespace_w_p_s.html">WPS</a> operation. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

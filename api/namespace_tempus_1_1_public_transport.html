@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::PublicTransport Namespace Reference</title>
+<title>Tempus: Tempus::PublicTransport Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -119,18 +120,6 @@ typedef boost::vecS&#160;</td><td class="memItemRight" valign="bottom"><a class=
 <tr class="memitem:aebdd271294d9d17fd9ba7d0477822737"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aebdd271294d9d17fd9ba7d0477822737"></a>
 typedef boost::vecS&#160;</td><td class="memItemRight" valign="bottom"><b>EdgeListType</b></td></tr>
 <tr class="separator:aebdd271294d9d17fd9ba7d0477822737"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23416c6998aa76c9e429b8e09ddfd8c6"><td class="memItemLeft" align="right" valign="top">typedef boost::mpl::if_<br class="typebreak"/>
-&lt; boost::detail::is_random_access<br class="typebreak"/>
-&lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ae63dd79920d1a48a837ea5f089c06832">VertexListType</a> &gt;::type, <br class="typebreak"/>
-size_t, void * &gt;::type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#a23416c6998aa76c9e429b8e09ddfd8c6">Vertex</a></td></tr>
-<tr class="separator:a23416c6998aa76c9e429b8e09ddfd8c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf188789fde36fac459aa406d46e6aed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf188789fde36fac459aa406d46e6aed"></a>
-typedef <br class="typebreak"/>
-boost::detail::edge_desc_impl<br class="typebreak"/>
-&lt; boost::bidirectional_tag, <br class="typebreak"/>
-<a class="el" href="namespace_tempus_1_1_public_transport.html#a23416c6998aa76c9e429b8e09ddfd8c6">Vertex</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#aaf188789fde36fac459aa406d46e6aed">Edge</a></td></tr>
-<tr class="memdesc:aaf188789fde36fac459aa406d46e6aed"><td class="mdescLeft">&#160;</td><td class="mdescRight">see adjacency_list.hpp <br/></td></tr>
-<tr class="separator:aaf188789fde36fac459aa406d46e6aed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5c0369f1ca3480c876fd96285344534"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad5c0369f1ca3480c876fd96285344534"></a>
 typedef boost::adjacency_list<br class="typebreak"/>
 &lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ae63dd79920d1a48a837ea5f089c06832">VertexListType</a>, EdgeListType, <br class="typebreak"/>
@@ -138,6 +127,12 @@ boost::bidirectionalS, <a class="el" href="struct_tempus_1_1_public_transport_1_
 <a class="el" href="struct_tempus_1_1_public_transport_1_1_section.html">Section</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a></td></tr>
 <tr class="memdesc:ad5c0369f1ca3480c876fd96285344534"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definition of a public transport graph. <br/></td></tr>
 <tr class="separator:ad5c0369f1ca3480c876fd96285344534"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a361497eccb5c820c96d07a962e0b94d5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a361497eccb5c820c96d07a962e0b94d5"></a>
+typedef Graph::vertex_descriptor&#160;</td><td class="memItemRight" valign="bottom"><b>Vertex</b></td></tr>
+<tr class="separator:a361497eccb5c820c96d07a962e0b94d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa36b729b083245802c4e1b24d4c17b54"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa36b729b083245802c4e1b24d4c17b54"></a>
+typedef Graph::edge_descriptor&#160;</td><td class="memItemRight" valign="bottom"><b>Edge</b></td></tr>
+<tr class="separator:aa36b729b083245802c4e1b24d4c17b54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7c9c4420ab31ad403ea1ba296854266"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af7c9c4420ab31ad403ea1ba296854266"></a>
 typedef boost::graph_traits<br class="typebreak"/>
 &lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a> &gt;::vertex_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>VertexIterator</b></td></tr>
@@ -154,44 +149,32 @@ typedef boost::graph_traits<br class="typebreak"/>
 typedef boost::graph_traits<br class="typebreak"/>
 &lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a> &gt;::in_edge_iterator&#160;</td><td class="memItemRight" valign="bottom"><b>InEdgeIterator</b></td></tr>
 <tr class="separator:a45837f1af70b9d65200c0bd05d002085"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a451835c8be7ffd2d20511da8b5af6a92"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a451835c8be7ffd2d20511da8b5af6a92"></a>
+<tr class="memitem:afcb5e2464990cf05199905843a7a1344"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afcb5e2464990cf05199905843a7a1344"></a>
 typedef <a class="el" href="class_tempus_1_1_reverse_graph_t.html">ReverseGraphT</a><br class="typebreak"/>
-&lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ReverseGraph</b></td></tr>
-<tr class="separator:a451835c8be7ffd2d20511da8b5af6a92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+&lt; <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">PublicTransport::Graph</a>, <br class="typebreak"/>
+<a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">PublicTransport::Stop</a>, <br class="typebreak"/>
+<a class="el" href="struct_tempus_1_1_public_transport_1_1_section.html">PublicTransport::Section</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ReverseGraph</b></td></tr>
+<tr class="separator:afcb5e2464990cf05199905843a7a1344"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a32f7aaa57e8b9932f1e3ad6745178501"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a32f7aaa57e8b9932f1e3ad6745178501"></a>
-<a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">Stop</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#a32f7aaa57e8b9932f1e3ad6745178501">get_stop_from</a> (const <a class="el" href="struct_tempus_1_1_public_transport_1_1_section.html">Section</a> &amp;s)</td></tr>
-<tr class="memdesc:a32f7aaa57e8b9932f1e3ad6745178501"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function - Get the departure stop of a public transport section. <br/></td></tr>
-<tr class="separator:a32f7aaa57e8b9932f1e3ad6745178501"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a333c5befb3952b20b2f4197332b71252"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a333c5befb3952b20b2f4197332b71252"></a>
-<a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">Stop</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#a333c5befb3952b20b2f4197332b71252">get_stop_to</a> (const <a class="el" href="struct_tempus_1_1_public_transport_1_1_section.html">Section</a> &amp;s)</td></tr>
-<tr class="memdesc:a333c5befb3952b20b2f4197332b71252"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function - Get the arrival stop of a public transport section. <br/></td></tr>
-<tr class="separator:a333c5befb3952b20b2f4197332b71252"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd0a8808c3be9c048cd00604a5b14d7b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acd0a8808c3be9c048cd00604a5b14d7b"></a>
+<a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">Stop</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#acd0a8808c3be9c048cd00604a5b14d7b">get_stop_from</a> (const <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a> &amp;g, const Edge &amp;e)</td></tr>
+<tr class="memdesc:acd0a8808c3be9c048cd00604a5b14d7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function - Get the departure stop of a public transport section. <br/></td></tr>
+<tr class="separator:acd0a8808c3be9c048cd00604a5b14d7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa4792895bddc5f4f887204b5a0c03a3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa4792895bddc5f4f887204b5a0c03a3"></a>
+<a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">Stop</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus_1_1_public_transport.html#afa4792895bddc5f4f887204b5a0c03a3">get_stop_to</a> (const <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534">Graph</a> &amp;g, const Edge &amp;e)</td></tr>
+<tr class="memdesc:afa4792895bddc5f4f887204b5a0c03a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function - Get the arrival stop of a public transport section. <br/></td></tr>
+<tr class="separator:afa4792895bddc5f4f887204b5a0c03a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A <a class="el" href="namespace_tempus_1_1_public_transport.html#ad5c0369f1ca3480c876fd96285344534" title="Definition of a public transport graph. ">PublicTransport::Graph</a> is a made of <a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">PublicTransport::Stop</a> and <a class="el" href="struct_tempus_1_1_public_transport_1_1_section.html" title="used as an Edge in a PublicTransportGraph ">PublicTransport::Section</a></p>
 <p>It generally maps to the database's schema: one class exists for each table. Tables with 1&lt;-&gt;N arity are represented by STL containers (vectors or lists) External keys are represented by pointers to other classes or by vertex/edge descriptors.</p>
 <p><a class="el" href="struct_tempus_1_1_public_transport_1_1_stop.html">PublicTransport::Stop</a> and <a class="el" href="struct_tempus_1_1_public_transport_1_1_section.html" title="used as an Edge in a PublicTransportGraph ">PublicTransport::Section</a> classes are used to build a BGL public transport graph. </p>
-</div><h2 class="groupheader">Typedef Documentation</h2>
-<a class="anchor" id="a23416c6998aa76c9e429b8e09ddfd8c6"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef boost::mpl::if_&lt;boost::detail::is_random_access&lt;<a class="el" href="namespace_tempus_1_1_public_transport.html#ae63dd79920d1a48a837ea5f089c06832">VertexListType</a>&gt;::type, size_t, void*&gt;::type <a class="el" href="namespace_tempus_1_1_public_transport.html#a23416c6998aa76c9e429b8e09ddfd8c6">Tempus::PublicTransport::Vertex</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>To make a long line short: VertexDescriptor is either typedef'd to size_t or to a pointer, depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.) </p>
-
-</div>
-</div>
-</div><!-- contents -->
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

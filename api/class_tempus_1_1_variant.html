@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::Variant Class Reference</title>
+<title>Tempus: Tempus::Variant Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -88,6 +89,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="class_tempus_1_1_variant-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">Tempus::Variant Class Reference</div>  </div>
@@ -101,15 +103,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aba7718004a0303c290fd1ddb077a2988"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba7718004a0303c290fd1ddb077a2988"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Variant</b> (bool b)</td></tr>
 <tr class="separator:aba7718004a0303c290fd1ddb077a2988"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e47cb417fdb1c5842d6fe09fd8c9bc5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0e47cb417fdb1c5842d6fe09fd8c9bc5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Variant</b> (int i=0)</td></tr>
-<tr class="separator:a0e47cb417fdb1c5842d6fe09fd8c9bc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a478075e48a38ffde8728fedd48d154bf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a478075e48a38ffde8728fedd48d154bf"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Variant</b> (int64_t i)</td></tr>
+<tr class="separator:a478075e48a38ffde8728fedd48d154bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07e37407b53c5fdb881e31a7b152df29"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07e37407b53c5fdb881e31a7b152df29"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Variant</b> (double f)</td></tr>
 <tr class="separator:a07e37407b53c5fdb881e31a7b152df29"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b1994c085bafb596322569988abeeed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b1994c085bafb596322569988abeeed"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Variant</b> (const std::string &amp;s, <a class="el" href="namespace_tempus.html#aa5af453873f12a1830afab2b9144f323">VariantType</a>=StringVariant)</td></tr>
-<tr class="separator:a4b1994c085bafb596322569988abeeed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf5a9db1257bcd1deb3fb888944b5197"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf5a9db1257bcd1deb3fb888944b5197"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Variant</b> (const std::string &amp;s)</td></tr>
+<tr class="separator:adf5a9db1257bcd1deb3fb888944b5197"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae903c261751dd92a891a1de8b5dcd20d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae903c261751dd92a891a1de8b5dcd20d"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>str</b> () const </td></tr>
 <tr class="separator:ae903c261751dd92a891a1de8b5dcd20d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -120,17 +122,32 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>str</b> () con
 template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ad8a155a3bbb042045cb90840b7711963"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><b>as</b> () const </td></tr>
 <tr class="separator:ad8a155a3bbb042045cb90840b7711963"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a0a42bc2e268228f6d05b2fa4f358a384"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a42bc2e268228f6d05b2fa4f358a384"></a>
+static <a class="el" href="class_tempus_1_1_variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><b>from_bool</b> (bool b)</td></tr>
+<tr class="separator:a0a42bc2e268228f6d05b2fa4f358a384"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8ddaf19de3f0a0550214f7dbf9bb208"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af8ddaf19de3f0a0550214f7dbf9bb208"></a>
+static <a class="el" href="class_tempus_1_1_variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><b>from_int</b> (int64_t i)</td></tr>
+<tr class="separator:af8ddaf19de3f0a0550214f7dbf9bb208"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac994cee8b6b117fd7284221699ab2187"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac994cee8b6b117fd7284221699ab2187"></a>
+static <a class="el" href="class_tempus_1_1_variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><b>from_float</b> (double f)</td></tr>
+<tr class="separator:ac994cee8b6b117fd7284221699ab2187"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a753c1c2c0595f65edc8697743fde7d6e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a753c1c2c0595f65edc8697743fde7d6e"></a>
+static <a class="el" href="class_tempus_1_1_variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><b>from_string</b> (const std::string &amp;s, <a class="el" href="namespace_tempus.html#aa5af453873f12a1830afab2b9144f323">VariantType</a>=StringVariant)</td></tr>
+<tr class="separator:a753c1c2c0595f65edc8697743fde7d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>class <a class="el" href="class_tempus_1_1_variant.html">Variant</a> Used to store plugin option values and metric values FIXME: why not use boost::variant ? </p>
 </div><hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="variant_8hh_source.html">variant.hh</a></li>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/variant.cc</li>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="variant_8hh_source.html">variant.hh</a></li>
+<li>/home/hme/src/tempus/src/core/variant.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

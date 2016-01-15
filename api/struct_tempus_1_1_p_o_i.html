@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::POI Struct Reference</title>
+<title>Tempus: Tempus::POI Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -89,6 +90,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="struct_tempus_1_1_p_o_i-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">Tempus::POI Struct Reference</div>  </div>
@@ -139,11 +141,11 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="stru
 <tr class="memdesc:aad1158432b3a44c8b0d63d223c5157ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test if a parking mode transport is present. <br/></td></tr>
 <tr class="separator:aad1158432b3a44c8b0d63d223c5157ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9d29847ca8feed64747d8145affb6a7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af9d29847ca8feed64747d8145affb6a7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_p_o_i.html#af9d29847ca8feed64747d8145affb6a7">DECLARE_RW_PROPERTY</a> (road_edge, <a class="el" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Road::Edge</a>)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_p_o_i.html#af9d29847ca8feed64747d8145affb6a7">DECLARE_RW_PROPERTY</a> (road_edge, Road::Edge)</td></tr>
 <tr class="memdesc:af9d29847ca8feed64747d8145affb6a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Link to a road edge. <br/></td></tr>
 <tr class="separator:af9d29847ca8feed64747d8145affb6a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03ca7cc69b8ecec67e1dd8596e047806"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a03ca7cc69b8ecec67e1dd8596e047806"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_p_o_i.html#a03ca7cc69b8ecec67e1dd8596e047806">DECLARE_RW_PROPERTY</a> (opposite_road_edge, boost::optional&lt; <a class="el" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Road::Edge</a> &gt;)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_p_o_i.html#a03ca7cc69b8ecec67e1dd8596e047806">DECLARE_RW_PROPERTY</a> (opposite_road_edge, boost::optional&lt; Road::Edge &gt;)</td></tr>
 <tr class="memdesc:a03ca7cc69b8ecec67e1dd8596e047806"><td class="mdescLeft">&#160;</td><td class="mdescRight">optional link to the opposite road edge <br/></td></tr>
 <tr class="separator:a03ca7cc69b8ecec67e1dd8596e047806"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b6408fa47d75c86905743249931c70f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b6408fa47d75c86905743249931c70f"></a>
@@ -164,17 +166,26 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="stru
 <tr class="memitem:a67f771b45208e1db28c48c2f24dde90b inherit pub_methods_class_tempus_1_1_base"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a67f771b45208e1db28c48c2f24dde90b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>set_db_id</b> (const <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &amp;id)</td></tr>
 <tr class="separator:a67f771b45208e1db28c48c2f24dde90b inherit pub_methods_class_tempus_1_1_base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:ad89af3ae3aa48eedc6b24a52ee3767e8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad89af3ae3aa48eedc6b24a52ee3767e8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>serialize</b> (std::ostream &amp;ostr, const <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &amp;, <a class="el" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a>)</td></tr>
+<tr class="separator:ad89af3ae3aa48eedc6b24a52ee3767e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a387a1dbe38e11c3e5a8609470495ec72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a387a1dbe38e11c3e5a8609470495ec72"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>unserialize</b> (std::istream &amp;istr, <a class="el" href="struct_tempus_1_1_p_o_i.html">POI</a> &amp;, <a class="el" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a>)</td></tr>
+<tr class="separator:a387a1dbe38e11c3e5a8609470495ec72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>refers to the 'poi' DB's table </p>
 </div><hr/>The documentation for this struct was generated from the following files:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="poi_8hh_source.html">poi.hh</a></li>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/poi.cc</li>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="poi_8hh_source.html">poi.hh</a></li>
+<li>/home/hme/src/tempus/src/core/poi.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

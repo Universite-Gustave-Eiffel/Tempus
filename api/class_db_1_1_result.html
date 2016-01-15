@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Db::Result Class Reference</title>
+<title>Tempus: Db::Result Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -102,37 +103,44 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:acd55f61ed35c21b7857360a852dc8fc2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acd55f61ed35c21b7857360a852dc8fc2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Result</b> (PGresult *res)</td></tr>
-<tr class="separator:acd55f61ed35c21b7857360a852dc8fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af1edfc4fe04c62f0b4787287821dc58f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1edfc4fe04c62f0b4787287821dc58f"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_db_1_1_result.html#af1edfc4fe04c62f0b4787287821dc58f">size</a> ()</td></tr>
-<tr class="memdesc:af1edfc4fe04c62f0b4787287821dc58f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of rows. <br/></td></tr>
-<tr class="separator:af1edfc4fe04c62f0b4787287821dc58f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76a595bbe3299ebf5c2818ccc66a1c12"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a76a595bbe3299ebf5c2818ccc66a1c12"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_db_1_1_result.html#a76a595bbe3299ebf5c2818ccc66a1c12">columns</a> ()</td></tr>
-<tr class="memdesc:a76a595bbe3299ebf5c2818ccc66a1c12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of columns. <br/></td></tr>
-<tr class="separator:a76a595bbe3299ebf5c2818ccc66a1c12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb929e6def469795b888cfe672ce34ec"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb929e6def469795b888cfe672ce34ec"></a>
-<a class="el" href="class_db_1_1_row_value.html">RowValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_db_1_1_result.html#acb929e6def469795b888cfe672ce34ec">operator[]</a> (size_t idx)</td></tr>
-<tr class="memdesc:acb929e6def469795b888cfe672ce34ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a row of a result, by row number. <br/></td></tr>
-<tr class="separator:acb929e6def469795b888cfe672ce34ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab10d38025727d436adabdc86c1c9931c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab10d38025727d436adabdc86c1c9931c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Result</b> (pg_result *res)</td></tr>
+<tr class="separator:ab10d38025727d436adabdc86c1c9931c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81308d128bf72797872609c48d2690da"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a81308d128bf72797872609c48d2690da"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Result</b> (<a class="el" href="class_db_1_1_result.html">Result</a> &amp;&amp;other)</td></tr>
+<tr class="separator:a81308d128bf72797872609c48d2690da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a283cf33114784f4aa0a1eb51b6e69ca6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a283cf33114784f4aa0a1eb51b6e69ca6"></a>
+<a class="el" href="class_db_1_1_result.html">Result</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="class_db_1_1_result.html">Result</a> &amp;&amp;other)</td></tr>
+<tr class="separator:a283cf33114784f4aa0a1eb51b6e69ca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb812995d2a27d5e6ea4dd9b5bdfde92"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb812995d2a27d5e6ea4dd9b5bdfde92"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_db_1_1_result.html#acb812995d2a27d5e6ea4dd9b5bdfde92">size</a> () const </td></tr>
+<tr class="memdesc:acb812995d2a27d5e6ea4dd9b5bdfde92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of rows. <br/></td></tr>
+<tr class="separator:acb812995d2a27d5e6ea4dd9b5bdfde92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30072b3ab44abcb262f742f4ba6ed59c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a30072b3ab44abcb262f742f4ba6ed59c"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_db_1_1_result.html#a30072b3ab44abcb262f742f4ba6ed59c">columns</a> () const </td></tr>
+<tr class="memdesc:a30072b3ab44abcb262f742f4ba6ed59c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of columns. <br/></td></tr>
+<tr class="separator:a30072b3ab44abcb262f742f4ba6ed59c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46ce183c864aae917e6b53f9b40638d8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a46ce183c864aae917e6b53f9b40638d8"></a>
+<a class="el" href="class_db_1_1_row_value.html">RowValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_db_1_1_result.html#a46ce183c864aae917e6b53f9b40638d8">operator[]</a> (size_t idx) const </td></tr>
+<tr class="memdesc:a46ce183c864aae917e6b53f9b40638d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to a row of a result, by row number. <br/></td></tr>
+<tr class="separator:a46ce183c864aae917e6b53f9b40638d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:ac0bd5048329c3bb6db797e1829033a63"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0bd5048329c3bb6db797e1829033a63"></a>
-PGresult *&#160;</td><td class="memItemRight" valign="bottom"><b>res_</b></td></tr>
-<tr class="separator:ac0bd5048329c3bb6db797e1829033a63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76b84fb2f2b3b03b8242071356427272"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a76b84fb2f2b3b03b8242071356427272"></a>
+pg_result *&#160;</td><td class="memItemRight" valign="bottom"><b>res_</b></td></tr>
+<tr class="separator:a76b84fb2f2b3b03b8242071356427272"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Class representing result of a query. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="db_8hh_source.html">db.hh</a></li>
+</div><hr/>The documentation for this class was generated from the following files:<ul>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="db_8hh_source.html">db.hh</a></li>
+<li>/home/hme/src/tempus/src/core/db.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/road_graph.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/core/road_graph.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -91,28 +92,33 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor">#ifndef TEMPUS_ROAD_GRAPH_HH</span></div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define TEMPUS_ROAD_GRAPH_HH</span></div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#include &lt;boost/optional.hpp&gt;</span></div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &lt;boost/graph/adjacency_list.hpp&gt;</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &quot;common.hh&quot;</span></div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &quot;point.hh&quot;</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="keyword">namespace </span>Tempus {</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="comment">// forward declaration</span></div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">namespace </span>PublicTransport {</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">struct </span>Stop;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;}</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="keyword">struct </span>POI;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="keyword">namespace </span>Road {</div>
-<div class="line"><a name="l00045"></a><span class="lineno"><a class="line" href="namespace_tempus_1_1_road.html#aa6e2c691122c23cd225e7753bf65c619">   45</a></span>&#160;<span class="keyword">typedef</span> boost::vecS <a class="code" href="namespace_tempus_1_1_road.html#aa6e2c691122c23cd225e7753bf65c619">VertexListType</a>;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keyword">typedef</span> boost::vecS EdgeListType;</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
-<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">   51</a></span>&#160;<span class="keyword">typedef</span> boost::mpl::if_&lt;boost::detail::is_random_access&lt;VertexListType&gt;::type, size_t, <span class="keywordtype">void</span>*&gt;::type <a class="code" href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Vertex</a>;</div>
-<div class="line"><a name="l00053"></a><span class="lineno"><a class="line" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">   53</a></span>&#160;<span class="keyword">typedef</span> boost::detail::edge_desc_impl&lt;boost::bidirectional_tag, Vertex&gt; <a class="code" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Edge</a>;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_road_1_1_node.html">Node</a>;</div>
-<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">   56</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a>;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="keyword">typedef</span> boost::adjacency_list&lt;VertexListType, EdgeListType, boost::bidirectionalS, Node, Section &gt; <a class="code" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Graph</a>;</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#include &lt;iosfwd&gt;</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#pragma warning(push, 0)</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#include &lt;boost/graph/compressed_sparse_row_graph.hpp&gt;</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#pragma warning(pop)</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#include &quot;common.hh&quot;</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#include &quot;point.hh&quot;</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &quot;serializers.hh&quot;</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="keyword">namespace </span>Tempus {</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="comment">// forward declaration</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="keyword">namespace </span>PublicTransport {</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="keyword">struct </span>Stop;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;}</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="keyword">struct </span>POI;</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">namespace </span>Road {</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="keyword">struct </span>Node;</div>
+<div class="line"><a name="l00053"></a><span class="lineno"><a class="line" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">   53</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a>;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="keyword">typedef</span> boost::compressed_sparse_row_graph&lt;boost::bidirectionalS, <a class="code" href="struct_tempus_1_1_road_1_1_node.html">Node</a>, <a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a>, <span class="comment">/*GraphProperty = */</span> boost::no_property, uint32_t, uint32_t&gt; <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Graph</a>;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="keyword">typedef</span> Graph::vertex_descriptor Vertex;</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="keyword">typedef</span> Graph::edge_descriptor Edge;</div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
 <div class="line"><a name="l00062"></a><span class="lineno"><a class="line" href="namespace_tempus_1_1_road.html#a342045d6535d115b18892e5af6cf3cc2">   62</a></span>&#160;<span class="keyword">enum</span> <a class="code" href="namespace_tempus_1_1_road.html#a342045d6535d115b18892e5af6cf3cc2">RoadType</a></div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;{</div>
@@ -126,116 +132,125 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;};</div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
 <div class="line"><a name="l00076"></a><span class="lineno"><a class="line" href="struct_tempus_1_1_road_1_1_node.html">   76</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_road_1_1_node.html">Node</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_base.html">Base</a> {</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html#ac5b24f296448a649cde3402e6306e8c3">DECLARE_RW_PROPERTY</a>( vertex, boost::optional&lt;Vertex&gt; );</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html#ac5b24f296448a649cde3402e6306e8c3">DECLARE_RW_PROPERTY</a>( is_bifurcation, <span class="keywordtype">bool</span> );</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html#ac5b24f296448a649cde3402e6306e8c3">DECLARE_RW_PROPERTY</a>( <a class="code" href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">coordinates</a>, <a class="code" href="struct_tempus_1_1_point3_d.html">Point3D</a> );</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html">Node</a>() : is_bifurcation_(<span class="keyword">false</span>) {}</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;};</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
-<div class="line"><a name="l00094"></a><span class="lineno"><a class="line" href="struct_tempus_1_1_road_1_1_section.html">   94</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_base.html">Base</a> {</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( edge, <a class="code" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Edge</a> );</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( road_type, <a class="code" href="namespace_tempus_1_1_road.html#a342045d6535d115b18892e5af6cf3cc2">RoadType</a> );</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html#a2b219693ff1133766d6e9d30c145149f">DECLARE_RW_PROPERTY</a>( is_bifurcation, <span class="keywordtype">bool</span> );</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html#a2b219693ff1133766d6e9d30c145149f">DECLARE_RW_PROPERTY</a>( <a class="code" href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">coordinates</a>, <a class="code" href="struct_tempus_1_1_point3_d.html">Point3D</a> );</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_node.html">Node</a>() : is_bifurcation_(<span class="keyword">false</span>) {}</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;};</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno"><a class="line" href="struct_tempus_1_1_road_1_1_section.html">   90</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_base.html">Base</a> {</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    DECLARE_RW_PROPERTY( length, <span class="keywordtype">float</span> );</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    DECLARE_RW_PROPERTY( car_speed_limit, <span class="keywordtype">float</span> );</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    DECLARE_RW_PROPERTY( traffic_rules, uint16_t );</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    DECLARE_RW_PROPERTY( parking_traffic_rules, uint16_t );</div>
 <div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( road_name, std::string );</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( traffic_rules, <span class="keywordtype">int</span> );</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( length, <span class="keywordtype">double</span> );</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( car_speed_limit, <span class="keywordtype">double</span> );</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( lane, <span class="keywordtype">int</span> );</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( is_roundabout, <span class="keywordtype">bool</span> );</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( is_bridge, <span class="keywordtype">bool</span> );</div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( is_tunnel, <span class="keywordtype">bool</span> );</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( is_ramp, <span class="keywordtype">bool</span> );</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( is_tollway, <span class="keywordtype">bool</span> );</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    DECLARE_RW_PROPERTY( lane, uint8_t );</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    <span class="keywordtype">bool</span> is_roundabout()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (road_flags_ &amp; RoadIsRoundAbout) != 0; }</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    <span class="keywordtype">bool</span> is_bridge()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (road_flags_ &amp; RoadIsBridge) != 0; }</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <span class="keywordtype">bool</span> is_tunnel()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (road_flags_ &amp; RoadIsTunnel) != 0; }</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <span class="keywordtype">bool</span> is_ramp()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (road_flags_ &amp; RoadIsRamp) != 0; }</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="keywordtype">bool</span> is_tollway()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (road_flags_ &amp; RoadIsTollway) != 0; }</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="keywordtype">void</span> set_is_roundabout(<span class="keywordtype">bool</span> b) { road_flags_ |= b ? RoadIsRoundAbout : 0; }</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    <span class="keywordtype">void</span> set_is_bridge(<span class="keywordtype">bool</span> b) { road_flags_ |= b ? RoadIsBridge : 0; }</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <span class="keywordtype">void</span> set_is_tunnel(<span class="keywordtype">bool</span> b) { road_flags_ |= b ? RoadIsTunnel : 0; }</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    <span class="keywordtype">void</span> set_is_ramp(<span class="keywordtype">bool</span> b) { road_flags_ |= b ? RoadIsRamp : 0; }</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <span class="keywordtype">void</span> set_is_tollway(<span class="keywordtype">bool</span> b) { road_flags_ |= b ? RoadIsTollway : 0; }</div>
 <div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#a61e11133a3046b2c229f68d4c06ca7cd">DECLARE_RO_PROPERTY</a>( stops, std::vector&lt;const PublicTransport::Stop*&gt; );</div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="struct_tempus_1_1_road_1_1_section.html#ad640875a1e250880f920e0600a835ca2">add_stop_ref</a>( <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_public_transport_1_1_stop.html">PublicTransport::Stop</a>* );</div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;</div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#a61e11133a3046b2c229f68d4c06ca7cd">DECLARE_RO_PROPERTY</a>( pois, std::vector&lt;const POI*&gt; );</div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="struct_tempus_1_1_road_1_1_section.html#a9d574029488a002e2757b057f85bafec">add_poi_ref</a>( <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_p_o_i.html">POI</a>* );</div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">DECLARE_RW_PROPERTY</a>( parking_traffic_rules, <span class="keywordtype">int</span> );</div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a>() : traffic_rules_(0), length_(0.0), car_speed_limit_(0.0), parking_traffic_rules_(0) {}</div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;};</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    DECLARE_RW_PROPERTY( road_type, <a class="code" href="namespace_tempus_1_1_road.html#a342045d6535d115b18892e5af6cf3cc2">RoadType</a> );</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;    <a class="code" href="struct_tempus_1_1_road_1_1_section.html">Section</a>() : length_(0.0), car_speed_limit_(0.0), traffic_rules_(0), parking_traffic_rules_(0), road_flags_(0) {}</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;</div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;    uint8_t road_flags_;</div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    <span class="keyword">enum</span> RoadFlag</div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;    {</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;        RoadIsRoundAbout = 1 &lt;&lt; 0,</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;        RoadIsBridge =     1 &lt;&lt; 1,</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;        RoadIsTunnel =     1 &lt;&lt; 2,</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        RoadIsRamp =       1 &lt;&lt; 3,</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;        RoadIsTollway =    1 &lt;&lt; 4</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    };</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;};</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::vertex_iterator VertexIterator;</div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::edge_iterator EdgeIterator;</div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::out_edge_iterator OutEdgeIterator;</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::in_edge_iterator InEdgeIterator;</div>
 <div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::vertex_iterator VertexIterator;</div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::edge_iterator EdgeIterator;</div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::out_edge_iterator OutEdgeIterator;</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;<span class="keyword">typedef</span> boost::graph_traits&lt;Graph&gt;::in_edge_iterator InEdgeIterator;</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;</div>
-<div class="line"><a name="l00146"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restriction.html">  146</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_road_1_1_restriction.html">Restriction</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_base.html">Base</a> {</div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00152"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">  152</a></span>&#160;    <span class="keyword">typedef</span> std::map&lt;int, double&gt; <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a>;</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;</div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;    <span class="keyword">typedef</span> std::vector&lt;Edge&gt; EdgeSequence;</div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;    <a class="code" href="class_tempus_1_1_road_1_1_restriction.html">Restriction</a>( <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> <span class="keywordtype">id</span>, <span class="keyword">const</span> EdgeSequence&amp; edge_seq, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a>&amp; cost = <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a>() ) :</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;        <a class="code" href="class_tempus_1_1_base.html">Base</a>( id ),</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;        road_edges_( edge_seq ),</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;        cost_per_transport_( cost )</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;    {}</div>
+<div class="line"><a name="l00141"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restriction.html">  141</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_road_1_1_restriction.html">Restriction</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_base.html">Base</a> {</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00147"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">  147</a></span>&#160;    <span class="keyword">typedef</span> std::map&lt;int, double&gt; <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a>;</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    <span class="keyword">typedef</span> std::vector&lt;Edge&gt; EdgeSequence;</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;    <a class="code" href="class_tempus_1_1_road_1_1_restriction.html">Restriction</a>( <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> <span class="keywordtype">id</span>, <span class="keyword">const</span> EdgeSequence&amp; edge_seq, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a>&amp; cost = <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a>() ) :</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        <a class="code" href="class_tempus_1_1_base.html">Base</a>( id ),</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;        road_edges_( edge_seq ),</div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;        cost_per_transport_( cost )</div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;    {}</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    DECLARE_RO_PROPERTY( road_edges, EdgeSequence );</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    DECLARE_RW_PROPERTY( cost_per_transport, <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a> );</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;};</div>
 <div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;</div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;    DECLARE_RO_PROPERTY( road_edges, EdgeSequence );</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;    DECLARE_RW_PROPERTY( cost_per_transport, <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">CostPerTransport</a> );</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;};</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
-<div class="line"><a name="l00167"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restrictions.html">  167</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_road_1_1_restrictions.html">Restrictions</a> {</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;    <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html">Restrictions</a>( <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Graph</a>&amp; road_graph ) : road_graph_(&amp;road_graph) {}</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;</div>
-<div class="line"><a name="l00173"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">  173</a></span>&#160;    <span class="keyword">typedef</span> std::list&lt;Restriction&gt; <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">RestrictionSequence</a>;</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    DECLARE_RO_PROPERTY( restrictions, <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">RestrictionSequence</a> );</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#a182254f3e5d5e5a7736ca86193c65240">add_restriction</a>( <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> <span class="keywordtype">id</span>,</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;                          <span class="keyword">const</span> Restriction::EdgeSequence&amp; edges,</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;                          <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Restriction::CostPerTransport</a>&amp; cost );</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#a182254f3e5d5e5a7736ca86193c65240">add_restriction</a>( <a class="code" href="class_tempus_1_1_road_1_1_restriction.html">Restriction</a> restriction ); </div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Graph</a>* road_graph_;</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;};</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;}  <span class="comment">// Road namespace</span></div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;</div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;} <span class="comment">// Tempus namespace</span></div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="class_tempus_1_1_road_1_1_restriction_html_afe0bf390592d65819860e3be8ad477d1"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Tempus::Road::Restriction::CostPerTransport</a></div><div class="ttdeci">std::map&lt; int, double &gt; CostPerTransport</div><div class="ttdef"><b>Definition:</b> road_graph.hh:152</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_a56eff1f0ab2a281e3da0dba7786959f2"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Tempus::Road::Vertex</a></div><div class="ttdeci">boost::mpl::if_&lt; boost::detail::is_random_access&lt; VertexListType &gt;::type, size_t, void * &gt;::type Vertex</div><div class="ttdef"><b>Definition:</b> road_graph.hh:51</div></div>
-<div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html">Tempus::Road::Restrictions</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:167</div></div>
-<div class="ttc" id="struct_tempus_1_1_public_transport_1_1_stop_html"><div class="ttname"><a href="struct_tempus_1_1_public_transport_1_1_stop.html">Tempus::PublicTransport::Stop</a></div><div class="ttdef"><b>Definition:</b> public_transport_graph.hh:84</div></div>
+<div class="line"><a name="l00162"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restrictions.html">  162</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_road_1_1_restrictions.html">Restrictions</a> {</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;    <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html">Restrictions</a>( <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Graph</a>&amp; road_graph ) : road_graph_(&amp;road_graph) {}</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;</div>
+<div class="line"><a name="l00168"></a><span class="lineno"><a class="line" href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">  168</a></span>&#160;    <span class="keyword">typedef</span> std::list&lt;Restriction&gt; <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">RestrictionSequence</a>;</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    DECLARE_RO_PROPERTY( restrictions, <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">RestrictionSequence</a> );</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#a182254f3e5d5e5a7736ca86193c65240">add_restriction</a>( <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> <span class="keywordtype">id</span>,</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;                          <span class="keyword">const</span> Restriction::EdgeSequence&amp; edges,</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;                          <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Restriction::CostPerTransport</a>&amp; cost );</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_road_1_1_restrictions.html#a182254f3e5d5e5a7736ca86193c65240">add_restriction</a>( <a class="code" href="class_tempus_1_1_road_1_1_restriction.html">Restriction</a> restriction ); </div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;    <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Graph</a>* road_graph_;</div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;};</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;}  <span class="comment">// Road namespace</span></div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;<span class="keywordtype">void</span> serialize( std::ostream&amp; ostr, <span class="keyword">const</span> <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a>&amp;, <a class="code" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a> );</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;<span class="keywordtype">void</span> unserialize( std::istream&amp; istr, <a class="code" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a>&amp;, <a class="code" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a> );</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;} <span class="comment">// Tempus namespace</span></div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;<span class="keyword">namespace </span>boost {</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="keyword">namespace </span>detail {</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;std::ostream&amp; operator&lt;&lt;( std::ostream&amp; ostr, <span class="keyword">const</span> Tempus::Road::Edge&amp; e );</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;}</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;}</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="class_tempus_1_1_road_1_1_restriction_html_afe0bf390592d65819860e3be8ad477d1"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restriction.html#afe0bf390592d65819860e3be8ad477d1">Tempus::Road::Restriction::CostPerTransport</a></div><div class="ttdeci">std::map&lt; int, double &gt; CostPerTransport</div><div class="ttdef"><b>Definition:</b> road_graph.hh:147</div></div>
+<div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html">Tempus::Road::Restrictions</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:162</div></div>
 <div class="ttc" id="namespace_tempus_1_1_road_html_a342045d6535d115b18892e5af6cf3cc2"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a342045d6535d115b18892e5af6cf3cc2">Tempus::Road::RoadType</a></div><div class="ttdeci">RoadType</div><div class="ttdoc">Road types. </div><div class="ttdef"><b>Definition:</b> road_graph.hh:62</div></div>
-<div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html_ae3dbe63ed333e4c4d9f3e8dc7a91e69e"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">Tempus::Road::Restrictions::RestrictionSequence</a></div><div class="ttdeci">std::list&lt; Restriction &gt; RestrictionSequence</div><div class="ttdoc">List of restrictions (as edges) </div><div class="ttdef"><b>Definition:</b> road_graph.hh:173</div></div>
+<div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html_ae3dbe63ed333e4c4d9f3e8dc7a91e69e"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html#ae3dbe63ed333e4c4d9f3e8dc7a91e69e">Tempus::Road::Restrictions::RestrictionSequence</a></div><div class="ttdeci">std::list&lt; Restriction &gt; RestrictionSequence</div><div class="ttdoc">List of restrictions (as edges) </div><div class="ttdef"><b>Definition:</b> road_graph.hh:168</div></div>
 <div class="ttc" id="struct_tempus_1_1_point3_d_html"><div class="ttname"><a href="struct_tempus_1_1_point3_d.html">Tempus::Point3D</a></div><div class="ttdoc">3D Points </div><div class="ttdef"><b>Definition:</b> point.hh:36</div></div>
-<div class="ttc" id="class_tempus_1_1_road_1_1_restriction_html"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restriction.html">Tempus::Road::Restriction</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:146</div></div>
-<div class="ttc" id="struct_tempus_1_1_road_1_1_section_html_a61e11133a3046b2c229f68d4c06ca7cd"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_section.html#a61e11133a3046b2c229f68d4c06ca7cd">Tempus::Road::Section::DECLARE_RO_PROPERTY</a></div><div class="ttdeci">DECLARE_RO_PROPERTY(stops, std::vector&lt; const PublicTransport::Stop * &gt;)</div><div class="ttdoc">list of pointers to public transport steps referenced on this edge </div></div>
+<div class="ttc" id="class_tempus_1_1_road_1_1_restriction_html"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restriction.html">Tempus::Road::Restriction</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:141</div></div>
 <div class="ttc" id="class_tempus_1_1_base_html"><div class="ttname"><a href="class_tempus_1_1_base.html">Tempus::Base</a></div><div class="ttdoc">The base class of all classes with a database ID. </div><div class="ttdef"><b>Definition:</b> base.hh:32</div></div>
-<div class="ttc" id="struct_tempus_1_1_road_1_1_node_html_ac5b24f296448a649cde3402e6306e8c3"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_node.html#ac5b24f296448a649cde3402e6306e8c3">Tempus::Road::Node::DECLARE_RW_PROPERTY</a></div><div class="ttdeci">DECLARE_RW_PROPERTY(vertex, boost::optional&lt; Vertex &gt;)</div></div>
 <div class="ttc" id="class_tempus_1_1_road_1_1_restrictions_html_a182254f3e5d5e5a7736ca86193c65240"><div class="ttname"><a href="class_tempus_1_1_road_1_1_restrictions.html#a182254f3e5d5e5a7736ca86193c65240">Tempus::Road::Restrictions::add_restriction</a></div><div class="ttdeci">void add_restriction(db_id_t id, const Restriction::EdgeSequence &amp;edges, const Restriction::CostPerTransport &amp;cost)</div><div class="ttdef"><b>Definition:</b> road_graph.cc:23</div></div>
-<div class="ttc" id="struct_tempus_1_1_road_1_1_section_html_aa450b740ebf77e99780e18cde20a8beb"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_section.html#aa450b740ebf77e99780e18cde20a8beb">Tempus::Road::Section::DECLARE_RW_PROPERTY</a></div><div class="ttdeci">DECLARE_RW_PROPERTY(edge, Edge)</div></div>
-<div class="ttc" id="struct_tempus_1_1_road_1_1_section_html_ad640875a1e250880f920e0600a835ca2"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_section.html#ad640875a1e250880f920e0600a835ca2">Tempus::Road::Section::add_stop_ref</a></div><div class="ttdeci">void add_stop_ref(const PublicTransport::Stop *)</div><div class="ttdoc">add a link to a public transport step </div><div class="ttdef"><b>Definition:</b> road_graph.cc:92</div></div>
-<div class="ttc" id="namespace_tempus_html_a3027132e51c674c3f37449b079a46068"><div class="ttname"><a href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">Tempus::coordinates</a></div><div class="ttdeci">Point2D coordinates(const Road::Vertex &amp;v, Db::Connection &amp;db, const Road::Graph &amp;graph)</div><div class="ttdoc">Get 2D coordinates of a road vertex, from the database. </div><div class="ttdef"><b>Definition:</b> graph_db_link.cc:26</div></div>
-<div class="ttc" id="struct_tempus_1_1_road_1_1_section_html_a9d574029488a002e2757b057f85bafec"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_section.html#a9d574029488a002e2757b057f85bafec">Tempus::Road::Section::add_poi_ref</a></div><div class="ttdeci">void add_poi_ref(const POI *)</div><div class="ttdoc">add a link to a POI </div><div class="ttdef"><b>Definition:</b> road_graph.cc:97</div></div>
+<div class="ttc" id="namespace_tempus_html_a3027132e51c674c3f37449b079a46068"><div class="ttname"><a href="namespace_tempus.html#a3027132e51c674c3f37449b079a46068">Tempus::coordinates</a></div><div class="ttdeci">Point2D coordinates(const Road::Vertex &amp;v, Db::Connection &amp;db, const Road::Graph &amp;graph)</div><div class="ttdoc">Get 2D coordinates of a road vertex, from the database. </div><div class="ttdef"><b>Definition:</b> graph_db_link.cc:27</div></div>
 <div class="ttc" id="struct_tempus_1_1_road_1_1_node_html"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_node.html">Tempus::Road::Node</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:76</div></div>
-<div class="ttc" id="struct_tempus_1_1_p_o_i_html"><div class="ttname"><a href="struct_tempus_1_1_p_o_i.html">Tempus::POI</a></div><div class="ttdoc">refers to the &#39;poi&#39; DB&#39;s table </div><div class="ttdef"><b>Definition:</b> poi.hh:31</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_aa6e2c691122c23cd225e7753bf65c619"><div class="ttname"><a href="namespace_tempus_1_1_road.html#aa6e2c691122c23cd225e7753bf65c619">Tempus::Road::VertexListType</a></div><div class="ttdeci">boost::vecS VertexListType</div><div class="ttdoc">Storage types used to make a road graph. </div><div class="ttdef"><b>Definition:</b> road_graph.hh:45</div></div>
+<div class="ttc" id="namespace_tempus_1_1_road_html_ab8b311f360f20ca940df189832da915d"><div class="ttname"><a href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Tempus::Road::Graph</a></div><div class="ttdeci">boost::compressed_sparse_row_graph&lt; boost::bidirectionalS, Node, Section, boost::no_property, uint32_t, uint32_t &gt; Graph</div><div class="ttdef"><b>Definition:</b> road_graph.hh:53</div></div>
+<div class="ttc" id="struct_tempus_1_1binary__serialization__t_html"><div class="ttname"><a href="struct_tempus_1_1binary__serialization__t.html">Tempus::binary_serialization_t</a></div><div class="ttdef"><b>Definition:</b> serializers.hh:51</div></div>
 <div class="ttc" id="namespace_tempus_html_a04e36446d6db638eb8b0de649ba35fe5"><div class="ttname"><a href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">Tempus::db_id_t</a></div><div class="ttdeci">unsigned long long int db_id_t</div><div class="ttdef"><b>Definition:</b> base.hh:28</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_a423688e17dbdc2a999bf5cefb80a7cb2"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a423688e17dbdc2a999bf5cefb80a7cb2">Tempus::Road::Graph</a></div><div class="ttdeci">boost::adjacency_list&lt; VertexListType, EdgeListType, boost::bidirectionalS, Node, Section &gt; Graph</div><div class="ttdoc">The final road graph type. </div><div class="ttdef"><b>Definition:</b> road_graph.hh:56</div></div>
-<div class="ttc" id="struct_tempus_1_1_road_1_1_section_html"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_section.html">Tempus::Road::Section</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:94</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_a8db854706be2c1c19d1ce6344b129980"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Tempus::Road::Edge</a></div><div class="ttdeci">boost::detail::edge_desc_impl&lt; boost::bidirectional_tag, Vertex &gt; Edge</div><div class="ttdoc">see adjacency_list.hpp </div><div class="ttdef"><b>Definition:</b> road_graph.hh:53</div></div>
+<div class="ttc" id="struct_tempus_1_1_road_1_1_section_html"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_section.html">Tempus::Road::Section</a></div><div class="ttdef"><b>Definition:</b> road_graph.hh:90</div></div>
+<div class="ttc" id="struct_tempus_1_1_road_1_1_node_html_a2b219693ff1133766d6e9d30c145149f"><div class="ttname"><a href="struct_tempus_1_1_road_1_1_node.html#a2b219693ff1133766d6e9d30c145149f">Tempus::Road::Node::DECLARE_RW_PROPERTY</a></div><div class="ttdeci">DECLARE_RW_PROPERTY(is_bifurcation, bool)</div><div class="ttdoc">Total number of incident edges &gt; 2. </div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

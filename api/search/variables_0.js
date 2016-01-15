@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['db_5f',['db_',['../class_tempus_1_1_plugin.html#a2f88790b839470f38efb7c881964d92f',1,'Tempus::Plugin']]]
+  ['ei_5f',['ei_',['../class_tempus_1_1_multimodal_1_1_edge_iterator.html#a1ce483706eb5a9546e9c15e1534eb675',1,'Tempus::Multimodal::EdgeIterator']]]
 ];

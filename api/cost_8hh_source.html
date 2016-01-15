@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/cost.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/core/cost.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -93,40 +94,43 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &lt;map&gt;</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="keyword">namespace </span>Tempus</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;{</div>
-<div class="line"><a name="l00029"></a><span class="lineno"><a class="line" href="namespace_tempus.html#a8953484e6b88c12f61d74c4d2a87a0b5">   29</a></span>&#160;<span class="keyword">typedef</span> std::map&lt;int, double&gt; <a class="code" href="namespace_tempus.html#a8953484e6b88c12f61d74c4d2a87a0b5">Costs</a>;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
-<div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">   33</a></span>&#160;<span class="keyword">enum</span> <a class="code" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">CostId</a> {</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    CostDistance = 1,</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    CostDuration,</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    CostPrice,</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    CostCarbon,</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    CostCalories,</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    CostNumberOfChanges,</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    CostVariability,</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    CostPathComplexity,</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    CostElevation,</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    CostSecurity,</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    CostLandmark,</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    FirstValue = CostDistance,</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    LastValue = CostLandmark</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;};</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;std::string cost_name( <span class="keywordtype">int</span> cost );</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;std::string cost_unit( <span class="keywordtype">int</span> cost );</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;}</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="namespace_tempus_html_a84a57293f43ee47b1fc6018ddb19344d"><div class="ttname"><a href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">Tempus::CostId</a></div><div class="ttdeci">CostId</div><div class="ttdoc">Default common cost identifiers. </div><div class="ttdef"><b>Definition:</b> cost.hh:33</div></div>
-<div class="ttc" id="namespace_tempus_html_a8953484e6b88c12f61d74c4d2a87a0b5"><div class="ttname"><a href="namespace_tempus.html#a8953484e6b88c12f61d74c4d2a87a0b5">Tempus::Costs</a></div><div class="ttdeci">std::map&lt; int, double &gt; Costs</div><div class="ttdef"><b>Definition:</b> cost.hh:29</div></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &lt;iosfwd&gt;</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="keyword">namespace </span>Tempus</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;{</div>
+<div class="line"><a name="l00029"></a><span class="lineno"><a class="line" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">   29</a></span>&#160;<span class="keyword">enum class</span> <a class="code" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">CostId</a> {</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    CostDistance = 1,</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    CostDuration,</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    CostPrice,</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    CostCarbon,</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    CostCalories,</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    CostNumberOfChanges,</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    CostVariability,</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    CostPathComplexity,</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    CostElevation,</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    CostSecurity,</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    CostLandmark,</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    FirstValue = CostDistance,</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    LastValue = CostLandmark</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;};</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;std::ostream&amp; operator&lt;&lt;( std::ostream&amp; out, <a class="code" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">CostId</a> e );</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno"><a class="line" href="namespace_tempus.html#a7d0f621bd4f70ebc365cfa90969fbd60">   50</a></span>&#160;<span class="keyword">typedef</span> std::map&lt;CostId, double&gt; <a class="code" href="namespace_tempus.html#a7d0f621bd4f70ebc365cfa90969fbd60">Costs</a>;</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;std::string cost_name( <a class="code" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">CostId</a> cost );</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;std::string cost_unit( <a class="code" href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">CostId</a> cost );</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;}</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="namespace_tempus_html_a84a57293f43ee47b1fc6018ddb19344d"><div class="ttname"><a href="namespace_tempus.html#a84a57293f43ee47b1fc6018ddb19344d">Tempus::CostId</a></div><div class="ttdeci">CostId</div><div class="ttdoc">Default common cost identifiers. </div><div class="ttdef"><b>Definition:</b> cost.hh:29</div></div>
+<div class="ttc" id="namespace_tempus_html_a7d0f621bd4f70ebc365cfa90969fbd60"><div class="ttname"><a href="namespace_tempus.html#a7d0f621bd4f70ebc365cfa90969fbd60">Tempus::Costs</a></div><div class="ttdeci">std::map&lt; CostId, double &gt; Costs</div><div class="ttdef"><b>Definition:</b> cost.hh:50</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

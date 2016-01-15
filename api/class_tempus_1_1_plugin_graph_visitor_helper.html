@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::PluginGraphVisitorHelper&lt; Graph, VertexAccessorFunction, EdgeAccessorFunction &gt; Class Template Reference</title>
+<title>Tempus: Tempus::PluginGraphVisitorHelper&lt; Graph, VertexAccessorFunction, EdgeAccessorFunction &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -111,9 +112,9 @@ typedef boost::graph_traits<br class="typebreak"/>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a845108f4de948d9a41e3bb6876374670"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a845108f4de948d9a41e3bb6876374670"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PluginGraphVisitorHelper</b> (<a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> *plugin)</td></tr>
-<tr class="separator:a845108f4de948d9a41e3bb6876374670"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dad59171d5ca96a158b139c0bdb3c6c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4dad59171d5ca96a158b139c0bdb3c6c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PluginGraphVisitorHelper</b> (<a class="el" href="class_tempus_1_1_plugin_request.html">PluginRequest</a> *plugin)</td></tr>
+<tr class="separator:a4dad59171d5ca96a158b139c0bdb3c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade59ab2ea4455aec88498c0ff2942d37"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade59ab2ea4455aec88498c0ff2942d37"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize_vertex</b> (const VDescriptor &amp;v, const Graph &amp;)</td></tr>
 <tr class="separator:ade59ab2ea4455aec88498c0ff2942d37"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,22 +166,22 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>edge_not_minimized</b
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:a4de5b61c121f666756e231e28677ebed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4de5b61c121f666756e231e28677ebed"></a>
-<a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>plugin_</b></td></tr>
-<tr class="separator:a4de5b61c121f666756e231e28677ebed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4eef37311d0ae9d346a80d979473803c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4eef37311d0ae9d346a80d979473803c"></a>
+<a class="el" href="class_tempus_1_1_plugin_request.html">PluginRequest</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>plugin_</b></td></tr>
+<tr class="separator:a4eef37311d0ae9d346a80d979473803c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class Graph, void(Plugin::*)(const typename boost::graph_traits&lt; Graph &gt;::vertex_descriptor &amp;, int) VertexAccessorFunction, void(Plugin::*)(const typename boost::graph_traits&lt; Graph &gt;::edge_descriptor &amp;, int) EdgeAccessorFunction&gt;<br/>
+<div class="textblock"><h3>template&lt;class Graph, void(PluginRequest::*)(const typename boost::graph_traits&lt; Graph &gt;::vertex_descriptor &amp;, int) VertexAccessorFunction, void(PluginRequest::*)(const typename boost::graph_traits&lt; Graph &gt;::edge_descriptor &amp;, int) EdgeAccessorFunction&gt;<br/>
 class Tempus::PluginGraphVisitorHelper&lt; Graph, VertexAccessorFunction, EdgeAccessorFunction &gt;</h3>
 
 <p>Class used as a boost::visitor. This is a proxy to Plugin::xxx_accessor methods. It may be used as implementation of any kind of boost::graph visitors (BFS, DFS, Dijkstra, A*, Bellman-Ford) </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="plugin_8hh_source.html">plugin.hh</a></li>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="plugin_8hh_source.html">plugin.hh</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

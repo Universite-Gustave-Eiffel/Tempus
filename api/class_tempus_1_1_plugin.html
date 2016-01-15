@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: Tempus::Plugin Class Reference</title>
+<title>Tempus: Tempus::Plugin Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -88,12 +89,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="class_tempus_1_1_plugin-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">Tempus::Plugin Class Reference</div>  </div>
+<div class="title">Tempus::Plugin Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -104,183 +104,67 @@ Inheritance diagram for Tempus::Plugin:</div>
  <div class="center">
   <img src="class_tempus_1_1_plugin.png" usemap="#Tempus::Plugin_map" alt=""/>
   <map id="Tempus::Plugin_map" name="Tempus::Plugin_map">
-<area href="class_tempus_1_1_dynamic_multi_plugin.html" alt="Tempus::DynamicMultiPlugin" shape="rect" coords="0,56,212,80"/>
-<area href="class_tempus_1_1_forbidden_movement_plugin.html" alt="Tempus::ForbiddenMovementPlugin" shape="rect" coords="222,56,434,80"/>
-<area href="class_tempus_1_1_multi_plugin.html" alt="Tempus::MultiPlugin" shape="rect" coords="444,56,656,80"/>
-<area href="class_tempus_1_1_pt_plugin.html" alt="Tempus::PtPlugin" shape="rect" coords="666,56,878,80"/>
-<area href="class_tempus_1_1_road_plugin.html" alt="Tempus::RoadPlugin" shape="rect" coords="888,56,1100,80"/>
-<area href="class_tempus_1_1_timetable_pt_plugin.html" alt="Tempus::TimetablePtPlugin" shape="rect" coords="1110,56,1322,80"/>
+<area href="class_tempus_1_1_c_h_plugin.html" alt="Tempus::CHPlugin" shape="rect" coords="222,56,434,80"/>
+<area href="class_tempus_1_1_c_h_query.html" alt="Tempus::CHQuery" shape="rect" coords="222,112,434,136"/>
+<area href="class_tempus_1_1_dynamic_multi_plugin.html" alt="Tempus::DynamicMultiPlugin" shape="rect" coords="222,168,434,192"/>
+<area href="class_tempus_1_1_forbidden_movement_plugin.html" alt="Tempus::ForbiddenMovementPlugin" shape="rect" coords="222,224,434,248"/>
+<area href="class_tempus_1_1_multi_plugin.html" alt="Tempus::MultiPlugin" shape="rect" coords="222,280,434,304"/>
+<area href="class_tempus_1_1_pt_plugin.html" alt="Tempus::PtPlugin" shape="rect" coords="222,336,434,360"/>
+<area href="class_tempus_1_1_road_plugin.html" alt="Tempus::RoadPlugin" shape="rect" coords="222,392,434,416"/>
+<area href="class_tempus_1_1_timetable_pt_plugin.html" alt="Tempus::TimetablePtPlugin" shape="rect" coords="222,448,434,472"/>
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_1_1_capabilities.html">Capabilities</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores plugin parameters.  <a href="struct_tempus_1_1_plugin_1_1_capabilities.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_1_1_option_description.html">OptionDescription</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> option description.  <a href="struct_tempus_1_1_plugin_1_1_option_description.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">OptionDescriptionList</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_1_1_plugin_capabilities.html">PluginCapabilities</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores plugin parameters.  <a href="struct_tempus_1_1_plugin_1_1_plugin_capabilities.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a990e656db4b42938e828ba65271f204f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>AccessType</b> { <br/>
-&#160;&#160;<b>InitAccess</b>, 
-<b>DiscoverAccess</b>, 
-<b>ExamineAccess</b>, 
-<b>EdgeRelaxedAccess</b>, 
-<br/>
-&#160;&#160;<b>EdgeNotRelaxedAccess</b>, 
-<b>EdgeMinimizedAccess</b>, 
-<b>EdgeNotMinimizedAccess</b>, 
-<b>TreeEdgeAccess</b>, 
-<br/>
-&#160;&#160;<b>NonTreeEdgeAccess</b>, 
-<b>BackEdgeAccess</b>, 
-<b>ForwardOrCrossEdgeAccess</b>, 
-<b>StartAccess</b>, 
-<br/>
-&#160;&#160;<b>FinishAccess</b>, 
-<b>GrayTargetAccess</b>, 
-<b>BlackTargetAccess</b>
-<br/>
- }</td></tr>
-<tr class="separator:a990e656db4b42938e828ba65271f204f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a174e0e958f7433ca9ac4d751a9ab75ad"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a174e0e958f7433ca9ac4d751a9ab75ad"></a>
-typedef std::map&lt; std::string, <br class="typebreak"/>
-<a class="el" href="class_tempus_1_1_variant.html">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a174e0e958f7433ca9ac4d751a9ab75ad">OptionValueList</a></td></tr>
-<tr class="memdesc:a174e0e958f7433ca9ac4d751a9ab75ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">List of option values. <br/></td></tr>
-<tr class="separator:a174e0e958f7433ca9ac4d751a9ab75ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac65fc9114dde853d468da0ebae05e2f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aac65fc9114dde853d468da0ebae05e2f"></a>
-typedef <a class="el" href="class_tempus_1_1_variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#aac65fc9114dde853d468da0ebae05e2f">MetricValue</a></td></tr>
-<tr class="memdesc:aac65fc9114dde853d468da0ebae05e2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">A metric is also an OptionValue. <br/></td></tr>
-<tr class="separator:aac65fc9114dde853d468da0ebae05e2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac78dc326ef49dfdff576b4c08d646519"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac78dc326ef49dfdff576b4c08d646519"></a>
-typedef std::map&lt; std::string, <br class="typebreak"/>
-<a class="el" href="class_tempus_1_1_plugin.html#aac65fc9114dde853d468da0ebae05e2f">MetricValue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ac78dc326ef49dfdff576b4c08d646519">MetricValueList</a></td></tr>
-<tr class="memdesc:ac78dc326ef49dfdff576b4c08d646519"><td class="mdescLeft">&#160;</td><td class="mdescRight">Metric name -&gt; value. <br/></td></tr>
-<tr class="separator:ac78dc326ef49dfdff576b4c08d646519"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad972ff599776e1a4b5b882af55fe503c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad972ff599776e1a4b5b882af55fe503c"></a>
-<a class="el" href="class_tempus_1_1_plugin.html#a174e0e958f7433ca9ac4d751a9ab75ad">OptionValueList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ad972ff599776e1a4b5b882af55fe503c">options</a> ()</td></tr>
-<tr class="memdesc:ad972ff599776e1a4b5b882af55fe503c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to the list of option values. <br/></td></tr>
-<tr class="separator:ad972ff599776e1a4b5b882af55fe503c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac7f19c985e9eb2842b46230fe4e1c9d"><td class="memTemplParams" colspan="2"><a class="anchor" id="aac7f19c985e9eb2842b46230fe4e1c9d"></a>
-template&lt;class T &gt; </td></tr>
-<tr class="memitem:aac7f19c985e9eb2842b46230fe4e1c9d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#aac7f19c985e9eb2842b46230fe4e1c9d">set_option</a> (const std::string &amp;nname, const T &amp;value)</td></tr>
-<tr class="memdesc:aac7f19c985e9eb2842b46230fe4e1c9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used to set an option value. <br/></td></tr>
-<tr class="separator:aac7f19c985e9eb2842b46230fe4e1c9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2bff20c75826aec48a9b6350dd48df7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae2bff20c75826aec48a9b6350dd48df7"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ae2bff20c75826aec48a9b6350dd48df7">set_option_from_string</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a>, const std::string &amp;value, <a class="el" href="namespace_tempus.html#aa5af453873f12a1830afab2b9144f323">VariantType</a> t)</td></tr>
-<tr class="memdesc:ae2bff20c75826aec48a9b6350dd48df7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used to set an option value from a string. Conversions are made, based on the option description. <br/></td></tr>
-<tr class="separator:ae2bff20c75826aec48a9b6350dd48df7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abad65a703f2094e177bf4d7be27fb333"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abad65a703f2094e177bf4d7be27fb333"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#abad65a703f2094e177bf4d7be27fb333">option_to_string</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a>)</td></tr>
-<tr class="memdesc:abad65a703f2094e177bf4d7be27fb333"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used to get a string from an option value. <br/></td></tr>
-<tr class="separator:abad65a703f2094e177bf4d7be27fb333"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a329c0a606414b4b14d9312f9fcb1e697"><td class="memTemplParams" colspan="2"><a class="anchor" id="a329c0a606414b4b14d9312f9fcb1e697"></a>
-template&lt;class T &gt; </td></tr>
-<tr class="memitem:a329c0a606414b4b14d9312f9fcb1e697"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a329c0a606414b4b14d9312f9fcb1e697">get_option</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a>, T &amp;value)</td></tr>
-<tr class="memdesc:a329c0a606414b4b14d9312f9fcb1e697"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used to get an option value. <br/></td></tr>
-<tr class="separator:a329c0a606414b4b14d9312f9fcb1e697"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f2737f1af4966307e185d759ce82bf3"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3f2737f1af4966307e185d759ce82bf3"></a>
-template&lt;class T &gt; </td></tr>
-<tr class="memitem:a3f2737f1af4966307e185d759ce82bf3"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a3f2737f1af4966307e185d759ce82bf3">get_option</a> (const std::string &amp;nname)</td></tr>
-<tr class="memdesc:a3f2737f1af4966307e185d759ce82bf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used to get an option value, alternative signature. <br/></td></tr>
-<tr class="separator:a3f2737f1af4966307e185d759ce82bf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1fb4553fcae4380d0a6a3acdcb8628b2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1fb4553fcae4380d0a6a3acdcb8628b2"></a>
-<a class="el" href="class_tempus_1_1_plugin.html#ac78dc326ef49dfdff576b4c08d646519">MetricValueList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a1fb4553fcae4380d0a6a3acdcb8628b2">metrics</a> ()</td></tr>
-<tr class="memdesc:a1fb4553fcae4380d0a6a3acdcb8628b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access to metric list. <br/></td></tr>
-<tr class="separator:a1fb4553fcae4380d0a6a3acdcb8628b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fce444655603b54daf2905b910300db"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fce444655603b54daf2905b910300db"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a2fce444655603b54daf2905b910300db">metric_to_string</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a>)</td></tr>
-<tr class="memdesc:a2fce444655603b54daf2905b910300db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a metric value to a string. <br/></td></tr>
-<tr class="separator:a2fce444655603b54daf2905b910300db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60155cf2183d146fe15fc0857af6e9b8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60155cf2183d146fe15fc0857af6e9b8"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a> () const </td></tr>
 <tr class="memdesc:a60155cf2183d146fe15fc0857af6e9b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Name accessor. <br/></td></tr>
 <tr class="separator:a60155cf2183d146fe15fc0857af6e9b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab86f9fac346f068e57bdd1dbf099d76c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab86f9fac346f068e57bdd1dbf099d76c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ab86f9fac346f068e57bdd1dbf099d76c">Plugin</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a>, const std::string &amp;db_options)</td></tr>
-<tr class="memdesc:ab86f9fac346f068e57bdd1dbf099d76c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ctor. <br/></td></tr>
-<tr class="separator:ab86f9fac346f068e57bdd1dbf099d76c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2009b207da0643964ec76db5620fe1bf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a2009b207da0643964ec76db5620fe1bf">Plugin</a> (const std::string &amp;<a class="el" href="class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8">name</a>, const VariantMap &amp;=VariantMap())</td></tr>
+<tr class="memdesc:a2009b207da0643964ec76db5620fe1bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get value of the option, or the default value.  <a href="#a2009b207da0643964ec76db5620fe1bf">More...</a><br/></td></tr>
+<tr class="separator:a2009b207da0643964ec76db5620fe1bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab017876cdb02ddce39a991156809b398"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab017876cdb02ddce39a991156809b398"></a>
 virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ab017876cdb02ddce39a991156809b398">~Plugin</a> ()</td></tr>
 <tr class="memdesc:ab017876cdb02ddce39a991156809b398"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the plugin is unloaded from memory (uninstall) <br/></td></tr>
 <tr class="separator:ab017876cdb02ddce39a991156809b398"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c039185527c9f4d2a83c9cfa639264a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a2c039185527c9f4d2a83c9cfa639264a">validate</a> ()</td></tr>
-<tr class="memdesc:a2c039185527c9f4d2a83c9cfa639264a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called after graphs have been built in memory.  <a href="#a2c039185527c9f4d2a83c9cfa639264a">More...</a><br/></td></tr>
-<tr class="separator:a2c039185527c9f4d2a83c9cfa639264a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48434c1208698b2ccccd3936857c8552"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a48434c1208698b2ccccd3936857c8552">road_vertex_accessor</a> (const <a class="el" href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Road::Vertex</a> &amp;, int)</td></tr>
-<tr class="separator:a48434c1208698b2ccccd3936857c8552"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adeb4cee277d66668ca0c978c8ab6adcb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adeb4cee277d66668ca0c978c8ab6adcb"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>road_edge_accessor</b> (const <a class="el" href="namespace_tempus_1_1_road.html#a8db854706be2c1c19d1ce6344b129980">Road::Edge</a> &amp;, int)</td></tr>
-<tr class="separator:adeb4cee277d66668ca0c978c8ab6adcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f7c8d4db87528123ed0176d86ecb3b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f7c8d4db87528123ed0176d86ecb3b9"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>pt_vertex_accessor</b> (const <a class="el" href="namespace_tempus_1_1_public_transport.html#a23416c6998aa76c9e429b8e09ddfd8c6">PublicTransport::Vertex</a> &amp;, int)</td></tr>
-<tr class="separator:a7f7c8d4db87528123ed0176d86ecb3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55c1d5ee6633531cb98019a7e0a1005a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55c1d5ee6633531cb98019a7e0a1005a"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>pt_edge_accessor</b> (const <a class="el" href="namespace_tempus_1_1_public_transport.html#aaf188789fde36fac459aa406d46e6aed">PublicTransport::Edge</a> &amp;, int)</td></tr>
-<tr class="separator:a55c1d5ee6633531cb98019a7e0a1005a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a82f8880e131eb84b0d25c6783270b60e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a82f8880e131eb84b0d25c6783270b60e"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>vertex_accessor</b> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_vertex.html">Multimodal::Vertex</a> &amp;, int)</td></tr>
-<tr class="separator:a82f8880e131eb84b0d25c6783270b60e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a420f364b4abd6c4ba6b7a459065c97ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a420f364b4abd6c4ba6b7a459065c97ca"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>edge_accessor</b> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_edge.html">Multimodal::Edge</a> &amp;, int)</td></tr>
-<tr class="separator:a420f364b4abd6c4ba6b7a459065c97ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac59024e9221a87778fc041ff0483b32b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac59024e9221a87778fc041ff0483b32b"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ac59024e9221a87778fc041ff0483b32b">cycle</a> ()</td></tr>
-<tr class="memdesc:ac59024e9221a87778fc041ff0483b32b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cycle. <br/></td></tr>
-<tr class="separator:ac59024e9221a87778fc041ff0483b32b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd8d051305943617b740ab41d563f445"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#afd8d051305943617b740ab41d563f445">pre_process</a> (<a class="el" href="class_tempus_1_1_request.html">Request</a> &amp;request)</td></tr>
-<tr class="separator:afd8d051305943617b740ab41d563f445"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ad47585663ee5a0ac7aa4f2bbfebb1d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a8ad47585663ee5a0ac7aa4f2bbfebb1d">process</a> ()</td></tr>
-<tr class="separator:a8ad47585663ee5a0ac7aa4f2bbfebb1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e7367713ba8269a4caec4cacc6f1d49"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9e7367713ba8269a4caec4cacc6f1d49"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a9e7367713ba8269a4caec4cacc6f1d49">post_process</a> ()</td></tr>
-<tr class="memdesc:a9e7367713ba8269a4caec4cacc6f1d49"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post-process the user request. <br/></td></tr>
-<tr class="separator:a9e7367713ba8269a4caec4cacc6f1d49"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac99d4d3e31dcface55f5c1a45b0df95f"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespace_tempus.html#ac3add6b395ac4211f5fcbb3473745a6e">Result</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#ac99d4d3e31dcface55f5c1a45b0df95f">result</a> ()</td></tr>
-<tr class="memdesc:ac99d4d3e31dcface55f5c1a45b0df95f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result formatting.  <a href="#ac99d4d3e31dcface55f5c1a45b0df95f">More...</a><br/></td></tr>
-<tr class="separator:ac99d4d3e31dcface55f5c1a45b0df95f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a133497c4980e540e9d307ce64b4aaf09"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a133497c4980e540e9d307ce64b4aaf09"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a133497c4980e540e9d307ce64b4aaf09">cleanup</a> ()</td></tr>
-<tr class="memdesc:a133497c4980e540e9d307ce64b4aaf09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cleanup method. <br/></td></tr>
-<tr class="separator:a133497c4980e540e9d307ce64b4aaf09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2576970c34f2bc33c5e7b2602ff02385"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2576970c34f2bc33c5e7b2602ff02385"></a>
+virtual std::unique_ptr<br class="typebreak"/>
+&lt; <a class="el" href="class_tempus_1_1_plugin_request.html">PluginRequest</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a2576970c34f2bc33c5e7b2602ff02385">request</a> (const VariantMap &amp;options=VariantMap()) const =0</td></tr>
+<tr class="memdesc:a2576970c34f2bc33c5e7b2602ff02385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a <a class="el" href="class_tempus_1_1_plugin_request.html">PluginRequest</a> object. <br/></td></tr>
+<tr class="separator:a2576970c34f2bc33c5e7b2602ff02385"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53208dc3468a9dd900134bd7508a3dee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a53208dc3468a9dd900134bd7508a3dee"></a>
+virtual const <a class="el" href="class_tempus_1_1_routing_data.html">RoutingData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a53208dc3468a9dd900134bd7508a3dee">routing_data</a> () const =0</td></tr>
+<tr class="memdesc:a53208dc3468a9dd900134bd7508a3dee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets access to the underlying routing data. <br/></td></tr>
+<tr class="separator:a53208dc3468a9dd900134bd7508a3dee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb2c1174534f30ec2bae04e1dd52c2c9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb2c1174534f30ec2bae04e1dd52c2c9"></a>
+<a class="el" href="class_tempus_1_1_variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#afb2c1174534f30ec2bae04e1dd52c2c9">get_option_or_default</a> (const VariantMap &amp;options, const std::string &amp;key) const </td></tr>
+<tr class="memdesc:afb2c1174534f30ec2bae04e1dd52c2c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an option value, or the default value if unavailable. <br/></td></tr>
+<tr class="separator:afb2c1174534f30ec2bae04e1dd52c2c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e66e4c772e9ab7db1da5ecbc82cc46d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6e66e4c772e9ab7db1da5ecbc82cc46d"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>db_options</b> () const </td></tr>
+<tr class="separator:a6e66e4c772e9ab7db1da5ecbc82cc46d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09f74616c8ddd352d21bb3fe09458d12"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a09f74616c8ddd352d21bb3fe09458d12"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>schema_name</b> () const </td></tr>
+<tr class="separator:a09f74616c8ddd352d21bb3fe09458d12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:aa5f17542b62d5941feba7384220a2320"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5f17542b62d5941feba7384220a2320"></a>
-const <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#aa5f17542b62d5941feba7384220a2320">graph_</a></td></tr>
-<tr class="memdesc:aa5f17542b62d5941feba7384220a2320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Graph extracted from the database. <br/></td></tr>
-<tr class="separator:aa5f17542b62d5941feba7384220a2320"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35b9aad330c79ca2f9a89ff1ac61e852"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a35b9aad330c79ca2f9a89ff1ac61e852"></a>
-<a class="el" href="class_tempus_1_1_request.html">Request</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a35b9aad330c79ca2f9a89ff1ac61e852">request_</a></td></tr>
-<tr class="memdesc:a35b9aad330c79ca2f9a89ff1ac61e852"><td class="mdescLeft">&#160;</td><td class="mdescRight">User request. <br/></td></tr>
-<tr class="separator:a35b9aad330c79ca2f9a89ff1ac61e852"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a995f5382fb120baef0394c45234bd3fe"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a995f5382fb120baef0394c45234bd3fe"></a>
-<a class="el" href="namespace_tempus.html#ac3add6b395ac4211f5fcbb3473745a6e">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a995f5382fb120baef0394c45234bd3fe">result_</a></td></tr>
-<tr class="memdesc:a995f5382fb120baef0394c45234bd3fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result. <br/></td></tr>
-<tr class="separator:a995f5382fb120baef0394c45234bd3fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2caa6656b86a58f1cfc37ed04464278"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af2caa6656b86a58f1cfc37ed04464278"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#af2caa6656b86a58f1cfc37ed04464278">name_</a></td></tr>
-<tr class="memdesc:af2caa6656b86a58f1cfc37ed04464278"><td class="mdescLeft">&#160;</td><td class="mdescRight">Name of the dll this plugin comes from. <br/></td></tr>
-<tr class="separator:af2caa6656b86a58f1cfc37ed04464278"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f88790b839470f38efb7c881964d92f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2f88790b839470f38efb7c881964d92f"></a>
-<a class="el" href="class_db_1_1_connection.html">Db::Connection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a2f88790b839470f38efb7c881964d92f">db_</a></td></tr>
-<tr class="memdesc:a2f88790b839470f38efb7c881964d92f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespace_db.html">Db</a> connection. <br/></td></tr>
-<tr class="separator:a2f88790b839470f38efb7c881964d92f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3670b26dd9c9b72eacc9721d42ebebfc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3670b26dd9c9b72eacc9721d42ebebfc"></a>
-<a class="el" href="class_tempus_1_1_plugin.html#a174e0e958f7433ca9ac4d751a9ab75ad">OptionValueList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a3670b26dd9c9b72eacc9721d42ebebfc">options_</a></td></tr>
-<tr class="memdesc:a3670b26dd9c9b72eacc9721d42ebebfc"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> option management. <br/></td></tr>
-<tr class="separator:a3670b26dd9c9b72eacc9721d42ebebfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63489d8e6a4f539d58766ff3fa8e9d76"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63489d8e6a4f539d58766ff3fa8e9d76"></a>
-<a class="el" href="class_tempus_1_1_plugin.html#ac78dc326ef49dfdff576b4c08d646519">MetricValueList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>metrics_</b></td></tr>
-<tr class="separator:a63489d8e6a4f539d58766ff3fa8e9d76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a18b1ea583025bd8a549cc4e86be60a1c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18b1ea583025bd8a549cc4e86be60a1c"></a>
+static <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">OptionDescriptionList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a18b1ea583025bd8a549cc4e86be60a1c">common_option_descriptions</a> ()</td></tr>
+<tr class="memdesc:a18b1ea583025bd8a549cc4e86be60a1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get plugin option descriptions available for all plugins. <br/></td></tr>
+<tr class="separator:a18b1ea583025bd8a549cc4e86be60a1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="class_tempus_1_1_base.html" title="The base class of all classes with a database ID. ">Base</a> class that has to be derived in plugins</p>
@@ -290,119 +174,22 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 <li>some callback functions called when user requests are processed</li>
 <li>some performance metrics </li>
 </ul>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="afd8d051305943617b740ab41d563f445"></a>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a2009b207da0643964ec76db5620fe1bf"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void Tempus::Plugin::pre_process </td>
+          <td class="memname">Tempus::Plugin::Plugin </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="class_tempus_1_1_request.html">Request</a> &amp;&#160;</td>
-          <td class="paramname"><em>request</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Pre-process the user request. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">request</td><td>The request to preprocess. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>Throws an instance of std::invalid_argument if the request cannot be processed by the current plugin. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Reimplemented in <a class="el" href="class_tempus_1_1_timetable_pt_plugin.html#a6f38e1ff21a4c49dc4d2f4d9235c83dd">Tempus::TimetablePtPlugin</a>, <a class="el" href="class_tempus_1_1_multi_plugin.html#a5972d356491266ef6d246524f86f1a0f">Tempus::MultiPlugin</a>, <a class="el" href="class_tempus_1_1_dynamic_multi_plugin.html#ae195c91a2af8ab3519da159b306f5bf2">Tempus::DynamicMultiPlugin</a>, <a class="el" href="class_tempus_1_1_road_plugin.html#a6323c5bbff739495bc62df0820596eea">Tempus::RoadPlugin</a>, <a class="el" href="class_tempus_1_1_forbidden_movement_plugin.html#af781af69ed2aae26167f7e8d10f4de0b">Tempus::ForbiddenMovementPlugin</a>, and <a class="el" href="class_tempus_1_1_pt_plugin.html#abce9b85b6303ab3d3ca788d483ffd8a8">Tempus::PtPlugin</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a8ad47585663ee5a0ac7aa4f2bbfebb1d"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void Tempus::Plugin::process </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Process the last preprocessed user request. Must populates the 'result_' object.</p>
-<p>Process the user request. Must populates the 'result_' object. </p>
-
-<p>Reimplemented in <a class="el" href="class_tempus_1_1_multi_plugin.html#ae091d05e9578c0e12f1aab93acc46ce7">Tempus::MultiPlugin</a>, <a class="el" href="class_tempus_1_1_timetable_pt_plugin.html#aaa82913a56affcbe7277c3f07406a2bc">Tempus::TimetablePtPlugin</a>, <a class="el" href="class_tempus_1_1_forbidden_movement_plugin.html#a9aa915b81baa02d466b092a837585fed">Tempus::ForbiddenMovementPlugin</a>, <a class="el" href="class_tempus_1_1_road_plugin.html#a1ac51b43cfb24866432f5835acf291bf">Tempus::RoadPlugin</a>, <a class="el" href="class_tempus_1_1_dynamic_multi_plugin.html#af4d9a69792a34394e5c91682777ca185">Tempus::DynamicMultiPlugin</a>, and <a class="el" href="class_tempus_1_1_pt_plugin.html#a89499d9f7e1ac86b830ebc1daee9ca08">Tempus::PtPlugin</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ac99d4d3e31dcface55f5c1a45b0df95f"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespace_tempus.html#ac3add6b395ac4211f5fcbb3473745a6e">Result</a> &amp; Tempus::Plugin::result </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Result formatting. </p>
-<p>Text formatting and preparation of roadmap. </p>
-
-<p>Reimplemented in <a class="el" href="class_tempus_1_1_road_plugin.html#a7926709fcb03b27e81463382d3d4362b">Tempus::RoadPlugin</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a48434c1208698b2ccccd3936857c8552"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void Tempus::Plugin::road_vertex_accessor </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Road::Vertex</a> &amp;&#160;</td>
-          <td class="paramname">, </td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname">&#160;</td>
+          <td class="paramtype">const VariantMap &amp;&#160;</td>
+          <td class="paramname"><em>options</em> = <code>VariantMap()</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -410,52 +197,21 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Acessors methods. They can be called on graph traversals. A <a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> is made compatible with a boost::visitor by means of a PluginGraphVisitor </p>
-
-<p>Reimplemented in <a class="el" href="class_tempus_1_1_road_plugin.html#a81b3929670b8206e4d653d44550776b7">Tempus::RoadPlugin</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a2c039185527c9f4d2a83c9cfa639264a"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void Tempus::Plugin::validate </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Called after graphs have been built in memory. </p>
-<p>Called in order to validate the in-memory structure. </p>
+<p>Get value of the option, or the default value. </p>
+<p>Ctor </p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/<a class="el" href="plugin_8hh_source.html">plugin.hh</a></li>
-<li>/home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/plugin.cc</li>
+<li>/home/hme/src/tempus/src/core/<a class="el" href="plugin_8hh_source.html">plugin.hh</a></li>
+<li>/home/hme/src/tempus/src/core/plugin.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

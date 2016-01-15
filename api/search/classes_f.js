@@ -7,14 +7,17 @@ var searchData=
   ['selectservice',['SelectService',['../class_w_p_s_1_1_select_service.html',1,'WPS']]],
   ['service',['Service',['../class_w_p_s_1_1_service.html',1,'WPS']]],
   ['sf',['sf',['../structsf.html',1,'']]],
+  ['shortcut',['Shortcut',['../struct_tempus_1_1_shortcut.html',1,'Tempus']]],
   ['shpimporter',['ShpImporter',['../classtempus_1_1importer_1_1_shp_importer.html',1,'tempus::importer']]],
   ['shploader',['ShpLoader',['../classtempus_1_1tools_1_1_shp_loader.html',1,'tempus::tools']]],
   ['speedtimeperiod',['SpeedTimePeriod',['../struct_tempus_1_1_speed_time_period.html',1,'Tempus']]],
   ['splashscreen',['SplashScreen',['../classhmi__qgis_1_1ifsttarrouting_1_1_splash_screen.html',1,'hmi_qgis::ifsttarrouting']]],
+  ['spriv',['SPriv',['../struct_tempus_1_1_s_priv.html',1,'Tempus']]],
   ['staticvariables',['StaticVariables',['../struct_tempus_1_1_static_variables.html',1,'Tempus']]],
   ['step',['Step',['../class_tempus_1_1_roadmap_1_1_step.html',1,'Tempus::Roadmap']]],
   ['step',['Step',['../struct_tempus_1_1_request_1_1_step.html',1,'Tempus::Request']]],
   ['stepselector',['StepSelector',['../classhmi__qgis_1_1stepselector_1_1_step_selector.html',1,'hmi_qgis::stepselector']]],
   ['stop',['Stop',['../struct_tempus_1_1_public_transport_1_1_stop.html',1,'Tempus::PublicTransport']]],
+  ['stopindex',['StopIndex',['../struct_tempus_1_1_multimodal_1_1_graph_1_1_stop_index.html',1,'Tempus::Multimodal::Graph']]],
   ['sub_5fmap',['sub_map',['../classsub__map.html',1,'']]]
 ];

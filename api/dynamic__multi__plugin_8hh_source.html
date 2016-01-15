@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/plugins/dynamic_multi_plugin/dynamic_multi_plugin.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/plugins/dynamic_multi_plugin/dynamic_multi_plugin.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -99,9 +100,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">// Data structure used to label vertices : (vertex, automaton state, mode)</span></div>
 <div class="line"><a name="l00030"></a><span class="lineno"><a class="line" href="struct_tempus_1_1_triple.html">   30</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_triple.html">Triple</a> {</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <a class="code" href="struct_tempus_1_1_multimodal_1_1_vertex.html">Multimodal::Vertex</a> vertex;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html">Automaton&lt;Road::Edge&gt;::Graph::vertex_descriptor</a> state; </div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> mode; </div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    </div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html">Automaton&lt;Road::Edge&gt;::Graph::vertex_descriptor</a> state;</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    <a class="code" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> mode;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    <span class="keywordtype">bool</span> operator==( <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_triple.html">Tempus::Triple</a>&amp; t )<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        <span class="keywordflow">return</span> (vertex == t.vertex) &amp;&amp; (state == t.state) &amp;&amp; (mode == t.mode);</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    }</div>
@@ -117,102 +118,100 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
 <div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="keyword">typedef</span> std::list&lt;Triple&gt; Path;</div>
 <div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">typedef</span> std::map&lt; Triple, double &gt; PotentialMap; </div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="keyword">typedef</span> std::map&lt; Triple, db_id_t &gt; TripMap; </div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">typedef</span> std::map&lt; Triple, double &gt; PotentialMap;</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="keyword">typedef</span> std::map&lt; Triple, db_id_t &gt; TripMap;</div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="keyword">typedef</span> std::map&lt; Triple, Triple &gt; PredecessorMap;</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="comment">// variables to retain between two requests</span></div>
 <div class="line"><a name="l00055"></a><span class="lineno"><a class="line" href="struct_tempus_1_1_static_variables.html">   55</a></span>&#160;<span class="keyword">struct </span><a class="code" href="struct_tempus_1_1_static_variables.html">StaticVariables</a></div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;{</div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    <a class="code" href="namespace_tempus.html#ae22c39843671fdd8bc5c59d705a14557">Date</a> current_day; <span class="comment">// Day for which timetable or frequency data are loaded</span></div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html">Automaton&lt;Road::Edge&gt;</a> automaton;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    TimetableMap timetable; <span class="comment">// Timetable data for the current request</span></div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    FrequencyMap frequency; <span class="comment">// Frequency data for the current request</span></div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    TimetableMap rtimetable; <span class="comment">// Reverse time table</span></div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    FrequencyMap rfrequency; <span class="comment">// Reverse frequency data for the current request</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <a class="code" href="class_tempus_1_1_road_edge_speed_profile.html">RoadEdgeSpeedProfile</a> speed_profile; <span class="comment">// daily speed profile</span></div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    <a class="code" href="struct_tempus_1_1_static_variables.html">StaticVariables</a>() : current_day( boost::gregorian::from_string(<span class="stringliteral">&quot;2013/11/12&quot;</span>) )</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    {}</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;};</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
-<div class="line"><a name="l00070"></a><span class="lineno"><a class="line" href="class_tempus_1_1_dynamic_multi_plugin.html">   70</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html">DynamicMultiPlugin</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_plugin.html">Plugin</a> {</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    TimetableMap timetable; <span class="comment">// Timetable data for the current request</span></div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    FrequencyMap frequency; <span class="comment">// Frequency data for the current request</span></div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    TimetableMap rtimetable; <span class="comment">// Reverse time table</span></div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    FrequencyMap rfrequency; <span class="comment">// Reverse frequency data for the current request</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    <a class="code" href="class_tempus_1_1_road_edge_speed_profile.html">RoadEdgeSpeedProfile</a> speed_profile; <span class="comment">// daily speed profile</span></div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <a class="code" href="struct_tempus_1_1_static_variables.html">StaticVariables</a>() : current_day( boost::gregorian::from_string(<span class="stringliteral">&quot;2013/11/12&quot;</span>) )</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    {}</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;};</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
+<div class="line"><a name="l00069"></a><span class="lineno"><a class="line" href="class_tempus_1_1_dynamic_multi_plugin.html">   69</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html">DynamicMultiPlugin</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_plugin.html">Plugin</a></div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;{</div>
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">OptionDescriptionList</a> option_descriptions();</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_plugin_1_1_plugin_capabilities.html">PluginCapabilities</a> plugin_capabilities();</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html">DynamicMultiPlugin</a>( <span class="keyword">const</span> std::string&amp; nname, <span class="keyword">const</span> std::string&amp; db_options ) : <a class="code" href="class_tempus_1_1_plugin.html#ab86f9fac346f068e57bdd1dbf099d76c">Plugin</a>( nname, db_options ) {</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    }</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html">DynamicMultiPlugin</a>( <a class="code" href="class_tempus_1_1_progression_callback.html">ProgressionCallback</a>&amp; progression, <span class="keyword">const</span> VariantMap&amp; options );</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keyword">static</span> <a class="code" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Plugin::OptionDescriptionList</a> option_descriptions();</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <span class="keyword">static</span> <a class="code" href="struct_tempus_1_1_plugin_1_1_capabilities.html">Plugin::Capabilities</a> plugin_capabilities();</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_automaton.html">Automaton&lt;Road::Edge&gt;</a>&amp; automaton()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> automaton_; }</div>
 <div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <span class="keyword">virtual</span> ~<a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html">DynamicMultiPlugin</a>() {</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    }</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    </div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;<span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    <span class="comment">// Plugin options</span></div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    <span class="keywordtype">double</span> timetable_frequency_; <span class="comment">// travel time calculation mode</span></div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    <span class="keywordtype">bool</span> verbose_algo_; <span class="comment">// verbose vertex and edge traversal </span></div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    <span class="keywordtype">bool</span> verbose_; <span class="comment">// Verbose processing (except algorithm)</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <span class="keywordtype">double</span> min_transfer_time_; <span class="comment">// Minimum time necessary for a transfer to be done (in minutes) </span></div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <span class="keywordtype">double</span> walking_speed_; <span class="comment">// Average walking speed</span></div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;    <span class="keywordtype">double</span> cycling_speed_; <span class="comment">// Average cycling speed </span></div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;    <span class="keywordtype">double</span> car_parking_search_time_; <span class="comment">// Parking search time for cars</span></div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;    <span class="keywordtype">bool</span> use_speed_profiles_;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    </div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    <span class="comment">// Plugin metrics</span></div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="keywordtype">int</span> iterations_; <span class="comment">// Number of iterations</span></div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keywordtype">double</span> time_; <span class="comment">// Time elapsed for pre_process() and process() </span></div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <span class="keywordtype">double</span> time_algo_; <span class="comment">// Time elapsed for process()</span></div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    </div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    <span class="comment">// Other attributes</span></div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    <a class="code" href="struct_tempus_1_1_multimodal_1_1_vertex.html">Multimodal::Vertex</a> destination_; <span class="comment">// Current request destination </span></div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    std::map&lt; Multimodal::Vertex, db_id_t &gt; available_vehicles_; </div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    PotentialMap potential_map_;     </div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    PredecessorMap pred_map_; </div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    PotentialMap wait_map_; </div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    PotentialMap shift_map_; </div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    TripMap trip_map_; </div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <a class="code" href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Road::Vertex</a> parking_location_;</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <span class="keyword">static</span> <a class="code" href="struct_tempus_1_1_static_variables.html">StaticVariables</a> s_;</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;<span class="keyword">public</span>: </div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <span class="keyword">static</span> <span class="keywordtype">void</span> post_build();</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html#ae195c91a2af8ab3519da159b306f5bf2">pre_process</a>( <a class="code" href="class_tempus_1_1_request.html">Request</a>&amp; request );</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html#af4d9a69792a34394e5c91682777ca185">process</a>();</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    Path reorder_path( <a class="code" href="struct_tempus_1_1_triple.html">Triple</a> departure, <a class="code" href="struct_tempus_1_1_triple.html">Triple</a> arrival, <span class="keywordtype">bool</span> reverse = <span class="keyword">false</span> );</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <span class="keywordtype">void</span> add_roadmap( <span class="keyword">const</span> Path&amp; path, <span class="keywordtype">bool</span> reverse = <span class="keyword">false</span> );</div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;}; </div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;}</div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;</div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;</div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;</div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;</div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;</div>
+<div class="line"><a name="l00079"></a><span class="lineno"><a class="line" href="class_tempus_1_1_dynamic_multi_plugin.html#a522c0dbf7b456c9d2123019503fa49a8">   79</a></span>&#160;    <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_routing_data.html">RoutingData</a>* <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html#a522c0dbf7b456c9d2123019503fa49a8">routing_data</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> graph_; }</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;    <span class="keyword">virtual</span> std::unique_ptr&lt;PluginRequest&gt; <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html#a8491063011b17c37d2f1b642324fe860">request</a>( <span class="keyword">const</span> VariantMap&amp; options = VariantMap() ) <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a>* graph_;</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    <a class="code" href="class_tempus_1_1_automaton.html">Automaton&lt;Road::Edge&gt;</a> automaton_;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;};</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
+<div class="line"><a name="l00089"></a><span class="lineno"><a class="line" href="class_tempus_1_1_dynamic_multi_plugin_request.html">   89</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_dynamic_multi_plugin_request.html">DynamicMultiPluginRequest</a> : <span class="keyword">public</span> <a class="code" href="class_tempus_1_1_plugin_request.html">PluginRequest</a></div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;{</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    <a class="code" href="class_tempus_1_1_dynamic_multi_plugin_request.html">DynamicMultiPluginRequest</a>( <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_dynamic_multi_plugin.html">DynamicMultiPlugin</a>* plugin, <span class="keyword">const</span> VariantMap&amp; options, <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a>* );</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="keyword">virtual</span> std::unique_ptr&lt;Result&gt; <a class="code" href="class_tempus_1_1_dynamic_multi_plugin_request.html#ab111439b14d3048977153a27b6d610c5">process</a>( <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_request.html">Request</a>&amp; request );</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    Path reorder_path( <a class="code" href="struct_tempus_1_1_triple.html">Triple</a> departure, <a class="code" href="struct_tempus_1_1_triple.html">Triple</a> arrival, <span class="keywordtype">bool</span> reverse = <span class="keyword">false</span> );</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    <span class="keywordtype">void</span> add_roadmap( <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_request.html">Request</a>&amp; request, <a class="code" href="namespace_tempus.html#ac3add6b395ac4211f5fcbb3473745a6e">Result</a>&amp; r, <span class="keyword">const</span> Path&amp; path, <span class="keywordtype">bool</span> reverse = <span class="keyword">false</span> );</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <span class="keyword">static</span> <a class="code" href="struct_tempus_1_1_static_variables.html">StaticVariables</a> s_;</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    PotentialMap potential_map_;</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    PredecessorMap pred_map_;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    PotentialMap shift_map_;</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    PotentialMap wait_map_;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    TripMap trip_map_;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="keywordtype">bool</span> enable_trace_;</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="keyword">const</span> <a class="code" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a>* graph_;</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;};</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;}</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
 <div class="ttc" id="class_tempus_1_1_automaton_html"><div class="ttname"><a href="class_tempus_1_1_automaton.html">Tempus::Automaton</a></div><div class="ttdef"><b>Definition:</b> automaton.hh:23</div></div>
-<div class="ttc" id="namespace_tempus_1_1_road_html_a56eff1f0ab2a281e3da0dba7786959f2"><div class="ttname"><a href="namespace_tempus_1_1_road.html#a56eff1f0ab2a281e3da0dba7786959f2">Tempus::Road::Vertex</a></div><div class="ttdeci">boost::mpl::if_&lt; boost::detail::is_random_access&lt; VertexListType &gt;::type, size_t, void * &gt;::type Vertex</div><div class="ttdef"><b>Definition:</b> road_graph.hh:51</div></div>
-<div class="ttc" id="class_tempus_1_1_plugin_html_ab86f9fac346f068e57bdd1dbf099d76c"><div class="ttname"><a href="class_tempus_1_1_plugin.html#ab86f9fac346f068e57bdd1dbf099d76c">Tempus::Plugin::Plugin</a></div><div class="ttdeci">Plugin(const std::string &amp;name, const std::string &amp;db_options)</div><div class="ttdoc">Ctor. </div><div class="ttdef"><b>Definition:</b> plugin.cc:275</div></div>
-<div class="ttc" id="struct_tempus_1_1_plugin_1_1_option_description_list_html"><div class="ttname"><a href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Tempus::Plugin::OptionDescriptionList</a></div><div class="ttdef"><b>Definition:</b> plugin.hh:79</div></div>
+<div class="ttc" id="namespace_tempus_html_ac3add6b395ac4211f5fcbb3473745a6e"><div class="ttname"><a href="namespace_tempus.html#ac3add6b395ac4211f5fcbb3473745a6e">Tempus::Result</a></div><div class="ttdeci">std::list&lt; Roadmap &gt; Result</div><div class="ttdoc">A Result is a list of Roadmap, ordered by relevance towards optimizing criteria. </div><div class="ttdef"><b>Definition:</b> roadmap.hh:206</div></div>
+<div class="ttc" id="struct_tempus_1_1_plugin_1_1_option_description_list_html"><div class="ttname"><a href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Tempus::Plugin::OptionDescriptionList</a></div><div class="ttdef"><b>Definition:</b> plugin.hh:189</div></div>
 <div class="ttc" id="class_tempus_1_1_road_edge_speed_profile_html"><div class="ttname"><a href="class_tempus_1_1_road_edge_speed_profile.html">Tempus::RoadEdgeSpeedProfile</a></div><div class="ttdef"><b>Definition:</b> speed_profile.hh:36</div></div>
-<div class="ttc" id="class_tempus_1_1_plugin_html"><div class="ttname"><a href="class_tempus_1_1_plugin.html">Tempus::Plugin</a></div><div class="ttdef"><b>Definition:</b> plugin.hh:62</div></div>
-<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_html_af4d9a69792a34394e5c91682777ca185"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin.html#af4d9a69792a34394e5c91682777ca185">Tempus::DynamicMultiPlugin::process</a></div><div class="ttdeci">virtual void process()</div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.cc:446</div></div>
-<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_html"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin.html">Tempus::DynamicMultiPlugin</a></div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.hh:70</div></div>
+<div class="ttc" id="class_tempus_1_1_plugin_html"><div class="ttname"><a href="class_tempus_1_1_plugin.html">Tempus::Plugin</a></div><div class="ttdef"><b>Definition:</b> plugin.hh:175</div></div>
+<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_html_a8491063011b17c37d2f1b642324fe860"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin.html#a8491063011b17c37d2f1b642324fe860">Tempus::DynamicMultiPlugin::request</a></div><div class="ttdeci">virtual std::unique_ptr&lt; PluginRequest &gt; request(const VariantMap &amp;options=VariantMap()) const </div><div class="ttdoc">Create a PluginRequest object. </div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.cc:314</div></div>
+<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_html"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin.html">Tempus::DynamicMultiPlugin</a></div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.hh:69</div></div>
 <div class="ttc" id="struct_tempus_1_1_static_variables_html"><div class="ttname"><a href="struct_tempus_1_1_static_variables.html">Tempus::StaticVariables</a></div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.hh:55</div></div>
-<div class="ttc" id="struct_tempus_1_1_multimodal_1_1_vertex_html"><div class="ttname"><a href="struct_tempus_1_1_multimodal_1_1_vertex.html">Tempus::Multimodal::Vertex</a></div><div class="ttdoc">A Multimodal::Vertex is either a Road::Vertex or PublicTransport::Vertex on a particular public trans...</div><div class="ttdef"><b>Definition:</b> multimodal_graph.hh:62</div></div>
+<div class="ttc" id="class_tempus_1_1_plugin_request_html"><div class="ttname"><a href="class_tempus_1_1_plugin_request.html">Tempus::PluginRequest</a></div><div class="ttdef"><b>Definition:</b> plugin.hh:62</div></div>
+<div class="ttc" id="struct_tempus_1_1_multimodal_1_1_vertex_html"><div class="ttname"><a href="struct_tempus_1_1_multimodal_1_1_vertex.html">Tempus::Multimodal::Vertex</a></div><div class="ttdoc">A Multimodal::Vertex is either a Road::Vertex or PublicTransport::Vertex on a particular public trans...</div><div class="ttdef"><b>Definition:</b> multimodal_graph.hh:70</div></div>
+<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_request_html_ab111439b14d3048977153a27b6d610c5"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin_request.html#ab111439b14d3048977153a27b6d610c5">Tempus::DynamicMultiPluginRequest::process</a></div><div class="ttdeci">virtual std::unique_ptr&lt; Result &gt; process(const Request &amp;request)</div><div class="ttdoc">Process the user request. </div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.cc:324</div></div>
+<div class="ttc" id="class_tempus_1_1_routing_data_html"><div class="ttname"><a href="class_tempus_1_1_routing_data.html">Tempus::RoutingData</a></div><div class="ttdef"><b>Definition:</b> routing_data.hh:62</div></div>
 <div class="ttc" id="class_tempus_1_1_request_html"><div class="ttname"><a href="class_tempus_1_1_request.html">Tempus::Request</a></div><div class="ttdef"><b>Definition:</b> request.hh:34</div></div>
-<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_html_ae195c91a2af8ab3519da159b306f5bf2"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin.html#ae195c91a2af8ab3519da159b306f5bf2">Tempus::DynamicMultiPlugin::pre_process</a></div><div class="ttdeci">virtual void pre_process(Request &amp;request)</div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.cc:212</div></div>
 <div class="ttc" id="namespace_tempus_html_ae22c39843671fdd8bc5c59d705a14557"><div class="ttname"><a href="namespace_tempus.html#ae22c39843671fdd8bc5c59d705a14557">Tempus::Date</a></div><div class="ttdeci">boost::gregorian::date Date</div><div class="ttdoc">Date type : dd/mm/yyyy. </div><div class="ttdef"><b>Definition:</b> datetime.hh:35</div></div>
+<div class="ttc" id="struct_tempus_1_1_multimodal_1_1_graph_html"><div class="ttname"><a href="struct_tempus_1_1_multimodal_1_1_graph.html">Tempus::Multimodal::Graph</a></div><div class="ttdoc">A MultimodalGraph is basically a Road::Graph associated with a list of PublicTransport::Graph. </div><div class="ttdef"><b>Definition:</b> multimodal_graph.hh:229</div></div>
+<div class="ttc" id="class_tempus_1_1_progression_callback_html"><div class="ttname"><a href="class_tempus_1_1_progression_callback.html">Tempus::ProgressionCallback</a></div><div class="ttdef"><b>Definition:</b> progression.hh:28</div></div>
+<div class="ttc" id="struct_tempus_1_1_plugin_1_1_capabilities_html"><div class="ttname"><a href="struct_tempus_1_1_plugin_1_1_capabilities.html">Tempus::Plugin::Capabilities</a></div><div class="ttdoc">Stores plugin parameters. </div><div class="ttdef"><b>Definition:</b> plugin.hh:206</div></div>
+<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_html_a522c0dbf7b456c9d2123019503fa49a8"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin.html#a522c0dbf7b456c9d2123019503fa49a8">Tempus::DynamicMultiPlugin::routing_data</a></div><div class="ttdeci">const RoutingData * routing_data() const </div><div class="ttdoc">Gets access to the underlying routing data. </div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.hh:79</div></div>
 <div class="ttc" id="struct_tempus_1_1_triple_html"><div class="ttname"><a href="struct_tempus_1_1_triple.html">Tempus::Triple</a></div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.hh:30</div></div>
 <div class="ttc" id="namespace_tempus_html_a04e36446d6db638eb8b0de649ba35fe5"><div class="ttname"><a href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">Tempus::db_id_t</a></div><div class="ttdeci">unsigned long long int db_id_t</div><div class="ttdef"><b>Definition:</b> base.hh:28</div></div>
-<div class="ttc" id="struct_tempus_1_1_plugin_1_1_plugin_capabilities_html"><div class="ttname"><a href="struct_tempus_1_1_plugin_1_1_plugin_capabilities.html">Tempus::Plugin::PluginCapabilities</a></div><div class="ttdoc">Stores plugin parameters. </div><div class="ttdef"><b>Definition:</b> plugin.hh:96</div></div>
+<div class="ttc" id="class_tempus_1_1_dynamic_multi_plugin_request_html"><div class="ttname"><a href="class_tempus_1_1_dynamic_multi_plugin_request.html">Tempus::DynamicMultiPluginRequest</a></div><div class="ttdef"><b>Definition:</b> dynamic_multi_plugin.hh:89</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['graph_5f',['graph_',['../class_tempus_1_1_multimodal_1_1_out_edge_iterator.html#a7c4e06066e1f242d75c960b407b6775a',1,'Tempus::Multimodal::OutEdgeIterator::graph_()'],['../class_tempus_1_1_multimodal_1_1_in_edge_iterator.html#adae3b307df00c2663ad67ae7ba744c64',1,'Tempus::Multimodal::InEdgeIterator::graph_()'],['../class_tempus_1_1_multimodal_1_1_edge_iterator.html#acde1376569e172ace4e6cd5bacbe78e9',1,'Tempus::Multimodal::EdgeIterator::graph_()'],['../class_tempus_1_1_plugin.html#aa5f17542b62d5941feba7384220a2320',1,'Tempus::Plugin::graph_()']]]
+  ['metadata_5f',['metadata_',['../class_tempus_1_1_routing_data.html#a15de42d65a574c54fe5ac00a18fe5774',1,'Tempus::RoutingData']]],
+  ['metrics_5f',['metrics_',['../class_tempus_1_1_plugin_request.html#a954785fa364153f9ecdd128f510f9a31',1,'Tempus::PluginRequest']]]
 ];

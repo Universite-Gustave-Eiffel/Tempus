@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>TempusV2: /home/hme/src/IFSTTAR/git_svn/TempusV2/src/core/application.hh Source File</title>
+<title>Tempus: /home/hme/src/tempus/src/core/application.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">TempusV2
+   <div id="projectname">Tempus
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -97,83 +98,44 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &quot;multimodal_graph.hh&quot;</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &quot;db.hh&quot;</span></div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">namespace </span>Tempus {</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">struct </span>PluginFactory;</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#include &quot;variant.hh&quot;</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">namespace </span>Tempus {</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
 <div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html">   33</a></span>&#160;<span class="keyword">class </span><a class="code" href="class_tempus_1_1_application.html">Application</a> {</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <span class="keyword">static</span> <a class="code" href="class_tempus_1_1_application.html">Application</a>* <a class="code" href="class_tempus_1_1_application.html#a5f1d51c55eae5dcc22d699f87b705d5b">instance</a>();</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
-<div class="line"><a name="l00041"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22e">   41</a></span>&#160;    <span class="keyword">enum</span> <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22e">State</a> {</div>
-<div class="line"><a name="l00044"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22eab82d6ec191d58d4f1bce104afc9375fa">   44</a></span>&#160;        <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22eab82d6ec191d58d4f1bce104afc9375fa">Started</a> = 0,</div>
-<div class="line"><a name="l00047"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea6efdbaa4fd8339795c820ea68891f1cb">   47</a></span>&#160;        <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea6efdbaa4fd8339795c820ea68891f1cb">Connected</a>,</div>
-<div class="line"><a name="l00050"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea24d544bb7a3c74166577a9099da3a93d">   50</a></span>&#160;        <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea24d544bb7a3c74166577a9099da3a93d">GraphPreBuilt</a>,</div>
-<div class="line"><a name="l00053"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea3c8c4c3ee230d66d9f54e704b0d836cc">   53</a></span>&#160;        <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea3c8c4c3ee230d66d9f54e704b0d836cc">GraphBuilt</a></div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    };</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;</div>
-<div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#a7477103fcbdc9b32d70cdd52593b90f3">   58</a></span>&#160;    <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22e">State</a> <a class="code" href="class_tempus_1_1_application.html#a7477103fcbdc9b32d70cdd52593b90f3">state</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        <span class="keywordflow">return</span> state_;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    }</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_application.html#a320de9dfe0b415118e37b560267ffc3a">connect</a>( <span class="keyword">const</span> std::string&amp; <a class="code" href="class_tempus_1_1_application.html#a58fe615ebd0d545fd7346f97b614f575">db_options</a> );</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    <span class="keyword">const</span> std::string <a class="code" href="class_tempus_1_1_application.html#aa3794b40bccdb150ed66659ef2d8008f">data_directory</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
-<div class="line"><a name="l00073"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#a58fe615ebd0d545fd7346f97b614f575">   73</a></span>&#160;    <span class="keyword">const</span> std::string&amp; <a class="code" href="class_tempus_1_1_application.html#a58fe615ebd0d545fd7346f97b614f575">db_options</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;        <span class="keywordflow">return</span> db_options_;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    }</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_application.html#af1d375ab50b4e083c35323cfe0075853">pre_build_graph</a>();</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="class_tempus_1_1_application.html#a769dae585b76a145ed1b33412ddb60fa">build_graph</a>( <span class="keywordtype">bool</span> consistency_check = <span class="keyword">false</span>, <span class="keyword">const</span> std::string&amp; <a class="code" href="class_tempus_1_1_application.html#aab5641de2a424a76a866e1d8c7b88d52">schema_name</a> = <span class="stringliteral">&quot;tempus&quot;</span> );</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    std::string <a class="code" href="class_tempus_1_1_application.html#aab5641de2a424a76a866e1d8c7b88d52">schema_name</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
-<div class="line"><a name="l00091"></a><span class="lineno"><a class="line" href="class_tempus_1_1_application.html#a264197d5102136fa3938af092c897781">   91</a></span>&#160;    boost::optional&lt;const Multimodal::Graph&amp;&gt; <a class="code" href="class_tempus_1_1_application.html#a264197d5102136fa3938af092c897781">graph</a>() {</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="keywordflow">if</span> (!graph_.get()) {</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            <span class="keywordflow">return</span> boost::optional&lt;const Multimodal::Graph&amp;&gt;();</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        }</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        <span class="keywordflow">return</span> *graph_;</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    }</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    <span class="comment">// private constructor</span></div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <a class="code" href="class_tempus_1_1_application.html">Application</a>()</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    {}</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    std::string db_options_;</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    std::string schema_name_;</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    std::auto_ptr&lt;Multimodal::Graph&gt; graph_;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <a class="code" href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22e">State</a> state_;</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;};</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;}</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;<span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> __declspec( dllexport ) Tempus::Application* get_application_instance_();</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="class_tempus_1_1_application_html_a7477103fcbdc9b32d70cdd52593b90f3"><div class="ttname"><a href="class_tempus_1_1_application.html#a7477103fcbdc9b32d70cdd52593b90f3">Tempus::Application::state</a></div><div class="ttdeci">State state() const </div><div class="ttdoc">State accessors. </div><div class="ttdef"><b>Definition:</b> application.hh:58</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_ab2aa1e4d658ce6f7166e50bcf847e22ea3c8c4c3ee230d66d9f54e704b0d836cc"><div class="ttname"><a href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea3c8c4c3ee230d66d9f54e704b0d836cc">Tempus::Application::GraphBuilt</a></div><div class="ttdoc">Graph has been built. </div><div class="ttdef"><b>Definition:</b> application.hh:53</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_ab2aa1e4d658ce6f7166e50bcf847e22ea6efdbaa4fd8339795c820ea68891f1cb"><div class="ttname"><a href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea6efdbaa4fd8339795c820ea68891f1cb">Tempus::Application::Connected</a></div><div class="ttdoc">The application has database connection informations. </div><div class="ttdef"><b>Definition:</b> application.hh:47</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_af1d375ab50b4e083c35323cfe0075853"><div class="ttname"><a href="class_tempus_1_1_application.html#af1d375ab50b4e083c35323cfe0075853">Tempus::Application::pre_build_graph</a></div><div class="ttdeci">void pre_build_graph()</div><div class="ttdoc">Method to call to pre build the graph in memory. </div><div class="ttdef"><b>Definition:</b> application.cc:70</div></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    ~<a class="code" href="class_tempus_1_1_application.html">Application</a>();</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    <span class="keyword">const</span> std::string <a class="code" href="class_tempus_1_1_application.html#aa3794b40bccdb150ed66659ef2d8008f">data_directory</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    <span class="keywordtype">void</span> set_data_directory( <span class="keyword">const</span> std::string&amp; );</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keywordtype">void</span> set_option( <span class="keyword">const</span> std::string&amp; key, <span class="keyword">const</span> <a class="code" href="class_tempus_1_1_variant.html">Variant</a>&amp; value );</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;    <a class="code" href="class_tempus_1_1_variant.html">Variant</a> option( <span class="keyword">const</span> std::string&amp; ) <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    <span class="comment">// private constructor</span></div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <a class="code" href="class_tempus_1_1_application.html">Application</a>();</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    std::map&lt;std::string, Variant&gt; options_;</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;};</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;}</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> __declspec( dllexport ) Tempus::Application* get_application_instance_();</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="class_tempus_1_1_variant_html"><div class="ttname"><a href="class_tempus_1_1_variant.html">Tempus::Variant</a></div><div class="ttdef"><b>Definition:</b> variant.hh:40</div></div>
 <div class="ttc" id="class_tempus_1_1_application_html"><div class="ttname"><a href="class_tempus_1_1_application.html">Tempus::Application</a></div><div class="ttdoc">Class used to represent the global state of the current application. </div><div class="ttdef"><b>Definition:</b> application.hh:33</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_a58fe615ebd0d545fd7346f97b614f575"><div class="ttname"><a href="class_tempus_1_1_application.html#a58fe615ebd0d545fd7346f97b614f575">Tempus::Application::db_options</a></div><div class="ttdeci">const std::string &amp; db_options() const </div><div class="ttdoc">Database connection accessors. </div><div class="ttdef"><b>Definition:</b> application.hh:73</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_a320de9dfe0b415118e37b560267ffc3a"><div class="ttname"><a href="class_tempus_1_1_application.html#a320de9dfe0b415118e37b560267ffc3a">Tempus::Application::connect</a></div><div class="ttdeci">void connect(const std::string &amp;db_options)</div><div class="ttdef"><b>Definition:</b> application.cc:64</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_a5f1d51c55eae5dcc22d699f87b705d5b"><div class="ttname"><a href="class_tempus_1_1_application.html#a5f1d51c55eae5dcc22d699f87b705d5b">Tempus::Application::instance</a></div><div class="ttdeci">static Application * instance()</div><div class="ttdoc">Access to the singleton instance. </div><div class="ttdef"><b>Definition:</b> application.cc:35</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_ab2aa1e4d658ce6f7166e50bcf847e22eab82d6ec191d58d4f1bce104afc9375fa"><div class="ttname"><a href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22eab82d6ec191d58d4f1bce104afc9375fa">Tempus::Application::Started</a></div><div class="ttdoc">The application has just been (re)started. </div><div class="ttdef"><b>Definition:</b> application.hh:44</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_a264197d5102136fa3938af092c897781"><div class="ttname"><a href="class_tempus_1_1_application.html#a264197d5102136fa3938af092c897781">Tempus::Application::graph</a></div><div class="ttdeci">boost::optional&lt; const Multimodal::Graph &amp; &gt; graph()</div><div class="ttdoc">Graph accessor (non const) </div><div class="ttdef"><b>Definition:</b> application.hh:91</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_a769dae585b76a145ed1b33412ddb60fa"><div class="ttname"><a href="class_tempus_1_1_application.html#a769dae585b76a145ed1b33412ddb60fa">Tempus::Application::build_graph</a></div><div class="ttdeci">void build_graph(bool consistency_check=false, const std::string &amp;schema_name=&quot;tempus&quot;)</div><div class="ttdoc">Build the graph in memory (import from the database and wake up plugins) </div><div class="ttdef"><b>Definition:</b> application.cc:75</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_ab2aa1e4d658ce6f7166e50bcf847e22e"><div class="ttname"><a href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22e">Tempus::Application::State</a></div><div class="ttdeci">State</div><div class="ttdoc">Used to represent the application state. </div><div class="ttdef"><b>Definition:</b> application.hh:41</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_aa3794b40bccdb150ed66659ef2d8008f"><div class="ttname"><a href="class_tempus_1_1_application.html#aa3794b40bccdb150ed66659ef2d8008f">Tempus::Application::data_directory</a></div><div class="ttdeci">const std::string data_directory() const </div><div class="ttdoc">Get the directory where data are stored. </div><div class="ttdef"><b>Definition:</b> application.cc:93</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_aab5641de2a424a76a866e1d8c7b88d52"><div class="ttname"><a href="class_tempus_1_1_application.html#aab5641de2a424a76a866e1d8c7b88d52">Tempus::Application::schema_name</a></div><div class="ttdeci">std::string schema_name() const </div><div class="ttdoc">Get the current schema used. </div><div class="ttdef"><b>Definition:</b> application.cc:88</div></div>
-<div class="ttc" id="class_tempus_1_1_application_html_ab2aa1e4d658ce6f7166e50bcf847e22ea24d544bb7a3c74166577a9099da3a93d"><div class="ttname"><a href="class_tempus_1_1_application.html#ab2aa1e4d658ce6f7166e50bcf847e22ea24d544bb7a3c74166577a9099da3a93d">Tempus::Application::GraphPreBuilt</a></div><div class="ttdoc">Graph has been pre built. </div><div class="ttdef"><b>Definition:</b> application.hh:50</div></div>
+<div class="ttc" id="class_tempus_1_1_application_html_a5f1d51c55eae5dcc22d699f87b705d5b"><div class="ttname"><a href="class_tempus_1_1_application.html#a5f1d51c55eae5dcc22d699f87b705d5b">Tempus::Application::instance</a></div><div class="ttdeci">static Application * instance()</div><div class="ttdoc">Access to the singleton instance. </div><div class="ttdef"><b>Definition:</b> application.cc:52</div></div>
+<div class="ttc" id="class_tempus_1_1_application_html_aa3794b40bccdb150ed66659ef2d8008f"><div class="ttname"><a href="class_tempus_1_1_application.html#aa3794b40bccdb150ed66659ef2d8008f">Tempus::Application::data_directory</a></div><div class="ttdeci">const std::string data_directory() const </div><div class="ttdoc">Get the directory where data are stored. </div><div class="ttdef"><b>Definition:</b> application.cc:98</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 28 2014 13:46:38 for TempusV2 by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 15 2016 15:26:30 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
