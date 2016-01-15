@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 #include "common.hh"
+#include "serializers.hh"
 
 namespace Tempus
 {
@@ -136,6 +137,9 @@ class TransportMode : public Base
     DECLARE_RW_PROPERTY( route_type, TransportModeRouteType );
 private:
     unsigned traffic_rules_;
+
+    friend void Tempus::serialize( std::ostream& ostr, const TransportMode&, binary_serialization_t );
+    friend void Tempus::unserialize( std::istream& istr, TransportMode&, binary_serialization_t );
 };
 
 ///

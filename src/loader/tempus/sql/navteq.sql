@@ -36,7 +36,7 @@ INSERT INTO tempus.road_node
 
 update tempus.road_node
 set
-        geom = ST_Force_3DZ(ST_Transform(ST_StartPoint(st.geom),2154))
+        geom = ST_Force_3DZ(ST_Transform(ST_StartPoint(st.geom),%(native_srid)))
 from
         _tempus_import.streets as st
 where
@@ -44,7 +44,7 @@ where
 
 update tempus.road_node
 set
-        geom = ST_Force_3DZ(ST_Transform(ST_EndPoint(st.geom),2154))
+        geom = ST_Force_3DZ(ST_Transform(ST_EndPoint(st.geom),%(native_srid)))
 from
         _tempus_import.streets as st
 where
@@ -101,7 +101,7 @@ SELECT
 	ramp = 'Y' AS ramp,
 	tollway = 'Y' AS tollway,
 
-	ST_Transform(ST_Force_3DZ(ST_LineMerge(geom)), 2154) AS geom
+	ST_Transform(ST_Force_3DZ(ST_LineMerge(geom)), %(native_srid)) AS geom
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
 
 FROM _tempus_import.streets AS st;
@@ -270,8 +270,8 @@ SELECT poi_id as id,
         poi_name as name,
         array[3] as parking_transport_modes,
         link_id as road_section_id,
-        st_LineLocatePoint(road_section.geom, ST_Transform(parking.geom,2154))::double precision as abscissa_road_section,
-        st_force3DZ(st_setsrid(st_transform(parking.geom, 2154), 2154))
+        st_LineLocatePoint(road_section.geom, ST_Transform(parking.geom,%(native_srid)))::double precision as abscissa_road_section,
+        st_force3DZ(st_setsrid(st_transform(parking.geom, %(native_srid)), %(native_srid)))
 FROM _tempus_import.parking, tempus.road_section
 WHERE road_section.id = parking.link_id;
 

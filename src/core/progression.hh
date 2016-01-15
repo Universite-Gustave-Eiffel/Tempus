@@ -30,6 +30,7 @@ public:
     virtual void operator()( float, bool = false ) {
         // Default : do nothing
     }
+    virtual ~ProgressionCallback() {}
 };
 
 ///

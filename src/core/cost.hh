@@ -20,17 +20,13 @@
 
 #include <string>
 #include <map>
+#include <iosfwd>
 
 namespace Tempus
 {
 ///
-/// Type used to model costs. Either in a Step or as an optimizing criterion.
-/// This is a map to a double value and thus is user extensible.
-typedef std::map<int, double> Costs;
-
-///
 /// Default common cost identifiers
-enum CostId {
+enum class CostId {
     CostDistance = 1,
     CostDuration,
     CostPrice,
@@ -46,17 +42,24 @@ enum CostId {
     LastValue = CostLandmark
 };
 
+std::ostream& operator<<( std::ostream& out, CostId e );
+
+///
+/// Type used to model costs. Either in a Step or as an optimizing criterion.
+/// This is a map to a double value and thus is user extensible.
+typedef std::map<CostId, double> Costs;
+
 ///
 /// Returns the name of a cost
 /// @param[in] cost The cost identifier. @relates CostId
 /// @param[out]     The string representation of the cost
-std::string cost_name( int cost );
+std::string cost_name( CostId cost );
 
 ///
 /// Returns the unit of a cost
 /// @param[in] cost The cost identifier. @relates CostId
 /// @param[out]     The string representation of the cost
-std::string cost_unit( int cost );
+std::string cost_unit( CostId cost );
 
 }
 

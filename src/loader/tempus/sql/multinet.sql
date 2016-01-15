@@ -5,7 +5,7 @@ INSERT INTO tempus.road_node
 SELECT DISTINCT
 	jc.id,
 	jc.jncttyp = 2 AS bifurcation,
-	ST_Force_3DZ(st_transform(geom, 2154)) AS geom
+	ST_Force_3DZ(st_transform(geom, %(native_srid))) AS geom
 FROM _tempus_import.jc AS jc
 WHERE jc.feattyp = 4120; -- 4120 means road node, 4220 means rail node
 
@@ -100,7 +100,7 @@ SELECT
 		ELSE false
 	END AS tollway,
 
-	ST_Transform(ST_Force_3DZ(ST_LineMerge(nw.geom)), 2154) AS geom
+	ST_Transform(ST_Force_3DZ(ST_LineMerge(nw.geom)), %(native_srid)) AS geom
 	-- FIXME remove ST_LineMerge call as soon as loader will use Simple geometry option
 
 FROM

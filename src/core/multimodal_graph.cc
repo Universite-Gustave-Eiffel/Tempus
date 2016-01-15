@@ -29,34 +29,59 @@ namespace Tempus {
 namespace Multimodal {
 
 
-Vertex::Vertex() : is_null_(true)
+Vertex::Vertex() : graph_(0), type_(Null)
 {
 }
 
-Vertex::Vertex( const Road::Graph* graph, Road::Vertex vertex ) : is_null_(false), union_( RoadVertex_(graph,vertex) )
+Vertex::Vertex( const Graph& a_graph, Road::Vertex vertex, road_t ) : graph_(&a_graph), type_(Road)
 {
+    data_.vertex = vertex;
 }
 
-Vertex::Vertex( const PublicTransport::Graph* graph, PublicTransport::Vertex vertex ) : is_null_(false), union_( PtVertex_(graph, vertex) )
+Vertex::Vertex( const Graph& a_graph, PublicTransportGraphIndex idx, PublicTransport::Vertex vertex, pt_t ) : graph_(&a_graph), type_(PublicTransport)
 {
+    data_.pt.index = idx;
+    data_.pt.vertex = vertex;
 }
-Vertex::Vertex( const POI* ppoi ) : is_null_(false), union_( ppoi )
+
+Vertex::Vertex( const Graph& a_graph, POIIndex idx, poi_t ) : graph_(&a_graph), type_(Poi)
 {
+    data_.poi = idx;
+}
+
+const Multimodal::Graph* Vertex::graph() const
+{
+    return graph_;
+}
+
+const Road::Graph* Vertex::road_graph() const
+{
+    return &graph_->road();
 }
 
 Vertex::VertexType Vertex::type() const
 {
-    return static_cast<Vertex::VertexType>(union_.which());
+    return type_;
 }
 
 bool Vertex::is_null() const
 {
-    return is_null_;
+    return type_ == Null;
 }
 
 bool Vertex::operator==( const Vertex& v ) const
 {
-    return is_null_ == v.is_null_ && union_ == v.union_;
+    switch ( type_ ) {
+    case Road:
+        return v.data_.vertex == data_.vertex;
+    case PublicTransport:
+        return v.data_.pt.index == data_.pt.index && v.data_.pt.vertex == data_.pt.vertex;
+    case Poi:
+        return v.data_.poi == data_.poi;
+    case Null:
+        return v.is_null();
+    }
+    return false;
 }
 
 bool Vertex::operator!=( const Vertex& v ) const
@@ -66,49 +91,50 @@ bool Vertex::operator!=( const Vertex& v ) const
 
 bool Vertex::operator<( const Vertex& v ) const
 {
-    if (is_null_ && v.is_null_) return false;
-    return is_null_ != v.is_null_ ? is_null_ < v.is_null_ : union_ < v.union_;
-}
-
-const Road::Graph* Vertex::road_graph() const
-{
-    if ( is_null_ || union_.which() != 0 ) {
-        return 0;
+    if (is_null() && v.is_null()) return false;
+    if (type() != v.type()) {
+        return type() < v.type();
     }
-    using boost::get;
-    return get<RoadVertex_>( union_ ).graph;
+    switch (type_)
+    {
+    case Road:
+        return data_.vertex < v.data_.vertex;
+    case PublicTransport:
+        return data_.pt.index != v.data_.pt.index ? data_.pt.index < v.data_.pt.index : data_.pt.vertex < v.data_.pt.vertex;
+    case Poi:
+        return data_.poi < v.data_.poi;
+    case Null:
+        return false;
+    }
+    return false;
 }
 
 Road::Vertex Vertex::road_vertex() const
 {
-    if ( is_null_ || union_.which() != 0 ) {
+    if ( is_null() || type() != Road ) {
         return Road::Vertex();
     }
-    using boost::get;
-    return get<RoadVertex_>( union_ ).vertex;
+    return data_.vertex;
+}
+
+PublicTransportGraphIndex Vertex::pt_graph_idx() const
+{
+    return data_.pt.index;
 }
 
 const PublicTransport::Graph* Vertex::pt_graph() const
 {
-    if ( is_null_ || union_.which() != 1 ) {
-        return 0;
-    }
-    using boost::get;
-    return get<PtVertex_>( union_ ).graph;
+    return &graph_->public_transport(data_.pt.index);
 }
 
 PublicTransport::Vertex Vertex::pt_vertex() const
 {
-    if ( is_null_ || union_.which() != 1 ) {
-        return 0;
-    }
-    using boost::get;
-    return get<PtVertex_>( union_ ).vertex;
+    return data_.pt.vertex;
 }
 
 Road::Node get_road_node( const Multimodal::Vertex& v )
 {
-    return (*v.road_graph())[v.road_vertex()];
+    return v.graph()->road()[v.road_vertex()];
 }
 
 PublicTransport::Stop get_pt_stop( const Multimodal::Vertex& v )
@@ -116,13 +142,45 @@ PublicTransport::Stop get_pt_stop( const Multimodal::Vertex& v )
     return (*v.pt_graph())[v.pt_vertex()];
 }
 
+MMVertex get_mm_vertex( const Multimodal::Vertex& v )
+{
+    switch ( v.type() ) {
+    case Multimodal::Vertex::Road:
+        return MMVertex( MMVertex::Road, (*v.road_graph())[v.road_vertex()].db_id() );
+    case Multimodal::Vertex::PublicTransport:
+        return MMVertex( (*v.pt_graph())[v.pt_vertex()].db_id(), v.graph()->public_transport_rindex( v.pt_graph_idx() ) );
+    case Multimodal::Vertex::Poi:
+        return MMVertex( MMVertex::Poi, v.poi()->db_id() );
+    default:
+        break;
+    }
+    return MMVertex(MMVertex::Road, 0);
+}
+
+POIIndex Vertex::poi_idx() const
+{
+    return data_.poi;
+}
+
 const POI* Vertex::poi() const
 {
-    if ( is_null_ || union_.which() != 2 ) {
-        return 0;
+    return &graph_->poi(data_.poi);
+}
+
+Point3D Vertex::coordinates() const
+{
+    switch (type_)
+    {
+    case Null:
+        return Point3D();
+    case Road:
+        return graph_->road()[data_.vertex].coordinates();
+    case PublicTransport:
+        return (*pt_graph())[data_.pt.vertex].coordinates();
+    case Poi:
+        return poi()->coordinates();
     }
-    using boost::get;
-    return get<const POI*>(union_);
+    return Point3D();
 }
 
 Edge::ConnectionType Edge::connection_type() const
@@ -161,7 +219,7 @@ unsigned Edge::traffic_rules() const
         return TrafficRulePublicTransport;
     }
 
-    return (*source_.road_graph())[road_edge()].traffic_rules();
+    return source_.graph()->road()[road_edge()].traffic_rules();
 }
 
 bool Edge::operator==( const Multimodal::Edge& e ) const
@@ -187,14 +245,14 @@ VertexIterator::VertexIterator( const Multimodal::Graph& graph )
 {
     graph_ = &graph;
     boost::tie( road_it_, road_it_end_ ) = boost::vertices( graph_->road() );
-    pt_graph_it_ = graph_->public_transports().subset_begin();
-    pt_graph_it_end_ = graph_->public_transports().subset_end();
-    poi_it_ = graph_->pois().begin();
-    poi_it_end_ = graph_->pois().end();
+    pt_graph_it_ = 0;
+    pt_graph_it_end_ = graph_->public_transports().size();
+    poi_it_ = 0;
+    poi_it_end_ = graph_->pois().size();
 
     // If we have at least one public transport network
     if ( pt_graph_it_ != pt_graph_it_end_ ) {
-        boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( *pt_graph_it_->second );
+        boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( graph_->public_transport( pt_graph_it_ ) );
     }
 }
 
@@ -213,14 +271,14 @@ Vertex VertexIterator::dereference() const
     BOOST_ASSERT( graph_ != 0 );
 
     if ( road_it_ != road_it_end_ ) {
-        vertex = Vertex( &graph_->road(), *road_it_ );
+        vertex = Vertex( *graph_, *road_it_, Vertex::road_t() );
     }
     else {
         if ( pt_it_ != pt_it_end_ ) {
-            vertex = Vertex( &*pt_graph_it_->second, *pt_it_ );
+            vertex = Vertex( *graph_, pt_graph_it_, *pt_it_ );
         }
         else {
-            vertex = Vertex( &*poi_it_->second );
+            vertex = Vertex( *graph_, poi_it_, Vertex::poi_t() );
         }
     }
 
@@ -250,7 +308,7 @@ void VertexIterator::increment()
 
             if ( pt_graph_it_ != pt_graph_it_end_ ) {
                 // set on the beginning of the next pt_graph
-                boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( *pt_graph_it_->second );
+                boost::tie( pt_it_, pt_it_end_ ) = boost::vertices( graph_->public_transport( pt_graph_it_ ) );
             }
         }
     }
@@ -284,22 +342,23 @@ bool VertexIterator::equal( const VertexIterator& v ) const
 }
 
 // Road2Road
-Edge::Edge( const Road::Graph* graph, const Road::Vertex& s, const Road::Vertex& t ) :
-    source_( graph, s ), target_( graph, t )
+Edge::Edge( const Multimodal::Graph& graph, const Road::Vertex& s, const Road::Vertex& t, road2road_t ) :
+    source_( graph, s, Vertex::road_t() ), target_( graph, t, Vertex::road_t() )
 {
     bool found = false;
-    tie( road_edge_, found ) = edge( s, t, *graph );
+    tie( road_edge_, found ) = edge( s, t, graph.road() );
     BOOST_ASSERT( found );
 }
 
 // Road2Transport
-Edge::Edge( const Road::Graph* graph, const Road::Vertex& s,
-            const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& t ) :
-    source_( graph, s ), target_( pt_graph, t )
+Edge::Edge( const Multimodal::Graph& graph, const Road::Vertex& s,
+            PublicTransportGraphIndex pt_idx, const PublicTransport::Vertex& t ) :
+    source_( graph, s, Vertex::road_t() ), target_( graph, pt_idx, t )
 {
     using boost::target;
-    const PublicTransport::Stop& stop = (*pt_graph)[t];
-    if ( stop.opposite_road_edge() && s == target( stop.road_edge(), *graph ) ) {
+    const PublicTransport::Graph& pt_graph = graph.public_transport(pt_idx);
+    const PublicTransport::Stop& stop = pt_graph[t];
+    if ( stop.opposite_road_edge() && (s == target( stop.road_edge(), graph.road() )) ) {
         road_edge_ = *stop.opposite_road_edge();
     }
     else {
@@ -308,27 +367,29 @@ Edge::Edge( const Road::Graph* graph, const Road::Vertex& s,
 }
 
 // Road2Poi
-Edge::Edge( const Road::Graph* graph, const Road::Vertex& s,
-            const POI* t ) :
-    source_( graph, s ), target_( t )
+Edge::Edge( const Multimodal::Graph& graph, const Road::Vertex& s,
+            POIIndex idx, road2poi_t ) :
+    source_( graph, s, Vertex::road_t() ), target_( graph, idx, Vertex::poi_t() )
 {
     using boost::target;
-    if ( t->opposite_road_edge() && s == target( t->road_edge(), *graph ) ) {
-        road_edge_ = *t->opposite_road_edge();
+    const POI& poi = graph.poi(idx);
+    if ( poi.opposite_road_edge() && s == target( poi.road_edge(), graph.road() ) ) {
+        road_edge_ = *poi.opposite_road_edge();
     }
     else {
-        road_edge_ = t->road_edge();
+        road_edge_ = poi.road_edge();
     }
 }
 
 // Transport2Road
-Edge::Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s,
-            const Road::Graph* graph, const Road::Vertex& t ) :
-    source_( pt_graph, s), target_( graph, t )
+Edge::Edge( const Multimodal::Graph& graph, PublicTransportGraphIndex pt_idx, const PublicTransport::Vertex& s,
+            const Road::Vertex& t ) :
+    source_( graph, pt_idx, s), target_( graph, t, Vertex::road_t() )
 {
     using boost::source;
-    const PublicTransport::Stop& stop = (*pt_graph)[s];
-    if ( stop.opposite_road_edge() && t == source( stop.road_edge(), *graph ) ) {
+    const PublicTransport::Graph& pt_graph = graph.public_transport(pt_idx);
+    const PublicTransport::Stop& stop = pt_graph[s];
+    if ( stop.opposite_road_edge() && t == source( stop.road_edge(), graph.road() ) ) {
         road_edge_ = *stop.opposite_road_edge();
     }
     else {
@@ -337,29 +398,31 @@ Edge::Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Verte
 }
 
 // Transport2Transport
-Edge::Edge( const PublicTransport::Graph* pt_graph, const PublicTransport::Vertex& s, const PublicTransport::Vertex& t ) :
-    source_( pt_graph, s ), target_( pt_graph, t )
+Edge::Edge( const Multimodal::Graph& graph, PublicTransportGraphIndex pt_idx, const PublicTransport::Vertex& s, const PublicTransport::Vertex& t ) :
+    source_( graph, pt_idx, s ), target_( graph, pt_idx, t )
 {
-    BOOST_ASSERT( edge( s, t, *pt_graph ).second );
+    const PublicTransport::Graph& pt_graph = graph.public_transport(pt_idx);
+    BOOST_ASSERT( edge( s, t, pt_graph ).second );
     // arbitrary direction
-    road_edge_ = (*pt_graph)[s].road_edge();
+    road_edge_ = pt_graph[s].road_edge();
 }
 
 // Poi2Road
-Edge::Edge( const POI* s,
-            const Road::Graph* graph, const Road::Vertex& t ) :
-    source_( s ), target_( graph, t )
+Edge::Edge( const Multimodal::Graph& graph, POIIndex s,
+            const Road::Vertex& t, poi2road_t ) :
+    source_( graph, s, Vertex::poi_t() ), target_( graph, t, Vertex::road_t() )
 {
     using boost::source;
-    if ( s->opposite_road_edge() && t == source( s->road_edge(), *graph ) ) {
-        road_edge_ = *s->opposite_road_edge();
+    const POI& poi = graph.poi(s);
+    if ( poi.opposite_road_edge() && t == source( poi.road_edge(), graph.road() ) ) {
+        road_edge_ = *poi.opposite_road_edge();
     }
     else {
-        road_edge_ = s->road_edge();
+        road_edge_ = poi.road_edge();
     }
 }
 
-Edge::Edge( const Vertex& s, const Vertex& t )
+Edge::Edge( const Multimodal::Graph& graph, const Vertex& s, const Vertex& t )
 {
     using boost::target;
     using boost::source;
@@ -376,12 +439,12 @@ Edge::Edge( const Vertex& s, const Vertex& t )
     if ( s.type() == Vertex::Road ) {
         if ( t.type() == Vertex::Road ) {
             bool found = false;
-            tie(road_edge_,found) = edge( s.road_vertex(), t.road_vertex(), *s.road_graph() );
+            tie(road_edge_,found) = edge( s.road_vertex(), t.road_vertex(), graph.road() );
             BOOST_ASSERT( found );
         }
         else if (t.type() == Vertex::PublicTransport ) {
-            const PublicTransport::Stop& stop = (*t.pt_graph())[t.pt_vertex()];
-            if ( stop.opposite_road_edge() && s.road_vertex() == target( stop.road_edge(), *s.road_graph() ) ) {
+            const PublicTransport::Stop& stop = get_pt_stop( t );
+            if ( stop.opposite_road_edge() && s.road_vertex() == target( stop.road_edge(), graph.road() ) ) {
                 road_edge_ = *stop.opposite_road_edge();
             }
             else {
@@ -389,18 +452,19 @@ Edge::Edge( const Vertex& s, const Vertex& t )
             }
         }
         else if (t.type() == Vertex::Poi ) {
-            if ( t.poi()->opposite_road_edge() && s.road_vertex() == target( t.poi()->road_edge(), *s.road_graph() ) ) {
-                road_edge_ = *t.poi()->opposite_road_edge();
+            const POI* poi = t.poi();
+            if ( poi->opposite_road_edge() && s.road_vertex() == target( poi->road_edge(), graph.road() ) ) {
+                road_edge_ = *poi->opposite_road_edge();
             }
             else {
-                road_edge_ = t.poi()->road_edge();
+                road_edge_ = poi->road_edge();
             }
         }
     }
     else if ( s.type() == Vertex::PublicTransport ) {
         if ( t.type() == Vertex::Road ) {
-            const PublicTransport::Stop& stop = (*s.pt_graph())[s.pt_vertex()];
-            if ( stop.opposite_road_edge() && t.road_vertex() == source( stop.road_edge(), *t.road_graph() ) ) {
+            const PublicTransport::Stop& stop = get_pt_stop( s );
+            if ( stop.opposite_road_edge() && t.road_vertex() == source( stop.road_edge(), graph.road() ) ) {
                 road_edge_ = *stop.opposite_road_edge();
             }
             else {
@@ -414,12 +478,13 @@ Edge::Edge( const Vertex& s, const Vertex& t )
         }
     }
     else if ( s.type() == Vertex::Poi ) {
+        const POI& poi = *s.poi();
         if ( t.type() == Vertex::Road ) {
-            if ( s.poi()->opposite_road_edge() && t.road_vertex() == source( s.poi()->road_edge(), *t.road_graph() ) ) {
-                road_edge_ = *s.poi()->opposite_road_edge();
+            if ( poi.opposite_road_edge() && t.road_vertex() == source( poi.road_edge(), graph.road() ) ) {
+                road_edge_ = *poi.opposite_road_edge();
             }
             else {
-                road_edge_ = s.poi()->road_edge();
+                road_edge_ = poi.road_edge();
             }
         }
     }
@@ -529,46 +594,46 @@ Multimodal::Edge OutEdgeIterator::dereference() const
         BOOST_ASSERT( road_it_ != road_it_end_ );
         Road::Vertex r_target = boost::target( *road_it_, graph_->road() );
 
-        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road()[ *road_it_ ].stops().size() ) {
+        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             size_t idx = road2stop_connection_;
-            const PublicTransport::Graph* pt_graph = graph_->road()[ *road_it_ ].stops()[ idx ]->graph();
-            PublicTransport::Vertex v = *(graph_->road()[ *road_it_ ].stops()[ idx ]->vertex());
-            edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), pt_graph, v );
+            Multimodal::Graph::StopIndex stop = graph_->edge_stops( *road_it_ )[ idx ];
+            edge = Multimodal::Edge( *graph_, source_.road_vertex(), stop.graph(), stop.vertex() );
         }
-        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road()[ *road_it_ ].pois().size() ) {
+        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             size_t idx = road2poi_connection_;
-            const POI* poi = graph_->road()[ *road_it_ ].pois()[ idx ];
-            edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), poi );
+            POIIndex poi = graph_->edge_pois( *road_it_ )[ idx ];
+            edge = Multimodal::Edge( *graph_, source_.road_vertex(), poi, Multimodal::Edge::road2poi_t() );
         }
         else {
-            edge = Multimodal::Edge( source_.road_graph(), source_.road_vertex(), r_target );
+            edge = Multimodal::Edge( *graph_, source_.road_vertex(), r_target, Multimodal::Edge::road2road_t() );
         }
     }
     else if ( source_.type() == Vertex::PublicTransport ) {
-        const PublicTransport::Graph* pt_graph = source_.pt_graph();
+        PublicTransportGraphIndex pt_graph = source_.pt_graph_idx();
         PublicTransport::Vertex r_source = source_.pt_vertex();
-        const PublicTransport::Stop *stop = &(*pt_graph)[r_source];
+        const PublicTransport::Stop& stop = get_pt_stop(source_);
 
         if ( stop2road_connection_ == 0 ) {
-            edge = Multimodal::Edge( pt_graph, r_source, &graph_->road(), target( stop->road_edge(), graph_->road() ) );
+            edge = Multimodal::Edge( *graph_, pt_graph, r_source, target( stop.road_edge(), graph_->road() ) );
         }
         // if there is an opposite road edge attached
-        else if ( stop2road_connection_ == 1 && stop->opposite_road_edge() ) {
-            edge = Multimodal::Edge( pt_graph, r_source, &graph_->road(), target( *stop->opposite_road_edge(), graph_->road() ) );
+        else if ( stop2road_connection_ == 1 && stop.opposite_road_edge() ) {
+            edge = Multimodal::Edge( *graph_, pt_graph, r_source, target( *stop.opposite_road_edge(), graph_->road() ) );
         }
         else {
-            PublicTransport::Vertex r_target = boost::target( *pt_it_, *pt_graph );
-            edge = Multimodal::Edge( pt_graph, r_source, r_target );
+            PublicTransport::Vertex r_target = boost::target( *pt_it_, graph_->public_transport(pt_graph) );
+            edge = Multimodal::Edge( *graph_, pt_graph, r_source, r_target );
         }
     }
     else if ( source_.type() == Vertex::Poi ) {
+        const POI& poi = *source_.poi();
         if ( poi2road_connection_ == 0 ) {
-            edge = Multimodal::Edge( source_.poi(), &graph_->road(), boost::target( source_.poi()->road_edge(), graph_->road() ) );
+            edge = Multimodal::Edge( *graph_, source_.poi_idx(), boost::target( poi.road_edge(), graph_->road() ), Multimodal::Edge::poi2road_t() );
         }
         // if there is an opposite road edge attached
         else if ( poi2road_connection_ == 1 &&
-                  source_.poi()->opposite_road_edge() ) {
-            edge = Multimodal::Edge( source_.poi(), &graph_->road(), boost::target( *source_.poi()->opposite_road_edge(), graph_->road() ) );
+                  poi.opposite_road_edge() ) {
+            edge = Multimodal::Edge( *graph_, source_.poi_idx(), boost::target( *poi.opposite_road_edge(), graph_->road() ), Multimodal::Edge::poi2road_t() );
         }
     }
 
@@ -580,10 +645,10 @@ void OutEdgeIterator::increment()
     BOOST_ASSERT( graph_ != 0 );
 
     if ( source_.type() == Vertex::Road ) {
-        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->road()[*road_it_].stops().size() ) {
+        if ( road2stop_connection_ >= 0 && ( size_t )road2stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             road2stop_connection_++;
         }
-        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->road()[*road_it_].pois().size() ) {
+        else if ( road2poi_connection_ >= 0 && ( size_t )road2poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             road2poi_connection_++;
         }
         else {
@@ -593,13 +658,11 @@ void OutEdgeIterator::increment()
         }
     }
     else if ( source_.type() == Vertex::PublicTransport ) {
-        const PublicTransport::Graph* pt_graph = source_.pt_graph();
-        PublicTransport::Vertex r_source = source_.pt_vertex();
-        const PublicTransport::Stop *stop = &(*pt_graph)[r_source];
+        const PublicTransport::Stop& stop = get_pt_stop(source_);
 
         if ( stop2road_connection_ == 0 ) {
             // if there is an opposite edge
-            if ( stop->opposite_road_edge() ) {
+            if ( stop.opposite_road_edge() ) {
                 stop2road_connection_ ++;
             }
             // else, step to 2
@@ -702,47 +765,45 @@ Multimodal::Edge InEdgeIterator::dereference() const
     if ( source_.type() == Vertex::Road ) {
         BOOST_ASSERT( road_it_ != road_it_end_ );
 
-        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->road()[ *road_it_ ].stops().size() ) {
+        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             size_t idx = road_from_stop_connection_;
-            const PublicTransport::Graph* pt_graph = graph_->road()[ *road_it_ ].stops()[ idx ]->graph();
-            PublicTransport::Vertex v = *(graph_->road()[ *road_it_ ].stops()[ idx ]->vertex());
-            edge = Multimodal::Edge( pt_graph, v, source_.road_graph(), source_.road_vertex() );
+            Multimodal::Graph::StopIndex stop = graph_->edge_stops( *road_it_ )[ idx ];
+            edge = Multimodal::Edge( *graph_, stop.graph(), stop.vertex(), source_.road_vertex() );
         }
-        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->road()[ *road_it_ ].pois().size() ) {
+        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             size_t idx = road_from_poi_connection_;
-            const POI* poi = graph_->road()[ *road_it_ ].pois()[ idx ];
-            edge = Multimodal::Edge( poi, source_.road_graph(), source_.road_vertex() );
+            POIIndex poi_idx = graph_->edge_pois( *road_it_ )[ idx ];
+            edge = Multimodal::Edge( *graph_, poi_idx, source_.road_vertex(), Multimodal::Edge::poi2road_t() );
         }
         else {
             Road::Vertex r_source = source( *road_it_, graph_->road() );
-            edge = Multimodal::Edge( source_.road_graph(), r_source, source_.road_vertex() );
+            edge = Multimodal::Edge( *graph_, r_source, source_.road_vertex(), Multimodal::Edge::road2road_t() );
         }
     }
     else if ( source_.type() == Vertex::PublicTransport ) {
-        const PublicTransport::Graph* pt_graph = source_.pt_graph();
         PublicTransport::Vertex r_source = source_.pt_vertex();
-        const PublicTransport::Stop *stop = &(*pt_graph)[r_source];
+        const PublicTransport::Stop& stop = get_pt_stop(source_);
 
         if ( stop_from_road_connection_ == 0 ) {
-            edge = Multimodal::Edge( &graph_->road(), source( stop->road_edge(), graph_->road() ), pt_graph, r_source );
+            edge = Multimodal::Edge( *graph_, source( stop.road_edge(), graph_->road() ), source_.pt_graph_idx(), r_source );
         }
         // if there is an opposite road edge attached
-        else if ( stop_from_road_connection_ == 1 && stop->opposite_road_edge() ) {
-            edge = Multimodal::Edge( &graph_->road(), source( *stop->opposite_road_edge(), graph_->road() ), pt_graph, r_source );
+        else if ( stop_from_road_connection_ == 1 && stop.opposite_road_edge() ) {
+            edge = Multimodal::Edge( *graph_, source( *stop.opposite_road_edge(), graph_->road() ), source_.pt_graph_idx(), r_source );
         }
         else {
-            PublicTransport::Vertex r_target = source( *pt_it_, *pt_graph );
-            edge = Multimodal::Edge( pt_graph, r_target, r_source );
+            PublicTransport::Vertex r_target = source( *pt_it_, *source_.pt_graph() );
+            edge = Multimodal::Edge( *graph_, source_.pt_graph_idx(), r_target, r_source );
         }
     }
     else if ( source_.type() == Vertex::Poi ) {
         if ( poi_from_road_connection_ == 0 ) {
-            edge = Multimodal::Edge( &graph_->road(), source( source_.poi()->road_edge(), graph_->road() ), source_.poi() );
+            edge = Multimodal::Edge( *graph_, source( source_.poi()->road_edge(), graph_->road() ), source_.poi_idx(), Multimodal::Edge::road2poi_t() );
         }
         // if there is an opposite road edge attached
         else if ( poi_from_road_connection_ == 1 &&
                   source_.poi()->opposite_road_edge() ) {
-            edge = Multimodal::Edge( &graph_->road(), source( *source_.poi()->opposite_road_edge(), graph_->road() ), source_.poi() );
+            edge = Multimodal::Edge( *graph_, source( *source_.poi()->opposite_road_edge(), graph_->road() ), source_.poi_idx(), Multimodal::Edge::road2poi_t() );
         }
     }
 
@@ -754,10 +815,10 @@ void InEdgeIterator::increment()
     BOOST_ASSERT( graph_ != 0 );
 
     if ( source_.type() == Vertex::Road ) {
-        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->road()[*road_it_].stops().size() ) {
+        if ( road_from_stop_connection_ >= 0 && ( size_t )road_from_stop_connection_ < graph_->edge_stops( *road_it_ ).size() ) {
             road_from_stop_connection_++;
         }
-        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->road()[*road_it_].pois().size() ) {
+        else if ( road_from_poi_connection_ >= 0 && ( size_t )road_from_poi_connection_ < graph_->edge_pois( *road_it_ ).size() ) {
             road_from_poi_connection_++;
         }
         else {
@@ -863,22 +924,21 @@ size_t VertexIndexProperty::get_index( const Vertex& v ) const
 
 
     switch (v.type()) {
+    case Vertex::Null:
+        return 0;
     case Vertex::Road: {
-        const Vertex::RoadVertex_& rv = boost::get<Vertex::RoadVertex_>( v.union_ );
-        return boost::get( boost::get( boost::vertex_index, *rv.graph ), rv.vertex );
+        return boost::get( boost::get( boost::vertex_index, graph_.road() ), v.road_vertex() );
     }
 
     case Vertex::PublicTransport: {
         size_t n = num_vertices( graph_.road() );
 
-        const Vertex::PtVertex_& rv = boost::get<Vertex::PtVertex_>( v.union_ );
-        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports().begin();
-              it != graph_.public_transports().end(); it++ ) {
-            if ( &*it->second != rv.graph ) {
-                n += num_vertices( *it->second );
+        for ( auto it : graph_.public_transports() ) {
+            if ( it.second != v.pt_graph() ) {
+                n += num_vertices( *it.second );
             }
             else {
-                n += boost::get( boost::get( boost::vertex_index, *rv.graph ), rv.vertex );
+                n += boost::get( boost::get( boost::vertex_index, *v.pt_graph() ), v.pt_vertex() );
                 break;
             }
         }
@@ -888,20 +948,11 @@ size_t VertexIndexProperty::get_index( const Vertex& v ) const
     case Vertex::Poi: {
         size_t n = num_vertices( graph_.road() );
 
-        for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph_.public_transports().begin();
-              it != graph_.public_transports().end(); it++ ) {
-            n += num_vertices( *it->second );
+        for ( auto it : graph_.public_transports() ) {
+            n += num_vertices( *it.second );
         }
 
-        // FIXME : could be sped up by using a POI index in a POI vector rather than a loop
-        const POI* poi = boost::get<const POI*>( v.union_ );
-        for ( Graph::PoiList::const_iterator it = graph_.pois().begin(); it != graph_.pois().end(); it++ ) {
-            if ( &*it->second == poi ) {
-                break;
-            }
-
-            n++;
-        }
+        n += v.poi_idx();
         return n;
     }
     }
@@ -917,10 +968,8 @@ size_t num_vertices( const Graph& graph )
     // + num_vertices of each pt graph
     // + the number of pois
     size_t n = 0;
-    Multimodal::Graph::PublicTransportGraphList::const_subset_iterator it;
-
-    for ( it = graph.public_transports().subset_begin(); it != graph.public_transports().subset_end(); it++ ) {
-        n += num_vertices( *it->second );
+    for ( auto it : graph.public_transports() ) {
+        n += num_vertices( *it.second );
     }
 
     return n + num_vertices( graph.road() ) + graph.pois().size();
@@ -981,7 +1030,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
         // M POis (given by pois.size())
         // the out edge (+1)
         for ( boost::tie( ei, ei_end ) = out_edges( v.road_vertex(), graph.road() ); ei != ei_end; ei++ ) {
-            sum += graph.road()[ *ei ].stops().size() + graph.road()[ *ei ].pois().size() + 1;
+            sum += graph.edge_stops( *ei ).size() + graph.edge_pois( *ei ).size() + 1;
         }
 
         return sum;
@@ -1009,7 +1058,7 @@ size_t in_degree( const Vertex& v, const Graph& graph )
         // M POis (given by pois.size())
         // the out edge (+1)
         for ( boost::tie( ei, ei_end ) = in_edges( v.road_vertex(), graph.road() ); ei != ei_end; ei++ ) {
-            sum += graph.road()[ *ei ].stops().size() + graph.road()[ *ei ].pois().size() + 1;
+            sum += graph.edge_stops( *ei ).size() + graph.edge_pois( *ei ).size() + 1;
         }
 
         return sum;
@@ -1060,37 +1109,9 @@ std::pair<PublicTransport::Edge, bool> public_transport_edge( const Multimodal::
 }
 
 
-boost::optional<TransportMode> Graph::transport_mode( db_id_t id ) const
+Graph::Graph( std::unique_ptr<Road::Graph> r ) : RoutingData( "multimodal_graph" )
 {
-    TransportModes::const_iterator fit = transport_modes_.find( id );
-    if ( fit == transport_modes_.end() ) {
-        return boost::optional<TransportMode>();
-    }
-    return fit->second;
-}
-
-boost::optional<TransportMode> Graph::transport_mode( const std::string& name ) const
-{
-    NameToId::const_iterator fit = transport_mode_from_name_.find( name );
-    if ( fit == transport_mode_from_name_.end() ) {
-        return boost::optional<TransportMode>();
-    }
-    return transport_modes_.find(fit->second)->second;
-}
-
-void Graph::set_transport_modes( const TransportModes& tm )
-{
-    transport_modes_ = tm;
-    // cache name to id
-    transport_mode_from_name_.clear();
-    for ( TransportModes::const_iterator it = transport_modes_.begin(); it != transport_modes_.end(); ++it ) {
-        transport_mode_from_name_[ it->second.name() ] = it->first;
-    }
-}
-
-Graph::Graph( std::auto_ptr<Road::Graph> r )
-{
-    set_road( r );
+    set_road( std::move(r) );
 }
 
 const Road::Graph& Graph::road() const {
@@ -1103,86 +1124,179 @@ Road::Graph& Graph::road() {
     return *road_;
 }
 
-void Graph::set_road( std::auto_ptr<Road::Graph> r )
+void Graph::set_road( std::unique_ptr<Road::Graph> r )
 {
+    road_ = std::move(r);
+
+    road_vertex_map_.clear();
+    road_edge_map_.clear();
+    if ( road_ ) {
+        // update vertex and edge map
+        for ( auto it = vertices( *road_ ).first; it != vertices( *road_ ).second; it++ ) {
+            road_vertex_map_[(*road_)[*it].db_id()] = *it;
+        }
+        for ( auto it = edges( *road_ ).first; it != edges( *road_ ).second; it++ ) {
+            road_edge_map_[(*road_)[*it].db_id()] = *it;
+        }
+    }
+}
+
+boost::optional<PublicTransportGraphIndex> Graph::public_transport_index( db_id_t id ) const
+{
+    if ( selected_transport_graphs_.find( id ) != selected_transport_graphs_.end() ) {
+        return public_transport_graph_idx_map_.find(id)->second;
+    }
+    return boost::optional<PublicTransportGraphIndex>();
+}
+
+db_id_t Graph::public_transport_rindex( PublicTransportGraphIndex idx ) const
+{
+    if ( idx < public_transport_graph_ridx_map_.size() ) {
+        return public_transport_graph_ridx_map_[idx];
+    }
+    return 0;
+}
+
+const PublicTransport::Graph& Graph::public_transport( PublicTransportGraphIndex idx ) const
+{
+    return *public_transport_graphs_[idx];
+}
+
+Graph::PublicTransportGraphList Graph::public_transports() const
+{
+    return Graph::PublicTransportGraphList( selected_transport_graphs_, public_transport_graphs_, public_transport_graph_idx_map_ );
+}
+
+void Graph::set_public_transports( std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>>&& nmap )
+{
+    public_transport_graph_idx_map_.clear();
+    public_transport_graph_ridx_map_.clear();
+    public_transport_graphs_.clear();
     // move
-    road_ = r;
-}
 
-boost::optional<const PublicTransport::Network&> Graph::network( db_id_t id ) const
-{
-    NetworkMap::const_iterator it = network_map_.find(id);
-    if ( it == network_map_.end() ) {
-        return boost::optional<const PublicTransport::Network&>();
+    size_t n_graphs = nmap.size();
+    public_transport_graphs_.resize( n_graphs );
+    size_t i = 0;
+    for ( auto it = nmap.begin(); it != nmap.end(); it++ ) {
+        public_transport_graphs_[i] = std::move(it->second);
+        public_transport_graph_idx_map_[it->first] = i;
+        public_transport_graph_ridx_map_.push_back( it->first );
+        // By default, all public transport networks are part of the selected subset
+        selected_transport_graphs_.insert( it->first );
+        i++;
     }
-    return it->second;
-}
-
-boost::optional<const PublicTransport::Graph&> Graph::public_transport( db_id_t id ) const
-{
-    PublicTransportGraphList::const_iterator it = public_transports_.find(id);
-    if ( it == public_transports_.end() ) {
-        return boost::optional<const PublicTransport::Graph&>();
-    }
-    return *it->second;
-}
-
-void Graph::set_public_transports( boost::ptr_map<db_id_t, PublicTransport::Graph>& nmap )
-{
-    for ( PublicTransportGraphList::iterator it = public_transports_.begin(); it != public_transports_.end(); ++it ) {
-        delete it->second;
-    }
-    public_transports_.clear();
-    // move
-
-    while (!nmap.empty()) {
-        boost::ptr_map<db_id_t, PublicTransport::Graph>::iterator it = nmap.begin();
-		db_id_t id = it->first;
-        PublicTransport::Graph* p(nmap.release(it).release());
-        public_transports_[id] = p;
-    }
-
-    //
-    // By default, all public transport networks are part of the selected subset
-    public_transports_.select_all();
 }
 
 void Graph::select_public_transports( const std::set<db_id_t> & s )
 {
-    public_transports_.select(s);
+    selected_transport_graphs_ = s;
 }
 
 std::set<db_id_t> Graph::public_transport_selection() const
 {
-    return public_transports_.selection();
+    return selected_transport_graphs_;
 }
 
 Graph::~Graph()
 {
-    for ( PublicTransportGraphList::iterator it = public_transports_.begin(); it != public_transports_.end(); ++it ) {
-        delete it->second;
+}
+
+void Graph::set_pois( std::vector<POI>&& v )
+{
+    pois_ = v;
+    poi_index_map_.clear();
+    POIIndex idx = 0;
+    for ( auto p : pois_ ) {
+        poi_index_map_[p.db_id()] = idx;
+        idx++;
     }
 }
 
-boost::optional<const POI&> Graph::poi( db_id_t id ) const
+void Graph::add_poi_ref( const Road::Edge& e, POIIndex idx )
 {
-    PoiList::const_iterator it = pois_.find(id);
-    if ( it == pois_.end() ) {
-        return boost::optional<const POI&>();
+    auto it = road_edge_pois_.find(e);
+    if ( it == road_edge_pois_.end() ) {
+        std::vector<POIIndex> v(1);
+        v[0] = idx;
+        road_edge_pois_.insert( std::make_pair(e, v) );
     }
-    return *it->second;
+    else {
+        it->second.push_back( idx );
+    }
 }
 
-void Graph::set_pois( PoiList& p )
+boost::optional<POIIndex> Graph::poi_index( db_id_t id ) const
 {
-    pois_.clear();
-    pois_.transfer( p );
+    auto it = poi_index_map_.find(id);
+    if ( it != poi_index_map_.end() ) {
+        return it->second;
+    }
+    return boost::optional<POIIndex>();
+}
+
+const POI& Graph::poi( POIIndex idx ) const
+{
+    return pois_[idx];
+}
+
+POI& Graph::poi( POIIndex idx )
+{
+    return pois_[idx];
+}
+
+const Graph::EdgePois& Graph::edge_pois( const Road::Edge& e ) const
+{
+    auto it = road_edge_pois_.find(e);
+    if ( it == road_edge_pois_.end() ) {
+        return empty_edge_pois_;
+    }
+    return it->second;
+}
+
+void Graph::add_stop_ref( const Road::Edge& e, const PublicTransportGraphIndex& idx, const PublicTransport::Vertex& vertex )
+{
+    auto it = road_edge_stops_.find(e);
+    if ( it == road_edge_stops_.end() ) {
+        EdgeStops v;
+        v.push_back( StopIndex( idx, vertex ) );
+        road_edge_stops_.insert( std::make_pair(e, v) );
+    }
+    else {
+        it->second.push_back( StopIndex( idx, vertex ) );
+    }
+}
+
+const Graph::EdgeStops& Graph::edge_stops( const Road::Edge& e ) const
+{
+    auto it = road_edge_stops_.find(e);
+    if ( it == road_edge_stops_.end() ) {
+        return empty_edge_stops_;
+    }
+    return it->second;
+}
+
+boost::optional<Road::Vertex> Graph::road_vertex_from_id( db_id_t id ) const
+{
+    auto it = road_vertex_map_.find( id );
+    if ( it != road_vertex_map_.end() ) {
+        return it->second;
+    }
+    return boost::optional<Road::Vertex>();
+}
+
+boost::optional<Road::Edge> Graph::road_edge_from_id( db_id_t id ) const
+{
+    auto it = road_edge_map_.find( id );
+    if ( it != road_edge_map_.end() ) {
+        return it->second;
+    }
+    return boost::optional<Road::Edge>();
 }
 
 ostream& operator<<( ostream& out, const Multimodal::Vertex& v )
 {
     if ( v.type() == Multimodal::Vertex::Road ) {
-        out << "R" << ( *v.road_graph() )[v.road_vertex()].db_id();
+        out << "R" << v.graph()->road()[v.road_vertex()].db_id();
     }
     else if ( v.type() == Multimodal::Vertex::PublicTransport ) {
         out << "PT" << ( *v.pt_graph() )[v.pt_vertex()].db_id();
@@ -1293,29 +1407,5 @@ std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it
 }
 
 } // namespace Multimodal
-
-class coordinates_visitor
-{
-public:
-    Point3D operator()(const Road::Graph& g, const Road::Vertex& v ) const
-    {
-        return g[v].coordinates();
-    }
-    
-    Point3D operator()(const PublicTransport::Graph& g, const PublicTransport::Vertex& v ) const
-    {
-        return g[v].coordinates();
-    }
-
-    Point3D operator()(const POI& p) const
-    {
-        return p.coordinates();
-    }
-};
-
-Point3D Multimodal::Vertex::coordinates() const
-{
-    return apply_visitor_<Point3D, coordinates_visitor>( coordinates_visitor() );
-}
 
 }

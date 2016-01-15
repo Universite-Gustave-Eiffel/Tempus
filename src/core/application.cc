@@ -16,14 +16,19 @@
  */
 
 #include <iostream>
+#include <fstream>
 
 #include "application.hh"
 #include "common.hh"
-#include "pgsql_importer.hh"
+#include "config.hh"
 
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h>
+#endif
+
+#if ENABLE_SEGMENT_ALLOCATOR
+#include "utils/segment_allocator.hh"
 #endif
 
 Tempus::Application* get_application_instance_()
@@ -32,6 +37,18 @@ Tempus::Application* get_application_instance_()
 }
 
 namespace Tempus {
+
+Application::Application()
+{
+}
+
+Application::~Application()
+{
+#if ENABLE_SEGMENT_ALLOCATOR
+    SegmentAllocator::release();
+#endif
+}
+
 Application* Application::instance()
 {
     // On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
@@ -46,7 +63,6 @@ Application* Application::instance()
 
         if ( main_get_instance == &get_application_instance_ ) {
             instance_ = new Application();
-            instance_->state_ = Started;
         }
         else {
             instance_ = main_get_instance();
@@ -54,56 +70,54 @@ Application* Application::instance()
 
 #else
         instance_ = new Application();
-        instance_->state_ = Started;
 #endif
     }
 
     return instance_;
 }
 
-void Application::connect( const std::string& ddb_options )
+void Application::set_option( const std::string& key, const Variant& value )
 {
-    db_options_ = ddb_options;
-    state_ = Connected;
+    options_[key] = value;
 }
 
-void Application::pre_build_graph()
+Variant Application::option( const std::string& key ) const
 {
-    state_ = GraphPreBuilt;
+    auto it = options_.find( key );
+    if ( it == options_.end() ) {
+        return Variant(std::string(""));
+    }
+    return it->second;
 }
 
-void Application::build_graph( bool consistency_check, const std::string& schema )
+void Application::set_data_directory( const std::string& d )
 {
-    // request the database
-    PQImporter importer( db_options_ );
-    TextProgression progression( 50 );
-    COUT << "Loading graph from database: " << std::endl;
-    graph_ = importer.import_graph( progression, consistency_check, schema );
-    COUT << "Importing constants ..." << std::endl;
-    importer.import_constants( *graph_, progression, schema );
-    state_ = GraphBuilt;
-    schema_name_ = schema;
-}
-
-std::string Application::schema_name() const
-{
-    return schema_name_;
+    set_option( "data_directory", Variant::from_string(d) );
 }
 
 const std::string Application::data_directory() const
 {
-    const char* data_dir = getenv( "TEMPUS_DATA_DIRECTORY" );
+    std::string data_dir;
+    auto it = options_.find( "data_directory" );
+    if ( it != options_.end() ) {
+        data_dir = it->second.str();
+    }
+    else {
+        const char* d = getenv( "TEMPUS_DATA_DIRECTORY" );
 
-    if ( !data_dir ) {
-        const std::string msg = "environment variable TEMPUS_DATA_DIRECTORY is not defined";
-        CERR << msg << "\n";
-        throw std::runtime_error( msg );
+        if ( !d ) {
+            const std::string msg = "environment variable TEMPUS_DATA_DIRECTORY is not defined";
+            CERR << msg << "\n";
+            throw std::runtime_error( msg );
+        }
+        data_dir = d;
     }
 
     // remove trailing space in path (windows will do that for you, an the env var
-    // defined in visual studio has that space wich screws up concatenation)
-    std::string dir( data_dir );
-    dir.erase( dir.find_last_not_of( " " )+1 );
-    return dir;
+    // defined in visual studio has that space which screws up concatenation)
+    data_dir.erase( data_dir.find_last_not_of( " " )+1 );
+    return data_dir;
 }
+
+
 }

@@ -1,0 +1,134 @@
+<h1>Tempus in Eclipse</h1>
+
+<h2>Create your Makefile</h2>
+
+<p>On ubuntu 15.04 :</p>
+
+<pre><code>INSTALL_PREFIX=~/tempus_installed/libexec/tempus
+MAINTAINER=david.marteau@mappy.com
+
+CMAKE_FLAGS=-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/9.4/ \
+            -DCMAKE_INSTALL_PREFIX=$(INSTALL_PREFIX)
+
+
+include lbs.mk
+
+
+#------------------------------------------------
+# If you have specific local configuration:
+# create your own Makefile.
+# 
+# Example:
+#
+# BOOST_ROOT=/usr/local/libexec/boost_1_58_0
+# INSTALL_PREFIX=/opt/local/libexec/tempus
+# MAINTAINER=david.marteau@mappy.com
+#
+# CMAKE_FLAGS=-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/9.4/ \
+#            -DBoost_NO_SYSTEM_PATHS=TRUE \
+#            -DBoost_NO_BOOST_CMAKE=TRUE \
+#            -DBoost_LIBRARY_DIRS:FILEPATH=$(BOOST_ROOT)/lib \
+#            -DBOOST_ROOT:PATHNAME=$(BOOST_ROOT) \
+#            -DCMAKE_INSTALL_PREFIX=$(INSTALL_PREFIX)
+#
+#
+# include lbs.mk
+#
+#------------------------------------------------
+</code></pre>
+
+<h2>Create Eclipse project from tempus Makefile</h2>
+
+<p>From <strong>File > Import...</strong> :</p>
+
+<ul>
+<li>In the <strong>Import</strong> window :
+<blockquote>
+  <ul>
+<li>choose <strong>C/C++ > Existing Code as Makefile project</strong></li>
+<li>Click next</li>
+<li>In the <strong>New project</strong> window :</li>
+<li>set a <strong>Project Name</strong></li>
+<li>point <strong>Existing Code Location</strong> to your Tempus directory</li>
+<li>in the <strong>Toolchain for indexer settings</strong>, choose <strong>Linux GCC</strong>
+<br/></li>
+</ul>
+
+<p><h2>Run make targets</h2></li>
+</ul></p>
+
+<p></blockquote></p>
+
+<p>In the <strong>Project explorer</strong>, go to the Tempus root, and double click on <strong>lbs.mk</strong> to open it and make it the active document.</p>
+
+<p>In the <strong>Outline window</strong>, right click on each compile target you plan to use 
+and choose <strong>Add make target</strong>.</p>
+
+<p>Targets appear in the thee <strong>Make Target</strong> window.
+<br/></p>
+
+<h2>Configure CDT/Codan</h2>
+
+<ul>
+<li>In the <strong>Project explorer</strong>, right-click on the Tempus project, and choose the <strong>Properties</strong> item.</li>
+<li>In the Language column, choose <strong>GNU C</strong>.</li>
+<li>Go to <strong>C / C++ General > Paths and symbols</strong>.</li>
+<li>Click on the <strong>Add...</strong> button, and set <strong>Directory</strong> as <strong>/usr/include/libxml2</strong> <br />
+(you can find the path on your system with command <code>/usr/include/libxml2</code>)
+<br/></li>
+</ul>
+
+<h2>Build configuration</h2>
+
+<ul>
+<li>Go to <strong>Project > Build Configurations > Manage...</strong></li>
+<li>Make sure you have these two configurations : <strong>Debug</strong> and <strong>Release</strong> ; create them if needed ; close the <strong>Tempus: Manage Configurations</strong> window.</li>
+<li>In the <strong>Project explorer</strong>, right-click on the Tempus project, and choose the <strong>Properties</strong> item.</li>
+<li>Go to <strong>C/C++ Build</strong></li>
+<li>In the <strong>Configuration</strong> drop down list, select <strong>All Configurations</strong></li>
+<li>Select the <strong>Builder Settings</strong> tab
+<blockquote>
+  <ul>
+<li>In the <strong>Builder</strong> area, uncheck <strong>Use default build command</strong> (by default, it launches make all) ; for <strong>Build command</strong>, set <strong>make</strong></li>
+<li>In the <strong>Build location</strong> area, the <strong>Build directory</strong> should be set as <strong>${workspace_loc:/Tempus}/</strong></li>
+<li>Select the <strong>Behavior</strong> tab
+In the <strong>Workbench Build Behavior</strong> area, ensure these options : <br />
+[x] <strong>Build (Incremental build)</strong>  : <code>build</code> <br />
+[x] <strong>Clean</strong>  : <code>clobber configure</code></li>
+<li>Close the <strong>Properties for Tempus</strong> window
+<br/></li>
+</ul>
+
+<p><h2>Debugging</h2></li>
+</ul></p>
+
+<p></blockquote></p>
+
+<ul>
+<li>In the <strong>Project explorer</strong>, right-click on the Tempus project, and choose the <strong>Properties</strong> item.</li>
+<li>Go to <strong>C/C++ Build</strong></li>
+<li>At the right upside corner of the window, click on <strong>Manage Configurations...</strong></li>
+<li>In the <strong>Configuration</strong> drop down list, select <strong>Debug</strong></li>
+<li>Select the <strong>Builder Settings</strong> tab, and for <strong>Build command</strong>, set <strong>make DEBUG=1</strong></li>
+<li>Close the <strong>Properties for Tempus</strong> window</li>
+<li>Go to <strong>Run > Debug Configurations...</strong></li>
+<li>In the left pane of the window, select <strong>C/C++ Application</strong>, create a new configuration, and do on the new project some settings in the right pane</li>
+<li><strong>Main</strong> tab :
+<blockquote>
+  <ul>
+<li>In the field <strong>C/C++ Application:</strong>, set <strong>build_debug/bin/wps</strong></li>
+<li>In <strong>Build configuration</strong>, choose <strong>Debug</strong></li>
+<li>At the bottom, click on <strong>Select other...</strong>, check <strong>Use configuration specific settings</strong> and choose <strong>Legacy Create Process Create Launcher</strong></li>
+<li><strong>Arguments</strong> tab : <br />
+In the field <strong>Program arguments</strong>, enter :<br/>-c build<em>debug/lib  -d dbname=tempus -p 7000 -l sample</em>road<em>plugin</li>
+<li><strong>Environment</strong> tab : <br />
+Add the following variables (adapt to your configuration as set in ...) :</li>
+</ul>
+
+<blockquote>
+  <p><strong>LD</em>LIBRARY<em>PATH</strong> : build</em>debug/lib:/usr/libexec/boost<em>1</em>58/lib <br />
+<strong>TEMPUS<em>DATA</em>DIRECTORY</strong> : data</li>
+</ul></p>
+</blockquote>
+
+<p></blockquote></p>

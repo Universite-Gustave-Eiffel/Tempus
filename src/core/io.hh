@@ -18,7 +18,13 @@
 #ifndef TEMPUS_IO_HH
 #define TEMPUS_IO_HH
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 ///
 /// @brief Macro for mutex protected cerr and cout

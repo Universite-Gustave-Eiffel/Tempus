@@ -16,57 +16,63 @@
  */
 
 #include <string>
+#include <ostream>
 #include "cost.hh"
 
 namespace Tempus
 {
-std::string cost_name( int cost )
+std::ostream& operator<<( std::ostream& out, CostId e )
+{
+    return (out << int(e));
+}
+
+std::string cost_name( CostId cost )
 {
     switch ( cost ) {
-    case CostDistance:
+    case CostId::CostDistance:
         return "distance";
-    case CostDuration:
+    case CostId::CostDuration:
         return "duration";
-    case CostPrice:
+    case CostId::CostPrice:
         return "price";
-    case CostCarbon:
+    case CostId::CostCarbon:
         return "carbon";
-    case CostCalories:
+    case CostId::CostCalories:
         return "calories";
-    case CostNumberOfChanges:
+    case CostId::CostNumberOfChanges:
         return "number of changes";
-    case CostVariability:
+    case CostId::CostVariability:
         return "variability";
-    case CostPathComplexity:
+    case CostId::CostPathComplexity:
         return "complexity";
-    case CostElevation:
+    case CostId::CostElevation:
         return "elevation";
-    case CostSecurity:
+    case CostId::CostSecurity:
         return "security";
-    case CostLandmark:
+    case CostId::CostLandmark:
         return "landmark";
     }
 
     return "--";
 }
 
-std::string cost_unit( int cost )
+std::string cost_unit( CostId cost )
 {
     switch ( cost ) {
-    case CostDistance:
+    case CostId::CostDistance:
         return "m";
-    case CostDuration:
+    case CostId::CostDuration:
         return "min";
-    case CostPrice:
+    case CostId::CostPrice:
         return "€";
-    case CostCarbon:
+    case CostId::CostCarbon:
         return "g/m^3";
-    case CostCalories:
+    case CostId::CostCalories:
         return "kcal";
-    case CostElevation:
+    case CostId::CostElevation:
         return "m";
+    default:
+        return "";
     }
-
-    return "";
 }
 }

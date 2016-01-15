@@ -15,26 +15,33 @@
  *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/format.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #include "db.hh"
-#include "pgsql_importer.hh"
 #include "multimodal_graph.hh"
 #include "reverse_multimodal_graph.hh"
 #include "utils/graph_db_link.hh"
+#include "multimodal_graph_builder.hh"
+#include "ch_routing_data.hh"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-
-std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OPTIONS" ) : "";
+static std::string g_db_options = getenv( "TEMPUS_DB_OPTIONS" ) ? getenv( "TEMPUS_DB_OPTIONS" ) : "";
+static std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";
 
 using namespace boost::unit_test ;
 using namespace Tempus;
-
-std::string g_db_name = getenv( "TEMPUS_DB_NAME" ) ? getenv( "TEMPUS_DB_NAME" ) : "tempus_test_db";
 
 Multimodal::Vertex vertex_from_road_node_id( db_id_t id, const Multimodal::Graph& lgraph )
 {
@@ -55,7 +62,7 @@ BOOST_AUTO_TEST_CASE( testConnection )
 {
     std::cout << "DbTest::testConnection()" << std::endl;
 
-    std::auto_ptr<Db::Connection> connection;
+    std::unique_ptr<Db::Connection> connection;
 
     // Connection to an non-existing database
     BOOST_CHECK_THROW( connection.reset( new Db::Connection( g_db_options + " dbname=zorglub" ) ), std::runtime_error );
@@ -78,7 +85,7 @@ BOOST_AUTO_TEST_CASE( testConnection )
 BOOST_AUTO_TEST_CASE( testQueries )
 {
     std::cout << "DbTest::testQueries()" << std::endl;
-    std::auto_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
+    std::unique_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
 
     // test bad query
     BOOST_CHECK_THROW( connection->exec( "SELZECT * PHROM zorglub" ),  std::runtime_error );
@@ -111,71 +118,185 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_PgImporter )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
-
-std::auto_ptr<Multimodal::Graph> graph;
-
-BOOST_AUTO_TEST_CASE( testConsistency )
+void testConsistency_( const Multimodal::Graph* graph )
 {
-    std::cout << "PgImporterTest::testConsistency()" << std::endl;
-    TextProgression progression;
-    graph = importer->import_graph( progression );
-    importer->import_constants( *graph, progression );
+    Db::Connection connection( g_db_options + " dbname = " + g_db_name );
 
     // get the number of vertices in the graph
-    long n_road_vertices, n_road_edges, n_road_oriented_edges;
+    long n_road_vertices;
     {
-        Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.road_node" ) );
+        Db::Result res( connection.exec( "SELECT COUNT(*) FROM tempus.road_node" ) );
         BOOST_CHECK_EQUAL( res.size(), 1 );
         n_road_vertices = res[0][0].as<long>();
     }
 
     // get the number of road edges in the DB
     // and compute the number of edges in the graph
+    size_t n_two_way, n_separate_two_way, n_one_way;
+    // number of two-way roads
     {
-        Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.road_section" ) );
+        Db::Result res( connection.exec( "select count(*) from tempus.road_section as rs1 left join tempus.road_section as rs2 "
+                                         "on rs1.node_from = rs2.node_to and rs1.node_to = rs2.node_from "
+                                         "where rs2.id is null AND rs1.traffic_rules_tf > 0") );
         BOOST_CHECK_EQUAL( res.size(), 1 );
-        n_road_edges = res[0][0].as<long>();
+        n_two_way = res[0][0].as<long>();
+    }
+    // number of two-way roads, with each way on a separate section
+    {
+        Db::Result res( connection.exec( "select count(*) from tempus.road_section as rs1 left join tempus.road_section as rs2 "
+                                         "on rs1.node_from = rs2.node_to and rs1.node_to = rs2.node_from "
+                                         "where rs2.id is not null and rs1.id < rs2.id") );
+        BOOST_CHECK_EQUAL( res.size(), 1 );
+        n_separate_two_way = res[0][0].as<long>();
     }
     {
         // get the number of simple edges
-        Db::Result res( importer->query( "select count(*) from tempus.road_section where traffic_rules_tf = 0" ) );
+        Db::Result res( connection.exec( "select count(*) from tempus.road_section where traffic_rules_tf = 0" ) );
         BOOST_CHECK_EQUAL( res.size(), 1 );
-        n_road_oriented_edges = res[0][0].as<long>();
+        n_one_way = res[0][0].as<long>();
     }
-    std::cout << "n_road_vertices = " << n_road_vertices << " n_road_edges = " << n_road_edges;
-    std::cout << " n_road_oriented_edges = " << n_road_oriented_edges << std::endl;
+    std::cout << "n_road_vertices = " << n_road_vertices;
+    std::cout << " n_two_way = " << n_two_way << " n_separate_two_way = " << n_separate_two_way << " n_one_way = " << n_one_way << std::endl;
     std::cout << "num_vertices = " << boost::num_vertices( graph->road() ) << " num_edges = " << boost::num_edges( graph->road() ) << std::endl;
     BOOST_CHECK_EQUAL( n_road_vertices, boost::num_vertices( graph->road() ) );
-    BOOST_CHECK_EQUAL( n_road_edges * 2 - n_road_oriented_edges, boost::num_edges( graph->road() ) );
+    BOOST_CHECK_EQUAL( (n_two_way + n_separate_two_way) * 2 + n_one_way, boost::num_edges( graph->road() ) );
+
+    std::cout << "======== test opposite sections ============" << std::endl;
+    // check that opposite sections are correctly stored
+    {
+        std::map<db_id_t, Road::Vertex> vertex_id_map;
+        Road::VertexIterator vit, vitend;
+        boost::tie( vit, vitend ) = vertices( graph->road() );
+        std::cout << "n_vertices: " << (vitend-vit) << std::endl;
+        uint32_t ne = 0;
+        for ( ; vit != vitend; vit++ ) {
+            vertex_id_map[ graph->road()[*vit].db_id() ] = *vit;
+            int noe = 0;
+            int nie = 0;
+            auto outp = out_edges( *vit, graph->road() );
+            noe += outp.second - outp.first;
+            auto inp = in_edges( *vit, graph->road() );
+            nie += inp.second - inp.first;
+            BOOST_CHECK_EQUAL( noe, out_degree( *vit, graph->road() ) );
+            BOOST_CHECK_EQUAL( nie, in_degree( *vit, graph->road() ) );
+            ne += noe;
+        }
+        BOOST_CHECK_EQUAL( ne, num_edges( graph->road() ) );
+        
+        std::cout << "db request" << std::endl;
+        // select sections that are different in the two directions
+        Db::Result res( connection.exec( "SELECT "
+                                         "rs1.id, rs1.road_type, rs1.node_from, rs1.node_to, rs1.traffic_rules_ft, "
+                                         "rs1.traffic_rules_tf, rs1.length, rs1.car_speed_limit, rs1.lane, "
+                                         "rs1.roundabout, rs1.bridge, rs1.tunnel, rs1.ramp, rs1.tollway, "
+                                         "rs2.id, rs2.road_type, "
+                                         "rs2.traffic_rules_ft, rs2.length, rs2.car_speed_limit, rs2.lane, "
+                                         "rs2.roundabout, rs2.bridge, rs2.tunnel, rs2.ramp, rs2.tollway "
+                                         "FROM tempus.road_section AS rs1 "
+                                         "LEFT JOIN tempus.road_section AS rs2 "
+                                         "ON rs1.node_from = rs2.node_to AND rs1.node_to = rs2.node_from "
+                                         "WHERE rs2.id IS NOT NULL AND rs1.id < rs2.id" ) );
+        std::cout << "res: " << res.size() << std::endl;
+        for ( size_t i = 0; i < res.size(); i++ ) {
+            int j = 0;
+            db_id_t s1_id = res[i][j++];
+            int s1_road_type = res[i][j++];
+            db_id_t node_from = res[i][j++];
+            db_id_t node_to = res[i][j++];
+            int s1_traffic_rules_ft = res[i][j++];
+            int s1_traffic_rules_tf = res[i][j++];
+            float s1_length = res[i][j++];
+            float s1_car_speed_limit = res[i][j++];
+            Db::Value s1_lane = res[i][j++];
+            bool s1_roundabout = res[i][j++];
+            bool s1_bridge = res[i][j++];
+            bool s1_tunnel = res[i][j++];
+            bool s1_ramp = res[i][j++];
+            bool s1_tollway = res[i][j++];
+
+            db_id_t s2_id = res[i][j++];
+            int s2_road_type = res[i][j++];
+            int s2_traffic_rules_ft = res[i][j++];
+            float s2_length = res[i][j++];
+            float s2_car_speed_limit = res[i][j++];
+            Db::Value s2_lane = res[i][j++];
+            bool s2_roundabout = res[i][j++];
+            bool s2_bridge = res[i][j++];
+            bool s2_tunnel = res[i][j++];
+            bool s2_ramp = res[i][j++];
+            bool s2_tollway = res[i][j++];
+
+            BOOST_CHECK( vertex_id_map.find( node_from ) != vertex_id_map.end() );
+            BOOST_CHECK( vertex_id_map.find( node_to ) != vertex_id_map.end() );
+            Road::Vertex from = vertex_id_map[node_from];
+            Road::Vertex to = vertex_id_map[node_to];
+
+            bool found = false;
+            Road::Edge edge1, edge2;
+            boost::tie( edge1, found ) = edge( from, to, graph->road() );
+            BOOST_CHECK( found );
+            boost::tie( edge2, found ) = edge( to, from, graph->road() );
+            BOOST_CHECK( found );
+
+            Road::Section s1 = graph->road()[edge1];
+            Road::Section s2 = graph->road()[edge2];
+
+            BOOST_CHECK_EQUAL( s1.db_id(), s1_id );
+            BOOST_CHECK_EQUAL( s1.road_type(), s1_road_type );
+            BOOST_CHECK_EQUAL( s1.traffic_rules(), s1_traffic_rules_ft );
+            BOOST_CHECK_EQUAL( s1.length(), s1_length );
+            BOOST_CHECK_EQUAL( s1.car_speed_limit(), s1_car_speed_limit );
+            BOOST_CHECK_EQUAL( s1.lane(), s1_lane.is_null() ? 1 : s1_lane.as<int>() );
+            BOOST_CHECK_EQUAL( s1.is_roundabout(), s1_roundabout );
+            BOOST_CHECK_EQUAL( s1.is_bridge(), s1_bridge );
+            BOOST_CHECK_EQUAL( s1.is_tunnel(), s1_tunnel );
+            BOOST_CHECK_EQUAL( s1.is_ramp(), s1_ramp );
+            BOOST_CHECK_EQUAL( s1.is_tollway(), s1_tollway );
+
+            BOOST_CHECK_EQUAL( s2.db_id(), s2_id );
+            BOOST_CHECK_EQUAL( s2.road_type(), s2_road_type );
+            BOOST_CHECK_EQUAL( s2.traffic_rules(), s2_traffic_rules_ft );
+            BOOST_CHECK_EQUAL( s2.length(), s2_length );
+            BOOST_CHECK_EQUAL( s2.car_speed_limit(), s2_car_speed_limit );
+            BOOST_CHECK_EQUAL( s2.lane(), s2_lane.is_null() ? 1 : s2_lane.as<int>() );
+            BOOST_CHECK_EQUAL( s2.is_roundabout(), s2_roundabout );
+            BOOST_CHECK_EQUAL( s2.is_bridge(), s2_bridge );
+            BOOST_CHECK_EQUAL( s2.is_tunnel(), s2_tunnel );
+            BOOST_CHECK_EQUAL( s2.is_ramp(), s2_ramp );
+            BOOST_CHECK_EQUAL( s2.is_tollway(), s2_tollway );
+
+            BOOST_CHECK_EQUAL( s2_traffic_rules_ft, s1_traffic_rules_tf );
+        }
+    }
 
     // number of PT networks
     {
-        Db::Result res( importer->query( "SELECT COUNT(*) FROM tempus.pt_network" ) );
+        std::cout << "pt networks" << std::endl;
+        Db::Result res( connection.exec( "SELECT COUNT(*) FROM tempus.pt_network" ) );
         long n_networks = res[0][0].as<long>();
 
         BOOST_CHECK_EQUAL( ( size_t )n_networks, graph->public_transports().size() );
         BOOST_CHECK_EQUAL( ( size_t )n_networks, graph->network_map().size() );
     }
 
-    Multimodal::Graph::PublicTransportGraphList::const_iterator it;
-    for ( it = graph->public_transports().begin(); it != graph->public_transports().end(); it++ ) {
-        const PublicTransport::Graph& pt_graph = *it->second;
+    std::cout << "pt graphs" << std::endl;
+    for ( auto p : graph->public_transports() ) {
+        const PublicTransport::Graph& pt_graph = *p.second;
 
         long n_pt_vertices, n_pt_edges;
         {
             // select PT stops that are involved in a pt section
-            Db::Result res( importer->query( (boost::format("SELECT COUNT(*) FROM ("
+            Db::Result res( connection.exec( (boost::format("SELECT COUNT(*) FROM ("
                                                             "select distinct n.id from tempus.pt_stop as n, "
                                                             "tempus.pt_section as s "
                                                             "WHERE s.network_id = %1% AND (s.stop_from = n.id "
-                                                            "OR s.stop_to = n.id ) ) t" ) % it->first ).str() ) );
+                                                            "OR s.stop_to = n.id ) ) t" ) % p.first ).str() ) );
             BOOST_CHECK( res.size() == 1 );
             n_pt_vertices = res[0][0].as<long>();
         }
 
         {
-            Db::Result res( importer->query( (boost::format("SELECT COUNT(*) FROM tempus.pt_section WHERE network_id = %1%") % it->first).str() ));
+            Db::Result res( connection.exec( (boost::format("SELECT COUNT(*) FROM tempus.pt_section WHERE network_id = %1%") % p.first).str() ));
             BOOST_CHECK( res.size() == 1 );
             n_pt_edges = res[0][0].as<long>();
         }
@@ -186,21 +307,37 @@ BOOST_AUTO_TEST_CASE( testConsistency )
     }
 }
 
+BOOST_AUTO_TEST_CASE( testConsistency )
+{
+    std::cout << "PgImporterTest::testConsistency()" << std::endl;
+    TextProgression progression;
+    VariantMap options;
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
+    const Multimodal::Graph* graph( dynamic_cast<const Tempus::Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
+    testConsistency_( graph );
+
+    MultimodalGraphBuilder builder;
+    std::cout << "dumping ... " << std::endl;
+    builder.file_export( graph, "dump.bin", progression );
+
+    // retry with a fresh loaded from dump file
+    std::unique_ptr<RoutingData> rd2 = builder.file_import( "dump.bin", progression );
+    const Multimodal::Graph* graph2( dynamic_cast<const Tempus::Multimodal::Graph*>( rd2.get() ) );
+    testConsistency_( graph2 );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 
 BOOST_AUTO_TEST_SUITE( tempus_plugin_multimodal )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
-
-std::auto_ptr<Multimodal::Graph> graph;
-
 BOOST_AUTO_TEST_CASE( testMultimodal )
 {
     std::cout << "PgImporterTest::testMultimodal()" << std::endl;
     TextProgression progression;
-    graph = importer->import_graph( progression );
-    importer->import_constants( *graph, progression );
+    VariantMap options;
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
+    const Multimodal::Graph* graph( dynamic_cast<const Tempus::Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
 
     size_t nv = 0;
     size_t n_road_vertices = 0;
@@ -224,7 +361,7 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
         }
     }
 
-    const PublicTransport::Graph& pt_graph = *graph->public_transports().begin()->second;
+    const PublicTransport::Graph& pt_graph = *(*graph->public_transports().begin()).second;
     std::cout << "nv = " << nv << std::endl;
     std::cout << "n_road_vertices = " << n_road_vertices << " num_vertices(road) = " << num_vertices( graph->road() ) << std::endl;
     std::cout << "n_pt_vertices = " << n_pt_vertices << " num_vertices(pt) = " << num_vertices( pt_graph ) << std::endl;
@@ -319,7 +456,7 @@ BOOST_AUTO_TEST_CASE( testMultimodal )
     Road::EdgeIterator pei, pei_end;
 
     for ( boost::tie( pei, pei_end ) = edges( graph->road() ); pei != pei_end; pei++ ) {
-        n_stops += graph->road()[ *pei ].stops().size();
+        n_stops += graph->edge_stops( *pei ).size();
     }
 
     std::cout << "ne = " << ne << std::endl;
@@ -428,17 +565,17 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
     }
 
     // test public transport sub map
+    // FIXME
+#if 0
     {
         // 1 // create other public transport networks, if needed
         if ( graph->public_transports().size() < 2 ) {
             // get the maximum pt id
             db_id_t max_id = 0;
 
-            for ( Multimodal::Graph::PublicTransportGraphList::const_iterator it = graph->public_transports().begin();
-                  it != graph->public_transports().end();
-                    it++ ) {
-                if ( it->first > max_id ) {
-                    max_id = it->first;
+            for ( auto p : graph->public_transports() ) {
+                if ( p.first > max_id ) {
+                    max_id = p.first;
                 }
             }
 
@@ -446,11 +583,11 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
             size_t n_edges = num_edges( *graph );
 
             // insert a new pt that is a copy of the first
-            boost::ptr_map<db_id_t, PublicTransport::Graph> pt_copy;
-            pt_copy.insert( 1, std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) ) );
-            pt_copy.insert( 2, std::auto_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) ) );
+            std::map<db_id_t, std::unique_ptr<PublicTransport::Graph>> pt_copy;
+            pt_copy.insert( std::make_pair(1, std::unique_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) )) );
+            pt_copy.insert( std::make_pair(2, std::unique_ptr<PublicTransport::Graph>(new PublicTransport::Graph(pt_graph) )) );
 
-            graph->set_public_transports( pt_copy );
+            graph->set_public_transports( std::move(pt_copy) );
 
             // check that vertices are doubled
             size_t vv = num_vertices( *graph );
@@ -488,22 +625,20 @@ std::cout << "n_poi2road = " << n_poi2road << " pois.size = " << graph->pois().s
             BOOST_CHECK_EQUAL( n_computed_edges, n_edges3 );
         }
     }
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_reverse_road )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
-
-std::auto_ptr<Multimodal::Graph> graph;
-
 BOOST_AUTO_TEST_CASE( testReverseRoad )
 {
     std::cout << "PgImporterTest::testReverseRoad()" << std::endl;
     TextProgression progression;
-    graph = importer->import_graph( progression );
-    importer->import_constants( *graph, progression );
+    VariantMap options;
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
+    const Multimodal::Graph* graph( dynamic_cast<const Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
 
     Road::ReverseGraph rroad( graph->road() );
     const Road::Graph& road = graph->road();
@@ -543,16 +678,13 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_core_reverse_multimodal )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
-
-std::auto_ptr<Multimodal::Graph> graph;
-
 BOOST_AUTO_TEST_CASE( testReverseMultimodal )
 {
     std::cout << "PgImporterTest::testReverseMultimodal()" << std::endl;
     TextProgression progression;
-    graph = importer->import_graph( progression );
-    importer->import_constants( *graph, progression );
+    VariantMap options;
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
+    const Multimodal::Graph* graph( dynamic_cast<const Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
 
     Multimodal::ReverseGraph rgraph( *graph );
     Multimodal::VertexIterator vi, vi_end;
@@ -646,24 +778,22 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( tempus_road_restrictions )
 
-std::auto_ptr<PQImporter> importer( new PQImporter( g_db_options + " dbname = " + g_db_name ) );
-
-std::auto_ptr<Multimodal::Graph> graph;
-
 BOOST_AUTO_TEST_CASE( testRestrictions )
 {
     TextProgression progression;
-    graph = importer->import_graph( progression );
-    importer->import_constants( *graph, progression );
+    VariantMap options;
+    options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
+    const Multimodal::Graph* graph( dynamic_cast<const Multimodal::Graph*>( load_routing_data( "multimodal_graph", progression, options ) ) );
+    Db::Connection connection( g_db_options + " dbname = " + g_db_name );
 
     // restriction nodes
     db_id_t expected_nodes[][4] = { { 15097, 15073, 14849, 0 },
                                     { 14360, 14371, 14423, 14415 },
                                     // forbidden u-turn :
-                                    { 14360, 14371, 14360, 0 },
-                                    { 14371, 14360, 14371, 0 }
+                                    { 14331, 14265, 14331, 0 },
+                                    { 14265, 14331, 14265, 0 }
     };
-    Road::Restrictions restrictions( importer->import_turn_restrictions( graph->road() ) );
+    Road::Restrictions restrictions( import_turn_restrictions( connection, graph->road() ) );
 
     Road::Restrictions::RestrictionSequence::const_iterator it;
     int i = 0;
@@ -686,3 +816,105 @@ BOOST_AUTO_TEST_CASE( testRestrictions )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( tempus_ch_query )
+
+void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_vertices, int* degrees, int* costs )
+{
+    std::vector<CHEdgeProperty> props;
+    for ( size_t i = 0; i < edges_.size(); i++ ) {
+        CHEdgeProperty p;
+        p.b.cost = costs[i];
+        props.push_back( p );
+    }
+    
+    CHQuery graph( edges_.begin(), edges_.end(), n_vertices, degrees, &props[0] );
+
+    graph.debug_print( std::cout );
+
+    auto oit = edges_.begin();
+    uint32_t lastv = 0;
+    int upd = 0;
+    auto eit = edges( graph ).first;
+    auto eit_end = edges( graph ).second;
+    for ( ; eit != eit_end; eit++, oit++ ) {
+        if ( oit->first != lastv )
+        {
+            std::cout << "deg " << degrees[lastv] << " =? " << upd << std::endl;
+            BOOST_CHECK_EQUAL( degrees[lastv], upd );
+            upd = 0;
+        }
+        std::cout << oit->first << " - " << oit->second << (eit->is_upward()? "+" : "-") << std::endl;
+        BOOST_CHECK_EQUAL( eit->source(), source( *eit, graph ) );
+        BOOST_CHECK_EQUAL( eit->target(), target( *eit, graph ) );
+        if ( eit->is_upward() ) {
+            BOOST_CHECK_EQUAL( eit->source(), oit->first );
+            BOOST_CHECK_EQUAL( eit->target(), oit->second );
+            upd++;
+        }
+        else {
+            BOOST_CHECK_EQUAL( eit->target(), oit->first );
+            BOOST_CHECK_EQUAL( eit->source(), oit->second );
+        }
+
+        bool found = false;
+        CHEdge e;
+        boost::tie( e, found ) = edge( eit->source(), eit->target(), graph );
+        BOOST_CHECK( found );
+        BOOST_CHECK_EQUAL( e.property().b.cost, eit->property().b.cost );
+        
+        lastv = oit->first;
+    }
+    if ( oit->first != lastv )
+    {
+        std::cout << "deg " << degrees[lastv] << " =? " << upd << std::endl;
+        BOOST_CHECK_EQUAL( degrees[lastv], upd );
+        upd = 0;
+    }
+}
+
+BOOST_AUTO_TEST_CASE( testCHQuery )
+{
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> edges;
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(1) ) );
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(3) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(3) ) );
+        edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(3) ) );
+
+        int degrees[] = { 0, 1, 1, 0 };
+        int costs[] = { 10, 20, 30, 40, 50, 60 };
+
+        test_ch( edges, 4, degrees, costs );
+    }
+
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> edges;
+        // two connected components (islands)
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(3) ) );
+        edges.push_back( std::make_pair( (uint32_t)1, (uint32_t)(2) ) );
+        edges.push_back( std::make_pair( (uint32_t)3, (uint32_t)(4) ) );
+
+        int degrees[] = { 0, 1, 0, 1, 0 };
+        int costs[] = { 10, 20, 30 };
+
+        test_ch( edges, 5, degrees, costs );
+    }
+
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> edges;
+        // two connected components (islands)
+        edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(1) ) );
+        edges.push_back( std::make_pair( (uint32_t)2, (uint32_t)(3) ) );
+
+        int degrees[] = { 0, 0, 0, 0 };
+        int costs[] = { 10, 20 };
+
+        test_ch( edges, 4, degrees, costs );
+    }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+

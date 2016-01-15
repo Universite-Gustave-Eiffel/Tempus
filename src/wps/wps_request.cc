@@ -24,8 +24,14 @@
 #include <vector>
 #include <map>
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "wps_request.hh"
 #include "wps_service.hh"

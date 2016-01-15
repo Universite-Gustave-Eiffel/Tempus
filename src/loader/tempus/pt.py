@@ -48,7 +48,7 @@ class GTFSImporter(DataImporter):
     # SQL files to execute before loading GTFS data
     PRELOADSQL = ["reset_import_schema.sql", "create_gtfs_import_tables.sql" ]
     # SQL files to execute after loading GTFS data 
-    POSTLOADSQL = []
+    POSTLOADSQL = [ "gtfs.sql", "gtfs_shapes.sql" ]
 
     def __init__(self, source = "", dbstring = "", logfile = None, encoding = 'UTF8', copymode = True, doclean = True, subs = {}):
         """Create a new GTFS data loader. Arguments are :
@@ -57,18 +57,13 @@ class GTFSImporter(DataImporter):
         dbstring : the database connection string
         logfile : where to log SQL execution results (stdout by default)
         """
-        super(GTFSImporter, self).__init__(source, dbstring, logfile, doclean)
+        if not 'network' in subs.keys():
+            subs['network'] = "PT"
+        super(GTFSImporter, self).__init__(source, dbstring, logfile, doclean, subs)
         self.sqlfile = ""
         self.copymode = copymode
         self.doclean = doclean
         self.encoding = encoding
-
-        if not 'network' in subs.keys():
-            subs['network'] = "PT"
-        self.POSTLOADSQL = [
-            ("gtfs.sql", subs),
-            'gtfs_shapes.sql'
-        ]
 
     def check_input(self):
         """Check if given source is a GTFS zip file."""
@@ -182,7 +177,7 @@ class GTFSImporter(DataImporter):
 
     def load_gtfs(self):
         """Load generated SQL file with GTFS data into the database."""
-        return self.load_sqlfiles([self.sqlfile])
+        return self.load_sqlfiles([self.sqlfile], substitute = False)
 
     def clean(self):
         """Remove previously generated SQL file."""

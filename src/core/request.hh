@@ -53,7 +53,7 @@ public:
     ///
     /// Class used to represent destinations of a request and constraints of the step
     struct Step {
-        DECLARE_RW_PROPERTY( location, Road::Vertex );
+        DECLARE_RW_PROPERTY( location, db_id_t );
         ///
         /// Time constraint.
         /// @warning Should be ignored for the first step (origin)
@@ -83,19 +83,19 @@ public:
 
     ///
     /// Get access to the origin vertex
-    Road::Vertex origin() const;
+    db_id_t origin() const;
 
     /// Get write access to the origin vertex
-    void set_origin( const Road::Vertex& );
+    void set_origin( const db_id_t& );
     /// Get write access to the origin
     void set_origin( const Step& );
 
     ///
     /// Get access to the destination vertex
-    Road::Vertex destination() const;
+    db_id_t destination() const;
 
     /// Get write access to the destination vertex
-    void set_destination( const Road::Vertex& );
+    void set_destination( const db_id_t& );
     /// Get write access to the destination
     void set_destination( const Step& );
 
@@ -108,7 +108,7 @@ public:
 
     ///
     /// Private vehicule option: parking location
-    DECLARE_RW_PROPERTY( parking_location, boost::optional<Road::Vertex> );
+    DECLARE_RW_PROPERTY( parking_location, boost::optional<db_id_t> );
 
     ///
     /// Criteria to optimize. The list is ordered by criterion priority.

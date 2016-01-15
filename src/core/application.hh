@@ -24,9 +24,9 @@
 
 #include "multimodal_graph.hh"
 #include "db.hh"
+#include "variant.hh"
 
 namespace Tempus {
-struct PluginFactory;
 
 ///
 /// Class used to represent the global state of the current application
@@ -36,75 +36,22 @@ public:
     /// Access to the singleton instance
     static Application* instance();
 
-    ///
-    /// Used to represent the application state
-    enum State {
-        ///
-        /// The application has just been (re)started
-        Started = 0,
-        ///
-        /// The application has database connection informations
-        Connected,
-        ///
-        /// Graph has been pre built
-        GraphPreBuilt,
-        ///
-        /// Graph has been built
-        GraphBuilt
-    };
-
-    ///
-    /// State accessors
-    State state() const {
-        return state_;
-    }
-
-    ///
-    /// Connect to the database
-    /// @param[in] db_options string giving options for database connection (e.g. dbname="" user="", etc.)
-    void connect( const std::string& db_options );
+    ~Application();
 
     ///
     /// Get the directory where data are stored
     const std::string data_directory() const;
 
-    ///
-    /// Database connection accessors. @relates Db::Connection
-    const std::string& db_options() const {
-        return db_options_;
-    }
+    void set_data_directory( const std::string& );
 
-    ///
-    /// Method to call to pre build the graph in memory
-    void pre_build_graph();
-
-    ///
-    /// Build the graph in memory (import from the database and wake up plugins)
-    void build_graph( bool consistency_check = false, const std::string& schema_name = "tempus" );
-
-    ///
-    /// Get the current schema used
-    std::string schema_name() const;
-
-    ///
-    /// Graph accessor (non const)
-    boost::optional<const Multimodal::Graph&> graph() {
-        if (!graph_.get()) {
-            return boost::optional<const Multimodal::Graph&>();
-        }
-        return *graph_;
-    }
+    void set_option( const std::string& key, const Variant& value );
+    Variant option( const std::string& ) const;
 
 protected:
     // private constructor
-    Application()
-    {}
+    Application();
 
-    std::string db_options_;
-    std::string schema_name_;
-    std::auto_ptr<Multimodal::Graph> graph_;
-
-    State state_;
+    std::map<std::string, Variant> options_;
 };
 }
 

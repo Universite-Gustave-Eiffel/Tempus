@@ -113,7 +113,7 @@ create table
 	_tempus_import.stops_geom as
 select
 	stop_id
-	, st_force_3DZ(st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), 2154)) as geom
+	, st_force_3DZ(st_transform(st_setsrid(st_point(stop_lon, stop_lat), 4326), %(native_srid))) as geom
 from
 	_tempus_import.stops;
 
@@ -384,7 +384,7 @@ select
         , (select id from tempus.pt_network as pn order by import_date desc limit 1) as network_id
         -- Geometry is a line between stops
         -- FIXME : if we have a shape.txt, could be a full shape
-        , st_force_3DZ(st_setsrid(st_makeline(g1.geom, g2.geom), 2154)) as geom
+        , st_force_3DZ(st_setsrid(st_makeline(g1.geom, g2.geom), %(native_srid))) as geom
 from (
         select
                 (select id from _tempus_import.pt_stop_idmap where vendor_id=t1.stop_id) as stop_from,

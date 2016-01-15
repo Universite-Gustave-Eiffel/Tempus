@@ -18,9 +18,19 @@
 #ifndef TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 #define TEMPUS_PUBLIC_TRANSPORT_GRAPH_HH
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/optional.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 #include "common.hh"
 #include "road_graph.hh"
+#include "abscissa.hh"
+#include "optional.hh"
+#include "public_transport.hh"
 
 namespace Tempus {
 /**
@@ -35,71 +45,41 @@ namespace Tempus {
 namespace PublicTransport {
 
 ///
-/// Public transport agency
-class Agency : public Base
-{
-public:
-    DECLARE_RW_PROPERTY( name, std::string );
-};
-typedef std::vector<Agency> AgencyList;
-
-///
-/// Public transport networks. A network can be made of several agencies
-struct Network : public Base {
-    DECLARE_RW_PROPERTY( name, std::string );
-
-public:
-    ///
-    /// Get the list of agencies of this network
-    const AgencyList& agencies() const { return agencies_; }
-
-    ///
-    /// Add an agency to this network
-    void add_agency( const Agency& agency );
-private:
-    AgencyList agencies_;
-};
-
-///
 /// storage types used to make a road graph
 typedef boost::vecS VertexListType;
 typedef boost::vecS EdgeListType;
 
-///
-/// To make a long line short: VertexDescriptor is either typedef'd to size_t or to a pointer,
-/// depending on VertexListType and EdgeListType used to represent lists of vertices (vecS, listS, etc.)
-typedef boost::mpl::if_<boost::detail::is_random_access<VertexListType>::type, size_t, void*>::type Vertex;
-/// see adjacency_list.hpp
-typedef boost::detail::edge_desc_impl<boost::bidirectional_tag, Vertex> Edge;
-
 struct Stop;
 struct Section;
+
 ///
 /// Definition of a public transport graph
 typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section> Graph;
+typedef Graph::vertex_descriptor Vertex;
+typedef Graph::edge_descriptor Edge;
 
 ///
 /// Used as a vertex in a PublicTransportGraph.
 /// Refers to the 'pt_stop' DB's table
 struct Stop : public Base {
 public:
-    Stop() : Base(), graph_(0) {}
+    Stop() : Base() {}
  
     /// Shortcut to the public transport where this stop belongs
     /// Can be null
-    DECLARE_RW_PROPERTY( graph, const Graph* );
+    DECLARE_RW_PROPERTY( graph, Optional<uint16_t> );
 
     /// This is a shortcut to the vertex index in the corresponding graph, if any.
     /// Needed to speedup access to a graph's vertex from a Node.
     /// Can be null
-    DECLARE_RW_PROPERTY( vertex, boost::optional<Vertex> );
+    DECLARE_RW_PROPERTY( vertex, Optional<Vertex> );
 
     DECLARE_RW_PROPERTY( name, std::string );
     DECLARE_RW_PROPERTY( is_station, bool );
 
     ///
     /// link to a possible parent station, or null
-    DECLARE_RW_PROPERTY( parent_station, boost::optional<Vertex> );
+    DECLARE_RW_PROPERTY( parent_station, Optional<Vertex> );
 
     /// link to a road edge
     DECLARE_RW_PROPERTY( road_edge, Road::Edge );
@@ -111,31 +91,25 @@ public:
 
     ///
     /// Number between 0 and 1 : position of the stop on the main road section
-    DECLARE_RW_PROPERTY( abscissa_road_section, double );
+    DECLARE_RW_PROPERTY( abscissa_road_section, Abscissa );
 
     ///
     /// Fare zone ID of this stop
-    DECLARE_RW_PROPERTY( zone_id, int );
+    DECLARE_RW_PROPERTY( zone_id, uint16_t );
 
     ///
     /// coordinates
     DECLARE_RW_PROPERTY( coordinates, Point3D );
+
+    friend void Tempus::serialize( std::ostream& ostr, const PublicTransport::Stop&, binary_serialization_t );
+    friend void Tempus::unserialize( std::istream& istr, PublicTransport::Stop&, binary_serialization_t );
 };
 
 ///
 /// used as an Edge in a PublicTransportGraph
 struct Section {
 public:
-    Section() : graph_(0), network_id_(0) {}
-
-    /// Shortcut to the public transport graph where this edge belongs
-    /// Can be null
-    DECLARE_RW_PROPERTY( graph, const Graph* );
-
-    /// This is a shortcut to the edge index in the corresponding graph, if any.
-    /// Needed to speedup access to a graph's edge from a Section
-    /// Can be null
-    DECLARE_RW_PROPERTY( edge, boost::optional<Edge> );
+    Section() : network_id_(0) {}
 
     /// must not be null
     DECLARE_RW_PROPERTY( network_id, db_id_t );
@@ -143,16 +117,16 @@ public:
 
 ///
 /// Convenience function - Get the departure stop of a public transport section
-inline Stop get_stop_from( const Section& s )
+inline Stop get_stop_from( const Graph& g, const Edge& e )
 {
-    return (*s.graph())[source( *s.edge(), *s.graph() )];
+    return g[source( e, g )];
 }
 
 ///
 /// Convenience function - Get the arrival stop of a public transport section
-inline Stop get_stop_to( const Section& s )
+inline Stop get_stop_to( const Graph& g, const Edge& e )
 {
-    return (*s.graph())[target( *s.edge(), *s.graph() )];
+    return g[target( e, g )];
 }
 
 
@@ -162,6 +136,10 @@ typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
 } // PublicTransport namespace
+
+void serialize( std::ostream& ostr, const PublicTransport::Graph&, binary_serialization_t );
+void unserialize( std::istream& istr, PublicTransport::Graph&, binary_serialization_t );
+
 } // Tempus namespace
 
 #endif

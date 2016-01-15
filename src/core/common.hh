@@ -65,4 +65,13 @@ namespace Tempus {
 
 } // Tempus namespace
 
+///
+/// Convenience method for C++11 so that Boost graph vertices and edges can be used in a range-based for loop
+template<class It>
+boost::iterator_range<It> pair_range(std::pair<It, It> const& p)
+{
+    return boost::make_iterator_range(p.first, p.second);
+}
+
+
 #endif

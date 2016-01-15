@@ -21,7 +21,7 @@ On Ubuntu
 
 On an Ubuntu system, dependencies correspond to the following packages :
 
-````
+```
 nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev
 libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
 ```
@@ -64,7 +64,7 @@ Note: Tempus uses a lot of C++ templates. It means a 'Debug' build will turn off
 On Windows
 ----------
 
-A [Windows installer](http://91.121.102.10/install_tempus/) is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.
+A [Windows installer](https://github.com/Ifsttar/Tempus/releases/download/v1.2.1/tempus-1.2.1-win32-vc9.exe) is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.
 
 ![Image](images/windows_install_animation.gif?raw=true)
 
@@ -96,10 +96,10 @@ Server installation
 
 The idea is to use the standalone mode of the WPS server and an httpd server (like nginx or Apache2) that just "passes" execution to this executable.
 
-You have to launch the "wps" executable from a command line, for example like this:
+You have to launch the "tempus_wps" executable from a command line, for example like this:
 
 ```
-hme@socompa:~/build$ TEMPUS_DATA_DIRECTORY=../data/ ./bin/wps -c ./lib -p 9000 -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4
+hme@socompa:~/build$ ./bin/tempus_wps --data ../data -c ./lib -p 9000 -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4
 ```
 
 Options used:

@@ -14,9 +14,15 @@ project( tempus )
 cmake_minimum_required(VERSION 2.6)
 enable_testing()
 
+# don't rebuild everything when rules are changed
+set(CMAKE_SKIP_RULE_DEPENDENCY true)
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+# for CMake >= 3.1.0
+# set_property(TARGET tgt PROPERTY CXX STANDARD 11)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 if (WIN32)
@@ -25,8 +31,15 @@ endif()
 
 find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time)
 find_package(PostgreSQL REQUIRED)
-include_directories( ${PostgreSQL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
+include_directories( ${PostgreSQL_INCLUDE_DIRS} )
+include_directories( SYSTEM ${Boost_INCLUDE_DIR} )
 link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
+
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
 
 if(MSVC)
 	# Force to always compile with W4
@@ -39,15 +52,17 @@ if(MSVC)
 	
 	
 	# Disable verbose warnings
-	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290" )
+	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290 /wd4267 /wd4267" )
 	
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
 	# Update if necessary
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
+	# auto_ptr is deprecated in C++11
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated" CACHE STRING "compile flags" FORCE)
     add_definitions( -Wl,-E )
 elseif(CMAKE_CXX_COMPILER MATCHES ".*clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror " CACHE STRING "compile flags" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++11 -Wno-deprecated" CACHE STRING "compile flags" FORCE)
 endif()
 
 set(CPACK_PACKAGE_NAME "tempus")
@@ -135,30 +150,30 @@ endif()
 include(CPack)
 
 if (WIN32)
-   find_file( MSVCR71 NAME msvcr71.dll
-     PATHS
-     $ENV{OSGEO4W_ROOT}/bin
-	 $ENV{MSVCR71_DLL}
-   )
-   if (MSVCR71)
-   else()
-        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
-	endif()
+#   find_file( MSVCR71 NAME msvcr71.dll
+#     PATHS
+#     $ENV{OSGEO4W_ROOT}/bin
+#	 $ENV{MSVCR71_DLL}
+#   )
+#   if (MSVCR71)
+#   else()
+#        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
+#	endif()
    
-   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
-   file(GLOB iconvdll ${PostgreSQL_LIBRARY_DIRS}/../bin/*iconv*.dll)
+#   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
+#   file(GLOB iconvdll ${PostgreSQL_LIBRARY_DIRS}/../bin/*iconv*.dll)
    install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_wps_service_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat win32/unzip.vbs DESTINATION .)
-   install(FILES 
-      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
-      ${intldll}
-	  ${iconvdll}
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
-      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
-      ${MSVCR71}
-      DESTINATION bin)
+#   install(FILES 
+#      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
+#      ${intldll}
+#	  ${iconvdll}
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/libglib-2.0-0.dll
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/postgisgui/intl.dll
+#      ${MSVCR71}
+#      DESTINATION bin)
 else()
   install(FILES script/install-qgis-plugins.sh DESTINATION share/tempus)
 endif()

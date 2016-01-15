@@ -19,9 +19,15 @@
 
 // Path algorithms for combined graphs with homogen labeling strategy
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/pending/indirect_cmp.hpp>
 #include <boost/heap/d_ary_heap.hpp>
 #include <boost/heap/binomial_heap.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "reverse_multimodal_graph.hh"
 

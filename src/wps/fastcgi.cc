@@ -22,7 +22,15 @@
 #include <fstream>
 
 #include <string>
+
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 
 
 #ifdef _WIN32
@@ -42,10 +50,14 @@
 #include "wps_request.hh"
 #include "application.hh"
 #include "xml_helper.hh"
+#include "config.hh"
+#include "plugin_factory.hh"
+#include "tempus_services.hh"
 
 
 #define DEBUG_TRACE if(1) std::cout << " debug: "
 using namespace std;
+using namespace Tempus;
 
 ///
 /// This is the main WPS server. It is designed to be called by a FastCGI-aware web server
@@ -100,9 +112,67 @@ private:
     const int _listen_socket;
 };
 
+void add_str_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        options[key] = Variant::from_string(value);
+    }
+}
+
+void add_int_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        int64_t i;
+        std::istringstream istr(value);
+        istr >> i;
+        options[key] = Variant::from_int(i);
+    }
+}
+
+void add_float_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        double i;
+        std::istringstream istr(value);
+        istr >> i;
+        options[key] = Variant::from_float(i);
+    }
+}
+
+void add_bool_option( VariantMap& options, const std::string& opt )
+{
+    size_t n = opt.find( '=' );
+    if ( n != std::string::npos ) {
+        std::string key = opt.substr( 0, n );
+        std::string value = opt.substr( n+1 );
+        if ( value == "true" ) {
+            options[key] = Variant::from_bool(true);
+        }
+        else if ( value == "false" ) {
+            options[key] = Variant::from_bool(false);
+        }
+        else {
+            int i;
+            std::istringstream istr(value);
+            istr >> i;
+            options[key] = Variant::from_bool(i);
+        }
+    }
+}
 
 int main( int argc, char* argv[] )
 {
+    using namespace Tempus;
+
     xmlInitParser();
     bool standalone = true;
     // the default TCP port to listen to
@@ -113,10 +183,17 @@ int main( int argc, char* argv[] )
     string dbstring = "dbname=tempus_test_db";
     string schema_name = "tempus";
     bool consistency_check = true;
+    std::string load_from = "";
+    std::string data_dir = "";
+#if ENABLE_SEGMENT_ALLOCATOR
+    std::string dump_file = "";
+    size_t segment_size = 0;
+#endif
 #ifndef WIN32
     bool daemon = false;
     ( void )daemon;
 #endif
+    VariantMap options;
 
     if ( argc > 1 ) {
         for ( int i = 1; i < argc; i++ ) {
@@ -163,6 +240,57 @@ int main( int argc, char* argv[] )
             else if ( arg == "-X" ) {
                 consistency_check = false;
             }
+            else if ( arg == "-L" ) {
+                if ( argc > i+1 ) {
+                    load_from = argv[++i];
+                }
+            }
+            else if ( arg == "--data" ) {
+                if ( argc > i+1 ) {
+                    data_dir = argv[++i];
+                }
+            }
+            else if ( arg == "--str" ) {
+                if ( argc > i+1 ) {
+            add_str_option( options, argv[++i] );
+                }
+            }
+            else if ( arg == "--int" ) {
+                if ( argc > i+1 ) {
+            add_int_option( options, argv[++i] );
+                }
+            }
+            else if ( arg == "--bool" ) {
+                if ( argc > i+1 ) {
+            add_bool_option( options, argv[++i] );
+                }
+            }
+            else if ( arg == "--float" ) {
+                if ( argc > i+1 ) {
+            add_float_option( options, argv[++i] );
+                }
+            }
+#if ENABLE_SEGMENT_ALLOCATOR
+            else if ( arg == "-f" ) {
+                if ( argc > i+1 ) {
+                    dump_file = argv[++i];
+                }
+            }
+            else if ( arg == "-S" ) {
+                if ( argc > i+1 ) {
+                    std::string s = argv[++i];
+                    if (s[s.size()-1] == 'M') {
+                        segment_size = atoi(s.substr(0,s.size()-1).c_str()) * 1024LL * 1024LL;
+                    }
+                    else if (s[s.size()-1] == 'G') {
+                        segment_size = atoi(s.substr(0,s.size()-1).c_str()) * 1024LL * 1024LL * 1024LL;
+                    }
+                    else {
+                        segment_size = atoi(s.c_str());
+                    }
+                }
+            }
+#endif
             else {
                 std::cout << "Options: " << endl
                           << "\t-p port_number\tstandalone mode (for use with nginx and lighttpd)" << endl
@@ -172,8 +300,13 @@ int main( int argc, char* argv[] )
                           << "\t-d dbstring\tstring used to connect to pgsql" << endl
                           << "\t-s schema\tschema to use (default: tempus)" << endl
                           << "\t-X no consistency check" << endl
+                          << "\t--data dir\tData directory" << endl
 #ifndef WIN32
                           << "\t-D\trun as daemon" << endl
+#endif
+                          << "\t-L\tload graph from dump file" << endl
+#if ENABLE_SEGMENT_ALLOCATOR
+                          << "\t-S\tsegment size 0 or unspecified to load from the dump file" << endl
 #endif
                           ;
                 return ( arg == "-h" ) ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -216,6 +349,16 @@ int main( int argc, char* argv[] )
 
 #endif
 
+    if ( !data_dir.empty() ) {
+        Application::instance()->set_data_directory( data_dir );
+    }
+
+    //
+    // initialize WPS services
+    WPS::PluginListService plugin_list_service;
+    WPS::SelectService select_service;
+    WPS::ConstantListService constant_list_service;
+
     if ( chdir_str != "" ) {
         if( chdir( chdir_str.c_str() ) ) {
             std::cerr << "cannot change directory to " << chdir_str << std::endl;
@@ -230,17 +373,19 @@ int main( int argc, char* argv[] )
     try
 #endif
     {
-        std::cout << "connecting to database: " << dbstring << "\n";
-        Tempus::Application::instance()->connect( dbstring );
-        Tempus::Application::instance()->pre_build_graph();
-        std::cout << "building the graph...\n";
-        Tempus::Application::instance()->build_graph( consistency_check, schema_name );
+        options["db/options"] = Variant::from_string( dbstring );
+        options["db/schema"] = Variant::from_string( schema_name );
+        if ( !load_from.empty() ) {
+            options["from_file"] = Variant::from_string( load_from );
+        }
+        options["consistency_check"] = Variant::from_bool( consistency_check );
 
         // load plugins
+        TextProgression progression;
         for ( size_t i=0; i< plugins.size(); i++ ) {
             using namespace Tempus;
-            std::cout << "loading " << plugins[i] << "\n";
-            PluginFactory::instance()->load( plugins[i] );
+            std::cout << "Loading " << plugins[i] << "\n";
+            PluginFactory::instance()->create_plugin( plugins[i], progression, options );
         }
     }
 #ifdef NDEBUG

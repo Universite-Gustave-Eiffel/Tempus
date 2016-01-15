@@ -27,367 +27,132 @@
 #include <strsafe.h>
 #endif
 
-Tempus::PluginFactory* get_plugin_factory_instance_()
+#include "plugin_factory.hh"
+
+namespace Tempus
 {
-    return Tempus::PluginFactory::instance();
+
+Plugin::Plugin( const std::string& nname, const VariantMap& options ) :
+    name_( nname )
+{
+    schema_name_ = get_option_or_default( options, "db/schema" ).str();
+    db_options_ = get_option_or_default( options, "db/options" ).str();
 }
 
-namespace Tempus {
-
-
-PluginFactory* PluginFactory::instance()
+Plugin::OptionDescriptionList Plugin::common_option_descriptions()
 {
-    // On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
-    // DLL have still access to the main EXE memory ...
-    static PluginFactory* instance_ = 0;
-
-    if ( 0 == instance_ ) {
-#ifdef _WIN32
-        // We test if we are in the main module (EXE) or not. If it is the case, a new Application is allocated.
-        // It will also be returned by modules.
-        PluginFactory * ( *main_get_instance )() = ( PluginFactory* (* )() )GetProcAddress( GetModuleHandle( NULL ), "get_plugin_factory_instance_" );
-        instance_ = ( main_get_instance == &get_plugin_factory_instance_ )  ? new PluginFactory : main_get_instance();
-#else
-        instance_ = new PluginFactory();
-#endif
-    }
-
-    return instance_;
+    Plugin::OptionDescriptionList opt;
+    opt.declare_option( "db/options", "DB connection options", Variant::from_string(""));
+    opt.declare_option( "db/schema", "DB schema name", Variant::from_string("tempus"));
+    return opt;
 }
 
-
-#ifdef _WIN32
-std::string win_error()
+///
+/// Process the user request.
+std::unique_ptr<Result> PluginRequest::process( const Request& /*request*/ )
 {
-    // Retrieve the system error message for the last-error code
-    struct RAII {
-        LPVOID ptr;
-        RAII( LPVOID p ):ptr( p ) {};
-        ~RAII() {
-            LocalFree( ptr );
-        }
-    };
-    LPVOID lpMsgBuf;
-    DWORD dw = GetLastError();
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        dw,
-        MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-        ( LPTSTR ) &lpMsgBuf,
-        0, NULL );
-    RAII lpMsgBufRAII( lpMsgBuf );
-
-    // Display the error message and exit the process
-
-    LPVOID lpDisplayBuf = ( LPVOID )LocalAlloc( LMEM_ZEROINIT,
-                          ( lstrlen( ( LPCTSTR )lpMsgBuf ) + 40 ) * sizeof( TCHAR ) );
-    RAII lpDisplayBufRAII( lpDisplayBuf );
-    StringCchPrintf( ( LPTSTR )lpDisplayBuf,
-                     LocalSize( lpDisplayBuf ) / sizeof( TCHAR ), TEXT( "failed with error %d: %s" ), dw, lpMsgBuf );
-    return std::string( ( const char* )lpDisplayBuf );
-}
-#endif
-
-PluginFactory::~PluginFactory()
-{
-    for ( DllMap::iterator i=dll_.begin(); i!=dll_.end(); i++ ) {
-#ifdef _WIN32
-        FreeLibrary( i->second.handle_ );
-#else
-
-        if ( dlclose( i->second.handle_ ) ) {
-            CERR << "Error on dlclose " << dlerror() << std::endl;
-        }
-
-#endif
-    }
+    COUT << "[plugin_base]: process" << std::endl;
+    return std::unique_ptr<Result>( new Result );
 }
 
-void PluginFactory::load( const std::string& dll_name )
-{
-    if ( dll_.find( dll_name ) != dll_.end() ) {
-        return;    // already there
-    }
-
-    const std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
-
-    COUT << "Loading " << complete_dll_name << std::endl;
-
-#ifdef _WIN32
-#   define DLCLOSE FreeLibrary
-#   define DLSYM GetProcAddress
-#   define THROW_DLERROR( msg )  throw std::runtime_error( std::string( msg ) + "(" + win_error() + ")")
-#else
-#   define DLCLOSE dlclose
-#   define DLSYM dlsym
-#   define THROW_DLERROR( msg ) throw std::runtime_error( std::string( msg ) + "(" + std::string( dlerror() ) + ")" );
-#endif
-    struct RAII {
-        RAII( HMODULE h ):h_( h ) {};
-        ~RAII() {
-            if ( h_ ) {
-                DLCLOSE( h_ );
-            }
-        }
-        HMODULE get() {
-            return h_;
-        }
-        HMODULE release() {
-            HMODULE p = NULL;
-            std::swap( p,h_ );
-            return p;
-        }
-    private:
-        HMODULE h_;
-    };
-
-    RAII hRAII(
-#ifdef _WIN32
-        LoadLibrary( complete_dll_name.c_str() )
-#else
-        dlopen( complete_dll_name.c_str(), RTLD_NOW | RTLD_GLOBAL )
-#endif
-    );
-
-    if ( !hRAII.get() ) {
-        THROW_DLERROR( "cannot load " + complete_dll_name );
-    }
-
-    Dll::PluginCreationFct createFct;
-    // this cryptic syntax is here to avoid a warning when converting
-    // a pointer-to-function to a pointer-to-object
-    *reinterpret_cast<void**>( &createFct ) = DLSYM( hRAII.get(), "createPlugin" );
-
-    if ( !createFct ) {
-        THROW_DLERROR( "no function createPlugin in " + complete_dll_name );
-    }
-
-    Dll::PluginOptionDescriptionFct optDescFct;
-    *reinterpret_cast<void**>( &optDescFct ) = DLSYM( hRAII.get(), "optionDescriptions" );
-
-    if ( !optDescFct ) {
-        THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name  );
-    }
-
-    Dll::PluginCapabilitiesFct capFct;
-    *reinterpret_cast<void**>( &capFct ) = DLSYM( hRAII.get(), "pluginCapabilities" );
-
-    if ( !capFct ) {
-        THROW_DLERROR( "no function pluginCapabilities in " + complete_dll_name  );
-    }
-
-    Dll::PluginNameFct nameFct;
-    *reinterpret_cast<void**>( &nameFct ) = DLSYM( hRAII.get(), "pluginName" );
-
-    if ( nameFct == NULL ) {
-        THROW_DLERROR( "no function pluginName in " + complete_dll_name  );
-    }
-
-    typedef void ( *PluginPostBuildFct )();
-    PluginPostBuildFct postBuildFct;
-    *reinterpret_cast<void**>( &postBuildFct ) = DLSYM( hRAII.get(), "post_build" );
-
-    if ( nameFct == NULL ) {
-        THROW_DLERROR( "no function post_build in " + complete_dll_name  );
-    }
-
-    Dll dll = { hRAII.release(), createFct, optDescFct, capFct };
-    const std::string pluginName = ( *nameFct )();
-    dll_.insert( std::make_pair( pluginName, dll ) );
-
-    if ( Application::instance()->state() < Application::GraphBuilt ) {
-        throw std::runtime_error( "trying to load plugin (post_build graph) while the graph has not been build" );
-    }
-
-    postBuildFct();
-    COUT << "loaded " << pluginName << " from " << dll_name << "\n";
-}
-
-std::vector<std::string> PluginFactory::plugin_list() const
-{
-    std::vector<std::string> names;
-
-    for ( DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++ ) {
-        names.push_back( i->first );
-    }
-
-    return names;
-}
-
-Plugin* PluginFactory::createPlugin( const std::string& dll_name ) const
-{
-    std::string loaded;
-
-    for ( DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++ ) {
-        loaded += " " + i->first;
-    }
-
-    DllMap::const_iterator dll = dll_.find( dll_name );
-
-    if ( dll == dll_.end() ) {
-        throw std::runtime_error( dll_name + " is not loaded (loaded:" + loaded+")" );
-    }
-
-    std::auto_ptr<Plugin> p( dll->second.create( Application::instance()->db_options() ) );
-    p->validate();
-    return p.release();
-}
-
-const Plugin::OptionDescriptionList PluginFactory::option_descriptions( const std::string& dll_name ) const
-{
-    std::string loaded;
-
-    for ( DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++ ) {
-        loaded += " " + i->first;
-    }
-
-    DllMap::const_iterator dll = dll_.find( dll_name );
-
-    if ( dll == dll_.end() ) {
-        throw std::runtime_error( dll_name + " is not loaded (loaded:" + loaded+")" );
-    }
-
-    std::auto_ptr<const Plugin::OptionDescriptionList> list( dll->second.options_description() );
-    return Plugin::OptionDescriptionList( *list );
-}
-
-const Plugin::PluginCapabilities PluginFactory::plugin_capabilities( const std::string& dll_name ) const
-{
-    std::string loaded;
-
-    for ( DllMap::const_iterator i=dll_.begin(); i!=dll_.end(); i++ ) {
-        loaded += " " + i->first;
-    }
-
-    DllMap::const_iterator dll = dll_.find( dll_name );
-
-    if ( dll == dll_.end() ) {
-        throw std::runtime_error( dll_name + " is not loaded (loaded:" + loaded+")" );
-    }
-
-    std::auto_ptr<const Plugin::PluginCapabilities> l( dll->second.plugin_capabilities() );
-    return Plugin::PluginCapabilities( *l );
-}
-
-Plugin::Plugin( const std::string& nname, const std::string& db_options ) :
-    graph_( *Application::instance()->graph() ),
-    name_( nname ),
-    db_( db_options ) // create another connection
+PluginRequest::PluginRequest( const Plugin* plugin, const VariantMap& options ) :
+    plugin_(plugin), options_( options )
 {
     // default metrics
-    metrics_[ "time_s" ] = ( double )0.0;
-    metrics_[ "iterations" ] = ( int )0;
+    metrics_[ "time_s" ] = Variant::from_float(0.0);
+    metrics_[ "iterations" ] = Variant::from_int(0);
+}
+
+Plugin::OptionDescriptionList option_descriptions( const Plugin* plugin )
+{
+    return PluginFactory::instance()->option_descriptions( plugin->name() );
+}
+
+Variant Plugin::get_option_or_default( const VariantMap& options, const std::string& key ) const
+{
+    if ( options.find( key ) != options.end() ) {
+        return options.find( key )->second;
+    }
+    // look for the default value
+    Plugin::OptionDescriptionList desc = option_descriptions( this );
+    auto it = desc.find( key );
+    if ( it != desc.end() ) {
+        return it->second.default_value;
+    }
+    return Variant();
 }
 
 template <class T>
-void Plugin::get_option( const std::string& nname, T& value )
+void PluginRequest::get_option( const std::string& nname, T& value ) const
 {
-    const OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
-    OptionDescriptionList::const_iterator descIt = desc.find( nname );
+    const Plugin::OptionDescriptionList desc = option_descriptions( plugin_ );
+    auto descIt = desc.find( nname );
 
     if ( descIt == desc.end() ) {
         throw std::runtime_error( "get_option(): cannot find option " + nname );
     }
 
-    if ( options_.find( nname ) == options_.end() ) {
+    auto it = options_.find( nname );
+    if ( it == options_.end() ) {
         // return default value
         value = descIt->second.default_value.as<T>();
         return;
     }
 
-    value = options_[nname].as<T>();
+    value = it->second.as<T>();
 }
 // template instanciations
-template void Plugin::get_option<bool>( const std::string&, bool& );
-template void Plugin::get_option<int>( const std::string&, int& );
-template void Plugin::get_option<double>( const std::string&, double& );
-template void Plugin::get_option<std::string>( const std::string&, std::string& );
+template void PluginRequest::get_option<bool>( const std::string&, bool& ) const;
+template void PluginRequest::get_option<int64_t>( const std::string&, int64_t& ) const;
+template void PluginRequest::get_option<double>( const std::string&, double& ) const;
+template void PluginRequest::get_option<std::string>( const std::string&, std::string& ) const;
 
-void Plugin::set_option_from_string( const std::string& nname, const std::string& value, VariantType type )
+bool PluginRequest::get_bool_option( const std::string& name ) const
 {
-    const Plugin::OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
-    Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
-
-    if ( descIt == desc.end() ) {
-        return;
-    }
-
-    const VariantType t = descIt->second.type();
-
-    if ( t != type ) {
-        throw std::invalid_argument( ( boost::format( "Requested type %1% for option %2% is different from the declared type %3%" )
-                                       % type
-                                       % nname
-                                       % t ).str() );
-    }
-
-    options_[nname] = Variant( value, t );
+    bool v;
+    get_option( name, v );
+    return v;
 }
 
-std::string Plugin::option_to_string( const std::string& nname )
+int64_t PluginRequest::get_int_option( const std::string& name ) const
 {
-    const Plugin::OptionDescriptionList desc = PluginFactory::instance()->option_descriptions( name_ );
-    Plugin::OptionDescriptionList::const_iterator descIt = desc.find( nname );
-
-    if ( descIt == desc.end() ) {
-        throw std::invalid_argument( "Cannot find option " + nname );
-    }
-
-    Variant value = options_[nname];
-    return value.str();
+    int64_t v;
+    get_option( name, v );
+    return v;
 }
 
-std::string Plugin::metric_to_string( const std::string& nname )
+double PluginRequest::get_float_option( const std::string& name ) const
+{
+    double v;
+    get_option( name, v );
+    return v;
+}
+
+std::string PluginRequest::get_string_option( const std::string& name ) const
+{
+    std::string v;
+    get_option( name, v );
+    return v;
+}
+
+std::string PluginRequest::metric_to_string( const std::string& nname ) const
 {
     if ( metrics_.find( nname ) == metrics_.end() ) {
         throw std::invalid_argument( "Cannot find metric " + nname );
     }
 
-    MetricValue v = metrics_[nname];
+    const MetricValue& v = metrics_.find( nname )->second;
     return v.str();
-}
-
-void Plugin::validate()
-{
-    COUT << "[plugin_base]: validate" << std::endl;
-}
-
-void Plugin::cycle()
-{
-    COUT << "[plugin_base]: cycle" << std::endl;
-}
-
-void Plugin::pre_process( Request& request )
-{
-    COUT << "[plugin_base]: pre_process" << std::endl;
-    request_ = request;
-    result_.clear();
-}
-
-///
-/// Process the user request.
-/// Must populates the 'result_' object.
-void Plugin::process()
-{
-    COUT << "[plugin_base]: process" << std::endl;
-}
-
-void Plugin::post_process()
-{
-    COUT << "[plugin_base]: post_process" << std::endl;
 }
 
 ///
 /// Text formatting and preparation of roadmap
-Result& Plugin::result()
+void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multimodal::Graph& graph )
 {
-    for ( Result::iterator rit = result_.begin(); rit != result_.end(); ++rit ) {
+    for ( Result::iterator rit = result.begin(); rit != result.end(); ++rit ) {
         Roadmap& roadmap = *rit;
         Roadmap new_roadmap;
-        const Road::Graph& road_graph = graph_.road();
+        const Road::Graph& road_graph = graph.road();
 
         Tempus::db_id_t previous_section = 0;
         bool on_roundabout = false;
@@ -406,25 +171,23 @@ Result& Plugin::result()
         // cost accumulator
         Costs accum_costs;
 
+        // retrieve data from db
+        fill_roadmap_from_db( roadmap.begin(), roadmap.end(), db );
+
         Roadmap::StepIterator it = roadmap.begin();
         Roadmap::StepIterator next = it;
-		if ( it == roadmap.end() ) {
-			continue;
-		}
+        if ( it == roadmap.end() ) {
+            continue;
+        }
         next++;
 
         for ( ; it != roadmap.end(); it++ ) {
             if ( it->step_type() == Roadmap::Step::TransferStep ) {
                 Roadmap::TransferStep* step = static_cast<Roadmap::TransferStep*>( &*it );
-                Multimodal::Edge* edge = static_cast<Multimodal::Edge*>( step );
-
-                step->set_geometry_wkb( geometry_wkb( *edge, db_ ) );
-
                 new_roadmap.add_step( std::auto_ptr<Roadmap::Step>(step->clone()) );
             }
             else if ( it->step_type() == Roadmap::Step::PublicTransportStep ) {
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( &*it );
-                const PublicTransport::Graph& pt_graph = *graph_.public_transport(step->network_id());
 
                 // store stops
                 accum_pt.push_back( std::make_pair(step->departure_stop(), step->arrival_stop()) );
@@ -436,7 +199,7 @@ Result& Plugin::result()
                     pt_first = step;
                 }
 
-                // accumulate step sharing the same trip
+                // accumulate steps sharing the same trip
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::PublicTransportStep ) {
                     Roadmap::PublicTransportStep* next_step = static_cast<Roadmap::PublicTransportStep*>( &*next );
                     if ( next_step->trip_id() == step->trip_id() ) {
@@ -446,35 +209,28 @@ Result& Plugin::result()
                 }
 
                 // retrieval of the step's geometry
+                // TODO: do not call postgis just to merge geometries
                 std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.pt_section WHERE ARRAY[stop_from,stop_to] IN (";
                 for ( size_t i = 0; i < accum_pt.size(); i++ ) {
-                    q += (boost::format("ARRAY[%1%,%2%]") % pt_graph[accum_pt[i].first].db_id() % pt_graph[accum_pt[i].second].db_id() ).str();
+                    q += (boost::format("ARRAY[%1%,%2%]") % accum_pt[i].first % accum_pt[i].second ).str();
                     if ( i != accum_pt.size()-1 ) {
                         q += ",";
                     }
                 }
                 q += ")) t";
-                Db::Result res = db_.exec( q );
+                Db::Result res = db.exec( q );
                 if ( ! res.size() ) {
                     throw std::runtime_error("No result for " + q);
                 }
                 std::string wkb = res[0][0].as<std::string>();
                 // get rid of the heading '\x'
-                step->set_geometry_wkb( wkb.substr( 2 ) );
-
-                // get the route name
-                q = (boost::format("SELECT r.short_name, r.long_name, r.transport_mode from tempus.pt_trip as t, tempus.pt_route as r where t.id=%1% and t.route_id = r.id")
-                     % step->trip_id() ).str();
-                Db::Result res2 = db_.exec( q );
-                if ( ! res2.size() ) {
-                    throw std::runtime_error("No result for " + q);
-                }
-                std::string short_name = res2[0][0].as<std::string>();
-                std::string long_name = res2[0][1].as<std::string>();
-                step->set_transport_mode( res2[0][2].as<db_id_t>() );
-                step->set_route( short_name + " - " + long_name );
+                if ( wkb.size() > 2 )
+                    wkb = wkb.substr( 2 );
+                step->set_geometry_wkb( wkb );
 
                 // copy info from the first step
+                step->set_transport_mode( pt_first->transport_mode() );
+                step->set_route( pt_first->route() );
                 step->set_departure_stop( pt_first->departure_stop() );
                 step->set_departure_time( pt_first->departure_time() );
                 step->set_wait( pt_first->wait() );
@@ -495,7 +251,7 @@ Result& Plugin::result()
                 Roadmap::RoadStep* step = static_cast<Roadmap::RoadStep*>( &*it );
 
                 // accumulate step sharing the same road name
-                accum_road.push_back( road_graph[step->road_edge()].db_id() );
+                accum_road.push_back( step->road_edge_id() );
                 // accumulate costs
                 for ( Costs::const_iterator cit = step->costs().begin(); cit != step->costs().end(); ++cit ) {
                     accum_costs[cit->first] += cit->second;
@@ -503,9 +259,9 @@ Result& Plugin::result()
 
                 if ( next != roadmap.end() && next->step_type() == Roadmap::Step::RoadStep ) {
                     Roadmap::RoadStep* next_step = static_cast<Roadmap::RoadStep*>( &*next );
-                    if ( road_graph[next_step->road_edge()].road_name() == 
-                         road_graph[step->road_edge()].road_name() ) {
-						if ( next != roadmap.end() ) next++;
+                    if ( next_step->road_name() == step->road_name() ) {
+                        if ( next != roadmap.end() )
+                            next++;
                         continue;
                     }
                 }
@@ -513,6 +269,7 @@ Result& Plugin::result()
                 //
                 // retrieval of the step's geometry
                 {
+                    // TODO: do not call postgis just to merge geometries
                     std::string q = "SELECT st_asbinary(st_linemerge(st_collect(geom))) FROM (SELECT geom FROM tempus.road_section WHERE id IN (";
                     for ( size_t i = 0; i < accum_road.size(); i++ ) {
                         q += (boost::format("%1%") % accum_road[i]).str();
@@ -522,7 +279,7 @@ Result& Plugin::result()
                     }
                     q += ")) t";
                     // reverse the geometry if needed
-                    Db::Result res = db_.exec( q );
+                    Db::Result res = db.exec( q );
                     if ( ! res.size() ) {
                         throw std::runtime_error("No result for " + q);
                     }
@@ -542,7 +299,7 @@ Result& Plugin::result()
                 //
                 movement = Roadmap::RoadStep::GoAhead;
 
-                on_roundabout =  road_graph[step->road_edge()].is_roundabout();
+                on_roundabout = road_graph[graph.road_edge_from_id(step->road_edge_id()).get()].is_roundabout();
 
                 bool action = false;
 
@@ -560,9 +317,10 @@ Result& Plugin::result()
                 }
 
                 if ( previous_section && !on_roundabout && !action ) {
+                    // TODO: do not call postgis just to compute an angle
                     std::string q1 = ( boost::format( "SELECT ST_Azimuth( st_endpoint(s1.geom), st_startpoint(s1.geom) ), ST_Azimuth( st_startpoint(s2.geom), st_endpoint(s2.geom) ), st_endpoint(s1.geom)=st_startpoint(s2.geom) "
-                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % road_graph[step->road_edge()].db_id() ).str();
-                    Db::Result res = db_.exec( q1 );
+                                                      "FROM tempus.road_section AS s1, tempus.road_section AS s2 WHERE s1.id=%1% AND s2.id=%2%" ) % previous_section % step->road_edge_id() ).str();
+                    Db::Result res = db.exec( q1 );
                     if ( ! res.size() ) {
                         throw std::runtime_error("No result for " + q1);
                     }
@@ -609,7 +367,7 @@ Result& Plugin::result()
                     last_step = 0;
                 }
                 else {
-                    previous_section = road_graph[step->road_edge()].db_id();
+                    previous_section = step->road_edge_id();
                     Roadmap::StepIterator ite = new_roadmap.end();
                     ite--;
                     last_step = static_cast<Roadmap::RoadStep*>(&*ite);
@@ -633,7 +391,9 @@ Result& Plugin::result()
             PathTrace new_trace;
             for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
                 ValuedEdge ve = roadmap.trace()[i];
-                ve.set_geometry_wkb( geometry_wkb( ve, db_ ) );
+                std::string wkb, name1, name2;
+                get_edge_info_from_db( ve, db, wkb, name1, name2 );
+                ve.set_geometry_wkb( wkb );
                 new_trace.push_back( ve );
             }
             new_roadmap.set_trace( new_trace );
@@ -641,13 +401,7 @@ Result& Plugin::result()
 
         *rit = new_roadmap;
 	}
-
-    return result_;
 }
 
-void Plugin::cleanup()
-{
-    COUT << "[plugin_base]: cleanup" << std::endl;
-}
 }
 

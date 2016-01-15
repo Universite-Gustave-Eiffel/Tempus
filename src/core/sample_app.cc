@@ -26,7 +26,7 @@
 #include "road_graph.hh"
 #include "public_transport_graph.hh"
 #include "plugin.hh"
-#include "pgsql_importer.hh"
+#include "plugin_factory.hh"
 
 using namespace std;
 using namespace Tempus;
@@ -76,83 +76,23 @@ int main( int argc, char* argv[] )
         destination_id = vm["destination"].as<Tempus::db_id_t>();
     }
 
-    Tempus::Application* app = Tempus::Application::instance();
-    app->connect( db_options );
+    VariantMap options;
+    options["db/options"] = Variant::from_string( db_options );
 
     ///
     /// Plugins
-    try {
-        std::auto_ptr<Plugin> plugin( PluginFactory::instance()->createPlugin( plugin_name ) );
+    TextProgression progression;
+    Plugin* plugin = PluginFactory::instance()->create_plugin( plugin_name, progression, options );
 
-        COUT << "[plugin " << plugin->name() << "]" << endl;
+    COUT << "[plugin " << plugin->name() << "]" << endl;
 
-        COUT << endl << ">> pre_build" << endl;
-        app->pre_build_graph();
-        COUT << endl << ">> build" << endl;
-        app->build_graph();
+    Request req;
 
-        //
-        // Build the user request
-        const Multimodal::Graph& graph = *app->graph();
-        const Road::Graph& road_graph = graph.road();
+    req.set_origin( origin_id );
+    req.set_destination( destination_id );
 
-        Request req;
-        Request::Step step;
-        Road::VertexIterator vi, vi_end;
-        bool found_origin = false;
-        bool found_destination = false;
-
-        for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
-            if ( road_graph[*vi].db_id() == origin_id ) {
-                req.set_origin( *vi );
-                found_origin = true;
-                break;
-            }
-        }
-
-        if ( !found_origin ) {
-            CERR << "Cannot find origin vertex ID " << origin_id << endl;
-            return 1;
-        }
-
-        for ( boost::tie( vi, vi_end ) = boost::vertices( road_graph ); vi != vi_end; vi++ ) {
-            if ( road_graph[*vi].db_id() == destination_id ) {
-                req.set_destination( *vi );
-                found_destination = true;
-                break;
-            }
-        }
-
-        if ( !found_destination ) {
-            CERR << "Cannot find destination vertex ID " << destination_id << endl;
-            return 1;
-        }
-
-        COUT << endl << ">> pre_process" << endl;
-
-        try {
-            plugin->pre_process( req );
-        }
-        catch ( std::invalid_argument& e ) {
-            CERR << "Can't process request : " << e.what() << std::endl;
-            return 1;
-        }
-
-        COUT << endl << ">> process" << endl;
-        plugin->process();
-        COUT << endl << ">> post_process" << endl;
-        plugin->post_process();
-
-        COUT << endl << ">> result" << endl;
-        plugin->result();
-
-        COUT << endl << ">> cleanup" << endl;
-        plugin->cleanup();
-
-    }
-    catch ( std::exception& e ) {
-        CERR << "Exception: " << e.what() << endl;
-    }
+    std::unique_ptr<PluginRequest> plugin_request( plugin->request() );
+    std::unique_ptr<Result> result( plugin_request->process( req ) );
 
     return 0;
 }

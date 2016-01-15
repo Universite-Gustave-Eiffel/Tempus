@@ -63,7 +63,12 @@ struct POI : public Base {
     ///
     /// coordinates
     DECLARE_RW_PROPERTY( coordinates, Point3D );
+
+    friend void serialize( std::ostream& ostr, const POI&, binary_serialization_t );
+    friend void unserialize( std::istream& istr, POI&, binary_serialization_t );
 };
+
+typedef uint32_t POIIndex;
 
 }
 

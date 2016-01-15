@@ -48,7 +48,6 @@ class PsqlLoader:
     def fill_template(self, template, values):
         """Takes a template text file and replace every occurence of
         "%(key)" with the corresponding value in the given dictionnary."""
-        print "values", values
         t = template
         for k, v in values.iteritems():
             t = t.replace( '%(' + k + ')', unicode(v) )
@@ -114,3 +113,10 @@ class PsqlLoader:
         if self.logfile:
             out.close()
         return retcode == 0
+
+def exec_sql(dbstring, query):
+    proc = subprocess.Popen([PSQL, '-t', '-d', dbstring, '-c', query], stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    if err is not None:
+        raise StandardError("PSQL error:" + err)
+    return out

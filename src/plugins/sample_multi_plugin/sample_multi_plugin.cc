@@ -27,12 +27,18 @@
    If the request contains multiple criteria, a result is added for each criterion.
  */
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #include "plugin.hh"
-#include "pgsql_importer.hh"
+#include "plugin_factory.hh"
 #include "db.hh"
 #include "utils/timer.hh"
 
@@ -47,40 +53,42 @@ static std::map< Multimodal::Edge, double > durations;
 class MultiPlugin : public Plugin {
 public:
 
-    static const OptionDescriptionList option_descriptions() {
-        return OptionDescriptionList();
+    static Plugin::OptionDescriptionList option_descriptions()
+    {
+        return Plugin::common_option_descriptions();
     }
 
-    static const PluginCapabilities plugin_capabilities() {
-        PluginCapabilities params;
-        params.optimization_criteria().push_back( CostDistance );
-        params.optimization_criteria().push_back( CostDuration );
-        params.set_intermediate_steps( true );
-        params.set_depart_after( true );
-        params.set_arrive_before( false );
-        return params;
+    static Plugin::Capabilities plugin_capabilities()
+    {
+        Plugin::Capabilities caps;
+        caps.optimization_criteria().push_back( CostId::CostDistance );
+        caps.optimization_criteria().push_back( CostId::CostDuration );
+        caps.set_intermediate_steps( true );
+        caps.set_depart_after( true );
+        caps.set_arrive_before( false );
+        return caps;
     }
 
-    MultiPlugin( const std::string& nname, const std::string db_options ) : Plugin( nname, db_options ) {
-    }
 
-    virtual ~MultiPlugin() {
-    }
+    MultiPlugin( ProgressionCallback& progression, const VariantMap& options ) : Plugin( "sample_multi_plugin", options )
+    {
+        // load graph
+        const RoutingData* rd = load_routing_data( "multimodal_graph", progression, options );
+        graph_ = dynamic_cast<const Multimodal::Graph*>( rd );
+        if ( graph_ == nullptr ) {
+            throw std::runtime_error( "Problem loading the multimodal graph" );
+        }
 
-private:
+        ///
+        /// In the post_build, we pre-compute a table of distances for each edge
+        ///
 
-public:
-
-    ///
-    /// In the post_build, we pre-compute a table of distances for each edge
-    ///
-    static void post_build() {
         // retrieve the length of each pt section
         std::cout << "Computing the length of each section..." << std::endl;
         typedef std::map< std::pair<db_id_t, db_id_t>, double > PtLength;
         PtLength pt_lengths;
 
-        Db::Connection db( Application::instance()->db_options() );
+        Db::Connection db( db_options() );
         Db::Result res = db.exec( "SELECT stop_from, stop_to, ST_Length(geom) FROM tempus.pt_section" );
 
         for ( size_t i = 0; i < res.size(); ++i ) {
@@ -97,10 +105,9 @@ public:
 
         Multimodal::EdgeIterator ei, ei_end;
 
-        const Multimodal::Graph& graph = *Application::instance()->graph();
-        const Road::Graph& road_graph = graph.road();
+        const Road::Graph& road_graph = graph_->road();
 
-        for ( boost::tie( ei, ei_end ) = edges( graph ); ei != ei_end; ei++ ) {
+        for ( boost::tie( ei, ei_end ) = edges( *graph_ ); ei != ei_end; ei++ ) {
             switch ( ei->connection_type() ) {
             case Multimodal::Edge::Road2Road: {
                 Road::Edge e = ei->road_edge();
@@ -120,7 +127,7 @@ public:
                     CERR << "Can't find pt edge" << *ei << std::endl;
                 }
 
-                distances[*ei] = pt_lengths[ std::make_pair( get_stop_from(pt_graph[e]).db_id(), get_stop_to(pt_graph[e]).db_id() ) ];
+                distances[*ei] = pt_lengths[ std::make_pair( get_stop_from(pt_graph, e).db_id(), get_stop_to(pt_graph, e).db_id() ) ];
                 // average public transport speed : 25 km / h
                 durations[*ei] = distances[*ei] / 25000.0 * 60.0;
             }
@@ -174,44 +181,40 @@ public:
             }
         }
 
-        REQUIRE( distances.size() == num_edges( graph ) );
+        REQUIRE( distances.size() == num_edges( *graph_ ) );
     }
 
-    virtual void pre_process( Request& request ) {
-        request_ = request;
 
-        for ( size_t i = 0; i < request.optimizing_criteria().size(); ++i ) {
-            REQUIRE( request.optimizing_criteria()[i] == CostDistance || request.optimizing_criteria()[i] == CostDuration );
-        }
+    virtual std::unique_ptr<PluginRequest> request( const VariantMap& options = VariantMap() ) const;
 
-        result_.clear();
-        iterations_ = 0;
+    const RoutingData* routing_data() const { return graph_; }
+
+private:
+    const Multimodal::Graph* graph_;
+};
+
+class MultiPluginRequest : public PluginRequest
+{
+private:
+    const Multimodal::Graph* graph_;
+
+public:
+    MultiPluginRequest( const MultiPlugin* parent, const VariantMap& options, const Multimodal::Graph* graph ) : PluginRequest( parent, options ), graph_(graph)
+    {
     }
 
-    Multimodal::Vertex vertex_from_road_node_id( db_id_t id ) {
-        const Road::Graph& road_graph = graph_.road();
-        Multimodal::VertexIterator vi, vi_end;
-
-        for ( boost::tie( vi, vi_end ) = vertices( graph_ ); vi != vi_end; vi++ ) {
-            if ( vi->type() == Multimodal::Vertex::Road && road_graph[ vi->road_vertex() ].db_id() == id ) {
-                return *vi;
-            }
-        }
-
-        throw std::runtime_error( "bug: should not reach here" );
-    }
-
+public:
     ///
     /// A path is a list of vertices
     typedef std::list<Multimodal::Vertex> Path;
 
     ///
     /// Convert a path into a roadmap
-    void add_roadmap( const Path& path ) {
-        result_.push_back( Roadmap() );
-        Roadmap& roadmap = result_.back();
+    void add_roadmap( const Request& request, Result& result, const Path& path ) {
+        result.push_back( Roadmap() );
+        Roadmap& roadmap = result.back();
 
-        roadmap.set_starting_date_time( request_.steps()[1].constraint().date_time() );
+        roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 
         std::list<Multimodal::Vertex>::const_iterator previous = path.begin();
         std::list<Multimodal::Vertex>::const_iterator it = ++previous;
@@ -231,37 +234,37 @@ public:
                     throw std::runtime_error( "Can't find the road edge !" );
                 }
 
-                step->set_road_edge(e);
+                step->set_road_edge_id(graph_->road()[e].db_id());
             }
 
             else if ( previous->type() == Multimodal::Vertex::PublicTransport && it->type() == Multimodal::Vertex::PublicTransport ) {
                 mstep = new Roadmap::PublicTransportStep();
                 Roadmap::PublicTransportStep* step = static_cast<Roadmap::PublicTransportStep*>( mstep );
-                step->set_departure_stop( previous->pt_vertex() );
-                step->set_arrival_stop( it->pt_vertex() );
+                step->set_departure_stop( get_mm_vertex(*previous).id() );
+                step->set_arrival_stop( get_mm_vertex(*it).id() );
                 // Set the trip ID
                 step->set_trip_id( 1 );
 
                 // find the network_id
-                for ( Multimodal::Graph::PublicTransportGraphList::const_iterator nit = graph_.public_transports().begin(); nit != graph_.public_transports().end(); ++nit ) {
-                    if ( it->pt_graph() == nit->second ) {
-                        step->set_network_id( nit->first );
+                for ( auto p : graph_->public_transports() ) {
+                    if ( it->pt_graph() == p.second ) {
+                        step->set_network_id( p.first );
                         break;
                     }
                 }
             }
             else {
                 // Make a multimodal edge and copy it into the roadmap as a 'generic' step
-                mstep = new Roadmap::TransferStep( Multimodal::Edge( *previous, *it ) );
+                mstep = new Roadmap::TransferStep( get_mm_vertex( *previous ), get_mm_vertex( *it ) );
             }
 
             // build the multimodal edge to find corresponding costs
             // we don't use edge() since it will loop over the whole graph each time
             // we assume the edge exists in these maps
-            Multimodal::Edge me( *previous, *it );
-            mstep->set_cost(CostDistance, distances[me]);
-            mstep->set_cost(CostDuration, durations[me]);
-            mstep->set_transport_mode( 1 );
+            Multimodal::Edge me( *graph_, *previous, *it );
+            mstep->set_cost(CostId::CostDistance, distances[me]);
+            mstep->set_cost(CostId::CostDuration, durations[me]);
+            mstep->set_transport_mode( TransportModeWalking );
 
             roadmap.add_step( std::auto_ptr<Roadmap::Step>(mstep) );
         }
@@ -276,7 +279,7 @@ public:
     int iterations_;
 
     void vertex_accessor( const Multimodal::Vertex& v, int access_type ) {
-        if ( access_type == Plugin::ExamineAccess ) {
+        if ( access_type == PluginRequest::ExamineAccess ) {
             iterations_++;
             if ( v == destination_ ) {
                 throw PathFound();
@@ -288,20 +291,20 @@ public:
     /// Try to find the shortest path between origin and destination, optimizing the passed criterion
     /// The given path is not cleared
     /// The bool returned is false if no path has been found
-    bool find_path( const Multimodal::Vertex& origin, const Multimodal::Vertex& destination, int optimizing_criterion, Path& path ) {
-        size_t n = num_vertices( graph_ );
+    bool find_path( const Multimodal::Vertex& origin, const Multimodal::Vertex& destination, CostId optimizing_criterion, Path& path ) {
+        size_t n = num_vertices( *graph_ );
         std::vector<boost::default_color_type> color_map( n );
         std::vector<Multimodal::Vertex> pred_map( n );
         // distance map (in number of nodes)
         std::vector<double> node_distance_map( n );
 
-        Multimodal::VertexIndexProperty vertex_index = get( boost::vertex_index, graph_ );
+        Multimodal::VertexIndexProperty vertex_index = get( boost::vertex_index, *graph_ );
 
         Tempus::PluginGraphVisitor vis( this );
         destination_ = destination;
         try {
-            if ( optimizing_criterion == CostDistance ) {
-                boost::dijkstra_shortest_paths( graph_,
+            if ( optimizing_criterion == CostId::CostDistance ) {
+                boost::dijkstra_shortest_paths( *graph_,
                                                 origin,
                                                 boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
                                                 boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
@@ -315,8 +318,8 @@ public:
                                                 boost::make_iterator_property_map( color_map.begin(), vertex_index )
                                                 );
             }
-            else if ( optimizing_criterion == CostDuration ) {
-                boost::dijkstra_shortest_paths( graph_,
+            else if ( optimizing_criterion == CostId::CostDuration ) {
+                boost::dijkstra_shortest_paths( *graph_,
                                                 origin,
                                                 boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
                                                 boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
@@ -361,31 +364,41 @@ public:
 
     ///
     /// The main process
-    virtual void process() {
+    virtual std::unique_ptr<Result> process( const Request& request )
+    {
+        std::unique_ptr<Result> result( new Result() );
+        for ( size_t i = 0; i < request.optimizing_criteria().size(); ++i ) {
+            REQUIRE( request.optimizing_criteria()[i] == CostId::CostDistance || request.optimizing_criteria()[i] == CostId::CostDuration );
+        }
+
+        iterations_ = 0;
+
+        const Multimodal::Graph& graph = *graph_;
+
         //
         // Here we run the optimization for each criterion (this is NOT a multi-objective optimisation)
-        for ( size_t i = 0; i < request_.optimizing_criteria().size(); ++i ) {
+        for ( size_t i = 0; i < request.optimizing_criteria().size(); ++i ) {
             //
             // Run for each intermiadry steps
 
             Multimodal::Vertex vorigin, vdestination;
-            vorigin = Multimodal::Vertex( &graph_.road(), request_.origin() );
+            vorigin = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
 
             Timer timer;
 
             // global path
             Path path;
-            for ( size_t j = 1; j < request_.steps().size(); ++j ) {
+            for ( size_t j = 1; j < request.steps().size(); ++j ) {
                 // path of this step
                 Path lpath;
 
-                vorigin = Multimodal::Vertex( &graph_.road(), request_.steps()[j - 1].location() );
-                vdestination = Multimodal::Vertex( &graph_.road(), request_.steps()[j].location() );
+                vorigin = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.steps()[j - 1].location()).get(), Multimodal::Vertex::road_t() );
+                vdestination = Multimodal::Vertex( graph, graph.road_vertex_from_id(request.steps()[j].location()).get(), Multimodal::Vertex::road_t() );
 
                 bool found;
-                found = find_path( vorigin, vdestination, request_.optimizing_criteria()[i], lpath );
+                found = find_path( vorigin, vdestination, request.optimizing_criteria()[i], lpath );
 
-                metrics_[ "time_s" ] = timer.elapsed();
+                metrics_[ "time_s" ] = Variant::from_float(timer.elapsed());
 
                 if ( !found ) {
                     std::stringstream err;
@@ -397,20 +410,26 @@ public:
                 std::copy( lpath.begin(), lpath.end(), std::back_inserter(path) );
             }
             // add origin back
-            path.push_front( Multimodal::Vertex( &graph_.road(), request_.origin() ) );
+            path.push_front( Multimodal::Vertex( graph, graph.road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() ) );
 
-            metrics_[ "time_s" ] = timer.elapsed();
-            metrics_["iterations"] = iterations_;
+            metrics_[ "time_s" ] = Variant::from_float(timer.elapsed());
+            metrics_["iterations"] = Variant::from_int(iterations_);
 
             // convert the path to a roadmap
-            add_roadmap( path );
+            add_roadmap( request, *result, path );
         }
-    }
+        Db::Connection connection( plugin_->db_options() );
+        simple_multimodal_roadmap( *result, connection, graph );
 
-    void cleanup() {
-        // nothing special to clean up
+        return std::move(result);
     }
-
 };
+
+std::unique_ptr<PluginRequest> MultiPlugin::request( const VariantMap& options ) const
+{
+    return std::unique_ptr<PluginRequest>( new MultiPluginRequest( this, options, graph_ ) );
+}
+
+
 }
 DECLARE_TEMPUS_PLUGIN( "sample_multi_plugin", Tempus::MultiPlugin )

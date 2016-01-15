@@ -44,7 +44,7 @@ from wps_client import *
 
 from qgis.core import *
 
-def display_pinpoints( coords, start_letter, style_file, layer_name, canvas ):
+def display_pinpoints(coords, start_letter, style_file, layer_name, canvas, crs = 2154):
     maps = QgsMapLayerRegistry.instance().mapLayers()
     vl = None
     features = {}
@@ -58,7 +58,7 @@ def display_pinpoints( coords, start_letter, style_file, layer_name, canvas ):
             break
 
     if vl is None:
-        vl = QgsVectorLayer("Point?crs=epsg:2154", layer_name, "memory")
+        vl = QgsVectorLayer("Point?crs=epsg:%d" % crs, layer_name, "memory")
         pr = vl.dataProvider()
         vl.startEditing()
         vl.addAttribute( QgsField( "tag", QVariant.String ) )
@@ -176,6 +176,8 @@ class IfsttarRoutingDock(QDockWidget):
         self.canvas = canvas
         self.in_query = False
 
+        self.native_srid = 2154
+
         # Set up the user interface from Designer.
         self.ui = Ui_IfsttarRoutingDock()
         self.ui.setupUi(self)
@@ -221,6 +223,19 @@ class IfsttarRoutingDock(QDockWidget):
         # set parking location updater
         self.parkingChooser.coordinates_changed.connect( self.update_parking )
         self.parkingChooser.dock = self
+
+    def set_native_srid( self, srid ):
+        if self.native_srid == srid:
+            return
+
+        self.native_srid = srid
+        # remove memory layers
+        layer_ids = []
+        for id, l in QgsMapLayerRegistry.instance().mapLayers().items():
+            if l.name() == "Tempus_private_parking" or l.name() == "Tempus_pin_points":
+                layer_ids.append( id )
+        QgsMapLayerRegistry.instance().removeMapLayers( layer_ids )
+            
 
     def on_toggle_parking( self, state ):
         self.parkingChooser.setEnabled( state == Qt.Checked )
@@ -421,7 +436,7 @@ class IfsttarRoutingDock(QDockWidget):
 
     def update_pinpoints( self ):
         if self.in_query:
-            display_pinpoints( self.get_coordinates(), 'A', 'style_pinpoints.qml', 'Tempus_pin_points', self.canvas )
+            display_pinpoints( self.get_coordinates(), 'A', 'style_pinpoints.qml', 'Tempus_pin_points', self.canvas, self.native_srid )
 
     def update_parking( self ):
         c = self.get_parking()
@@ -429,5 +444,5 @@ class IfsttarRoutingDock(QDockWidget):
             p = None
         else:
             p = [c]
-        display_pinpoints( p, 'P', 'style_parking.qml', 'Tempus_private_parking', self.canvas )
+        display_pinpoints( p, 'P', 'style_parking.qml', 'Tempus_private_parking', self.canvas, self.native_srid )
 

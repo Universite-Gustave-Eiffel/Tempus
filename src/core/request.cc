@@ -29,7 +29,7 @@ Request::Request()
 {
     steps_.push_back( Step() ); // origin
     steps_.push_back( Step() ); // destination
-    optimizing_criteria_.push_back( CostDistance ); // default criterion
+    optimizing_criteria_.push_back( CostId::CostDistance ); // default criterion
 }
 
 Request::Request( const Step& o, const Step& d )
@@ -39,7 +39,7 @@ Request::Request( const Step& o, const Step& d )
     if ( !check_timing_() ) {
         throw BadRequestTiming();
     }
-    optimizing_criteria_.push_back( CostDistance ); // default criterion
+    optimizing_criteria_.push_back( CostId::CostDistance ); // default criterion
 }
 
 void Request::add_intermediary_step( const Step& step )
@@ -57,12 +57,12 @@ void Request::add_allowed_mode( db_id_t m )
     std::sort( allowed_modes_.begin(), allowed_modes_.end() );
 }
 
-Road::Vertex Request::origin() const
+db_id_t Request::origin() const
 {
     return steps_.front().location();
 }
 
-void Request::set_origin( const Road::Vertex& v )
+void Request::set_origin( const db_id_t& v )
 {
     steps_[0].set_location( v );
 }
@@ -72,12 +72,12 @@ void Request::set_origin( const Step& s )
     steps_[0] = s;
 }
 
-Road::Vertex Request::destination() const
+db_id_t Request::destination() const
 {
     return steps_.back().location();
 }
 
-void Request::set_destination( const Road::Vertex& v )
+void Request::set_destination( const db_id_t& v )
 {
     steps_.back().set_location( v );
 }
@@ -95,7 +95,7 @@ void Request::set_optimizing_criterion( unsigned idx, const CostId& c )
 
 void Request::set_optimizing_criterion( unsigned idx, int cost )
 {
-    BOOST_ASSERT( cost >= FirstValue && cost <= LastValue );
+    BOOST_ASSERT( cost >= int(CostId::FirstValue) && cost <= int(CostId::LastValue) );
     set_optimizing_criterion( idx, static_cast<CostId>(cost) );
 }
 

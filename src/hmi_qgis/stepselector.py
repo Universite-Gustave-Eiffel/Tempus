@@ -9,7 +9,7 @@
  *   modify it under the terms of the GNU Library General Public
  *   License as published by the Free Software Foundation; either
  *   version 2 of the License, or (at your option) any later version.
- *   
+ *
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -26,16 +26,16 @@ from qgis.gui import *
 from datetime import datetime
 import config
 
-class StepSelector( QFrame ):
+class StepSelector( QFrame):
 
     coordinates_changed = pyqtSignal()
 
-    def __init__( self, parent, name = "Origin", coordinates_only = False, dock = None ):
-        QFrame.__init__( self )
+    def __init__(self, parent, name = "Origin", coordinates_only = False, dock = None):
+        QFrame.__init__(self)
         self.parent = parent
         self.dock = dock
 
-        self.layout = QVBoxLayout( self )
+        self.layout = QVBoxLayout(self)
         self.layout.setMargin( 0 )
 
         self.label = QLabel()
@@ -102,20 +102,20 @@ class StepSelector( QFrame ):
             self.pvadCheck.setCheckState( Qt.Checked )
             self.layout.addWidget( self.pvadCheck )
 
-    def on_update_constraint( self, idx ):
+    def on_update_constraint(self, idx):
         self.dateEdit.setEnabled( idx != 0 )
 
-    def on_coordinates_changed( self, new_text ):
+    def on_coordinates_changed(self, new_text):
         if self.get_coordinates() != [0,0]:
             self.coordinates_changed.emit()
 
-    def set_canvas( self, canvas ):
+    def set_canvas(self, canvas):
         self.canvas = canvas
 
         self.clickTool = QgsMapToolEmitPoint( self.canvas )
         QObject.connect( self.selectBtn, SIGNAL("clicked()"), self.onSelect )
 
-    def get_coordinates( self ):
+    def get_coordinates(self):
         if self.coordinates.text().find(',') == -1:
             return [0,0]
         s = self.coordinates.text().split(',')
@@ -126,7 +126,7 @@ class StepSelector( QFrame ):
             return [0,0]
         return [ 0, 0 ]
 
-    def set_coordinates( self, xy ):
+    def set_coordinates(self, xy):
         if not xy:
             self.coordinates.setText("-- unavailable --")
             return
@@ -134,19 +134,19 @@ class StepSelector( QFrame ):
             xy = [ 0, 0 ]
         self.coordinates.setText( "%f, %f" % ( xy[0], xy[1] ) )
 
-    def get_constraint_type( self ):
+    def get_constraint_type(self):
         if self.dateEdit is None:
             return 0
         return self.constraint_types[self.constraintBox.currentIndex()][0]
 
-    def set_constraint_type( self, idx ):
+    def set_constraint_type(self, idx):
         if self.dateEdit is None:
             return
         for i, e in enumerate(self.constraint_types):
             if e[0] == idx:
                 self.constraintBox.setCurrentIndex( i )
 
-    def set_depart_after_support( self, enabled ):
+    def set_depart_after_support(self, enabled):
         k = (2,"Depart after")
         if enabled:
             if k not in self.constraint_types:
@@ -160,7 +160,7 @@ class StepSelector( QFrame ):
             for i,e in enumerate(self.constraint_types):
                 self.constraintBox.insertItem( i, e[1] )
 
-    def set_arrive_before_support( self, enabled ):
+    def set_arrive_before_support(self, enabled):
         k = (1,"Arrive before")
         if enabled:
             if k not in self.constraint_types:
@@ -174,23 +174,23 @@ class StepSelector( QFrame ):
             for i,e in enumerate(self.constraint_types):
                 self.constraintBox.insertItem( i, e[1] )
 
-    def get_constraint( self ):
+    def get_constraint(self):
         if self.dateEdit is None:
             return None
         return self.dateEdit.dateTime().toString(Qt.ISODate)
 
-    def set_constraint( self, str ):
+    def set_constraint(self, str):
         if self.dateEdit is None:
             return
         datetime = QDateTime.fromString( str, Qt.ISODate )
         self.dateEdit.setDateTime( datetime )
 
-    def get_pvad( self ):
+    def get_pvad(self):
         if self.pvadCheck is None:
             return True
         return self.pvadCheck.checkState() == Qt.Checked
 
-    def set_pvad( self, check ):
+    def set_pvad(self, check):
         if self.pvadCheck is None:
             return
         state = Qt.Checked
@@ -198,7 +198,7 @@ class StepSelector( QFrame ):
             state = Qt.Unchecked
         self.pvadCheck.setCheckState( state )
 
-    def onAdd( self ):
+    def onAdd(self):
         # we assume the parent widget is a QLayout
         s = StepSelector( self.parent, "Step", False, self.dock )
         # forward the signal
@@ -212,20 +212,20 @@ class StepSelector( QFrame ):
         # add back the last one
         self.parent.addWidget( lw )
 
-    def onRemove( self ):
-        self.parent.removeWidget( self )
+    def onRemove(self):
+        self.parent.removeWidget(self)
         self.close()
 
         # update pin points layer
         self.coordinates_changed.emit()
 
-    def onSelect( self ):
+    def onSelect(self):
         # will reset coordinates if needed
         self.dock.resetCoordinates()
         QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.onCanvasClick)
         self.canvas.setMapTool(self.clickTool)
 
-    def onCanvasClick( self, point, button ):
+    def onCanvasClick(self, point, button):
         geom = QgsGeometry.fromPoint(point)
         p = geom.asPoint()
         self.canvas.unsetMapTool( self.clickTool )

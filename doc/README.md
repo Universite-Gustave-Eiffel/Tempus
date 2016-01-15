@@ -14,3 +14,4 @@ TempusV2 is distributed under the terms of the GNU LGPLv2+
 [Documentation](Documentation.md)
 
 [Installation](Installation.md)
+[Getting Started](Start.md)

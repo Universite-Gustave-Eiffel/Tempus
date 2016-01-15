@@ -28,20 +28,27 @@
    These classes throw std::runtime_error on problem.
  */
 
-#include <libpq-fe.h>
-
 #include <string>
 #include <stdexcept>
 
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
 #include <boost/assert.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 #ifdef DB_TIMING
 #   include <boost/timer/timer.hpp>
 #endif
 
 #include "common.hh"
+
+struct pg_result;
+struct pg_conn;
 
 namespace Db {
 ///
@@ -113,20 +120,14 @@ std::vector<Tempus::db_id_t> Value::as<std::vector<Tempus::db_id_t> >() const;
 /// Class used to represent a row in a result.
 class RowValue {
 public:
-    RowValue( PGresult* res, size_t nrow ) : res_( res ), nrow_( nrow ) {
-    }
+    RowValue( pg_result* res, size_t nrow );
 
     ///
     /// Access to a value by column number
-    Value operator [] ( size_t fn ) {
-        BOOST_ASSERT( fn < ( size_t )PQnfields( res_ ) );
-        return Value( PQgetvalue( res_, nrow_, fn ),
-                      PQgetlength( res_, nrow_, fn ),
-                      PQgetisnull( res_, nrow_, fn ) != 0 ? true : false
-                    );
-    }
+    Value operator [] ( size_t fn );
+
 protected:
-    PGresult* res_;
+    pg_result* res_;
     size_t nrow_;
 };
 
@@ -134,121 +135,79 @@ protected:
 /// Class representing result of a query
 class Result {
 public:
-    Result( PGresult* res ) : res_( res ) {
-        BOOST_ASSERT( res_ );
-    }
+    Result( pg_result* res );
 
-    // default cpu ctor is ok and allowed only to be able to return by value
-    // ideally (c++11) we would use the move ctor
+    // Result is only movable
+    Result( Result&& other );
+    Result& operator=( Result&& other );
 
-    virtual ~Result() {
-        PQclear( res_ );
-    }
+    ~Result();
 
     ///
     /// Number of rows
-    size_t size() {
-        return PQntuples( res_ );
-    }
+    size_t size() const;
 
     ///
     /// Number of columns
-    size_t columns() {
-        return PQnfields( res_ );
-    }
+    size_t columns() const;
 
     ///
     /// Access to a row of a result, by row number
-    RowValue operator [] ( size_t idx ) {
-        BOOST_ASSERT( idx < size() );
-        return RowValue( res_, idx );
-    }
+    RowValue operator [] ( size_t idx ) const;
 
 protected:
-    PGresult* res_;
+    pg_result* res_;
 private:
-    Result& operator=( const Result& ); // we don't really want copies
+    // non copyable
+    Result( const Result& other );
+    Result& operator=( const Result& );
+};
 
+///
+/// Class representing a result iterator
+class ResultIterator {
+public:
+    ResultIterator();
+    ResultIterator( pg_conn* conn );
+    ~ResultIterator();
+
+    // a result iterator is moveable
+    ResultIterator( ResultIterator&& other );
+    ResultIterator& operator=( ResultIterator&& other );
+
+    bool operator==( const ResultIterator& other ) const;
+    bool operator!=( const ResultIterator& other ) const;
+    RowValue operator* () const;
+    void operator++(int);
+private:
+    // non copyable
+    ResultIterator( const ResultIterator& other );
+    ResultIterator& operator=( const ResultIterator& other );
+
+    pg_conn* conn_;
+    pg_result* res_;
 };
 
 ///
 /// Class representing connection to a database.
 class Connection: boost::noncopyable {
 public:
-    Connection()
-        : conn_( 0 ) {
-    }
+    Connection();
+    Connection( const std::string& db_options );
+    ~Connection();
 
-    Connection( const std::string& db_options )
-        : conn_( 0 )
-        //, db_options_(db_options) initialized by connect
-    {
-        assert( PQisthreadsafe() );
-        connect( db_options );
-    }
-
-    void connect( const std::string& db_options ) {
-#ifdef DB_TIMING
-        timer_.start();
-        boost::timer::nanosecond_type start = timer_.elapsed().wall;
-#endif
-        boost::lock_guard<boost::mutex> lock( mutex );
-        conn_ = PQconnectdb( db_options.c_str() );
-
-        if ( conn_ == NULL || PQstatus( conn_ ) != CONNECTION_OK ) {
-            std::string msg = "Database connection problem: ";
-            msg += PQerrorMessage( conn_ );
-            PQfinish( conn_ ); // otherwise leak
-            throw std::runtime_error( msg.c_str() );
-        }
-
-#ifdef DB_TIMING
-        std::cout << conn_ << " " << ( timer_.elapsed().wall - start )*1.e-9 << "s in connection\n";
-        timer_.stop();
-#endif
-    }
-
-    virtual ~Connection() {
-#ifdef DB_TIMING
-        timer_.resume();
-        boost::timer::nanosecond_type start = timer_.elapsed().wall;
-#endif
-        PQfinish( conn_ );
-#ifdef DB_TIMING
-        std::cout << conn_ << " " << ( timer_.elapsed().wall - start )*1.e-9 << "s in finish\n";
-        timer_.stop();
-        std::cout << conn_ << " total elapsed " << timer_.elapsed().wall*1.e-9 << "s\n";
-#endif
-
-    }
+    void connect( const std::string& db_options );
 
     ///
     /// Query execution. Returns a Db::Result. Throws a std::runtime_error on problem
-    Result exec( const std::string& query ) throw ( std::runtime_error ) {
-#ifdef DB_TIMING
-        timer_.resume();
-        boost::timer::nanosecond_type start = timer_.elapsed().wall;
-#endif
+    Result exec( const std::string& query ) throw ( std::runtime_error );
 
-        PGresult* res = PQexec( conn_, query.c_str() );
-        ExecStatusType ret = PQresultStatus( res );
+    ///
+    /// Query execution using a cursor
+    ResultIterator exec_it( const std::string& query ) throw ( std::runtime_error );
 
-        if ( ( ret != PGRES_COMMAND_OK ) && ( ret != PGRES_TUPLES_OK ) ) {
-            std::string msg = "Problem on database query: ";
-            msg += PQresultErrorMessage( res );
-            PQclear( res );
-            throw std::runtime_error( msg.c_str() );
-        }
-
-#ifdef DB_TIMING
-        std::cout << conn_ << " " << ( timer_.elapsed().wall - start )*1.e-9 << "s in query: " << query << "\n";
-        timer_.stop();
-#endif
-
-        return res;
-    }
 protected:
-    PGconn* conn_;
+    pg_conn* conn_;
     static boost::mutex mutex;
 
 #ifdef DB_TIMING

@@ -43,9 +43,15 @@ void Restrictions::add_restriction( db_id_t id,
     // special case for u-turns : duplicate and reverse
     if ( edge_seq.size() == 2 && edge1 == edge2 ) {
         Restriction::EdgeSequence seq2;
-        edge2 = edge( target( edge1, graph ),
-                     source( edge1, graph ),
-                     graph ).first;
+        bool found;
+        boost::tie( edge2, found ) = edge( target( edge1, graph ),
+                                           source( edge1, graph ),
+                                           graph );
+
+        if ( !found ) {
+            // U-turn on a one-way section ?
+            return;
+        }
         
         seq2.push_back( edge1 );
         seq2.push_back( edge2 );
@@ -89,15 +95,17 @@ void Restrictions::add_restriction( Restriction r )
     restrictions_.push_back( r );
 }
 
-void Section::add_stop_ref( const PublicTransport::Stop* stop )
-{
-    stops_.push_back( stop );
+}
 }
 
-void Section::add_poi_ref( const POI* poi )
+namespace boost {
+namespace detail {
+std::ostream& operator<<( std::ostream& ostr, const Tempus::Road::Edge& e )
 {
-    pois_.push_back( poi );
+    ostr << "(" << e.src << "+" << e.idx << ")";
+    return ostr;
+}
+}
 }
 
-}
-}
+
