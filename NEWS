@@ -1,6 +1,6 @@
 2.0.0 (2016-01-15):
     * Use C++11
-    * New Contraction Hiereachies plugin: ch_plugin
+    * New Contraction Hierarchies plugin: ch_plugin
     * The Plugin class is now split into Plugin and PluginRequest
     * The database schema is independant from the coordinate system (Lambert 93 is not mandatory anymore)
     * Design changes to allow other graph types, called 'routing data'.
