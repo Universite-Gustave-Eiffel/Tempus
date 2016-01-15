@@ -18,14 +18,11 @@ Please refer to the following sections :
 
 ## Linux compilation status
 
-Master [![Build Status](https://travis-ci.org/Ifsttar/Tempus.svg?branch=master)](https://travis-ci.org/Ifsttar/Tempus)
-
-Dev branch [![Build Status](https://travis-ci.org/Ifsttar/Tempus.svg?branch=dev)](https://travis-ci.org/Ifsttar/Tempus)
-
-## Windows compilation status
-
-Master [![Build Status](https://ci.appveyor.com/api/projects/status/github/ifsttar/tempus?branch=master&svg=true)(https://ci.appveyor.com/project/mhugo/tempus)
-
-Dev branch [![Build Status](https://ci.appveyor.com/api/projects/status/github/ifsttar/tempus?branch=dev&svg=true)(https://ci.appveyor.com/project/mhugo/tempus)
+| Environment              | Branch | Status        |
+| ------------------------ |--------|:-------------:|
+| Linux                    | master | [![Build Status](https://travis-ci.org/Ifsttar/Tempus.svg?branch=master)](https://travis-ci.org/Ifsttar/Tempus) |
+| Linux                    | dev    | [![Build Status](https://travis-ci.org/Ifsttar/Tempus.svg?branch=dev)](https://travis-ci.org/Ifsttar/Tempus) |
+| Windows (VS 2015)        | master | [![Build Status](https://ci.appveyor.com/api/projects/status/github/ifsttar/tempus?branch=master&svg=true)](https://ci.appveyor.com/project/mhugo/tempus) |
+| Windows (VS 2015)        | dev    | [![Build Status](https://ci.appveyor.com/api/projects/status/github/ifsttar/tempus?branch=dev&svg=true)](https://ci.appveyor.com/project/mhugo/tempus) |
 
 
