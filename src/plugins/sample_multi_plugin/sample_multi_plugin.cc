@@ -31,7 +31,7 @@
 #pragma warning(push, 0)
 #endif
 #include <boost/format.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/dijkstra_shortest_paths_no_color_map.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #ifdef _WIN32
 #pragma warning(pop)
@@ -304,34 +304,32 @@ public:
         destination_ = destination;
         try {
             if ( optimizing_criterion == CostId::CostDistance ) {
-                boost::dijkstra_shortest_paths( *graph_,
-                                                origin,
-                                                boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                                                boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
-                                                boost::make_assoc_property_map( distances ),
-                                                vertex_index,
-                                                std::less<double>(),
-                                                boost::closed_plus<double>(),
-                                                std::numeric_limits<double>::max(),
-                                                0.0,
-                                                vis,
-                                                boost::make_iterator_property_map( color_map.begin(), vertex_index )
-                                                );
+                boost::dijkstra_shortest_paths_no_color_map( *graph_,
+                                                             origin,
+                                                             boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                                             boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
+                                                             boost::make_assoc_property_map( distances ),
+                                                             vertex_index,
+                                                             std::less<double>(),
+                                                             boost::closed_plus<double>(),
+                                                             std::numeric_limits<double>::max(),
+                                                             0.0,
+                                                             vis
+                                                             );
             }
             else if ( optimizing_criterion == CostId::CostDuration ) {
-                boost::dijkstra_shortest_paths( *graph_,
-                                                origin,
-                                                boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                                                boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
-                                                boost::make_assoc_property_map( durations ),
-                                                vertex_index,
-                                                std::less<double>(),
-                                                boost::closed_plus<double>(),
-                                                std::numeric_limits<double>::max(),
-                                                0.0,
-                                                vis,
-                                                boost::make_iterator_property_map( color_map.begin(), vertex_index )
-                                                );
+                boost::dijkstra_shortest_paths_no_color_map( *graph_,
+                                                             origin,
+                                                             boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                                             boost::make_iterator_property_map( node_distance_map.begin(), vertex_index ),
+                                                             boost::make_assoc_property_map( durations ),
+                                                             vertex_index,
+                                                             std::less<double>(),
+                                                             boost::closed_plus<double>(),
+                                                             std::numeric_limits<double>::max(),
+                                                             0.0,
+                                                             vis
+                                                             );
             }
         }
         catch ( PathFound& ) {
