@@ -47,9 +47,25 @@ struct Triple {
 
 typedef std::list<Triple> Path;
 
-typedef std::map< Triple, double > PotentialMap;
-typedef std::map< Triple, db_id_t > TripMap;
-typedef std::map< Triple, Triple > PredecessorMap;
+//
+// Data structure used inside the dijkstra-like algorithm
+class MMVertexData
+{
+    DECLARE_RW_PROPERTY( potential, double );
+    DECLARE_RW_PROPERTY( wait_time, double );
+    DECLARE_RW_PROPERTY( shift_time, double );
+    DECLARE_RW_PROPERTY( trip, db_id_t );
+    DECLARE_RW_PROPERTY( predecessor, Triple );
+public:
+    MMVertexData() : // default values
+        potential_( std::numeric_limits<double>::max() ),
+        wait_time_( 0.0 ),
+        shift_time_( 0.0 ),
+        trip_( 0 )
+    {}
+};
+
+typedef std::map< Triple, MMVertexData > MMVertexDataMap;
 
 // variables to retain between two requests
 struct StaticVariables
@@ -99,11 +115,7 @@ private:
 
     static StaticVariables s_;
 
-    PotentialMap potential_map_;
-    PredecessorMap pred_map_;
-    PotentialMap shift_map_;
-    PotentialMap wait_map_;
-    TripMap trip_map_;
+    MMVertexDataMap vertex_data_map_;
 
     bool enable_trace_;
 
