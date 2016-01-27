@@ -364,18 +364,15 @@ public:
 		
     // Mode transfer time function : returns numeric_limits<double>::max() when the mode transfer is impossible
     template <class Graph>
-    double transfer_time( const Graph& graph, const Multimodal::Edge& edge, db_id_t initial_mode_id, db_id_t final_mode_id ) const
+    double transfer_time( const Graph& graph, const Multimodal::Edge& edge, const TransportMode& initial_mode, const TransportMode& final_mode ) const
     {
         double transf_t = 0;
-        if (initial_mode_id == final_mode_id ) {
+        if (initial_mode.db_id() == final_mode.db_id() ) {
             return 0.0;
         }
 
         const Multimodal::Vertex& src = edge.source();
         const Multimodal::Vertex& tgt = edge.target();
-
-        const TransportMode initial_mode = graph.transport_modes().find( initial_mode_id )->second;
-        const TransportMode final_mode = graph.transport_modes().find( final_mode_id )->second;
 
         if ( initial_mode.is_public_transport() && final_mode.is_public_transport() ) {
             return 0.0;

@@ -679,7 +679,6 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                 combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, shift_pmap, request.allowed_modes(), rvis, NullHeuristic() );
             }
             else {
-                EuclidianHeuristic<Multimodal::Graph> heuristic( *graph_, request.destination() );
                 combined_ls_algorithm_no_init( *graph_, automaton_, origin_o, pred_pmap, potential_pmap, cost_calculator, trip_pmap, wait_pmap, shift_pmap, request.allowed_modes(), vis, NullHeuristic() );
             }
         }
