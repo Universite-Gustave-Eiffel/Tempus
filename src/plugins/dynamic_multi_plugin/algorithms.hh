@@ -79,6 +79,15 @@ struct HeuristicCompare
 
         Object min_object; 
 
+        // get transport mode objet for each allowed mode
+        std::vector<TransportMode> modes;
+        for ( size_t i = 0; i < request_allowed_modes.size(); i++ )
+        {
+            boost::optional<TransportMode> mode = graph.transport_mode( request_allowed_modes[i] );
+            BOOST_ASSERT( mode );
+            modes.push_back( *mode );
+        }
+
         while ( !vertex_queue.empty() ) {
             min_object = vertex_queue.top();
             vis.examine_vertex( min_object, graph );
@@ -98,24 +107,23 @@ struct HeuristicCompare
 
                 db_id_t initial_trip_id = get( trip_map, min_object );
 
+                const TransportMode& initial_mode = *graph.transport_mode( min_object.mode );
+
                 Object new_object;
                 new_object.vertex = target(current_edge, graph);
                 new_object.state = s;
 
-                for ( size_t i = 0; i < request_allowed_modes.size(); i++ )
+                for ( size_t i = 0; i < modes.size(); i++ )
                 {
-                    db_id_t mode_id = request_allowed_modes[i];
-                    boost::optional<TransportMode> mode;
-                    mode = graph.transport_mode(mode_id);
-                    BOOST_ASSERT(mode);
+                    const TransportMode& mode = modes[i];
 
                     // if this mode is not allowed on the current edge, skip it
-                    if ( ! (current_edge.traffic_rules() & mode->traffic_rules() ) ) {
-                        vis.edge_not_relaxed( current_edge, mode_id, graph );
+                    if ( ! (current_edge.traffic_rules() & mode.traffic_rules() ) ) {
+                        vis.edge_not_relaxed( current_edge, mode.db_id(), graph );
                         continue;
                     }
 
-                    new_object.mode = mode_id;
+                    new_object.mode = mode.db_id();
 
                     double new_pi = get( potential_map, new_object );
                     // don't forget to set to 0
@@ -124,14 +132,14 @@ struct HeuristicCompare
                     double initial_shift_time, final_shift_time;
 
                     // compute the time needed to transfer from one mode to another
-                    double cost = cost_calculator.transfer_time( graph, current_edge, min_object.mode, new_object.mode );
+                    double cost = cost_calculator.transfer_time( graph, current_edge, initial_mode, mode );
                     if ( cost < std::numeric_limits<double>::max() )
                     {
                         initial_shift_time = get( shift_map, min_object );
                         // will update final_trip_id and wait_time
                         double travel_time = cost_calculator.travel_time( graph,
                                                                           current_edge,
-                                                                          mode_id,
+                                                                          mode.db_id(),
                                                                           min_pi,
                                                                           initial_shift_time,
                                                                           final_shift_time,
@@ -140,17 +148,16 @@ struct HeuristicCompare
                                                                           wait_time );
                         cost += travel_time;
                         if ( ( cost < std::numeric_limits<double>::max() ) && ( s != min_object.state ) ) {
-                            cost += penalty( automaton.automaton_graph_, s, mode->traffic_rules() ) ;
+                            cost += penalty( automaton.automaton_graph_, s, mode.traffic_rules() ) ;
                         }
                     }
 
                     if ( ( cost < std::numeric_limits<double>::max() ) && ( min_pi + cost < new_pi ) ) {
-                        vis.edge_relaxed( current_edge, mode_id, graph ); 
+                        vis.edge_relaxed( current_edge, mode.db_id(), graph ); 
 
                         put( potential_map, new_object, min_pi + cost ); 
-                        put( trip_map, new_object, final_trip_id ); 
-
                         put( predecessor_map, new_object, min_object );
+                        put( trip_map, new_object, final_trip_id ); 
                         put( wait_map, new_object, wait_time ); 
                         put( shift_map, new_object, final_shift_time ); 
 
@@ -158,7 +165,7 @@ struct HeuristicCompare
                         vis.discover_vertex( new_object, graph );
                     }
                     else {
-                        vis.edge_not_relaxed( current_edge, mode_id, graph );
+                        vis.edge_not_relaxed( current_edge, mode.db_id(), graph );
                     }
                 }
             }
