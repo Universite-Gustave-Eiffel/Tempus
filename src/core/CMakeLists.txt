@@ -79,9 +79,6 @@ endif ()
 
 target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} )
 
-add_executable( sample_app sample_app.cc )
-target_link_libraries( sample_app tempus )
-
 install(TARGETS tempus DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include/tempus)
 install(FILES ${UTILS_HEADER_FILES} DESTINATION include/tempus/utils)
