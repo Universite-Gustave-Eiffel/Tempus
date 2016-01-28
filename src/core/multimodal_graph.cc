@@ -184,11 +184,21 @@ bool Edge::operator!=( const Multimodal::Edge& e ) const
 
 bool Edge::operator<( const Multimodal::Edge& e ) const
 {
+#if 0
+    // not faster ...
+    int c = source_.cmp( e.source_ );
+    if ( c == 0 ) {
+        int d = target_.cmp( e.target_ );
+        return d == 0 ? road_edge_ < e.road_edge_ : d < 0;
+    }
+    return c < 0;
+#else
     return source_ == e.source_ ? 
         ( target_ == e.target_ ?
           road_edge_ < e.road_edge_
           : target_ < e.target_ )
-        : source_ < e.source_;
+                       : source_ < e.source_;
+#endif
 }
 
 VertexIterator::VertexIterator( const Multimodal::Graph& graph )
