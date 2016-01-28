@@ -120,6 +120,8 @@ private:
     bool enable_trace_;
 
     const Multimodal::Graph* graph_;
+
+    bool verbose_;
 };
 
 }
