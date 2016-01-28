@@ -340,7 +340,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // Get plugin options
     // Plugin options
-    bool verbose_ = get_bool_option( "Debug/verbose" );
+    verbose_ = get_bool_option( "Debug/verbose" );
     bool verbose_algo_ = get_bool_option( "Debug/verbose_algo" );
     enable_trace_ = get_bool_option( "Debug/enable_trace" );
     double timetable_frequency_ = get_float_option( "Features/timetable_frequency" );
@@ -355,8 +355,8 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     REQUIRE( graph_->road_vertex_from_id( request.origin() ) );
     REQUIRE( graph_->road_vertex_from_id( request.destination() ) );
 
-    if ( request.optimizing_criteria()[0] != CostId::CostDuration )
-        throw std::invalid_argument( "Unsupported optimizing criterion" );
+    if ( verbose_ && request.optimizing_criteria()[0] != CostId::CostDuration )
+        cout << "Unsupported optimizing criterion, optimizing duration" << endl;
 
     if ( verbose_ ) cout << "Road origin node ID = " << request.origin() << ", road destination node ID = " << request.destination() << endl;
 
@@ -842,7 +842,8 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
     roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
     std::cout << "resulting start_time: " << sec2hm(start_time) << std::endl;
 
-    std::cout << it->vertex << "\tP: " << sec2hm(vertex_data_map_[*it].potential()) << " W: " << sec2hm(vertex_data_map_[*it].wait_time()) << std::endl;
+    if ( verbose_ )
+        std::cout << it->vertex << "\tP: " << sec2hm(vertex_data_map_[*it].potential()) << " W: " << sec2hm(vertex_data_map_[*it].wait_time()) << std::endl;
     double total_duration = 0.0;
     for ( ; next != path.end(); ++next, ++it ) {
         std::auto_ptr<Roadmap::Step> mstep;
@@ -850,7 +851,8 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
         const MMVertexData& it_data = vertex_data_map_[*it];
         const MMVertexData& next_data = vertex_data_map_[*next];
 
-        std::cout << next->vertex << "\tP: " << sec2hm(next_data.potential()) << " W: " << sec2hm(next_data.wait_time()) << std::endl;
+        if ( verbose_ )
+            std::cout << next->vertex << "\tP: " << sec2hm(next_data.potential()) << " W: " << sec2hm(next_data.wait_time()) << std::endl;
 
         if ( it->mode == next->mode && it->vertex.type() == Multimodal::Vertex::Road && next->vertex.type() == Multimodal::Vertex::Road ) {
             mstep.reset( new Roadmap::RoadStep() );
