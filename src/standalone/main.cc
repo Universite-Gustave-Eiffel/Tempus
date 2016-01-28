@@ -45,6 +45,7 @@ int main( int argc, char* argv[] )
     Tempus::db_id_t origin_id = 21406;
     Tempus::db_id_t destination_id = 21015;
     int repeat = 1;
+    bool pvad = true;
 
     // parse command line arguments
     po::options_description desc( "Allowed options" );
@@ -55,6 +56,7 @@ int main( int argc, char* argv[] )
         ( "origin", po::value<Tempus::db_id_t>(), "set the origin vertex id" )
         ( "destination", po::value<Tempus::db_id_t>(), "set the destination vertex id" )
         ( "modes", po::value<std::vector<int>>()->multitoken(), "set the allowed modes (space separated)" )
+        ( "pvad", po::value<bool>(), "set 'private vehicule at destination'" )
         ( "options", po::value<std::vector<string>>()->multitoken(), "set the plugin options option:type=value (space separated)" )
         ( "repeat", po::value<int>(), "set the repeat count (for profiling)" )
         ;
@@ -86,6 +88,10 @@ int main( int argc, char* argv[] )
 
     if ( vm.count( "repeat" ) ) {
         repeat = vm["repeat"].as<int>();
+    }
+
+    if ( vm.count( "pvad" ) ) {
+        pvad = vm["pvad"].as<bool>();
     }
 
     vector<int> modes;
@@ -140,7 +146,10 @@ int main( int argc, char* argv[] )
     Request req;
 
     req.set_origin( origin_id );
-    req.set_destination( destination_id );
+    Request::Step dest;
+    dest.set_location( destination_id );
+    dest.set_private_vehicule_at_destination( pvad );
+    req.set_destination( dest );
     if ( modes.empty() )
         modes.push_back( TransportModeWalking );
     for ( int m : modes ) {
