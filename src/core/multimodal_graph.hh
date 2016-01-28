@@ -71,9 +71,40 @@ struct Vertex {
 public:
     ///
     /// Comparison operator
-    bool operator==( const Vertex& v ) const;
-    bool operator!=( const Vertex& v ) const;
-    bool operator<( const Vertex& v ) const;
+    inline bool operator==( const Vertex& v ) const {
+        switch ( type_ ) {
+        case Road:
+            return v.data_.vertex == data_.vertex;
+        case PublicTransport:
+            return v.data_.pt.index == data_.pt.index && v.data_.pt.vertex == data_.pt.vertex;
+        case Poi:
+            return v.data_.poi == data_.poi;
+        case Null:
+            return v.is_null();
+    }
+    return false;
+    }
+
+    bool operator!=( const Vertex& v ) const { return !operator==( v ); }
+
+    inline bool operator<( const Vertex& v ) const {
+        // Critical code, called in many places. Each minor optimisation is a huge gain
+        if (type() != v.type()) {
+            return type() < v.type();
+        }
+        switch (type_)
+        {
+        case Road:
+            return data_.vertex < v.data_.vertex;
+        case PublicTransport:
+            return data_.pt.index != v.data_.pt.index ? data_.pt.index < v.data_.pt.index : data_.pt.vertex < v.data_.pt.vertex;
+        case Poi:
+            return data_.poi < v.data_.poi;
+        case Null:
+            return false;
+        }
+        return false;
+    }
 
     struct road_t {};
     struct pt_t {};
@@ -94,9 +125,9 @@ public:
         PublicTransport, /// This vertex is a public transport stop
         Poi              /// This vertex is a POI
     };
-    VertexType type() const;
+    VertexType type() const { return type_; }
 
-    bool is_null() const;
+    bool is_null() const { return type_ == Null; }
 
     /// Access to the underlying road graph
     /// @returns the road graph or 0 if it's not a road vertex

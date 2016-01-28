@@ -59,56 +59,6 @@ const Road::Graph* Vertex::road_graph() const
     return &graph_->road();
 }
 
-Vertex::VertexType Vertex::type() const
-{
-    return type_;
-}
-
-bool Vertex::is_null() const
-{
-    return type_ == Null;
-}
-
-bool Vertex::operator==( const Vertex& v ) const
-{
-    switch ( type_ ) {
-    case Road:
-        return v.data_.vertex == data_.vertex;
-    case PublicTransport:
-        return v.data_.pt.index == data_.pt.index && v.data_.pt.vertex == data_.pt.vertex;
-    case Poi:
-        return v.data_.poi == data_.poi;
-    case Null:
-        return v.is_null();
-    }
-    return false;
-}
-
-bool Vertex::operator!=( const Vertex& v ) const
-{
-    return !operator==( v );
-}
-
-bool Vertex::operator<( const Vertex& v ) const
-{
-    if (is_null() && v.is_null()) return false;
-    if (type() != v.type()) {
-        return type() < v.type();
-    }
-    switch (type_)
-    {
-    case Road:
-        return data_.vertex < v.data_.vertex;
-    case PublicTransport:
-        return data_.pt.index != v.data_.pt.index ? data_.pt.index < v.data_.pt.index : data_.pt.vertex < v.data_.pt.vertex;
-    case Poi:
-        return data_.poi < v.data_.poi;
-    case Null:
-        return false;
-    }
-    return false;
-}
-
 Road::Vertex Vertex::road_vertex() const
 {
     if ( is_null() || type() != Road ) {
