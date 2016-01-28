@@ -61,6 +61,7 @@ public:
         ///
         /// Whether the private vehicule must reach the destination
         DECLARE_RW_PROPERTY( private_vehicule_at_destination, bool );
+        Step() : private_vehicule_at_destination_( true ) {}
     };
     typedef std::vector<Step> StepList;
 
