@@ -37,6 +37,19 @@ using namespace Tempus;
 
 namespace po = boost::program_options;
 
+DateTime to_date_time( const std::string& s )
+{
+    DateTime dt;
+    istringstream iss( s );
+    auto facet = new boost::posix_time::time_input_facet();
+    facet->set_iso_extended_format();
+    iss.imbue(std::locale(iss.getloc(), facet));
+    if ( ! ( iss >> dt ) ) {
+        throw std::runtime_error( "Can't parse date time in " + s );
+    }
+    return dt;
+}
+
 int main( int argc, char* argv[] )
 {
     // default db options
@@ -50,15 +63,18 @@ int main( int argc, char* argv[] )
     // parse command line arguments
     po::options_description desc( "Allowed options" );
     desc.add_options()
-        ( "help", "produce help message" )
-        ( "db", po::value<string>(), "set database connection options" )
-        ( "plugin", po::value<string>(), "set the plugin name to launch" )
+        ( "help,h", "produce help message" )
+        ( "db,d", po::value<string>(), "set database connection options" )
+        ( "plugin,l", po::value<string>(), "set the plugin name to launch" )
         ( "origin", po::value<Tempus::db_id_t>(), "set the origin vertex id" )
         ( "destination", po::value<Tempus::db_id_t>(), "set the destination vertex id" )
         ( "modes", po::value<std::vector<int>>()->multitoken(), "set the allowed modes (space separated)" )
         ( "pvad", po::value<bool>(), "set 'private vehicule at destination'" )
+        ( "depart-after", po::value<string>(), "set the time constraint to depart after this date & time" )
+        ( "arrive-before", po::value<string>(), "set the time constraint to arrive before this date & time" )
         ( "options", po::value<std::vector<string>>()->multitoken(), "set the plugin options option:type=value (space separated)" )
-        ( "repeat", po::value<int>(), "set the repeat count (for profiling)" )
+        ( "repeat,n", po::value<int>(), "set the repeat count (for profiling)" )
+        ( "load-from,L", po::value<string>(), "set the dump file to load")
         ;
 
     po::variables_map vm;
@@ -99,6 +115,19 @@ int main( int argc, char* argv[] )
         modes = vm["modes"].as<std::vector<int>>();
     }
 
+    Request::TimeConstraint tc;
+    tc.set_type( Request::TimeConstraint::NoConstraint );
+    if ( vm.count( "depart-after" ) ) {
+        string s = vm["depart-after"].as<string>();
+        tc.set_date_time( to_date_time( s ) );
+        tc.set_type( Request::TimeConstraint::ConstraintAfter );
+    }
+    if ( vm.count( "arrive-before" ) ) {
+        string s = vm["arrive-before"].as<string>();
+        tc.set_date_time( to_date_time( s ) );
+        tc.set_type( Request::TimeConstraint::ConstraintBefore );
+    }
+
     VariantMap options;
     options["db/options"] = Variant::from_string( db_options );
 
@@ -132,6 +161,11 @@ int main( int argc, char* argv[] )
             }
         }
     }
+
+    if ( vm.count("load-from") ) {
+        options["from_file"] = Variant::from_string( vm["load-from"].as<string>() );
+    }
+
     for ( auto p : options ) {
         cout << p.first << "=" << p.second.str() << endl;
     }
@@ -149,6 +183,7 @@ int main( int argc, char* argv[] )
     Request::Step dest;
     dest.set_location( destination_id );
     dest.set_private_vehicule_at_destination( pvad );
+    dest.set_constraint( tc );
     req.set_destination( dest );
     if ( modes.empty() )
         modes.push_back( TransportModeWalking );
