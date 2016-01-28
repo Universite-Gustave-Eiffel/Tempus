@@ -106,6 +106,35 @@ public:
         return false;
     }
 
+    inline int cmp( const Vertex& v ) const {
+        if (type() != v.type()) {
+            return type() < v.type() ? -1 : 1;
+        }
+        switch (type_)
+        {
+        case Road:
+            if ( data_.vertex != v.data_.vertex ) {
+                return data_.vertex < v.data_.vertex ? -1 : 1;
+            }
+            break;
+        case PublicTransport:
+            if ( data_.pt.index != v.data_.pt.index ) {
+                return data_.pt.index < v.data_.pt.index ? -1 : 1;
+            }
+            if ( data_.pt.vertex != v.data_.pt.vertex ) {
+                return data_.pt.vertex < v.data_.pt.vertex ? -1 : 1;
+            }
+            break;
+        case Poi:
+            if ( data_.poi != v.data_.poi ) {
+                return data_.poi < v.data_.poi ? -1 : 1;
+            }
+        default:
+            break;
+        }
+        return 0;
+    }
+
     struct road_t {};
     struct pt_t {};
     struct poi_t {};
