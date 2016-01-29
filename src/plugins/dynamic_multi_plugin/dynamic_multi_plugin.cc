@@ -145,26 +145,28 @@ template <class Graph>
 struct EuclidianHeuristic
 {
 public:
-    EuclidianHeuristic( const Graph& g, const Road::Vertex& destination, double max_speed = 0.06 ) :
-        graph_(g), max_speed_(max_speed)
+    EuclidianHeuristic( const Graph& g, db_id_t destination, double max_speed ) :
+        graph_(g), max_speed_( max_speed * 1000.0 / 60.0 )
     {
-        destination_ = g.road()[destination].coordinates();
+        Road::Vertex v = *g.road_vertex_from_id( destination );
+        Point3D p( g.road()[v].coordinates() );
+        destination_ = Point2D( p.x(), p.y() );
     }
 
-    double operator()( const Multimodal::Vertex& v )
+    float operator()( const Multimodal::Vertex& v )
     {
-        // max speed = 130 km/h (in m/min)
-        return distance( destination_, v.coordinates() ) / (max_speed_ * 1000.0 / 60.0);
+        return distance( destination_, Point2D( v.coordinates().x(), v.coordinates().y() ) ) / max_speed_;
     }
 private:
     const Graph& graph_;
-    Point3D destination_;
-    double max_speed_;
+    Point2D destination_;
+    // in m/min
+    const float max_speed_;
 };
 
 struct NullHeuristic
 {
-    double operator()( const Multimodal::Vertex& )
+    float operator()( const Multimodal::Vertex& )
     {
         return 0.0;
     }
@@ -265,7 +267,7 @@ Plugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
     odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int(12));
     odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", Variant::from_int(5));
     odl.declare_option( "AStar/heuristic", "Use an heuristic based on euclidian distance", Variant::from_bool(false) );
-    odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", Variant::from_float(0.06) );
+    odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", Variant::from_float(90.0) );
     odl.declare_option( "Time/use_speed_profiles", "Use road speed profiles", Variant::from_bool(false) );
     odl.declare_option( "multi_destinations", "Destination list (road vertex id, comma separated)", Variant::from_string("") );
     return odl;

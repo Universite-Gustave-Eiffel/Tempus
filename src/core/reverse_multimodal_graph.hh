@@ -219,6 +219,10 @@ struct ReverseGraph: boost::noncopyable {
     /// the second element of the pair tells if the mode exists
     boost::optional<TransportMode> transport_mode( const std::string& name ) const;
 
+    ///
+    /// @return a Road::Vertex from it's database id in O(1)
+    boost::optional<Road::Vertex> road_vertex_from_id( db_id_t id ) const;
+
 private:
     const Graph& graph_;
     Road::ReverseGraph rroad_;
