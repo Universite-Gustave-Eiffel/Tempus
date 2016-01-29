@@ -74,6 +74,11 @@ boost::optional<TransportMode> ReverseGraph::transport_mode( const std::string& 
     return graph_.transport_mode( name );
 }
 
+boost::optional<Road::Vertex> ReverseGraph::road_vertex_from_id( db_id_t id ) const
+{
+    return graph_.road_vertex_from_id( id );
+}
+
 size_t num_vertices( const ReverseGraph& graph )
 {
     return num_vertices( graph.graph() );
