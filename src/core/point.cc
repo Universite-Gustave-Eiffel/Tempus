@@ -36,4 +36,17 @@ float distance( const Point3D& a, const Point3D& b )
                 (a.z() - b.z()) * (a.z() - b.z()) );
 }
 
+float distance2( const Point2D& a, const Point2D& b )
+{
+    return (a.x() - b.x()) * (a.x() - b.x()) +
+        (a.y() - b.y()) * (a.y() - b.y());
+}
+
+float distance2( const Point3D& a, const Point3D& b )
+{
+    return (a.x() - b.x()) * (a.x() - b.x()) +
+        (a.y() - b.y()) * (a.y() - b.y()) +
+        (a.z() - b.z()) * (a.z() - b.z());
+}
+
 }
