@@ -29,6 +29,9 @@ namespace Tempus
 struct Point2D {
     DECLARE_RW_PROPERTY( x, float );
     DECLARE_RW_PROPERTY( y, float );
+public:
+    Point2D() : x_( 0.0 ), y_( 0.0 ) {}
+    Point2D( float mx, float my ) : x_( mx ), y_( my ) {}
 };
 
 ///
@@ -37,10 +40,20 @@ struct Point3D {
     DECLARE_RW_PROPERTY( x, float );
     DECLARE_RW_PROPERTY( y, float );
     DECLARE_RW_PROPERTY( z, float );
+public:
+    Point3D() : x_( 0.0 ), y_( 0.0 ), z_( 0.0 ) {}
+    Point3D( float mx, float my, float mz ) : x_( mx ), y_( my ), z_( mz ) {}
 };
 
+/** Compute the distance between a and b */
 float distance( const Point3D& a, const Point3D& b );
+/** Compute the distance between a and b */
 float distance( const Point2D& a, const Point2D& b );
+
+/** Compute the square of the distance between a and b */
+float distance2( const Point3D& a, const Point3D& b );
+/** Compute the square of the distance between a and b */
+float distance2( const Point2D& a, const Point2D& b );
 
 }
 
