@@ -59,6 +59,7 @@ int main( int argc, char* argv[] )
     Tempus::db_id_t destination_id = 21015;
     int repeat = 1;
     bool pvad = true;
+    Tempus::CostId opt_criterion = CostId::CostDuration;
 
     // parse command line arguments
     po::options_description desc( "Allowed options" );
@@ -72,6 +73,7 @@ int main( int argc, char* argv[] )
         ( "pvad", po::value<bool>(), "set 'private vehicule at destination'" )
         ( "depart-after", po::value<string>(), "set the time constraint to depart after this date & time" )
         ( "arrive-before", po::value<string>(), "set the time constraint to arrive before this date & time" )
+        ( "optimize-distance", po::value<bool>(), "optimize distance" )
         ( "options", po::value<std::vector<string>>()->multitoken(), "set the plugin options option:type=value (space separated)" )
         ( "repeat,n", po::value<int>(), "set the repeat count (for profiling)" )
         ( "load-from,L", po::value<string>(), "set the dump file to load")
@@ -108,6 +110,10 @@ int main( int argc, char* argv[] )
 
     if ( vm.count( "pvad" ) ) {
         pvad = vm["pvad"].as<bool>();
+    }
+
+    if ( vm.count( "optimize-distance" ) ) {
+        opt_criterion = CostId::CostDistance;
     }
 
     vector<int> modes;
@@ -179,6 +185,7 @@ int main( int argc, char* argv[] )
 
     Request req;
 
+    req.add_criterion( opt_criterion );
     req.set_origin( origin_id );
     Request::Step dest;
     dest.set_location( destination_id );
