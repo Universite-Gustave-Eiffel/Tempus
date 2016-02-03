@@ -15,28 +15,38 @@
  *   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "function_traits.hpp"
+
 namespace Tempus {
 ///
 /// A FunctionPropertyAccessor implements a Readable Property Map concept
 /// by means of a function application on a vertex or edge of a graph
-template <class Graph, class Tag, class T, class Function>
+template <class Graph, class Function>
 struct FunctionPropertyAccessor {
-    typedef T value_type;
-    typedef const T& reference;
-    typedef typename Tempus::vertex_or_edge<Graph, Tag>::descriptor key_type;
-    typedef boost::readable_property_map_tag category;
+    using T = typename function_traits<Function>::return_type;
+    using value_type = T;
+    using reference = const T&;
+    using key_type = typename function_traits<Function>::template argument<1>::type;
+    using category = boost::readable_property_map_tag;
 
     FunctionPropertyAccessor( const Graph& graph, Function fct ) : graph_( graph ), fct_( fct ) {}
     const Graph& graph_;
     Function fct_;
 };
+
+template <typename Graph, typename Function>
+FunctionPropertyAccessor<Graph, Function> make_function_property_accessor( const Graph& graph, Function foo )
+{
+    return FunctionPropertyAccessor<Graph, Function>( graph, foo );
+}
+
 }
 
 namespace boost {
 ///
 /// Implementation of FunctionPropertyAccessor
-template <class Graph, class Tag, class T, class Function>
-T get( Tempus::FunctionPropertyAccessor<Graph, Tag, T, Function> pmap, typename Tempus::vertex_or_edge<Graph, Tag>::descriptor e )
+template <class Graph, class Function>
+typename Tempus::FunctionPropertyAccessor<Graph, Function>::value_type get( Tempus::FunctionPropertyAccessor<Graph, Function> pmap, typename Tempus::FunctionPropertyAccessor<Graph, Function>::key_type e )
 {
     return pmap.fct_( pmap.graph_, e );
 }

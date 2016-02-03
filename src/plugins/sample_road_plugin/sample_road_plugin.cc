@@ -27,6 +27,7 @@
 #endif
 #include <boost/format.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/property_map/function_property_map.hpp>
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -149,12 +150,8 @@ public:
         ///
         /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
         /// which is the edge property of a Road::Graph
-        //	    FieldPropertyAccessor<Road::Graph, boost::edge_property_tag, double, double Road::Section::*> length_map( road_graph, &Road::Section::length );
-        WeightCalculator weight_calculator;
-        Tempus::FunctionPropertyAccessor<Road::Graph,
-                                 boost::edge_property_tag,
-                                 double,
-                                 WeightCalculator> weight_map( road_graph, weight_calculator );
+        WeightDistance weight_distance_calculator( graph_.transport_mode( mode )->traffic_rules() );
+        auto weight_distance_map = make_function_property_accessor( road_graph, weight_distance_calculator );
 
         ///
         /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
