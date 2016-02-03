@@ -293,7 +293,6 @@ public:
     /// The bool returned is false if no path has been found
     bool find_path( const Multimodal::Vertex& origin, const Multimodal::Vertex& destination, CostId optimizing_criterion, Path& path ) {
         size_t n = num_vertices( *graph_ );
-        std::vector<boost::default_color_type> color_map( n );
         std::vector<Multimodal::Vertex> pred_map( n );
         // distance map (in number of nodes)
         std::vector<double> node_distance_map( n );

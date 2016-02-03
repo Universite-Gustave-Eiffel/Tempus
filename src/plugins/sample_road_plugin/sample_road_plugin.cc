@@ -41,17 +41,52 @@ using namespace std;
 
 namespace Tempus {
 
-class WeightCalculator
+class WeightDistance
 {
 public:
-    double operator() ( const Road::Graph& graph, const Road::Edge& e ) {
-        if ( (graph[e].traffic_rules() & TrafficRulePedestrian) == 0 ) {
+    WeightDistance( unsigned traffic_rule ) : traffic_rule_( traffic_rule ) {}
+    float operator() ( const Road::Graph& graph, const Road::Edge& e ) {
+        if ( ( graph[e].traffic_rules() & traffic_rule_ ) == 0 ) {
             // allowed transport types do not include car
             // It is an oversimplification here : it must depends on allowed transport types selected by the user
-            return std::numeric_limits<double>::infinity();
+            return std::numeric_limits<float>::infinity();
         }
         return graph[e].length();
     }
+private:
+    int traffic_rule_;
+};
+
+class ConstantTravelTime
+{
+public:
+    ConstantTravelTime( const Road::Graph& graph, const float walking_speed, int traffic_rule ) :
+        graph_( graph ), walking_speed_( walking_speed * 1000.0 / 60.0 ), traffic_rule_( traffic_rule )
+    {}
+    float operator() ( const Road::Edge& e ) const {
+        if ( ( graph_[e].traffic_rules() & traffic_rule_ ) == 0 ) {
+            return std::numeric_limits<float>::infinity();
+        }
+        return graph_[e].length() / walking_speed_;
+    }
+private:
+    const Road::Graph& graph_;
+    const float walking_speed_;
+    const int traffic_rule_;
+};
+
+class CarTravelTime
+{
+public:
+    CarTravelTime( const Road::Graph& graph ) : graph_( graph ) {}
+    float operator() ( const Road::Edge& e ) const {
+        if ( (graph_[e].traffic_rules() & TrafficRuleCar) == 0 ) {
+            return std::numeric_limits<float>::infinity();
+        }
+        return graph_[e].length() / (graph_[e].car_speed_limit() * 1000.0) * 60.0;
+    }
+private:
+    const Road::Graph& graph_;
 };
 
 class RoadPlugin : public Plugin {
@@ -66,6 +101,7 @@ public:
     static const Capabilities plugin_capabilities() {
         Capabilities params;
         params.optimization_criteria().push_back( CostId::CostDistance );
+        params.optimization_criteria().push_back( CostId::CostDuration );
         return params;
     }
 
@@ -126,14 +162,47 @@ public:
         }
     }
 
+    template <typename PredMap, typename DistanceMap, typename WeightPMap>
+    void shortest_path( const Road::Graph& road_graph,
+                        Road::Vertex origin,
+                        PredMap& pred_map,
+                        DistanceMap& distance_map,
+                        WeightPMap weight_pmap )
+    {
+        ///
+        /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
+        Tempus::PluginRoadGraphVisitor vis( this );
+
+        auto vertex_index = get( boost::vertex_index, road_graph );
+        try {
+            boost::dijkstra_shortest_paths( road_graph,
+                                            origin,
+                                            boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
+                                            boost::make_iterator_property_map( distance_map.begin(), vertex_index ),
+                                            weight_pmap,
+                                            vertex_index,
+                                            std::less<float>(),
+                                            boost::closed_plus<float>(),
+                                            std::numeric_limits<float>::max(),
+                                            0.0,
+                                            vis
+                                            );
+        }
+        catch ( path_found_exception& ) {
+            // Dijkstra has been short cut
+        }
+    }
+
     virtual std::unique_ptr<Result> process( const Request& request ) {
+        REQUIRE( request.allowed_modes().size() == 1 );
         REQUIRE( graph_.road_vertex_from_id( request.origin() ) );
         for ( size_t i = 0; i < request.steps().size(); i++ ) {
             REQUIRE( graph_.road_vertex_from_id(request.steps()[i].location()) );
         }
 
-        if ( ( request.optimizing_criteria()[0] != CostId::CostDistance ) ) {
-            throw std::invalid_argument( "Unsupported optimizing criterion" );
+        db_id_t mode = request.allowed_modes()[0];
+        if ( mode != TransportModeWalking && mode != TransportModePrivateBicycle && mode != TransportModePrivateCar ) {
+            throw std::runtime_error( "Unsupported transport mode" );
         }
 
         trace_vertex_  = get_bool_option( "trace_vertex" );
@@ -145,17 +214,23 @@ public:
 
         Timer timer;
 
+        // output predecessor map
         std::vector<Road::Vertex> pred_map( boost::num_vertices( road_graph ) );
+        // output distance map
+
         std::vector<double> distance_map( boost::num_vertices( road_graph ) );
         ///
-        /// We define a property map that reads the 'length' (of type double) member of a Road::Section,
+        /// We define a property map that reads the 'length' member of a Road::Section,
         /// which is the edge property of a Road::Graph
         WeightDistance weight_distance_calculator( graph_.transport_mode( mode )->traffic_rules() );
         auto weight_distance_map = make_function_property_accessor( road_graph, weight_distance_calculator );
 
-        ///
-        /// Visitor to be built on 'this'. This way, xxx_accessor methods will be called
-        Tempus::PluginRoadGraphVisitor vis( this );
+        ConstantTravelTime const_tt( road_graph,
+                                     mode == TransportModeWalking ? 3.6 : 12.0,
+                                     graph_.transport_mode( mode )->traffic_rules() );
+        CarTravelTime car_tt( road_graph );
+        auto const_weight_map = boost::make_function_property_map<Road::Edge, float, ConstantTravelTime>( const_tt );
+        auto car_weight_map = boost::make_function_property_map<Road::Edge, float, CarTravelTime>( car_tt );
 
         std::list<Road::Vertex> path;
         Road::Vertex origin = graph_.road_vertex_from_id( request.origin() ).get();
@@ -174,22 +249,15 @@ public:
 
             destination_ = graph_.road_vertex_from_id(request.steps()[i].location()).get();
 
-            try {
-                boost::dijkstra_shortest_paths( road_graph,
-                                                origin,
-                                                boost::make_iterator_property_map( pred_map.begin(), get( boost::vertex_index, road_graph ) ),
-                                                boost::make_iterator_property_map( distance_map.begin(), get( boost::vertex_index, road_graph ) ),
-                                                weight_map,
-                                                boost::get( boost::vertex_index, road_graph ),
-                                                std::less<double>(),
-                                                boost::closed_plus<double>(),
-                                                std::numeric_limits<double>::max(),
-                                                0.0,
-                                                vis
-                                              );
+            // call dijkstra
+            if ( request.optimizing_criteria()[0] == CostId::CostDistance ) {
+                shortest_path( road_graph, origin, pred_map, distance_map, weight_distance_map );
             }
-            catch ( path_found_exception& ) {
-                // Dijkstra has been short cut
+            else if ( mode == TransportModePrivateCar ) {
+                shortest_path( road_graph, origin, pred_map, distance_map, car_weight_map );
+            }
+            else {
+                shortest_path( road_graph, origin, pred_map, distance_map, const_weight_map );
             }
 
             // reorder the path
