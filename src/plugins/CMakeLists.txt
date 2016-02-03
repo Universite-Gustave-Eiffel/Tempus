@@ -22,6 +22,8 @@ target_link_libraries( dynamic_multi_plugin tempus cost_lib )
 
 add_subdirectory( ch_plugin )
 
+add_subdirectory( astar_road_plugin )
+
 if (WIN32)
 install( TARGETS 
     sample_multi_plugin 
