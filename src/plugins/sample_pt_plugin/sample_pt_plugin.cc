@@ -192,10 +192,7 @@ public:
         std::vector<double> distance_map( boost::num_vertices( pt_graph ) );
 
         LengthCalculator length_calculator( db );
-        FunctionPropertyAccessor<PublicTransport::Graph,
-                                 boost::edge_property_tag,
-                                 double,
-                                 LengthCalculator> length_map( pt_graph, length_calculator );
+        auto length_map = make_function_property_accessor( pt_graph, length_calculator );
 
         PluginPtGraphVisitor vis( this );
         boost::dijkstra_shortest_paths( pt_graph,
