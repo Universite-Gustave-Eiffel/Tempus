@@ -237,7 +237,7 @@ public:
         // resolve each step, in reverse order
         bool path_found = true;
 
-        for ( size_t ik = request.steps().size(); ik >= 1; --ik ) {
+        for ( size_t ik = request.steps().size(); ik >= 2; --ik ) {
             size_t i = ik - 1;
 
             if ( i > 0 ) {
