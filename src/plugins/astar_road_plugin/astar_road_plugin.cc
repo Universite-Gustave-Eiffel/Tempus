@@ -293,6 +293,12 @@ public:
 
             step.reset( new Roadmap::RoadStep() );
             step->set_cost(CostId::CostDistance, road_graph[e].length());
+            if ( mode == TransportModePrivateCar ) {
+	      step->set_cost(CostId::CostDuration, get( car_weight_map, e ) );
+	    }
+	    else {
+	      step->set_cost(CostId::CostDuration, get( const_weight_map, e ) );
+	    }
             step->set_transport_mode(1);
             Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
             rstep->set_road_edge_id( road_graph[e].db_id() );
