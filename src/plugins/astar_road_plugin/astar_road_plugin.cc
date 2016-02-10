@@ -317,44 +317,43 @@ public:
         std::unique_ptr<Result> result( new Result() );
         result->push_back( Roadmap() );
         Roadmap& roadmap = result->back();
-
         roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 
-        std::auto_ptr<Roadmap::Step> step;
+        if ( prepare_result ) {
+            std::auto_ptr<Roadmap::Step> step;
 
-        Road::Edge current_road;
-        std::list<Road::Vertex>::iterator prev = path.begin();
-        std::list<Road::Vertex>::iterator it = prev;
-        it++;
+            Road::Edge current_road;
+            std::list<Road::Vertex>::iterator prev = path.begin();
+            std::list<Road::Vertex>::iterator it = prev;
+            it++;
 
-        for ( ; it != path.end(); ++it, ++prev) {
-            Road::Vertex v = *it;
-            Road::Vertex previous = *prev;
+            for ( ; it != path.end(); ++it, ++prev) {
+                Road::Vertex v = *it;
+                Road::Vertex previous = *prev;
 
-            // Find an edge, based on a source and destination vertex
-            Road::Edge e;
-            bool found = false;
-            boost::tie( e, found ) = boost::edge( previous, v, road_graph );
+                // Find an edge, based on a source and destination vertex
+                Road::Edge e;
+                bool found = false;
+                boost::tie( e, found ) = boost::edge( previous, v, road_graph );
 
-            if ( !found ) {
-                continue;
+                if ( !found ) {
+                    continue;
+                }
+
+                step.reset( new Roadmap::RoadStep() );
+                step->set_cost(CostId::CostDistance, road_graph[e].length());
+                if ( mode == TransportModePrivateCar ) {
+                    step->set_cost(CostId::CostDuration, get( car_weight_map, e ) );
+                }
+                else {
+                    step->set_cost(CostId::CostDuration, get( const_weight_map, e ) );
+                }
+                step->set_transport_mode(1);
+                Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
+                rstep->set_road_edge_id( road_graph[e].db_id() );
+                roadmap.add_step( step );
             }
 
-            step.reset( new Roadmap::RoadStep() );
-            step->set_cost(CostId::CostDistance, road_graph[e].length());
-            if ( mode == TransportModePrivateCar ) {
-	      step->set_cost(CostId::CostDuration, get( car_weight_map, e ) );
-	    }
-	    else {
-	      step->set_cost(CostId::CostDuration, get( const_weight_map, e ) );
-	    }
-            step->set_transport_mode(1);
-            Roadmap::RoadStep* rstep = static_cast<Roadmap::RoadStep*>(step.get());
-            rstep->set_road_edge_id( road_graph[e].db_id() );
-            roadmap.add_step( step );
-        }
-
-        if ( prepare_result ) {
             Db::Connection connection( plugin_->db_options() );
             simple_multimodal_roadmap( *result, connection, graph_ );
         }
