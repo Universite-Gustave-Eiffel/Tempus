@@ -21,11 +21,15 @@
    The plugin finds a route between an origin and a destination via Dijkstra.
  */
 
+#include "utils/struct_vector_member_property_map.hh"
+
 #ifdef _WIN32
 #pragma warning(push, 0)
 #endif
 #include <boost/format.hpp>
 #include <boost/graph/astar_search.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/heap/d_ary_heap.hpp>
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -102,8 +106,36 @@ public:
 
     virtual std::unique_ptr<PluginRequest> request( const VariantMap& options = VariantMap() ) const;
 
+    struct VertexRoutingData
+    {
+        float distance;
+        float cost;
+        Road::Vertex pred;
+        boost::default_color_type color;
+
+        VertexRoutingData() :
+            distance( std::numeric_limits<float>::max() )
+            , cost ( std::numeric_limits<float>::max() )
+            , pred( 0 )
+            , color( boost::white_color ) {
+        }
+
+        VertexRoutingData( Road::Vertex v ) :
+            distance( std::numeric_limits<float>::max() )
+            , cost ( std::numeric_limits<float>::max() )
+            , pred( v )
+            , color( boost::white_color ) {
+        }
+    };
+
+    using ThreadRoutingData = std::map<boost::thread::id, std::vector<VertexRoutingData> >;
+
+    ThreadRoutingData& thread_routing_data() const { return thread_routing_data_; }
+
 private:
     const Multimodal::Graph* graph_;
+
+    mutable ThreadRoutingData thread_routing_data_;
 };
 
 
@@ -178,10 +210,17 @@ public:
 
         Timer timer;
 
-        std::vector<Road::Vertex> pred_map( boost::num_vertices( road_graph ) );
-        std::vector<float> distance_map( boost::num_vertices( road_graph ) );
-        std::vector<float> cost_map( boost::num_vertices( road_graph ) );
-        std::vector<boost::default_color_type> color_map( boost::num_vertices( road_graph ) );
+        metrics_[ "time_alloc" ] = Variant::from_float( timer.elapsed() );
+
+        size_t nv = num_vertices( road_graph );
+
+        AStarRoadPlugin* p = static_cast< AStarRoadPlugin* >( const_cast<Plugin*>(  plugin_ ) );
+        auto& vertex_data = p->thread_routing_data()[ boost::this_thread::get_id() ];
+        for ( size_t i = 0; i < nv; i++ ) {
+            vertex_data[i] = AStarRoadPlugin::VertexRoutingData( i );
+        }
+
+        metrics_[ "time_init" ] = Variant::from_float( timer.elapsed() );
 
         ConstantTravelTime const_tt( road_graph,
                                      mode == TransportModeWalking ? walking_speed : cycling_speed,
@@ -201,37 +240,47 @@ public:
 
         EuclidianHeuristic h( road_graph, destination, max_speed );
 
+        auto pred_map = make_struct_vector_member_property_map( vertex_data, &AStarRoadPlugin::VertexRoutingData::pred );
+        auto cost_map = make_struct_vector_member_property_map( vertex_data, &AStarRoadPlugin::VertexRoutingData::cost );
+        auto distance_map = make_struct_vector_member_property_map( vertex_data, &AStarRoadPlugin::VertexRoutingData::distance );
+        auto color_map = make_struct_vector_member_property_map( vertex_data, &AStarRoadPlugin::VertexRoutingData::color );
+
+        distance_map[origin] = 0.0;
+        cost_map[origin] = h( origin );
+
+        put( color_map, origin, boost::white_color );
+
         bool path_found = true;
 
         auto vertex_index = get( boost::vertex_index, road_graph );
         try {
             if ( mode == TransportModePrivateCar ) {
-                astar_search( road_graph,
-                              origin,
-                              h,
-                              vis,
-                              boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                              boost::make_iterator_property_map( cost_map.begin(), vertex_index ),
-                              boost::make_iterator_property_map( distance_map.begin(), vertex_index ),
-                              car_weight_map,
-                              vertex_index,
-                              boost::make_iterator_property_map( color_map.begin(), vertex_index ),
-                              std::less<float>(),
-                              boost::closed_plus<float>(),
-                              std::numeric_limits<float>::max(),
-                              0.0 );
+                astar_search_no_init( road_graph,
+                                      origin,
+                                      h,
+                                      vis,
+                                      pred_map,
+                                      cost_map,
+                                      distance_map,
+                                      car_weight_map,
+                                      color_map,
+                                      vertex_index,
+                                      std::less<float>(),
+                                      boost::closed_plus<float>(),
+                                      std::numeric_limits<float>::max(),
+                                      0.0 );
             }
             else {
                 astar_search( road_graph,
                               origin,
                               h,
                               vis,
-                              boost::make_iterator_property_map( pred_map.begin(), vertex_index ),
-                              boost::make_iterator_property_map( cost_map.begin(), vertex_index ),
-                              boost::make_iterator_property_map( distance_map.begin(), vertex_index ),
+                              pred_map,
+                              cost_map,
+                              distance_map,
                               const_weight_map,
                               vertex_index,
-                              boost::make_iterator_property_map( color_map.begin(), vertex_index ),
+                              color_map,
                               std::less<float>(),
                               boost::closed_plus<float>(),
                               std::numeric_limits<float>::max(),
@@ -316,6 +365,13 @@ public:
 
 std::unique_ptr<PluginRequest> AStarRoadPlugin::request( const VariantMap& options ) const
 {
+    auto it = thread_routing_data().find( boost::this_thread::get_id() );
+    if ( it == thread_routing_data().end() ) {
+        size_t nv = num_vertices( graph_->road() );
+        // allocate
+        std::cout << "allocate for thread " << boost::this_thread::get_id() << " " << nv << " elements" << std::endl;
+        thread_routing_data()[boost::this_thread::get_id()] = std::vector<AStarRoadPlugin::VertexRoutingData>( nv );
+    }
     return std::unique_ptr<PluginRequest>( new AStarRoadPluginRequest( this, options, graph_ ) );
 }
 
