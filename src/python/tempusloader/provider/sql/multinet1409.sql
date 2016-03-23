@@ -191,8 +191,8 @@ SET traffic_rules_tf = traffic_rules_tf -
         END ) )
 FROM
 (
-        SELECT id, array_agg(vt ORDER BY vt)
-        FROM _tempus_import.rs
+        SELECT RS.id, array_agg(vt ORDER BY vt)
+        FROM _tempus_import.rs       RS
         -- FIXED must not consider temporary restrictions
         LEFT JOIN       _tempus_import.td       TD ON RS.id = TD.id AND RS.seqnr = TD.seqnr
         -- FIXED dir_pos and not restrval (null)
@@ -200,7 +200,7 @@ FROM
         WHERE           feattyp = 4110 AND restrtyp = 'DF' AND dir_pos in ( 1, 3 )
         -- FIXED temporary restrictions are NOT used
         AND             TD.timedom is null
-        GROUP BY id 
+        GROUP BY RS.id 
 ) q
 WHERE q.id = road_section.id ;
 
@@ -253,23 +253,23 @@ CREATE INDEX idx_road_section_geom ON tempus.road_section USING gist (geom);
 ALTER TABLE tempus.road_section CLUSTER ON idx_road_section_geom;
 
 -- TABLE road_restriction
-insert into tempus.road_restriction
-select
+INSERT INTO tempus.road_restriction
+SELECT
         mp.id::bigint as id,
         array_agg(trpelid::bigint order by seqnr) as road_section
-from
+FROM
         _tempus_import.mp as mp
-left join
+LEFT JOIN
         _tempus_import.mn as mn
-on
+ON
         mn.id = mp.id
-where
+WHERE
         mn.feattyp in (2101,2103)
-and
+AND
         mp.trpeltyp = 4110
-and
+AND
         mn.promantyp = 0
-group by mp.id;
+GROUP BY mp.id;
 
 INSERT INTO tempus.road_restriction_time_penalty
 SELECT
