@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as _test
 
 __project_name__ = 'tempusloader'
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 
 here = abspath(dirname(__file__))
 

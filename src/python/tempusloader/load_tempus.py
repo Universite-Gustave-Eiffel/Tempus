@@ -16,7 +16,7 @@ def import_tomtom(args, shape_options):
     }[args.model_version]
     shape_options['I'] = False
     subs = { 'native_srid' : args.native_srid }
-    mni = Importer(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
+    mni = Importer(args.source, args.speed_profile, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
     return mni.load()
 
 
@@ -75,6 +75,11 @@ def main():
         required=True,
         nargs='+',
         help='The source directory/file to load data from')
+    parser.add_argument(
+        '-sp', '--speed_profile',
+        required=False,
+        nargs='+',
+        help='The source directory/file to load speed profile data from')
     parser.add_argument(
         '-S', '--srid',
         required=False,
