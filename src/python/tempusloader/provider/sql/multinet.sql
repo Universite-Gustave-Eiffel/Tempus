@@ -196,9 +196,7 @@ ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 
 CREATE INDEX idx_road_node_geom ON tempus.road_node USING gist (geom);
-ALTER TABLE tempus.road_node CLUSTER ON idx_road_node_geom;
 CREATE INDEX idx_road_section_geom ON tempus.road_section USING gist (geom);
-ALTER TABLE tempus.road_section CLUSTER ON idx_road_section_geom;
 
 -- TABLE road_restriction
 insert into tempus.road_restriction
