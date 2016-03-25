@@ -210,6 +210,26 @@ COMMENT ON COLUMN tempus.road_section_speed.period_id IS '0 if always applies';
 COMMENT ON COLUMN tempus.road_section_speed.profile_id IS 'Reference to tempus.road_daily_profile';
 
 
+CREATE TABLE tempus.road_section_daily_profile
+(
+    id serial PRIMARY KEY,
+    section_id bigint NOT NULL REFERENCES tempus.road_section ON DELETE CASCADE ON UPDATE CASCADE,
+    speed_freeflow integer,
+    speed_weekend integer,
+    speed_weekday integer,
+    speed_week integer,
+    monday integer,
+    tuesday integer,
+    wednesday integer,
+    thursday integer,
+    friday integer,
+    saturday integer,
+    sunday integer
+);
+COMMENT ON TABLE tempus.road_section_daily_profile IS 'For each section id this table contains by week day speed profile id applies';
+
+
+
 CREATE TABLE tempus.road_restriction
 (
     id bigint PRIMARY KEY,
