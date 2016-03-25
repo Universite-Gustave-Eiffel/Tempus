@@ -15,6 +15,8 @@ WHERE jc.feattyp = 4120; -- 4120 means road node, 4220 means rail node
 -- TABLE road_section
 
 -- Begin to remove all related constraints and index (performances concern)
+ALTER TABLE tempus.road_daily_profile DROP CONSTRAINT road_daily_profile_pkey;
+ALTER TABLE tempus.road_section_daily_profile DROP CONSTRAINT road_section_daily_profile_section_id_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_from_fkey;
 ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_node_to_fkey;
 ALTER TABLE tempus.poi DROP CONSTRAINT poi_road_section_id_fkey;
@@ -25,8 +27,10 @@ ALTER TABLE tempus.road_section DROP CONSTRAINT road_section_pkey;
 -- create index to speed up next query
 ANALYSE _tempus_import.sr;
 ANALYSE _tempus_import.nw;
+ANALYSE _tempus_import.hsnp;
 CREATE INDEX idx_tempus_import_sr_id ON _tempus_import.sr (id);
 CREATE INDEX idx_tempus_import_nw_id ON _tempus_import.nw (id);
+CREATE INDEX idx_tempus_import_hsnp_id ON _tempus_import.hsnp (network_id);
 
 -- Proceed to INSERT
 INSERT INTO tempus.road_section
@@ -247,6 +251,7 @@ ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
         FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 
+
 CREATE INDEX idx_road_node_geom ON tempus.road_node USING gist (geom);
 CREATE INDEX idx_road_section_geom ON tempus.road_section USING gist (geom);
 
@@ -295,6 +300,47 @@ WHERE q.id = road_restriction.id;
 
 -- TODO : add blocked passage (table rs, restrtyp = 'BP') => defined with an edge and a blocked extreme node (from_node if restrval = 1, to_node if restrval = 2)
 -- Could be represented as a road_restriction composed of the edge and each adjacent edge from the chosen extreme node
+
+-- SPEED Profile datas
+
+INSERT INTO tempus.road_daily_profile
+SELECT
+        hspr.profile_id::integer as profile_id,
+        hspr.time_slot as begin_time,
+        4 as speed_rule,                       -- TrafficRuleCar = 4
+        hspr.time_slot as end_time,
+        hspr.rel_sp as speed_weekend
+FROM
+        _tempus_import.hspr as hspr
+ORDER BY profile_id, begin_time;
+
+ALTER TABLE tempus.road_daily_profile ADD CONSTRAINT road_daily_profile_pkey
+        PRIMARY KEY (profile_id, speed_rule, begin_time);
+
+
+INSERT INTO tempus.road_section_daily_profile (section_id, speed_freeflow, speed_weekend, speed_weekday, speed_week, monday, tuesday, wednesday, thursday, friday, saturday, sunday)
+SELECT
+        hsnp.network_id::bigint as section_id,
+        hsnp.spfreeflow::integer as speed_freeflow,
+        hsnp.spweekend::integer as speed_weekend,
+        hsnp.spweekday::integer as speed_weekday,
+        hsnp.spweek::integer as speed_week,
+        hsnp.profile_2::integer as monday,   -- 'profile_2' is monday / 'profile_1' is sunday in TomTom
+        hsnp.profile_3::integer as tuesday,
+        hsnp.profile_4::integer as wednesday,
+        hsnp.profile_5::integer as thursday,
+        hsnp.profile_6::integer as friday,
+        hsnp.profile_7::integer as saturday,
+        hsnp.profile_1::integer as sunday
+FROM
+        _tempus_import.hsnp as hsnp
+ORDER BY section_id;
+
+
+ANALYSE tempus.road_section_daily_profile;
+ALTER TABLE tempus.road_section_daily_profile ADD CONSTRAINT road_section_daily_profile_section_id_fkey
+        FOREIGN KEY (section_id) REFERENCES tempus.road_section;
+CREATE INDEX idx_road_section_daily_profile_section_id ON tempus.road_section_daily_profile (section_id);
 
 
 -- Vacuuming database
