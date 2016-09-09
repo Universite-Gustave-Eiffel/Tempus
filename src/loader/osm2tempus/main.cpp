@@ -31,6 +31,15 @@ public:
     virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags ) = 0;
 };
 
+std::string escape_pgquotes( std::string s )
+{
+    size_t pos = 0;
+    while ((pos = s.find('\'', pos)) != std::string::npos) {
+         s.replace(pos, 1, "''");
+         pos += 2;
+    }
+    return s;
+}
 
 ///
 /// A basic text-based SQL writer
@@ -39,14 +48,15 @@ class SQLWriter : public Writer
 public:
     SQLWriter() : section_id( 0 )
     {
+        //std::cout << "set client encoding to 'utf8';" << std::endl;
         std::cout << "drop table if exists edges;" << std::endl;
-        std::cout << "create table edges(id serial primary key, node_from bigint, node_to bigint, geom geometry(linestring, 4326));" << std::endl;
-        std::cout << "begin;" << std::endl;        
+        std::cout << "create table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326));" << std::endl;
+        std::cout << "begin;" << std::endl;
     }
     
-    virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ )
+    virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
     {
-        std::cout << "INSERT INTO edges (id,node_from,node_to, geom) VALUES (" << ++section_id << ","
+        std::cout << "INSERT INTO edges (id,node_from,node_to, geom, tags) VALUES (" << ++section_id << ","
                   << node_from << ","
                   << node_to << ","
                   << "'SRID=4326;LINESTRING(";
@@ -56,7 +66,17 @@ public:
             if ( i < points.size() - 1 )
                 std::cout << ",";
         }
-        std::cout << ")');" << std::endl;
+        std::cout << ")',";
+        std::cout << "hstore(array[";
+        bool first = true;
+        for ( const auto& p: tags ) {
+            if ( !first ) {
+                std::cout << ",";
+            }
+            first = false;
+            std::cout << "'" << p.first << "','" << escape_pgquotes(p.second) << "'";
+        }
+        std::cout << "]));" << std::endl;
     }
 
     ~SQLWriter()
