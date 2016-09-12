@@ -111,7 +111,6 @@ Value RowValue::operator [] ( size_t fn ) {
 
 Result::Result( pg_result* res ) : res_( res )
 {
-    BOOST_ASSERT( res_ );
 }
 
 Result::Result( Result&& other )
@@ -304,7 +303,7 @@ Result Connection::exec( const std::string& query ) throw ( std::runtime_error )
     pg_result* res = PQexec( conn_, query.c_str() );
     ExecStatusType ret = PQresultStatus( res );
 
-    if ( ( ret != PGRES_COMMAND_OK ) && ( ret != PGRES_TUPLES_OK ) ) {
+    if ( ( ret != PGRES_COMMAND_OK ) && ( ret != PGRES_TUPLES_OK ) && ( ret != PGRES_COPY_IN ) ) {
         std::string msg = "Problem on database query: ";
         msg += PQresultErrorMessage( res );
         PQclear( res );
@@ -317,6 +316,28 @@ Result Connection::exec( const std::string& query ) throw ( std::runtime_error )
 #endif
 
     return res;
+}
+
+void Connection::put_copy_data( const std::string& data )
+{
+    int r = PQputCopyData( conn_, data.data(), data.size() );
+    if ( r == -1 ) {
+        std::string msg = "Problem on PQputCopyData: ";
+        msg += PQerrorMessage( conn_ );
+        throw std::runtime_error( msg.c_str() );
+    }
+}
+
+void Connection::put_copy_end()
+{
+    PQputCopyEnd( conn_, NULL );
+    pg_result* res = PQgetResult( conn_ );
+    ExecStatusType ret = PQresultStatus( res );
+    if ( ret != PGRES_COMMAND_OK ) {
+        std::string msg = "Problem on PQputCopyEnd: ";
+        msg += PQerrorMessage( conn_ );
+        throw std::runtime_error( msg.c_str() );
+    }
 }
 
 } // namespace Db

@@ -206,6 +206,14 @@ public:
     /// Query execution using a cursor
     ResultIterator exec_it( const std::string& query ) throw ( std::runtime_error );
 
+    ///
+    /// Put COPY data
+    void put_copy_data( const std::string& data );
+
+    ///
+    /// End a put COPY session
+    void put_copy_end();
+    
 protected:
     pg_conn* conn_;
     static boost::mutex mutex;
