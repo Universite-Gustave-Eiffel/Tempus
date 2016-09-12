@@ -127,7 +127,7 @@ public:
     SQLCopyWriter( const std::string& db_params ) : section_id( 0 ), db( db_params )
     {
         db.exec( "drop table if exists edges" );
-        db.exec( "create table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
+        db.exec( "create unlogged table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
         db.exec( "copy edges(node_from, node_to, geom) from stdin with delimiter ';'" );
     }
     
