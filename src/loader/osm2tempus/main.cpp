@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <functional> // hash
+#include <boost/program_options.hpp>
 
 
 #include "db.hh"
@@ -401,15 +402,54 @@ private:
 
 int main(int argc, char** argv)
 {
-     if(argc != 2) {
-         std::cout << "Usage: " << argv[0] << " file_to_read.osm.pbf" << std::endl;
-         return 1;
-     }
+    namespace po = boost::program_options;
+    using namespace std;
+
+    string db_options = "dbname=tempus_test_db";
+    string schema = "_tempus_import";
+    string table = "highway";
+    string pbf_file = "";
+
+    po::options_description desc( "Allowed options" );
+    desc.add_options()
+    ( "help", "produce help message" )
+    ( "db", po::value<string>(), "set database connection options" )
+    ( "schema", po::value<string>(), "set database schema" )
+    ( "table", po::value<string>(), "set the table name to populate" )
+    ( "pbf", po::value<string>(), "input OSM pbf file" )
+    ;
+
+    po::variables_map vm;
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
+
+    if ( vm.count( "help" ) ) {
+        std::cout << desc << std::endl;
+        return 1;
+    }
+
+    if ( vm.count( "db" ) ) {
+        db_options = vm["db"].as<string>();
+    }
+    if ( vm.count( "schema" ) ) {
+        schema = vm["schema"].as<string>();
+    }
+    if ( vm.count( "table" ) ) {
+        table = vm["table"].as<string>();
+    }
+    if ( vm.count( "pbf" ) ) {
+        pbf_file = vm["pbf"].as<string>();
+    }
+
+    if ( pbf_file.empty() ) {
+        std::cerr << "An input PBF file must be specified" << std::endl;
+        return 1;
+    }
 
      PbfReader p;
-     osm_pbf::read_osm_pbf(argv[1], p);
+     osm_pbf::read_osm_pbf(pbf_file, p);
      p.mark_points_and_ways();
-     SQLBinaryCopyWriter w( "dbname=tempus_test_db");
+     SQLBinaryCopyWriter w( db_options );
      p.write_sections( w );
 
      return 0;
