@@ -320,7 +320,12 @@ Result Connection::exec( const std::string& query ) throw ( std::runtime_error )
 
 void Connection::put_copy_data( const std::string& data )
 {
-    int r = PQputCopyData( conn_, data.data(), data.size() );
+    put_copy_data( data.data(), data.length() );
+}
+
+void Connection::put_copy_data( const char* data, size_t size )
+{
+    int r = PQputCopyData( conn_, data, size );
     if ( r == -1 ) {
         std::string msg = "Problem on PQputCopyData: ";
         msg += PQerrorMessage( conn_ );

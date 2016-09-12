@@ -119,6 +119,40 @@ std::string binary_to_hextext( const std::string& str )
     return ostr.str();
 }
 
+std::string tags_to_binary( const osm_pbf::Tags& tags )
+{
+    uint32_t size1, size2, wsize;
+    // total size;
+    uint32_t tsize = 4;
+    for ( const auto& tag: tags ) {
+        tsize += tag.first.length() + tag.second.length() + 8;
+    }
+    
+    std::string out;
+    out.resize( tsize + 4 );
+    char *p = &out[0];
+
+    // total size
+    wsize = htonl( tsize );
+    memcpy( p, &wsize, 4 ); p += 4;
+    
+    // number of tags
+    wsize = htonl( tags.size() );
+    memcpy( p, &wsize, 4 ); p += 4;
+    for ( const auto& tag : tags )
+    {
+        size1 = tag.first.length();
+        size2 = tag.second.length();
+        wsize = htonl( size1 );
+        memcpy( p, &wsize, 4 ); p += 4;
+        memcpy( p, tag.first.data(), size1 ); p += size1;
+        wsize = htonl( size2 );
+        memcpy( p, &wsize, 4 ); p += 4;
+        memcpy( p, tag.second.data(), size2 ); p += size2;
+    }
+    return out;
+}
+
 ///
 /// A basic COPY-based SQL writer
 class SQLCopyWriter : public Writer
@@ -140,6 +174,59 @@ public:
 
     ~SQLCopyWriter()
     {
+        db.put_copy_end();
+    }
+
+private:
+    uint64_t section_id;
+    Db::Connection db;
+};
+
+///
+/// A binary COPY-based SQL writer
+class SQLBinaryCopyWriter : public Writer
+{
+public:
+    SQLBinaryCopyWriter( const std::string& db_params ) : section_id( 0 ), db( db_params )
+    {
+        db.exec( "drop table if exists edges" );
+        db.exec( "create unlogged table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
+        db.exec( "copy edges(node_from, node_to, tags, geom) from stdin with (format binary)" );
+        const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0";
+        db.put_copy_data( header, 19 );
+    }
+    
+    virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
+    {
+        const size_t l = 2 /*size*/ + (4+8)*2;
+        char data[ l ];
+        // number of fields
+        uint16_t size = htons( 4 );
+        // size of a uint64
+        uint32_t size2 = htonl( 8 );
+        char *p = &data[0];
+        memcpy( p, &size, 2 ); p += 2;
+        memcpy( p, &size2, 4 ); p+= 4;
+        node_from = htobe64( node_from );
+        node_to = htobe64( node_to );
+        memcpy( p, &node_from, 8 ); p+= 8;
+        memcpy( p, &size2, 4 ); p+= 4;
+        memcpy( p, &node_to, 8 ); p+= 8;
+        db.put_copy_data( data, l );
+
+        db.put_copy_data( tags_to_binary( tags ) );
+
+        // geometry
+        std::string geom_wkb = linestring_to_ewkb( points );
+        uint32_t geom_size = htonl( geom_wkb.length() );
+        db.put_copy_data( reinterpret_cast<char*>( &geom_size ), 4 );
+        db.put_copy_data( geom_wkb );
+    }
+
+    ~SQLBinaryCopyWriter()
+    {
+        std::string end = "\xff\xff";
+        db.put_copy_data( end );
         db.put_copy_end();
     }
 
@@ -244,7 +331,7 @@ int main(int argc, char** argv)
      PbfReader p;
      osm_pbf::read_osm_pbf(argv[1], p);
      p.mark_points_and_ways();
-     SQLCopyWriter w( "dbname=tempus_test_db");
+     SQLBinaryCopyWriter w( "dbname=tempus_test_db");
      p.write_sections( w );
 
      return 0;

@@ -211,6 +211,10 @@ public:
     void put_copy_data( const std::string& data );
 
     ///
+    /// Put COPY data
+    void put_copy_data( const char* data, size_t size );
+
+    ///
     /// End a put COPY session
     void put_copy_end();
     
