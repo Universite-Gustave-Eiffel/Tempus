@@ -2,6 +2,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include "db.hh"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -40,6 +42,8 @@ std::string escape_pgquotes( std::string s )
     }
     return s;
 }
+
+/// TODO: turn virtual into template-based
 
 ///
 /// A basic text-based SQL writer
@@ -86,6 +90,62 @@ public:
 
 private:
     uint64_t section_id;
+};
+
+std::string linestring_to_ewkb( const std::vector<Point>& points )
+{
+    std::string ewkb;
+    ewkb.resize( 1 + 4 /*type*/ + 4 /*srid*/ + 4 /*size*/ + 8 * points.size() * 2 );
+    memcpy( &ewkb[0], "\x01"
+            "\x02\x00\x00\x20"  // linestring + has srid
+            "\xe6\x10\x00\x00", // srid = 4326
+            9
+            );
+    // size
+    *reinterpret_cast<uint32_t*>( &ewkb[9] ) = points.size();
+    for ( size_t i = 0; i < points.size(); i++ ) {
+        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 0 ) = points[i].lon;
+        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 8 ) = points[i].lat;
+    }
+    return ewkb;
+}
+
+std::string binary_to_hextext( const std::string& str )
+{
+    std::ostringstream ostr;
+    for ( char c : str ) {
+        ostr << std::hex << std::setw( 2 ) << std::setfill('0') << static_cast<int>( static_cast<unsigned char>( c ) );
+    }
+    return ostr.str();
+}
+
+///
+/// A basic COPY-based SQL writer
+class SQLCopyWriter : public Writer
+{
+public:
+    SQLCopyWriter( const std::string& db_params ) : section_id( 0 ), db( db_params )
+    {
+        db.exec( "drop table if exists edges" );
+        db.exec( "create table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
+        db.exec( "copy edges(node_from, node_to, geom) from stdin with delimiter ';'" );
+    }
+    
+    virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
+    {
+        std::ostringstream data;
+        data << node_from << ";" << node_to << ";" << binary_to_hextext( linestring_to_ewkb( points ) ) << std::endl;
+        db.put_copy_data( data.str() );
+    }
+
+    ~SQLCopyWriter()
+    {
+        db.put_copy_end();
+    }
+
+private:
+    uint64_t section_id;
+    Db::Connection db;
 };
 
 struct PbfReader
@@ -184,7 +244,7 @@ int main(int argc, char** argv)
      PbfReader p;
      osm_pbf::read_osm_pbf(argv[1], p);
      p.mark_points_and_ways();
-     SQLWriter w;
+     SQLCopyWriter w( "dbname=tempus_test_db");
      p.write_sections( w );
 
      return 0;
