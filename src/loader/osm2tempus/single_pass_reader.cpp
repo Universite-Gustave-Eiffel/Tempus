@@ -84,8 +84,8 @@ struct PbfReader
     }
 
 private:
-    std::unordered_map<uint64_t, Point> points;
-    std::unordered_map<uint64_t, Way> ways;
+    PointCache points;
+    WayCache ways;
 
     // structure used to detect multi edges
     std::unordered_set<node_pair> way_node_pairs;
@@ -151,7 +151,7 @@ private:
 void single_pass_pbf_read( const std::string& filename, Writer& writer )
 {
     PbfReader p;
-    osm_pbf::read_osm_pbf( filename, p );
+    osm_pbf::read_osm_pbf<PbfReader, StdOutProgressor>( filename, p );
     p.mark_points_and_ways();
     p.write_sections( writer );
 }

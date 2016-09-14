@@ -15,9 +15,9 @@ namespace osm_pbf = CanalTP;
 struct Point
 {
     Point() {}
-    Point( double mlon, double mlat ) : lon( mlon ), lat( mlat ) {}
-    double lon, lat;
-    int uses = 0;
+    Point( float mlon, float mlat ) : lon( mlon ), lat( mlat ) {}
+    float lon, lat;
+    char uses = 0;
 };
 
 struct Way
@@ -29,6 +29,7 @@ struct Way
 
 
 using PointCache = std::unordered_map<uint64_t, Point>;
+using WayCache = std::unordered_map<uint64_t, Way>;
 
 // a pair of nodes
 using node_pair = std::pair<uint64_t, uint64_t>;
@@ -45,5 +46,44 @@ namespace std {
     }
   };
 }
+
+struct StdOutProgressor
+{
+    StdOutProgressor() : first_time( true ) {}
+    static const int length = 40;
+    void display_dots( int p )
+    {
+        std::cout << "[";
+        for ( int i = 0; i < p; i++ ) {
+            std::cout << ".";
+        }
+        for ( int i = p; i < length; i++ ) {
+            std::cout << " ";
+        }
+        std::cout << "] ";
+        std::cout << p / double(length) * 100.0 << "%";
+        std::cout.flush();
+    }
+    void operator() ( size_t x, size_t total )
+    {
+        if ( first_time ) {
+            display_dots( 0 );
+            first_time = false;
+        }
+        int p = (float(x) / float(total) * length);
+        if ( p != n_dots ) {
+            n_dots = p;
+            std::cout << "\r";
+            display_dots( p );
+        }
+    }
+    ~StdOutProgressor()
+    {
+        std::cout << std::endl;
+    }
+private:
+    bool first_time = true;
+    int n_dots = 0;
+};
 
 #endif

@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>() ) );
     }
 
-   if ( vm.count( "two-pass" ) ) {
+    if ( vm.count( "two-pass" ) ) {
         two_pass_pbf_read( pbf_file, *writer );
     }
     else

@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <ios>
 
 // this describes the low-level blob storage
 #include <osmpbf/fileformat.pb.h>
@@ -65,7 +66,7 @@ struct Reference {
 typedef std::vector<Reference> References;
 
 // Main function
-template<typename Visitor>
+template<typename Visitor, typename Progressor>
 void read_osm_pbf(const std::string & filename, Visitor & visitor);
 
 struct warn {
@@ -101,11 +102,16 @@ Tags get_tags(T object, const OSMPBF::PrimitiveBlock &primblock){
     return result;
 }
 
-template<typename Visitor>
+template<typename Visitor, typename Progressor>
 struct Parser {
 
     void parse(){
+        file.seekg(0, std::ios_base::end);
+        size_t fsize = file.tellg();
+        file.seekg(0, std::ios_base::beg);
+        Progressor progressor;
         while(!this->file.eof() && !finished) {
+            progressor( file.tellg(), fsize );
             OSMPBF::BlobHeader header = this->read_header();
             if(!this->finished){
                 int32_t sz = this->read_blob(header);
@@ -121,7 +127,7 @@ struct Parser {
         }
     }
 
-    Parser(const std::string & filename, Visitor & visitor)
+    Parser(const std::string & filename, Visitor & visitor )
         : visitor(visitor), file(filename.c_str(), std::ios::binary ), finished(false)
     {
         if(!file.is_open())
@@ -299,9 +305,17 @@ private:
     }
 };
 
-template<typename Visitor>
+struct NullProgressor
+{
+    void operator()( size_t, size_t )
+    {}
+    void end()
+    {}
+};
+
+template<typename Visitor, typename Progressor = NullProgressor>
 void read_osm_pbf(const std::string & filename, Visitor & visitor){
-    Parser<Visitor> p(filename, visitor);
+    Parser<Visitor, Progressor> p(filename, visitor);
     p.parse();
 }
 

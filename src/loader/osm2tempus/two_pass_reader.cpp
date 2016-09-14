@@ -154,10 +154,10 @@ void two_pass_pbf_read( const std::string& filename, Writer& writer )
 {
     std::cout << "first pass" << std::endl;
     PbfReaderPass1 p1;
-    osm_pbf::read_osm_pbf( filename, p1 );
+    osm_pbf::read_osm_pbf<PbfReaderPass1, StdOutProgressor>( filename, p1 );
     std::cout << "second pass" << std::endl;
     PbfReaderPass2 p2( p1.points(), writer );
-    osm_pbf::read_osm_pbf( filename, p2 );
+    osm_pbf::read_osm_pbf<PbfReaderPass2, StdOutProgressor>( filename, p2 );
 }
 
 

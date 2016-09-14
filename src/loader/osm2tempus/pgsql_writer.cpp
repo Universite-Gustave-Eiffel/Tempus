@@ -107,7 +107,6 @@ void SQLWriter::write_section( uint64_t node_from, uint64_t node_to, const std::
 
 SQLWriter::~SQLWriter()
 {
-    std::cout << "commit;" << std::endl;
 }
 
 ///
@@ -138,7 +137,7 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params ) : secti
     db.exec( "drop table if exists edges" );
     db.exec( "create unlogged table edges(id serial, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
     db.exec( "copy edges(node_from, node_to, tags, geom) from stdin with (format binary)" );
-    const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0";
+    const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
     db.put_copy_data( header, 19 );
 }
 
@@ -171,7 +170,6 @@ void SQLBinaryCopyWriter::write_section( uint64_t node_from, uint64_t node_to, c
 
 SQLBinaryCopyWriter::~SQLBinaryCopyWriter()
 {
-    std::string end = "\xff\xff";
-    db.put_copy_data( end );
+    db.put_copy_data( "\xff\xff" );
     db.put_copy_end();
 }
