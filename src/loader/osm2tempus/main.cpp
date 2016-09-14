@@ -5,6 +5,7 @@
 #include <functional> // hash
 #include <boost/program_options.hpp>
 
+#include <sqlite3.h>
 
 #include "db.hh"
 
@@ -210,7 +211,7 @@ public:
     SQLBinaryCopyWriter( const std::string& db_params ) : section_id( 0 ), db( db_params )
     {
         db.exec( "drop table if exists edges" );
-        db.exec( "create unlogged table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
+        db.exec( "create unlogged table edges(id serial, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
         db.exec( "copy edges(node_from, node_to, tags, geom) from stdin with (format binary)" );
         const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0";
         db.put_copy_data( header, 19 );
@@ -253,6 +254,81 @@ public:
 private:
     uint64_t section_id;
     Db::Connection db;
+};
+
+///
+/// A Sqlite writer
+class SqliteWriter : public Writer
+{
+public:
+    SqliteWriter( const std::string& file_name ) : section_id( 0 )
+    {
+        int r;
+        r = sqlite3_open( file_name.c_str(), &db );
+        if ( r != SQLITE_OK ) {
+            throw std::runtime_error( "Problem opening " + file_name );
+        }
+        char *err_msg;
+        // pragma cache_size ?
+        // pragma page_size ?
+        r = sqlite3_exec( db, "create table edges(id int, node_from int, node_to int, geom blob); pragma journal_mode = off; pragma synchronous = off; begin;", NULL, NULL, &err_msg );
+        if ( r != SQLITE_OK ) {
+            std::string msg = std::string("Problem on exec: ") + err_msg;
+            throw std::runtime_error( msg );
+        }
+        r = sqlite3_prepare_v2( db, "insert into edges values (?,?,?,?)", -1, &stmt, NULL );
+        if ( r != SQLITE_OK ) {
+            throw std::runtime_error( "Problem during prepare" );
+        }
+        std::cout << "stmt = " << stmt << std::endl;
+    }
+    
+    virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
+    {
+        int r;
+        r = sqlite3_bind_int64( stmt, 1, section_id++ );
+        if ( r != SQLITE_OK ) {
+            std::ostringstream err;
+            err << "Problem during bind1 " << r;
+            throw std::runtime_error( err.str() );
+        }
+        r = sqlite3_bind_int64( stmt, 2, node_from );
+        if ( r != SQLITE_OK ) {
+            throw std::runtime_error( "Problem during bind2" );
+        }
+        r = sqlite3_bind_int64( stmt, 3, node_to );
+        if ( r != SQLITE_OK ) {
+            throw std::runtime_error( "Problem during bind3" );
+        }
+        std::string ewkb = linestring_to_ewkb( points );
+        r = sqlite3_bind_blob( stmt, 4, ewkb.data(), ewkb.length(), SQLITE_STATIC );
+        if ( r != SQLITE_OK ) {
+            throw std::runtime_error( "Problem during bind4" );
+        }
+        r = sqlite3_step( stmt );
+        if ( r != SQLITE_DONE ) {
+            throw std::runtime_error( "Problem during step" );
+        }
+        sqlite3_clear_bindings( stmt );
+        sqlite3_reset( stmt );
+    }
+
+    ~SqliteWriter()
+    {
+        int r;
+        char *err_msg;
+        r = sqlite3_exec( db, "commit", NULL, NULL, &err_msg );
+        if ( r != SQLITE_OK ) {
+            std::string msg = std::string("Problem on exec: ") + err_msg;
+            throw std::runtime_error( msg );
+        }
+        sqlite3_close( db );
+    }
+
+private:
+    uint64_t section_id;
+    sqlite3* db;
+    sqlite3_stmt* stmt;
 };
 
 struct PbfReader
@@ -449,7 +525,8 @@ int main(int argc, char** argv)
      PbfReader p;
      osm_pbf::read_osm_pbf(pbf_file, p);
      p.mark_points_and_ways();
-     SQLBinaryCopyWriter w( db_options );
+     //SQLBinaryCopyWriter w( db_options );
+     SqliteWriter w( db_options );
      p.write_sections( w );
 
      return 0;

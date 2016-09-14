@@ -4,7 +4,7 @@ find_package(ZLIB REQUIRED)
 include_directories(../../core)
 
 add_executable(osm2tempus main.cpp)
-target_link_libraries(osm2tempus ${PROTOBUF_LIBRARIES} ${ZLIB_LIBRARIES} osmpbf tempus)
+target_link_libraries(osm2tempus ${PROTOBUF_LIBRARIES} ${ZLIB_LIBRARIES} osmpbf tempus sqlite3)
 
 install(TARGETS osm2tempus DESTINATION bin)
 
