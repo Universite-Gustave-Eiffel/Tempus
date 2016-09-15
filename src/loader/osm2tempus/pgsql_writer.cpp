@@ -12,8 +12,8 @@ static std::string linestring_to_ewkb( const std::vector<Point>& points )
     // size
     *reinterpret_cast<uint32_t*>( &ewkb[9] ) = points.size();
     for ( size_t i = 0; i < points.size(); i++ ) {
-        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 0 ) = points[i].lon;
-        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 8 ) = points[i].lat;
+        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 0 ) = points[i].lon();
+        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 8 ) = points[i].lat();
     }
     return ewkb;
 }
@@ -88,7 +88,7 @@ void SQLWriter::write_section( uint64_t node_from, uint64_t node_to, const std::
               << "'SRID=4326;LINESTRING(";
     for ( size_t i = 0; i < points.size(); i++ )
     {
-        std::cout << std::setprecision(8) << points[i].lon << " " << points[i].lat;
+        std::cout << std::setprecision(8) << points[i].lon() << " " << points[i].lat();
         if ( i < points.size() - 1 )
             std::cout << ",";
     }

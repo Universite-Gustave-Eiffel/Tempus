@@ -20,7 +20,9 @@ public:
         for ( uint64_t node: nodes ) {
             auto it = points_.find( node );
             if ( it != points_.end() ) {
-                it->second.uses++;
+                int uses = it->second.uses();
+                if ( uses < 2 )
+                    it->second.set_uses( uses + 1 );
             }
         }
     }
@@ -73,7 +75,7 @@ struct PbfReaderPass2
                 section_start = false;
             }
             section_nodes.push_back( node );
-            if ( i == nodes.size() - 1 || pt.uses > 1 ) {
+            if ( i == nodes.size() - 1 || pt.uses() > 1 ) {
                 split_into_sections( node_from, node, section_nodes, tags );
                 section_start = true;
             }
@@ -125,7 +127,7 @@ private:
             else {
                 const Point& p1 = points_.find( nodes[0] )->second;
                 const Point& p2 = points_.find( nodes[1] )->second;
-                Point center_point( ( p1.lon + p2.lon ) / 2.0, ( p1.lat + p2.lat ) / 2.0 );
+                Point center_point( ( p1.lon() + p2.lon() ) / 2.0, ( p1.lat() + p2.lat() ) / 2.0 );
                 
                 before_pts.push_back( points_.find( nodes[0] )->second );
                 before_pts.push_back( center_point );

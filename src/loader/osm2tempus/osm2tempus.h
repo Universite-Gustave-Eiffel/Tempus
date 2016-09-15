@@ -15,9 +15,47 @@ namespace osm_pbf = CanalTP;
 struct Point
 {
     Point() {}
-    Point( float mlon, float mlat ) : lon( mlon ), lat( mlat ) {}
-    float lon, lat;
-    char uses = 0;
+    Point( float mlon, float mlat )
+    {
+        set_lon( mlon );
+        set_lat( mlat );
+    }
+    float lat() const
+    {
+        return ulat.v;
+    }
+    float lon() const
+    {
+        return ulon.v;
+    }
+    void set_lat( float lat )
+    {
+        ulat.v = lat;
+        ulat.bits &= 0xFFFFFFFE;
+    }
+    void set_lon( float lon )
+    {
+        ulon.v = lon;
+        ulon.bits &= 0xFFFFFFFE;
+    }
+    int uses() const
+    {
+        return (ulat.bits & 1) << 1 | (ulon.bits & 1);
+    }
+    void set_uses( int uses )
+    {
+        ulat.bits |= uses & 2;
+        ulon.bits |= uses & 1;
+    }
+private:
+    union {
+        float v;
+        uint32_t bits;
+    } ulon;
+    union {
+        float v;
+        uint32_t bits;
+    } ulat;
 };
 
 struct Way

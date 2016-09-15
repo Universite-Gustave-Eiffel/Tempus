@@ -13,8 +13,8 @@ static std::string linestring_to_ewkb( const std::vector<Point>& points )
     // size
     *reinterpret_cast<uint32_t*>( &ewkb[9] ) = points.size();
     for ( size_t i = 0; i < points.size(); i++ ) {
-        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 0 ) = points[i].lon;
-        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 8 ) = points[i].lat;
+        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 0 ) = points[i].lon();
+        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 8 ) = points[i].lat();
     }
     return ewkb;
 }
