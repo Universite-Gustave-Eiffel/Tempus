@@ -40,21 +40,21 @@ struct Point
     }
     int uses() const
     {
-        return (ulat.bits & 1) << 1 | (ulon.bits & 1);
+        return ((ulat.bits & 1) << 1) | (ulon.bits & 1);
     }
     void set_uses( int uses )
     {
-        ulat.bits |= uses & 2;
-        ulon.bits |= uses & 1;
+        ulat.bits = (ulat.bits & 0xFFFFFFFE) | ((uses & 2) >> 1);
+        ulon.bits = (ulon.bits & 0xFFFFFFFE) | (uses & 1);
     }
 private:
     union {
         float v;
-        uint32_t bits;
+        uint32_t bits = 0;
     } ulon;
     union {
         float v;
-        uint32_t bits;
+        uint32_t bits = 0;
     } ulat;
 };
 
