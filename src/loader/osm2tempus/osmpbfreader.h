@@ -65,10 +65,6 @@ struct Reference {
 
 typedef std::vector<Reference> References;
 
-// Main function
-template<typename Visitor, typename Progressor>
-void read_osm_pbf(const std::string & filename, Visitor & visitor);
-
 struct warn {
     warn() {std::cout << "\033[33m[WARN] ";}
     template<typename T>warn & operator<<(const T & t){ std::cout << t; return *this;}
@@ -102,21 +98,37 @@ Tags get_tags(T object, const OSMPBF::PrimitiveBlock &primblock){
     return result;
 }
 
-template<typename Visitor, typename Progressor>
-struct Parser {
+template <typename Progressor>
+struct Parser
+{
+    enum BlockType
+    {
+        NodeBlock = 1,
+        WayBlock = 2,
+        RelationBlock = 3
+    };
 
-    void parse(){
+    void get_file_offsets( off_t& ways_offset, off_t& relations_offset ){
         file.seekg(0, std::ios_base::end);
-        size_t fsize = file.tellg();
+        off_t fsize = file.tellg();
         file.seekg(0, std::ios_base::beg);
         Progressor progressor;
+        BlockType currentBlock = NodeBlock;
         while(!this->file.eof() && !finished) {
-            progressor( file.tellg(), fsize );
+            off_t tellp = file.tellg();
+            progressor( tellp, fsize );
             OSMPBF::BlobHeader header = this->read_header();
             if(!this->finished){
                 int32_t sz = this->read_blob(header);
                 if(header.type() == "OSMData") {
-                    this->parse_primitiveblock(sz);
+                    BlockType b = enum_primitiveblock( sz );
+                    if ( b != currentBlock ) {
+                        if ( b == WayBlock )
+                            ways_offset = tellp;
+                        else if ( b == RelationBlock )
+                            relations_offset = tellp;
+                        currentBlock = b;
+                    }
                 }
                 else if(header.type() == "OSMHeader"){
                 }
@@ -127,8 +139,8 @@ struct Parser {
         }
     }
 
-    Parser(const std::string & filename, Visitor & visitor )
-        : visitor(visitor), file(filename.c_str(), std::ios::binary ), finished(false)
+    Parser(const std::string & filename )
+        : file(filename.c_str(), std::ios::binary ), finished(false)
     {
         if(!file.is_open())
             fatal() << "Unable to open the file " << filename;
@@ -136,14 +148,12 @@ struct Parser {
         unpack_buffer = new char[max_uncompressed_blob_size];
     }
 
-    ~Parser(){
+    virtual ~Parser(){
         delete[] buffer;
         delete[] unpack_buffer;
         google::protobuf::ShutdownProtobufLibrary();
     }
-
-private:
-    Visitor & visitor;
+protected:
     std::ifstream file;
     char* buffer;
     char* unpack_buffer;
@@ -231,6 +241,70 @@ private:
         return 0;
     }
 
+    BlockType enum_primitiveblock(int32_t sz) {
+        OSMPBF::PrimitiveBlock primblock;
+        if(!primblock.ParseFromArray(this->unpack_buffer, sz))
+            fatal() << "unable to parse primitive block";
+
+        for(int i = 0, l = primblock.primitivegroup_size(); i < l; i++) {
+            OSMPBF::PrimitiveGroup pg = primblock.primitivegroup(i);
+            if ( pg.nodes_size() || pg.has_dense() ) {
+                return NodeBlock;
+            }
+            if ( pg.ways_size() ) {
+                return WayBlock;
+            }
+            if ( pg.relations_size() ) {
+                return RelationBlock;
+            }
+        }
+        return NodeBlock;
+    }
+    
+};
+
+template<typename Visitor, typename Progressor>
+struct ParserWithVisitor : public Parser<Progressor> {
+
+    ParserWithVisitor(const std::string & filename, Visitor & visitor )
+        : Parser<Progressor>( filename ), visitor( visitor )
+    {
+    }
+
+    void parse( off_t start_offset = 0, off_t end_offset = 0 )
+    {
+        off_t fsize;
+        if ( start_offset || end_offset ) {
+            fsize = end_offset - start_offset;
+            this->file.seekg( start_offset, std::ios_base::beg );
+        }
+        else {
+            this->file.seekg(0, std::ios_base::end);
+            fsize = this->file.tellg();
+            this->file.seekg(0, std::ios_base::beg);
+        }
+        Progressor progressor;
+        while(!this->file.eof() && !this->finished && ( !end_offset || this->file.tellg() < end_offset ) ) {
+            progressor( this->file.tellg() - start_offset, fsize );
+            OSMPBF::BlobHeader header = this->read_header();
+            if(!this->finished){
+                int32_t sz = this->read_blob(header);
+                if(header.type() == "OSMData") {
+                    this->parse_primitiveblock(sz);
+                }
+                else if(header.type() == "OSMHeader"){
+                }
+                else {
+                    warn() << "  unknown blob type: " << header.type();
+                }
+            }
+        }
+    }
+
+
+private:
+    Visitor & visitor;
+
     void parse_primitiveblock(int32_t sz) {
         OSMPBF::PrimitiveBlock primblock;
         if(!primblock.ParseFromArray(this->unpack_buffer, sz))
@@ -313,10 +387,18 @@ struct NullProgressor
     {}
 };
 
+template<typename Progressor = NullProgressor>
+void osm_pbf_offsets(const std::string & filename, off_t& ways_offset, off_t& relations_offset )
+{
+    Parser<Progressor> p( filename );
+    p.get_file_offsets( ways_offset, relations_offset );
+}
+
 template<typename Visitor, typename Progressor = NullProgressor>
-void read_osm_pbf(const std::string & filename, Visitor & visitor){
-    Parser<Visitor, Progressor> p(filename, visitor);
-    p.parse();
+void read_osm_pbf( const std::string & filename, Visitor & visitor, off_t start_offset = 0, off_t end_offset = 0 )
+{
+    ParserWithVisitor<Visitor, Progressor> p(filename, visitor);
+    p.parse( start_offset, end_offset );
 }
 
 }

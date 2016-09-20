@@ -7,7 +7,7 @@ struct PbfReader
 {
     void node_callback( uint64_t osmid, double lon, double lat, const osm_pbf::Tags &/*tags*/ )
     {
-        points[osmid] = Point(lon, lat);
+        points_[osmid] = Point(lon, lat);
     }
 
     void way_callback( uint64_t osmid, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
@@ -27,8 +27,8 @@ struct PbfReader
         for ( auto way_it = ways.begin(); way_it != ways.end(); way_it++ ) {
             // mark each nodes as being used
             for ( uint64_t node: way_it->second.nodes ) {
-                auto it = points.find( node );
-                if ( it != points.end() ) {
+                auto it = points_.find( node );
+                if ( it != points_.end() ) {
                     int uses = it->second.uses();
                     if ( uses < 2 )
                         it->second.set_uses( uses + 1 );
@@ -61,10 +61,10 @@ struct PbfReader
         uint64_t old_node = way.nodes[0];
         uint64_t node_from;
         std::vector<uint64_t> section_nodes;
-        //Point old_pt = points.find( old_node )->second;
+        //Point old_pt = points_.find( old_node )->second;
         for ( size_t i = 1; i < way.nodes.size(); i++ ) {
             uint64_t node = way.nodes[i];
-            const Point& pt = points.find( node )->second;
+            const Point& pt = points_.find( node )->second;
             if ( section_start ) {
                 section_nodes.clear();
                 section_nodes.push_back( old_node );
@@ -81,12 +81,14 @@ struct PbfReader
         }
     }
 
-    void relation_callback( uint64_t /*osmid*/, const osm_pbf::Tags &/*tags*/, const osm_pbf::References & /*refs*/ )
+    void relation_callback( uint64_t /*osmid*/, const osm_pbf::Tags & /*tags*/, const osm_pbf::References & /*refs*/ )
     {
     }
 
+    const PointCache& points() const { return points_; }
+
 private:
-    PointCache points;
+    PointCache points_;
     WayCache ways;
 
     // structure used to detect multi edges
@@ -116,25 +118,25 @@ private:
                 size_t center = nodes.size() / 2;
                 center_node = nodes[center];
                 for ( size_t i = 0; i <= center; i++ ) {
-                    before_pts.push_back( points.find( nodes[i] )->second );
+                    before_pts.push_back( points_.find( nodes[i] )->second );
                 }
                 for ( size_t i = center; i < nodes.size(); i++ ) {
-                    after_pts.push_back( points.find( nodes[i] )->second );
+                    after_pts.push_back( points_.find( nodes[i] )->second );
                 }
             }
             else {
-                const Point& p1 = points.find( nodes[0] )->second;
-                const Point& p2 = points.find( nodes[1] )->second;
+                const Point& p1 = points_.find( nodes[0] )->second;
+                const Point& p2 = points_.find( nodes[1] )->second;
                 Point center_point( ( p1.lon() + p2.lon() ) / 2.0, ( p1.lat() + p2.lat() ) / 2.0 );
                 
-                before_pts.push_back( points.find( nodes[0] )->second );
+                before_pts.push_back( points_.find( nodes[0] )->second );
                 before_pts.push_back( center_point );
                 after_pts.push_back( center_point );
-                after_pts.push_back( points.find( nodes[1] )->second );
+                after_pts.push_back( points_.find( nodes[1] )->second );
 
                 // add a new point
                 center_node = last_artificial_node_id;
-                points[last_artificial_node_id--] = center_point;
+                points_[last_artificial_node_id--] = center_point;
             }
             writer.write_section( node_from, center_node, before_pts, tags );
             writer.write_section( center_node, node_to, after_pts, tags );
@@ -143,17 +145,72 @@ private:
             way_node_pairs.insert( p );
             std::vector<Point> section_pts;
             for ( uint64_t node: nodes ) {
-                section_pts.push_back( points.find( node )->second );
+                section_pts.push_back( points_.find( node )->second );
             }
             writer.write_section( node_from, node_to, section_pts, tags );
         }
     }
 };
 
+#if 0
+struct RelationReader
+{
+    RelationReader( const PointCache& points ) : points_( points ) {}
+    void node_callback( uint64_t /*osmid*/, double /*lon*/, double /*lat*/, const osm_pbf::Tags &/*tags*/ )
+    {
+    }
+
+    void way_callback( uint64_t /*osmid*/, const osm_pbf::Tags& /*tags*/, const std::vector<uint64_t>& /*nodes*/ )
+    {
+    }
+    
+    void relation_callback( uint64_t osmid, const osm_pbf::Tags & tags, const osm_pbf::References & refs )
+    {
+        auto r_it = tags.find( "restriction" );
+        auto t_it = tags.find( "type" );
+        if ( ( r_it != tags.end() ) ||
+             ( t_it != tags.end() && t_it->second == "restriction" ) ) {
+            uint64_t from = 0, via_n = 0, to = 0;
+            for ( const osm_pbf::Reference& r : refs ) {
+                bool is_node = points_.find( r.member_id ) != points_.end();
+                if ( r.role == "from" && !is_node )
+                    from = r.member_id;
+                else if ( r.role == "via" && is_node ) {
+                    via_n = r.member_id;
+                }
+                else if ( r.role == "to" && !is_node )
+                    to = r.member_id;
+            }
+
+            if ( from && via_n && to ) {
+                const Point& p = points_.find( via_n )->second;
+                // emit restriction
+                std::cout << r_it->second << " " << t_it->second << " " << from << " to " << to << " via " << via_n << " " << p.uses() << std::endl;
+            }
+        }
+    }
+private:
+    const PointCache& points_;
+};
+#endif
+
+
 void single_pass_pbf_read( const std::string& filename, Writer& writer )
 {
+    off_t ways_offset = 0, relations_offset = 0;
+    osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
+    std::cout << "Ways offset: " << ways_offset << std::endl;
+    std::cout << "Relations offset: " << relations_offset << std::endl;
+
+    std::cout << "Nodes and ways ..." << std::endl;
     PbfReader p;
-    osm_pbf::read_osm_pbf<PbfReader, StdOutProgressor>( filename, p );
+    osm_pbf::read_osm_pbf<PbfReader, StdOutProgressor>( filename, p, 0, relations_offset );
     p.mark_points_and_ways();
     p.write_sections( writer );
+
+#if 0
+    std::cout << "Relations ..." << std::endl;
+    RelationReader r( p.points() );
+    osm_pbf::read_osm_pbf<RelationReader, StdOutProgressor>( filename, r, relations_offset );
+#endif
 }

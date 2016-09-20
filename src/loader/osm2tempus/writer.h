@@ -6,7 +6,12 @@
 class Writer
 {
 public:
-    virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags ) = 0;
+    virtual void write_section( uint64_t /*node_from*/, uint64_t /*node_to*/, const std::vector<Point>& /*points*/, const osm_pbf::Tags& /*tags*/ )
+    {
+    }
+    virtual void write_restriction( std::vector<uint64_t> /*section_ids*/ )
+    {
+    }
     virtual ~Writer() {};
 };
 
