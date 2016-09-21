@@ -196,21 +196,25 @@ struct pg_data_visitor : public boost::static_visitor<void>
     void operator()( uint64_t v ) { basic_op( v ); }
     void operator()( float f )
     {
-        data_.append( 4 + 8, 0 );
-        char *p = &data_.back() - 12 + 1;
-        uint32_t size = htonl( 8 );
-        uint32_t vv = htonl( *reinterpret_cast<uint32_t*>(&f) );
+        data_.append( 4 + sizeof(float), 0 );
+        char *p = &data_.back() - 4 - sizeof(float) + 1;
+        uint32_t size = htonl( sizeof(float) );
+        uint32_t vv;
+        memcpy( &vv, &f, sizeof(float) );
+        vv = htonl( vv );
         memcpy( p, &size, 4 ); p+= 4;
-        memcpy( p, &vv, 4 );
+        memcpy( p, &vv, sizeof(float) );
     }
     void operator()( double d )
     {
-        data_.append( 4 + 8, 0 );
-        char *p = &data_.back() - 12 + 1;
-        uint32_t size = htonl( 8 );
-        uint64_t vv = htobe64( *reinterpret_cast<uint64_t*>(&d) );
+        data_.append( 4 + sizeof(double), 0 );
+        char *p = &data_.back() - 4 - sizeof(double) + 1;
+        uint32_t size = htonl( sizeof(double) );
+        uint64_t vv;
+        memcpy( &vv, &d, sizeof(double) );
+        vv = htobe64( vv );
         memcpy( p, &size, 4 ); p+= 4;
-        memcpy( p, &vv, 8 );
+        memcpy( p, &vv, sizeof(double) );
     }
     void operator()( const std::string& txt )
     {
