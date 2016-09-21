@@ -37,6 +37,7 @@ int main(int argc, char** argv)
         ( "profile,p", po::value<string>()->default_value("tempus"), "use a data profile" )
         ( "list-profiles", "list available data profiles" )
         ( "keep-tags", "keep way tags when exporting" )
+        ( "create-table,c", "create the table (and drop any existing one)" )
     ;
 
     po::variables_map vm;
@@ -83,7 +84,7 @@ int main(int argc, char** argv)
     bool keep_tags = vm.count( "keep-tags" );
     std::unique_ptr<Writer> writer;
     if ( vm.count( "pgis" ) ) {
-        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), data_profile, keep_tags ) );
+        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), schema, table, vm.count( "create-table" ), data_profile, keep_tags ) );
     }
     else if ( vm.count( "sqlite" ) ) {
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>(), data_profile, keep_tags ) );

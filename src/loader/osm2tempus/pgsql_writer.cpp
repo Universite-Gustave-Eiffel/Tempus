@@ -146,7 +146,13 @@ static const std::string pg_types[] = { "boolean",
 
 ///
 /// A binary COPY-based SQL writer
-SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params, DataProfile* profile, bool keep_tags ) : Writer( profile, keep_tags ), section_id( 0 ), db( db_params )
+SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
+                                          const std::string& schema,
+                                          const std::string& table,
+                                          bool create_table,
+                                          DataProfile* profile,
+                                          bool keep_tags )
+    : Writer( profile, keep_tags ), section_id( 0 ), db( db_params ), schema_( schema ), table_( table ), create_table_( create_table )
 {
     std::string additional_columns, additional_columns_with_type;
     if ( data_profile_ ) {
@@ -160,9 +166,18 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params, DataProf
         additional_tags = ", tags";
         additional_tags_with_type = ", tags hstore";
     }
-    db.exec( "drop table if exists edges" );
-    db.exec( "create unlogged table edges(id serial, node_from bigint, node_to bigint, geom geometry(linestring, 4326)" + additional_columns_with_type + additional_tags_with_type + ")" );
-    db.exec( "copy edges(node_from, node_to, geom" + additional_columns + additional_tags + ") from stdin with (format binary)" );
+    if ( create_table ) {
+        db.exec( "create extension if not exists postgis" );
+        db.exec( "create extension if not exists hstore" );
+        db.exec( "create schema if not exists " + schema );
+        db.exec( "drop table if exists " + schema + "." + table );
+        db.exec( "create unlogged table " + schema + "." + table +
+                 "(id serial, node_from bigint, node_to bigint, geom geometry(linestring, 4326)" +
+                 additional_columns_with_type +
+                 additional_tags_with_type +
+                 ")" );
+    }
+    db.exec( "copy " + schema + "." + table + "(node_from, node_to, geom" + additional_columns + additional_tags + ") from stdin with (format binary)" );
     const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
     db.put_copy_data( header, 19 );
 }
@@ -268,4 +283,11 @@ SQLBinaryCopyWriter::~SQLBinaryCopyWriter()
 {
     db.put_copy_data( "\xff\xff" );
     db.put_copy_end();
+
+    if ( create_table_ ) {
+        std::cout << "creating index" << std::endl;
+        // create index
+        db.exec( "create unique index on " + schema_ + "." + table_ + "(id)" );
+        db.exec( "alter table " + schema_ + "." + table_ + " add primary key using index road_section_id_idx" );
+    }
 }
