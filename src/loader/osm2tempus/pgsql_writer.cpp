@@ -168,7 +168,9 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
     }
     if ( create_table ) {
         db.exec( "create extension if not exists postgis" );
-        db.exec( "create extension if not exists hstore" );
+        if ( keep_tags_ ) {
+            db.exec( "create extension if not exists hstore" );
+        }
         db.exec( "create schema if not exists " + schema );
         db.exec( "drop table if exists " + schema + "." + table );
         db.exec( "create unlogged table " + schema + "." + table +
