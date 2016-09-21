@@ -165,17 +165,24 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params, DataProf
 struct pg_data_visitor : public boost::static_visitor<void>
 {
     pg_data_visitor( std::string& data ) : data_(data) {}
-    std::string& data_;
     void operator()( bool ) {}
-    void operator()( int8_t ) {}
-    void operator()( uint8_t ) {}
-    void operator()( int16_t ) {}
-    void operator()( uint16_t ) {}
-    void operator()( int32_t ) {}
-    void operator()( uint32_t ) {}
-    void operator()( int64_t ) {}
-    void operator()( uint64_t ) {}
-    void operator()( float ) {}
+    void operator()( int8_t v ) { basic_op( v ); }
+    void operator()( uint8_t v ) { basic_op( v ); }
+    void operator()( int16_t v ) { basic_op( v ); }
+    void operator()( uint16_t v ) { basic_op( v ); }
+    void operator()( int32_t v ) { basic_op( v ); }
+    void operator()( uint32_t v ) { basic_op( v ); }
+    void operator()( int64_t v ) { basic_op( v ); }
+    void operator()( uint64_t v ) { basic_op( v ); }
+    void operator()( float f )
+    {
+        data_.append( 4 + 8, 0 );
+        char *p = &data_.back() - 12 + 1;
+        uint32_t size = htonl( 8 );
+        uint32_t vv = htonl( *reinterpret_cast<uint32_t*>(&f) );
+        memcpy( p, &size, 4 ); p+= 4;
+        memcpy( p, &vv, 4 );
+    }
     void operator()( double d )
     {
         data_.append( 4 + 8, 0 );
@@ -185,7 +192,34 @@ struct pg_data_visitor : public boost::static_visitor<void>
         memcpy( p, &size, 4 ); p+= 4;
         memcpy( p, &vv, 8 );
     }
-    void operator()( const std::string& ) {}
+    void operator()( const std::string& txt )
+    {
+        data_.append( 4 + txt.size(), 0 );
+        char *p = &data_.back() - 4 - txt.size() + 1;
+        uint32_t size = htonl( txt.size() );
+        memcpy( p, &size, 4 ); p+= 4;
+        memcpy( p, txt.data(), txt.size() );
+    }
+private:
+    std::string& data_;
+    template <typename T>
+    void basic_op( T v )
+    {
+        data_.append( 4 + sizeof(T), 0 );
+        char *p = &data_.back() - 4 - sizeof(T) + 1;
+        uint32_t size = htonl( sizeof(T) );
+        T vv = reverse_bytes( v );
+        memcpy( p, &size, 4 ); p += 4;
+        memcpy( p, &vv, sizeof(T) );
+    }
+    int8_t reverse_bytes( int8_t v ) const { return v; }
+    uint8_t reverse_bytes( uint8_t v ) const { return v; }
+    int16_t reverse_bytes( int16_t v ) const { return htons(v); }
+    uint16_t reverse_bytes( uint16_t v ) const { return htons(v); }
+    int32_t reverse_bytes( int32_t v ) const { return htonl(v); }
+    uint32_t reverse_bytes( uint32_t v ) const { return htonl(v); }
+    int64_t reverse_bytes( int64_t v ) const { return htobe64(v); }
+    uint64_t reverse_bytes( uint64_t v ) const { return htobe64(v); }
 };
 
 void SQLBinaryCopyWriter::write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
