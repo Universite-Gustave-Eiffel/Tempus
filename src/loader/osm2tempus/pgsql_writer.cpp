@@ -130,23 +130,70 @@ SQLCopyWriter::~SQLCopyWriter()
     db.put_copy_end();
 }
 
+// DataProfile::DataType -> pg type
+static const std::string pg_types[] = { "boolean",
+                                        "smallint",
+                                        "smallint",
+                                        "smallint",
+                                        "smallint",
+                                        "integer",
+                                        "integer",
+                                        "bigint",
+                                        "bigint",
+                                        "real",
+                                        "double precision",
+                                        "text" };
+
 ///
 /// A binary COPY-based SQL writer
-SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params ) : section_id( 0 ), db( db_params )
+SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params, DataProfile* profile ) : Writer( profile ), section_id( 0 ), db( db_params )
 {
+    std::string additional_columns, additional_columns_with_type;
+    if ( data_profile_ ) {
+        for ( const auto& c : data_profile_->columns() ) {
+            additional_columns += ", " + c.name;
+            additional_columns_with_type += ", " + c.name + " " + pg_types[c.type];
+        }
+    }
     db.exec( "drop table if exists edges" );
-    db.exec( "create unlogged table edges(id serial, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
-    db.exec( "copy edges(node_from, node_to, tags, geom) from stdin with (format binary)" );
+    db.exec( "create unlogged table edges(id serial, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326)" + additional_columns_with_type + ")" );
+    db.exec( "copy edges(node_from, node_to, tags, geom" + additional_columns + ") from stdin with (format binary)" );
     const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
     db.put_copy_data( header, 19 );
 }
+
+struct pg_data_visitor : public boost::static_visitor<void>
+{
+    pg_data_visitor( std::string& data ) : data_(data) {}
+    std::string& data_;
+    void operator()( bool ) {}
+    void operator()( int8_t ) {}
+    void operator()( uint8_t ) {}
+    void operator()( int16_t ) {}
+    void operator()( uint16_t ) {}
+    void operator()( int32_t ) {}
+    void operator()( uint32_t ) {}
+    void operator()( int64_t ) {}
+    void operator()( uint64_t ) {}
+    void operator()( float ) {}
+    void operator()( double d )
+    {
+        data_.append( 4 + 8, 0 );
+        char *p = &data_.back() - 12 + 1;
+        uint32_t size = htonl( 8 );
+        uint64_t vv = htobe64( *reinterpret_cast<uint64_t*>(&d) );
+        memcpy( p, &size, 4 ); p+= 4;
+        memcpy( p, &vv, 8 );
+    }
+    void operator()( const std::string& ) {}
+};
 
 void SQLBinaryCopyWriter::write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
 {
     const size_t l = 2 /*size*/ + (4+8)*2;
     char data[ l ];
     // number of fields
-    uint16_t size = htons( 4 );
+    uint16_t size = htons( 4  + ( data_profile_ ? data_profile_->n_columns() : 0 ) );
     // size of a uint64
     uint32_t size2 = htonl( 8 );
     char *p = &data[0];
@@ -166,6 +213,15 @@ void SQLBinaryCopyWriter::write_section( uint64_t node_from, uint64_t node_to, c
     uint32_t geom_size = htonl( geom_wkb.length() );
     db.put_copy_data( reinterpret_cast<char*>( &geom_size ), 4 );
     db.put_copy_data( geom_wkb );
+
+    if ( data_profile_ ) {
+        std::string add_data;
+        pg_data_visitor vis( add_data );
+        for ( const auto& v : data_profile_->section_additional_values( node_from, node_to, points, tags ) ) {
+            boost::apply_visitor( vis, v );
+        }
+        db.put_copy_data( add_data );
+    }
 }
 
 SQLBinaryCopyWriter::~SQLBinaryCopyWriter()

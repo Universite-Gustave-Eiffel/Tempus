@@ -1,11 +1,12 @@
 #include "pgsql_writer.h"
 #include "sqlite_writer.h"
 
+#include "data_profile.h"
+
 #include <boost/program_options.hpp>
 
 void single_pass_pbf_read( const std::string& filename, Writer& writer );
 void two_pass_pbf_read( const std::string& filename, Writer& writer );
-
 
 int main(int argc, char** argv)
 {
@@ -27,6 +28,8 @@ int main(int argc, char** argv)
     ( "pgis", po::value<string>(), "PostGIS connection options" )
     ( "sqlite", po::value<string>(), "SQLite output file" )
     ( "two-pass", "enable two pass reading" )
+    ( "profile", po::value<string>(), "use a data profile" )
+    ( "list-profiles", "list available data profiles" )
     ;
 
     po::variables_map vm;
@@ -36,6 +39,13 @@ int main(int argc, char** argv)
     if ( vm.count( "help" ) ) {
         std::cout << desc << std::endl;
         return 1;
+    }
+
+    if ( vm.count( "list-profiles" ) ) {
+        for ( const auto& p: g_data_profile_registry ) {
+            std::cout << p.first << std::endl;
+        }
+        return 0;
     }
 
     if ( vm.count( "db" ) ) {
@@ -56,9 +66,20 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    DataProfile* data_profile = nullptr;
+    if ( vm.count( "profile" ) ) {
+        string profile = vm["profile"].as<string>();
+        auto pit = g_data_profile_registry.find( profile );
+        if ( pit == g_data_profile_registry.end() ) {
+            std::cerr << "unknown profile " << profile << std::endl;
+            return 1;
+        }
+        data_profile = pit->second;
+    }
+
     std::unique_ptr<Writer> writer;
     if ( vm.count( "pgis" ) ) {
-        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>() ) );
+        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), data_profile ) );
     }
     else if ( vm.count( "sqlite" ) ) {
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>() ) );
