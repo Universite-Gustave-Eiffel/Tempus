@@ -22,7 +22,7 @@ static std::string linestring_to_ewkb( const std::vector<Point>& points )
 
 ///
 /// A Sqlite writer
-SqliteWriter::SqliteWriter( const std::string& file_name ) : section_id( 0 )
+SqliteWriter::SqliteWriter( const std::string& file_name, DataProfile* data_profile, bool keep_tags ) : Writer( data_profile, keep_tags ), section_id( 0 )
 {
     int r;
     r = sqlite3_open( file_name.c_str(), &db );

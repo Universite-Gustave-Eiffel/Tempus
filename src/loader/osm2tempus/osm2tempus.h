@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <iomanip>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
@@ -99,7 +100,7 @@ struct StdOutProgressor
             std::cout << " ";
         }
         std::cout << "] ";
-        std::cout << p / double(length) * 100.0 << "%";
+        std::cout << std::setw(4) << std::setfill(' ') << std::setprecision(1) << std::fixed << p / double(length) * 100.0 << "%";
         std::cout.flush();
     }
     void operator() ( size_t x, size_t total )

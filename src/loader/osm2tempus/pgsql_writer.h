@@ -38,7 +38,7 @@ private:
 class SQLBinaryCopyWriter : public Writer
 {
 public:
-    SQLBinaryCopyWriter( const std::string& db_params, DataProfile* profile );
+    SQLBinaryCopyWriter( const std::string& db_params, DataProfile* profile, bool keep_tags );
     
     virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags );
 

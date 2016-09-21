@@ -82,7 +82,7 @@ public:
         return columns_;
     }
 
-    std::vector<DataVariant> section_additional_values( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags ) const
+    std::vector<DataVariant> section_additional_values( uint64_t /*node_from*/, uint64_t /*node_to*/, const std::vector<Point>& points, const osm_pbf::Tags& tags ) const
     {
         int16_t traffic_rules_ft = 0, traffic_rules_tf = 0;
 

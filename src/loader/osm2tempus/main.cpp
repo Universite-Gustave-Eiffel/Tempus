@@ -8,36 +8,52 @@
 void single_pass_pbf_read( const std::string& filename, Writer& writer );
 void two_pass_pbf_read( const std::string& filename, Writer& writer );
 
+namespace po = boost::program_options;
+
+po::options_description opt_desc( "Allowed options" );
+
+void usage()
+{
+    std::cout << "osm2routing allows to import routing data from an OSM PBF dump" << std::endl << std::endl;
+    std::cout << opt_desc << std::endl;
+}
+
 int main(int argc, char** argv)
 {
-    namespace po = boost::program_options;
     using namespace std;
 
-    string db_options = "dbname=tempus_test_db";
-    string schema = "_tempus_import";
-    string table = "highway";
-    string pbf_file = "";
+    string schema;
+    string table;
+    string pbf_file;
 
-    po::options_description desc( "Allowed options" );
-    desc.add_options()
-    ( "help", "produce help message" )
-    ( "db", po::value<string>(), "set database connection options" )
-    ( "schema", po::value<string>(), "set database schema" )
-    ( "table", po::value<string>(), "set the table name to populate" )
-    ( "pbf", po::value<string>(), "input OSM pbf file" )
-    ( "pgis", po::value<string>(), "PostGIS connection options" )
-    ( "sqlite", po::value<string>(), "SQLite output file" )
-    ( "two-pass", "enable two pass reading" )
-    ( "profile", po::value<string>(), "use a data profile" )
-    ( "list-profiles", "list available data profiles" )
+    opt_desc.add_options()
+        ( "help,h", "produce help message" )
+        ( "input,i", po::value<string>(&pbf_file)->required(), "input OSM pbf file" )
+        ( "pgis", po::value<string>()->default_value("dbname=tempus_test_db"), "PostGIS connection options" )
+        ( "schema", po::value<string>(&schema)->default_value("tempus"), "set database schema" )
+        ( "table", po::value<string>(&table)->default_value("road_section"), "set the table name to populate" )
+        ( "sqlite", po::value<string>(), "SQLite output file" )
+        ( "two-pass", "enable two pass reading" )
+        ( "profile,p", po::value<string>()->default_value("tempus"), "use a data profile" )
+        ( "list-profiles", "list available data profiles" )
+        ( "keep-tags", "keep way tags when exporting" )
     ;
 
     po::variables_map vm;
-    po::store( po::parse_command_line( argc, argv, desc ), vm );
-    po::notify( vm );
+    try
+    {
+        po::store( po::parse_command_line( argc, argv, opt_desc ), vm );
+        po::notify( vm );
+    }
+    catch ( po::error& e )
+    {
+        std::cerr << "Argument error: " << e.what() << std::endl << std::endl;
+        std::cerr << opt_desc << std::endl;
+        return 1;
+    }
 
     if ( vm.count( "help" ) ) {
-        std::cout << desc << std::endl;
+        usage();
         return 1;
     }
 
@@ -46,19 +62,6 @@ int main(int argc, char** argv)
             std::cout << p.first << std::endl;
         }
         return 0;
-    }
-
-    if ( vm.count( "db" ) ) {
-        db_options = vm["db"].as<string>();
-    }
-    if ( vm.count( "schema" ) ) {
-        schema = vm["schema"].as<string>();
-    }
-    if ( vm.count( "table" ) ) {
-        table = vm["table"].as<string>();
-    }
-    if ( vm.count( "pbf" ) ) {
-        pbf_file = vm["pbf"].as<string>();
     }
 
     if ( pbf_file.empty() ) {
@@ -77,12 +80,13 @@ int main(int argc, char** argv)
         data_profile = pit->second;
     }
 
+    bool keep_tags = vm.count( "keep-tags" );
     std::unique_ptr<Writer> writer;
     if ( vm.count( "pgis" ) ) {
-        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), data_profile ) );
+        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), data_profile, keep_tags ) );
     }
     else if ( vm.count( "sqlite" ) ) {
-        writer.reset( new SqliteWriter( vm["sqlite"].as<string>() ) );
+        writer.reset( new SqliteWriter( vm["sqlite"].as<string>(), data_profile, keep_tags ) );
     }
 
     if ( vm.count( "two-pass" ) ) {

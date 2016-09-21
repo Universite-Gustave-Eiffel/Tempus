@@ -10,7 +10,7 @@
 class SqliteWriter : public Writer
 {
 public:
-    SqliteWriter( const std::string& file_name );
+    SqliteWriter( const std::string& file_name, DataProfile* data_profile, bool keep_tags );
     
     virtual void write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ );
 
