@@ -13,6 +13,10 @@
 
 namespace osm_pbf = CanalTP;
 
+#ifdef OSM_POINT_APPROXIMATION
+///
+/// Point class where 1 bit of each coordinate is taken to store a counter
+/// sizeof(Point) = 8
 struct Point
 {
     Point() {}
@@ -58,6 +62,45 @@ private:
         uint32_t bits = 0;
     } ulat;
 };
+#else
+///
+/// Point class
+/// sizeof(Point) = 12
+struct Point
+{
+    Point() {}
+    Point( float lon, float lat ) : lon_(lon), lat_(lat)
+    {
+    }
+    float lat() const
+    {
+        return lat_;
+    }
+    float lon() const
+    {
+        return lon_;
+    }
+    void set_lat( float lat )
+    {
+        lat_ = lat;
+    }
+    void set_lon( float lon )
+    {
+        lon_ = lon;
+    }
+    int uses() const
+    {
+        return uses_;
+    }
+    void set_uses( int uses )
+    {
+        uses_ = uses;
+    }
+private:
+    float lon_, lat_;
+    uint8_t uses_;
+};
+#endif
 
 struct Way
 {
