@@ -106,6 +106,9 @@ struct Parser
         RelationBlock = 3
     };
 
+    ///
+    /// Assuming the file is sorted (nodes then ways then relations)
+    /// return the offset of the nodes/ways and ways/relations limit
     void get_file_offsets( off_t& ways_offset, off_t& relations_offset ){
         Progressor progressor;
         BlockType currentBlock = NodeBlock;
@@ -134,61 +137,10 @@ struct Parser
         }
     }
 
-    off_t next_block()
-    {
-        const char pattern[] = "\0\0\0\x0d\x0a\x07OSMData";
-        const size_t bsize = 13;
-        char buffer[bsize+1] = {0};
-        char c;
-        while (file.get(c)) {
-            memmove( &buffer[0], &buffer[1], bsize - 1 );
-            buffer[bsize-1] = c;
-            if ( memcmp( buffer, pattern, bsize ) == 0 ) {
-                file.seekg( file.tellg() - static_cast<off_t>( bsize ) );
-                return file.tellg();
-            }
-        }
-        return -1;
-    }
-
-    off_t binary_search_pattern_( off_t start, off_t end, BlockType block_type )
-    {
-        int iblock_type = static_cast<int>( block_type );
-        off_t half = (start + end) / 2;
-        if ( file.eof() )
-            file.clear();
-        file.seekg( half );
-        if ( next_block() == -1 )
-            return -1;
-
-        int b1 = 0, b2 = 0;
-        OSMPBF::BlobHeader header = this->read_header();
-        if(!this->finished){
-            int32_t sz = this->read_blob(header);
-            if(header.type() == "OSMData") {
-                b1 = static_cast<int>( enum_primitiveblock( sz ) );
-            }
-        }
-        off_t found_off = file.tellg();
-        header = this->read_header();
-        if(!this->finished){
-            int32_t sz = this->read_blob(header);
-            if(header.type() == "OSMData") {
-                b2 = static_cast<int>( enum_primitiveblock( sz ) );
-            }
-        }
-        this->finished = false;
-        if ( b1 == iblock_type - 1 && b2 == iblock_type ) {
-            return found_off;
-        }
-        else if ( b1 >= block_type ) {
-            return binary_search_pattern_( start, half, block_type );
-        }
-        else if ( b2 < block_type ) {
-            return binary_search_pattern_( half, end, block_type );
-        }
-        return -1;
-    }
+    ///
+    /// Assuming the file is sorted (nodes then ways then relations)
+    /// return the offset of the nodes/ways and ways/relations limit
+    /// This method uses a binary search and is faster than get_file_offsets
     void get_file_offsets2( off_t& ways_offset, off_t& relations_offset ){
         ways_offset = binary_search_pattern_( 0, fsize, WayBlock );
         relations_offset = binary_search_pattern_( 0, fsize, RelationBlock );
@@ -321,6 +273,61 @@ protected:
         return NodeBlock;
     }
     
+    off_t next_block()
+    {
+        const char pattern[] = "\0\0\0\x0d\x0a\x07OSMData";
+        const size_t bsize = 13;
+        char buffer[bsize+1] = {0};
+        char c;
+        while (file.get(c)) {
+            memmove( &buffer[0], &buffer[1], bsize - 1 );
+            buffer[bsize-1] = c;
+            if ( memcmp( buffer, pattern, bsize ) == 0 ) {
+                file.seekg( file.tellg() - static_cast<off_t>( bsize ) );
+                return file.tellg();
+            }
+        }
+        return -1;
+    }
+
+    off_t binary_search_pattern_( off_t start, off_t end, BlockType block_type )
+    {
+        int iblock_type = static_cast<int>( block_type );
+        off_t half = (start + end) / 2;
+        if ( file.eof() )
+            file.clear();
+        file.seekg( half );
+        if ( next_block() == -1 )
+            return -1;
+
+        int b1 = 0, b2 = 0;
+        OSMPBF::BlobHeader header = this->read_header();
+        if(!this->finished){
+            int32_t sz = this->read_blob(header);
+            if(header.type() == "OSMData") {
+                b1 = static_cast<int>( enum_primitiveblock( sz ) );
+            }
+        }
+        off_t found_off = file.tellg();
+        header = this->read_header();
+        if(!this->finished){
+            int32_t sz = this->read_blob(header);
+            if(header.type() == "OSMData") {
+                b2 = static_cast<int>( enum_primitiveblock( sz ) );
+            }
+        }
+        this->finished = false;
+        if ( b1 == iblock_type - 1 && b2 == iblock_type ) {
+            return found_off;
+        }
+        else if ( b1 >= block_type ) {
+            return binary_search_pattern_( start, half, block_type );
+        }
+        else if ( b2 < block_type ) {
+            return binary_search_pattern_( half, end, block_type );
+        }
+        return -1;
+    }
 };
 
 template<typename Visitor, typename Progressor>
