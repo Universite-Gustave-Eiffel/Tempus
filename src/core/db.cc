@@ -331,11 +331,6 @@ void Connection::put_copy_data( const char* data, size_t size )
         msg += PQerrorMessage( conn_ );
         throw std::runtime_error( msg.c_str() );
     }
-#if 0
-    for ( size_t i = 0; i < size; i++ ) {
-        printf("%c", data[i]);
-    }
-#endif
 }
 
 void Connection::put_copy_end()

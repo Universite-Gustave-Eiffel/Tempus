@@ -50,6 +50,7 @@ public:
     TempusDataProfile() :
         DataProfile(),
         columns_( {
+                { "osm_id", DataType::UInt64Type },
                 { "length", DataType::Float8Type },
                 { "traffic_rules_ft", DataType::Int16Type },
                 { "traffic_rules_tf", DataType::Int16Type },
@@ -82,7 +83,7 @@ public:
         return columns_;
     }
 
-    std::vector<DataVariant> section_additional_values( uint64_t /*node_from*/, uint64_t /*node_to*/, const std::vector<Point>& points, const osm_pbf::Tags& tags ) const
+    std::vector<DataVariant> section_additional_values( uint64_t way_id, uint64_t /*section_id*/, uint64_t /*node_from*/, uint64_t /*node_to*/, const std::vector<Point>& points, const osm_pbf::Tags& tags ) const
     {
         int16_t traffic_rules_ft = 0, traffic_rules_tf = 0;
 
@@ -136,7 +137,7 @@ public:
         if ( road_name_t != tags.end() )
             road_name = road_name_t->second;
         
-        return { linestring_length( points ), traffic_rules_ft, traffic_rules_tf, max_speed, road_name };
+        return { way_id, linestring_length( points ), traffic_rules_ft, traffic_rules_tf, max_speed, road_name };
     }
 private:
     std::vector<Column> columns_;

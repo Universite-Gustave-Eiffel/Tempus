@@ -64,7 +64,7 @@ public:
 
     ///
     /// Return additional values for a section
-    virtual std::vector<DataVariant> section_additional_values( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags ) const = 0;
+    virtual std::vector<DataVariant> section_additional_values( uint64_t way_id, uint64_t section_id, uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags ) const = 0;
 };
 
 using DataProfileRegistry = std::map<std::string, DataProfile*>;

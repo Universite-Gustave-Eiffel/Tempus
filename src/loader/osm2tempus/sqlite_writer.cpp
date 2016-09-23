@@ -48,7 +48,7 @@ SqliteWriter::SqliteWriter( const std::string& file_name, DataProfile* data_prof
     std::cout << "stmt = " << stmt << std::endl;
 }
     
-void SqliteWriter::write_section( uint64_t section_id, uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ )
+void SqliteWriter::write_section( uint64_t /*way_id*/, uint64_t section_id, uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ )
 {
     int r;
     r = sqlite3_bind_int64( stmt, 1, section_id );

@@ -79,7 +79,7 @@ struct PbfReaderPass2
     {
     }
 
-    void way_callback( uint64_t /*osmid*/, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
+    void way_callback( uint64_t way_id, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
     {
         // ignore ways that are not highway
         if ( tags.find( "highway" ) == tags.end() )
@@ -110,7 +110,7 @@ struct PbfReaderPass2
             }
             section_nodes.push_back( node );
             if ( i == nodes.size() - 1 || pt.uses() > 1 ) {
-                split_into_sections( node_from, node, section_nodes, tags );
+                split_into_sections( way_id, node_from, node, section_nodes, tags );
                 section_start = true;
             }
             old_node = node;
@@ -140,7 +140,7 @@ private:
     /// Check if a section with the same (from, to) pair exists
     /// In which case, it is split into two sections
     /// in order to avoid multigraphs
-    void split_into_sections( uint64_t node_from, uint64_t node_to, const std::vector<uint64_t>& nodes, const osm_pbf::Tags& tags )
+    void split_into_sections( uint64_t way_id, uint64_t node_from, uint64_t node_to, const std::vector<uint64_t>& nodes, const osm_pbf::Tags& tags )
     {
         node_pair p ( node_from, node_to );
         if ( way_node_pairs.find( p ) != way_node_pairs.end() ) {
@@ -172,8 +172,8 @@ private:
                 center_node = last_artificial_node_id;
                 points_[last_artificial_node_id--] = center_point;
             }
-            writer_.write_section( ++section_id, node_from, center_node, before_pts, tags );
-            writer_.write_section( ++section_id, center_node, node_to, after_pts, tags );
+            writer_.write_section( way_id, ++section_id, node_from, center_node, before_pts, tags );
+            writer_.write_section( way_id, ++section_id, center_node, node_to, after_pts, tags );
         }
         else {
             way_node_pairs.insert( p );
@@ -181,7 +181,7 @@ private:
             for ( uint64_t node: nodes ) {
                 section_pts.push_back( points_.find( node )->second );
             }
-            writer_.write_section( ++section_id, node_from, node_to, section_pts, tags );
+            writer_.write_section( way_id, ++section_id, node_from, node_to, section_pts, tags );
         }
     }
 };
@@ -196,7 +196,7 @@ struct PbfReaderPass2Vector
     {
     }
 
-    void way_callback( uint64_t /*osmid*/, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
+    void way_callback( uint64_t way_id, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
     {
         // ignore ways that are not highway
         if ( tags.find( "highway" ) == tags.end() )
@@ -224,7 +224,7 @@ struct PbfReaderPass2Vector
             }
             section_nodes.push_back( node );
             if ( i == nodes.size() - 1 || pt.uses() > 1 ) {
-                split_into_sections( node_from, node, section_nodes, tags );
+                split_into_sections( way_id, node_from, node, section_nodes, tags );
                 section_start = true;
             }
             old_node = node;
@@ -254,7 +254,7 @@ private:
     /// Check if a section with the same (from, to) pair exists
     /// In which case, it is split into two sections
     /// in order to avoid multigraphs
-    void split_into_sections( uint64_t node_from, uint64_t node_to, const std::vector<uint64_t>& nodes, const osm_pbf::Tags& tags )
+    void split_into_sections( uint64_t way_id, uint64_t node_from, uint64_t node_to, const std::vector<uint64_t>& nodes, const osm_pbf::Tags& tags )
     {
         node_pair p ( node_from, node_to );
         if ( way_node_pairs.find( p ) != way_node_pairs.end() ) {
@@ -286,8 +286,8 @@ private:
                 center_node = last_artificial_node_id;
                 points_[last_artificial_node_id--] = center_point;
             }
-            writer_.write_section( ++section_id, node_from, center_node, before_pts, tags );
-            writer_.write_section( ++section_id, center_node, node_to, after_pts, tags );
+            writer_.write_section( way_id, ++section_id, node_from, center_node, before_pts, tags );
+            writer_.write_section( way_id, ++section_id, center_node, node_to, after_pts, tags );
         }
         else {
             way_node_pairs.insert( p );
@@ -295,7 +295,7 @@ private:
             for ( uint64_t node: nodes ) {
                 section_pts.push_back( points_[ node ] );
             }
-            writer_.write_section( ++section_id, node_from, node_to, section_pts, tags );
+            writer_.write_section( way_id, ++section_id, node_from, node_to, section_pts, tags );
         }
     }
 };

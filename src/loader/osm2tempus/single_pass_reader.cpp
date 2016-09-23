@@ -76,11 +76,10 @@ struct RelationReader
         }
     }
 
-    bool has_node( uint64_t node ) const { return via_nodes_ways_.find( node ) != via_nodes_ways_.end(); }
+    bool has_via_node( uint64_t node ) const { return via_nodes_ways_.find( node ) != via_nodes_ways_.end(); }
 
     void add_node_edge( uint64_t node, uint64_t way )
     {
-        std::cout << "add edge " << way << " to node " << node << std::endl;
         via_nodes_ways_[node].push_back( way );
     }
 
@@ -89,8 +88,9 @@ struct RelationReader
         way_sections_[way_id].emplace( section_id, node1, node2 );
     }
 
-    void resolve_restrictions( const PointCache& points )
+    void write_restrictions( const PointCache& points, Writer& writer )
     {
+        writer.begin_restrictions();
         for ( const auto& tr : restrictions_ ) {
             // only process way - node - way relations
             if ( points.find( tr.from_way ) != points.end() ||
@@ -112,33 +112,87 @@ struct RelationReader
                     break;
                 }
             }
-            if ( way_sections_[tr.to_way].size() == 1 ) {
-                section_to = *way_sections_[tr.to_way].begin();
-                //std::cout << section_from.node1 << " - " << section_from.node2 << " via " << tr.via_node << " to " << section_to.node1 << " - " << section_to.node2 << std::endl;
-                std::cout << "1 " << section_from.id << " via " << tr.via_node << " to " << section_to.id << std::endl;
+            if ( section_from.id == 0 )
+                continue;
+
+            std::vector<Section> sections_to;
+            for ( auto section: way_sections_[tr.to_way] ) {
+                if ( section.node1 == tr.via_node || section.node2 == tr.via_node )
+                    sections_to.push_back( section );
             }
-            else if ( way_sections_[tr.to_way].size() == 2 ) {
+            if ( sections_to.size() == 1 ) {
+                section_to = sections_to[0];
+                //std::cout << "1 " << section_from.id << " via " << tr.via_node << " to " << section_to.id << std::endl;
+                writer.write_restriction( ++restriction_id, { section_from.id, section_to.id } );
+            }
+            else if ( sections_to.size() == 2 ) {
                 // choose left or right
                 float angle[2];
                 int i = 0;
-                for ( const auto& s : way_sections_[tr.to_way] ) {
+                for ( const auto& s : sections_to ) {
                     uint64_t n1 = s.node1;
                     uint64_t n2 = s.node2;
-                    std::cout << section_from.node1 << " - " << n1 << " - " << n2 << " - " << std::endl;
                     if ( tr.via_node == s.node2 )
                         std::swap( n1, n2 );
                     const Point& p1 = points.find( section_from.node1 )->second;
                     const Point& p2 = points.find( tr.via_node )->second;
                     const Point& p3 = points.find( n2 )->second;
+                    // compute the angle between the 3 points
+                    // we could have used the orientation (determinant), but angle computation is more stable
                     angle[i] = angle_3_points( p1.lon(), p1.lat(), p2.lon(), p2.lat(), p3.lon(), p3.lat() );
-                    std::cout << "angle " << i << " = " << angle[i] << std::endl;
                     i++;
                 }
-            }
-            else {
-                std::cout << "ignoring restriction with " << way_sections_[tr.to_way].size() << " 'to' edges" << std::endl;
+                if ( tr.type == TurnRestriction::NoLeftTurn || tr.type == TurnRestriction::OnlyLeftTurn ) {
+                    // take the angle < 0
+                    if ( angle[0] < 0 )
+                        section_to = sections_to[0];
+                    else
+                        section_to = sections_to[1];
+                }
+                else if ( tr.type == TurnRestriction::NoRightTurn || tr.type == TurnRestriction::OnlyRightTurn ) {
+                    // take the angle > 0
+                    if ( angle[0] > 0 )
+                        section_to = sections_to[0];
+                    else
+                        section_to = sections_to[1];
+                }
+                else if ( tr.type == TurnRestriction::NoStraightOn || tr.type == TurnRestriction::OnlyStraightOn ) {
+                    // take the angle closer to 0
+                    if ( abs(angle[0]) < abs(angle[1]) )
+                        section_to = sections_to[0];
+                    else
+                        section_to = sections_to[1];
+                }
+                else {
+                    std::cerr << "Ignoring restriction from " << tr.from_way << " to " << tr.to_way << " with type " << tr.type << std::endl;
+                    continue;
+                }
+
+                // now distinguish between NoXXX and OnlyXXX restriction types
+                if ( tr.type == TurnRestriction::NoLeftTurn ||
+                     tr.type == TurnRestriction::NoRightTurn ||
+                     tr.type == TurnRestriction::NoStraightOn ) {
+                    // emit the restriction
+                    //std::cout << "2 " << section_from.id << " via " << tr.via_node << " to " << section_to.id << std::endl;
+                    writer.write_restriction( ++restriction_id, { section_from.id, section_to.id } );
+                }
+                else {
+                    // OnlyXXX is like several NoXXX on the other edges
+                    // we have to emit a restriction for every connected edges, except this one
+                    for ( auto way : via_nodes_ways_.at( tr.via_node ) ) {
+                        for ( auto section: way_sections_.at( way ) ) {
+                            if ( section.node1 == tr.via_node || section.node2 == tr.via_node ) {
+                                if ( section.id != section_to.id && section.id != section_from.id )
+                                    //std::cout << "3 " << section_from.id << " via " << tr.via_node << " to " << section.id << std::endl;
+                                    writer.write_restriction( ++restriction_id, { section_from.id, section.id } );
+                            }
+                        }
+                    }
+                }
+                    
             }
         }
+        writer.end_restrictions();
     }
     
 private:
@@ -157,7 +211,7 @@ private:
     std::vector<TurnRestriction> restrictions_;
     struct Section
     {
-        Section() {}
+        Section() : node1(0), node2(0), id(0) {}
         Section( uint64_t sid, uint64_t n1, uint64_t n2 ) : node1(n1), node2(n2), id(sid) {}
         uint64_t node1, node2;
         uint64_t id;
@@ -167,6 +221,8 @@ private:
         }
     };
     std::map<uint64_t, std::set<Section>> way_sections_;
+
+    uint64_t restriction_id = 0;
 };
 
 struct PbfReader
@@ -206,7 +262,7 @@ struct PbfReader
                     way_it->second.ignored = true;
                 }
                 // check if the node is involved in a restriction
-                if ( restrictions_.has_node( node ) ) {
+                if ( restrictions_.has_via_node( node ) ) {
                     restrictions_.add_node_edge( node, way_it->first );
                 }
             }
@@ -325,11 +381,11 @@ private:
                 center_node = last_artificial_node_id;
                 points_[last_artificial_node_id--] = center_point;
             }
-            writer.write_section( ++section_id_, node_from, center_node, before_pts, tags );
-            if ( restrictions_.has_node( node_from ) || restrictions_.has_node( center_node ) )
+            writer.write_section( way_id, ++section_id_, node_from, center_node, before_pts, tags );
+            if ( restrictions_.has_via_node( node_from ) || restrictions_.has_via_node( center_node ) )
                 restrictions_.add_way_section( way_id, section_id_, node_from, center_node );
-            writer.write_section( ++section_id_, center_node, node_to, after_pts, tags );
-            if ( restrictions_.has_node( center_node ) || restrictions_.has_node( node_to ) )
+            writer.write_section( way_id, ++section_id_, center_node, node_to, after_pts, tags );
+            if ( restrictions_.has_via_node( center_node ) || restrictions_.has_via_node( node_to ) )
                 restrictions_.add_way_section( way_id, section_id_, center_node, node_to );
         }
         else {
@@ -338,8 +394,8 @@ private:
             for ( uint64_t node: nodes ) {
                 section_pts.push_back( points_.find( node )->second );
             }
-            writer.write_section( ++section_id_, node_from, node_to, section_pts, tags );
-            if ( restrictions_.has_node( node_from ) || restrictions_.has_node( node_to ) )
+            writer.write_section( way_id, ++section_id_, node_from, node_to, section_pts, tags );
+            if ( restrictions_.has_via_node( node_from ) || restrictions_.has_via_node( node_to ) )
                 restrictions_.add_way_section( way_id, section_id_, node_from, node_to );
         }
     }
@@ -368,5 +424,6 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
         p.write_nodes( writer );
     }
 
-    r.resolve_restrictions( p.points() );
+    std::cout << "Writing restrictions ..." << std::endl;
+    r.write_restrictions( p.points(), writer );
 }

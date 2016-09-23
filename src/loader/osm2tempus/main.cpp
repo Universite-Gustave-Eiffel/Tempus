@@ -26,6 +26,7 @@ int main(int argc, char** argv)
     string table;
     string pbf_file;
     string nodes_table;
+    string restrictions_table;
 
     opt_desc.add_options()
         ( "help,h", "produce help message" )
@@ -40,6 +41,7 @@ int main(int argc, char** argv)
         ( "keep-tags", "keep way tags when exporting" )
         ( "create-table,c", "create the table (and drop any existing one)" )
         ( "nodes-table", po::value<string>(&nodes_table), "write nodes to the given table" )
+        ( "restrictions-table", po::value<string>(&restrictions_table)->default_value("road_restriction"), "write restrictions to the given table" )
     ;
 
     po::variables_map vm;
@@ -86,7 +88,14 @@ int main(int argc, char** argv)
     bool keep_tags = vm.count( "keep-tags" );
     std::unique_ptr<Writer> writer;
     if ( vm.count( "pgis" ) ) {
-        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), schema, table, nodes_table, vm.count( "create-table" ), data_profile, keep_tags ) );
+        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(),
+                                               schema,
+                                               table,
+                                               nodes_table,
+                                               restrictions_table,
+                                               vm.count( "create-table" ),
+                                               data_profile,
+                                               keep_tags ) );
     }
     else if ( vm.count( "sqlite" ) ) {
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>(), data_profile, keep_tags ) );
