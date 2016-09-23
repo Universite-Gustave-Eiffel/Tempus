@@ -22,7 +22,7 @@ static std::string linestring_to_ewkb( const std::vector<Point>& points )
 
 ///
 /// A Sqlite writer
-SqliteWriter::SqliteWriter( const std::string& file_name, DataProfile* data_profile, bool keep_tags ) : Writer( data_profile, keep_tags ), section_id( 0 )
+SqliteWriter::SqliteWriter( const std::string& file_name, DataProfile* data_profile, bool keep_tags ) : Writer( data_profile, keep_tags )
 {
     int r;
     r = sqlite3_open( file_name.c_str(), &db );
@@ -48,10 +48,10 @@ SqliteWriter::SqliteWriter( const std::string& file_name, DataProfile* data_prof
     std::cout << "stmt = " << stmt << std::endl;
 }
     
-void SqliteWriter::write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ )
+void SqliteWriter::write_section( uint64_t section_id, uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ )
 {
     int r;
-    r = sqlite3_bind_int64( stmt, 1, section_id++ );
+    r = sqlite3_bind_int64( stmt, 1, section_id );
     if ( r != SQLITE_OK ) {
         std::ostringstream err;
         err << "Problem during bind1 " << r;

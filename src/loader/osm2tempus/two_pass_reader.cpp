@@ -129,7 +129,7 @@ private:
     // structure used to detect multi edges
     std::unordered_set<node_pair> way_node_pairs;
     //std::unordered_map<node_pair, uint64_t> way_node_pairs;
-    uint64_t way_id = 0;
+    uint64_t section_id = 0;
 
     // node ids that are introduced to split multi edges
     // we count them backward from 2^64 - 1
@@ -172,8 +172,8 @@ private:
                 center_node = last_artificial_node_id;
                 points_[last_artificial_node_id--] = center_point;
             }
-            writer_.write_section( node_from, center_node, before_pts, tags );
-            writer_.write_section( center_node, node_to, after_pts, tags );
+            writer_.write_section( ++section_id, node_from, center_node, before_pts, tags );
+            writer_.write_section( ++section_id, center_node, node_to, after_pts, tags );
         }
         else {
             way_node_pairs.insert( p );
@@ -181,7 +181,7 @@ private:
             for ( uint64_t node: nodes ) {
                 section_pts.push_back( points_.find( node )->second );
             }
-            writer_.write_section( node_from, node_to, section_pts, tags );
+            writer_.write_section( ++section_id, node_from, node_to, section_pts, tags );
         }
     }
 };
@@ -243,7 +243,7 @@ private:
     // structure used to detect multi edges
     std::unordered_set<node_pair> way_node_pairs;
     //std::unordered_map<node_pair, uint64_t> way_node_pairs;
-    uint64_t way_id = 0;
+    uint64_t section_id = 0;
 
     // node ids that are introduced to split multi edges
     // we count them backward from 2^64 - 1
@@ -286,8 +286,8 @@ private:
                 center_node = last_artificial_node_id;
                 points_[last_artificial_node_id--] = center_point;
             }
-            writer_.write_section( node_from, center_node, before_pts, tags );
-            writer_.write_section( center_node, node_to, after_pts, tags );
+            writer_.write_section( ++section_id, node_from, center_node, before_pts, tags );
+            writer_.write_section( ++section_id, center_node, node_to, after_pts, tags );
         }
         else {
             way_node_pairs.insert( p );
@@ -295,7 +295,7 @@ private:
             for ( uint64_t node: nodes ) {
                 section_pts.push_back( points_[ node ] );
             }
-            writer_.write_section( node_from, node_to, section_pts, tags );
+            writer_.write_section( ++section_id, node_from, node_to, section_pts, tags );
         }
     }
 };

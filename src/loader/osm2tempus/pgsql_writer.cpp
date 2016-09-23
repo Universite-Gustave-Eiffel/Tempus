@@ -18,13 +18,19 @@ static std::string linestring_to_ewkb( const std::vector<Point>& points )
     return ewkb;
 }
 
-static std::string binary_to_hextext( const std::string& str )
+static std::string point_to_ewkb( float lat, float lon )
 {
-    std::ostringstream ostr;
-    for ( char c : str ) {
-        ostr << std::hex << std::setw( 2 ) << std::setfill('0') << static_cast<int>( static_cast<unsigned char>( c ) );
-    }
-    return ostr.str();
+    std::string ewkb;
+    ewkb.resize( 1 + 4 /*type*/ + 4 /*srid*/ + 8 * 2 );
+    memcpy( &ewkb[0], "\x01"
+            "\x01\x00\x00\x20"  // point + has srid
+            "\xe6\x10\x00\x00", // srid = 4326
+            9
+            );
+    // size
+    *reinterpret_cast<double*>( &ewkb[9] + 0 ) = lon;
+    *reinterpret_cast<double*>( &ewkb[9] + 8 ) = lat;
+    return ewkb;
 }
 
 static std::string tags_to_binary( const osm_pbf::Tags& tags )
@@ -61,75 +67,6 @@ static std::string tags_to_binary( const osm_pbf::Tags& tags )
     return out;
 }
 
-static std::string escape_pgquotes( std::string s )
-{
-    size_t pos = 0;
-    while ((pos = s.find('\'', pos)) != std::string::npos) {
-        s.replace(pos, 1, "''");
-        pos += 2;
-    }
-    return s;
-}
-
-
-SQLWriter::SQLWriter() : section_id( 0 )
-{
-    //std::cout << "set client encoding to 'utf8';" << std::endl;
-    std::cout << "drop table if exists edges;" << std::endl;
-    std::cout << "create table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326));" << std::endl;
-    std::cout << "begin;" << std::endl;
-}
-    
-void SQLWriter::write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
-{
-    std::cout << "INSERT INTO edges (id,node_from,node_to, geom, tags) VALUES (" << ++section_id << ","
-              << node_from << ","
-              << node_to << ","
-              << "'SRID=4326;LINESTRING(";
-    for ( size_t i = 0; i < points.size(); i++ )
-    {
-        std::cout << std::setprecision(8) << points[i].lon() << " " << points[i].lat();
-        if ( i < points.size() - 1 )
-            std::cout << ",";
-    }
-    std::cout << ")',";
-    std::cout << "hstore(array[";
-    bool first = true;
-    for ( const auto& p: tags ) {
-        if ( !first ) {
-            std::cout << ",";
-        }
-        first = false;
-        std::cout << "'" << p.first << "','" << escape_pgquotes(p.second) << "'";
-    }
-    std::cout << "]));" << std::endl;
-}
-
-SQLWriter::~SQLWriter()
-{
-}
-
-///
-/// A basic COPY-based SQL writer
-SQLCopyWriter::SQLCopyWriter( const std::string& db_params ) : section_id( 0 ), db( db_params )
-{
-    db.exec( "drop table if exists edges" );
-    db.exec( "create unlogged table edges(id serial primary key, node_from bigint, node_to bigint, tags hstore, geom geometry(linestring, 4326))" );
-    db.exec( "copy edges(node_from, node_to, geom) from stdin with delimiter ';'" );
-}
-    
-void SQLCopyWriter::write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& /*tags*/ )
-{
-    std::ostringstream data;
-    data << node_from << ";" << node_to << ";" << binary_to_hextext( linestring_to_ewkb( points ) ) << std::endl;
-    db.put_copy_data( data.str() );
-}
-
-SQLCopyWriter::~SQLCopyWriter()
-{
-    db.put_copy_end();
-}
-
 // DataProfile::DataType -> pg type
 static const std::string pg_types[] = { "boolean",
                                         "smallint",
@@ -149,10 +86,22 @@ static const std::string pg_types[] = { "boolean",
 SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
                                           const std::string& schema,
                                           const std::string& table,
+                                          const std::string& nodes_table,
                                           bool create_table,
                                           DataProfile* profile,
                                           bool keep_tags )
-    : Writer( profile, keep_tags ), section_id( 0 ), db( db_params ), schema_( schema ), table_( table ), create_table_( create_table )
+    : Writer( profile, keep_tags ), db( db_params ), schema_( schema ), table_( table ), nodes_table_( nodes_table ), create_table_( create_table )
+{
+    if ( create_table ) {
+        db.exec( "create extension if not exists postgis" );
+        if ( keep_tags_ ) {
+            db.exec( "create extension if not exists hstore" );
+        }
+        db.exec( "create schema if not exists " + schema );
+    }
+}
+
+void SQLBinaryCopyWriter::begin_sections()
 {
     std::string additional_columns, additional_columns_with_type;
     if ( data_profile_ ) {
@@ -166,22 +115,66 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
         additional_tags = ", tags";
         additional_tags_with_type = ", tags hstore";
     }
-    if ( create_table ) {
-        db.exec( "create extension if not exists postgis" );
-        if ( keep_tags_ ) {
-            db.exec( "create extension if not exists hstore" );
-        }
-        db.exec( "create schema if not exists " + schema );
-        db.exec( "drop table if exists " + schema + "." + table );
-        db.exec( "create unlogged table " + schema + "." + table +
-                 "(id serial, node_from bigint, node_to bigint, geom geometry(linestring, 4326)" +
+    if ( create_table_ ) {
+        db.exec( "drop table if exists " + schema_ + "." + table_ );
+        db.exec( "create unlogged table " + schema_ + "." + table_ +
+                 "(id bigint, node_from bigint, node_to bigint, geom geometry(linestring, 4326)" +
                  additional_columns_with_type +
                  additional_tags_with_type +
                  ")" );
     }
-    db.exec( "copy " + schema + "." + table + "(node_from, node_to, geom" + additional_columns + additional_tags + ") from stdin with (format binary)" );
+    db.exec( "copy " + schema_ + "." + table_ + "(id, node_from, node_to, geom" + additional_columns + additional_tags + ") from stdin with (format binary)" );
     const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
     db.put_copy_data( header, 19 );
+}
+
+void SQLBinaryCopyWriter::begin_nodes()
+{
+    if ( create_table_ ) {
+        db.exec( "drop table if exists " + schema_ + "." + nodes_table_ );
+        db.exec( "create unlogged table " + schema_ + "." + nodes_table_ +
+                 "(id bigint, geom geometry(point, 4326))" );
+    }
+    db.exec( "copy " + schema_ + "." + nodes_table_ + "(id, geom) from stdin with (format binary)" );
+    const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
+    db.put_copy_data( header, 19 );
+}
+
+void SQLBinaryCopyWriter::write_node( uint64_t node_id, float lat, float lon )
+{
+    const size_t l = 2 /*size*/ + (4+8);
+    char data[ l ];
+    // number of fields
+    uint16_t size = htons( 2 );
+    // size of a uint64
+    uint32_t size2 = htonl( 8 );
+    char *p = &data[0];
+    memcpy( p, &size, 2 ); p += 2;
+
+    node_id = htobe64( node_id );
+    memcpy( p, &size2, 4 ); p+= 4;
+    memcpy( p, &node_id, 8 ); p+= 8;
+
+    db.put_copy_data( data, l );
+
+    // geometry
+    std::string geom_wkb = point_to_ewkb( lat, lon );
+    uint32_t geom_size = htonl( geom_wkb.length() );
+    db.put_copy_data( reinterpret_cast<char*>( &geom_size ), 4 );
+    db.put_copy_data( geom_wkb );
+}
+
+void SQLBinaryCopyWriter::end_nodes()
+{
+    db.put_copy_data( "\xff\xff" );
+    db.put_copy_end();
+
+    if ( create_table_ ) {
+        std::cout << "creating index" << std::endl;
+        // create index
+        db.exec( "create unique index on " + schema_ + "." + nodes_table_ + "(id)" );
+        db.exec( "alter table " + schema_ + "." + nodes_table_ + " add primary key using index " + nodes_table_ + "_id_idx" );
+    }
 }
 
 struct pg_data_visitor : public boost::static_visitor<void>
@@ -248,22 +241,29 @@ private:
     uint64_t reverse_bytes( uint64_t v ) const { return htobe64(v); }
 };
 
-void SQLBinaryCopyWriter::write_section( uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
+void SQLBinaryCopyWriter::write_section( uint64_t section_id, uint64_t node_from, uint64_t node_to, const std::vector<Point>& points, const osm_pbf::Tags& tags )
 {
-    const size_t l = 2 /*size*/ + (4+8)*2;
+    const size_t l = 2 /*size*/ + (4+8)*3;
     char data[ l ];
     // number of fields
-    uint16_t size = htons( 3  + ( data_profile_ ? data_profile_->n_columns() : 0 ) + ( keep_tags_ ? 1 : 0 ) );
+    uint16_t size = htons( 4  + ( data_profile_ ? data_profile_->n_columns() : 0 ) + ( keep_tags_ ? 1 : 0 ) );
     // size of a uint64
     uint32_t size2 = htonl( 8 );
     char *p = &data[0];
     memcpy( p, &size, 2 ); p += 2;
+
+    section_id = htobe64( section_id );
     memcpy( p, &size2, 4 ); p+= 4;
+    memcpy( p, &section_id, 8 ); p+= 8;
+
     node_from = htobe64( node_from );
-    node_to = htobe64( node_to );
+    memcpy( p, &size2, 4 ); p+= 4;
     memcpy( p, &node_from, 8 ); p+= 8;
+
+    node_to = htobe64( node_to );
     memcpy( p, &size2, 4 ); p+= 4;
     memcpy( p, &node_to, 8 ); p+= 8;
+
     db.put_copy_data( data, l );
 
     // geometry
@@ -285,7 +285,7 @@ void SQLBinaryCopyWriter::write_section( uint64_t node_from, uint64_t node_to, c
         db.put_copy_data( tags_to_binary( tags ) );
 }
 
-SQLBinaryCopyWriter::~SQLBinaryCopyWriter()
+void SQLBinaryCopyWriter::end_sections()
 {
     db.put_copy_data( "\xff\xff" );
     db.put_copy_end();
@@ -294,6 +294,6 @@ SQLBinaryCopyWriter::~SQLBinaryCopyWriter()
         std::cout << "creating index" << std::endl;
         // create index
         db.exec( "create unique index on " + schema_ + "." + table_ + "(id)" );
-        db.exec( "alter table " + schema_ + "." + table_ + " add primary key using index road_section_id_idx" );
+        db.exec( "alter table " + schema_ + "." + table_ + " add primary key using index " + table_ + "_id_idx" );
     }
 }

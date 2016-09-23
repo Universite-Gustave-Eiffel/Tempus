@@ -5,7 +5,7 @@
 
 #include <boost/program_options.hpp>
 
-void single_pass_pbf_read( const std::string& filename, Writer& writer );
+void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes = false );
 void two_pass_pbf_read( const std::string& filename, Writer& writer );
 
 namespace po = boost::program_options;
@@ -25,6 +25,7 @@ int main(int argc, char** argv)
     string schema;
     string table;
     string pbf_file;
+    string nodes_table;
 
     opt_desc.add_options()
         ( "help,h", "produce help message" )
@@ -38,6 +39,7 @@ int main(int argc, char** argv)
         ( "list-profiles", "list available data profiles" )
         ( "keep-tags", "keep way tags when exporting" )
         ( "create-table,c", "create the table (and drop any existing one)" )
+        ( "nodes-table", po::value<string>(&nodes_table), "write nodes to the given table" )
     ;
 
     po::variables_map vm;
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
     bool keep_tags = vm.count( "keep-tags" );
     std::unique_ptr<Writer> writer;
     if ( vm.count( "pgis" ) ) {
-        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), schema, table, vm.count( "create-table" ), data_profile, keep_tags ) );
+        writer.reset( new SQLBinaryCopyWriter( vm["pgis"].as<string>(), schema, table, nodes_table, vm.count( "create-table" ), data_profile, keep_tags ) );
     }
     else if ( vm.count( "sqlite" ) ) {
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>(), data_profile, keep_tags ) );
@@ -95,7 +97,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        single_pass_pbf_read( pbf_file, *writer );
+        single_pass_pbf_read( pbf_file, *writer, /*do_write_nodes = */ !nodes_table.empty() );
     }
     
     return 0;
