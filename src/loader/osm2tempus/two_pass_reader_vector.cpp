@@ -175,13 +175,18 @@ private:
 
 void two_pass_vector_pbf_read( const std::string& filename, Writer& writer )
 {
+    off_t ways_offset = 0, relations_offset = 0;
+    osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
+    std::cout << "Ways offset: " << ways_offset << std::endl;
+    std::cout << "Relations offset: " << relations_offset << std::endl;
+
     std::cout << "first pass" << std::endl;
     PbfReaderPass1Vector p1;
-    osm_pbf::read_osm_pbf<PbfReaderPass1Vector, StdOutProgressor>( filename, p1 );
+    osm_pbf::read_osm_pbf<PbfReaderPass1Vector, StdOutProgressor>( filename, p1, 0, relations_offset );
     std::cout << p1.points().size() << " nodes cached" << std::endl;
     std::cout << "second pass" << std::endl;
     PbfReaderPass2Vector p2( p1.points(), writer );
-    osm_pbf::read_osm_pbf<PbfReaderPass2Vector, StdOutProgressor>( filename, p2 );
+    osm_pbf::read_osm_pbf<PbfReaderPass2Vector, StdOutProgressor>( filename, p2, ways_offset, relations_offset );
 }
 
 

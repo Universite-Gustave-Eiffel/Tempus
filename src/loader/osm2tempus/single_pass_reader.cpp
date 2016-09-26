@@ -89,14 +89,18 @@ struct RelationReader
         way_sections_[way_id].emplace( section_id, node1, node2 );
     }
 
-    void write_restrictions( const PointCache& points, Writer& writer )
+    template <typename Progressor>
+    void write_restrictions( const PointCache& points, Writer& writer, Progressor& progressor )
     {
+        progressor( 0, restrictions_.size() );
         writer.begin_restrictions();
+        size_t ri = 0;
         for ( const auto& tr : restrictions_ ) {
+            progressor( ++ri, restrictions_.size() );
             // only process way - node - way relations
-            if ( points.find( tr.from_way ) != points.end() ||
-                 points.find( tr.via_node ) == points.end() ||
-                 points.find( tr.to_way ) != points.end() )
+            if ( points.find( tr.from_way ) ||
+                 !points.find( tr.via_node ) ||
+                 points.find( tr.to_way ) )
                 continue;
             // get the first edge until on the "from" way
             Section section_from;
@@ -135,9 +139,9 @@ struct RelationReader
                     uint64_t n2 = s.node2;
                     if ( tr.via_node == s.node2 )
                         std::swap( n1, n2 );
-                    const Point& p1 = points.find( section_from.node1 )->second;
-                    const Point& p2 = points.find( tr.via_node )->second;
-                    const Point& p3 = points.find( n2 )->second;
+                    const Point& p1 = points.at( section_from.node1 );
+                    const Point& p2 = points.at( tr.via_node );
+                    const Point& p3 = points.at( n2 );
                     // compute the angle between the 3 points
                     // we could have used the orientation (determinant), but angle computation is more stable
                     angle[i] = angle_3_points( p1.lon(), p1.lat(), p2.lon(), p2.lat(), p3.lon(), p3.lat() );
@@ -226,6 +230,7 @@ private:
     uint64_t restriction_id = 0;
 };
 
+template <bool do_import_restrictions_ = false>
 struct PbfReader
 {
     PbfReader( RelationReader& restrictions ) :
@@ -244,56 +249,69 @@ struct PbfReader
         if ( tags.find( "highway" ) == tags.end() )
             return;
 
-        auto r = ways.emplace( osmid, Way() );
+        auto r = ways_.emplace( osmid, Way() );
         Way& w = r.first->second;
         w.tags = tags;
         w.nodes = nodes;
     }
 
-    void mark_points_and_ways()
+    template <typename Progressor>
+    void mark_points_and_ways( Progressor& progressor )
     {
-        for ( auto way_it = ways.begin(); way_it != ways.end(); way_it++ ) {
+        progressor( 0, ways_.size() );
+        size_t i = 0;
+        for ( auto way_it = ways_.begin(); way_it != ways_.end(); way_it++ ) {
             // mark each nodes as being used
             for ( uint64_t node: way_it->second.nodes ) {
-                auto it = points_.find( node );
-                if ( it != points_.end() ) {
-                    int uses = it->second.uses();
-                    if ( uses < 2 )
-                        it->second.set_uses( uses + 1 );
+                auto pt = points_.find( node );
+                if ( pt ) {
+                    if ( pt->uses() < 2 )
+                        pt->set_uses( pt->uses() + 1 );
                 }
                 else {
                     // unknown point
                     way_it->second.ignored = true;
                 }
-                // check if the node is involved in a restriction
-                if ( restrictions_.has_via_node( node ) ) {
-                    restrictions_.add_node_edge( node, way_it->first );
+                if ( do_import_restrictions_ ) { // static_if
+                    // check if the node is involved in a restriction
+                    if ( restrictions_.has_via_node( node ) ) {
+                        restrictions_.add_node_edge( node, way_it->first );
+                    }
                 }
             }
+            progressor( ++i, ways_.size() );
         }
     }
 
     ///
     /// Convert raw OSM ways to road sections. Sections are road parts between two intersections.
-    void write_sections( Writer& writer )
+    template <typename Progressor>
+    void write_sections( Writer& writer, Progressor& progressor )
     {
+        progressor( 0, ways_.size() );
+        size_t i = 0;
         writer.begin_sections();
-        for ( auto way_it = ways.begin(); way_it != ways.end(); way_it++ ) {
+        for ( auto way_it = ways_.begin(); way_it != ways_.end(); way_it++ ) {
             const Way& way = way_it->second;
             if ( way.ignored )
                 continue;
 
             way_to_sections( way_it->first, way, writer );
+            progressor( ++i, ways_.size() );
         }
         writer.end_sections();
     }
 
-    void write_nodes( Writer& writer )
+    template <typename Progressor>
+    void write_nodes( Writer& writer, Progressor& progressor )
     {
+        progressor( 0, points_.size() );
+        size_t i = 0;
         writer.begin_nodes();
         for ( const auto& p : points_ ) {
             if ( p.second.uses() > 1 )
                 writer.write_node( p.first, p.second.lat(), p.second.lon() );
+            progressor( ++i, points_.size() );
         }
         writer.end_nodes();
     }
@@ -321,8 +339,10 @@ struct PbfReader
                                    [&](uint64_t lway_id, uint64_t lsection_id, uint64_t lnode_from, uint64_t lnode_to, const std::vector<Point>& lpts, const osm_pbf::Tags& ltags)
                                    {
                                        writer.write_section( lway_id, lsection_id, lnode_from, lnode_to, lpts, ltags );
-                                       if ( restrictions_.has_via_node( lnode_from ) || restrictions_.has_via_node( lnode_to ) )
-                                           restrictions_.add_way_section( lway_id, lsection_id, lnode_from, lnode_to );
+                                       if ( do_import_restrictions_ ) { // static_if
+                                           if ( restrictions_.has_via_node( lnode_from ) || restrictions_.has_via_node( lnode_to ) )
+                                               restrictions_.add_way_section( lway_id, lsection_id, lnode_from, lnode_to );
+                                       }
                                    });
                 section_start = true;
             }
@@ -340,22 +360,13 @@ private:
     RelationReader& restrictions_;
     
     PointCache points_;
-    WayCache ways;
-
-    // structure used to detect multi edges
-    std::unordered_set<node_pair> way_node_pairs;
-    //std::unordered_map<node_pair, uint64_t> way_node_pairs;
-
-    // node ids that are introduced to split multi edges
-    // we count them backward from 2^64 - 1
-    // this should not overlap current OSM node ID (~ 2^32 in july 2016)
-    uint64_t last_artificial_node_id = 0xFFFFFFFFFFFFFFFFLL;
+    WayCache ways_;
 
     SectionSplitter<PointCache> section_splitter_;
 };
 
 
-void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes )
+void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes, bool do_import_restrictions )
 {
     off_t ways_offset = 0, relations_offset = 0;
     osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
@@ -367,16 +378,49 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
     osm_pbf::read_osm_pbf<RelationReader, StdOutProgressor>( filename, r, relations_offset );
 
     std::cout << "Nodes and ways ..." << std::endl;
-    PbfReader p( r );
-    osm_pbf::read_osm_pbf<PbfReader, StdOutProgressor>( filename, p, 0, relations_offset );
-    p.mark_points_and_ways();
-    p.write_sections( writer );
+    if ( do_import_restrictions ) {
+        PbfReader<true> p( r );
+        osm_pbf::read_osm_pbf<PbfReader<true>, StdOutProgressor>( filename, p, 0, relations_offset );
+        std::cout << "Marking nodes and ways ..."  << std::endl;
+        {
+            StdOutProgressor prog;
+            p.mark_points_and_ways( prog );
+        }
+        std::cout << "Writing sections ..."  << std::endl;
+        {
+            StdOutProgressor prog;
+            p.write_sections( writer, prog );
+        }
 
-    if ( do_write_nodes ) {
-        std::cout << "Writing nodes..." << std::endl;
-        p.write_nodes( writer );
+        if ( do_write_nodes ) {
+            std::cout << "Writing nodes..." << std::endl;
+            StdOutProgressor prog;
+            p.write_nodes( writer, prog );
+        }
+        std::cout << "Writing restrictions ..." << std::endl;
+        {
+            StdOutProgressor prog;
+            r.write_restrictions( p.points(), writer, prog );
+        }
     }
+    else {
+        PbfReader<false> p( r );
+        osm_pbf::read_osm_pbf<PbfReader<false>, StdOutProgressor>( filename, p, 0, relations_offset );
+        std::cout << "Marking nodes and ways ..."  << std::endl;
+        {
+            StdOutProgressor prog;
+            p.mark_points_and_ways( prog );
+        }
+        std::cout << "Writing sections ..."  << std::endl;
+        {
+            StdOutProgressor prog;
+            p.write_sections( writer, prog );
+        }
 
-    std::cout << "Writing restrictions ..." << std::endl;
-    r.write_restrictions( p.points(), writer );
+        if ( do_write_nodes ) {
+            std::cout << "Writing nodes..." << std::endl;
+            StdOutProgressor prog;
+            p.write_nodes( writer, prog );
+        }
+    }
 }

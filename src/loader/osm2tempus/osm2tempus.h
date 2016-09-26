@@ -134,13 +134,19 @@ public:
     {
         return points_.end();
     }
-    CacheType::const_iterator find( uint64_t id ) const
+    const Point* find( uint64_t id ) const
     {
-        return points_.find( id );
+        auto it = points_.find( id );
+        if ( it == points_.end() )
+            return nullptr;
+        return &it->second;
     }
-    CacheType::iterator find( uint64_t id )
+    Point* find( uint64_t id )
     {
-        return points_.find( id );
+        auto it = points_.find( id );
+        if ( it == points_.end() )
+            return nullptr;
+        return &it->second;
     }
 
     size_t size() const
@@ -179,6 +185,82 @@ public:
 private:
     uint64_t max_id_ = 0;
     CacheType points_;
+};
+
+class PointCacheVector
+{
+public:
+    using CacheType = std::vector<Point>;
+    PointCacheVector()
+    {
+        points_.resize( max_node_id_ );
+    }
+
+    CacheType::const_iterator begin() const
+    {
+        return points_.begin();
+    }
+    CacheType::const_iterator end() const
+    {
+        return points_.end();
+    }
+    CacheType::iterator begin()
+    {
+        return points_.begin();
+    }
+    CacheType::iterator end()
+    {
+        return points_.end();
+    }
+    const Point* find( uint64_t id ) const
+    {
+        return &points_[id];
+    }
+    Point* find( uint64_t id )
+    {
+        return &points_[id];
+    }
+
+    size_t size() const
+    {
+        return points_.size();
+    }
+
+    const Point& at( uint64_t id ) const
+    {
+        return points_[id];
+    }
+    Point& at( uint64_t id )
+    {
+        return points_[id];
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, Point&& point )
+    {
+        points_[id] = point;
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, const Point& point )
+    {
+        points_[id] = point;
+    }
+
+    /// Insert a new point and return the new id
+    uint64_t insert( const Point& point )
+    {
+        uint64_t ret = last_node_id_;
+        points_[last_node_id_--] = point;
+        return ret;
+    }
+private:
+    CacheType points_;
+    // node ids that are introduced to split multi edges
+    // we count them backward from 2^64 - 1
+    // this should not overlap current OSM node ID (~ 2^32 in july 2016)
+    const uint64_t max_node_id_ = 5000000000LL;
+    uint64_t last_node_id_ = 5000000000LL;
 };
 
 // a pair of nodes
