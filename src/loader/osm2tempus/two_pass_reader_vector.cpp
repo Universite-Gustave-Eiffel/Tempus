@@ -4,7 +4,83 @@
 
 #include <unordered_set>
 
-struct PbfReaderPass1
+class PointCacheVector
+{
+public:
+    using CacheType = std::vector<Point>;
+    PointCacheVector()
+    {
+        points_.resize( max_node_id_ );
+    }
+
+    CacheType::const_iterator begin() const
+    {
+        return points_.begin();
+    }
+    CacheType::const_iterator end() const
+    {
+        return points_.end();
+    }
+    CacheType::iterator begin()
+    {
+        return points_.begin();
+    }
+    CacheType::iterator end()
+    {
+        return points_.end();
+    }
+    CacheType::const_iterator find( uint64_t id ) const
+    {
+        return points_.begin() + id;
+    }
+    CacheType::iterator find( uint64_t id )
+    {
+        return points_.begin() + id;
+    }
+
+    size_t size() const
+    {
+        return points_.size();
+    }
+
+    const Point& at( uint64_t id ) const
+    {
+        return points_[id];
+    }
+    Point& at( uint64_t id )
+    {
+        return points_[id];
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, Point&& point )
+    {
+        points_[id] = point;
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, const Point& point )
+    {
+        points_[id] = point;
+    }
+
+    /// Insert a new point and return the new id
+    uint64_t insert( const Point& point )
+    {
+        uint64_t ret = last_node_id_;
+        points_[last_node_id_--] = point;
+        return ret;
+    }
+private:
+    CacheType points_;
+    // node ids that are introduced to split multi edges
+    // we count them backward from 2^64 - 1
+    // this should not overlap current OSM node ID (~ 2^32 in july 2016)
+    const uint64_t max_node_id_ = 5000000000LL;
+    uint64_t last_node_id_ = 5000000000LL;
+};
+
+struct PbfReaderPass1Vector
 {
 public:
     void node_callback( uint64_t osmid, double lon, double lat, const osm_pbf::Tags &/*tags*/ )
@@ -19,26 +95,24 @@ public:
             return;
 
         for ( uint64_t node: nodes ) {
-            auto it = points_.find( node );
-            if ( it != points_.end() ) {
-                int uses = it->second.uses();
-                if ( uses < 2 )
-                    it->second.set_uses( uses + 1 );
-            }
+            Point& p = points_.at( node );
+            int uses = p.uses();
+            if ( uses < 2 )
+                p.set_uses( uses + 1 );
         }
     }
     void relation_callback( uint64_t /*osmid*/, const osm_pbf::Tags &/*tags*/, const osm_pbf::References & /*refs*/ )
     {
     }
 
-    PointCache& points() { return points_; }
+    PointCacheVector& points() { return points_; }
 private:
-    PointCache points_;
+    PointCacheVector points_;
 };
 
-struct PbfReaderPass2
+struct PbfReaderPass2Vector
 {
-    PbfReaderPass2( PointCache& points, Writer& writer ):
+    PbfReaderPass2Vector( PointCacheVector& points, Writer& writer ):
         points_( points ), writer_( writer ), section_splitter_( points_ )
     {}
     
@@ -55,20 +129,17 @@ struct PbfReaderPass2
         // split the way on intersections (i.e. node that are used more than once)
         bool section_start = true;
         uint64_t old_node = nodes[0];
-        if ( points_.find( old_node ) == points_.end() )
-            return;
         uint64_t node_from;
         std::vector<uint64_t> section_nodes;
         for ( size_t i = 1; i < nodes.size(); i ++ ) {
             uint64_t node = nodes[i];
-            auto it = points_.find( node );
-            if ( it == points_.end() ) {
+            const Point& pt = points_.at( node );
+            if ( pt.uses() == 0 ) {
                 // ignore ways with unknown nodes
                 section_start = true;
                 continue;
             }
 
-            const Point& pt = it->second;
             if ( section_start ) {
                 section_nodes.clear();
                 section_nodes.push_back( old_node );
@@ -83,6 +154,7 @@ struct PbfReaderPass2
                                    {
                                        writer_.write_section( lway_id, lsection_id, lnode_from, lnode_to, lpts, ltags );
                                    });
+
                 section_start = true;
             }
             old_node = node;
@@ -94,28 +166,23 @@ struct PbfReaderPass2
     }
 
 private:
-    PointCache& points_;
+    PointCacheVector& points_;
 
     Writer& writer_;
 
-    // structure used to detect multi edges
-    std::unordered_set<node_pair> way_node_pairs;
-
-    SectionSplitter<PointCache> section_splitter_;
+    SectionSplitter<PointCacheVector> section_splitter_;
 };
 
-void two_pass_pbf_read( const std::string& filename, Writer& writer )
+void two_pass_vector_pbf_read( const std::string& filename, Writer& writer )
 {
     std::cout << "first pass" << std::endl;
-    PbfReaderPass1 p1;
-    osm_pbf::read_osm_pbf<PbfReaderPass1, StdOutProgressor>( filename, p1 );
+    PbfReaderPass1Vector p1;
+    osm_pbf::read_osm_pbf<PbfReaderPass1Vector, StdOutProgressor>( filename, p1 );
     std::cout << p1.points().size() << " nodes cached" << std::endl;
     std::cout << "second pass" << std::endl;
-    PbfReaderPass2 p2( p1.points(), writer );
-    osm_pbf::read_osm_pbf<PbfReaderPass2, StdOutProgressor>( filename, p2 );
+    PbfReaderPass2Vector p2( p1.points(), writer );
+    osm_pbf::read_osm_pbf<PbfReaderPass2Vector, StdOutProgressor>( filename, p2 );
 }
-
-
 
 
 

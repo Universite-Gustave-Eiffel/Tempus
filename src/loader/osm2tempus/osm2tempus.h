@@ -110,8 +110,76 @@ struct Way
 };
 
 
-using PointCache = std::unordered_map<uint64_t, Point>;
+//using PointCache = std::unordered_map<uint64_t, Point>;
 using WayCache = std::unordered_map<uint64_t, Way>;
+
+class PointCache
+{
+public:
+    using CacheType = std::unordered_map<uint64_t, Point>;
+    
+    CacheType::const_iterator begin() const
+    {
+        return points_.begin();
+    }
+    CacheType::const_iterator end() const
+    {
+        return points_.end();
+    }
+    CacheType::iterator begin()
+    {
+        return points_.begin();
+    }
+    CacheType::iterator end()
+    {
+        return points_.end();
+    }
+    CacheType::const_iterator find( uint64_t id ) const
+    {
+        return points_.find( id );
+    }
+    CacheType::iterator find( uint64_t id )
+    {
+        return points_.find( id );
+    }
+
+    size_t size() const
+    {
+        return points_.size();
+    }
+
+    const Point& at( uint64_t id ) const
+    {
+        return points_.at( id );
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, Point&& point )
+    {
+        points_[id] = point;
+        if ( id > max_id_ )
+            max_id_ = id;
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, const Point& point )
+    {
+        points_[id] = point;
+        if ( id > max_id_ )
+            max_id_ = id;
+    }
+
+    /// Insert a new point and return the new id
+    uint64_t insert( const Point& point )
+    {
+        uint64_t ret = max_id_;
+        points_[max_id_++] = point;
+        return ret;
+    }
+private:
+    uint64_t max_id_ = 0;
+    CacheType points_;
+};
 
 // a pair of nodes
 using node_pair = std::pair<uint64_t, uint64_t>;
