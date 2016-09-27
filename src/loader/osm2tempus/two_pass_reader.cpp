@@ -13,19 +13,14 @@ public:
         points_.insert( osmid, Point(lon, lat) );
     }
 
-    void way_callback( uint64_t /*osmid*/, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
+    void way_callback( uint64_t osmid, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
     {
         // ignore ways that are not highway
         if ( tags.find( "highway" ) == tags.end() )
             return;
 
         for ( uint64_t node: nodes ) {
-            auto pt = points_.find( node );
-            if ( pt ) {
-                int uses = pt->uses();
-                if ( uses < 2 )
-                    pt->set_uses( uses + 1 );
-            }
+            points_.inc_uses( node );
         }
     }
     void relation_callback( uint64_t /*osmid*/, const osm_pbf::Tags &/*tags*/, const osm_pbf::References & /*refs*/ )
@@ -56,21 +51,19 @@ struct PbfReaderPass2
         if ( tags.find( "highway" ) == tags.end() )
             return;
 
+        for ( uint64_t node: nodes ) {
+            // ignore ways with unknown nodes
+            if ( !points_.find( node ) )
+                return;
+        }
+
         // split the way on intersections (i.e. node that are used more than once)
         bool section_start = true;
         uint64_t old_node = nodes[0];
-        if ( !points_.find( old_node ) )
-            return;
         uint64_t node_from;
         std::vector<uint64_t> section_nodes;
         for ( size_t i = 1; i < nodes.size(); i ++ ) {
             uint64_t node = nodes[i];
-            const Point* pt = points_.find( node );
-            if ( !pt ) {
-                // ignore ways with unknown nodes
-                section_start = true;
-                continue;
-            }
 
             if ( section_start ) {
                 section_nodes.clear();
@@ -79,7 +72,7 @@ struct PbfReaderPass2
                 section_start = false;
             }
             section_nodes.push_back( node );
-            if ( i == nodes.size() - 1 || pt->uses() > 1 ) {
+            if ( i == nodes.size() - 1 || points_.uses( node ) > 1 ) {
                 //split_into_sections( way_id, node_from, node, section_nodes, tags );
                 section_splitter_( way_id, node_from, node, section_nodes, tags,
                                    [&](uint64_t lway_id, uint64_t lsection_id, uint64_t lnode_from, uint64_t lnode_to, const std::vector<Point>& lpts, const osm_pbf::Tags& ltags)
@@ -101,14 +94,10 @@ struct PbfReaderPass2
         writer_.end_sections();
     }
 
-
 private:
     PointCacheType& points_;
 
     Writer& writer_;
-
-    // structure used to detect multi edges
-    std::unordered_set<node_pair> way_node_pairs;
 
     SectionSplitter<PointCacheType> section_splitter_;
 };

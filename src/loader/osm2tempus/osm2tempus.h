@@ -13,63 +13,43 @@
 
 namespace osm_pbf = CanalTP;
 
-#ifdef OSM_POINT_APPROXIMATION
 ///
-/// Point class where 1 bit of each coordinate is taken to store a counter
+/// Point class
 /// sizeof(Point) = 8
 struct Point
 {
     Point() {}
-    Point( float mlon, float mlat )
+    Point( float lon, float lat ) : lon_(lon), lat_(lat)
     {
-        set_lon( mlon );
-        set_lat( mlat );
     }
     float lat() const
     {
-        return ulat.v;
+        return lat_;
     }
     float lon() const
     {
-        return ulon.v;
+        return lon_;
     }
     void set_lat( float lat )
     {
-        ulat.v = lat;
-        ulat.bits &= 0xFFFFFFFE;
+        lat_ = lat;
     }
     void set_lon( float lon )
     {
-        ulon.v = lon;
-        ulon.bits &= 0xFFFFFFFE;
-    }
-    int uses() const
-    {
-        return ((ulat.bits & 1) << 1) | (ulon.bits & 1);
-    }
-    void set_uses( int uses )
-    {
-        ulat.bits = (ulat.bits & 0xFFFFFFFE) | ((uses & 2) >> 1);
-        ulon.bits = (ulon.bits & 0xFFFFFFFE) | (uses & 1);
+        lon_ = lon;
     }
 private:
-    union {
-        float v;
-        uint32_t bits = 0;
-    } ulon;
-    union {
-        float v;
-        uint32_t bits = 0;
-    } ulat;
+    float lon_, lat_;
 };
-#else
+
 ///
 /// Point class
 /// sizeof(Point) = 12
-struct Point
+struct PointWithUses
 {
-    Point() {}
-    Point( float lon, float lat ) : lon_(lon), lat_(lat)
+    PointWithUses() {}
+    PointWithUses( const Point& pt ) : lon_(pt.lon()), lat_(pt.lat()) {}
+    PointWithUses( float lon, float lat ) : lon_(lon), lat_(lat)
     {
     }
     float lat() const
@@ -96,27 +76,22 @@ struct Point
     {
         uses_ = uses;
     }
+
+    // conversion to Point
+    operator Point() const
+    {
+        return Point(lon_, lat_);
+    }
 private:
     float lon_, lat_;
     uint8_t uses_;
 };
-#endif
-
-struct Way
-{
-    std::vector<uint64_t> nodes;
-    osm_pbf::Tags tags;
-    bool ignored = false;
-};
-
-
-//using PointCache = std::unordered_map<uint64_t, Point>;
-using WayCache = std::unordered_map<uint64_t, Way>;
 
 class PointCache
 {
 public:
-    using CacheType = std::unordered_map<uint64_t, Point>;
+    using PointType = PointWithUses;
+    using CacheType = std::unordered_map<uint64_t, PointType>;
     
     CacheType::const_iterator begin() const
     {
@@ -134,14 +109,14 @@ public:
     {
         return points_.end();
     }
-    const Point* find( uint64_t id ) const
+    const PointType* find( uint64_t id ) const
     {
         auto it = points_.find( id );
         if ( it == points_.end() )
             return nullptr;
         return &it->second;
     }
-    Point* find( uint64_t id )
+    PointType* find( uint64_t id )
     {
         auto it = points_.find( id );
         if ( it == points_.end() )
@@ -154,13 +129,13 @@ public:
         return points_.size();
     }
 
-    const Point& at( uint64_t id ) const
+    const PointType& at( uint64_t id ) const
     {
         return points_.at( id );
     }
 
     /// Insert a point with a given id
-    void insert( uint64_t id, Point&& point )
+    void insert( uint64_t id, PointType&& point )
     {
         points_[id] = point;
         if ( id > max_id_ )
@@ -168,7 +143,7 @@ public:
     }
 
     /// Insert a point with a given id
-    void insert( uint64_t id, const Point& point )
+    void insert( uint64_t id, const PointType& point )
     {
         points_[id] = point;
         if ( id > max_id_ )
@@ -176,12 +151,33 @@ public:
     }
 
     /// Insert a new point and return the new id
-    uint64_t insert( const Point& point )
+    uint64_t insert( const PointType& point )
     {
         uint64_t ret = max_id_;
         points_[max_id_++] = point;
         return ret;
     }
+
+    int uses( uint64_t id ) const
+    {
+        auto it = points_.find( id );
+        return it->second.uses();
+    }
+
+    int uses( CacheType::const_iterator it ) const
+    {
+        return it->second.uses();
+    }
+
+    void inc_uses( uint64_t id )
+    {
+        auto it = points_.find( id );
+        if ( it == points_.end() )
+            return;
+        if ( it->second.uses() < 2 )
+            it->second.set_uses( it->second.uses() + 1);
+    }
+
 private:
     uint64_t max_id_ = 0;
     CacheType points_;
@@ -190,10 +186,12 @@ private:
 class PointCacheVector
 {
 public:
-    using CacheType = std::vector<Point>;
+    using PointType = Point;
+    using CacheType = std::vector<PointType>;
     PointCacheVector()
     {
-        points_.resize( max_node_id_ );
+        points_.reserve( max_node_id_ );
+        uses_.resize( (max_node_id_ >> 2) + 1 );
     }
 
     CacheType::const_iterator begin() const
@@ -212,11 +210,11 @@ public:
     {
         return points_.end();
     }
-    const Point* find( uint64_t id ) const
+    const PointType* find( uint64_t id ) const
     {
         return &points_[id];
     }
-    Point* find( uint64_t id )
+    PointType* find( uint64_t id )
     {
         return &points_[id];
     }
@@ -226,33 +224,50 @@ public:
         return points_.size();
     }
 
-    const Point& at( uint64_t id ) const
+    const PointType& at( uint64_t id ) const
     {
         return points_[id];
     }
-    Point& at( uint64_t id )
+    PointType& at( uint64_t id )
     {
         return points_[id];
     }
 
     /// Insert a point with a given id
-    void insert( uint64_t id, Point&& point )
+    void insert( uint64_t id, PointType&& point )
     {
         points_[id] = point;
     }
 
     /// Insert a point with a given id
-    void insert( uint64_t id, const Point& point )
+    void insert( uint64_t id, const PointType& point )
     {
         points_[id] = point;
     }
 
     /// Insert a new point and return the new id
-    uint64_t insert( const Point& point )
+    uint64_t insert( const PointType& point )
     {
         uint64_t ret = last_node_id_;
         points_[last_node_id_--] = point;
         return ret;
+    }
+
+    int uses( uint64_t id ) const
+    {
+        const uint8_t p = (id % 4)*2;
+        const uint8_t m = 3 << p;
+        return (uses_[id >> 2] & m) >> p;
+    }
+
+    void inc_uses( uint64_t id )
+    {
+        const uint8_t p = (id % 4)*2;
+        const uint8_t m = 3 << p;
+        uint8_t& v = uses_[id >> 2];
+        uint8_t nuses = (v & m) >> p;
+        if ( nuses < 2 )
+            v |= (++nuses & 3) << p;
     }
 private:
     CacheType points_;
@@ -261,6 +276,10 @@ private:
     // this should not overlap current OSM node ID (~ 2^32 in july 2016)
     const uint64_t max_node_id_ = 5000000000LL;
     uint64_t last_node_id_ = 5000000000LL;
+
+    // vector of point uses
+    // 2 bits by point
+    std::vector<uint8_t> uses_;
 };
 
 // a pair of nodes

@@ -133,6 +133,7 @@ void SQLBinaryCopyWriter::begin_sections()
     db.exec( "copy " + schema_ + "." + sections_table_ + "(id, node_from, node_to, geom" + additional_columns + additional_tags + ") from stdin with (format binary)" );
     const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
     db.put_copy_data( header, 19 );
+    n_sections_ = 0;
 }
 
 void SQLBinaryCopyWriter::begin_nodes()
@@ -346,6 +347,8 @@ void SQLBinaryCopyWriter::write_section( uint64_t way_id, uint64_t section_id, u
 
     if ( keep_tags_ )
         db.put_copy_data( tags_to_binary( tags ) );
+
+    n_sections_++;
 }
 
 void SQLBinaryCopyWriter::end_sections()
@@ -359,4 +362,5 @@ void SQLBinaryCopyWriter::end_sections()
         db.exec( "create unique index on " + schema_ + "." + sections_table_ + "(id)" );
         db.exec( "alter table " + schema_ + "." + sections_table_ + " add primary key using index " + sections_table_ + "_id_idx" );
     }
+    std::cout << n_sections_ << " sections created" << std::endl;
 }

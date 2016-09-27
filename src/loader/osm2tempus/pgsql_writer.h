@@ -31,5 +31,6 @@ private:
     Db::Connection db;
     std::string schema_, sections_table_, nodes_table_, restrictions_table_;
     bool create_table_;
+    uint64_t n_sections_;
 };
 

@@ -5,6 +5,16 @@
 #include "writer.h"
 #include "section_splitter.h"
 
+struct Way
+{
+    std::vector<uint64_t> nodes;
+    osm_pbf::Tags tags;
+    bool ignored = false;
+};
+
+
+using WayCache = std::unordered_map<uint64_t, Way>;
+
 struct TurnRestriction
 {
     enum RestrictionType
@@ -139,9 +149,9 @@ struct RelationReader
                     uint64_t n2 = s.node2;
                     if ( tr.via_node == s.node2 )
                         std::swap( n1, n2 );
-                    const Point& p1 = points.at( section_from.node1 );
-                    const Point& p2 = points.at( tr.via_node );
-                    const Point& p3 = points.at( n2 );
+                    const auto& p1 = points.at( section_from.node1 );
+                    const auto& p2 = points.at( tr.via_node );
+                    const auto& p3 = points.at( n2 );
                     // compute the angle between the 3 points
                     // we could have used the orientation (determinant), but angle computation is more stable
                     angle[i] = angle_3_points( p1.lon(), p1.lat(), p2.lon(), p2.lat(), p3.lon(), p3.lat() );
@@ -240,7 +250,7 @@ struct PbfReader
     
     void node_callback( uint64_t osmid, double lon, double lat, const osm_pbf::Tags &/*tags*/ )
     {
-        points_.insert( osmid, Point(lon, lat) );
+        points_.insert( osmid, PointCache::PointType(lon, lat) );
     }
 
     void way_callback( uint64_t osmid, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
@@ -323,10 +333,10 @@ struct PbfReader
         uint64_t old_node = way.nodes[0];
         uint64_t node_from;
         std::vector<uint64_t> section_nodes;
-        //Point old_pt = points_.find( old_node )->second;
+
         for ( size_t i = 1; i < way.nodes.size(); i++ ) {
             uint64_t node = way.nodes[i];
-            const Point& pt = points_.at( node );
+            const PointWithUses& pt = points_.at( node );
             if ( section_start ) {
                 section_nodes.clear();
                 section_nodes.push_back( old_node );
@@ -370,8 +380,8 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
 {
     off_t ways_offset = 0, relations_offset = 0;
     osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
-    std::cout << "Ways offset: " << ways_offset << std::endl;
-    std::cout << "Relations offset: " << relations_offset << std::endl;
+    std::cout << "Ways offset: " << std::hex << ways_offset << std::endl;
+    std::cout << "Relations offset: " << std::hex << relations_offset << std::endl;
 
     std::cout << "Relations ..." << std::endl;
     RelationReader r;

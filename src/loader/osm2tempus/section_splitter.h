@@ -42,8 +42,8 @@ public:
                 }
             }
             else {
-                const Point& p1 = points_.at( nodes[0] );
-                const Point& p2 = points_.at( nodes[1] );
+                const typename PointCacheType::PointType& p1 = points_.at( nodes[0] );
+                const typename PointCacheType::PointType& p2 = points_.at( nodes[1] );
                 Point center_point( ( p1.lon() + p2.lon() ) / 2.0, ( p1.lat() + p2.lat() ) / 2.0 );
                 
                 before_pts.push_back( points_.at( nodes[0] ) );

@@ -103,7 +103,7 @@ struct Parser
     {
         NodeBlock = 1,
         WayBlock = 2,
-        RelationBlock = 3
+        RelationBlock = 4
     };
 
     ///
@@ -111,7 +111,7 @@ struct Parser
     /// return the offset of the nodes/ways and ways/relations limit
     void get_file_offsets( off_t& ways_offset, off_t& relations_offset ){
         Progressor progressor;
-        BlockType currentBlock = NodeBlock;
+        BlockType current_block = NodeBlock;
         while(!this->file.eof() && !finished) {
             off_t tellp = file.tellg();
             progressor( tellp, fsize );
@@ -119,13 +119,15 @@ struct Parser
             if(!this->finished){
                 int32_t sz = this->read_blob(header);
                 if(header.type() == "OSMData") {
-                    BlockType b = enum_primitiveblock( sz );
-                    if ( b != currentBlock ) {
-                        if ( b == WayBlock )
-                            ways_offset = tellp;
-                        else if ( b == RelationBlock )
-                            relations_offset = tellp;
-                        currentBlock = b;
+                    int b = enum_primitiveblock( sz );
+                    //std::cout << b << " " << std::hex << tellp << " current_block " << current_block << std::endl;
+                    if ( (current_block == NodeBlock) && (b & WayBlock) ) {
+                        ways_offset = tellp;
+                        current_block = WayBlock;
+                    }
+                    else if ( (current_block == WayBlock) && (b & RelationBlock) ) {
+                        relations_offset = tellp;
+                        current_block = RelationBlock;
                     }
                 }
                 else if(header.type() == "OSMHeader"){
@@ -253,24 +255,25 @@ protected:
         return 0;
     }
 
-    BlockType enum_primitiveblock(int32_t sz) {
+    int enum_primitiveblock(int32_t sz) {
         OSMPBF::PrimitiveBlock primblock;
         if(!primblock.ParseFromArray(this->unpack_buffer, sz))
             fatal() << "unable to parse primitive block";
 
+        int block_types = 0;
         for(int i = 0, l = primblock.primitivegroup_size(); i < l; i++) {
             OSMPBF::PrimitiveGroup pg = primblock.primitivegroup(i);
-            if ( pg.nodes_size() || pg.has_dense() ) {
-                return NodeBlock;
+            if ( pg.relations_size() ) {
+                block_types |= RelationBlock;
             }
             if ( pg.ways_size() ) {
-                return WayBlock;
+                block_types |= WayBlock;
             }
-            if ( pg.relations_size() ) {
-                return RelationBlock;
+            if ( pg.nodes_size() || pg.has_dense() ) {
+                block_types |= NodeBlock;
             }
         }
-        return NodeBlock;
+        return block_types;
     }
     
     off_t next_block()
@@ -305,7 +308,7 @@ protected:
         if(!this->finished){
             int32_t sz = this->read_blob(header);
             if(header.type() == "OSMData") {
-                b1 = static_cast<int>( enum_primitiveblock( sz ) );
+                b1 = enum_primitiveblock( sz );
             }
         }
         off_t found_off = file.tellg();
@@ -313,11 +316,11 @@ protected:
         if(!this->finished){
             int32_t sz = this->read_blob(header);
             if(header.type() == "OSMData") {
-                b2 = static_cast<int>( enum_primitiveblock( sz ) );
+                b2 = enum_primitiveblock( sz );
             }
         }
         this->finished = false;
-        if ( b1 == iblock_type - 1 && b2 == iblock_type ) {
+        if ( ((b1 & iblock_type) == 0) && (b2 & iblock_type) ) {
             return found_off;
         }
         else if ( b1 >= block_type ) {
@@ -351,8 +354,9 @@ struct ParserWithVisitor : public Parser<Progressor> {
             this->file.seekg(0, std::ios_base::beg);
         }
         Progressor progressor;
-        while(!this->file.eof() && !this->finished && ( !end_offset || this->file.tellg() < end_offset ) ) {
+        while(!this->file.eof() && !this->finished && ( !end_offset || this->file.tellg() <= end_offset ) ) {
             progressor( this->file.tellg() - start_offset, fsize );
+            //std::cout << std::hex << this->file.tellg() << std::endl;
             OSMPBF::BlobHeader header = this->read_header();
             if(!this->finished){
                 int32_t sz = this->read_blob(header);
