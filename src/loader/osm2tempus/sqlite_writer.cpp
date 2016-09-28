@@ -1,24 +1,6 @@
 #include "sqlite_writer.h"
 #include <sstream>
-
-static std::string linestring_to_ewkb( const std::vector<Point>& points )
-{
-    std::string ewkb;
-    ewkb.resize( 1 + 4 /*type*/ + 4 /*srid*/ + 4 /*size*/ + 8 * points.size() * 2 );
-    memcpy( &ewkb[0], "\x01"
-            "\x02\x00\x00\x20"  // linestring + has srid
-            "\xe6\x10\x00\x00", // srid = 4326
-            9
-            );
-    // size
-    *reinterpret_cast<uint32_t*>( &ewkb[9] ) = points.size();
-    for ( size_t i = 0; i < points.size(); i++ ) {
-        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 0 ) = points[i].lon();
-        *reinterpret_cast<double*>( &ewkb[13] + 16*i + 8 ) = points[i].lat();
-    }
-    return ewkb;
-}
-
+#include "geom.h"
 
 ///
 /// A Sqlite writer

@@ -1,6 +1,7 @@
 #include "osm2tempus.h"
 #include "writer.h"
 #include "section_splitter.h"
+#include "restrictions.h"
 
 #include <unordered_set>
 
@@ -13,7 +14,7 @@ public:
         points_.insert( osmid, Point(lon, lat) );
     }
 
-    void way_callback( uint64_t osmid, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
+    void way_callback( uint64_t /*osmid*/, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
     {
         // ignore ways that are not highway
         if ( tags.find( "highway" ) == tags.end() )
@@ -32,11 +33,11 @@ private:
     PointCacheType points_;
 };
 
-template <typename PointCacheType>
+template <typename PointCacheType, bool do_import_restrictions_ = true>
 struct PbfReaderPass2
 {
-    PbfReaderPass2( PointCacheType& points, Writer& writer ):
-        points_( points ), writer_( writer ), section_splitter_( points_ )
+    PbfReaderPass2( PointCacheType& points, Writer& writer, RelationReader& restrictions ):
+        restrictions_( restrictions ), points_( points ), writer_( writer ), section_splitter_( points_ )
     {
         writer_.begin_sections();
     }
@@ -55,6 +56,13 @@ struct PbfReaderPass2
             // ignore ways with unknown nodes
             if ( !points_.find( node ) )
                 return;
+
+            if ( do_import_restrictions_ ) {
+                // check if the node is involved in a restriction
+                if ( restrictions_.has_via_node( node ) ) {
+                    restrictions_.add_node_edge( node, way_id );
+                }                
+            }
         }
 
         // split the way on intersections (i.e. node that are used more than once)
@@ -78,6 +86,10 @@ struct PbfReaderPass2
                                    [&](uint64_t lway_id, uint64_t lsection_id, uint64_t lnode_from, uint64_t lnode_to, const std::vector<Point>& lpts, const osm_pbf::Tags& ltags)
                                    {
                                        writer_.write_section( lway_id, lsection_id, lnode_from, lnode_to, lpts, ltags );
+                                       if ( do_import_restrictions_ ) { // static_if
+                                           if ( restrictions_.has_via_node( lnode_from ) || restrictions_.has_via_node( lnode_to ) )
+                                               restrictions_.add_way_section( lway_id, lsection_id, lnode_from, lnode_to );
+                                       }
                                    });
                 section_start = true;
             }
@@ -95,6 +107,8 @@ struct PbfReaderPass2
     }
 
 private:
+    RelationReader& restrictions_;
+    
     PointCacheType& points_;
 
     Writer& writer_;
@@ -102,7 +116,7 @@ private:
     SectionSplitter<PointCacheType> section_splitter_;
 };
 
-template <typename PointCacheType>
+template <typename PointCacheType, bool do_import_restrictions>
 void two_pass_pbf_read_( const std::string& filename, Writer& writer )
 {
     off_t ways_offset = 0, relations_offset = 0;
@@ -110,23 +124,42 @@ void two_pass_pbf_read_( const std::string& filename, Writer& writer )
     std::cout << "Ways offset: " << ways_offset << std::endl;
     std::cout << "Relations offset: " << relations_offset << std::endl;
 
-    std::cout << "first pass" << std::endl;
+    RelationReader r;
+    if ( do_import_restrictions ) {
+        std::cout << "Relations ..." << std::endl;
+        osm_pbf::read_osm_pbf<RelationReader, StdOutProgressor>( filename, r, relations_offset );
+    }
+
+    std::cout << "First pass ..." << std::endl;
     PbfReaderPass1<PointCacheType> p1;
     osm_pbf::read_osm_pbf<PbfReaderPass1<PointCacheType>, StdOutProgressor>( filename, p1, 0, relations_offset );
     std::cout << p1.points().size() << " nodes cached" << std::endl;
-    std::cout << "second pass" << std::endl;
-    PbfReaderPass2<PointCacheType> p2( p1.points(), writer );
-    osm_pbf::read_osm_pbf<PbfReaderPass2<PointCacheType>, StdOutProgressor>( filename, p2, ways_offset, relations_offset );
+    std::cout << "Second pass ..." << std::endl;
+    {
+        PbfReaderPass2<PointCacheType, do_import_restrictions> p2( p1.points(), writer, r );
+        osm_pbf::read_osm_pbf<PbfReaderPass2<PointCacheType, do_import_restrictions>, StdOutProgressor>( filename, p2, ways_offset, relations_offset );
+    }
+    if ( do_import_restrictions ) {
+        std::cout << "writing restrictions ..." << std::endl;
+        StdOutProgressor prog;
+        r.write_restrictions( p1.points(), writer, prog );
+    }
 }
 
-void two_pass_pbf_read( const std::string& filename, Writer& writer )
+void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions )
 {
-    two_pass_pbf_read_<PointCache>( filename, writer );
+    if ( do_import_restrictions )
+        two_pass_pbf_read_<PointCache, true>( filename, writer );
+    else
+        two_pass_pbf_read_<PointCache, false>( filename, writer );
 }
 
-void two_pass_vector_pbf_read( const std::string& filename, Writer& writer )
+void two_pass_vector_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions )
 {
-    two_pass_pbf_read_<PointCacheVector>( filename, writer );
+    if ( do_import_restrictions )
+        two_pass_pbf_read_<PointCacheVector, true>( filename, writer );
+    else
+        two_pass_pbf_read_<PointCacheVector, false>( filename, writer );
 }
 
 

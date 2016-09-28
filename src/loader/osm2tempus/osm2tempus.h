@@ -317,6 +317,8 @@ struct StdOutProgressor
     }
     void operator() ( size_t x, size_t total )
     {
+        if ( total == 0 )
+            return;
         if ( first_time ) {
             display_dots( 0 );
             first_time = false;

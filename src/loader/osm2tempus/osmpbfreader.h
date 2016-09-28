@@ -344,15 +344,13 @@ struct ParserWithVisitor : public Parser<Progressor> {
     void parse( off_t start_offset = 0, off_t end_offset = 0 )
     {
         off_t fsize;
-        if ( start_offset || end_offset ) {
-            fsize = end_offset - start_offset;
-            this->file.seekg( start_offset, std::ios_base::beg );
-        }
-        else {
+        if ( end_offset == 0 ) {
             this->file.seekg(0, std::ios_base::end);
-            fsize = this->file.tellg();
-            this->file.seekg(0, std::ios_base::beg);
+            end_offset = this->file.tellg();
         }
+        fsize = end_offset - start_offset;
+        this->file.seekg( start_offset, std::ios_base::beg );
+
         Progressor progressor;
         while(!this->file.eof() && !this->finished && ( !end_offset || this->file.tellg() <= end_offset ) ) {
             progressor( this->file.tellg() - start_offset, fsize );

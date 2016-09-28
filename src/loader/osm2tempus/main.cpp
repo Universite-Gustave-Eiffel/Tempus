@@ -6,8 +6,8 @@
 #include <boost/program_options.hpp>
 
 void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes = false, bool do_import_restrictions = true );
-void two_pass_pbf_read( const std::string& filename, Writer& writer );
-void two_pass_vector_pbf_read( const std::string& filename, Writer& writer );
+void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true );
+void two_pass_vector_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true );
 
 namespace po = boost::program_options;
 
