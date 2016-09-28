@@ -16,17 +16,21 @@ struct Way
 
 using WayCache = std::unordered_map<uint64_t, Way>;
 
-template <bool do_import_restrictions_ = false>
+template <typename PointCacheType, bool do_import_restrictions_ = false>
 struct PbfReader
 {
-    PbfReader( RestrictionReader* restrictions = 0 ) :
+    PbfReader( RestrictionReader* restrictions = 0, size_t n_nodes = 0, size_t n_ways = 0 ) :
         restrictions_( restrictions ),
+        points_( n_nodes ),
         section_splitter_( points_ )
-    {}
+    {
+        if ( n_ways )
+            ways_.reserve( n_ways );
+    }
     
     void node_callback( uint64_t osmid, double lon, double lat, const osm_pbf::Tags &/*tags*/ )
     {
-        points_.insert( osmid, PointCache::PointType(lon, lat) );
+        points_.insert( osmid, typename PointCacheType::PointType(lon, lat) );
     }
 
     void way_callback( uint64_t osmid, const osm_pbf::Tags& tags, const std::vector<uint64_t>& nodes )
@@ -39,6 +43,7 @@ struct PbfReader
         Way& w = r.first->second;
         w.tags = tags;
         w.nodes = nodes;
+        n_ways_++;
     }
 
     template <typename Progressor>
@@ -141,24 +146,46 @@ struct PbfReader
     {
     }
 
-    const PointCache& points() const { return points_; }
+    const PointCacheType& points() const { return points_; }
+
+    size_t n_ways() const { return n_ways_; }
 
 private:
     RestrictionReader* restrictions_;
     
-    PointCache points_;
+    PointCacheType points_;
     WayCache ways_;
 
-    SectionSplitter<PointCache> section_splitter_;
+    SectionSplitter<PointCacheType> section_splitter_;
+
+    size_t n_ways_ = 0;
 };
 
 
-void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes, bool do_import_restrictions )
+template<typename PointCacheType>
+void single_pass_pbf_read_( const std::string& filename, Writer& writer, bool do_write_nodes, bool do_import_restrictions, size_t n_nodes, size_t n_ways )
 {
     off_t ways_offset = 0, relations_offset = 0;
     osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
-    std::cout << "Ways offset: " << std::hex << ways_offset << std::endl;
-    std::cout << "Relations offset: " << std::hex << relations_offset << std::endl;
+    std::cout << "Ways offset: " << ways_offset << std::endl;
+    std::cout << "Relations offset: " << relations_offset << std::endl;
+
+    if ( n_nodes == 0 )
+    {
+        n_nodes = ways_offset / 5;
+        std::cout << "# nodes estimation: " << std::dec << n_nodes << std::endl;
+    }
+    else {
+        std::cout << "# nodes hint: " << std::dec << n_nodes << std::endl;
+    }
+    if ( n_ways == 0 )
+    {
+        n_ways = (relations_offset - ways_offset) / 220;
+        std::cout << "# ways estimation: " << std::dec << n_ways << std::endl;
+    }
+    else {
+        std::cout << "# ways hint: " << std::dec << n_ways << std::endl;
+    }
 
     if ( do_import_restrictions ) {
         std::cout << "Relations ..." << std::endl;
@@ -166,8 +193,10 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
         osm_pbf::read_osm_pbf<RestrictionReader, StdOutProgressor>( filename, r, relations_offset );
 
         std::cout << "Nodes and ways ..." << std::endl;
-        PbfReader<true> p( &r );
-        osm_pbf::read_osm_pbf<PbfReader<true>, StdOutProgressor>( filename, p, 0, relations_offset );
+        PbfReader<PointCacheType, true> p( &r, n_nodes, n_ways );
+        osm_pbf::read_osm_pbf<PbfReader<PointCacheType, true>, StdOutProgressor>( filename, p, 0, relations_offset );
+        std::cout << std::dec << p.points().size() << " nodes cached" << std::endl;
+        std::cout << std::dec << p.n_ways() << " ways cached" << std::endl;
         std::cout << "Marking nodes and ways ..."  << std::endl;
         {
             StdOutProgressor prog;
@@ -192,8 +221,8 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
     }
     else {
         std::cout << "Nodes and ways ..." << std::endl;
-        PbfReader<false> p;
-        osm_pbf::read_osm_pbf<PbfReader<false>, StdOutProgressor>( filename, p, 0, relations_offset );
+        PbfReader<PointCacheType, false> p( nullptr, n_nodes );
+        osm_pbf::read_osm_pbf<PbfReader<PointCacheType, false>, StdOutProgressor>( filename, p, 0, relations_offset );
         std::cout << "Marking nodes and ways ..."  << std::endl;
         {
             StdOutProgressor prog;
@@ -211,4 +240,14 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
             p.write_nodes( writer, prog );
         }
     }
+}
+
+void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes, bool do_import_restrictions, size_t n_nodes, size_t n_ways )
+{
+    // if we don't know anything about the number of nodes, use a dynamic point cache
+    // else use a point cache with a preallocated size
+    if ( n_nodes )
+        single_pass_pbf_read_<SortedPointCache>( filename, writer, do_write_nodes, do_import_restrictions, n_nodes, n_ways );
+    else
+        single_pass_pbf_read_<PointCache>( filename, writer, do_write_nodes, do_import_restrictions, n_nodes, n_ways );
 }

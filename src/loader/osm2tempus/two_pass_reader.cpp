@@ -9,6 +9,9 @@ template <typename PointCacheType>
 struct PbfReaderPass1
 {
 public:
+    PbfReaderPass1( size_t n_nodes = 0 ) : points_( n_nodes )
+    {
+    }
     void node_callback( uint64_t osmid, double lon, double lat, const osm_pbf::Tags &/*tags*/ )
     {
         points_.insert( osmid, Point(lon, lat) );
@@ -117,12 +120,21 @@ private:
 };
 
 template <typename PointCacheType, bool do_import_restrictions>
-void two_pass_pbf_read_( const std::string& filename, Writer& writer )
+void two_pass_pbf_read_( const std::string& filename, Writer& writer, size_t n_nodes )
 {
     off_t ways_offset = 0, relations_offset = 0;
     osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
     std::cout << "Ways offset: " << ways_offset << std::endl;
     std::cout << "Relations offset: " << relations_offset << std::endl;
+
+    if ( n_nodes == 0 )
+    {
+        n_nodes = ways_offset / 5;
+        std::cout << "# nodes estimation: " << std::dec << n_nodes << std::endl;
+    }
+    else {
+        std::cout << "# nodes hint: " << std::dec << n_nodes << std::endl;
+    }
 
     RestrictionReader r;
     if ( do_import_restrictions ) {
@@ -131,7 +143,7 @@ void two_pass_pbf_read_( const std::string& filename, Writer& writer )
     }
 
     std::cout << "First pass ..." << std::endl;
-    PbfReaderPass1<PointCacheType> p1;
+    PbfReaderPass1<PointCacheType> p1( n_nodes );
     osm_pbf::read_osm_pbf<PbfReaderPass1<PointCacheType>, StdOutProgressor>( filename, p1, 0, relations_offset );
     std::cout << p1.points().size() << " nodes cached" << std::endl;
     std::cout << "Second pass ..." << std::endl;
@@ -146,20 +158,28 @@ void two_pass_pbf_read_( const std::string& filename, Writer& writer )
     }
 }
 
-void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions )
+void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions, size_t n_nodes )
 {
-    if ( do_import_restrictions )
-        two_pass_pbf_read_<PointCache, true>( filename, writer );
-    else
-        two_pass_pbf_read_<PointCache, false>( filename, writer );
+    if ( n_nodes ) {
+        if ( do_import_restrictions )
+            two_pass_pbf_read_<SortedPointCache, true>( filename, writer, n_nodes );
+        else
+            two_pass_pbf_read_<SortedPointCache, false>( filename, writer, n_nodes );
+    }
+    else {
+        if ( do_import_restrictions )
+            two_pass_pbf_read_<PointCache, true>( filename, writer, n_nodes );
+        else
+            two_pass_pbf_read_<PointCache, false>( filename, writer, n_nodes );
+    }
 }
 
 void two_pass_vector_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions )
 {
     if ( do_import_restrictions )
-        two_pass_pbf_read_<PointCacheVector, true>( filename, writer );
+        two_pass_pbf_read_<PointCacheVector, true>( filename, writer, 0 );
     else
-        two_pass_pbf_read_<PointCacheVector, false>( filename, writer );
+        two_pass_pbf_read_<PointCacheVector, false>( filename, writer, 0 );
 }
 
 

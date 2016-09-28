@@ -5,8 +5,8 @@
 
 #include <boost/program_options.hpp>
 
-void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes = false, bool do_import_restrictions = true );
-void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true );
+void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes = false, bool do_import_restrictions = true, size_t n_nodes = 0, size_t n_ways = 0 );
+void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true, size_t n_nodes = 0 );
 void two_pass_vector_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true );
 
 namespace po = boost::program_options;
@@ -28,6 +28,8 @@ int main(int argc, char** argv)
     string pbf_file;
     string nodes_table;
     string restrictions_table;
+    size_t n_nodes = 0;
+    size_t n_ways = 0;
 
     opt_desc.add_options()
         ( "help,h", "produce help message" )
@@ -43,6 +45,8 @@ int main(int argc, char** argv)
         ( "create-table,c", "create the table (and drop any existing one)" )
         ( "nodes-table", po::value<string>(&nodes_table), "write nodes to the given table" )
         ( "restrictions-table", po::value<string>(&restrictions_table)->default_value("road_restriction"), "write restrictions to the given table" )
+        ( "n-nodes", po::value<size_t>(&n_nodes), "give a hint about the number of nodes the input file contains" )
+        ( "n-ways", po::value<size_t>(&n_ways), "give a hint about the number of ways the input file contains" )
     ;
 
     po::variables_map vm;
@@ -103,11 +107,11 @@ int main(int argc, char** argv)
     }
 
     if ( vm.count( "two-pass" ) ) {
-        two_pass_pbf_read( pbf_file, *writer );
+        two_pass_pbf_read( pbf_file, *writer, /*do_import_restrictions = */ true, n_nodes );
     }
     else
     {
-        single_pass_pbf_read( pbf_file, *writer, /*do_write_nodes = */ !nodes_table.empty() );
+        single_pass_pbf_read( pbf_file, *writer, /*do_write_nodes = */ !nodes_table.empty(), /*do_import_restrictions = */ true, n_nodes, n_ways );
     }
     
     return 0;

@@ -19,7 +19,7 @@ namespace osm_pbf = CanalTP;
 struct Point
 {
     Point() {}
-    Point( float lon, float lat ) : lon_(lon), lat_(lat)
+    Point( float nlon, float nlat ) : lon_(nlon), lat_(nlat)
     {
     }
     float lat() const
@@ -30,13 +30,13 @@ struct Point
     {
         return lon_;
     }
-    void set_lat( float lat )
+    void set_lat( float nlat )
     {
-        lat_ = lat;
+        lat_ = nlat;
     }
-    void set_lon( float lon )
+    void set_lon( float nlon )
     {
-        lon_ = lon;
+        lon_ = nlon;
     }
 private:
     float lon_, lat_;
@@ -49,7 +49,7 @@ struct PointWithUses
 {
     PointWithUses() {}
     PointWithUses( const Point& pt ) : lon_(pt.lon()), lat_(pt.lat()) {}
-    PointWithUses( float lon, float lat ) : lon_(lon), lat_(lat)
+    PointWithUses( float nlon, float nlat ) : lon_(nlon), lat_(nlat)
     {
     }
     float lat() const
@@ -60,21 +60,21 @@ struct PointWithUses
     {
         return lon_;
     }
-    void set_lat( float lat )
+    void set_lat( float nlat )
     {
-        lat_ = lat;
+        lat_ = nlat;
     }
-    void set_lon( float lon )
+    void set_lon( float nlon )
     {
-        lon_ = lon;
+        lon_ = nlon;
     }
     int uses() const
     {
         return uses_;
     }
-    void set_uses( int uses )
+    void set_uses( int nuses )
     {
-        uses_ = uses;
+        uses_ = nuses;
     }
 
     // conversion to Point
@@ -92,6 +92,12 @@ class PointCache
 public:
     using PointType = PointWithUses;
     using CacheType = std::unordered_map<uint64_t, PointType>;
+
+    PointCache( size_t n_elts = 0 )
+    {
+        if ( n_elts )
+            points_.reserve( n_elts );
+    }
     
     CacheType::const_iterator begin() const
     {
@@ -188,10 +194,13 @@ class PointCacheVector
 public:
     using PointType = Point;
     using CacheType = std::vector<PointType>;
-    PointCacheVector()
+    PointCacheVector( size_t n_nodes = 0 )
     {
-        points_.reserve( max_node_id_ );
-        uses_.resize( (max_node_id_ >> 2) + 1 );
+        if ( n_nodes == 0 ) {
+            n_nodes = max_node_id_;
+        }
+        points_.reserve( n_nodes );
+        uses_.resize( (n_nodes >> 2) + 1 );
     }
 
     CacheType::const_iterator begin() const
@@ -280,6 +289,134 @@ private:
     // vector of point uses
     // 2 bits by point
     std::vector<uint8_t> uses_;
+};
+
+namespace std
+{
+inline bool operator<( const std::pair<uint64_t, PointWithUses>& a, uint64_t v )
+{
+    return a.first < v;
+}
+}
+
+
+///
+/// A point cache where nodes are sorted
+/// i.e. calls to insert always have a id greater than the previous call
+class SortedPointCache
+{
+public:
+    using PointType = PointWithUses;
+    using CacheType = std::vector<std::pair<uint64_t, PointType>>;
+
+    SortedPointCache( size_t n_elts = 0 )
+    {
+        if ( n_elts )
+            points_.reserve( n_elts );
+    }
+    
+    CacheType::const_iterator begin() const
+    {
+        return points_.begin();
+    }
+    CacheType::const_iterator end() const
+    {
+        return points_.end();
+    }
+    CacheType::iterator begin()
+    {
+        return points_.begin();
+    }
+    CacheType::iterator end()
+    {
+        return points_.end();
+    }
+    const PointType* find( uint64_t id ) const
+    {
+        auto it = std::lower_bound( points_.begin(), points_.end(), id );
+        if ( it->first == id )
+            return &it->second;
+        return nullptr;
+    }
+    PointType* find( uint64_t id )
+    {
+        auto it = std::lower_bound( points_.begin(), points_.end(), id );
+        if ( it->first == id )
+            return &it->second;
+        return nullptr;
+    }
+
+    size_t size() const
+    {
+        return points_.size();
+    }
+
+    const PointType& at( uint64_t id ) const
+    {
+        return *find( id );
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, PointType&& point )
+    {
+        points_.emplace_back( id, point );
+        if ( id > max_id_ )
+            max_id_ = id;
+#if 0
+        if ( id < last_value_ )
+            throw std::runtime_error("Unsorted!");
+        last_value_ = id;
+#endif
+    }
+
+    /// Insert a point with a given id
+    void insert( uint64_t id, const PointType& point )
+    {
+        points_.emplace_back( id, point );
+        if ( id > max_id_ )
+            max_id_ = id;
+#if 0
+        if ( id < last_value_ )
+            throw std::runtime_error("Unsorted!");
+        last_value_ = id;
+#endif
+    }
+
+    /// Insert a new point and return the new id
+    uint64_t insert( const PointType& point )
+    {
+        points_.emplace_back( ++max_id_, point );
+#if 0
+        last_value_ = max_id_;
+#endif
+        return max_id_;
+    }
+
+    int uses( uint64_t id ) const
+    {
+        return find( id )->uses();
+    }
+
+    int uses( CacheType::const_iterator it ) const
+    {
+        return it->second.uses();
+    }
+
+    void inc_uses( uint64_t id )
+    {
+        auto it = find( id );
+        if ( it == nullptr )
+            return;
+        if ( it->uses() < 2 )
+            it->set_uses( it->uses() + 1);
+    }
+
+private:
+#if 0
+    uint64_t last_value_ = 0;
+#endif
+    uint64_t max_id_ = 0;
+    CacheType points_;
 };
 
 // a pair of nodes
