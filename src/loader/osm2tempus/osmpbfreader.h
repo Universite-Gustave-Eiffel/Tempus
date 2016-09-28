@@ -148,6 +148,31 @@ struct Parser
         relations_offset = binary_search_pattern_( 0, fsize, RelationBlock );
     }
 
+    void stats( size_t& n_nodes, size_t& n_ways, size_t& n_highways, size_t& n_relations )
+    {
+        off_t fsize;
+        this->file.seekg(0, std::ios_base::end);
+        fsize = this->file.tellg();
+        this->file.seekg( 0, std::ios_base::beg );
+
+        Progressor progressor;
+        while(!this->file.eof() && !this->finished) {
+            progressor( this->file.tellg(), fsize );
+            OSMPBF::BlobHeader header = this->read_header();
+            if(!this->finished){
+                int32_t sz = this->read_blob(header);
+                if(header.type() == "OSMData") {
+                    this->stat_primitiveblock(sz, n_nodes, n_ways, n_highways, n_relations);
+                }
+                else if(header.type() == "OSMHeader"){
+                }
+                else {
+                    warn() << "  unknown blob type: " << header.type();
+                }
+            }
+        }
+    }
+
     Parser(const std::string & filename )
         : file(filename.c_str(), std::ios::binary ), finished(false)
     {
@@ -331,6 +356,40 @@ protected:
         }
         return -1;
     }
+
+    void stat_primitiveblock(int32_t sz, size_t& n_nodes, size_t& n_ways, size_t& n_highways, size_t& n_relations) {
+        OSMPBF::PrimitiveBlock primblock;
+        if(!primblock.ParseFromArray(this->unpack_buffer, sz))
+            fatal() << "unable to parse primitive block";
+
+        for(int i = 0, l = primblock.primitivegroup_size(); i < l; i++) {
+            OSMPBF::PrimitiveGroup pg = primblock.primitivegroup(i);
+
+            n_nodes += pg.nodes_size();
+
+            // Dense Nodes
+            if(pg.has_dense()) {
+                OSMPBF::DenseNodes dn = pg.dense();
+                n_nodes += dn.id_size();
+            }
+
+            n_ways += pg.ways_size();
+            for(int i = 0; i < pg.ways_size(); ++i) {
+                OSMPBF::Way w = pg.ways(i);
+
+                for(int j = 0; j < w.keys_size(); ++j){
+                    uint64_t key = w.keys(j);
+                    uint64_t val = w.vals(j);
+                    std::string key_string = primblock.stringtable().s(key);
+                    std::string val_string = primblock.stringtable().s(val);
+                    if ( key_string == "highway" )
+                        n_highways++;
+                }
+            }
+
+            n_relations += pg.relations_size();
+        }
+    }
 };
 
 template<typename Visitor, typename Progressor>
@@ -369,7 +428,6 @@ struct ParserWithVisitor : public Parser<Progressor> {
             }
         }
     }
-
 
 private:
     Visitor & visitor;
@@ -446,6 +504,7 @@ private:
             }
         }
     }
+
 };
 
 struct NullProgressor
@@ -468,6 +527,17 @@ void read_osm_pbf( const std::string & filename, Visitor & visitor, off_t start_
 {
     ParserWithVisitor<Visitor, Progressor> p(filename, visitor);
     p.parse( start_offset, end_offset );
+}
+
+template<typename Progressor = NullProgressor>
+void stats_osm_pbf( const std::string & filename, size_t& n_nodes, size_t& n_ways, size_t& n_highways, size_t& n_relations )
+{
+    n_nodes = 0;
+    n_ways = 0;
+    n_highways = 0;
+    n_relations = 0;
+    Parser<Progressor> p(filename);
+    p.stats( n_nodes, n_ways, n_highways, n_relations );
 }
 
 }

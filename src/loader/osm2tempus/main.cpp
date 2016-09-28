@@ -8,6 +8,7 @@
 void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_write_nodes = false, bool do_import_restrictions = true, size_t n_nodes = 0, size_t n_ways = 0 );
 void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true, size_t n_nodes = 0 );
 void two_pass_vector_pbf_read( const std::string& filename, Writer& writer, bool do_import_restrictions = true );
+void pbf_stats( const std::string& filename );
 
 namespace po = boost::program_options;
 
@@ -17,6 +18,23 @@ void usage()
 {
     std::cout << "osm2routing allows to import routing data from an OSM PBF dump" << std::endl << std::endl;
     std::cout << opt_desc << std::endl;
+}
+
+void pbf_stats( const std::string& filename )
+{
+    off_t ways_offset = 0, relations_offset = 0;
+    osm_pbf::osm_pbf_offsets<StdOutProgressor>( filename, ways_offset, relations_offset );
+    std::cout << "Ways offset: " << std::dec << ways_offset << " (" << std::hex << ways_offset << ")" << std::endl;
+    std::cout << "Relations offset: " << std::dec << relations_offset << " (" << std::hex << relations_offset << ")" << std::endl;
+
+    std::cout << "Collecting statistics ..." << std::endl;
+    size_t n_nodes, n_ways, n_highways, n_relations;
+    osm_pbf::stats_osm_pbf<StdOutProgressor>( filename, n_nodes, n_ways, n_highways, n_relations );
+
+    std::cout << "# nodes: " << std::dec << n_nodes << std::endl;
+    std::cout << "# ways: " << n_ways << std::endl;
+    std::cout << "# highways: " << n_highways << std::endl;
+    std::cout << "# relations: " << n_relations << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -47,6 +65,8 @@ int main(int argc, char** argv)
         ( "restrictions-table", po::value<string>(&restrictions_table)->default_value("road_restriction"), "write restrictions to the given table" )
         ( "n-nodes", po::value<size_t>(&n_nodes), "give a hint about the number of nodes the input file contains" )
         ( "n-ways", po::value<size_t>(&n_ways), "give a hint about the number of ways the input file contains" )
+        ( "planet", "use a huge vector to cache nodes (need ~50GB of RAM)" )
+        ( "stats", "only count the number of nodes, ways and relations in the input file" )
     ;
 
     po::variables_map vm;
@@ -79,6 +99,11 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    if ( vm.count("stats") ) {
+        pbf_stats( pbf_file );
+        return 0;
+    }
+
     DataProfile* data_profile = nullptr;
     if ( vm.count( "profile" ) ) {
         string profile = vm["profile"].as<string>();
@@ -106,7 +131,10 @@ int main(int argc, char** argv)
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>(), data_profile, keep_tags ) );
     }
 
-    if ( vm.count( "two-pass" ) ) {
+    if ( vm.count( "planet" ) ) {
+        two_pass_vector_pbf_read( pbf_file, *writer, /*do_import_restrictions = */ true );
+    }
+    else if ( vm.count( "two-pass" ) ) {
         two_pass_pbf_read( pbf_file, *writer, /*do_import_restrictions = */ true, n_nodes );
     }
     else
