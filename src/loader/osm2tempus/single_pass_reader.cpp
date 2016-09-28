@@ -19,7 +19,7 @@ using WayCache = std::unordered_map<uint64_t, Way>;
 template <bool do_import_restrictions_ = false>
 struct PbfReader
 {
-    PbfReader( RelationReader* restrictions = 0 ) :
+    PbfReader( RestrictionReader* restrictions = 0 ) :
         restrictions_( restrictions ),
         section_splitter_( points_ )
     {}
@@ -144,7 +144,7 @@ struct PbfReader
     const PointCache& points() const { return points_; }
 
 private:
-    RelationReader* restrictions_;
+    RestrictionReader* restrictions_;
     
     PointCache points_;
     WayCache ways_;
@@ -162,8 +162,8 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
 
     if ( do_import_restrictions ) {
         std::cout << "Relations ..." << std::endl;
-        RelationReader r;
-        osm_pbf::read_osm_pbf<RelationReader, StdOutProgressor>( filename, r, relations_offset );
+        RestrictionReader r;
+        osm_pbf::read_osm_pbf<RestrictionReader, StdOutProgressor>( filename, r, relations_offset );
 
         std::cout << "Nodes and ways ..." << std::endl;
         PbfReader<true> p( &r );

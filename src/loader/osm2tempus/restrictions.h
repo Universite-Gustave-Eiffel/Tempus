@@ -29,9 +29,9 @@ struct TurnRestriction
     uint64_t to_way;
 };
 
-struct RelationReader
+struct RestrictionReader
 {
-    RelationReader() {}
+    RestrictionReader() {}
     
     void node_callback( uint64_t /*osmid*/, double /*lon*/, double /*lat*/, const osm_pbf::Tags &/*tags*/ )
     {

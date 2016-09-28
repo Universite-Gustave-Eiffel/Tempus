@@ -36,7 +36,7 @@ private:
 template <typename PointCacheType, bool do_import_restrictions_ = true>
 struct PbfReaderPass2
 {
-    PbfReaderPass2( PointCacheType& points, Writer& writer, RelationReader& restrictions ):
+    PbfReaderPass2( PointCacheType& points, Writer& writer, RestrictionReader& restrictions ):
         restrictions_( restrictions ), points_( points ), writer_( writer ), section_splitter_( points_ )
     {
         writer_.begin_sections();
@@ -107,7 +107,7 @@ struct PbfReaderPass2
     }
 
 private:
-    RelationReader& restrictions_;
+    RestrictionReader& restrictions_;
     
     PointCacheType& points_;
 
@@ -124,10 +124,10 @@ void two_pass_pbf_read_( const std::string& filename, Writer& writer )
     std::cout << "Ways offset: " << ways_offset << std::endl;
     std::cout << "Relations offset: " << relations_offset << std::endl;
 
-    RelationReader r;
+    RestrictionReader r;
     if ( do_import_restrictions ) {
         std::cout << "Relations ..." << std::endl;
-        osm_pbf::read_osm_pbf<RelationReader, StdOutProgressor>( filename, r, relations_offset );
+        osm_pbf::read_osm_pbf<RestrictionReader, StdOutProgressor>( filename, r, relations_offset );
     }
 
     std::cout << "First pass ..." << std::endl;
