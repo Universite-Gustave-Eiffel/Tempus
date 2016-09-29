@@ -22,6 +22,16 @@
 #include "section_splitter.h"
 #include "restrictions.h"
 
+#if 0
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include "sparsepp.h"
+#pragma GCC diagnostic pop
+using SparsePointCache = PointCacheT<spp::sparse_hash_map<uint64_t, PointWithUses>>;
+#endif
+
 struct Way
 {
     std::vector<uint64_t> nodes;
@@ -272,5 +282,5 @@ void single_pass_pbf_read( const std::string& filename, Writer& writer, bool do_
     if ( n_nodes )
         single_pass_pbf_read_<SortedPointCache>( filename, writer, do_write_nodes, do_import_restrictions, n_nodes, n_ways );
     else
-        single_pass_pbf_read_<PointCache>( filename, writer, do_write_nodes, do_import_restrictions, n_nodes, n_ways );
+        single_pass_pbf_read_<STLPointCache>( filename, writer, do_write_nodes, do_import_restrictions, n_nodes, n_ways );
 }

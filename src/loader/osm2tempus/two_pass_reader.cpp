@@ -209,9 +209,9 @@ void two_pass_pbf_read( const std::string& filename, Writer& writer, bool do_imp
     }
     else {
         if ( do_import_restrictions )
-            two_pass_pbf_read_<PointCache, true>( filename, writer, n_nodes );
+            two_pass_pbf_read_<STLPointCache, true>( filename, writer, n_nodes );
         else
-            two_pass_pbf_read_<PointCache, false>( filename, writer, n_nodes );
+            two_pass_pbf_read_<STLPointCache, false>( filename, writer, n_nodes );
     }
 }
 

@@ -103,31 +103,31 @@ private:
     uint8_t uses_;
 };
 
-class PointCache
+template <typename HashType>
+class PointCacheT
 {
 public:
     using PointType = PointWithUses;
-    using CacheType = std::unordered_map<uint64_t, PointType>;
 
-    PointCache( size_t n_elts = 0 )
+    PointCacheT( size_t n_elts = 0 )
     {
         if ( n_elts )
             points_.reserve( n_elts );
     }
     
-    CacheType::const_iterator begin() const
+    typename HashType::const_iterator begin() const
     {
         return points_.begin();
     }
-    CacheType::const_iterator end() const
+    typename HashType::const_iterator end() const
     {
         return points_.end();
     }
-    CacheType::iterator begin()
+    typename HashType::iterator begin()
     {
         return points_.begin();
     }
-    CacheType::iterator end()
+    typename HashType::iterator end()
     {
         return points_.end();
     }
@@ -151,12 +151,12 @@ public:
         return points_.size();
     }
 
-    uint64_t id_from_it( CacheType::const_iterator it ) const
+    uint64_t id_from_it( typename HashType::const_iterator it ) const
     {
         return it->first;
     }
 
-    const PointType& pt_from_it( CacheType::const_iterator it ) const
+    const PointType& pt_from_it( typename HashType::const_iterator it ) const
     {
         return it->second;
     }
@@ -196,7 +196,7 @@ public:
         return it->second.uses();
     }
 
-    int uses( CacheType::const_iterator it ) const
+    int uses( typename HashType::const_iterator it ) const
     {
         return it->second.uses();
     }
@@ -212,8 +212,10 @@ public:
 
 private:
     uint64_t max_id_ = 0;
-    CacheType points_;
+    HashType points_;
 };
+
+using STLPointCache = PointCacheT<std::unordered_map<uint64_t, PointWithUses>>;
 
 class PointCacheVector
 {
