@@ -23,6 +23,11 @@ sudo apt-get install -t wheezy-backports -y \
     libtool pyqt4-dev-tools
 
 # on path to tempus directory
+
+WARNING: Ifsttar use gcc 4.8 with boost 1.55
+         If you have boost 1.58 use gcc 5.2
+         Using gcc 4.9 and boost 1.58 ==> link fail in ch_preprocess 
+
 cd /path/to/Tempus
 mkdir build && cd build
 cmake .. \

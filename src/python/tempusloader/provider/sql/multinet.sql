@@ -93,10 +93,11 @@ SELECT
 		ELSE NULL
 	END AS ramp,
 
-	CASE
-		WHEN tollrd is null THEN false
-		WHEN tollrd = 0 THEN false
-		ELSE true
+	CASE tollrd
+		WHEN 'B' THEN true
+		WHEN 'FT' THEN true
+		WHEN 'TF' THEN true
+		ELSE false
 	END AS tollway,
 
 	ST_Transform(ST_Force_3DZ(ST_LineMerge(nw.geom)), %(native_srid)) AS geom
@@ -194,6 +195,8 @@ ALTER TABLE tempus.poi ADD CONSTRAINT poi_road_section_id_fkey
 ALTER TABLE tempus.pt_stop ADD CONSTRAINT pt_stop_road_section_id_fkey
 	FOREIGN KEY (road_section_id) REFERENCES tempus.road_section;
 
+CREATE INDEX idx_road_node_geom ON tempus.road_node USING gist (geom);
+CREATE INDEX idx_road_section_geom ON tempus.road_section USING gist (geom);
 
 -- TABLE road_restriction
 insert into tempus.road_restriction
