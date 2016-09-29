@@ -1,5 +1,6 @@
 /*
 Copyright (c) 2012, Canal TP
+Copyright (C) 2016 Oslandia <infos@oslandia.com>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
