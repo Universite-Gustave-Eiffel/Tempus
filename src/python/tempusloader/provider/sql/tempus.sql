@@ -159,20 +159,21 @@ COMMENT ON COLUMN tempus.road_node.bifurcation IS 'If true, total number of inci
 CREATE TABLE tempus.road_section
 (
     id bigint PRIMARY KEY,
-    road_type integer NOT NULL,
-    node_from bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE,
-    node_to bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE,
-    traffic_rules_ft integer NOT NULL, -- References tempus.road_traffic_rule => bitfield value
-    traffic_rules_tf integer NOT NULL, -- References tempus.road_traffic_rule => bitfield value
+    vendor_id bigint,
+    road_type integer,
+    node_from bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE,
+    node_to bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE,
+    traffic_rules_ft smallint NOT NULL, -- References tempus.road_traffic_rule => bitfield value
+    traffic_rules_tf smallint NOT NULL, -- References tempus.road_traffic_rule => bitfield value
     length double precision NOT NULL, -- in meters
     car_speed_limit double precision, -- in km/h
     road_name varchar,
     lane integer,
-    roundabout boolean NOT NULL,
-    bridge boolean NOT NULL,
-    tunnel boolean NOT NULL,
-    ramp boolean NOT NULL, -- or sliproads
-    tollway boolean NOT NULL
+    roundabout boolean,
+    bridge boolean,
+    tunnel boolean,
+    ramp boolean, -- or sliproads
+    tollway boolean
     -- NOTA: geometry column added NOT NULL
 );
 COMMENT ON TABLE tempus.road_section IS 'Road sections description';
