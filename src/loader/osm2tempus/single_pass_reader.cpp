@@ -107,12 +107,12 @@ struct PbfReader
         size_t i = 0;
         writer.begin_sections();
         for ( auto way_it = ways_.begin(); way_it != ways_.end(); way_it++ ) {
+            progressor( ++i, ways_.size() );
             const Way& way = way_it->second;
             if ( way.ignored )
                 continue;
 
             way_to_sections( way_it->first, way, writer );
-            progressor( ++i, ways_.size() );
         }
         writer.end_sections();
     }

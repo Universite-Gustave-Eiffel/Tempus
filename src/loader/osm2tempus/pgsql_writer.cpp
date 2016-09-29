@@ -73,6 +73,7 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
                                           const std::string& nodes_table,
                                           const std::string& restrictions_table,
                                           bool create_table,
+                                          bool truncate,
                                           DataProfile* profile,
                                           bool keep_tags )
 : Writer( profile, keep_tags ),
@@ -81,8 +82,11 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
   sections_table_( sections_table ),
   nodes_table_( nodes_table ),
   restrictions_table_( restrictions_table ),
-  create_table_( create_table )
+  create_table_( create_table ),
+  truncate_( truncate )
 {
+    // start transaction and disable constraints until end of transaction
+    db.exec( "begin; set constraints all deferred;");
     if ( create_table ) {
         db.exec( "create extension if not exists postgis" );
         if ( keep_tags_ ) {
@@ -90,9 +94,13 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
         }
         db.exec( "create schema if not exists " + schema );
     }
-
-    // start transaction and disable constraints until end of transaction
-    db.exec( "begin; set constraints all deferred;");
+    if ( truncate_ ) {
+        db.exec( "truncate table " + schema_ + "." + sections_table_ + " cascade" );
+        if ( !nodes_table_.empty() )
+            db.exec( "truncate table " + schema_ + "." + nodes_table_ + " cascade" );
+        if ( !restrictions_table_.empty() )
+            db.exec( "truncate table " + schema_ + "." + restrictions_table_ + " cascade" );
+    }
 }
 
 SQLBinaryCopyWriter::~SQLBinaryCopyWriter()
@@ -354,5 +362,5 @@ void SQLBinaryCopyWriter::end_sections()
         db.exec( "create unique index on " + schema_ + "." + sections_table_ + "(id)" );
         db.exec( "alter table " + schema_ + "." + sections_table_ + " add primary key using index " + sections_table_ + "_id_idx" );
     }
-    std::cout << std::dec << n_sections_ << " sections created" << std::endl;
+    std::cout << std::endl << std::dec << n_sections_ << " sections created" << std::endl;
 }

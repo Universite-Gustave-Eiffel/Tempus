@@ -76,8 +76,9 @@ int main(int argc, char** argv)
         ( "profile,p", po::value<string>()->default_value("tempus"), "use a data profile" )
         ( "list-profiles", "list available data profiles" )
         ( "keep-tags", "keep way tags when exporting" )
-        ( "create-table,c", "create the table (and drop any existing one)" )
-        ( "nodes-table", po::value<string>(&nodes_table), "write nodes to the given table" )
+        ( "create,c", "create tables (and drop any existing one)" )
+        ( "truncate,t", "truncate tables" )
+        ( "nodes-table", po::value<string>(&nodes_table)->default_value("road_node"), "write nodes to the given table" )
         ( "restrictions-table", po::value<string>(&restrictions_table)->default_value("road_restriction"), "write restrictions to the given table" )
         ( "n-nodes", po::value<size_t>(&n_nodes), "give a hint about the number of nodes the input file contains" )
         ( "n-ways", po::value<size_t>(&n_ways), "give a hint about the number of ways the input file contains" )
@@ -139,7 +140,8 @@ int main(int argc, char** argv)
                                                table,
                                                nodes_table,
                                                restrictions_table,
-                                               vm.count( "create-table" ),
+                                               vm.count( "create" ),
+                                               vm.count( "truncate" ),
                                                data_profile,
                                                keep_tags ) );
     }
