@@ -19,7 +19,7 @@ develop_requirements = (
 setup(
     name=__project_name__,
     version=__version__,
-    description="Tempus loader Helpers",
+    description="Tempus data loader",
     long_description=(open("README.md").read(),),
     classifiers=[
         "Programming Language :: Python",
@@ -31,11 +31,10 @@ setup(
 
     keywords='',
     author='Tempus Team',
-    author_email='info@tempus.com',
-    maintainer='Mappy LBS Team',
-    maintainer_email='dt.lbs@mappy.com',
+    author_email='infos@oslandia.com',
+    maintainer='Oslandia',
+    maintainer_email='infos@oslandia.com',
 
-    url='http://pypi.mappy.priv/packages/%s' % __project_name__,
     license='LGPL',
     packages=['tempusloader', 'tempusloader/provider'],
     package_dir={'': 'src/python'},
