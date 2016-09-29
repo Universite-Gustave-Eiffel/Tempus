@@ -27,12 +27,12 @@ public:
     TempusDataProfile() :
         DataProfile(),
         columns_( {
-                { "osm_id", DataType::UInt64Type },
+                { "vendor_id", DataType::UInt64Type },
                 { "length", DataType::Float8Type },
                 { "traffic_rules_ft", DataType::Int16Type },
                 { "traffic_rules_tf", DataType::Int16Type },
                 { "car_speed_limit", DataType::Float8Type },
-                { "name", DataType::String }
+                { "road_name", DataType::String }
             } ),
         max_speed_( {
                 { "motorway", 130.0 },

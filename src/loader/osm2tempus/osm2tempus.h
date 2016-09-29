@@ -176,7 +176,7 @@ public:
     uint64_t insert( const PointType& point )
     {
         uint64_t ret = max_id_;
-        points_[max_id_++] = point;
+        points_[++max_id_] = point;
         return ret;
     }
 

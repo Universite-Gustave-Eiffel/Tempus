@@ -24,6 +24,8 @@
 
 std::string linestring_to_ewkb( const std::vector<Point>& points );
 std::string point_to_ewkb( float lat, float lon );
+std::string linestring_to_ewkb_with_z( const std::vector<Point>& points );
+std::string point_to_ewkb_with_z( float lat, float lon );
 
 ///
 /// Compute the (signed) angle (in degrees) between three points

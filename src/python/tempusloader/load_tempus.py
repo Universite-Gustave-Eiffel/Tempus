@@ -51,7 +51,7 @@ def import_route500(args, shape_options):
 def import_osm(args, shape_options):
     """Load OpenStreetMap (as shapefile) data into a PostGIS database."""
     subs = { 'native_srid' : args.native_srid }
-    osmi = provider.OSMImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, subs)
+    osmi = provider.OSMImporter(args.source, args.dbstring, args.logfile)
     return osmi.load()
 
 
@@ -87,8 +87,8 @@ def main():
     parser.add_argument(
         '-N', '--native-srid',
         required=False,
-        help="Set the SRID for the tempus db. Defaults to 2154. To be used when creating/reseting the base",
-        default=2154)
+        help="Set the SRID for the tempus db. Defaults to 4326. To be used when creating/reseting the base",
+        default=4326)
     parser.add_argument(
         '-R', '--reset',
         required=False,
@@ -141,7 +141,7 @@ def main():
         [var, value] = v.split(':')
         substitutions[var] = value
 
-    if args.type in {'tomtom', 'navteq', 'poi', 'osm'}:
+    if args.type in ('tomtom', 'navteq', 'poi'):
         if not args.srid:
             sys.stderr.write("SRID needed for %s data type. Assuming EPSG:4326.\n" % args.type)
             shape_options['s'] = 4326

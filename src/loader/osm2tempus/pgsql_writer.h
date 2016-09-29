@@ -30,6 +30,7 @@ public:
                          bool create_table,
                          DataProfile* profile,
                          bool keep_tags );
+    ~SQLBinaryCopyWriter();
     
     virtual void begin_nodes() override;
     virtual void write_node( uint64_t node_id, float lat, float lon );

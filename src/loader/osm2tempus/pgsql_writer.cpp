@@ -90,6 +90,14 @@ SQLBinaryCopyWriter::SQLBinaryCopyWriter( const std::string& db_params,
         }
         db.exec( "create schema if not exists " + schema );
     }
+
+    // start transaction and disable constraints until end of transaction
+    db.exec( "begin; set constraints all deferred;");
+}
+
+SQLBinaryCopyWriter::~SQLBinaryCopyWriter()
+{
+    db.exec( "commit");
 }
 
 void SQLBinaryCopyWriter::begin_sections()
@@ -109,7 +117,7 @@ void SQLBinaryCopyWriter::begin_sections()
     if ( create_table_ ) {
         db.exec( "drop table if exists " + schema_ + "." + sections_table_ );
         db.exec( "create unlogged table " + schema_ + "." + sections_table_ +
-                 "(id bigint, node_from bigint, node_to bigint, geom geometry(linestring, 4326)" +
+                 "(id bigint, node_from bigint, node_to bigint, geom geometry(linestringz, 4326)" +
                  additional_columns_with_type +
                  additional_tags_with_type +
                  ")" );
@@ -125,7 +133,7 @@ void SQLBinaryCopyWriter::begin_nodes()
     if ( create_table_ ) {
         db.exec( "drop table if exists " + schema_ + "." + nodes_table_ );
         db.exec( "create unlogged table " + schema_ + "." + nodes_table_ +
-                 "(id bigint, geom geometry(point, 4326))" );
+                 "(id bigint, geom geometry(pointz, 4326))" );
     }
     db.exec( "copy " + schema_ + "." + nodes_table_ + "(id, geom) from stdin with (format binary)" );
     const char header[] = "PGCOPY\n\377\r\n\0\0\0\0\0\0\0\0\0";
@@ -206,7 +214,7 @@ void SQLBinaryCopyWriter::write_node( uint64_t node_id, float lat, float lon )
     db.put_copy_data( data, l );
 
     // geometry
-    std::string geom_wkb = point_to_ewkb( lat, lon );
+    std::string geom_wkb = point_to_ewkb_with_z( lat, lon );
     uint32_t geom_size = htonl( geom_wkb.length() );
     db.put_copy_data( reinterpret_cast<char*>( &geom_size ), 4 );
     db.put_copy_data( geom_wkb );
@@ -315,7 +323,7 @@ void SQLBinaryCopyWriter::write_section( uint64_t way_id, uint64_t section_id, u
     db.put_copy_data( data, l );
 
     // geometry
-    std::string geom_wkb = linestring_to_ewkb( points );
+    std::string geom_wkb = linestring_to_ewkb_with_z( points );
     uint32_t geom_size = htonl( geom_wkb.length() );
     db.put_copy_data( reinterpret_cast<char*>( &geom_size ), 4 );
     db.put_copy_data( geom_wkb );

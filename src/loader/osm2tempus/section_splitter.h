@@ -44,12 +44,13 @@ public:
         node_pair p ( node_from, node_to );
         if ( way_node_pairs_.find( p ) != way_node_pairs_.end() ) {
             // split the way
-           // if there are more than two nodes, just split on a node
+            // if there are more than two nodes, just split on a node
             std::vector<Point> before_pts, after_pts;
             uint64_t center_node;
             if ( nodes.size() > 2 ) {
                 size_t center = nodes.size() / 2;
                 center_node = nodes[center];
+                points_.inc_uses( center_node );
                 for ( size_t i = 0; i <= center; i++ ) {
                     before_pts.push_back( points_.at( nodes[i] ) );
                 }
@@ -69,6 +70,8 @@ public:
 
                 // add a new point
                 center_node = points_.insert( center_point );
+                points_.inc_uses( center_node );
+                points_.inc_uses( center_node );
             }
             //writer_.write_section( way_id, ++section_id_, node_from, center_node, before_pts, tags );
             //writer_.write_section( way_id, ++section_id_, center_node, node_to, after_pts, tags );

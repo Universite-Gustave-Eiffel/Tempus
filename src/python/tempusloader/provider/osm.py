@@ -20,24 +20,35 @@
 """
 
 #
-# Tempus data loader
+# Tempus data loader - OSM data source
 
-import os
-
-from tools import ShpLoader
-from dbtools import PsqlLoader
-from importer import ShpImporter
+import sys
+import subprocess
 
 # Module to load OpenStreetMap road data (OSM as shapefile)
-class OSMImporter(ShpImporter):
-    """This class enables to load OpenStreetMap Shape data into a PostGIS database."""
-    # Shapefile names to load, without the extension and prefix. It will be the table name.
-    SHAPEFILES = ['highway'] 
-    OPT_SHAPEFILES = ['restriction']
-    # SQL files to execute before loading shapefiles
-    PRELOADSQL = ["reset_import_schema.sql"]
-    # SQL files to execute after loading shapefiles 
-    POSTLOADSQL = ["osm.sql", "osm_processing.sql"]
+class OSMImporter:
+    def __init__(self, source = "", dbstring = "", logfile = None):
+        self.source = source
+        self.dbstring = dbstring
+        self.logfile = logfile
+
+    def load(self):
+        if self.logfile:
+            try:
+                out = open(self.logfile, "a")
+                err = out
+            except IOError as (errno, strerror):
+                sys.stderr.write("%s : I/O error(%s): %s\n" % (self.logfile, errno, strerror))
+        else:
+            out = sys.stdout
+            err = sys.stderr
+
+        command = ["osm2tempus"]
+        command += ["-i", self.source]
+        command += ["--pgis", self.dbstring]
+        command += ["--nodes-table", "road_node"]
+        #command += ["--two-pass"]
+        p = subprocess.Popen(command, stdout = out, stderr = err)
 
 
 

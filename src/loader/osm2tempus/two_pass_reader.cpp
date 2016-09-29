@@ -42,6 +42,9 @@ public:
         for ( uint64_t node: nodes ) {
             points_.inc_uses( node );
         }
+        // mark way's extremities
+        points_.inc_uses( nodes[0] );
+        points_.inc_uses( nodes[nodes.size() - 1] );
     }
     void relation_callback( uint64_t /*osmid*/, const osm_pbf::Tags &/*tags*/, const osm_pbf::References & /*refs*/ )
     {

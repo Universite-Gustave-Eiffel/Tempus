@@ -69,11 +69,17 @@ struct PbfReader
         size_t i = 0;
         for ( auto way_it = ways_.begin(); way_it != ways_.end(); way_it++ ) {
             // mark each nodes as being used
+            size_t j = 0;
             for ( uint64_t node: way_it->second.nodes ) {
                 auto pt = points_.find( node );
                 if ( pt ) {
-                    if ( pt->uses() < 2 )
-                        pt->set_uses( pt->uses() + 1 );
+                    if ( j == 0 || j == way_it->second.nodes.size() - 1 ) {
+                        // mark way's extermities
+                        pt->set_uses( 2 );
+                    }
+                    else if ( pt->uses() < 2 ) {
+                            pt->set_uses( pt->uses() + 1 );
+                    }
                 }
                 else {
                     // unknown point
@@ -86,6 +92,7 @@ struct PbfReader
                         restrictions_->add_node_edge( node, way_it->first );
                     }
                 }
+                j++;
             }
             progressor( ++i, ways_.size() );
         }
@@ -118,7 +125,9 @@ struct PbfReader
         writer.begin_nodes();
         for ( const auto& p : points_ ) {
             if ( p.second.uses() > 1 )
+            {
                 writer.write_node( p.first, p.second.lat(), p.second.lon() );
+            }
             progressor( ++i, points_.size() );
         }
         writer.end_nodes();
@@ -223,7 +232,6 @@ void single_pass_pbf_read_( const std::string& filename, Writer& writer, bool do
             StdOutProgressor prog;
             p.write_sections( writer, prog );
         }
-
         if ( do_write_nodes ) {
             std::cout << "Writing nodes..." << std::endl;
             StdOutProgressor prog;
@@ -249,7 +257,6 @@ void single_pass_pbf_read_( const std::string& filename, Writer& writer, bool do
             StdOutProgressor prog;
             p.write_sections( writer, prog );
         }
-
         if ( do_write_nodes ) {
             std::cout << "Writing nodes..." << std::endl;
             StdOutProgressor prog;
