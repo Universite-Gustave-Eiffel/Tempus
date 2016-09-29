@@ -51,6 +51,23 @@ public:
     }
 
     PointCacheType& points() { return points_; }
+
+    template <typename Progressor>
+    void write_nodes( Writer& writer, Progressor& progressor )
+    {
+        progressor( 0, points_.size() );
+        size_t i = 0;
+        writer.begin_nodes();
+        for ( auto it = points_.begin(); it != points_.end(); it++ ) {
+            if ( points_.uses( it ) > 1 )
+            {
+                const auto& pt = points_.pt_from_it( it );
+                writer.write_node( points_.id_from_it( it ), pt.lat(), pt.lon() );
+            }
+            progressor( ++i, points_.size() );
+        }
+        writer.end_nodes();
+    }
 private:
     PointCacheType points_;
 };
@@ -169,6 +186,11 @@ void two_pass_pbf_read_( const std::string& filename, Writer& writer, size_t n_n
     {
         PbfReaderPass2<PointCacheType, do_import_restrictions> p2( p1.points(), writer, r );
         osm_pbf::read_osm_pbf<PbfReaderPass2<PointCacheType, do_import_restrictions>, StdOutProgressor>( filename, p2, ways_offset, relations_offset );
+    }
+    std::cout << "Writing nodes ..." << std::endl;
+    {
+        StdOutProgressor prog;
+        p1.write_nodes( writer, prog );
     }
     if ( do_import_restrictions ) {
         std::cout << "writing restrictions ..." << std::endl;

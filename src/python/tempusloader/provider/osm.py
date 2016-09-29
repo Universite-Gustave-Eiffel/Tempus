@@ -47,7 +47,6 @@ class OSMImporter:
         command += ["-i", self.source]
         command += ["--pgis", self.dbstring]
         command += ["--nodes-table", "road_node"]
-        #command += ["--two-pass"]
         p = subprocess.Popen(command, stdout = out, stderr = err)
 
 

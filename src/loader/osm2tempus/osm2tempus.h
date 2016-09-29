@@ -151,6 +151,16 @@ public:
         return points_.size();
     }
 
+    uint64_t id_from_it( CacheType::const_iterator it ) const
+    {
+        return it->first;
+    }
+
+    const PointType& pt_from_it( CacheType::const_iterator it ) const
+    {
+        return it->second;
+    }
+    
     const PointType& at( uint64_t id ) const
     {
         return points_.at( id );
@@ -249,6 +259,16 @@ public:
         return points_.size();
     }
 
+    uint64_t id_from_it( CacheType::const_iterator it ) const
+    {
+        return it - points_.begin();
+    }
+
+    const PointType& pt_from_it( CacheType::const_iterator it ) const
+    {
+        return *it;
+    }
+
     const PointType& at( uint64_t id ) const
     {
         return points_[id];
@@ -283,6 +303,11 @@ public:
         const uint8_t p = (id % 4)*2;
         const uint8_t m = 3 << p;
         return (uses_[id >> 2] & m) >> p;
+    }
+
+    int uses( CacheType::const_iterator it ) const
+    {
+        return uses( it - points_.begin() );
     }
 
     void inc_uses( uint64_t id )
@@ -370,6 +395,16 @@ public:
     const PointType& at( uint64_t id ) const
     {
         return *find( id );
+    }
+
+    uint64_t id_from_it( CacheType::const_iterator it ) const
+    {
+        return it->first;;
+    }
+
+    const PointType& pt_from_it( CacheType::const_iterator it ) const
+    {
+        return it->second;
     }
 
     /// Insert a point with a given id
