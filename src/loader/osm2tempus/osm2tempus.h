@@ -222,11 +222,10 @@ class PointCacheVector
 public:
     using PointType = Point;
     using CacheType = std::vector<PointType>;
-    PointCacheVector( size_t n_nodes = 0 )
+    PointCacheVector( size_t = 0 )
     {
-        if ( n_nodes == 0 ) {
-            n_nodes = max_node_id_;
-        }
+        size_t n_nodes = max_node_id_;
+        std::cout << "preallocating " << n_nodes << " nodes" << std::endl;
         points_.reserve( n_nodes );
         uses_.resize( (n_nodes >> 2) + 1 );
     }
@@ -326,8 +325,8 @@ private:
     // node ids that are introduced to split multi edges
     // we count them backward from 2^64 - 1
     // this should not overlap current OSM node ID (~ 2^32 in july 2016)
-    const uint64_t max_node_id_ = 5000000000LL;
-    uint64_t last_node_id_ = 5000000000LL;
+    const uint64_t max_node_id_ = 4700000000LL;
+    uint64_t last_node_id_ = 4700000000LL;
 
     // vector of point uses
     // 2 bits by point
