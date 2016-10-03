@@ -62,13 +62,13 @@ void combined_ls_algorithm_no_init(
                                    CostCalculator cost_calculator, 
                                    const std::vector<db_id_t>& request_allowed_modes,
                                    Visitor vis,
-                                   boost::function<double (const Multimodal::Vertex&)> heuristic )
+                                   std::function<double (const Multimodal::Vertex&)> heuristic )
 {
     using VertexData = typename boost::property_traits<VertexDataMap>::value_type;
 
     static_assert( std::is_same<typename boost::property_traits<VertexDataMap>::key_type, Object>::value, "The key type of the vertex data map must be the same as the type of the source" );
 
-    typedef HeuristicCompare<Object, VertexDataMap, boost::function<double (const Multimodal::Vertex&)> > Cmp;
+    typedef HeuristicCompare<Object, VertexDataMap, std::function<double (const Multimodal::Vertex&)> > Cmp;
     Cmp cmp( vertex_data_map, heuristic );
 
     typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;
