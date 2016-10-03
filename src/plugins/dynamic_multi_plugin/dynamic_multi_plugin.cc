@@ -34,9 +34,9 @@
 #include "utils/associative_property_map_default_value.hh"
 
 #include "datetime.hh"
-#include "cost_lib/cost_calculator.hh"
+#include "mm_lib/cost_calculator.hh"
 #include "automaton_lib/automaton.hh"
-#include "algorithms.hh"
+#include "mm_lib/algorithms.hh"
 #include "reverse_multimodal_graph.hh"
 #include "utils/graph_db_link.hh"
 #include "plugin_factory.hh"

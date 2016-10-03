@@ -1,9 +1,9 @@
 include_directories(../core)
 
 if (WIN32)
-  add_library( cost_lib STATIC cost_lib/speed_profile.hh cost_lib/speed_profile.cc )
+  add_library( mm_lib STATIC mm_lib/speed_profile.hh mm_lib/speed_profile.cc )
 else()
-  add_library( cost_lib SHARED cost_lib/speed_profile.cc )
+  add_library( mm_lib SHARED mm_lib/speed_profile.cc )
 endif()
 
 add_library( sample_multi_plugin MODULE sample_multi_plugin/sample_multi_plugin.cc )
@@ -18,7 +18,7 @@ target_link_libraries( sample_pt_plugin tempus )
 include_directories(.)
 
 add_library( dynamic_multi_plugin MODULE dynamic_multi_plugin/dynamic_multi_plugin.cc )
-target_link_libraries( dynamic_multi_plugin tempus cost_lib )
+target_link_libraries( dynamic_multi_plugin tempus mm_lib )
 
 add_subdirectory( ch_plugin )
 
@@ -38,7 +38,7 @@ install( TARGETS
     sample_road_plugin 
     sample_pt_plugin 
     dynamic_multi_plugin
-    cost_lib
+    mm_lib
     LIBRARY DESTINATION lib/tempus
     )
 endif()
