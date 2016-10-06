@@ -43,14 +43,18 @@ class Test(unittest.TestCase):
     def test1( self ):
         tempus = TempusRequest( 'http://' + WPS_HOST + WPS_PATH )
 
+        limit = 50.0
         tempus.request( plugin_name = 'isochrone_plugin',
                         origin = Point( -1.546040,47.199764 ),
-                        plugin_options = { 'Isochrone/limit' : 10.0 },
+                        plugin_options = { 'Isochrone/limit' : limit },
                         criteria = [Cost.Duration],
                         allowed_transport_modes = [1] # pedestrian
                         )
 
-        #print tempus.results[0].points
+        points = sorted(tempus.results[0].points, key = lambda x: x[3])
+        for p in tempus.results[0].points:
+            self.assertTrue(p[3] < limit)
+        
 
 
 if __name__ == '__main__':

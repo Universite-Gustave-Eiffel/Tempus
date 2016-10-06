@@ -89,21 +89,23 @@ public:
     
     IsochroneVisitor( const MMVertexDataMap& v_map, double limit, size_t& iterations ) : v_map_( v_map ), iterations_( iterations ), limit_( limit ) {}
 
-    void finish_vertex( const VertexLabel& l, const Multimodal::Graph& )
+    void examine_vertex( const VertexLabel& l, const Multimodal::Graph& )
     {
         auto it = v_map_.find( l );
-        if (( it != v_map_.end() ) && ( it->second.potential() >= limit_ ))
-            throw StopException();
+        if ( it != v_map_.end() ) {
+            if ( it->second.potential() >= limit_ )
+                throw StopException();
+        }
         iterations_++;
     }
 
-    void examine_vertex( const VertexLabel&, const Multimodal::Graph& ) {}
+    void finish_vertex( const VertexLabel&, const Multimodal::Graph& ) {}
     void discover_vertex( const VertexLabel&, const Multimodal::Graph& ) {}
     void examine_edge( const Multimodal::Edge&, const Multimodal::Graph& ) {}
     void edge_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& ) {}
     void edge_not_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& ) {}
 private:
-    MMVertexDataMap v_map_;
+    const MMVertexDataMap& v_map_;
     size_t iterations_;
     double limit_;
 };
@@ -148,13 +150,19 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
     
     size_t iterations = 0;
     IsochroneVisitor vis( vertex_data_map, isochrone_limit, iterations );
-    combined_ls_algorithm_no_init( *graph_, origin_l, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
+    try {
+        combined_ls_algorithm_no_init( *graph_, origin_l, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
+    }
+    catch ( IsochroneVisitor::StopException& ) {
+    }
 
     result->push_back( Isochrone() );
     Isochrone& isochrone = result->back().isochrone();
     for ( const auto& v : vertex_data_map ) {
-        Point3D pt = v.first.vertex.coordinates();
-        isochrone.emplace_back( pt.x(), pt.y(), v.first.mode, v.second.potential() );
+        if ( v.second.potential() < isochrone_limit ) {
+            Point3D pt = v.first.vertex.coordinates();
+            isochrone.emplace_back( pt.x(), pt.y(), v.first.mode, v.second.potential() );
+        }
     }
     
     return result;
