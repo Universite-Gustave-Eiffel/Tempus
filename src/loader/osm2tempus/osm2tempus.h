@@ -185,9 +185,8 @@ public:
     /// Insert a new point and return the new id
     uint64_t insert( const PointType& point )
     {
-        uint64_t ret = max_id_;
         points_[++max_id_] = point;
-        return ret;
+        return max_id_;
     }
 
     int uses( uint64_t id ) const
@@ -323,7 +322,6 @@ public:
 private:
     CacheType points_;
     // node ids that are introduced to split multi edges
-    // we count them backward from 2^64 - 1
     // this should not overlap current OSM node ID (~ 2^32 in july 2016)
     const uint64_t max_node_id_ = 4700000000LL;
     uint64_t last_node_id_ = 4700000000LL;
@@ -412,36 +410,19 @@ public:
     void insert( uint64_t id, PointType&& point )
     {
         points_.emplace_back( id, point );
-        if ( id > max_id_ )
-            max_id_ = id;
-#if 0
-        if ( id < last_value_ )
-            throw std::runtime_error("Unsorted!");
-        last_value_ = id;
-#endif
     }
 
     /// Insert a point with a given id
     void insert( uint64_t id, const PointType& point )
     {
         points_.emplace_back( id, point );
-        if ( id > max_id_ )
-            max_id_ = id;
-#if 0
-        if ( id < last_value_ )
-            throw std::runtime_error("Unsorted!");
-        last_value_ = id;
-#endif
     }
 
     /// Insert a new point and return the new id
     uint64_t insert( const PointType& point )
     {
-        points_.emplace_back( ++max_id_, point );
-#if 0
-        last_value_ = max_id_;
-#endif
-        return max_id_;
+        points_.emplace_back( ++last_node_id_, point );
+        return last_node_id_;
     }
 
     int uses( uint64_t id ) const
@@ -464,10 +445,7 @@ public:
     }
 
 private:
-#if 0
-    uint64_t last_value_ = 0;
-#endif
-    uint64_t max_id_ = 0;
+    uint64_t last_node_id_ = 4700000000LL;
     CacheType points_;
 };
 
