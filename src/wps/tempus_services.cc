@@ -343,6 +343,220 @@ SelectService::SelectService() : Service( "select" ) {
     add_output_parameter( "metrics" );
 }
 
+xmlNode* get_roadmap_node( const Roadmap& roadmap, const RoutingData* rd )
+{
+    xmlNode* result_node = XML::new_node( "roadmap" );
+
+    for ( Roadmap::StepConstIterator sit = roadmap.begin(); sit != roadmap.end(); sit++ ) {
+        xmlNode* step_node = 0;
+        const Roadmap::Step* gstep = &*sit;
+
+        if ( sit->step_type() == Roadmap::Step::RoadStep ) {
+            const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
+            step_node = XML::new_node( "road_step" );
+
+            XML::set_prop( step_node, "road", step->road_name() );
+            XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
+        }
+        else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
+            const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
+
+            if ( ! rd->network( step->network_id() ) ) {
+                throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
+            }
+
+            step_node = XML::new_node( "public_transport_step" );
+
+            const PublicTransport::Network& network = rd->network( step->network_id() ).get();
+
+            XML::set_prop( step_node, "network", network.name() );
+
+            XML::set_prop( step_node, "departure_stop", step->departure_name() );
+            XML::set_prop( step_node, "arrival_stop", step->arrival_name() );
+            XML::set_prop( step_node, "route", step->route() );
+            XML::set_prop( step_node, "trip_id", to_string(step->trip_id()) );
+            XML::set_prop( step_node, "departure_time", to_string(step->departure_time()) );
+            XML::set_prop( step_node, "arrival_time", to_string(step->arrival_time()) );
+            XML::set_prop( step_node, "wait_time", to_string(step->wait()) );
+        }
+        else if ( sit->step_type() == Roadmap::Step::TransferStep ) {
+
+            const Roadmap::TransferStep* step = static_cast<const Roadmap::TransferStep*>( &*sit );
+            if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Transport ) {
+                if ( ! rd->network( step->target().network_id().get() ) ) {
+                    throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->target().network_id().get() ).str() );
+                }
+                step_node = XML::new_node( "road_transport_step" );
+                XML::set_prop( step_node, "type", "2" );
+                XML::set_prop( step_node, "road", step->initial_name() );
+                XML::set_prop( step_node, "network", rd->network( step->target().network_id().get() )->name() );
+                XML::set_prop( step_node, "stop", step->final_name() );
+            }
+            else if ( step->source().type() == MMVertex::Transport && step->target().type() == MMVertex::Road ) {
+                if ( ! rd->network( step->source().network_id().get() ) ) {
+                    throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->source().network_id().get() ).str() );
+                }
+                step_node = XML::new_node( "road_transport_step" );
+                XML::set_prop( step_node, "type", "3" );
+                XML::set_prop( step_node, "road", step->final_name() );
+                XML::set_prop( step_node, "network", rd->network( step->source().network_id().get() )->name() );
+                XML::set_prop( step_node, "stop", step->initial_name() );
+            }
+            else if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Poi ) {
+                step_node = XML::new_node( "transfer_step" );
+                XML::set_prop( step_node, "type", "5" );
+                XML::set_prop( step_node, "road", step->initial_name() );
+                XML::set_prop( step_node, "poi", step->final_name() );
+                XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
+            }
+            else if ( step->source().type() == MMVertex::Poi && step->target().type() == MMVertex::Road ) {
+                step_node = XML::new_node( "transfer_step" );
+                XML::set_prop( step_node, "type", "6" );
+                XML::set_prop( step_node, "road", step->final_name() );
+                XML::set_prop( step_node, "poi", step->initial_name() );
+                XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
+            }
+            else if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Road ) {
+                step_node = XML::new_node( "transfer_step" );
+                XML::set_prop( step_node, "type", "1" );
+                XML::set_prop( step_node, "road", step->final_name() );
+                XML::set_prop( step_node, "poi", "0" );
+                XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
+            }
+        }
+
+        BOOST_ASSERT( step_node );
+
+        // transport_mode
+        XML::new_prop( step_node, "transport_mode", to_string(sit->transport_mode()) );
+
+        for ( Tempus::Costs::const_iterator cit = gstep->costs().begin(); cit != gstep->costs().end(); cit++ ) {
+            xmlNode* cost_node = XML::new_node( "cost" );
+            XML::new_prop( cost_node,
+                           "type",
+                           to_string( cit->first ) );
+            XML::new_prop( cost_node,
+                           "value",
+                           to_string( cit->second ) );
+            XML::add_child( step_node, cost_node );
+        }
+
+        XML::set_prop( step_node, "wkb", sit->geometry_wkb() );
+
+        XML::add_child( result_node, step_node );
+    }
+
+    // total costs
+
+    Costs total_costs( get_total_costs(roadmap) );
+    for ( Tempus::Costs::const_iterator cit = total_costs.begin(); cit != total_costs.end(); cit++ ) {
+        xmlNode* cost_node = XML::new_node( "cost" );
+        XML::new_prop( cost_node,
+                       "type",
+                       to_string( cit->first ) );
+        XML::new_prop( cost_node,
+                       "value",
+                       to_string( cit->second ) );
+        XML::add_child( result_node, cost_node );
+    }
+
+    {
+        xmlNode* starting_dt_node = XML::new_node( "starting_date_time" );
+        std::string dt_string = boost::posix_time::to_iso_extended_string( roadmap.starting_date_time() );
+        XML::add_child( starting_dt_node, XML::new_text( dt_string ) );
+        XML::add_child( result_node, starting_dt_node );
+    }
+
+    // path trace
+    if ( roadmap.trace().size() ) {
+        xmlNode * trace_node = XML::new_node( "trace" );
+
+        for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
+            xmlNode *edge_node = XML::new_node("edge");
+            const ValuedEdge& ve = roadmap.trace()[i];
+
+            XML::set_prop( edge_node, "wkb", ve.geometry_wkb() );
+
+            MMVertex orig = ve.source();
+            MMVertex dest = ve.target();
+
+            xmlNode *orig_node = 0;
+            if ( orig.type() == MMVertex::Road ) {
+                orig_node = XML::new_node("road");
+                XML::set_prop(orig_node, "id", to_string(orig.id()));
+            }
+            else if ( orig.type() == MMVertex::Transport ) {
+                orig_node = XML::new_node("pt");
+                XML::set_prop(orig_node, "id", to_string(orig.id()));
+            }
+            else if ( orig.type() == MMVertex::Poi ) {
+                orig_node = XML::new_node("poi");
+                XML::set_prop(orig_node, "id", to_string(orig.id()));
+            }
+            if (orig_node) {
+                XML::add_child(edge_node, orig_node);
+            }
+
+            xmlNode *dest_node = 0;
+            if ( dest.type() == MMVertex::Road ) {
+                dest_node = XML::new_node("road");
+                XML::set_prop(dest_node, "id", to_string(dest.id()));
+            }
+            else if ( dest.type() == MMVertex::Transport ) {
+                dest_node = XML::new_node("pt");
+                XML::set_prop(dest_node, "id", to_string(dest.id()));
+            }
+            else if ( dest.type() == MMVertex::Poi ) {
+                dest_node = XML::new_node("poi");
+                XML::set_prop(dest_node, "id", to_string(dest.id()));
+            }
+            if (dest_node) {
+                XML::add_child(edge_node, dest_node);
+            }
+
+            VariantMap::const_iterator vit;
+            for ( vit = ve.values().begin(); vit != ve.values().end(); ++vit ) {
+                xmlNode *n = 0;
+                if (vit->second.type() == BoolVariant) {
+                    n = XML::new_node("b");
+                }
+                else if (vit->second.type() == IntVariant) {
+                    n = XML::new_node("i");
+                }
+                else if (vit->second.type() == FloatVariant) {
+                    n = XML::new_node("f");
+                }
+                else if (vit->second.type() == StringVariant) {
+                    n = XML::new_node("s");
+                }
+                if (n ) {
+                    XML::set_prop(n, "k", vit->first);
+                    XML::set_prop(n, "v", vit->second.str());
+                    XML::add_child(edge_node, n);
+                }
+            }
+            XML::add_child(trace_node, edge_node);
+        }
+        XML::add_child(result_node, trace_node);
+    }
+    return result_node;
+}
+
+xmlNode* get_isochrone_node( const Isochrone& isochrone, const RoutingData* /*rd*/ )
+{
+    xmlNode* result_node = XML::new_node( "isochrone" );
+
+    for ( const auto& v: isochrone ) {
+        xmlNode* node = XML::new_node("p");
+        XML::set_prop(node, "x", to_string(v.x()));
+        XML::set_prop(node, "y", to_string(v.y()));
+        XML::set_prop(node, "cost", to_string(v.cost()));
+        XML::set_prop(node, "mode", to_string(v.mode()));
+        XML::add_child(result_node, node);
+    }
+    return result_node;
+}
+
 Service::ParameterMap SelectService::execute( const ParameterMap& input_parameter_map ) const
 {
     ParameterMap output_parameters;
@@ -516,203 +730,13 @@ Service::ParameterMap SelectService::execute( const ParameterMap& input_paramete
     const RoutingData* rd = plugin->routing_data();
 
     for ( rit = result->begin(); rit != result->end(); ++rit ) {
-        const Tempus::Roadmap& roadmap = *rit;
-
-        xmlNode* result_node = XML::new_node( "result" );
-
-        for ( Roadmap::StepConstIterator sit = roadmap.begin(); sit != roadmap.end(); sit++ ) {
-            xmlNode* step_node = 0;
-            const Roadmap::Step* gstep = &*sit;
-
-            if ( sit->step_type() == Roadmap::Step::RoadStep ) {
-                const Roadmap::RoadStep* step = static_cast<const Roadmap::RoadStep*>( &*sit );
-                step_node = XML::new_node( "road_step" );
-
-                XML::set_prop( step_node, "road", step->road_name() );
-                XML::set_prop( step_node, "end_movement", to_string( step->end_movement() ) );
-            }
-            else if ( sit->step_type() == Roadmap::Step::PublicTransportStep ) {
-                const Roadmap::PublicTransportStep* step = static_cast<const Roadmap::PublicTransportStep*>( &*sit );
-
-                if ( ! rd->network( step->network_id() ) ) {
-                    throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->network_id() ).str() );
-                }
-
-                step_node = XML::new_node( "public_transport_step" );
-
-                const PublicTransport::Network& network = rd->network( step->network_id() ).get();
-
-                XML::set_prop( step_node, "network", network.name() );
-
-                XML::set_prop( step_node, "departure_stop", step->departure_name() );
-                XML::set_prop( step_node, "arrival_stop", step->arrival_name() );
-                XML::set_prop( step_node, "route", step->route() );
-                XML::set_prop( step_node, "trip_id", to_string(step->trip_id()) );
-                XML::set_prop( step_node, "departure_time", to_string(step->departure_time()) );
-                XML::set_prop( step_node, "arrival_time", to_string(step->arrival_time()) );
-                XML::set_prop( step_node, "wait_time", to_string(step->wait()) );
-            }
-            else if ( sit->step_type() == Roadmap::Step::TransferStep ) {
-
-                const Roadmap::TransferStep* step = static_cast<const Roadmap::TransferStep*>( &*sit );
-                if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Transport ) {
-                    if ( ! rd->network( step->target().network_id().get() ) ) {
-                        throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->target().network_id().get() ).str() );
-                    }
-                    step_node = XML::new_node( "road_transport_step" );
-                    XML::set_prop( step_node, "type", "2" );
-                    XML::set_prop( step_node, "road", step->initial_name() );
-                    XML::set_prop( step_node, "network", rd->network( step->target().network_id().get() )->name() );
-                    XML::set_prop( step_node, "stop", step->final_name() );
-                }
-                else if ( step->source().type() == MMVertex::Transport && step->target().type() == MMVertex::Road ) {
-                    if ( ! rd->network( step->source().network_id().get() ) ) {
-                        throw std::runtime_error( ( boost::format( "Can't find PT network ID %1%" ) % step->source().network_id().get() ).str() );
-                    }
-                    step_node = XML::new_node( "road_transport_step" );
-                    XML::set_prop( step_node, "type", "3" );
-                    XML::set_prop( step_node, "road", step->final_name() );
-                    XML::set_prop( step_node, "network", rd->network( step->source().network_id().get() )->name() );
-                    XML::set_prop( step_node, "stop", step->initial_name() );
-                }
-                else if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Poi ) {
-                    step_node = XML::new_node( "transfer_step" );
-                    XML::set_prop( step_node, "type", "5" );
-                    XML::set_prop( step_node, "road", step->initial_name() );
-                    XML::set_prop( step_node, "poi", step->final_name() );
-                    XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
-                }
-                else if ( step->source().type() == MMVertex::Poi && step->target().type() == MMVertex::Road ) {
-                    step_node = XML::new_node( "transfer_step" );
-                    XML::set_prop( step_node, "type", "6" );
-                    XML::set_prop( step_node, "road", step->final_name() );
-                    XML::set_prop( step_node, "poi", step->initial_name() );
-                    XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
-                }
-                else if ( step->source().type() == MMVertex::Road && step->target().type() == MMVertex::Road ) {
-                    step_node = XML::new_node( "transfer_step" );
-                    XML::set_prop( step_node, "type", "1" );
-                    XML::set_prop( step_node, "road", step->final_name() );
-                    XML::set_prop( step_node, "poi", "0" );
-                    XML::set_prop( step_node, "final_mode", to_string( step->final_mode() ) );
-                }
-            }
-
-            BOOST_ASSERT( step_node );
-
-            // transport_mode
-            XML::new_prop( step_node, "transport_mode", to_string(sit->transport_mode()) );
-
-            for ( Tempus::Costs::const_iterator cit = gstep->costs().begin(); cit != gstep->costs().end(); cit++ ) {
-                xmlNode* cost_node = XML::new_node( "cost" );
-                XML::new_prop( cost_node,
-                               "type",
-                               to_string( cit->first ) );
-                XML::new_prop( cost_node,
-                               "value",
-                               to_string( cit->second ) );
-                XML::add_child( step_node, cost_node );
-            }
-
-            XML::set_prop( step_node, "wkb", sit->geometry_wkb() );
-
-            XML::add_child( result_node, step_node );
+        xmlNode* result_node = nullptr;
+        if ( rit->is_roadmap() ) {
+            result_node = get_roadmap_node( rit->roadmap(), rd );
         }
-
-        // total costs
-
-        Costs total_costs( get_total_costs(roadmap) );
-        for ( Tempus::Costs::const_iterator cit = total_costs.begin(); cit != total_costs.end(); cit++ ) {
-            xmlNode* cost_node = XML::new_node( "cost" );
-            XML::new_prop( cost_node,
-                           "type",
-                           to_string( cit->first ) );
-            XML::new_prop( cost_node,
-                           "value",
-                           to_string( cit->second ) );
-            XML::add_child( result_node, cost_node );
+        else if ( rit->is_isochrone() ) {
+            result_node = get_isochrone_node( rit->isochrone(), rd );
         }
-
-        {
-            xmlNode* starting_dt_node = XML::new_node( "starting_date_time" );
-            std::string dt_string = boost::posix_time::to_iso_extended_string( roadmap.starting_date_time() );
-            XML::add_child( starting_dt_node, XML::new_text( dt_string ) );
-            XML::add_child( result_node, starting_dt_node );
-        }
-
-        // path trace
-        if ( roadmap.trace().size() ) {
-            xmlNode * trace_node = XML::new_node( "trace" );
-
-            for ( size_t i = 0; i < roadmap.trace().size(); i++ ) {
-                xmlNode *edge_node = XML::new_node("edge");
-                const ValuedEdge& ve = roadmap.trace()[i];
-
-                XML::set_prop( edge_node, "wkb", ve.geometry_wkb() );
-
-                MMVertex orig = ve.source();
-                MMVertex dest = ve.target();
-
-                xmlNode *orig_node = 0;
-                if ( orig.type() == MMVertex::Road ) {
-                    orig_node = XML::new_node("road");
-                    XML::set_prop(orig_node, "id", to_string(orig.id()));
-                }
-                else if ( orig.type() == MMVertex::Transport ) {
-                    orig_node = XML::new_node("pt");
-                    XML::set_prop(orig_node, "id", to_string(orig.id()));
-                }
-                else if ( orig.type() == MMVertex::Poi ) {
-                    orig_node = XML::new_node("poi");
-                    XML::set_prop(orig_node, "id", to_string(orig.id()));
-                }
-                if (orig_node) {
-                    XML::add_child(edge_node, orig_node);
-                }
-
-                xmlNode *dest_node = 0;
-                if ( dest.type() == MMVertex::Road ) {
-                    dest_node = XML::new_node("road");
-                    XML::set_prop(dest_node, "id", to_string(dest.id()));
-                }
-                else if ( dest.type() == MMVertex::Transport ) {
-                    dest_node = XML::new_node("pt");
-                    XML::set_prop(dest_node, "id", to_string(dest.id()));
-                }
-                else if ( dest.type() == MMVertex::Poi ) {
-                    dest_node = XML::new_node("poi");
-                    XML::set_prop(dest_node, "id", to_string(dest.id()));
-                }
-                if (dest_node) {
-                    XML::add_child(edge_node, dest_node);
-                }
-
-                VariantMap::const_iterator vit;
-                for ( vit = ve.values().begin(); vit != ve.values().end(); ++vit ) {
-                    xmlNode *n = 0;
-                    if (vit->second.type() == BoolVariant) {
-                        n = XML::new_node("b");
-                    }
-                    else if (vit->second.type() == IntVariant) {
-                        n = XML::new_node("i");
-                    }
-                    else if (vit->second.type() == FloatVariant) {
-                        n = XML::new_node("f");
-                    }
-                    else if (vit->second.type() == StringVariant) {
-                        n = XML::new_node("s");
-                    }
-                    if (n ) {
-                        XML::set_prop(n, "k", vit->first);
-                        XML::set_prop(n, "v", vit->second.str());
-                        XML::add_child(edge_node, n);
-                    }
-                }
-                XML::add_child(trace_node, edge_node);
-            }
-            XML::add_child(result_node, trace_node);
-        }
-
         XML::add_child( root_node, result_node );
     } // for each result
 

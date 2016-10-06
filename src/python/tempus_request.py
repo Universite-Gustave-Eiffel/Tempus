@@ -180,7 +180,7 @@ class TransferStep:
         self.wkb = wkb
 
 
-class Result:
+class Roadmap:
     # cost: id(int) => value(float)
     def __init__(self, steps=[], costs={}, starting_date_time='', trace=None):
         self.steps = steps
@@ -188,6 +188,10 @@ class Result:
         dt = datetime.datetime.strptime(starting_date_time, '%Y-%m-%dT%H:%M:%S')
         self.starting_date_time = DateTime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
         self.trace = trace
+
+class Isochrone:
+    def __init__(self, points = []):
+        self.points = points
 
 
 class OptionType:
@@ -404,114 +408,129 @@ def parse_metrics(metrics):
 def parse_results(results):
     r = []
     for result in results:
-        steps = []
-        gcosts = {}
-        trace = []
-        starting_dt = ''
-        for child in result:
-            if child.tag == 'road_step':
-                costs = {}
-                road = child.attrib['road']
-                movement = int(child.attrib['end_movement'])
-                transport_mode = int(child.attrib['transport_mode'])
-                wkb = child.attrib['wkb']
-                for p in child:
-                    if p.tag == 'cost':
-                        costs[int(p.attrib['type'])] = float(p.attrib['value'])
-                steps.append(RoadStep(
-                    road=road,
-                    end_movement=movement,
+        if result.tag == 'roadmap':
+            r.append(parse_roadmap(result))
+        elif result.tag == 'isochrone':
+            r.append(parse_isochrone(result))
+    return r
+
+def parse_isochrone(result):
+    points = []
+    for child in result:
+        points.append((float(child.attrib['x']),
+                       float(child.attrib['y']),
+                       int(child.attrib['mode']),
+                       float(child.attrib['cost'])))
+    return Isochrone(points)
+
+def parse_roadmap(result):
+    steps = []
+    gcosts = {}
+    trace = []
+    starting_dt = ''
+    for child in result:
+        if child.tag == 'road_step':
+            costs = {}
+            road = child.attrib['road']
+            movement = int(child.attrib['end_movement'])
+            transport_mode = int(child.attrib['transport_mode'])
+            wkb = child.attrib['wkb']
+            for p in child:
+                if p.tag == 'cost':
+                    costs[int(p.attrib['type'])] = float(p.attrib['value'])
+            steps.append(RoadStep(
+                road=road,
+                end_movement=movement,
+                costs=costs,
+                mode=transport_mode,
+                wkb=wkb
+            ))
+
+        if child.tag == 'public_transport_step':
+            costs = {}
+            wkb = child.attrib['wkb']
+            departure = child.attrib['departure_stop']
+            arrival = child.attrib['arrival_stop']
+            route = child.attrib['route']
+            trip_id = int(child.attrib['trip_id'])
+            network = child.attrib['network']
+            transport_mode = int(child.attrib['transport_mode'])
+            departure_time = float(child.attrib['departure_time'])
+            arrival_time = float(child.attrib['arrival_time'])
+            wait_time = float(child.attrib['wait_time'])
+            for p in child:
+                if p.tag == 'cost':
+                    costs[int(p.attrib['type'])] = float(p.attrib['value'])
+            steps.append(PublicTransportStep(
+                    network=network,
+                    departure=departure,
+                    arrival=arrival,
+                    route=route,
+                    trip_id=trip_id,
+                    departure_time=departure_time,
+                    arrival_time=arrival_time,
+                    wait_time=wait_time,
                     costs=costs,
                     mode=transport_mode,
                     wkb=wkb
-                ))
+            ))
 
-            if child.tag == 'public_transport_step':
-                costs = {}
-                wkb = child.attrib['wkb']
-                departure = child.attrib['departure_stop']
-                arrival = child.attrib['arrival_stop']
-                route = child.attrib['route']
-                trip_id = int(child.attrib['trip_id'])
-                network = child.attrib['network']
-                transport_mode = int(child.attrib['transport_mode'])
-                departure_time = float(child.attrib['departure_time'])
-                arrival_time = float(child.attrib['arrival_time'])
-                wait_time = float(child.attrib['wait_time'])
-                for p in child:
-                    if p.tag == 'cost':
-                        costs[int(p.attrib['type'])] = float(p.attrib['value'])
-                steps.append(PublicTransportStep(
-                        network=network,
-                        departure=departure,
-                        arrival=arrival,
-                        route=route,
-                        trip_id=trip_id,
-                        departure_time=departure_time,
-                        arrival_time=arrival_time,
-                        wait_time=wait_time,
+        if child.tag == 'road_transport_step':
+            costs = {}
+            wkb = child.attrib['wkb']
+            road = child.attrib['road']
+            network = child.attrib['network']
+            stop = child.attrib['stop']
+            type = int(child.attrib['type'])
+            transport_mode = int(child.attrib['transport_mode'])
+            for p in child:
+                if p.tag == 'cost':
+                    costs[int(p.attrib['type'])] = float(p.attrib['value'])
+            steps.append(RoadTransportStep(
+                network=network,
+                type=type,
+                road=road,
+                stop=stop,
+                costs=costs,
+                mode=transport_mode,
+                wkb=wkb
+            ))
+        if child.tag == 'transfer_step':
+            costs = {}
+            wkb = child.attrib['wkb']
+            road = child.attrib['road']
+            poi = child.attrib['poi']
+            type = int(child.attrib['type'])
+            transport_mode = int(child.attrib['transport_mode'])
+            final_mode = int(child.attrib['final_mode'])
+            for p in child:
+                if p.tag == 'cost':
+                    costs[int(p.attrib['type'])] = float(p.attrib['value'])
+                    steps.append(TransferStep(
+                        type=type,
+                        road=road,
+                        poi=poi,
                         costs=costs,
                         mode=transport_mode,
+                        final_mode=final_mode,
                         wkb=wkb
-                ))
+                    ))
+        elif child.tag == 'cost':
+            gcosts[int(child.attrib['type'])] = float(child.attrib['value'])
+        elif child.tag == 'starting_date_time':
+            starting_dt = child.text
+        elif child.tag == 'trace':
+            # for each edge
+            edges = child
+            for e in edges:
+                wkb = e.attrib['wkb']
+                o = parse_vertex(e[0])
+                d = parse_vertex(e[1])
+                variants = parse_variants(e[2:])
+                vedge = ValuedEdge(origin=o, destination=d, wkb=wkb, variants=variants)
+                trace.append(vedge)
 
-            if child.tag == 'road_transport_step':
-                costs = {}
-                wkb = child.attrib['wkb']
-                road = child.attrib['road']
-                network = child.attrib['network']
-                stop = child.attrib['stop']
-                type = int(child.attrib['type'])
-                transport_mode = int(child.attrib['transport_mode'])
-                for p in child:
-                    if p.tag == 'cost':
-                        costs[int(p.attrib['type'])] = float(p.attrib['value'])
-                steps.append(RoadTransportStep(
-                    network=network,
-                    type=type,
-                    road=road,
-                    stop=stop,
-                    costs=costs,
-                    mode=transport_mode,
-                    wkb=wkb
-                ))
-            if child.tag == 'transfer_step':
-                costs = {}
-                wkb = child.attrib['wkb']
-                road = child.attrib['road']
-                poi = child.attrib['poi']
-                type = int(child.attrib['type'])
-                transport_mode = int(child.attrib['transport_mode'])
-                final_mode = int(child.attrib['final_mode'])
-                for p in child:
-                    if p.tag == 'cost':
-                        costs[int(p.attrib['type'])] = float(p.attrib['value'])
-                        steps.append(TransferStep(
-                            type=type,
-                            road=road,
-                            poi=poi,
-                            costs=costs,
-                            mode=transport_mode,
-                            final_mode=final_mode,
-                            wkb=wkb
-                        ))
-            elif child.tag == 'cost':
-                gcosts[int(child.attrib['type'])] = float(child.attrib['value'])
-            elif child.tag == 'starting_date_time':
-                starting_dt = child.text
-            elif child.tag == 'trace':
-                # for each edge
-                edges = child
-                for e in edges:
-                    wkb = e.attrib['wkb']
-                    o = parse_vertex(e[0])
-                    d = parse_vertex(e[1])
-                    variants = parse_variants(e[2:])
-                    vedge = ValuedEdge(origin=o, destination=d, wkb=wkb, variants=variants)
-                    trace.append(vedge)
-
-        r.append(Result(steps=steps, costs=gcosts, starting_date_time=starting_dt, trace=trace))
-    return r
+    return Roadmap(steps=steps, costs=gcosts, starting_date_time=starting_dt, trace=trace)
 
 
 def parse_plugin_options(xml):

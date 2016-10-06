@@ -41,7 +41,7 @@ def icon():
 def qgisMinimumVersion():
     return "1.8"
 def qgisMaximumVersion():
-    return "2.10"
+    return "2.99"
 def classFactory(iface):
     # load IfsttarRouting class from file IfsttarRouting
     from ifsttarrouting import IfsttarRouting

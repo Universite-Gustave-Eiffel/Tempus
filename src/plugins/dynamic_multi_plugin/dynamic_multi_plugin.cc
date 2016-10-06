@@ -164,14 +164,6 @@ private:
     const float max_speed_;
 };
 
-struct NullHeuristic
-{
-    float operator()( const Multimodal::Vertex& )
-    {
-        return 0.0;
-    }
-};
-
 Road::Restrictions import_turn_restrictions( const Road::Graph& graph, const std::string& db_options, const std::string& schema_name )
 {
     Db::Connection connection_( db_options );
@@ -561,7 +553,6 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // Other attributes
     Multimodal::Vertex destination_; // Current request destination
-    std::map< Multimodal::Vertex, db_id_t > available_vehicles_;
 
     // Get origin and destination nodes
     Multimodal::Vertex origin = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
@@ -606,7 +597,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     else {
         profile = 0;
     }
-    CostCalculator cost_calculator( s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency, request.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
+    CostCalculator cost_calculator( s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency, request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
 
     // destinations
     std::vector<Road::Vertex> destinations;
@@ -671,10 +662,10 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
             if ( reversed ) {
                 Multimodal::ReverseGraph rgraph( *graph_ );
                 DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
-                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), rvis, NullHeuristic() );
+                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), rvis );
             }
             else {
-                combined_ls_algorithm_no_init( *graph_, automaton_, origin_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis, NullHeuristic() );
+                combined_ls_algorithm_no_init( *graph_, automaton_, origin_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
             }
         }
     }
@@ -759,7 +750,7 @@ std::string sec2hm( double s )
 void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& result, const Path& path, bool reverse )
 {
     result.push_back( Roadmap() );
-    Roadmap& roadmap = result.back();
+    Roadmap& roadmap = result.back().roadmap();
 
     std::list< Triple >::const_iterator it = path.begin();
     std::list< Triple >::const_iterator next = it;

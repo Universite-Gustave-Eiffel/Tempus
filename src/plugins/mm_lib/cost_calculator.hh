@@ -115,12 +115,12 @@ class CostCalculator {
 public: 
     // Constructor 
     CostCalculator( const TimetableMap& timetable, const TimetableMap& rtimetable, const FrequencyMap& frequency, const FrequencyMap& rfrequency,
-                    const std::vector<db_id_t>& allowed_transport_modes, std::map<Multimodal::Vertex, db_id_t>& vehicle_nodes, 
+                    const std::vector<db_id_t>& allowed_transport_modes,
                     double walking_speed, double cycling_speed, 
                     double min_transfer_time, double car_parking_search_time, boost::optional<Road::Vertex> private_parking,
                     const RoadEdgeSpeedProfile* profile = 0 ) : 
         timetable_( timetable ), rtimetable_( rtimetable ), frequency_( frequency ), rfrequency_(rfrequency),
-        allowed_transport_modes_( allowed_transport_modes ), vehicle_nodes_( vehicle_nodes ), 
+        allowed_transport_modes_( allowed_transport_modes ),
         walking_speed_( walking_speed ), cycling_speed_( cycling_speed ), 
         min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time ),
         private_parking_( private_parking ),
@@ -447,7 +447,6 @@ protected:
     const FrequencyMap& frequency_; 
     const FrequencyMap& rfrequency_; 
     std::vector<db_id_t> allowed_transport_modes_;
-    std::map< Multimodal::Vertex, db_id_t >& vehicle_nodes_; 
     double walking_speed_; 
     double cycling_speed_; 
     double min_transfer_time_; 

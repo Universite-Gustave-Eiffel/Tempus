@@ -212,7 +212,7 @@ public:
     /// Convert a path into a roadmap
     void add_roadmap( const Request& request, Result& result, const Path& path ) {
         result.push_back( Roadmap() );
-        Roadmap& roadmap = result.back();
+        Roadmap& roadmap = result.back().roadmap();
 
         roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 

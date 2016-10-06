@@ -20,6 +20,7 @@
 
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/variant.hpp>
 
 #include "common.hh"
 #include "path_trace.hh"
@@ -201,9 +202,45 @@ private:
 /// Convenience function to compute the sum of costs for a roadmap
 Costs get_total_costs( const Roadmap& );
 
+class IsochroneValue
+{
+public:
+    IsochroneValue( float x, float y, int mode, float cost ) : x_( x ), y_( y ), mode_( mode ), cost_( cost ) {}
+    DECLARE_RW_PROPERTY( x, float );
+    DECLARE_RW_PROPERTY( y, float );
+    /// mode
+    DECLARE_RW_PROPERTY( mode, int );
+    /// cost
+    DECLARE_RW_PROPERTY( cost, float );
+};
+
 ///
-/// A Result is a list of Roadmap, ordered by relevance towards optimizing criteria
-typedef std::list<Roadmap> Result;
+/// An isochrone is a collection of vertex id associated to a cost
+using Isochrone = std::vector<IsochroneValue>;
+
+///
+/// A ResultElement is either an Isochrone or a Roadmap
+class ResultElement
+{
+public:
+    ResultElement() {}
+    ResultElement( const Isochrone& iso ) : element_( iso ) {}
+    ResultElement( const Roadmap& rm ) : element_( rm ) {}
+
+    bool is_roadmap() const { return element_.which() == 1; }
+    bool is_isochrone() const { return element_.which() == 0; }
+    Isochrone& isochrone() { return boost::get<Isochrone>(element_); }
+    Roadmap& roadmap() { return boost::get<Roadmap>(element_); }
+    const Isochrone& isochrone() const { return boost::get<Isochrone>(element_); }
+    const Roadmap& roadmap() const { return boost::get<Roadmap>(element_); }
+private:
+    using Element = boost::variant<Isochrone, Roadmap>;
+    Element element_;
+};
+
+///
+/// A Result is a list of ResultElement, ordered by relevance towards optimizing criteria
+typedef std::list<ResultElement> Result;
 
 ///
 /// Used internally by boost::ptr_vector when copying

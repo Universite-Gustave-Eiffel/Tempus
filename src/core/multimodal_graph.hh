@@ -19,6 +19,7 @@
 #define TEMPUS_MULTIMODAL_GRAPH_HH
 
 #include <unordered_map>
+#include <functional>
 
 #include <boost/variant.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
@@ -180,6 +181,8 @@ public:
     /// @returns the coordinates, whatever the vertex type
     Point3D coordinates() const;
 
+    /// @returns a hash value of the vertex
+    size_t hash() const;
 private:
     const Graph* graph_;
 
@@ -198,6 +201,25 @@ private:
 
     friend class VertexIndexProperty;
 };
+} // namespace Multimodal
+} // namespace Tempus
+
+namespace std
+{
+template <>
+struct hash<Tempus::Multimodal::Vertex>
+{
+    size_t operator()( const Tempus::Multimodal::Vertex& v ) const
+    {
+        return v.hash();
+    }
+};
+}
+
+namespace Tempus
+{
+namespace Multimodal
+{
 
 /// Convenience function - get a Road::Node out of a Vertex, if defined
 /// @returns the corresponding road node

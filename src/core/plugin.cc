@@ -150,7 +150,7 @@ std::string PluginRequest::metric_to_string( const std::string& nname ) const
 void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multimodal::Graph& graph )
 {
     for ( Result::iterator rit = result.begin(); rit != result.end(); ++rit ) {
-        Roadmap& roadmap = *rit;
+        Roadmap& roadmap = rit->roadmap();
         Roadmap new_roadmap;
         const Road::Graph& road_graph = graph.road();
 
