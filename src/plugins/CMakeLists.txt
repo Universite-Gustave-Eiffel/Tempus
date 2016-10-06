@@ -24,6 +24,8 @@ add_subdirectory( ch_plugin )
 
 add_subdirectory( astar_road_plugin )
 
+add_subdirectory( isochrone )
+
 if (WIN32)
 install( TARGETS 
     sample_multi_plugin 
