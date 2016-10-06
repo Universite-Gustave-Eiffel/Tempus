@@ -77,6 +77,7 @@ HISTORY_FILE = os.path.expanduser('~/.ifsttarrouting.db')
 PREFS_FILE = os.path.expanduser('~/.ifsttarrouting.prefs')
 
 ROADMAP_LAYER_NAME = "Tempus_Roadmap_"
+ISOCHRONE_LAYER_NAME = "Tempus_Isochrone_"
 TRACE_LAYER_NAME = "Tempus_Trace_"
 
 # There has been an API change regarding vector layer on 1.9 branch
@@ -644,6 +645,28 @@ class IfsttarRouting:
                             val = 0.0
             self.plugin_options[plugin_name][option_name] = val
 
+    def displayIsochrone(self, isochrone, lid):
+        lname = "%s%d" % (ISOCHRONE_LAYER_NAME, lid)
+        # create a new vector layer
+        vl = QgsVectorLayer("Point?crs=epsg:%d" % self.native_srid(), lname, "memory")
+
+        pr = vl.dataProvider()
+
+        vl.startEditing()
+        vl.addAttribute( QgsField( "transport_mode", QVariant.Int ) )
+        vl.addAttribute( QgsField( "cost", QVariant.Double ) )
+        vl.commitChanges()
+
+        for point in isochrone.points:
+            x, y, mode, cost = point
+            f = QgsFeature(vl.fields())
+            f.setAttributes([mode, cost])
+            f.setGeometry(QgsGeometry.fromPoint(QgsPoint(x, y)))
+            pr.addFeatures([f])
+            
+        vl.updateExtents()
+
+        QgsMapLayerRegistry.instance().addMapLayers( [vl] )
     #
     # Take a XML tree from the WPS 'result' operation
     # add an 'Itinerary' layer on the map
@@ -1104,16 +1127,19 @@ class IfsttarRouting:
         clearBoxLayout( self.dlg.ui.resultSelectionLayout )
         k = 1
         for result in results:
-            start = "%02d:%02d:%02d" % (result.starting_date_time.hour,result.starting_date_time.minute,result.starting_date_time.second)
-            name = "%s%d (start: %s)" % (ROADMAP_LAYER_NAME,k, start)
             rselect = ResultSelection()
-            for k,v in result.costs.iteritems():
-                rselect.addCost(Tempus.CostName[k], "%.1f%s" % (v, Tempus.CostUnit[k]))
-                if k == Tempus.Cost.Duration:
-                    s = result.starting_date_time.hour * 60 + result.starting_date_time.minute + result.starting_date_time.second / 60.0;
-                    s += v
-                    name = "%s%d (%s -> %s)" % (ROADMAP_LAYER_NAME,k, start, min2hm(s) )
-            rselect.setText( name )
+            if isinstance(result, Tempus.Roadmap):
+                start = "%02d:%02d:%02d" % (result.starting_date_time.hour,result.starting_date_time.minute,result.starting_date_time.second)
+                name = "%s%d (start: %s)" % (ROADMAP_LAYER_NAME,k, start)
+                for k,v in result.costs.iteritems():
+                    rselect.addCost(Tempus.CostName[k], "%.1f%s" % (v, Tempus.CostUnit[k]))
+                    if k == Tempus.Cost.Duration:
+                        s = result.starting_date_time.hour * 60 + result.starting_date_time.minute + result.starting_date_time.second / 60.0;
+                        s += v
+                        name = "%s%d (%s -> %s)" % (ROADMAP_LAYER_NAME,k, start, min2hm(s) )
+                rselect.setText( name )
+            elif isinstance(result, Tempus.Isochrone):
+                rselect.setText("Isochrone")
             self.dlg.ui.resultSelectionLayout.addWidget( rselect )
             self.result_ids.append( rselect.id() )
             k += 1
@@ -1135,9 +1161,12 @@ class IfsttarRouting:
         # then display each layer
         k = 1
         for result in results:
-            self.displayRoadmapLayer( result.steps, k )
-            if result.trace is not None:
-                self.displayTrace( result.trace, k, trace_layer )
+            if isinstance(result, Tempus.Roadmap):
+                self.displayRoadmapLayer( result.steps, k )
+                if result.trace is not None:
+                    self.displayTrace( result.trace, k, trace_layer )
+            elif isinstance(result, Tempus.Isochrone):
+                self.displayIsochrone(result, k)
             k += 1
 
 
