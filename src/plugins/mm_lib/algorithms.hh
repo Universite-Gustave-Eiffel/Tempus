@@ -192,7 +192,7 @@ template < class Graph,
            class Visitor>
 void combined_ls_algorithm_no_init(
                                    const Graph& graph,
-                                   Object source_object,
+                                   std::vector<Object> sources,
                                    VertexDataMap vertex_data_map,
                                    CostCalculator cost_calculator, 
                                    const std::vector<db_id_t>& request_allowed_modes,
@@ -207,9 +207,11 @@ void combined_ls_algorithm_no_init(
     Cmp cmp( vertex_data_map, heuristic );
 
     typedef boost::heap::d_ary_heap< Object, boost::heap::arity<4>, boost::heap::compare< Cmp >, boost::heap::mutable_<true> > VertexQueue;
-    VertexQueue vertex_queue( cmp ); 
-    vertex_queue.push( source_object ); 
-    vis.discover_vertex( source_object, graph );
+    VertexQueue vertex_queue( cmp );
+    for ( const auto& s: sources ) {
+        vertex_queue.push( s ); 
+        vis.discover_vertex( s, graph );
+    }
 
     Object min_object; 
 

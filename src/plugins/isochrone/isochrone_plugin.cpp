@@ -120,8 +120,6 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
     double cycling_speed = get_float_option( "Time/cycling_speed" );
     double car_parking_search_time = get_float_option( "Time/car_parking_search_time" );
 
-    Multimodal::Vertex origin = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
-
     // start time of the query (in minutes)
     //double start_time = request.steps()[1].constraint().date_time().time_of_day().total_seconds()/60;
 
@@ -142,16 +140,24 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
     MMVertexDataMap vertex_data_map;
     boost::associative_property_map< MMVertexDataMap > vertex_data_pmap( vertex_data_map );
 
-    VertexLabel origin_l = {origin, request.allowed_modes()[0]};
-    MMVertexData d;
-    d.set_potential( 0.0 );
-    d.set_predecessor( origin_l );
-    vertex_data_map[origin_l] = d;
+    // we start on a road node
+    Multimodal::Vertex origin = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
+
+    // add each transport mode as a source
+    std::vector<VertexLabel> sources;
+    for ( auto mode: request.allowed_modes() ) {
+        VertexLabel v = {origin, mode};
+        sources.push_back(v);
+        MMVertexData d;
+        d.set_potential( 0.0 );
+        d.set_predecessor( v );
+        vertex_data_map[v] = d;
+    }
     
     size_t iterations = 0;
     IsochroneVisitor vis( vertex_data_map, isochrone_limit, iterations );
     try {
-        combined_ls_algorithm_no_init( *graph_, origin_l, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
+        combined_ls_algorithm_no_init( *graph_, sources, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
     }
     catch ( IsochroneVisitor::StopException& ) {
     }
