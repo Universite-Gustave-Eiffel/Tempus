@@ -446,17 +446,17 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                         double departure_time = res[i][4].as<double>();
                         double arrival_time = res[i][5].as<double>();
                         t.arrival_time = arrival_time;
-                        s_.timetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
-                        s_.timetable[e].insert( std::make_pair( mode_id, std::map<double, TimetableData>() ));
-                        s_.timetable[e][mode_id].insert( std::make_pair( departure_time, t ) );
+                        s_.timetable.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, TimetableData> >() );
+                        s_.timetable[mode_id].emplace( e, std::map<double, TimetableData>() );
+                        s_.timetable[mode_id][e].emplace( departure_time, t );
 
                         // reverse timetable
                         rt.trip_id = t.trip_id;
                         rt.arrival_time = departure_time;
 
-                        s_.rtimetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
-                        s_.rtimetable[e].insert( std::make_pair( mode_id, std::map<double, TimetableData>() ));
-                        s_.rtimetable[e][mode_id].insert( std::make_pair( arrival_time, rt ) );
+                        s_.rtimetable.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, TimetableData> >() );
+                        s_.rtimetable[mode_id].emplace( e, std::map<double, TimetableData>() );
+                        s_.rtimetable[mode_id][e].emplace( arrival_time, rt );
                     }
                 }
                 else if (timetable_frequency_ == 1) // frequency model
@@ -503,9 +503,9 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                         f.travel_time = res[i][7].as<double>();
                         double start_time = res[i][4].as<double>();
 
-                        s_.frequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
-                        s_.frequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
-                        s_.frequency[e][mode_id].insert( std::make_pair( start_time, f ) );
+                        s_.frequency.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, FrequencyData> >() );
+                        s_.frequency[mode_id].emplace( e, std::map<double, FrequencyData>() );
+                        s_.frequency[mode_id][e].emplace( start_time, f );
 
                         // reverse frequency data
                         FrequencyData rf;
@@ -514,9 +514,9 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                         rf.headway = f.headway;
                         rf.travel_time = f.travel_time;
 
-                        s_.rfrequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
-                        s_.rfrequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
-                        s_.rfrequency[e][mode_id].insert( std::make_pair( f.end_time, rf ) );
+                        s_.rfrequency.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, FrequencyData> >() );
+                        s_.rfrequency[mode_id].emplace( e, std::map<double, FrequencyData>() );
+                        s_.rfrequency[mode_id][e].emplace( f.end_time, rf );
                     }
                 }
             }

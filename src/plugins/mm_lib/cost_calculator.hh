@@ -107,9 +107,9 @@ struct FrequencyData {
     double travel_time; 
 };
 	
-// Edge -> transport_mode -> departure_time -> Timetable
-typedef std::map<PublicTransport::Edge, std::map<int, std::map<double, TimetableData> > > TimetableMap; 
-typedef std::map<PublicTransport::Edge, std::map<int, std::map<double, FrequencyData> > > FrequencyMap; 
+// transport_mode -> Edge -> departure_time -> Timetable
+typedef std::map<int, std::map<PublicTransport::Edge, std::map<double, TimetableData> > > TimetableMap; 
+typedef std::map<int, std::map<PublicTransport::Edge, std::map<double, FrequencyData> > > FrequencyMap; 
 	
 class CostCalculator {
 public: 
@@ -202,16 +202,16 @@ public:
 						
                 if ( ! is_graph_reversed<Graph>::value ) {
                     // Timetable travel time calculation
-                    TimetableMap::const_iterator pt_e_it = timetable_.find( pt_e );
+                    auto pt_e_it = timetable_.find( mode_id );
                     if ( pt_e_it != timetable_.end() ) {
-                        // look for timetable of the given mode
-                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = pt_e_it->second.find( mode_id );
+                        // look for timetable of the given edge
+                        auto mit = pt_e_it->second.find( pt_e );
                         if ( mit == pt_e_it->second.end() ) { // no timetable for this mode
                             return std::numeric_limits<double>::max(); 
                         }
 
                         // get the time, just after initial_time
-                        std::map<double, TimetableData >::const_iterator it = mit->second.lower_bound( initial_time ) ;
+                        auto it = mit->second.lower_bound( initial_time ) ;
                         if ( it == mit->second.end() ) { // no service after this time
                             return std::numeric_limits<double>::max(); 
                         }
@@ -231,13 +231,13 @@ public:
                             return it->second.arrival_time - initial_time;
                         }
                     }
-                    else if (frequency_.find( pt_e ) != frequency_.end() ) {
-                        FrequencyMap::const_iterator pt_re_it = frequency_.find( pt_e );
-                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = pt_re_it->second.find( mode_id );
-                        if ( mit == pt_re_it->second.end() ) { // no timetable for this mode
+                    else if (frequency_.find( mode_id ) != frequency_.end() ) {
+                        auto pt_re_it = frequency_.find( mode_id );
+                        auto mit = pt_re_it->second.find( pt_e );
+                        if ( mit == pt_re_it->second.end() ) { // no timetable for this mode and edge
                             return std::numeric_limits<double>::max(); 
                         }
-                        std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( initial_time );
+                        auto it = mit->second.upper_bound( initial_time );
                         if (it == mit->second.begin() ) { // nothing before this time
                             return std::numeric_limits<double>::max();
                         }
@@ -266,17 +266,17 @@ public:
                 }
                 else {
                     // reverse graph
-                    TimetableMap::const_iterator pt_e_it = rtimetable_.find( pt_e );
+                    auto pt_e_it = rtimetable_.find( mode_id );
                     if ( pt_e_it != rtimetable_.end() ) {
                         double rinitial_time = -initial_time - initial_shift_time;
 
                         // look for timetable of the given mode
-                        std::map<int, std::map<double, TimetableData> >::const_iterator mit = pt_e_it->second.find( mode_id );
+                        auto mit = pt_e_it->second.find( pt_e );
                         if ( mit == pt_e_it->second.end() ) { // no timetable for this mode
                             return std::numeric_limits<double>::max(); 
                         }
                         // get the time, just before initial_time (upper_bound - 1)
-                        std::map< double, TimetableData >::const_iterator it = mit->second.upper_bound( rinitial_time ) ;
+                        auto it = mit->second.upper_bound( rinitial_time ) ;
                         if ( it == mit->second.begin() ) { // nothing before this time
                             return std::numeric_limits<double>::max(); 
                         }
@@ -287,14 +287,14 @@ public:
                         final_shift_time += wait_time;
                         return it->first - it->second.arrival_time;
                     }
-                    else if ( rfrequency_.find( pt_e ) != rfrequency_.end() ) {
+                    else if ( rfrequency_.find( mode_id ) != rfrequency_.end() ) {
                         double rinitial_time = -initial_time - initial_shift_time;
-                        FrequencyMap::const_iterator pt_re_it = rfrequency_.find( pt_e );
-                        std::map<int, std::map<double, FrequencyData> >::const_iterator mit = pt_re_it->second.find( mode_id );
+                        auto pt_re_it = rfrequency_.find( mode_id );
+                        auto mit = pt_re_it->second.find( pt_e );
                         if ( mit == pt_re_it->second.end() ) { // no timetable for this mode
                             return std::numeric_limits<double>::max(); 
                         }
-                        std::map<double, FrequencyData>::const_iterator it = mit->second.upper_bound( rinitial_time );
+                        auto it = mit->second.upper_bound( rinitial_time );
                         if (it == mit->second.end() ) { // nothing before this time
                             return std::numeric_limits<double>::max();
                         }
