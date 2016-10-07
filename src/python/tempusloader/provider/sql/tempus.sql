@@ -564,6 +564,57 @@ $BODY$
 ALTER FUNCTION tempus.array_search(anyelement, anyarray)
   OWNER TO postgres;
 
+-- days of service for each service
+create materialized view tempus.service_day as
+ select
+   service_id,
+   sday
+ from
+   tempus.pt_calendar
+ cross join
+   (select '2014-04-07'::date+dt as sday from generate_series(1, '2014-07-07'::date -'2014-04-07'::date) as dt) days
+ where
+   (ARRAY[sunday, monday, tuesday, wednesday, thursday, friday, saturday])[EXTRACT(dow FROM sday)+1]
+ union
+ select
+   service_id,
+   calendar_date
+ from
+   tempus.pt_calendar_date
+ where
+   exception_type = 1
+ except
+ select
+   service_id,
+   calendar_date
+ from
+   tempus.pt_calendar_date
+ where
+   exception_type = 2
+;
+
+-- for each pair of pt stops, departure, arrival_time and service_id of each available trip
+create materialized view tempus.pt_timetable as
+select
+  t1.stop_id as origin_stop,
+  t2.stop_id as destination_stop,
+  pt_route.transport_mode,
+  t1.trip_id,
+  extract(epoch from t1.arrival_time)/60 as departure_time,
+  extract(epoch from t2.departure_time)/60 as arrival_time,
+  service_id
+from
+  tempus.pt_stop_time t1,
+  tempus.pt_stop_time t2,
+  tempus.pt_trip,
+  tempus.pt_route
+where
+  t1.trip_id = t2.trip_id
+  and t1.stop_sequence + 1 = t2.stop_sequence
+  and pt_trip.id = t1.trip_id
+  and pt_route.id = pt_trip.route_id
+;
+
 -- Preparing pt views
 
 CREATE OR REPLACE FUNCTION tempus.update_pt_views() RETURNS void as $$
@@ -610,6 +661,10 @@ CREATE TABLE tempus.view_section_by_network AS
     tempus.transport_mode
   WHERE pt_route.id = pt_trip.route_id AND pt_trip.id = pt_stop_time_from.trip_id AND pt_stop_time_from.trip_id = pt_stop_time_to.trip_id AND pt_stop_time_from.stop_sequence = (pt_stop_time_to.stop_sequence - 1) AND pt_stop_time_from.stop_id = pt_section.stop_from AND pt_stop_time_to.stop_id = pt_section.stop_to AND transport_mode.id = pt_route.transport_mode;
   END;
+
+refresh materialized view tempus.service_day;
+
+refresh materialized view tempus.pt_timetable;
 $$ LANGUAGE plpgsql;
 
 select tempus.update_pt_views();
