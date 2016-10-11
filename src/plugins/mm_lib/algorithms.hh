@@ -194,7 +194,7 @@ void combined_ls_algorithm_no_init(
                                    const Graph& graph,
                                    std::vector<Object> sources,
                                    VertexDataMap vertex_data_map,
-                                   CostCalculator cost_calculator, 
+                                   CostCalculator2 cost_calculator, 
                                    const std::vector<db_id_t>& request_allowed_modes,
                                    Visitor vis,
                                    std::function<double (const Multimodal::Vertex&)> heuristic = NullHeuristic() )

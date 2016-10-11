@@ -72,7 +72,7 @@ class Point:
 
 class DateTime(datetime.datetime):
     def __init__(self, *args):
-        datetime.datetime.__init__(self, args)
+        datetime.datetime.__init__(self, *args)
 
     @classmethod
     def now(cls):
@@ -81,6 +81,10 @@ class DateTime(datetime.datetime):
 
     def __str__(self):
         return "%04d-%02d-%02dT%02d:%02d:%02d.0" % (self.year, self.month, self.day, self.hour, self.minute, self.second)
+
+    @classmethod
+    def from_dt(cls, dt):
+        return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond)
 
 
 class Constraint:

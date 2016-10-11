@@ -106,6 +106,8 @@ std::string Value::as<std::string>() const;
 template <>
 Tempus::Time Value::as<Tempus::Time>() const;
 template <>
+Tempus::Date Value::as<Tempus::Date>() const;
+template <>
 long long Value::as<long long>() const;
 template <>
 int Value::as<int>() const;

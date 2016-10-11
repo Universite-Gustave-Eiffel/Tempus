@@ -498,6 +498,79 @@ std::unique_ptr<Multimodal::Graph> import_graph( Db::Connection& connection, Pro
         }
     }
 
+    {
+        // load PT service
+        for ( auto& p: pt_graphs ) {
+            PublicTransport::GraphProperties& props = get_property( *p.second );
+            Db::ResultIterator res_it( connection.exec_it( (boost::format("select service_id, sday from tempus.pt_service_day where network_id=%1% order by service_id, sday") % p.first).str() ) );
+            Db::ResultIterator it_end;
+            for ( ; res_it != it_end; res_it++ ) {
+                Db::RowValue res_i = *res_it;
+                Tempus::db_id_t service_id = 0;
+                Tempus::Date day;
+                res_i[0] >> service_id;
+                res_i[1] >> day;
+                props.service_map().add( service_id, day );
+            }
+        }
+        
+        // load PT timetable
+        std::cout << "load PT time tables ..." << std::endl;
+        for ( auto& p: pt_graphs ) {
+            std::string q = (boost::format("select origin_stop, destination_stop, departure_time, arrival_time, trip_id, service_id from tempus.pt_timetable "
+                                           "where network_id = %1% "
+                                           "order by origin_stop, destination_stop, departure_time, arrival_time") % p.first).str();
+            Db::ResultIterator res_it( connection.exec_it( q ) );
+            Db::ResultIterator it_end;
+            int32_t old_origin = 0;
+            int32_t old_destination = 0;
+            std::vector<PublicTransport::Timetable::TripTime> trip_times;
+            do {
+                Db::RowValue res_i = *res_it;
+                int32_t origin = res_i[0].as<int32_t>();
+                int32_t destination = res_i[1].as<int32_t>();
+
+                PublicTransport::Timetable::TripTime tt;
+                tt.set_departure_time( res_i[2].as<float>() );
+                tt.set_arrival_time( res_i[3].as<float>() );
+                tt.set_trip_id( res_i[4].as<int32_t>() );
+                tt.set_service_id( res_i[5].as<int32_t>() );
+                trip_times.push_back( tt );
+                
+                res_it++;
+                if ( ( res_it == it_end ) ||
+                     ( old_origin && (old_origin != origin) ) ||
+                     ( old_destination && (old_destination != destination ) ) ) {
+                    auto pit1 = pt_nodes_map[p.first].find( old_origin );
+                    auto pit2 = pt_nodes_map[p.first].find( old_destination );
+                    if ( pit1 == pt_nodes_map[p.first].end() ) {
+                        CERR << "Cannot find 'from' node of ID " << old_origin << endl;
+                        continue;
+                    }
+                    if ( pit2 == pt_nodes_map[p.first].end() ) {
+                        CERR << "Cannot find 'to' node of ID " << old_destination << endl;
+                        continue;
+                    }
+                    PublicTransport::Vertex stop_from = pit1->second;
+                    PublicTransport::Vertex stop_to = pit2->second;
+                    PublicTransport::Edge e;
+                    bool found = false;
+                    boost::tie( e, found ) = edge( stop_from, stop_to, *p.second );
+                    if ( ! found ) {
+                        CERR << "Cannot find PT edge" << endl;
+                        continue;
+                    }
+
+                    (*p.second)[e].time_table().assign_sorted_table( trip_times );
+                    trip_times.clear();
+                }
+                old_origin = origin;
+                old_destination = destination;
+            }
+            while ( res_it != it_end );
+        }
+    }
+
     //-------------
     //    POI
     //-------------

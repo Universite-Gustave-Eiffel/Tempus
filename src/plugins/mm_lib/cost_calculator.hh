@@ -455,6 +455,262 @@ protected:
     const RoadEdgeSpeedProfile* speed_profile_;
 }; 
 
+class CostCalculator2 {
+public: 
+    // Constructor 
+    CostCalculator2( const DateTime& start_time,
+                     const std::vector<db_id_t>& allowed_transport_modes,
+                     double walking_speed, double cycling_speed, 
+                     double min_transfer_time, double car_parking_search_time, boost::optional<Road::Vertex> private_parking,
+                     const RoadEdgeSpeedProfile* profile = 0 ) :
+        start_time_( start_time ),
+        allowed_transport_modes_( allowed_transport_modes ),
+        walking_speed_( walking_speed ), cycling_speed_( cycling_speed ), 
+        min_transfer_time_( min_transfer_time ), car_parking_search_time_( car_parking_search_time ),
+        private_parking_( private_parking ),
+        speed_profile_( profile ),
+        start_time_s_( start_time_.time_of_day().total_seconds()/60.0 )
+    {
+    }
+		
+    // Multimodal travel time function
+    template <class Graph>
+    double travel_time( const Graph& graph, const Multimodal::Edge& e, db_id_t mode_id, double initial_time, double initial_shift_time, double& final_shift_time, db_id_t initial_trip_id, db_id_t& final_trip_id, double& wait_time ) const
+    {
+        // default (for non-PT edges)
+        final_trip_id = 0;
+
+        final_shift_time = initial_shift_time;
+        wait_time = 0.0;
+
+        Date day = start_time_.date();
+        initial_time += start_time_s_;
+
+        const TransportMode& mode = graph.transport_modes().find( mode_id )->second;
+        if ( std::find(allowed_transport_modes_.begin(), allowed_transport_modes_.end(), mode_id) != allowed_transport_modes_.end() ) 
+        {
+            switch ( e.connection_type() ) {  
+            case Multimodal::Edge::Road2Road: {
+                double c = road_travel_time( graph.road(), e.road_edge(), graph.road()[ e.road_edge() ].length(), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ); 
+                return c;
+            }
+                break;
+		
+            case Multimodal::Edge::Road2Transport: {
+                double add_cost = 0.0;
+                if ( is_graph_reversed<Graph>::value ) {
+                    if ( initial_trip_id != 0 ) {
+                        // we are "coming" from a Transport2Transport
+                        wait_time = min_transfer_time_;
+                        add_cost = min_transfer_time_;
+                    }
+                }
+
+                // find the road section where the stop is attached to
+                const PublicTransport::Graph& pt_graph = *( e.target().pt_graph() );
+                double abscissa = pt_graph[ e.target().pt_vertex() ].abscissa_road_section();
+                Road::Edge road_e = pt_graph[ e.target().pt_vertex() ].road_edge();
+						
+                // if we are coming from the start point of the road
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY + add_cost;
+                }
+                // otherwise, that is the opposite direction
+                else {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY + add_cost;
+                }
+            }
+                break; 
+					
+            case Multimodal::Edge::Transport2Road: {
+                // find the road section where the stop is attached to
+                const PublicTransport::Graph& pt_graph = *( e.source().pt_graph() );
+                double abscissa = pt_graph[ e.source().pt_vertex() ].abscissa_road_section();
+                Road::Edge road_e = pt_graph[ e.source().pt_vertex() ].road_edge();
+						
+                // if we are coming from the start point of the road
+                if ( target( road_e, graph.road() ) == e.target().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY;
+                }
+                // otherwise, that is the opposite direction
+                else {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + PT_STATION_PENALTY;
+                }
+            } 
+                break;
+					
+            case Multimodal::Edge::Transport2Transport: { 
+                PublicTransport::Edge pt_e;
+                bool found = false;
+                boost::tie( pt_e, found ) = public_transport_edge( e );
+                BOOST_ASSERT(found);
+						
+                if ( ! is_graph_reversed<Graph>::value ) {
+                    // Timetable travel time calculation
+                    const PublicTransport::Graph& pt_graph = *( e.source().pt_graph() );
+                    auto trip_time = next_departure( pt_graph, pt_e, day, initial_time );
+                    //std::cout << "pt_e " << pt_e << " day_ " << day_.day() << "/" << day_.month() << "/" << day_.year() << " time " << initial_time;
+                    if ( ! trip_time ) {
+                        //std::cout << " no trip" << std::endl;
+                        return std::numeric_limits<double>::max();
+                    }
+                    //std::cout << " trip #" << trip_time->trip_id() << std::endl;
+                    // continue on the same trip
+                    if ( trip_time->trip_id() == initial_trip_id ) {
+                        final_trip_id = trip_time->trip_id(); 
+                        wait_time = 0;
+                        return trip_time->arrival_time() - initial_time ; 
+                    }
+                    // Else, no connection without transfer found, or first step
+                    // Look for a service after transfer_time
+                    auto trip_time2 = next_departure( pt_graph, pt_e, day, initial_time + min_transfer_time_ );
+                    if ( trip_time2 ) {
+                        final_trip_id = trip_time2->trip_id();
+                        wait_time = trip_time2->departure_time() - initial_time;
+                        return trip_time2->arrival_time() - initial_time;
+                    }
+                }
+                // FIXME reversed
+                // FIXME frequency-based
+            }
+                break; 
+					
+            case Multimodal::Edge::Road2Poi: {
+                Road::Edge road_e = e.target().poi()->road_edge();
+                double abscissa = e.target().poi()->abscissa_road_section();
+
+                // if we are coming from the start point of the road
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
+                }
+                // otherwise, that is the opposite direction
+                else {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
+                }
+            }
+                break;
+            case Multimodal::Edge::Poi2Road: {
+                Road::Edge road_e = e.source().poi()->road_edge();
+                double abscissa = e.source().poi()->abscissa_road_section();
+
+                // if we are coming from the start point of the road
+                if ( source( road_e, graph.road() ) == e.source().road_vertex() ) {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * abscissa, initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
+                }
+                // otherwise, that is the opposite direction
+                else {
+                    return road_travel_time( graph.road(), road_e, graph.road()[ road_e ].length() * (1 - abscissa), initial_time, mode,
+                                             walking_speed_, cycling_speed_, speed_profile_ ) + POI_STATION_PENALTY;
+                }
+            }
+                break;
+            default: {
+						
+            }
+            }
+        }
+        return std::numeric_limits<double>::max(); 
+    }
+		
+    // Mode transfer time function : returns numeric_limits<double>::max() when the mode transfer is impossible
+    template <class Graph>
+    double transfer_time( const Graph& graph, const Multimodal::Edge& edge, const TransportMode& initial_mode, const TransportMode& final_mode ) const
+    {
+        double transf_t = 0;
+        if (initial_mode.db_id() == final_mode.db_id() ) {
+            return 0.0;
+        }
+
+        const Multimodal::Vertex& src = edge.source();
+        const Multimodal::Vertex& tgt = edge.target();
+
+        if ( initial_mode.is_public_transport() && final_mode.is_public_transport() ) {
+            return 0.0;
+        }
+
+        // park shared vehicle
+        if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.must_be_returned() ) {
+            if (( tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) )) {
+                // FIXME replace 1 by time to park a shared vehicle
+                transf_t += 1;
+            }
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }                
+        }
+        // Parking search time for initial mode
+        else if ( ( transf_t < std::numeric_limits<double>::max() ) && initial_mode.need_parking() ) {
+            if ( (tgt.type() == Multimodal::Vertex::Poi ) && ( tgt.poi()->has_parking_transport_mode( initial_mode.db_id() ) ) ) {
+                // FIXME more complex than that
+                if (initial_mode.traffic_rules() & TrafficRuleCar ) 
+                    transf_t += car_parking_search_time_ ; // Personal car
+                // For bicycle, parking search time = 0
+            }
+            // park on the private parking
+            else if ( private_parking_ && !initial_mode.is_shared() && tgt.road_vertex() == private_parking_.get() ) {
+                transf_t += 1;
+            }
+            // park on streets
+            else if ( ( tgt.type() == Multimodal::Vertex::Road ) && (src.type() == Multimodal::Vertex::Road) &&
+                      ( (graph.road()[ edge.road_edge() ].parking_traffic_rules() & initial_mode.traffic_rules()) > 0 ) ) {
+                if (initial_mode.traffic_rules() & TrafficRuleCar ) 
+                    transf_t += car_parking_search_time_ ; // Personal car
+                // For bicycle, parking search time = 0
+            }
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }
+        }
+
+
+        // take a shared vehicle from a POI
+        if ( ( transf_t < std::numeric_limits<double>::max() ) && final_mode.is_shared() ) {
+            if (( src.type() == Multimodal::Vertex::Poi ) && ( src.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
+                // FIXME replace 1 by time to take a shared vehicle
+                transf_t += 1;
+            }
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }
+        }
+        // Taking vehicle time for final mode 
+        else if ( ( transf_t < std::numeric_limits<double>::max() ) && ( final_mode.need_parking() ) ) {
+            if (( src.type() == Multimodal::Vertex::Poi ) && final_mode.is_shared() && ( src.poi()->has_parking_transport_mode( final_mode.db_id() ) )) {
+                // shared vehicles parked on a POI
+                transf_t += 1;
+            }
+            else if ( private_parking_ && !final_mode.is_shared() && src.road_vertex() == private_parking_.get() ) {
+                // vehicles parked on the private parking
+                transf_t += 1;
+            }
+            else {
+                transf_t = std::numeric_limits<double>::max();
+            }
+        }
+
+        return transf_t; 
+    }
+		
+protected:
+    const DateTime start_time_;
+    const std::vector<db_id_t> allowed_transport_modes_;
+    const double walking_speed_; 
+    const double cycling_speed_; 
+    const double min_transfer_time_; 
+    const double car_parking_search_time_; 
+    boost::optional<Road::Vertex> private_parking_;
+    const RoadEdgeSpeedProfile* speed_profile_;
+    const double start_time_s_;
+}; 
+
 }
 
 #endif

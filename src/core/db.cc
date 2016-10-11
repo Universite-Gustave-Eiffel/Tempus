@@ -47,6 +47,14 @@ Tempus::Time Value::as<Tempus::Time>() const
 }
 
 template <>
+Tempus::Date Value::as<Tempus::Date>() const
+{
+    int y, m, d;
+    sscanf( value_, "%d-%d-%d", &y, &m, &d );
+    return Tempus::Date(y, m, d);
+}
+
+template <>
 long long Value::as<long long>() const
 {
     long long v;
