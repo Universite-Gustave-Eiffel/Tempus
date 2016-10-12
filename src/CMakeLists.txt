@@ -36,9 +36,7 @@ if(BUILD_QGIS_PLUGIN)
   add_subdirectory( hmi_qgis )
 endif()
 
-if(BUILD_OSM2SHP)
-  add_subdirectory( loader )
-endif()
+add_subdirectory( loader )
 
 if(BUILD_TOOLS)
   add_subdirectory( tools )
