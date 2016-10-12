@@ -73,16 +73,17 @@ std::pair<Timetable::TripTimeIterator, Timetable::TripTimeIterator> Timetable::n
     return std::make_pair( it, it2 );
 }
 
-static bool arrival_cmp( const Timetable::TripTime& t1, float t )
+static bool arrival_cmp( float t, const Timetable::TripTime& t1 )
 {
-    return t1.arrival_time() >= t;
+    return t < t1.arrival_time();
 }
 
 std::pair<Timetable::TripTimeIterator, Timetable::TripTimeIterator> Timetable::previous_arrivals( float time_min ) const
 {
-    auto it = std::lower_bound( table_.begin(), table_.end(), time_min, arrival_cmp );
-    if ( it == table_.end() )
+    auto it = std::upper_bound( table_.begin(), table_.end(), time_min, arrival_cmp );
+    if ( it == table_.begin() )
         return std::make_pair( table_.begin(), table_.begin() );
+    it--;
     float t = it->arrival_time();
     while ( it->arrival_time() == t )
         it--;

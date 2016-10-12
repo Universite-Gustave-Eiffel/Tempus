@@ -138,6 +138,13 @@ public:
     class TripTime
     {
     public:
+        TripTime() {}
+        TripTime( float departure_time, float arrival_time, db_id_t trip_id, db_id_t service_id ) :
+            departure_time_( departure_time ),
+            arrival_time_( arrival_time ),
+            trip_id_( trip_id ),
+            service_id_( service_id )
+        {}
         ///
         /// departure time, in minutes since midnight
         DECLARE_RW_PROPERTY( departure_time, float );
