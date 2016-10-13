@@ -2,6 +2,7 @@
 #include "isochrone_plugin.h"
 #include "mm_lib/cost_calculator.hh"
 #include "mm_lib/algorithms.hh"
+#include "utils/timer.hh"
 
 #include <functional>
 
@@ -106,7 +107,7 @@ public:
     void edge_not_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& ) {}
 private:
     const MMVertexDataMap& v_map_;
-    size_t iterations_;
+    size_t& iterations_;
     double limit_;
 };
 
@@ -144,7 +145,8 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
         d.set_predecessor( v );
         vertex_data_map[v] = d;
     }
-    
+
+    Timer t;
     size_t iterations = 0;
     IsochroneVisitor vis( vertex_data_map, isochrone_limit, iterations );
     try {
@@ -152,6 +154,9 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
     }
     catch ( IsochroneVisitor::StopException& ) {
     }
+
+    std::cout << "iterations: " << iterations << std::endl;
+    std::cout << "time: " << std::setprecision(5) << t.elapsed_ms() << std::endl;
 
     result->push_back( Isochrone() );
     Isochrone& isochrone = result->back().isochrone();
