@@ -1,13 +1,13 @@
-create extension if not exists postgis;
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pgtempus" to load this file. \quit
+
 create extension if not exists plpythonu;
 
-drop schema if exists tempus_wps cascade;
 create schema tempus_wps;
 
 --
 -- Get the list of loaded plugins
 --
-drop function if exists tempus_wps.plugin_list(text);
 create function tempus_wps.plugin_list(wps text ='http://localhost/wps') returns setof text
 as $$
 from pytempus import TempusRequest
@@ -18,7 +18,6 @@ $$ language plpythonu;
 --
 -- Call the isochrone plugin
 --
-drop function if exists tempus_wps.isochrone(double precision, double precision, real, timestamp, int[], text, real, real);
 create function tempus_wps.isochrone(x double precision, y double precision, limit_value real,
                 dt timestamp = now(), transport_modes int[] = '{1}', wps text ='http://localhost/wps',
                 walking_speed_km_h real = 3.6,
@@ -38,11 +37,4 @@ r.request(plugin_name='isochrone_plugin', \
           allowed_transport_modes = transport_modes)
 return r.results[0].points
 $$ language plpythonu;
-
-select tempus_wps.plugin_list();
-select tempus_wps.plugin_list();
-
-drop table if exists t;
-create table t as
-select st_concavehull(st_collect(st_makepoint(x,y, 4326)), 0.95) as geom from tempus_wps.isochrone(-1.546040, 47.199764, 10.0, transport_modes := '{1}'::int[]);
 
