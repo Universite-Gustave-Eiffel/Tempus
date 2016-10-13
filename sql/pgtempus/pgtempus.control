@@ -3,3 +3,4 @@ comment = 'Tempus PG extension'
 default_version = '1.0'
 relocatable = true
 requires = 'plpythonu'
+superuser = false
