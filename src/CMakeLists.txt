@@ -45,7 +45,6 @@ endif()
 add_subdirectory( standalone )
 
 if(WIN32)
-    install(DIRECTORY python DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
     install(FILES batch/random_batch.py DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY}/batch)
 endif()
 
