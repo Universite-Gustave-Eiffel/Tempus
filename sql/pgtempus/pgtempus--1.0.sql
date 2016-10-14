@@ -26,10 +26,15 @@ returns table(x double precision, y double precision, mode smallint, cost real)
 as $$
 from pytempus import TempusRequest, Point, RequestStep, Cost, Constraint, DateTime
 import datetime
-ddt = DateTime.from_dt(datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S.%f'))
+if '.' in dt:
+   ddt = DateTime.from_dt(datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S.%f'))
+else:
+   ddt = DateTime.from_dt(datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S'))
 r = TempusRequest(wps)
 r.request(plugin_name='isochrone_plugin', \
-          plugin_options={'Isochrone/limit': limit_value, 'Time/walking_speed': walking_speed_km_h, 'Time/cycling_speed': cycling_speed_km_h}, \
+          plugin_options={'Isochrone/limit': limit_value, \
+                          'Time/walking_speed': walking_speed_km_h, \
+                          'Time/cycling_speed': cycling_speed_km_h}, \
           origin = Point(x,y), \
           steps = [ RequestStep(destination = Point(0,0), \
                                                constraint = Constraint( date_time = ddt, type = 2  )) ], \
