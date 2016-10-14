@@ -1,0 +1,13 @@
+# Copy to /etc/systemd/system
+# Enable it with systemctl enable tempus.service
+# Copy tempus.cmd.sample to /etc/tempus.cmd and set valid options
+[Unit]
+Description=Tempus WPS service
+After=postgresql.service
+
+[Service]
+Type=simple
+Environment="LD_LIBRARY_PATH=/usr/local/lib/tempus"
+# Read options from /etc/tempus.cmd
+ExecStart=/usr/bin/xargs -a /etc/tempus.cmd /usr/local/bin/tempus_wps
+Restart=always

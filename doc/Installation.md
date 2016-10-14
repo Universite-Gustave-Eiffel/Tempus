@@ -111,7 +111,7 @@ Options used:
 
 This will create a listening socket on port 9000 and start a WPS server. This way, you can see debugging outputs.
 
-The WPS server also has a "daemon" mode. Refer to this [file](../script/wps_daemon) for an example of use on Linux.
+You can also launch it as a system daemon. Refer to this [file](../script/tempus.service) to install it with systemd.
 
 Apache configuration
 --------------------
