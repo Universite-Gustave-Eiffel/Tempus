@@ -82,8 +82,11 @@ public:
         else if ( highway_type == "cycleway" ) {
             traffic_rules_ft = Tempus::TrafficRuleBicycle;
         }
-        else if ( highway_type == "footway" ) {
+        else if ( highway_type == "footway" || highway_type == "pedestrian" || highway_type == "steps" ) {
             traffic_rules_ft = Tempus::TrafficRulePedestrian;
+        }
+        else if ( highway_type == "path" || highway_type == "track" ) {
+            traffic_rules_ft = Tempus::TrafficRulePedestrian + Tempus::TrafficRuleBicycle;
         }
         else {
             traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool +
