@@ -48,6 +48,7 @@ class OSMImporter:
         command += ["--pgis", self.dbstring]
         command += ["--nodes-table", "road_node"]
         p = subprocess.Popen(command, stdout = out, stderr = err)
+        return p.wait() == 0
 
 
 
