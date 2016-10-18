@@ -63,9 +63,9 @@ private:
 /// sizeof(Point) = 12
 struct PointWithUses
 {
-    PointWithUses() {}
-    PointWithUses( const Point& pt ) : lon_(pt.lon()), lat_(pt.lat()) {}
-    PointWithUses( float nlon, float nlat ) : lon_(nlon), lat_(nlat)
+    PointWithUses() : uses_( 0 ) {}
+    PointWithUses( const Point& pt ) : lon_(pt.lon()), lat_(pt.lat()), uses_( 0 )  {}
+    PointWithUses( float nlon, float nlat ) : lon_(nlon), lat_(nlat), uses_( 0 )
     {
     }
     float lat() const
