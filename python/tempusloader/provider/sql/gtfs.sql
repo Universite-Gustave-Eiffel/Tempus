@@ -1,6 +1,9 @@
 /*
         Substitutions options
         network: name of the PT network
+        native_srid: SRID code of the road network
+        create_road_nodes: if true, new nodes and sections will be created for PT stops that are too far from the road network.
+                           this allows to import a GTFS network without an underlying road network
 */
 do $$
 begin
@@ -125,97 +128,104 @@ drop index if exists _tempus_import.idx_stops_geom_stop_id;
 create index idx_stops_geom_stop_id on _tempus_import.stops_geom (stop_id);
 
 -- remove constraint on tempus stops and dependencies
-alter table tempus.pt_stop drop CONSTRAINT pt_stop_road_section_id_fkey;
-alter table tempus.pt_stop drop CONSTRAINT pt_stop_parent_station_fkey;
-alter table tempus.pt_stop_time drop constraint pt_stop_time_stop_id_fkey;
+alter table tempus.pt_stop drop CONSTRAINT if exists pt_stop_road_section_id_fkey;
+alter table tempus.pt_stop drop CONSTRAINT if exists pt_stop_parent_station_fkey;
+alter table tempus.pt_stop_time drop constraint if exists pt_stop_time_stop_id_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_from_fkey;
 alter table tempus.pt_section drop constraint if exists pt_section_stop_to_fkey;
 
 do $$
 begin
-raise notice '==== Insert new road nodes if needed ====';
+if %(create_road_nodes) then
+    raise notice '==== Insert new road nodes if needed ====';
+
+   /* ==== Stops ==== */
+
+    drop sequence if exists tempus.seq_road_node_id;
+    create sequence tempus.seq_road_node_id start with 1;
+    perform setval('tempus.seq_road_node_id', (select max(id) from tempus.road_node));
+    
+    drop table if exists _tempus_import.new_nodes;
+    create /*temporary*/
+    table _tempus_import.new_nodes as
+    select
+       stop_id,
+       nextval('tempus.seq_road_node_id')::bigint as node_id,
+       nextval('tempus.seq_road_node_id')::bigint as node_id2
+    from
+    (
+    select
+    		distinct stops.stop_id
+    	from
+    		_tempus_import.stops
+    	join
+    		_tempus_import.stops_geom
+    	on
+    		stops.stop_id = stops_geom.stop_id
+    	left join
+    		tempus.road_section as rs
+    	on
+    		-- only consider road sections within xx meters
+    		-- stops further than this distance will not be included
+    		st_dwithin(stops_geom.geom, rs.geom, case when %(native_srid) = 4326 then 0.015 else 500 end)
+    	where
+    	     rs.id is null
+    ) as t;
+    
+    insert into tempus.road_node
+    select
+       nn.node_id as id,
+       false as bifurcation,
+       st_force3DZ( st_translate(geom, case when %(native_srid) = 4326 then -0.0001 else -10 end,0,0) ) as geom
+       from _tempus_import.new_nodes as nn,
+            _tempus_import.stops_geom as sg
+       where
+            nn.stop_id = sg.stop_id
+    union all
+    select
+       nn.node_id2 as id,
+       false as bifurcation,
+       st_force3DZ( st_translate(geom,case when %(native_srid) = 4326 then 0.0001 else 10 end,0,0) ) as geom
+       from _tempus_import.new_nodes as nn,
+            _tempus_import.stops_geom as sg
+       where
+            nn.stop_id = sg.stop_id
+    ;
+    
+    drop sequence if exists tempus.seq_road_section_id;
+    create sequence tempus.seq_road_section_id start with 1;
+    perform setval('tempus.seq_road_section_id', (select max(id) from tempus.road_section));
+    
+    insert into tempus.road_section
+            (id, road_type, node_from, node_to, traffic_rules_ft, traffic_rules_tf, length, car_speed_limit, road_name, lane, roundabout, bridge, tunnel, ramp, tollway, geom)
+    select
+       nextval('tempus.seq_road_section_id')::bigint as id,
+       1 as road_type, -- ??
+       node_id as node_from,
+       node_id2 as node_to,
+       32767 as traffic_rules_ft,
+       32767 as traffic_rules_tf,
+       0 as length,
+       0 as car_speed_limit,
+       '' as road_name,
+       1 as lane,
+       false as roundabout,
+       false as bridge,
+       false as tunnel,
+       false as ramp,
+       false as tollway,
+       -- create an artificial line around the stop
+       st_makeline(st_translate(geom, case when %(native_srid) = 4326 then -0.0001 else -10 end,0,0),
+                   st_translate(geom, case when %(native_srid) = 4326 then 0.0001 else 10 end,0,0)) as geom
+    from
+       _tempus_import.new_nodes as nn,
+       _tempus_import.stops_geom as sg
+    where nn.stop_id = sg.stop_id
+    ;
+else
+    raise notice '==== No additional road nodes ====';
+end if;
 end$$;
-/* ==== Stops ==== */
-
-drop sequence if exists tempus.seq_road_node_id;
-create sequence tempus.seq_road_node_id start with 1;
-select setval('tempus.seq_road_node_id', (select max(id) from tempus.road_node));
-
-drop table if exists _tempus_import.new_nodes;
-create /*temporary*/ table _tempus_import.new_nodes as
-select
-   stop_id,
-   nextval('tempus.seq_road_node_id')::bigint as node_id,
-   nextval('tempus.seq_road_node_id')::bigint as node_id2
-from
-(
-select
-		distinct stops.stop_id
-	from
-		_tempus_import.stops
-	join
-		_tempus_import.stops_geom
-	on
-		stops.stop_id = stops_geom.stop_id
-	left join
-		tempus.road_section as rs
-	on
-		-- only consider road sections within xx meters
-		-- stops further than this distance will not be included
-		_st_dwithin(stops_geom.geom, rs.geom, 500)
-	where
-	     rs.id is null
-) as t;
-
-insert into tempus.road_node
-select
-   nn.node_id as id,
-   false as bifurcation,
-   st_force3DZ( st_translate(geom,-10,0,0) ) as geom
-   from _tempus_import.new_nodes as nn,
-        _tempus_import.stops_geom as sg
-   where
-        nn.stop_id = sg.stop_id
-union
-select
-   nn.node_id2 as id,
-   false as bifurcation,
-   st_force3DZ( st_translate(geom,10,0,0) ) as geom
-   from _tempus_import.new_nodes as nn,
-        _tempus_import.stops_geom as sg
-   where
-        nn.stop_id = sg.stop_id
-;
-
-drop sequence if exists tempus.seq_road_section_id;
-create sequence tempus.seq_road_section_id start with 1;
-select setval('tempus.seq_road_section_id', (select max(id) from tempus.road_section));
-
-insert into tempus.road_section
-select
-   nextval('tempus.seq_road_section_id')::bigint as id,
-   1 as road_type, -- ??
-   node_id as node_from,
-   node_id2 as node_to,
-   65535 as traffic_rules_ft,
-   65535 as traffic_rules_tf,
-   0 as length,
-   0 as car_speed_limit,
-   '' as road_name,
-   1 as lane,
-   false as roundabout,
-   false as bridge,
-   false as tunnel,
-   false as ramp,
-   false as tollway,
-   -- create an artificial line around the stop
-   st_makeline(st_translate(geom, -10, 0, 0),st_translate(geom,10,0,0)) as geom
-from
-   _tempus_import.new_nodes as nn,
-   _tempus_import.stops_geom as sg
-where nn.stop_id = sg.stop_id
-;
-
 
 do $$
 begin
@@ -233,7 +243,7 @@ select
 	, road_section_id::bigint as road_section_id
 	, zone_id::integer as zone_id
 	-- abscissa_road_section is a float between 0 and 1
-	, st_line_locate_point(geom_road, geom)::double precision as abscissa_road_section
+	, st_lineLocatePoint(geom_road, geom)::double precision as abscissa_road_section
 	, geom
  from (
 	select
@@ -253,7 +263,7 @@ select
 	on
 		-- only consider road sections within xx meters
 		-- stops further than this distance will not be included
-		st_dwithin(stops_geom.geom, rs.geom, 500)
+		st_dwithin(stops_geom.geom, rs.geom, case when %(native_srid) = 4326 then 0.015 else 500 end)
 	window
 		-- select the nearest road geometry for each stop
 		nearest as (partition by stops.stop_id order by st_distance(stops_geom.geom, rs.geom))
@@ -722,7 +732,3 @@ where
    stop2.parent_station is null
 )
 ;
-
-
--- Vacuuming database
---VACUUM FULL ANALYSE;
