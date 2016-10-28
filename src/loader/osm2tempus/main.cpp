@@ -15,7 +15,7 @@
  */
 
 #include "pgsql_writer.h"
-#include "sqlite_writer.h"
+//#include "sqlite_writer.h"
 
 #include "data_profile.h"
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         ( "pgis", po::value<string>()->default_value("dbname=tempus_test_db"), "PostGIS connection options" )
         ( "schema", po::value<string>(&schema)->default_value("tempus"), "set database schema" )
         ( "table", po::value<string>(&table)->default_value("road_section"), "set the table name to populate" )
-        ( "sqlite", po::value<string>(), "SQLite output file" )
+        /*( "sqlite", po::value<string>(), "SQLite output file" )*/
         ( "two-pass", "enable two pass reading" )
         ( "profile,p", po::value<string>()->default_value("tempus"), "use a data profile" )
         ( "list-profiles", "list available data profiles" )
@@ -145,9 +145,10 @@ int main(int argc, char** argv)
                                                data_profile,
                                                keep_tags ) );
     }
-    else if ( vm.count( "sqlite" ) ) {
+    /*else if ( vm.count( "sqlite" ) ) {
         writer.reset( new SqliteWriter( vm["sqlite"].as<string>(), data_profile, keep_tags ) );
     }
+    */
 
     if ( vm.count( "planet" ) ) {
         two_pass_vector_pbf_read( pbf_file, *writer, /*do_import_restrictions = */ true );
