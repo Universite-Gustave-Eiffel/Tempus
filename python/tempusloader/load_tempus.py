@@ -92,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser(description='Tempus data loader')
     parser.add_argument(
         '-s', '--source',
-        required=True,
+        required=False,
         nargs='+',
         help='The source directory/file to load data from')
     parser.add_argument(
@@ -116,7 +116,7 @@ def main():
         action='store_true', dest='doreset', default=False)
     parser.add_argument(
         '-t', '--type',
-        required=True,
+        required=False,
         help='The data type (tomtom, navteq, osm, gtfs, poi, route120, route500)')
     parser.add_argument(
         '-m', '--model-version',
