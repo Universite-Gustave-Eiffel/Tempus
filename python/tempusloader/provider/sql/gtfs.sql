@@ -622,11 +622,19 @@ begin
 raise notice '==== PT transfer ====';
 end$$;
 
+drop sequence if exists seq_transfer_id;
+create sequence seq_transfer_id start with 1;
+select setval('seq_transfer_id', (select max(id) from tempus.road_section));
+
+drop sequence if exists seq_node_id;
+create sequence seq_node_id start with 1;
+select setval('seq_node_id', (select max(id) from tempus.road_node));
+
 -- add a road_node for each pt_stop involved in a transfer
 insert into
 	tempus.road_node
 select
-        nextval('tempus.seq_road_node_id')::bigint as id,
+        nextval('seq_node_id')::bigint as id,
         false as bifurcation,
         geom
 from
@@ -648,8 +656,9 @@ t;
 -- add a road_section for each transfer
 insert into
 	tempus.road_section
+        (id, road_type, node_from, node_to, traffic_rules_ft, traffic_rules_tf, length, car_speed_limit, road_name, lane, roundabout, bridge, tunnel, ramp, tollway, geom)
 select
-   nextval('tempus.seq_road_section_id')::bigint as id,
+   nextval('seq_transfer_id')::bigint as id,
    5 as road_type, -- "other"
    node1.id as node_from,
    node2.id as node_to,
@@ -716,4 +725,4 @@ where
 
 
 -- Vacuuming database
-VACUUM FULL ANALYSE;
+--VACUUM FULL ANALYSE;
