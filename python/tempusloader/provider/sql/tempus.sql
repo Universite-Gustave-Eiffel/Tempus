@@ -161,8 +161,8 @@ CREATE TABLE tempus.road_section
     id bigint PRIMARY KEY,
     vendor_id bigint,
     road_type integer,
-    node_from bigint NOT NULL /*REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE*/,
-    node_to bigint NOT NULL /*REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE*/,
+    node_from bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE,
+    node_to bigint NOT NULL REFERENCES tempus.road_node ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE,
     traffic_rules_ft smallint NOT NULL, -- References tempus.road_traffic_rule => bitfield value
     traffic_rules_tf smallint NOT NULL, -- References tempus.road_traffic_rule => bitfield value
     length double precision NOT NULL, -- in meters
