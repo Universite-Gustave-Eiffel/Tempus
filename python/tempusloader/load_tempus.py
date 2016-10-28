@@ -20,10 +20,16 @@ def import_tomtom(args, shape_options):
     return mni.load()
 
 
-def import_pt(args, substitutions):
+def import_pt(args):
     """Load Public Transportation (GTFS) data into a PostGIS database."""
-    substitutions['native_srid'] = args.native_srid
-    gtfsi = provider.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean, substitutions)
+    subs={}
+    subs['native_srid'] = args.native_srid
+    if args.pt_network is None:
+        sys.stderr.write("A PT network name must be supplied. Use --pt-network")
+        sys.exit(1)
+    subs['network'] = args.pt_network
+    subs['create_road_nodes'] = args.pt_create_roads
+    gtfsi = provider.GTFSImporter(args.source, args.dbstring, args.logfile, args.encoding, args.copymode, not args.noclean, subs)
     return gtfsi.load()
 
 
@@ -55,10 +61,24 @@ def import_osm(args, shape_options):
     return osmi.load()
 
 
-def import_poi(args, shape_options, poi_type, substitutions):
+def import_poi(args, shape_options):
     """Load a point shapefile into a PostGIS database."""
-    substitutions['native_srid'] = args.native_srid
-    poii = provider.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type, substitutions)
+    try:
+        poi_type = int(args.poi_type)
+        if poi_type not in range(1, 6):
+            raise ValueError
+    except ValueError:
+        print "Wrong poi type. Assuming User type (5). Correct values are in range 1-5."
+        poi_type = 5
+    if args.poi_service_name is None:
+        sys.stderr.write("The service name of the POI must be specified with --poi-service-name !")
+        sys.exit(1)
+    subs = {}
+    subs["service_name"] = args.poi_service_name
+    subs["name"] = args.poi_name_field
+    subs["filter"] = args.poi_filter
+    subs['native_srid'] = args.native_srid
+    poii = provider.POIImporter(args.source, args.prefix, args.dbstring, args.logfile, shape_options, not args.noclean, poi_type, subs)
     return poii.load()
 
 
@@ -127,19 +147,18 @@ def main():
         required=False, action='store_true', default=False,
         help="Do not clean temporary SQL file after loading.")
     parser.add_argument(
-        '-y', '--poitype',
+        '-y', '--poi-type',
         required=False, default=5,
         help="Poi type (1: Car park, 2: shared car, 3: Cycle, 4:Shared cycle, 5:user)")
-    parser.add_argument(
-        '-v', '--substitution',
-        required=False, nargs='+', default='',
-        help="List of column name substitution name:value. See poi.sql and gtfs.sql")
-    args = parser.parse_args()
+    parser.add_argument('--poi-name-field', required=False, default="pname", help="Name of the field containing the name of each POI (default 'pname')"),
+    parser.add_argument('--poi-service-name', required=False, help="Name of the POI service imported (required for POI import)"),
+    parser.add_argument('--poi-filter', required=False, default="true", help="WHERE clause of the POI import (default 'true', i.e. no filter)"),
 
-    substitutions = {}
-    for v in args.substitution:
-        [var, value] = v.split(':')
-        substitutions[var] = value
+    parser.add_argument('--pt-network', required=False, help="Name of the public transport to import (required for PT import)"),
+    parser.add_argument('--pt-create-roads', required=False, default=False, action="store_true",
+                        help="If 'true', this will create road nodes and sections for PT stops that are too far from the road network (default 'false')")
+
+    args = parser.parse_args()
 
     if args.type in ('tomtom', 'navteq', 'poi'):
         if not args.srid:
@@ -185,16 +204,9 @@ def main():
             r = import_route500(args, shape_options)
         elif args.type == 'gtfs':
             args.source = args.source[0]
-            r = import_pt(args, substitutions)
+            r = import_pt(args)
         elif args.type == 'poi':
-            try:
-                poi_type = int(args.poitype)
-                if poi_type not in range(1, 6):
-                    raise ValueError
-            except ValueError:
-                print "Wrong poi type. Assuming User type (5). Correct values are in range 1-5."
-                poi_type = 5
-            r = import_poi(args, shape_options, poi_type, substitutions)
+            r = import_poi(args, shape_options)
 
         if not r:
             print "Error during import !"
