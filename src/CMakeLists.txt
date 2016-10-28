@@ -3,7 +3,6 @@ set( BUILD_CORE ON CACHE BOOL "Build Tempus core ?" )
 set( BUILD_WPS ON CACHE BOOL "Build WPS server ?" )
 set( BUILD_QGIS_PLUGIN ON CACHE BOOL "Build QGIS plugin ?" )
 set( BUILD_TEMPUS_PLUGINS ON CACHE BOOL "Build Tempus plugins ?" )
-set( BUILD_OSM2SHP ON CACHE BOOL "Build osm2shp ?" )
 set( BUILD_TOOLS ON CACHE BOOL "Build tools ?" )
 
 if (NOT WIN32)
