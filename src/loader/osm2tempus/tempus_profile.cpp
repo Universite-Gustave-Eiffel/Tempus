@@ -75,9 +75,11 @@ public:
             highway_type == "motorway_link";
 
         // traffic rules
-        if ( highway_type == "motorway" || highway_type == "motorway_link" ||
-             highway_type == "trunk" || highway_type == "primary" || highway_type == "primary_link" ) {
+        if ( highway_type == "motorway" || highway_type == "motorway_link" || highway_type == "trunk" ) {
             traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool + Tempus::TrafficRuleTruck;
+        }
+        else if ( highway_type == "primary" || highway_type == "primary_link" ) {
+            traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool + Tempus::TrafficRuleTruck + Tempus::TrafficRuleBicycle + Tempus::TrafficRulePedestrian;
         }
         else if ( highway_type == "cycleway" ) {
             traffic_rules_ft = Tempus::TrafficRuleBicycle;
@@ -98,8 +100,7 @@ public:
         }
         else {
             if ( highway_type == "motorway" || highway_type == "motorway_link" ||
-                 highway_type == "trunk" || highway_type == "primary" ||
-                 highway_type == "primary_link" || highway_type == "cycleway" )
+                 highway_type == "trunk" || highway_type == "cycleway" )
                 traffic_rules_tf = 0;
             else
                 traffic_rules_tf = Tempus::TrafficRulePedestrian;
