@@ -23,7 +23,9 @@
 # Tempus data loader - OSM data source
 
 import sys
+import os
 import subprocess
+from dbtools import PsqlLoader
 
 # Module to load OpenStreetMap road data (OSM as shapefile)
 class OSMImporter:
@@ -43,12 +45,24 @@ class OSMImporter:
             out = sys.stdout
             err = sys.stderr
 
+        loader = PsqlLoader(dbstring = self.dbstring, logfile = self.logfile)
+        # drop indexes before import
+        loader.set_sqlfile(os.path.join(os.path.dirname(__file__), 'sql', 'drop_road_indexes.sql'))
+        loader.load()
+        
         command = ["osm2tempus"]
         command += ["-i", self.source]
         command += ["--pgis", self.dbstring]
         command += ["--nodes-table", "road_node"]
         p = subprocess.Popen(command, stdout = out, stderr = err)
-        return p.wait() == 0
+        r = p.wait() == 0
+
+        # recreate indexes after import
+        loader.set_sqlfile(os.path.join(os.path.dirname(__file__), 'sql', 'create_road_indexes.sql'))
+        loader.load()
+
+        return r
+        
 
 
 
