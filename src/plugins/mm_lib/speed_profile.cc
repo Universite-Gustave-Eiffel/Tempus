@@ -42,13 +42,16 @@ std::pair<RoadEdgeSpeedProfile::PeriodIterator, RoadEdgeSpeedProfile::PeriodIter
         if ( it != sit->second.end() ) {
             std::map<double, SpeedTimePeriod>::const_iterator mit = it->second.upper_bound( begin_time );
             // we suppose we cover 24h of speed profile
-            BOOST_ASSERT( mit != it->second.end() );
-            mit--;
-			found = true;
-            return std::make_pair( mit, it->second.end() );
+            if ( mit != it->second.begin() ) {
+                mit--;
+                found = true;
+                return std::make_pair( mit, it->second.end() );
+            }
         }
     }
-	// inconsistent return value
+    
+    found = false;
+    // inconsistent return value
     return std::make_pair( PeriodIterator(), PeriodIterator() );
 }
 
