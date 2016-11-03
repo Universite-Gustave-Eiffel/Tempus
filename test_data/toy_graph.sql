@@ -1463,7 +1463,7 @@ SELECT pg_catalog.setval('pt_agency_id_seq', 1, false);
 --
 
 COPY pt_calendar (service_id, monday, tuesday, wednesday, thursday, friday, saturday, sunday, start_date, end_date) FROM stdin;
-1	t	t	t	t	t	t	t	2000-01-01	2031-12-31
+1	t	t	t	t	t	t	t	2016-01-01	2016-12-31
 \.
 
 
