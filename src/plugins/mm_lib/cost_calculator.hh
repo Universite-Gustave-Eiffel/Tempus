@@ -268,13 +268,12 @@ public:
                     // reverse graph
                     auto pt_e_it = rtimetable_.find( mode_id );
                     if ( pt_e_it != rtimetable_.end() ) {
-                        double rinitial_time = -initial_time - initial_shift_time;
-
-                        // look for timetable of the given mode
+                        // look for timetable of the given edge
                         auto mit = pt_e_it->second.find( pt_e );
-                        if ( mit == pt_e_it->second.end() ) { // no timetable for this mode
+                        if ( mit == pt_e_it->second.end() ) { // no timetable for this mode and edge
                             return std::numeric_limits<double>::max(); 
                         }
+                        double rinitial_time = -initial_time - initial_shift_time;
                         // get the time, just before initial_time (upper_bound - 1)
                         auto it = mit->second.upper_bound( rinitial_time ) ;
                         if ( it == mit->second.begin() ) { // nothing before this time

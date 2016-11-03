@@ -770,9 +770,7 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
         start_time = it_data.potential();
         int n_pt_edges = 0;
         for ( ; next != path.end(); ++next, ++it ) {
-            // std::cout << it->vertex << "\tP: " << sec2hm(potential_map_[*it]) << " W: " << sec2hm(wait_map_[*it]) << " shift_map: " << sec2hm(shift_map_[*it]) << std::endl;
-            //            std::cout << next->vertex << "\t  P: " << sec2hm(potential_map_[*next]) << " W: " << sec2hm(wait_map_[*next]) << " S: " << sec2hm(shift) << " wait_time: " << wait_time << std::endl;
-
+            it_data = vertex_data_map_[*it];
             MMVertexData& next_data = vertex_data_map_[*next];
 
             double h1 = it_data.potential();
@@ -819,7 +817,7 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
             }
             it_data.set_potential( h1 );
             next_data.set_potential( h2 );
-        }
+        } // for
         it = path.begin();
         next = it;
         next++;
@@ -923,14 +921,15 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
                 o = vit->second.predecessor();
                 d = vit->first;
             }
-
-            ValuedEdge ve( get_mm_vertex( o.vertex ), get_mm_vertex( d.vertex ) );
-            ve.set_value( "duration", Variant::from_float( vertex_data_map_[d].potential() ) );
-            ve.set_value( "imode", Variant::from_int(o.mode) );
-            ve.set_value( "fmode", Variant::from_int(d.mode) );
-            ve.set_value( "istate", Variant::from_int(o.state) );
-            ve.set_value( "fstate", Variant::from_int(d.state) );
-            trace.push_back( ve );
+            if ( !o.vertex.is_null() && !d.vertex.is_null() ) {
+                ValuedEdge ve( get_mm_vertex( o.vertex ), get_mm_vertex( d.vertex ) );
+                ve.set_value( "duration", Variant::from_float( vertex_data_map_[d].potential() ) );
+                ve.set_value( "imode", Variant::from_int(o.mode) );
+                ve.set_value( "fmode", Variant::from_int(d.mode) );
+                ve.set_value( "istate", Variant::from_int(o.state) );
+                ve.set_value( "fstate", Variant::from_int(d.state) );
+                trace.push_back( ve );
+            }
         }
         roadmap.set_trace( trace );
     }
