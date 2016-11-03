@@ -502,7 +502,11 @@ class VertexIterator :
 
 {
 public:
-    VertexIterator() : graph_( 0 ) {}
+    VertexIterator() : road_it_(), road_it_end_()
+                     , pt_graph_it_(), pt_graph_it_end_()
+                     , poi_it_(), poi_it_end_()
+                     , pt_it_(), pt_it_end_()
+                     , graph_( 0 ) {}
     VertexIterator( const Graph& graph );
 
     ///
@@ -548,7 +552,11 @@ class OutEdgeIterator :
     boost::forward_traversal_tag,
 /* reference */ Multimodal::Edge> {
 public:
-    OutEdgeIterator() : graph_( 0 ) {}
+    OutEdgeIterator() : source_(), graph_( 0 )
+                      , road_it_(), road_it_end_()
+                      , pt_it_(), pt_it_end_()
+                      , stop2road_connection_( 0 ), road2stop_connection_( 0 )
+                      , road2poi_connection_( 0 ), poi2road_connection_( 0 ) {}
     OutEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
 
     void to_end();
@@ -607,7 +615,11 @@ class InEdgeIterator :
     boost::forward_traversal_tag,
 /* reference */ Multimodal::Edge> {
 public:
-    InEdgeIterator() : graph_( 0 ) {}
+    InEdgeIterator() : source_(), graph_( 0 )
+                     , road_it_(), road_it_end_()
+                     , pt_it_(), pt_it_end_()
+                     , stop_from_road_connection_( 0 ), road_from_stop_connection_( 0 )
+                     , road_from_poi_connection_( 0 ), poi_from_road_connection_( 0 ) {}
     InEdgeIterator( const Multimodal::Graph& graph, Multimodal::Vertex source );
 
     void to_end();
@@ -672,7 +684,9 @@ class EdgeIterator :
     boost::forward_traversal_tag,
 /* reference */ Multimodal::Edge> {
 public:
-    EdgeIterator() : graph_( 0 ) {}
+    EdgeIterator() : graph_( 0 )
+                   , vi_(), vi_end_()
+                   , ei_(), ei_end_() {}
     EdgeIterator( const Multimodal::Graph& graph );
 
     void to_end();

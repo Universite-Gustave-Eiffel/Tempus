@@ -42,7 +42,7 @@ public:
     MMVertex( db_id_t idx, db_id_t network_idx ) : type_(Transport), id_(idx), network_id_(network_idx) {}
 
 private:
-    db_id_t network_id_;
+    db_id_t network_id_ = 0;
 };
 
 class MMEdge
@@ -51,8 +51,10 @@ public:
     MMEdge( const MMVertex& vertex1, const MMVertex& vertex2 ) : source_(vertex1), target_(vertex2) {}
     MMEdge( MMVertex&& vertex1, MMVertex&& vertex2 ) : source_(vertex1), target_(vertex2) {}
 
-    DECLARE_RO_PROPERTY( source, MMVertex );
-    DECLARE_RO_PROPERTY( target, MMVertex );
+    const MMVertex& source() const { return source_; }
+    const MMVertex& target() const { return target_; }
+private:
+    MMVertex source_, target_;
 };
 
 ///
@@ -119,17 +121,17 @@ private:
 protected:
     ///
     /// Graph metadata
-    std::map<std::string, std::string> metadata_;
+    std::map<std::string, std::string> metadata_ = {};
 
-    TransportModes transport_modes_;
+    TransportModes transport_modes_ = TransportModes();
 
-    NetworkMap network_map_;
+    NetworkMap network_map_ = NetworkMap();
 
 private:
     typedef std::map<std::string, Tempus::db_id_t> NameToId;
     ///
     /// Associative array that maps a transport type name to a transport type id
-    NameToId transport_mode_from_name_;
+    NameToId transport_mode_from_name_ = NameToId();
 };
 
 ///

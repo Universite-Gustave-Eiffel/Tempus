@@ -36,7 +36,7 @@ struct remove_const<T const>
 /// Macro used to declare a class property as well as its getter and setter
 #define DECLARE_RW_PROPERTY(NAME, TYPE)                \
 private:                                               \
-  TYPE NAME ## _;                                      \
+ TYPE NAME ## _ = TYPE();                              \
 public:                                                \
   const remove_const<TYPE>::type& NAME() const { return NAME ## _; } \
   void set_##NAME( const remove_const<TYPE>::type& a ) { NAME ## _ = a; } \
@@ -46,7 +46,7 @@ public:                                                \
 /// Macro used to declare a class property and its getter
 #define DECLARE_RO_PROPERTY(NAME, TYPE)                \
 private:                                               \
-  TYPE NAME ## _;                                      \
+ TYPE NAME ## _ = TYPE();                              \
 public:                                                \
   const remove_const<TYPE>::type& NAME() const { return NAME ## _; }
 
@@ -54,7 +54,7 @@ public:                                                \
 /// Macro used to declare a class property and its setter
 #define DECLARE_WO_PROPERTY(NAME, TYPE)                \
 private:                                               \
-  TYPE NAME ## _;                                      \
+ TYPE NAME ## _ = TYPE();                              \
 public:                                                \
   void set_##NAME( const TYPE& a ) { NAME ## _ = a; }  \
   void set_##NAME( TYPE&& a ) { NAME ## _ = a; }

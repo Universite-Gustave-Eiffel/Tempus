@@ -179,14 +179,14 @@ public:
     std::pair<TripTimeIterator, TripTimeIterator> previous_arrivals( float time_min ) const;
 private:
     // sorted vector of times
-    std::vector<TripTime> table_;
+    std::vector<TripTime> table_ = std::vector<TripTime>();
 };
 
 ///
 /// used as an Edge in a PublicTransportGraph
 struct Section {
 public:
-    Section() : network_id_(0) {}
+    Section() : network_id_(0), time_table_() {}
 
     /// must not be null
     DECLARE_RW_PROPERTY( network_id, db_id_t );

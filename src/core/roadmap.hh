@@ -115,7 +115,7 @@ public:
     /// For a trip from station A to station C that passes through the station B on the same trip_id
     /// only one step is stored
     struct PublicTransportStep : public Step {
-        PublicTransportStep() : Step( Step::PublicTransportStep ), wait_(0.0) {}
+        PublicTransportStep() : Step( Step::PublicTransportStep ), wait_(0.0), departure_time_(0.0), arrival_time_(0.0) {}
 
         ///
         /// Public transport network id
