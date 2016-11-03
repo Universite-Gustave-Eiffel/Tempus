@@ -9,7 +9,7 @@
   </xs:complexType>
   <xs:complexType name="IntVariant">
     <xs:attribute name="k" type="xs:string"/>
-    <xs:attribute name="v" type="xs:int"/>
+    <xs:attribute name="v" type="xs:integer"/>
   </xs:complexType>
   <xs:complexType name="FloatVariant">
     <xs:attribute name="k" type="xs:string"/>
