@@ -7,5 +7,6 @@ add_executable( test_pt timetable_tests.cc main.cc )
 target_link_libraries( test_pt tempus )
 
 add_test( test_core ${EXECUTABLE_OUTPUT_PATH}/test_core )
+add_test( test_pt ${EXECUTABLE_OUTPUT_PATH}/test_pt )
 
 
