@@ -23,7 +23,33 @@ void import_constants( Db::Connection& connection, Multimodal::Graph& graph )
     graph.set_transport_modes( modes );
 }
 
-std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, std::map<Tempus::db_id_t, Road::Edge>& road_sections_map )
+struct RoadEdgePair
+{
+    RoadEdgePair() : edge_(), opposite_() {}
+    RoadEdgePair( const Road::Edge& e1 ) : edge_(e1), opposite_() {}
+    RoadEdgePair( const Road::Edge& e1, const Road::Edge& e2 ) :edge_(e1), opposite_(e2) {}
+    RoadEdgePair( const RoadEdgePair& p ) : edge_(p.edge_), opposite_(p.opposite_) {}
+
+    boost::optional<Road::Edge> edge() const { return edge_; }
+    boost::optional<Road::Edge> opposite() const { return opposite_; }
+
+    void set_edge( const Road::Edge& e )
+    {
+        edge_ = e;
+    }
+    void set_opposite( const Road::Edge& e )
+    {
+        opposite_ = e;
+    }
+private:
+    boost::optional<Road::Edge> edge_;
+    boost::optional<Road::Edge> opposite_;
+};
+
+// mapping between road section ID and road edges
+using RoadSectionMap = std::map<Tempus::db_id_t, RoadEdgePair>;
+
+std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, RoadSectionMap& road_sections_map )
 {
    if ( consistency_check ) {
         //
@@ -317,7 +343,13 @@ std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, Pro
         boost::tie(e, found) = edge( p.first, p.second, *road_graph );
         BOOST_ASSERT( found );
         // populate road_sections_map
-        road_sections_map[ sit.second.db_id() ] = e;
+        auto rs_it = road_sections_map.find( sit.second.db_id() );
+        if ( rs_it == road_sections_map.end() ) {
+            road_sections_map.emplace( sit.second.db_id(), RoadEdgePair( e ) );
+        }
+        else {
+            rs_it->second.set_opposite( e );
+        }
         (*road_graph)[e] = sit.second;
     }
 
@@ -328,13 +360,12 @@ std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, Pro
 /// Function used to import the road and public transport graphs from a PostgreSQL database.
 std::unique_ptr<Multimodal::Graph> import_graph( Db::Connection& connection, ProgressionCallback& progression, bool consistency_check, const std::string& schema_name )
 {
-    std::map<Tempus::db_id_t, Road::Edge> road_sections_map;
+    RoadSectionMap road_sections_map;
     std::unique_ptr<Multimodal::Graph> graph;
     std::unique_ptr<Road::Graph> sm_road_graph( import_road_graph_( connection, progression, consistency_check, schema_name, road_sections_map ) );
 
     // build the multimodal graph
     graph.reset( new Multimodal::Graph( std::move(sm_road_graph) ) );
-    Road::Graph* road_graph = &graph->road();
 
     // network_id -> pt_node_id -> vertex
     std::map<Tempus::db_id_t, std::map<Tempus::db_id_t, PublicTransport::Vertex> > pt_nodes_map;
@@ -352,7 +383,6 @@ std::unique_ptr<Multimodal::Graph> import_graph( Db::Connection& connection, Pro
             network.set_name( res[i][1] );
 
             networks[network.db_id()] = network;
-            std::cout << "insert " << network.db_id() << std::endl;
             pt_graphs[network.db_id()].reset(new PublicTransport::Graph());
         }
     }
@@ -402,17 +432,10 @@ std::unique_ptr<Multimodal::Graph> import_graph( Db::Connection& connection, Pro
                 continue;
             }
 
-            stop.set_road_edge( road_sections_map[ road_section ] );
-            // look for an opposite road edge
-            {
-                Road::Edge opposite_edge;
-                bool found;
-                boost::tie( opposite_edge, found ) = edge( target( stop.road_edge(), *road_graph ),
-                                                           source( stop.road_edge(), *road_graph ),
-                                                           *road_graph );
-                if ( found && (graph->road()[stop.road_edge()].db_id() == graph->road()[opposite_edge].db_id()) ) {
-                    stop.set_opposite_road_edge( opposite_edge );
-                }
+            stop.set_road_edge( road_sections_map[ road_section ].edge().get() );
+            boost::optional<Road::Edge> opposite = road_sections_map[road_section].opposite();
+            if ( opposite ) {
+                stop.set_opposite_road_edge( opposite.get() );
             }
 
             stop.set_zone_id( res_i[j++] );
@@ -607,20 +630,13 @@ std::unique_ptr<Multimodal::Graph> import_graph( Db::Connection& connection, Pro
                 continue;
             }
 
-            Road::Edge re = road_sections_map[ road_section_id ];
+            Road::Edge re = road_sections_map[ road_section_id ].edge().get();
             poi.set_road_edge( re );
             graph->add_poi_ref( re, pidx );
-            // look for an opposite road edge
-            {
-                Road::Edge opposite_edge;
-                bool found;
-                boost::tie( opposite_edge, found ) = edge( target( poi.road_edge(), *road_graph ),
-                                                           source( poi.road_edge(), *road_graph ),
-                                                           *road_graph );
-                if ( found && (graph->road()[poi.road_edge()].db_id() == graph->road()[opposite_edge].db_id()) ) {
-                    poi.set_opposite_road_edge( opposite_edge );
-                    graph->add_poi_ref( opposite_edge, pidx );
-                }
+            boost::optional<Road::Edge> opposite = road_sections_map[road_section_id].opposite();
+            if ( opposite ) {
+                poi.set_opposite_road_edge( opposite.get() );
+                graph->add_poi_ref( opposite.get(), pidx );
             }
 
             poi.set_abscissa_road_section( res_i[5] );
