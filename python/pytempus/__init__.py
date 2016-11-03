@@ -3,3 +3,4 @@ from tempus_request import Cost,CostName,CostUnit,Point,DateTime,Constraint,Requ
 from tempus_request import RoadTransportStep,TransferStep
 from tempus_request import Roadmap,Isochrone,OptionType,OptionValue
 from tempus_request import Variant,PluginOption,Plugin,TransportMode,TransportNetwork,RoadVertex,PoiVertex,PtVertex,ValuedEdge,TempusRequest
+import wps_client
