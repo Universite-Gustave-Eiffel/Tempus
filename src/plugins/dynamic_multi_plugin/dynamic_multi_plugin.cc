@@ -573,7 +573,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     destination_o.mode = request.allowed_modes()[0];
 
     // make a property map out of the vertex data map
-    boost::associative_property_map< MMVertexDataMap > vertex_data_pmap( vertex_data_map_ );
+    associative_property_map_default_value<MMVertexDataMap> vertex_data_pmap( vertex_data_map_, MMVertexData() );
 
     double start_time = request.steps()[1].constraint().date_time().time_of_day().total_seconds()/60;
 
