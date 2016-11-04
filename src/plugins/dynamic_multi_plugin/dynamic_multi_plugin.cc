@@ -44,6 +44,7 @@
 using namespace std;
 
 namespace Tempus {
+namespace DynamicMultiPlugin {
 
 // the exception used to shortcut dijkstra
 struct path_found_exception
@@ -935,6 +936,7 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
 }
 
 StaticVariables DynamicMultiPluginRequest::s_;
-}
+} // namespace DynamicMultiPlugin
+} // namespace Tempus
 
-DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin )
+DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin::DynamicMultiPlugin )

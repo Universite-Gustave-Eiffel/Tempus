@@ -8,6 +8,8 @@
 
 namespace Tempus
 {
+namespace IsochronePlugin
+{
 
 IsochronePlugin::IsochronePlugin( ProgressionCallback& progression, const VariantMap& options )
     : Plugin( "isochrone_plugin", options )
@@ -45,21 +47,24 @@ struct VertexLabel
         return vertex == other.vertex && mode == other.mode;
     }
 };
+} // namespace IsochronePlugin
 } // namespace Tempus
 
 namespace std
 {
 template <>
-struct hash<Tempus::VertexLabel>
+struct hash<Tempus::IsochronePlugin::VertexLabel>
 {
-    size_t operator()( const Tempus::VertexLabel& d ) const
+    size_t operator()( const Tempus::IsochronePlugin::VertexLabel& d ) const
     {
         return hash<Tempus::Multimodal::Vertex>()( d.vertex ) ^ ( hash<Tempus::db_id_t>()( d.mode ) << 1 );
     }
 };
-}
+} // namespace std
 
 namespace Tempus
+{
+namespace IsochronePlugin
 {
 //
 // Data structure used inside the dijkstra-like algorithm
@@ -171,11 +176,7 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
 }
 
 
+} // namespace IsochronePlugin
 } // namespace Tempus
 
-DECLARE_TEMPUS_PLUGIN( "isochrone_plugin", Tempus::IsochronePlugin )
-
-
-
-
-
+DECLARE_TEMPUS_PLUGIN( "isochrone_plugin", Tempus::IsochronePlugin::IsochronePlugin )

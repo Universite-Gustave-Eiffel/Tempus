@@ -22,6 +22,7 @@
 #include "plugin.hh"
 
 namespace Tempus {
+namespace IsochronePlugin {
 
 ///
 /// Plugin that computes a (multimodal) isochrone
@@ -86,6 +87,7 @@ private:
     const Multimodal::Graph* graph_;
 };
 
-}
+} // namespace Isochrone
+} // namespace Tempus
 
 #endif
