@@ -598,9 +598,18 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     else {
         profile = 0;
     }
+    // the reverse graph
+    Multimodal::ReverseGraph rgraph( *graph_ );
+
+    // cost calculator for the "forward" graph
     CostCalculatorExternalTimetable<Multimodal::Graph> cost_calculator( *graph_, request.steps()[1].constraint().date_time().date(),
                                                                         s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency,
                                                                         request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
+
+    // cost calculator for the reverse graph
+    CostCalculatorExternalTimetable<Multimodal::ReverseGraph> rcost_calculator( rgraph, request.steps()[1].constraint().date_time().date(),
+                                                                                s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency,
+                                                                                request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
     
     // destinations
     std::vector<Road::Vertex> destinations;
@@ -643,6 +652,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
     DestinationDetectorVisitor<Multimodal::Graph> vis( *graph_, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
+    DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
 
     bool path_found = false;
     try {
@@ -651,10 +661,8 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
             double h_speed_max = get_float_option( "AStar/speed_heuristic" );
 
             if ( reversed ) {
-                Multimodal::ReverseGraph rgraph( *graph_ );
                 EuclidianHeuristic<Multimodal::ReverseGraph> heuristic( rgraph, request.origin(), h_speed_max );
-                DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
-                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), rvis, heuristic );
+                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, rcost_calculator, request.allowed_modes(), rvis, heuristic );
             }
             else {
                 EuclidianHeuristic<Multimodal::Graph> heuristic( *graph_, request.destination(), h_speed_max );
@@ -663,9 +671,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
         }
         else {
             if ( reversed ) {
-                Multimodal::ReverseGraph rgraph( *graph_ );
-                DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
-                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), rvis );
+                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, rcost_calculator, request.allowed_modes(), rvis );
             }
             else {
                 combined_ls_algorithm_no_init( *graph_, automaton_, origin_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
