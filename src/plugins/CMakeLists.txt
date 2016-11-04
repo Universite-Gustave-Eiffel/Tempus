@@ -33,6 +33,7 @@ install( TARGETS
     sample_pt_plugin 
     dynamic_multi_plugin
     mm_lib
+    ARCHIVE DESTINATION bin
     LIBRARY DESTINATION bin
     )
 else()
