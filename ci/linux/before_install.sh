@@ -9,6 +9,6 @@ sudo apt-get install --force-yes \
     cmake libboost-chrono1.55-dev libboost-program-options1.55-dev libboost-timer1.55-dev \
     libboost-test1.55-dev libboost-date-time1.55-dev libboost-thread1.55-dev \
     libboost-system1.55-dev libboost-serialization1.55-dev \
-    libshp1 libshp-dev libfcgi-dev pyqt4-dev-tools
+    libshp1 libshp-dev libfcgi-dev pyqt4-dev-tools libprotobuf-dev libosmpbf-dev
     
 export CXX="g++-4.8"
