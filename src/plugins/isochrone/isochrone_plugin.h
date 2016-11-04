@@ -59,7 +59,7 @@ public:
 
     ///
     /// Access to the underlying routing data (graph + auxliary data)
-    const RoutingData* routing_data() const { return graph_; }
+    const RoutingData* routing_data() const override { return graph_; }
 
     ///
     /// Method the creates a PluginRequest object to handle the request

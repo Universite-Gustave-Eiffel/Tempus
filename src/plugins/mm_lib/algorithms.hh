@@ -32,13 +32,12 @@
 #include <type_traits>
 
 #include "reverse_multimodal_graph.hh"
-#include "cost_calculator.hh"
 
 namespace Tempus {
 
 struct NullHeuristic
 {
-    constexpr float operator()( const Multimodal::Vertex& )
+    float operator() ( const Multimodal::Vertex& ) const
     {
         return 0.0;
     }

@@ -107,7 +107,7 @@ public:
     virtual std::unique_ptr<RoutingData> file_import( const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const override;
     virtual void file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& progression, const VariantMap& options = VariantMap() ) const override;
 
-    uint32_t version() const { return 1; }
+    uint32_t version() const override { return 1; }
 };
 
 } // namespace Tempus

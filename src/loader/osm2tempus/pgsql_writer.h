@@ -34,7 +34,7 @@ public:
     ~SQLBinaryCopyWriter();
     
     virtual void begin_nodes() override;
-    virtual void write_node( uint64_t node_id, float lat, float lon );
+    virtual void write_node( uint64_t node_id, float lat, float lon ) override;
     virtual void end_nodes() override;
 
     virtual void begin_sections() override;

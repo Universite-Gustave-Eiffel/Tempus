@@ -418,7 +418,7 @@ public:
         Db::Connection connection( plugin_->db_options() );
         simple_multimodal_roadmap( *result, connection, graph );
 
-        return std::move(result);
+        return result;
     }
 };
 

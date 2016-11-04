@@ -333,7 +333,7 @@ public:
 
         Db::Connection connection( plugin_->db_options() );
         fill_roadmap_from_db( roadmap.begin(), roadmap.end(), connection );
-        return std::move( result );
+        return result;
     }
 };
 

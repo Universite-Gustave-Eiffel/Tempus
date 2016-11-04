@@ -173,7 +173,7 @@ struct RestrictionReader
                 }
                 else if ( tr.type == TurnRestriction::NoStraightOn || tr.type == TurnRestriction::OnlyStraightOn ) {
                     // take the angle closer to 0
-                    if ( abs(angle[0]) < abs(angle[1]) )
+                    if ( std::abs(angle[0]) < std::abs(angle[1]) )
                         section_to = sections_to[0];
                     else
                         section_to = sections_to[1];

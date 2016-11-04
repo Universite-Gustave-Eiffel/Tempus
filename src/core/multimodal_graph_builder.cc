@@ -760,7 +760,7 @@ std::unique_ptr<RoutingData> MultimodalGraphBuilder::pg_import( const std::strin
     std::unique_ptr<Multimodal::Graph> mm_graph( import_graph( connection, progression, consistency_check, schema_name ) );
     import_constants( connection, *mm_graph );
     std::unique_ptr<RoutingData> rgraph( mm_graph.release() );
-    return std::move(rgraph);
+    return rgraph;
 }
 
 std::unique_ptr<RoutingData> MultimodalGraphBuilder::file_import( const std::string& filename, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const
@@ -776,7 +776,7 @@ std::unique_ptr<RoutingData> MultimodalGraphBuilder::file_import( const std::str
 
     unserialize( ifs, *graph, binary_serialization_t() );
     std::unique_ptr<RoutingData> rd( graph.release() );
-    return std::move( rd );
+    return rd;
 }
 
 void MultimodalGraphBuilder::file_export( const RoutingData* rd, const std::string& filename, ProgressionCallback& /*progression*/, const VariantMap& /*options*/ ) const

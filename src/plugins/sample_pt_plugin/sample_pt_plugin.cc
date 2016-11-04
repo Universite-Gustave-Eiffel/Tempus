@@ -269,7 +269,7 @@ public:
             roadmap.add_step( std::auto_ptr<Roadmap::Step>(ptstep) );
         }
 
-        return std::move( result );
+        return result;
     }
 };
 

@@ -358,7 +358,7 @@ public:
             simple_multimodal_roadmap( *result, connection, graph_ );
         }
 
-        return std::move( result );
+        return result;
     }
 };
 
