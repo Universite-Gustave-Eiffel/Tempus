@@ -60,7 +60,8 @@ template < class NetworkGraph,
            class Automaton,
            class Object, 
            class VertexDataMap,
-           class Visitor>
+           class Visitor,
+           class CostCalculator>
 void combined_ls_algorithm_no_init(
                                    const NetworkGraph& graph,
                                    const Automaton& automaton,
@@ -140,13 +141,12 @@ void combined_ls_algorithm_no_init(
                 double final_shift_time = 0.0;
 
                 // compute the time needed to transfer from one mode to another
-                double cost = cost_calculator.transfer_time( graph, current_edge, initial_mode, mode );
+                double cost = cost_calculator.transfer_time( current_edge, initial_mode, mode );
                 if ( cost < std::numeric_limits<double>::max() )
                 {
                     initial_shift_time = min_vd.shift_time();
                     // will update final_trip_id and wait_time
-                    double travel_time = cost_calculator.travel_time( graph,
-                                                                      current_edge,
+                    double travel_time = cost_calculator.travel_time( current_edge,
                                                                       mode.db_id(),
                                                                       min_pi,
                                                                       initial_shift_time,
@@ -188,12 +188,13 @@ void combined_ls_algorithm_no_init(
 template < class Graph,
            class Object, 
            class VertexDataMap,
-           class Visitor>
+           class Visitor,
+           class CostCalculator>
 void combined_ls_algorithm_no_init(
                                    const Graph& graph,
                                    std::vector<Object> sources,
                                    VertexDataMap vertex_data_map,
-                                   CostCalculator2 cost_calculator, 
+                                   CostCalculator cost_calculator, 
                                    const std::vector<db_id_t>& request_allowed_modes,
                                    Visitor vis,
                                    std::function<double (const Multimodal::Vertex&)> heuristic = NullHeuristic() )
@@ -261,13 +262,12 @@ void combined_ls_algorithm_no_init(
                 double final_shift_time = 0.0;
 
                 // compute the time needed to transfer from one mode to another
-                double cost = cost_calculator.transfer_time( graph, current_edge, initial_mode, mode );
+                double cost = cost_calculator.transfer_time( current_edge, initial_mode, mode );
                 if ( cost < std::numeric_limits<double>::max() )
                 {
                     initial_shift_time = min_vd.shift_time();
                     // will update final_trip_id and wait_time
-                    double travel_time = cost_calculator.travel_time( graph,
-                                                                      current_edge,
+                    double travel_time = cost_calculator.travel_time( current_edge,
                                                                       mode.db_id(),
                                                                       min_pi,
                                                                       initial_shift_time,

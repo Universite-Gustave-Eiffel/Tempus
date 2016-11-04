@@ -126,13 +126,14 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
     double cycling_speed = get_float_option( "Time/cycling_speed" );
     double car_parking_search_time = get_float_option( "Time/car_parking_search_time" );
 
-    CostCalculator2 cost_calculator( request.steps()[1].constraint().date_time(),
-                                     request.allowed_modes(),
-                                     walking_speed,
-                                     cycling_speed,
-                                     min_transfer_time,
-                                     car_parking_search_time,
-                                     boost::none );
+    CostCalculatorInternalTimetable<Multimodal::Graph> cost_calculator( *graph_,
+                                                                        request.steps()[1].constraint().date_time().date(),
+                                                                        request.allowed_modes(),
+                                                                        walking_speed,
+                                                                        cycling_speed,
+                                                                        min_transfer_time,
+                                                                        car_parking_search_time,
+                                                                        boost::none );
     
     MMVertexDataMap vertex_data_map;
     boost::associative_property_map< MMVertexDataMap > vertex_data_pmap( vertex_data_map );

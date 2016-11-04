@@ -598,8 +598,10 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     else {
         profile = 0;
     }
-    CostCalculator cost_calculator( s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency, request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
-
+    CostCalculatorExternalTimetable<Multimodal::Graph> cost_calculator( *graph_, request.steps()[1].constraint().date_time().date(),
+                                                                        s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency,
+                                                                        request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
+    
     // destinations
     std::vector<Road::Vertex> destinations;
     // if the "multi_destinations" option is here, take destinations from it
