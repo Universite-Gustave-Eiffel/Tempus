@@ -1,7 +1,15 @@
 var searchData=
 [
-  ['metadata',['metadata',['../class_tempus_1_1_routing_data.html#ab7effc684b64620f5ca734c5b5f37d98',1,'Tempus::RoutingData::metadata(const std::string &amp;key) const '],['../class_tempus_1_1_routing_data.html#a92a9f1b7cf094566d5adc4ec6658ee06',1,'Tempus::RoutingData::metadata() const ']]],
-  ['metric_5fto_5fstring',['metric_to_string',['../class_tempus_1_1_plugin_request.html#ac8c571edc21f4cf0cf34a4b06e023e91',1,'Tempus::PluginRequest']]],
-  ['metrics',['metrics',['../class_tempus_1_1_plugin_request.html#a42dc7c65dc28ee7c7451184092b0ae67',1,'Tempus::PluginRequest']]],
-  ['multiplugin',['MultiPlugin',['../class_tempus_1_1_multi_plugin.html#a3c7df7815e089f062215f07721172571',1,'Tempus::MultiPlugin']]]
+  ['n_5fcolumns',['n_columns',['../class_data_profile.html#ac50de7fce5adc77d6894ca90941b76f8',1,'DataProfile::n_columns()'],['../class_tempus_data_profile.html#ac235cd0238a8be5f307678357f2a29aa',1,'TempusDataProfile::n_columns()']]],
+  ['name',['name',['../class_tempus_1_1_plugin.html#a60155cf2183d146fe15fc0857af6e9b8',1,'Tempus::Plugin::name()'],['../class_tempus_1_1_routing_data.html#acff07d1bfa3a01f70ab9589aa3536093',1,'Tempus::RoutingData::name()'],['../class_tempus_1_1_routing_data_builder.html#a6bfe866db078a51049f3687c8952c988',1,'Tempus::RoutingDataBuilder::name()']]],
+  ['network',['network',['../struct_tempus_1_1_multimodal_1_1_reverse_graph.html#a5e143ade66a070393d99190a5bd2aec6',1,'Tempus::Multimodal::ReverseGraph::network()'],['../class_tempus_1_1_routing_data.html#af29a96cd9a82fc0cef6ee230483be477',1,'Tempus::RoutingData::network()']]],
+  ['network_5fmap',['network_map',['../class_tempus_1_1_routing_data.html#a4c84f492eb1fd22a6a503c8b3f412059',1,'Tempus::RoutingData']]],
+  ['new_5fclone',['new_clone',['../namespace_tempus.html#a0fa6e100e6c5647a290a0655be9368a2',1,'Tempus']]],
+  ['new_5fnode',['new_node',['../namespace_x_m_l.html#a450dfe5acd9b0ec3738e8ad3cede9a3a',1,'XML']]],
+  ['new_5fprop',['new_prop',['../namespace_x_m_l.html#a7facef7f1d6b36d660f20ab6086d61fb',1,'XML']]],
+  ['new_5ftext',['new_text',['../namespace_x_m_l.html#a118cf72c89ac1f851d0210dd068fbbcb',1,'XML']]],
+  ['next_5fdeparture',['next_departure',['../namespace_tempus_1_1_public_transport.html#a28bbbaf696ab198de63ba6d626b1f367',1,'Tempus::PublicTransport']]],
+  ['next_5fdepartures',['next_departures',['../class_tempus_1_1_public_transport_1_1_timetable.html#ae5ed07d4285622e4303bdee709a55a03',1,'Tempus::PublicTransport::Timetable']]],
+  ['num_5fedges',['num_edges',['../namespace_tempus_1_1_multimodal.html#aa471289c34c78be26ca96395bb38678a',1,'Tempus::Multimodal::num_edges(const Graph &amp;graph)'],['../namespace_tempus_1_1_multimodal.html#afa66cc27996e23b34fb2b731a0f562e5',1,'Tempus::Multimodal::num_edges(const ReverseGraph &amp;graph)']]],
+  ['num_5fvertices',['num_vertices',['../namespace_tempus_1_1_multimodal.html#ab9673ee6e3f3761ff8a34ea28de3760a',1,'Tempus::Multimodal::num_vertices(const Graph &amp;graph)'],['../namespace_tempus_1_1_multimodal.html#a2be40a9bc4a7647c16bdb57666871145',1,'Tempus::Multimodal::num_vertices(const ReverseGraph &amp;graph)']]]
 ];

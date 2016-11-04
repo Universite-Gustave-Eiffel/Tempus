@@ -1,13 +1,23 @@
 var searchData=
 [
-  ['lengthcalculator',['LengthCalculator',['../class_tempus_1_1_length_calculator.html',1,'Tempus']]],
-  ['lexical_5fcast_5faux_5f',['lexical_cast_aux_',['../struct_tempus_1_1lexical__cast__aux__.html',1,'Tempus']]],
-  ['lexical_5fcast_5faux_5f_3c_20std_3a_3astring_20_3e',['lexical_cast_aux_&lt; std::string &gt;',['../struct_tempus_1_1lexical__cast__aux___3_01std_1_1string_01_4.html',1,'Tempus']]],
-  ['load',['load',['../classtempus_1_1dbtools_1_1_psql_loader.html#ad807f902885ea4c14ae8f739bcae1340',1,'tempus.dbtools.PsqlLoader.load()'],['../classtempus_1_1tools_1_1_shp_loader.html#a180a57934cd4b6f2fcf740d3c5768d68',1,'tempus.tools.ShpLoader.load()'],['../class_x_m_l_1_1_schema.html#ab0844654427b4e084a5d1162e34dd563',1,'XML::Schema::load()']]],
-  ['load_5fdata',['load_data',['../classtempus_1_1importer_1_1_data_importer.html#a11ba8ab4fba40831cbcaca4ddde99e5e',1,'tempus.importer.DataImporter.load_data()'],['../classtempus_1_1importer_1_1_shp_importer.html#a7eba1a5845557a868c2d29507e0c1035',1,'tempus.importer.ShpImporter.load_data()'],['../classtempus_1_1pt_1_1_g_t_f_s_importer.html#ab9f94bd49e6622e865343022f94d204c',1,'tempus.pt.GTFSImporter.load_data()']]],
-  ['load_5fgtfs',['load_gtfs',['../classtempus_1_1pt_1_1_g_t_f_s_importer.html#a0d167bb002441447d71806bc1ca28c27',1,'tempus::pt::GTFSImporter']]],
-  ['load_5fmetadata',['load_metadata',['../namespace_tempus.html#aa745fdbbc132adf55e46038bab9b7961',1,'Tempus']]],
-  ['load_5frouting_5fdata',['load_routing_data',['../namespace_tempus.html#a0f07a861bbcbb1c2676177ac728ee23b',1,'Tempus']]],
-  ['load_5fsqlfiles',['load_sqlfiles',['../classtempus_1_1importer_1_1_data_importer.html#ad13aeebc3f36139fdef0c2c2bae8bdc6',1,'tempus::importer::DataImporter']]],
-  ['load_5ftransport_5fmodes',['load_transport_modes',['../namespace_tempus.html#a379598aace7a07d033c3c4d924ccc279',1,'Tempus']]]
+  ['memberpointerr',['MemberPointerR',['../struct_member_pointer_r.html',1,'']]],
+  ['memberpointerr_3c_20r_20t_3a_3a_2a_20_3e',['MemberPointerR&lt; R T::* &gt;',['../struct_member_pointer_r_3_01_r_01_t_1_1_5_01_4.html',1,'']]],
+  ['meminfo',['MemInfo',['../struct_mem_info.html',1,'']]],
+  ['metadata',['metadata',['../class_tempus_1_1_routing_data.html#ab7effc684b64620f5ca734c5b5f37d98',1,'Tempus::RoutingData::metadata(const std::string &amp;key) const '],['../class_tempus_1_1_routing_data.html#a92a9f1b7cf094566d5adc4ec6658ee06',1,'Tempus::RoutingData::metadata() const ']]],
+  ['metadata_5f',['metadata_',['../class_tempus_1_1_routing_data.html#a15de42d65a574c54fe5ac00a18fe5774',1,'Tempus::RoutingData']]],
+  ['metric_5fto_5fstring',['metric_to_string',['../class_tempus_1_1_plugin_request.html#ac8c571edc21f4cf0cf34a4b06e023e91',1,'Tempus::PluginRequest']]],
+  ['metrics',['metrics',['../class_tempus_1_1_plugin_request.html#a42dc7c65dc28ee7c7451184092b0ae67',1,'Tempus::PluginRequest']]],
+  ['metrics_5f',['metrics_',['../class_tempus_1_1_plugin_request.html#a954785fa364153f9ecdd128f510f9a31',1,'Tempus::PluginRequest']]],
+  ['metricvalue',['MetricValue',['../class_tempus_1_1_plugin_request.html#a3a337488ac2d3881abd1de81b9ef501d',1,'Tempus::PluginRequest']]],
+  ['metricvaluelist',['MetricValueList',['../class_tempus_1_1_plugin_request.html#a1ac2dffd2d6c7decc66abffa504caa0e',1,'Tempus::PluginRequest']]],
+  ['middlenodemap',['MiddleNodeMap',['../namespace_tempus.html#a9a99856b424b9a8d8c303369f5094687',1,'Tempus']]],
+  ['mmedge',['MMEdge',['../class_tempus_1_1_m_m_edge.html',1,'Tempus']]],
+  ['mmvertex',['MMVertex',['../class_tempus_1_1_m_m_vertex.html',1,'Tempus']]],
+  ['mmvertexdata',['MMVertexData',['../class_tempus_1_1_dynamic_multi_plugin_1_1_m_m_vertex_data.html',1,'Tempus::DynamicMultiPlugin']]],
+  ['mmvertexdata',['MMVertexData',['../class_tempus_1_1_isochrone_plugin_1_1_m_m_vertex_data.html',1,'Tempus::IsochronePlugin']]],
+  ['multimodalgraphbuilder',['MultimodalGraphBuilder',['../class_tempus_1_1_multimodal_graph_builder.html',1,'Tempus']]],
+  ['multiplugin',['MultiPlugin',['../class_tempus_1_1_multi_plugin.html#a3c7df7815e089f062215f07721172571',1,'Tempus::MultiPlugin']]],
+  ['multiplugin',['MultiPlugin',['../class_tempus_1_1_multi_plugin.html',1,'Tempus']]],
+  ['multipluginrequest',['MultiPluginRequest',['../class_tempus_1_1_multi_plugin_request.html',1,'Tempus']]],
+  ['myarcwriter',['MyArcWriter',['../class_tempus_1_1_automaton_1_1_my_arc_writer.html',1,'Tempus::Automaton']]]
 ];
