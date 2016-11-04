@@ -45,13 +45,13 @@ using WayCache = std::unordered_map<uint64_t, Way>;
 template <typename PointCacheType, bool do_import_restrictions_ = false>
 struct PbfReader
 {
-    PbfReader( RestrictionReader* restrictions = 0, size_t n_nodes = 0, size_t n_ways = 0 ) :
+    PbfReader( RestrictionReader* restrictions = 0, size_t n_nodes = 0, size_t ln_ways = 0 ) :
         restrictions_( restrictions ),
         points_( n_nodes ),
         section_splitter_( points_ )
     {
-        if ( n_ways )
-            ways_.reserve( n_ways );
+        if ( ln_ways )
+            ways_.reserve( ln_ways );
     }
     
     void node_callback( uint64_t osmid, double lon, double lat, const osm_pbf::Tags &/*tags*/ )

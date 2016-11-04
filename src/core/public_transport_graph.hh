@@ -139,11 +139,11 @@ public:
     {
     public:
         TripTime() {}
-        TripTime( float departure_time, float arrival_time, db_id_t trip_id, db_id_t service_id ) :
-            departure_time_( departure_time ),
-            arrival_time_( arrival_time ),
-            trip_id_( trip_id ),
-            service_id_( service_id )
+        TripTime( float ldeparture_time, float larrival_time, db_id_t ltrip_id, db_id_t lservice_id ) :
+            departure_time_( ldeparture_time ),
+            arrival_time_( larrival_time ),
+            trip_id_( ltrip_id ),
+            service_id_( lservice_id )
         {}
         ///
         /// departure time, in minutes since midnight

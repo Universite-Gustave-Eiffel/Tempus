@@ -205,7 +205,7 @@ Costs get_total_costs( const Roadmap& );
 class IsochroneValue
 {
 public:
-    IsochroneValue( float x, float y, int mode, float cost ) : x_( x ), y_( y ), mode_( mode ), cost_( cost ) {}
+    IsochroneValue( float lx, float ly, int lmode, float lcost ) : x_( lx ), y_( ly ), mode_( lmode ), cost_( lcost ) {}
     DECLARE_RW_PROPERTY( x, float );
     DECLARE_RW_PROPERTY( y, float );
     /// mode
