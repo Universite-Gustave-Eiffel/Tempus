@@ -10,7 +10,7 @@ set BOOST_LIBRARYDIR=C:\Libraries\boost_1_59_0\lib64-msvc-14.0
 
 echo Running cmake...
 cd c:\projects\tempus
-cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DOC=OFF -DBUILD_OSM2SHP=OFF -DBUILD_QGIS_PLUGIN=OFF -DBUILD_WPS=OFF
+cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DOC=OFF -DBUILD_OSM2TEMPUS=OFF -DBUILD_QGIS_PLUGIN=OFF -DBUILD_WPS=OFF
 
 nmake
 

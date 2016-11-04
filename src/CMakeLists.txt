@@ -4,6 +4,7 @@ set( BUILD_WPS ON CACHE BOOL "Build WPS server ?" )
 set( BUILD_QGIS_PLUGIN ON CACHE BOOL "Build QGIS plugin ?" )
 set( BUILD_TEMPUS_PLUGINS ON CACHE BOOL "Build Tempus plugins ?" )
 set( BUILD_TOOLS ON CACHE BOOL "Build tools ?" )
+set( BUILD_OSM2TEMPUS ON CACHE BOOL "Build osm2tempus loader ?" )
 
 if (NOT WIN32)
   set( ENABLE_SEGMENT_ALLOCATOR OFF CACHE BOOL "Allow to use a segment allocator ?" )
