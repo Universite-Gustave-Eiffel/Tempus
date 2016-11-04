@@ -3,7 +3,6 @@ set( BUILD_CORE ON CACHE BOOL "Build Tempus core ?" )
 set( BUILD_WPS ON CACHE BOOL "Build WPS server ?" )
 set( BUILD_QGIS_PLUGIN ON CACHE BOOL "Build QGIS plugin ?" )
 set( BUILD_TEMPUS_PLUGINS ON CACHE BOOL "Build Tempus plugins ?" )
-set( BUILD_OSM2SHP ON CACHE BOOL "Build osm2shp ?" )
 set( BUILD_TOOLS ON CACHE BOOL "Build tools ?" )
 
 if (NOT WIN32)
@@ -36,9 +35,7 @@ if(BUILD_QGIS_PLUGIN)
   add_subdirectory( hmi_qgis )
 endif()
 
-if(BUILD_OSM2SHP)
-  add_subdirectory( loader )
-endif()
+add_subdirectory( loader )
 
 if(BUILD_TOOLS)
   add_subdirectory( tools )
@@ -47,7 +44,6 @@ endif()
 add_subdirectory( standalone )
 
 if(WIN32)
-    install(DIRECTORY python DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
     install(FILES batch/random_batch.py DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY}/batch)
 endif()
 

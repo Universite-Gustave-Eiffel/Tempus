@@ -34,9 +34,9 @@
 #include "utils/associative_property_map_default_value.hh"
 
 #include "datetime.hh"
-#include "cost_lib/cost_calculator.hh"
+#include "mm_lib/cost_calculator.hh"
 #include "automaton_lib/automaton.hh"
-#include "algorithms.hh"
+#include "mm_lib/algorithms.hh"
 #include "reverse_multimodal_graph.hh"
 #include "utils/graph_db_link.hh"
 #include "plugin_factory.hh"
@@ -44,6 +44,7 @@
 using namespace std;
 
 namespace Tempus {
+namespace DynamicMultiPlugin {
 
 // the exception used to shortcut dijkstra
 struct path_found_exception
@@ -162,14 +163,6 @@ private:
     Point2D destination_;
     // in m/min
     const float max_speed_;
-};
-
-struct NullHeuristic
-{
-    float operator()( const Multimodal::Vertex& )
-    {
-        return 0.0;
-    }
 };
 
 Road::Restrictions import_turn_restrictions( const Road::Graph& graph, const std::string& db_options, const std::string& schema_name )
@@ -454,17 +447,17 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                         double departure_time = res[i][4].as<double>();
                         double arrival_time = res[i][5].as<double>();
                         t.arrival_time = arrival_time;
-                        s_.timetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
-                        s_.timetable[e].insert( std::make_pair( mode_id, std::map<double, TimetableData>() ));
-                        s_.timetable[e][mode_id].insert( std::make_pair( departure_time, t ) );
+                        s_.timetable.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, TimetableData> >() );
+                        s_.timetable[mode_id].emplace( e, std::map<double, TimetableData>() );
+                        s_.timetable[mode_id][e].emplace( departure_time, t );
 
                         // reverse timetable
                         rt.trip_id = t.trip_id;
                         rt.arrival_time = departure_time;
 
-                        s_.rtimetable.insert( std::make_pair(e, std::map<int, std::map<double, TimetableData> >() ) );
-                        s_.rtimetable[e].insert( std::make_pair( mode_id, std::map<double, TimetableData>() ));
-                        s_.rtimetable[e][mode_id].insert( std::make_pair( arrival_time, rt ) );
+                        s_.rtimetable.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, TimetableData> >() );
+                        s_.rtimetable[mode_id].emplace( e, std::map<double, TimetableData>() );
+                        s_.rtimetable[mode_id][e].emplace( arrival_time, rt );
                     }
                 }
                 else if (timetable_frequency_ == 1) // frequency model
@@ -511,9 +504,9 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                         f.travel_time = res[i][7].as<double>();
                         double start_time = res[i][4].as<double>();
 
-                        s_.frequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
-                        s_.frequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
-                        s_.frequency[e][mode_id].insert( std::make_pair( start_time, f ) );
+                        s_.frequency.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, FrequencyData> >() );
+                        s_.frequency[mode_id].emplace( e, std::map<double, FrequencyData>() );
+                        s_.frequency[mode_id][e].emplace( start_time, f );
 
                         // reverse frequency data
                         FrequencyData rf;
@@ -522,9 +515,9 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
                         rf.headway = f.headway;
                         rf.travel_time = f.travel_time;
 
-                        s_.rfrequency.insert( std::make_pair(e, map<int, std::map<double, FrequencyData> >() ) );
-                        s_.rfrequency[e].insert( std::make_pair( mode_id, std::map<double, FrequencyData>() ) );
-                        s_.rfrequency[e][mode_id].insert( std::make_pair( f.end_time, rf ) );
+                        s_.rfrequency.emplace( mode_id, std::map<PublicTransport::Edge, std::map<double, FrequencyData> >() );
+                        s_.rfrequency[mode_id].emplace( e, std::map<double, FrequencyData>() );
+                        s_.rfrequency[mode_id][e].emplace( f.end_time, rf );
                     }
                 }
             }
@@ -561,7 +554,6 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // Other attributes
     Multimodal::Vertex destination_; // Current request destination
-    std::map< Multimodal::Vertex, db_id_t > available_vehicles_;
 
     // Get origin and destination nodes
     Multimodal::Vertex origin = Multimodal::Vertex( *graph_, graph_->road_vertex_from_id(request.origin()).get(), Multimodal::Vertex::road_t() );
@@ -581,7 +573,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     destination_o.mode = request.allowed_modes()[0];
 
     // make a property map out of the vertex data map
-    boost::associative_property_map< MMVertexDataMap > vertex_data_pmap( vertex_data_map_ );
+    associative_property_map_default_value<MMVertexDataMap> vertex_data_pmap( vertex_data_map_, MMVertexData() );
 
     double start_time = request.steps()[1].constraint().date_time().time_of_day().total_seconds()/60;
 
@@ -606,8 +598,19 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
     else {
         profile = 0;
     }
-    CostCalculator cost_calculator( s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency, request.allowed_modes(), available_vehicles_, walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
+    // the reverse graph
+    Multimodal::ReverseGraph rgraph( *graph_ );
 
+    // cost calculator for the "forward" graph
+    CostCalculatorExternalTimetable<Multimodal::Graph> cost_calculator( *graph_, request.steps()[1].constraint().date_time().date(),
+                                                                        s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency,
+                                                                        request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
+
+    // cost calculator for the reverse graph
+    CostCalculatorExternalTimetable<Multimodal::ReverseGraph> rcost_calculator( rgraph, request.steps()[1].constraint().date_time().date(),
+                                                                                s_.timetable, s_.rtimetable, s_.frequency, s_.rfrequency,
+                                                                                request.allowed_modes(), walking_speed_, cycling_speed_, min_transfer_time_, car_parking_search_time_, parking_location_, profile );
+    
     // destinations
     std::vector<Road::Vertex> destinations;
     // if the "multi_destinations" option is here, take destinations from it
@@ -649,6 +652,7 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
 
     // we cannot use the regular visitor here, since we examine tuples instead of vertices
     DestinationDetectorVisitor<Multimodal::Graph> vis( *graph_, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
+    DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
 
     bool path_found = false;
     try {
@@ -657,10 +661,8 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
             double h_speed_max = get_float_option( "AStar/speed_heuristic" );
 
             if ( reversed ) {
-                Multimodal::ReverseGraph rgraph( *graph_ );
                 EuclidianHeuristic<Multimodal::ReverseGraph> heuristic( rgraph, request.origin(), h_speed_max );
-                DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
-                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), rvis, heuristic );
+                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, rcost_calculator, request.allowed_modes(), rvis, heuristic );
             }
             else {
                 EuclidianHeuristic<Multimodal::Graph> heuristic( *graph_, request.destination(), h_speed_max );
@@ -669,12 +671,10 @@ std::unique_ptr<Result> DynamicMultiPluginRequest::process( const Request& reque
         }
         else {
             if ( reversed ) {
-                Multimodal::ReverseGraph rgraph( *graph_ );
-                DestinationDetectorVisitor<Multimodal::ReverseGraph> rvis( rgraph, destinations, request.steps().back().private_vehicule_at_destination(), verbose_algo_, iterations_ );
-                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), rvis, NullHeuristic() );
+                combined_ls_algorithm_no_init( rgraph, automaton_, destination_o, vertex_data_pmap, rcost_calculator, request.allowed_modes(), rvis );
             }
             else {
-                combined_ls_algorithm_no_init( *graph_, automaton_, origin_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis, NullHeuristic() );
+                combined_ls_algorithm_no_init( *graph_, automaton_, origin_o, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
             }
         }
     }
@@ -759,7 +759,7 @@ std::string sec2hm( double s )
 void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& result, const Path& path, bool reverse )
 {
     result.push_back( Roadmap() );
-    Roadmap& roadmap = result.back();
+    Roadmap& roadmap = result.back().roadmap();
 
     std::list< Triple >::const_iterator it = path.begin();
     std::list< Triple >::const_iterator next = it;
@@ -779,9 +779,6 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
         start_time = it_data.potential();
         int n_pt_edges = 0;
         for ( ; next != path.end(); ++next, ++it ) {
-            // std::cout << it->vertex << "\tP: " << sec2hm(potential_map_[*it]) << " W: " << sec2hm(wait_map_[*it]) << " shift_map: " << sec2hm(shift_map_[*it]) << std::endl;
-            //            std::cout << next->vertex << "\t  P: " << sec2hm(potential_map_[*next]) << " W: " << sec2hm(wait_map_[*next]) << " S: " << sec2hm(shift) << " wait_time: " << wait_time << std::endl;
-
             MMVertexData& next_data = vertex_data_map_[*next];
 
             double h1 = it_data.potential();
@@ -828,7 +825,7 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
             }
             it_data.set_potential( h1 );
             next_data.set_potential( h2 );
-        }
+        } // for
         it = path.begin();
         next = it;
         next++;
@@ -932,20 +929,22 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
                 o = vit->second.predecessor();
                 d = vit->first;
             }
-
-            ValuedEdge ve( get_mm_vertex( o.vertex ), get_mm_vertex( d.vertex ) );
-            ve.set_value( "duration", Variant::from_float( vertex_data_map_[d].potential() ) );
-            ve.set_value( "imode", Variant::from_int(o.mode) );
-            ve.set_value( "fmode", Variant::from_int(d.mode) );
-            ve.set_value( "istate", Variant::from_int(o.state) );
-            ve.set_value( "fstate", Variant::from_int(d.state) );
-            trace.push_back( ve );
+            if ( !o.vertex.is_null() && !d.vertex.is_null() ) {
+                ValuedEdge ve( get_mm_vertex( o.vertex ), get_mm_vertex( d.vertex ) );
+                ve.set_value( "duration", Variant::from_float( vertex_data_map_[d].potential() ) );
+                ve.set_value( "imode", Variant::from_int(o.mode) );
+                ve.set_value( "fmode", Variant::from_int(d.mode) );
+                ve.set_value( "istate", Variant::from_int(o.state) );
+                ve.set_value( "fstate", Variant::from_int(d.state) );
+                trace.push_back( ve );
+            }
         }
         roadmap.set_trace( trace );
     }
 }
 
 StaticVariables DynamicMultiPluginRequest::s_;
-}
+} // namespace DynamicMultiPlugin
+} // namespace Tempus
 
-DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin )
+DECLARE_TEMPUS_PLUGIN( "dynamic_multi_plugin", Tempus::DynamicMultiPlugin::DynamicMultiPlugin )

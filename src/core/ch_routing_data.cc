@@ -226,7 +226,7 @@ std::unique_ptr<RoutingData> CHRoutingDataBuilder::pg_import( const std::string&
     modes[TransportModeWalking] = all_modes[TransportModeWalking];
     rd->set_transport_modes( modes );
 
-    return std::move( rd );
+    return rd;
 }
 
 std::unique_ptr<RoutingData> CHRoutingDataBuilder::file_import( const std::string& filename, ProgressionCallback& /*progression**/, const VariantMap& /*options*/ ) const

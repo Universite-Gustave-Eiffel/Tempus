@@ -1,0 +1,7 @@
+--data /usr/local/share/tempus/data
+-p 9000
+-c /usr/local/lib/tempus
+-l dynamic_multi_plugin
+-l sample_road_plugin
+-L /home/hme/src/tempus/tempus_pddl.bin
+-d "dbname=tempus_pddl user=hme port=5434"

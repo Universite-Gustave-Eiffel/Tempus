@@ -106,6 +106,8 @@ std::string Value::as<std::string>() const;
 template <>
 Tempus::Time Value::as<Tempus::Time>() const;
 template <>
+Tempus::Date Value::as<Tempus::Date>() const;
+template <>
 long long Value::as<long long>() const;
 template <>
 int Value::as<int>() const;
@@ -206,6 +208,18 @@ public:
     /// Query execution using a cursor
     ResultIterator exec_it( const std::string& query ) throw ( std::runtime_error );
 
+    ///
+    /// Put COPY data
+    void put_copy_data( const std::string& data );
+
+    ///
+    /// Put COPY data
+    void put_copy_data( const char* data, size_t size );
+
+    ///
+    /// End a put COPY session
+    void put_copy_end();
+    
 protected:
     pg_conn* conn_;
     static boost::mutex mutex;

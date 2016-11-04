@@ -26,14 +26,13 @@ import argparse
 import subprocess
 
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-loader_path = os.path.abspath(script_path + '/../src/loader')
+loader_path = os.path.abspath(script_path + '/../python/')
 data_path = os.path.abspath( script_path + '/../test_data' )
 sys.path.insert(0, loader_path)
 
-import tempus
-from tempus.config import *
+from tempusloader.config import PSQL
 
-loader = loader_path + "/load_tempus"
+loader = loader_path + "/tempusloader/load_tempus.py"
 dbstring = os.environ.get('DBSTRING') or "dbname=tempus_unit_test"
 
 def get_sql_output( dbstring, sql ):
@@ -49,18 +48,18 @@ class TestTempusLoader(unittest.TestCase):
         subprocess.call( cmd )
 
     def test_osm_loading( self ):
-        r = subprocess.call( ['python', loader, '-t', 'osm', '-s', data_path, '-d', dbstring, '-R'] )
+        r = subprocess.call( ['python', loader, '-t', 'osm', '-s', data_path + '/nantes_subset.pbf', '-d', dbstring, '-R'] )
         self.assertEqual(r, 0)
 
         n_road_nodes = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node"))
-        self.assertEqual(3172, n_road_nodes)
+        self.assertEqual(3521, n_road_nodes)
 
         n_road_sections = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section"))
-        self.assertEqual(4027, n_road_sections)
+        self.assertEqual(4865, n_road_sections)
 
     def test_gtfs_loading( self ):
         # GTFS loading without road
-        cmd = ['python', loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring, '-R']
+        cmd = ['python', loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring, '-R', '--pt-network', 'TAN', '--pt-create-roads']
         r = subprocess.call( cmd )
         self.assertEqual(r, 0)
 
@@ -74,41 +73,11 @@ class TestTempusLoader(unittest.TestCase):
 
     def test_gtfs_transfers_loading( self ):
         # GTFS loading without road
-        r = subprocess.call( ['python', loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min_with_transfers.zip', '-d', dbstring, '-R'] )
+        r = subprocess.call( ['python', loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min_with_transfers.zip', '-d', dbstring, '-R', '--pt-network', 'TAN', '--pt-create-roads'] )
         self.assertEqual(r, 0)
 
         # number of transfers
         self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section WHERE road_type=5")), 4)
-
-class TestTempusLoaderProjection(unittest.TestCase):
-
-    def setUp(self):
-        cmd = [PSQL, dbstring, '-t', '-c', "CREATE EXTENSION IF NOT EXISTS postgis;DROP SCHEMA tempus CASCADE;"]
-        subprocess.call( cmd )
-
-    def test_init(self):
-        # create a 4326 db
-        r = subprocess.call( [loader, '-d', dbstring, '-R', '-N', '4326'] )
-        self.assertEqual(r, 0)
-
-        r = subprocess.call( [loader, '-t', 'osm', '-s', data_path, '-d', dbstring] )
-        self.assertEqual(r, 0)
-
-        n_road_nodes = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node"))
-        self.assertEqual(3176, n_road_nodes)
-
-        n_road_sections = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section"))
-        self.assertEqual(4032, n_road_sections)
-
-        # GTFS loading without road
-        r = subprocess.call( [loader, '-t', 'gtfs', '-s', data_path + '/gtfs_min.zip', '-d', dbstring] )
-        self.assertEqual(r, 0)
-
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop")), 141)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_section")), 69)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_trip")), 3)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_stop_time")), 80)
-        self.assertEqual(int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.pt_route")), 2)
 
 if __name__ == '__main__':
 

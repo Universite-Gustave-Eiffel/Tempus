@@ -161,7 +161,7 @@ public:
 
 class Restrictions {
 public:
-    Restrictions( const Graph& road_graph ) : road_graph_(&road_graph) {}
+    Restrictions( const Graph& road_graph ) : restrictions_(), road_graph_(&road_graph) {}
 
     ///
     /// List of restrictions (as edges)

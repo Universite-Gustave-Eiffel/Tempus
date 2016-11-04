@@ -239,7 +239,7 @@ public:
         // we result in only one roadmap
         std::unique_ptr<Result> result( new Result() );
         result->push_back( Roadmap() );
-        Roadmap& roadmap = result->back();
+        Roadmap& roadmap = result->back().roadmap();
 
         roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 
@@ -269,7 +269,7 @@ public:
             roadmap.add_step( std::auto_ptr<Roadmap::Step>(ptstep) );
         }
 
-        return std::move( result );
+        return result;
     }
 };
 

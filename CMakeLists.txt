@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 2.6)
 enable_testing()
 
 set( TEMPUS_VERSION_MAJOR 2 )
-set( TEMPUS_VERSION_MINOR 0 )
+set( TEMPUS_VERSION_MINOR 1 )
 set( TEMPUS_VERSION_PATCH 0 )
 
 # don't rebuild everything when rules are changed
@@ -39,6 +39,9 @@ include_directories( ${PostgreSQL_INCLUDE_DIRS} )
 include_directories( SYSTEM ${Boost_INCLUDE_DIR} )
 link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
 
+set (CMAKE_C_FLAGS "") 
+set (CMAKE_CXX_FLAGS "") 
+
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -60,7 +63,8 @@ if(MSVC)
 	
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
-	# Update if necessary
+  # Update if necessary
+  # FIXME add Weffc++ to detect uninitialized members
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
 	# auto_ptr is deprecated in C++11
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated" CACHE STRING "compile flags" FORCE)

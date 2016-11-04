@@ -1,0 +1,18 @@
+2.1.0 (2016-11-04):
+	* The OSM loader has been rewritten. It now uses a fast C++-based PBF reader dedicated to extract a routing graph
+	* New plugin for (multimodal) isochrones
+	* Better packaging of Python packages: pytempus and tempusloader
+	* Experimental support for Tempus as a PostgreSQL extension: wps_tempus.isochrone(), see sql/pgtempus
+	* Various bug fixes
+
+2.0.0 (2016-01-15):
+	* Use C++11
+	* New Contraction Hierarchies plugin: ch_plugin
+	* The Plugin class is now split into Plugin and PluginRequest
+	* The database schema is independant from the coordinate system (Lambert 93 is not mandatory anymore)
+	* Design changes to allow other graph types, called 'routing data'.
+	* A new graph type for querying Contraction Hierarchies CHQueryGraph
+	* Use of a compressed_sparse_row graph for the road graph (gain in memory footprint)
+	* Serialization functions for graphs
+	* A new tool graph_dumper to convert a graph for the database to a binary representation
+	* Travis and Appveyor support

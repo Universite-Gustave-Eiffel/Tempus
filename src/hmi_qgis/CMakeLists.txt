@@ -14,9 +14,9 @@ configure_file( config.py.in config.py )
 FILE(GLOB INSTALLER_FILES metadata.txt *.py)
 FILE(GLOB IMAGES_FILES *.png)
 SET(INSTALLER_FILES ${INSTALLER_FILES}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../python/wps_client.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/../python/tempus_request.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/../python/history_file.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../python/pytempus/wps_client.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../python/pytempus/tempus_request.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../python/pytempus/history_file.py
   style_pinpoints.qml
   style_parking.qml
   ${IMAGES_FILES}

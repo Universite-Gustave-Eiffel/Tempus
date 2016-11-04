@@ -9,7 +9,7 @@
   </xs:complexType>
   <xs:complexType name="IntVariant">
     <xs:attribute name="k" type="xs:string"/>
-    <xs:attribute name="v" type="xs:int"/>
+    <xs:attribute name="v" type="xs:integer"/>
   </xs:complexType>
   <xs:complexType name="FloatVariant">
     <xs:attribute name="k" type="xs:string"/>
@@ -76,6 +76,12 @@
     <xs:attribute name="id" type="xs:long"/>
     <xs:attribute name="network" type="xs:int"/>
   </xs:complexType>
+  <xs:complexType name="ValuedPoint">
+    <xs:attribute name="x" type="xs:float"/>
+    <xs:attribute name="y" type="xs:float"/>
+    <xs:attribute name="mode" type="xs:int"/>
+    <xs:attribute name="cost" type="xs:float"/>
+  </xs:complexType>
   <xs:complexType name="ValuedEdge">
     <!-- origin vertex -->
     <xs:sequence>
@@ -107,21 +113,31 @@
   </xs:complexType>
   <xs:complexType name="Results">
     <xs:sequence>
-      <xs:element name="result" minOccurs="0" maxOccurs="unbounded">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:element name="road_step" type="RoadStep"/>
-              <xs:element name="public_transport_step" type="PublicTransportStep"/>
-              <xs:element name="road_transport_step" type="RoadTransportStep"/>
-              <xs:element name="transfer_step" type="TransferStep"/>
-            </xs:choice>
-            <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="starting_date_time" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="trace" type="PathTrace" minOccurs="0" maxOccurs="1"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="roadmap" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="road_step" type="RoadStep"/>
+                <xs:element name="public_transport_step" type="PublicTransportStep"/>
+                <xs:element name="road_transport_step" type="RoadTransportStep"/>
+                <xs:element name="transfer_step" type="TransferStep"/>
+              </xs:choice>
+              <xs:element name="cost" type="Cost" minOccurs="0" maxOccurs="unbounded"/>
+              <xs:element name="starting_date_time" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
+              <xs:element name="trace" type="PathTrace" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="isochrone" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="p" type="ValuedPoint" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
     </xs:sequence>
   </xs:complexType>
   <xs:element name="results" type="Results"/>

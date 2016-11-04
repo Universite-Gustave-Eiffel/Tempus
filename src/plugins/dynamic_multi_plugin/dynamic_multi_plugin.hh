@@ -22,9 +22,10 @@
 
 #include "plugin.hh"
 #include "automaton_lib/automaton.hh"
-#include "cost_lib/cost_calculator.hh"
+#include "mm_lib/cost_calculator.hh"
 
 namespace Tempus {
+namespace DynamicMultiPlugin {
 
 // Data structure used to label vertices : (vertex, automaton state, mode)
 struct Triple {
@@ -32,10 +33,10 @@ struct Triple {
     Automaton<Road::Edge>::Graph::vertex_descriptor state;
     db_id_t mode;
 
-    bool operator==( const Tempus::Triple& t ) const {
+    bool operator==( const Triple& t ) const {
         return (vertex == t.vertex) && (state == t.state) && (mode == t.mode);
     }
-    bool operator!=( const Tempus::Triple& t ) const {
+    bool operator!=( const Triple& t ) const {
         return (vertex != t.vertex) || (state != t.state) || (mode != t.mode);
     }
     bool operator<( const Triple& other ) const
@@ -58,10 +59,10 @@ class MMVertexData
     DECLARE_RW_PROPERTY( predecessor, Triple );
 public:
     MMVertexData() : // default values
-        potential_( std::numeric_limits<double>::max() ),
-        wait_time_( 0.0 ),
-        shift_time_( 0.0 ),
-        trip_( 0 )
+        potential_( std::numeric_limits<double>::max() )
+        , wait_time_( 0.0 )
+        , shift_time_( 0.0 )
+        , trip_( 0 )
     {}
 };
 
@@ -124,8 +125,8 @@ private:
     bool verbose_;
 };
 
-}
-
+} // namespace DynamicMultiPlugin
+} // namespace Tempus
 
 
 

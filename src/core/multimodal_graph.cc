@@ -16,6 +16,7 @@
  */
 
 #include <string>
+#include <functional>
 
 #include <boost/format.hpp>
 #include <boost/variant/get.hpp>
@@ -131,6 +132,27 @@ Point3D Vertex::coordinates() const
         return poi()->coordinates();
     }
     return Point3D();
+}
+
+size_t Vertex::hash() const
+{
+    uint64_t v = (static_cast<uint64_t>(type_) << 62);
+    switch ( type_ )
+    {
+    case Road:
+        v |= data_.vertex;
+        break;
+    case PublicTransport:
+        v |= (static_cast<uint64_t>(data_.pt.index) << 32) | data_.pt.vertex;
+        break;
+    case Poi:
+        v |= data_.poi;
+        break;
+    case Null:
+    default:
+        break;
+    }
+    return std::hash<uint64_t>()( v );
 }
 
 Edge::ConnectionType Edge::connection_type() const

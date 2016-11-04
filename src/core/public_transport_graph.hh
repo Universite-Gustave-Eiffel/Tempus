@@ -53,8 +53,35 @@ struct Stop;
 struct Section;
 
 ///
+/// Service map: service db ID -> dates of availability
+class ServiceMap
+{
+public:
+    using Service = std::set<Date>;
+
+    ///
+    /// Add a service_id, date
+    void add( db_id_t service_id, const Date& date );
+
+    ///
+    /// Check if a service is available on a given date
+    bool is_available_on( db_id_t service_id, const Date& date ) const;
+private:
+    std::map<db_id_t, Service> map_;
+};
+
+class GraphProperties
+{
+public:
+    ServiceMap& service_map() { return service_map_; }
+    const ServiceMap& service_map() const { return service_map_; }
+private:
+    ServiceMap service_map_;
+};
+
+///
 /// Definition of a public transport graph
-typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section> Graph;
+typedef boost::adjacency_list<VertexListType, EdgeListType, boost::bidirectionalS, Stop, Section, GraphProperties> Graph;
 typedef Graph::vertex_descriptor Vertex;
 typedef Graph::edge_descriptor Edge;
 
@@ -105,14 +132,69 @@ public:
     friend void Tempus::unserialize( std::istream& istr, PublicTransport::Stop&, binary_serialization_t );
 };
 
+class Timetable
+{
+public:
+    class TripTime
+    {
+    public:
+        TripTime() {}
+        TripTime( float departure_time, float arrival_time, db_id_t trip_id, db_id_t service_id ) :
+            departure_time_( departure_time ),
+            arrival_time_( arrival_time ),
+            trip_id_( trip_id ),
+            service_id_( service_id )
+        {}
+        ///
+        /// departure time, in minutes since midnight
+        DECLARE_RW_PROPERTY( departure_time, float );
+        ///
+        /// arrival time, in minutes since midnight
+        DECLARE_RW_PROPERTY( arrival_time, float );
+        ///
+        /// trip id
+        DECLARE_RW_PROPERTY( trip_id, db_id_t );
+        ///
+        /// service id
+        DECLARE_RW_PROPERTY( service_id, db_id_t );
+    };
+
+    ///
+    /// Assign times from the given table, sorted by departure times
+    void assign_sorted_table( const std::vector<TripTime>& );
+
+    ///
+    /// Assign times from the given table, sorted by departure times
+    void assign_sorted_table( std::vector<TripTime>&& );
+
+    using TripTimeIterator = std::vector<TripTime>::const_iterator;
+    ///
+    /// Get the next departures
+    /// @returns a pair of iterators. If first == second, it is empty
+    std::pair<TripTimeIterator, TripTimeIterator> next_departures( float time_min ) const;
+
+    ///
+    /// Get the previous arrival
+    /// @returns a pair of iterators. If first == second, it is empty
+    std::pair<TripTimeIterator, TripTimeIterator> previous_arrivals( float time_min ) const;
+private:
+    // sorted vector of times
+    std::vector<TripTime> table_ = std::vector<TripTime>();
+};
+
 ///
 /// used as an Edge in a PublicTransportGraph
 struct Section {
 public:
-    Section() : network_id_(0) {}
+    Section() : network_id_(0), time_table_() {}
 
     /// must not be null
     DECLARE_RW_PROPERTY( network_id, db_id_t );
+
+    Timetable& time_table() { return time_table_; }
+    const Timetable& time_table() const { return time_table_; }
+private:
+    Timetable time_table_;
 };
 
 ///
@@ -134,6 +216,14 @@ typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
+
+///
+/// Get the next (first) departure given an edge, day and time
+boost::optional<Timetable::TripTime> next_departure( const Graph& g, const Edge& e, const Date& day, float time );
+
+///
+/// Get the previous (first) arrival given an edge, day and time
+boost::optional<Timetable::TripTime> previous_arrival( const Graph& g, const Edge& e, const Date& day, float time );
 
 } // PublicTransport namespace
 

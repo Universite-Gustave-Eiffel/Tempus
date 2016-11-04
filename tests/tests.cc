@@ -168,7 +168,6 @@ void testConsistency_( const Multimodal::Graph* graph )
         Road::VertexIterator vit, vitend;
         boost::tie( vit, vitend ) = vertices( graph->road() );
         std::cout << "n_vertices: " << (vitend-vit) << std::endl;
-        uint32_t ne = 0;
         for ( ; vit != vitend; vit++ ) {
             vertex_id_map[ graph->road()[*vit].db_id() ] = *vit;
 #if 0 // FIXME appveyor does not seem to like it
@@ -830,7 +829,7 @@ void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_ve
         props.push_back( p );
     }
     
-    CHQuery graph( edges_.begin(), edges_.end(), n_vertices, degrees, &props[0] );
+    CHQuery graph( edges_.begin(), edges_.end(), n_vertices, (uint*)degrees, &props[0] );
 
     graph.debug_print( std::cout );
 

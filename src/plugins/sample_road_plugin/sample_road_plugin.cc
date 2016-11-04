@@ -290,7 +290,7 @@ public:
 
         std::unique_ptr<Result> result( new Result() );
         result->push_back( Roadmap() );
-        Roadmap& roadmap = result->back();
+        Roadmap& roadmap = result->back().roadmap();
 
         roadmap.set_starting_date_time( request.steps()[1].constraint().date_time() );
 
@@ -326,7 +326,7 @@ public:
             Db::Connection connection( plugin_->db_options() );
             simple_multimodal_roadmap( *result, connection, graph_ );
         }
-        return std::move( result );
+        return result;
     }
 };
 

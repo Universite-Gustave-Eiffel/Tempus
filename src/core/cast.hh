@@ -22,6 +22,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <typeinfo>
+#include <iomanip>
 
 namespace Tempus
 {
@@ -71,6 +72,14 @@ std::string to_string( const TIN& in )
 {
     std::stringstream ss;
     ss << in;
+    return ss.str();
+}
+
+template <>
+inline std::string to_string<float>( const float& f )
+{
+    std::ostringstream ss;
+    ss << std::setprecision(9) << f;
     return ss.str();
 }
 
