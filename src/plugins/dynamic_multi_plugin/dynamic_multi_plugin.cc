@@ -770,7 +770,6 @@ void DynamicMultiPluginRequest::add_roadmap( const Request& request, Result& res
         start_time = it_data.potential();
         int n_pt_edges = 0;
         for ( ; next != path.end(); ++next, ++it ) {
-            it_data = vertex_data_map_[*it];
             MMVertexData& next_data = vertex_data_map_[*next];
 
             double h1 = it_data.potential();
