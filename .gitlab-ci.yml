@@ -1,0 +1,2 @@
+before_script:
+  - echo "Hello from gitlab !!"
