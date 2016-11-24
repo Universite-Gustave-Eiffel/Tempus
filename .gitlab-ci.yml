@@ -4,4 +4,3 @@ before_script:
 rtest:
   script:
       - echo "Ok"
-      - echo "No"
