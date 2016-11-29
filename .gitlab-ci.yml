@@ -6,5 +6,5 @@ before_script:
 rtest:
   script:
       - mkdir build
-      - cmd /k ci\windows\build_gitlab.bat
+      - cmd /k /s "ci\windows\build_gitlab.bat"
       
