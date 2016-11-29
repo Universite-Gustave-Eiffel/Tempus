@@ -1,4 +1,6 @@
 before_script:
+  - pwd
+  - /bin/ls
   - ./osgeo4w-setup-x86_64.exe -k -q -P boost-devel
 
 rtest:
