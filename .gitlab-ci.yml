@@ -1,11 +1,10 @@
 before_script:
   - pwd
   - /bin/ls
-  - ./osgeo4w-setup-x86_64.exe -k -q -P boost-devel
+  - ~/osgeo4w-setup-x86_64.exe -k -q -P boost-devel
 
 rtest:
   script:
-      - cd tempus
       - mkdir build
       - cmd /k ci\windows\build_gitlab.bat
       
