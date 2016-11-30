@@ -43,6 +43,7 @@ public:
         odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float(3.6));
         odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int(12));
         odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", Variant::from_int(5));
+	odl.declare_option( "Debug/verbose", "Verbose general processing", Variant::from_bool(false));
         return odl;
     }
 
