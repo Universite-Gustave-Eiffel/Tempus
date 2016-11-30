@@ -87,35 +87,39 @@ std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, Pro
         }
 
         {
-            // look for duplicated road sections that do not serve as
-            // attachment for any PT stop or POI
-            const std::string q = (boost::format("SELECT COUNT(rs.id) FROM "
-                                                 "( "
-                                                 "SELECT "
-                                                 "	rs1.id "
-                                                 "FROM "
+            // look for road sections with same nodes
+            const std::string q = (boost::format("SELECT COUNT(rs1.id) FROM "
                                                  "	%1%.road_section as rs1, "
                                                  "	%1%.road_section as rs2 "
                                                  "WHERE "
                                                  "	rs1.node_from = rs2.node_from "
                                                  "AND "
                                                  "	rs1.node_to = rs2.node_to "
-                                                 "AND rs1.id != rs2.id "
-                                                 ") AS rs "
-                                                 "LEFT JOIN %1%.pt_stop AS pt "
-                                                 "ON rs.id = pt.road_section_id "
-                                                 "LEFT JOIN %1%.poi AS poi "
-                                                 "ON rs.id = poi.road_section_id "
-                                                 "WHERE "
-                                                 "pt.id IS NULL "
-                                                 "and "
-                                                 "poi.id IS NULL") % schema_name).str();
+                                                 "AND rs1.id != rs2.id ") % schema_name).str();
 
             Db::Result res( connection.exec( q ) );
             size_t count = 0;
             res[0][0] >> count;
             if ( count ) {
-                CERR << "[WARNING]: there are " << count << " duplicated road sections of the same orientation" << std::endl;
+                CERR << "[WARNING]: there are " << count << " duplicated road sections with (from,to) = (from,to)" << std::endl;
+            }
+        }
+        {
+            // look for road sections with same nodes (inverted)
+            const std::string q = (boost::format("SELECT COUNT(rs1.id) FROM "
+                                                 "	%1%.road_section as rs1, "
+                                                 "	%1%.road_section as rs2 "
+                                                 "WHERE "
+                                                 "	rs1.node_from = rs2.node_to "
+                                                 "AND "
+                                                 "	rs1.node_to = rs2.node_from "
+                                                 "AND rs1.id != rs2.id ") % schema_name).str();
+
+            Db::Result res( connection.exec( q ) );
+            size_t count = 0;
+            res[0][0] >> count;
+            if ( count ) {
+                CERR << "[WARNING]: there are " << count << " duplicated road sections with (from,to) = (to,from)" << std::endl;
             }
         }
 
