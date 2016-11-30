@@ -34,7 +34,7 @@ public:
                 { "car_speed_limit", DataType::Float8Type },
                 { "road_name", DataType::String }
             } ),
-        max_speed_( {
+        max_car_speed_( {
                 { "motorway", 130.0 },
                 { "motorway_link", 130.0 },
                 { "trunk", 110.0 },
@@ -42,12 +42,20 @@ public:
                 { "primary", 90.0 },
                 { "primary_link", 90.0 },
                 { "secondary", 90.0 },
+                { "secondary_link", 90.0 },
                 { "tertiary", 90.0 },
+                { "tertiary_link", 90.0 },
                 { "residential", 50.0 },
+                { "residential_link", 50.0 },
+                { "services", 50.0 },
                 { "service", 50.0 },
+                { "rest_area", 50.0 },
                 { "track", 50.0 },
                 { "unclassified", 50.0 },
-                { "footway", 0.0 } } )
+                { "road", 50.0 },
+                { "living_street", 20.0 },
+                { "passing_place", 20.0 }
+            } )
     {
     }
     int n_columns() const
@@ -76,10 +84,10 @@ public:
 
         // traffic rules
         if ( highway_type == "motorway" || highway_type == "motorway_link" || highway_type == "trunk" ) {
-            traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool + Tempus::TrafficRuleTruck;
+            traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool + Tempus::TrafficRuleTruck + Tempus::TrafficRuleCoach;
         }
         else if ( highway_type == "primary" || highway_type == "primary_link" ) {
-            traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool + Tempus::TrafficRuleTruck + Tempus::TrafficRuleBicycle + Tempus::TrafficRulePedestrian;
+            traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool + Tempus::TrafficRuleTruck + Tempus::TrafficRuleCoach + Tempus::TrafficRuleBicycle + Tempus::TrafficRulePedestrian;
         }
         else if ( highway_type == "cycleway" ) {
             traffic_rules_ft = Tempus::TrafficRuleBicycle;
@@ -92,7 +100,7 @@ public:
         }
         else {
             traffic_rules_ft = Tempus::TrafficRuleCar + Tempus::TrafficRuleTaxi + Tempus::TrafficRuleCarPool +
-                Tempus::TrafficRuleTruck + Tempus::TrafficRulePedestrian + Tempus::TrafficRuleBicycle;
+                Tempus::TrafficRuleTruck + Tempus::TrafficRuleCoach + Tempus::TrafficRulePedestrian + Tempus::TrafficRuleBicycle;
         }
 
         if ( !oneway ) {
@@ -107,10 +115,16 @@ public:
         }
 
         // max car speed
-        double max_speed = 0.0;
-        auto max_speed_it = max_speed_.find( highway_type );
-        if ( max_speed_it != max_speed_.end() )
-            max_speed = max_speed_it->second;
+        double max_car_speed = 0.0;
+        auto max_car_speed_it = max_car_speed_.find( highway_type );
+        if ( max_car_speed_it != max_car_speed_.end() ) {
+            max_car_speed = max_car_speed_it->second;
+        }
+        else {
+            // enable only non-car modes
+            traffic_rules_ft &= Tempus::TrafficRulePedestrian | Tempus::TrafficRuleBicycle;
+            traffic_rules_tf &= Tempus::TrafficRulePedestrian | Tempus::TrafficRuleBicycle;
+        }
 
         // road name
         std::string road_name;
@@ -118,11 +132,11 @@ public:
         if ( road_name_t != tags.end() )
             road_name = road_name_t->second;
         
-        return { way_id, linestring_length( points ), traffic_rules_ft, traffic_rules_tf, max_speed, road_name };
+        return { way_id, linestring_length( points ), traffic_rules_ft, traffic_rules_tf, max_car_speed, road_name };
     }
 private:
     std::vector<Column> columns_;
-    std::map<std::string, double> max_speed_;
+    std::map<std::string, double> max_car_speed_;
 };
 
 DECLARE_DATA_PROFILE(tempus, TempusDataProfile);
