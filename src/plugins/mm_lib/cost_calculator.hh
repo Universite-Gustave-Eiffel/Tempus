@@ -39,8 +39,8 @@ double avg_road_travel_time( const RoadGraph& road_graph, const Road::Edge& road
                          double walking_speed = DEFAULT_WALKING_SPEED, double cycling_speed = DEFAULT_CYCLING_SPEED )
 {
     if ( mode.speed_rule() == SpeedRuleCar ) {
-        // take 75% of the speed limit
-        return length / (road_graph[ road_e ].car_speed_limit() * 1000 * 0.75) * 60 ;
+        // take 60% of the speed limit
+        return length / (road_graph[ road_e ].car_speed_limit() * 1000 * 0.60) * 60 ;
     }
     else if ( mode.speed_rule() == SpeedRulePedestrian ) { // Walking
         return length / (walking_speed * 1000) * 60 ;
