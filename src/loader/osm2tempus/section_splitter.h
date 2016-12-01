@@ -41,54 +41,53 @@ public:
                      const osm_pbf::Tags& tags,
                      SectionFoo emit_section )
     {
-        // add the two pair orientations
-      node_pair p( node_from, node_to );
-      //      std::vector<node_pair> two_pairs = { node_pair( node_from, node_to ),
-      //                                             node_pair( node_to, node_from ) };
-      //        for ( node_pair p : two_pairs ) {
-            if ( way_node_pairs_.find( p ) != way_node_pairs_.end() ) {
-                // split the way
-                // if there are more than two nodes, just split on a node
-                std::vector<Point> before_pts, after_pts;
-                uint64_t center_node;
-                if ( nodes.size() > 2 ) {
-                    size_t center = nodes.size() / 2;
-                    center_node = nodes[center];
-                    points_.inc_uses( center_node );
-                    for ( size_t i = 0; i <= center; i++ ) {
-                        before_pts.push_back( points_.at( nodes[i] ) );
-                    }
-                    for ( size_t i = center; i < nodes.size(); i++ ) {
-                        after_pts.push_back( points_.at( nodes[i] ) );
-                    }
+        node_pair p( node_from, node_to );
+        node_pair rev_p( node_to, node_from );
+        // we split the section if there is already a section with the same (node_from, node_to) pair
+        // or a (node_to, node_from) pair
+        if ( ( way_node_pairs_.find( p ) != way_node_pairs_.end() ) ||
+             ( way_node_pairs_.find( rev_p ) != way_node_pairs_.end() ) ) {
+            // split the way
+            // if there are more than two nodes, just split on a node
+            std::vector<Point> before_pts, after_pts;
+            uint64_t center_node;
+            if ( nodes.size() > 2 ) {
+                size_t center = nodes.size() / 2;
+                center_node = nodes[center];
+                points_.inc_uses( center_node );
+                for ( size_t i = 0; i <= center; i++ ) {
+                    before_pts.push_back( points_.at( nodes[i] ) );
                 }
-                else {
-                    const typename PointCacheType::PointType& p1 = points_.at( nodes[0] );
-                    const typename PointCacheType::PointType& p2 = points_.at( nodes[1] );
-                    Point center_point( ( p1.lon() + p2.lon() ) / 2.0, ( p1.lat() + p2.lat() ) / 2.0 );
-                
-                    before_pts.push_back( points_.at( nodes[0] ) );
-                    before_pts.push_back( center_point );
-                    after_pts.push_back( center_point );
-                    after_pts.push_back( points_.at( nodes[1] ) );
-
-                    // add a new point
-                    center_node = points_.insert( center_point );
-                    points_.inc_uses( center_node );
-                    points_.inc_uses( center_node );
+                for ( size_t i = center; i < nodes.size(); i++ ) {
+                    after_pts.push_back( points_.at( nodes[i] ) );
                 }
-                emit_section( way_id, ++section_id_, node_from, center_node, before_pts, tags );
-                emit_section( way_id, ++section_id_, center_node, node_to, after_pts, tags );
             }
             else {
-                way_node_pairs_.insert( p );
-                std::vector<Point> section_pts;
-                for ( uint64_t node: nodes ) {
-                    section_pts.push_back( points_.at( node ) );
-                }
-                emit_section( way_id, ++section_id_, node_from, node_to, section_pts, tags );
+                const typename PointCacheType::PointType& p1 = points_.at( nodes[0] );
+                const typename PointCacheType::PointType& p2 = points_.at( nodes[1] );
+                Point center_point( ( p1.lon() + p2.lon() ) / 2.0, ( p1.lat() + p2.lat() ) / 2.0 );
+                
+                before_pts.push_back( points_.at( nodes[0] ) );
+                before_pts.push_back( center_point );
+                after_pts.push_back( center_point );
+                after_pts.push_back( points_.at( nodes[1] ) );
+
+                // add a new point
+                center_node = points_.insert( center_point );
+                points_.inc_uses( center_node );
+                points_.inc_uses( center_node );
             }
-	    //}
+            emit_section( way_id, ++section_id_, node_from, center_node, before_pts, tags );
+            emit_section( way_id, ++section_id_, center_node, node_to, after_pts, tags );
+        }
+        else {
+            way_node_pairs_.insert( p );
+            std::vector<Point> section_pts;
+            for ( uint64_t node: nodes ) {
+                section_pts.push_back( points_.at( node ) );
+            }
+            emit_section( way_id, ++section_id_, node_from, node_to, section_pts, tags );
+        }
     }
  private:
     // reference to the point cache
