@@ -42,9 +42,10 @@ public:
                      SectionFoo emit_section )
     {
         // add the two pair orientations
-        std::vector<node_pair> two_pairs = { node_pair( node_from, node_to ),
-                                             node_pair( node_to, node_from ) };
-        for ( node_pair p : two_pairs ) {
+      node_pair p( node_from, node_to );
+      //      std::vector<node_pair> two_pairs = { node_pair( node_from, node_to ),
+      //                                             node_pair( node_to, node_from ) };
+      //        for ( node_pair p : two_pairs ) {
             if ( way_node_pairs_.find( p ) != way_node_pairs_.end() ) {
                 // split the way
                 // if there are more than two nodes, just split on a node
@@ -87,7 +88,7 @@ public:
                 }
                 emit_section( way_id, ++section_id_, node_from, node_to, section_pts, tags );
             }
-        }
+	    //}
     }
  private:
     // reference to the point cache
