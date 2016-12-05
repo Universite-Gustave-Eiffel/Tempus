@@ -7,6 +7,6 @@ tempus_build:
       - createdb -U User tempus_test_db
       - psql -U User -d tempus_test_db -c "create extension postgis"
       - zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
-      - for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $i; done
+      - for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
       - ./build/test_core.exe
 
