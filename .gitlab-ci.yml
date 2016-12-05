@@ -1,10 +1,9 @@
 tempus_build:
-  stage: build
-  script: cmd /s /c "ci\windows\build_gitlab.bat"
-
-tempus_ut:
   stage: test
   script:
+      # - cmd /s /c "ci\windows\build_gitlab.bat"
+      - echo %PATH%
+      - echo $PATH
       - createdb tempus_test_db
       - psql -d tempus_test_db -c "create extension postgis"
       - zcat data/tempus_test_db/tempus_test_db.sql.zip | psql tempus_test_db
