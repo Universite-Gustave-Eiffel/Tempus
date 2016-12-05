@@ -1,7 +1,7 @@
 tempus_build:
   stage: test
   script:
-      # - cmd /s /c "ci\windows\build_gitlab.bat"
+      - cmd /s /c "ci\windows\build_gitlab.bat"
       - echo %PATH%
       - echo $PATH
       - createdb -U User tempus_test_db
