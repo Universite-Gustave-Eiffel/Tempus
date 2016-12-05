@@ -5,6 +5,9 @@ before_script:
 
 rtest:
   script:
-      - mkdir build
       - cmd /s /k "ci\windows\build_gitlab.bat"
-      
+      - createdb tempus_test_db
+      - psql -d tempus_test_db -c "create extension postgis"
+      - zcat data/tempus_test_db/tempus_test_db.sql.zip | psql tempus_test_db
+      - for f in data/tempus_test_db/patch.*; do psql tempus_test_db < $i; done
+      - ./build/test_core.exe
