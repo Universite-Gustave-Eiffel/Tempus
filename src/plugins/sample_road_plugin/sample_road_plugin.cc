@@ -83,7 +83,7 @@ public:
         if ( (graph_[e].traffic_rules() & TrafficRuleCar) == 0 ) {
             return std::numeric_limits<float>::infinity();
         }
-        return graph_[e].length() / (graph_[e].car_speed_limit() * 1000.0) * 60.0;
+        return graph_[e].length() / (graph_[e].car_speed_limit() * 1000.0 * 0.60) * 60.0;
     }
 private:
     const Road::Graph& graph_;
