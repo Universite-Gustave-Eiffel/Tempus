@@ -1,13 +1,13 @@
-before_script:
-  - pwd
-  - /bin/ls
-#  - ~/osgeo4w-setup-x86_64.exe -k -q -P boost-devel
+tempus_build:
+  stage: build
+  script: cmd /s /c "ci\windows\build_gitlab.bat"
 
-rtest:
+tempus_ut:
+  stage: test
   script:
-      - cmd /s /k "ci\windows\build_gitlab.bat"
       - createdb tempus_test_db
       - psql -d tempus_test_db -c "create extension postgis"
       - zcat data/tempus_test_db/tempus_test_db.sql.zip | psql tempus_test_db
       - for f in data/tempus_test_db/patch.*; do psql tempus_test_db < $i; done
       - ./build/test_core.exe
+
