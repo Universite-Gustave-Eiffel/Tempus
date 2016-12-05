@@ -829,7 +829,7 @@ void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_ve
         props.push_back( p );
     }
     
-    CHQuery graph( edges_.begin(), edges_.end(), n_vertices, (uint*)degrees, &props[0] );
+    CHQuery graph( edges_.begin(), edges_.end(), n_vertices, (unsigned int*)degrees, &props[0] );
 
     graph.debug_print( std::cout );
 
