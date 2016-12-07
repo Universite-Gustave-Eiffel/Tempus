@@ -45,7 +45,7 @@ const int max_blob_header_size = 64 * 1024; // 64 kB
 const int max_uncompressed_blob_size = 32 * 1024 * 1024; // 32 MB
 // resolution for longitude/latitude used for conversion
 // between representation as double and as int
-const int lonlat_resolution = 1000 * 1000 * 1000; 
+const int lonlat_resolution = 1000 * 1000 * 1000;
 
 namespace CanalTP {
 
@@ -190,7 +190,7 @@ struct Parser
     virtual ~Parser(){
         delete[] buffer;
         delete[] unpack_buffer;
-        google::protobuf::ShutdownProtobufLibrary();
+        // google::protobuf::ShutdownProtobufLibrary();
     }
 protected:
     std::ifstream file;
@@ -301,7 +301,7 @@ protected:
         }
         return block_types;
     }
-    
+
     off_t next_block()
     {
         const char pattern[] = "\0\0\0\x0d\x0a\x07OSMData";

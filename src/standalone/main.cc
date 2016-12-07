@@ -202,6 +202,9 @@ int main( int argc, char* argv[] )
     for ( int i = 0; i < repeat; i++ ) {
         std::unique_ptr<PluginRequest> plugin_request( plugin->request( options ) );
         std::unique_ptr<Result> result( plugin_request->process( req ) );
+        for (auto r: *result) {
+            std::cout << r.is_roadmap() << std::endl;
+        }
         double t = plugin_request->metrics()["time_s"].as<double>() * 1000;
         std::cout << "Time: " << t << "ms" << " iterations: " << plugin_request->metrics()["iterations"].as<int64_t>() << std::endl;
         avg_time += t;

@@ -404,4 +404,3 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
 }
 
 }
-

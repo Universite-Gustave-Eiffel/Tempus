@@ -18,6 +18,9 @@
 #include "variant.hh"
 #include "cast.hh"
 
+#include <boost/python.hpp>
+#include <boost/python/suite/indexing/map_indexing_suite.hpp>
+
 namespace Tempus {
 
 Variant::Variant()

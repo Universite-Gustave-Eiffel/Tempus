@@ -191,6 +191,8 @@ public:
     }
 
     virtual std::unique_ptr<Result> process( const Request& request ) {
+        std::cerr << "origin=" << request.origin() << std::endl;
+        std::cerr << "destination=" << request.destination() << std::endl;
         REQUIRE( graph_.road_vertex_from_id( request.origin() ) );
         REQUIRE( graph_.road_vertex_from_id( request.destination() ) );
         if ( request.allowed_modes().size() > 1 ) {

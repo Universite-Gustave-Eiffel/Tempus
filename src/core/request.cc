@@ -57,7 +57,7 @@ void Request::add_allowed_mode( db_id_t m )
     std::sort( allowed_modes_.begin(), allowed_modes_.end() );
 }
 
-db_id_t Request::origin() const
+const db_id_t& Request::origin() const
 {
     return steps_.front().location();
 }
@@ -72,7 +72,7 @@ void Request::set_origin( const Step& s )
     steps_[0] = s;
 }
 
-db_id_t Request::destination() const
+const db_id_t& Request::destination() const
 {
     return steps_.back().location();
 }

@@ -1,7 +1,7 @@
 project( tempus )
 
 # the following environment variables must be defined in windows for cmake to find the libraries
-# 
+#
 # set FCGI_ROOT=c:\Users\oslandia\fcgi-2.4.1
 # set BOOST_ROOT=c:\Program Files (x86)\boost_1_54_0
 # set GLIB_ROOT=c:\Program Files (x86)\glib-dev_2.28.8-1_win32
@@ -33,14 +33,21 @@ if (WIN32)
     set (Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time)
+set(TEMPUS_PYTHON_VERSION "2.7" CACHE STRING "Select python version (note: 3.X are not supported yet)")
+find_package(PythonLibs ${TEMPUS_PYTHON_VERSION} REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+link_directories(${PYTHON_LIBRARIES})
+
+string (REPLACE "." "" TEMPUS_PYTHON_VERSION_NO_DOT ${TEMPUS_PYTHON_VERSION})
+
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time python-py${TEMPUS_PYTHON_VERSION_NO_DOT})
 find_package(PostgreSQL REQUIRED)
 include_directories( ${PostgreSQL_INCLUDE_DIRS} )
 include_directories( SYSTEM ${Boost_INCLUDE_DIR} )
 link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
 
-set (CMAKE_C_FLAGS "") 
-set (CMAKE_CXX_FLAGS "") 
+set (CMAKE_C_FLAGS "-fPIC")
+set (CMAKE_CXX_FLAGS "-fPIC")
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -56,11 +63,11 @@ if(MSVC)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" CACHE STRING "compile flags" FORCE)
 	endif()
 	set (CMAKE_EXE_LINKER_FLAGS "/ALLOWBIND")
-	
-	
+
+
 	# Disable verbose warnings
 	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290 /wd4267 /wd4267" )
-	
+
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
   # Update if necessary
@@ -89,10 +96,10 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    !include 'winmessages.nsh'
    WriteRegExpandStr HKLM 'SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment' TEMPUS_DATA_DIRECTORY $INSTDIR\\\\data
    SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 'STR:Environment' /TIMEOUT=5000
-   
+
    ; update startTempus location
    WriteRegExpandStr HKCU 'Software\\\\QGIS\\\\QGIS2\\\\IfsttarTempus' startTempus $INSTDIR\\\\bin\\\\startTempus.bat
-   
+
   ; **** INSTALL POSTGRESQL ***
   MessageBox MB_YESNO 'Install PostgreSQL 9.3 database server ?' /SD IDYES IDNO endPostgres
     NSISdl::download http://get.enterprisedb.com/postgresql/postgresql-9.3.1-1-windows.exe $INSTDIR\\\\postgresql-9.3.1-1-windows.exe
@@ -102,9 +109,9 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
        Delete postgresql-9.3.1-1-windows.exe
        Goto endPostgres
     PostgresMissing:
-       MessageBox MB_OK 'Unable to download PostgreSQL 9.3' 
+       MessageBox MB_OK 'Unable to download PostgreSQL 9.3'
   endPostgres:
-  
+
   ; **** INSTALL QGIS ***
   MessageBox MB_YESNO 'Install QGIS 2.4 ?' /SD IDYES IDNO endQGIS
     NSISdl::download  http://qgis.org/downloads/QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe $INSTDIR\\\\QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe
@@ -114,20 +121,20 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
        Delete QGIS-OSGeo4W-2.4.0-1-Setup-x86.exe
        Goto endQGIS
     QgisMissing:
-       MessageBox MB_OK 'Unable to download QGIS 2.4' 
+       MessageBox MB_OK 'Unable to download QGIS 2.4'
   endQGIS:
-  
+
   ; *** INSTALL NGINX ***
   MessageBox MB_YESNO 'Install nginx web server ?' /SD IDYES IDNO endNginx
     ExecWait `nginx-1.5.6.exe`
     ExecWait `..\\\\nginx\\\\nginx_service.exe install`
     ExecWait `net start nginx`
-    Goto endNginx   
+    Goto endNginx
   endNginx:
- 
+
   ; *** INSTALL MSVC REDISTRIBUTABLES ***
   ExecWait `vcredist_x86.exe /q`
- 
+
   ; *** INSTALL TEST DB ***
   ExecWait `reset_tempus_test_db.bat`
 
@@ -135,7 +142,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
   ;ExecWait `gen_wps_service_xml.bat`
   ;ExecWait `wps_service.exe install`
   ;ExecWait `net start wps`
-  
+
   ; *** INSTALL PLUGINS IN USER .qgis DIRECTORY ***
   ExecWait `install_qgis_plugins.bat`
 "
@@ -167,13 +174,13 @@ if (WIN32)
 #   else()
 #        message( FATAL_ERROR "msvcr71.dll not found, define OSGEO4W_ROOT or MSVRC71_DLL in your environment" )
 #	endif()
-   
+
 #   file(GLOB intldll ${PostgreSQL_LIBRARY_DIRS}/../bin/libintl*.dll)
 #   file(GLOB iconvdll ${PostgreSQL_LIBRARY_DIRS}/../bin/*iconv*.dll)
    install(FILES win32/nginx-1.5.6.exe win32/wps_service.exe win32/gen_wps_service_xml.bat win32/vcredist_x86.exe win32/reset_tempus_test_db.bat win32/install_qgis_plugins.bat win32/unzip.vbs DESTINATION .)
-#   install(FILES 
-#      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll 
-#      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll 
+#   install(FILES
+#      ${PostgreSQL_LIBRARY_DIRS}/libpq.dll
+#      ${PostgreSQL_LIBRARY_DIRS}/../bin/zlib1.dll
 #      ${PostgreSQL_LIBRARY_DIRS}/../bin/libeay32.dll
 #      ${PostgreSQL_LIBRARY_DIRS}/../bin/ssleay32.dll
 #      ${intldll}

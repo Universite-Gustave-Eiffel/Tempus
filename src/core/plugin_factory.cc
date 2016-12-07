@@ -229,5 +229,4 @@ std::vector<std::string> PluginFactory::plugin_list() const
 
     return names;
 }
-
-} // namespace Tempus
+}

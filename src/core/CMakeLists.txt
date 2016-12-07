@@ -39,14 +39,14 @@ set( UTILS_HEADER_FILES
   utils/timer.hh
 )
 
-set( SOURCE_FILES 
+set( SOURCE_FILES
     io.cc
     progression.cc
     cost.cc
     abscissa.cc
     road_graph.cc
     public_transport_graph.cc
-    multimodal_graph.cc 
+    multimodal_graph.cc
     reverse_multimodal_graph.cc
     poi.cc
     point.cc
@@ -56,8 +56,8 @@ set( SOURCE_FILES
     application.cc
     plugin.cc
     plugin_factory.cc
-    db.cc 
-    utils/graph_db_link.cc 
+    db.cc
+    utils/graph_db_link.cc
     variant.cc
     serializers.cc
     routing_data.cc
@@ -65,6 +65,8 @@ set( SOURCE_FILES
     multimodal_graph_builder.cc
     ch_routing_data.cc
 )
+
+set (PYTHON_SOURCE_FILES python_binding.cc )
 
 if (ENABLE_SEGMENT_ALLOCATOR)
   set( SOURCE_FILES ${SOURCE_FILES} utils/segment_allocator.cc )
@@ -77,7 +79,14 @@ else ()
     add_library( tempus SHARED ${SOURCE_FILES} )
 endif ()
 
-target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} )
+
+target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+
+add_library( pytempus SHARED ${PYTHON_SOURCE_FILES} )
+set_target_properties( pytempus PROPERTIES PREFIX "" )
+set_target_properties( pytempus PROPERTIES OUTPUT_NAME "tempus")
+target_link_libraries( pytempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} tempus)
+
 
 install(TARGETS tempus DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include/tempus)
