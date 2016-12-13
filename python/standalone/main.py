@@ -1,6 +1,39 @@
 import tempus
 import sys
 import argparse
+import importlib
+
+def load_plugin(name, progress, options):
+    try:
+        plugin = tempus.PluginFactory.instance().create_plugin(
+            name,
+            progress,
+            options)
+        print 'Created C++ plugin [{}]'.format(plugin.name)
+        return plugin
+    except RuntimeError as e:
+        pass # now try a python module
+
+    try:
+        print 'TRY PYTHON'
+        py_plugin = importlib.import_module(name)
+
+        tempus.PluginFactory.instance().register_plugin_fn(py_plugin.create_plugin, py_plugin.options_description, py_plugin.capabilities, py_plugin.name)
+        print 'REGISTER PYTHON DONE'
+        print name
+        print progress
+        print options
+
+        plugin = tempus.PluginFactory.instance().create_plugin(
+            name,
+            progress,
+            options)
+        print 'Created python plugin [{}]'.format(plugin.name)
+        return plugin
+
+    except ImportError as e:
+        raise RuntimeError('Failed to load plugin {}'.format(name))
+
 
 def main(argv):
     parser = argparse.ArgumentParser(description='Tempus test program')
@@ -55,12 +88,11 @@ def main(argv):
 
     progression = Progress()
 
-    plugin = tempus.PluginFactory.instance().create_plugin(
-        options['plugin'],
-        progression,
-        plugin_options)
+    plugin = load_plugin(options['plugin'], progression, plugin_options)
 
     req = tempus.Request()
+    print 'Req', req
+    sys.exit(0)
     req.origin = options['origin']
     dest = tempus.Request.Step()
     dest.location = options['destination']

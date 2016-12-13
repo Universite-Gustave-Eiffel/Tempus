@@ -24,6 +24,9 @@
 #include "multimodal_graph.hh"
 #include "db.hh"
 
+#include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+
 using namespace std;
 
 namespace Tempus {
@@ -215,7 +218,7 @@ bool Edge::operator<( const Multimodal::Edge& e ) const
     }
     return c < 0;
 #else
-    return source_ == e.source_ ? 
+    return source_ == e.source_ ?
         ( target_ == e.target_ ?
           road_edge_ < e.road_edge_
           : target_ < e.target_ )
@@ -1020,7 +1023,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
     else if ( v.type() == Vertex::PublicTransport ) {
         //
         // For a PublicTransport::Vertex, we have access to 1 or 2 additional node (the road node)
-        return out_degree( v.pt_vertex(), *v.pt_graph() ) + 
+        return out_degree( v.pt_vertex(), *v.pt_graph() ) +
             ( (*v.pt_graph())[v.pt_vertex()].opposite_road_edge() ? 2 : 1);
     }
 
@@ -1048,7 +1051,7 @@ size_t in_degree( const Vertex& v, const Graph& graph )
     else if ( v.type() == Vertex::PublicTransport ) {
         //
         // For a PublicTransport::Vertex, we have access to 1 or 2 additional node (the road node)
-        return in_degree( v.pt_vertex(), *v.pt_graph() ) + 
+        return in_degree( v.pt_vertex(), *v.pt_graph() ) +
             ( (*v.pt_graph())[v.pt_vertex()].opposite_road_edge() ? 2 : 1);
     }
 
@@ -1390,4 +1393,52 @@ std::ostream& operator<<( std::ostream& ostr, const Multimodal::EdgeIterator& it
 
 } // namespace Multimodal
 
+}
+
+#define GET_SET(CLASS, TYPE, name) \
+    const TYPE& (CLASS::*name ## l_get)() const = &CLASS::name; \
+    auto name ## _get = make_function(name ## l_get, return_value_policy<copy_const_reference>()); \
+
+
+#include <boost/python/return_internal_reference.hpp>
+void export_Graph() {
+    using namespace boost::python;
+
+    {
+        object modalModule(handle<>(borrowed(PyImport_AddModule("tempus.MultiModal"))));
+        scope().attr("MultiModal") = modalModule;
+        scope modalScope = modalModule;
+
+        GET_SET(Tempus::Multimodal::Graph, Tempus::Road::Graph, road)
+        class_<Tempus::Multimodal::Graph, boost::noncopyable>("Graph", no_init)
+            .def("road", road_get)
+        ;
+    }
+
+    {
+        object roadModule(handle<>(borrowed(PyImport_AddModule("tempus.Road"))));
+        scope().attr("Road") = roadModule;
+        scope modalScope = roadModule;
+
+        class_<Tempus::Road::Graph>("Graph", no_init)
+
+        ;
+
+        enum_<Tempus::Road::RoadType>("RoadType")
+            .value("RoadMotorway", Tempus::Road::RoadType::RoadMotorway)
+            .value("RoadPrimary", Tempus::Road::RoadType::RoadPrimary)
+            .value("RoadSecondary", Tempus::Road::RoadType::RoadSecondary)
+            .value("RoadStreet", Tempus::Road::RoadType::RoadStreet)
+            .value("RoadOther", Tempus::Road::RoadType::RoadOther)
+            .value("RoadCycleWay", Tempus::Road::RoadType::RoadCycleWay)
+            .value("RoadPedestrianOnly", Tempus::Road::RoadType::RoadPedestrianOnly)
+        ;
+
+        class_<Tempus::Road::Node, bases<Tempus::Base>>("Node")
+        ;
+        class_<Tempus::Road::Section, bases<Tempus::Base>>("Section")
+        ;
+        class_<Tempus::Road::Restriction, bases<Tempus::Base>>("Restriction", no_init)
+        ;
+    }
 }

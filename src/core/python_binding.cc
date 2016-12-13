@@ -110,12 +110,48 @@ bp::object adapt_unique_by_value(std::unique_ptr<T> (C::*fn)(Args...))
 
 /* actual binding code */
 #include "plugin_factory.hh"
+
+void register_plugin_fn(
+    Tempus::PluginFactory* plugin_factory,
+    bp::object create,
+    bp::object options,
+    bp::object caps,
+    bp::object name)
+{
+    COUT << "plouf1" << "\n";
+
+    auto
+    create_fn = [create](Tempus::ProgressionCallback& p, const Tempus::VariantMap& opt) -> Tempus::Plugin* {
+        bp::object do_not_delete_me_please (create(p, opt));
+        bp::incref(do_not_delete_me_please.ptr());
+        return bp::extract<Tempus::Plugin*>(do_not_delete_me_please);
+    };
+
+    #if 0
+    auto
+     options_fn = [options]() { return bp::extract<const Tempus::Plugin::OptionDescriptionList*>(options()); };
+
+    auto
+     caps_fn = [caps]() { return bp::extract<const Tempus::Plugin::Capabilities*>(caps()); };
+    #endif
+
+    auto
+     name_fn = [name]() { return bp::extract<const char*>(name()); };
+
+
+    Tempus::PluginFactory::instance()->register_plugin_fn(create_fn, nullptr /*options_fn*/, nullptr /*caps_fn*/, name_fn);
+    COUT << "plouf3" << "\n";
+}
+
 void export_PluginFactory() {
     bp::class_<Tempus::PluginFactory, boost::noncopyable>("PluginFactory", bp::no_init)
         .def("plugin_list", &Tempus::PluginFactory::plugin_list)
-        .def("create_plugin", &Tempus::PluginFactory::create_plugin, bp::return_value_policy<bp::manage_new_object>())
+        .def("create_plugin", &Tempus::PluginFactory::create_plugin, bp::return_value_policy<bp::reference_existing_object>())
+        .def("register_plugin_fn", &register_plugin_fn)
         .def("instance", &Tempus::PluginFactory::instance, bp::return_value_policy<bp::reference_existing_object>()).staticmethod("instance")
     ;
+    // .def("create_plugin_from_fn", &Tempus::PluginFactory::create_plugin_from_fn, bp::return_value_policy<bp::reference_existing_object>())
+    // bp::
 }
 
 #include "progression.hh"
@@ -127,8 +163,80 @@ void export_ProgressionCallback() {
 
 #include "variant.hh"
 
+
+struct Variant_to_python{
+    static PyObject* convert(const Tempus::Variant& v){
+        bp::object ret;
+        switch (v.type()) {
+            case Tempus::VariantType::BoolVariant:
+                ret = boost::python::object(v.as<bool>());
+                break;
+            case Tempus::VariantType::IntVariant:
+                ret = boost::python::object(v.as<int64_t>());
+                break;
+            case Tempus::VariantType::FloatVariant:
+                ret = boost::python::object(v.as<double>());
+                break;
+            case Tempus::VariantType::StringVariant:
+                ret = boost::python::object(v.as<std::string>().c_str());
+                break;
+            default:
+                return nullptr;
+        }
+        return bp::incref(ret.ptr());
+    }
+};
+
+
 struct Variant_from_python {
     Variant_from_python() {
+      bp::converter::registry::push_back(
+        &convertible,
+        &construct,
+        bp::type_id<Tempus::Variant>());
+    }
+
+    static void* convertible(PyObject* obj_ptr) {
+        if (!PyString_Check(obj_ptr) ||
+            !PyBool_Check(obj_ptr) ||
+            !PyInt_Check(obj_ptr) ||
+            !PyFloat_Check(obj_ptr)) {
+            return nullptr;
+        } else {
+            return obj_ptr;
+        }
+    }
+
+    static void construct(
+        PyObject* obj_ptr,
+        bp::converter::rvalue_from_python_stage1_data* data) {
+
+        Tempus::Variant v;
+        if (PyString_Check(obj_ptr)) {
+            v = Tempus::Variant::from_string(std::string(PyString_AsString(obj_ptr)));
+        } else if (PyBool_Check(obj_ptr)) {
+            v = Tempus::Variant::from_bool(obj_ptr == Py_True);
+        } else if (PyInt_Check(obj_ptr)) {
+            v = Tempus::Variant::from_int(PyInt_AsLong(obj_ptr));
+        } else if (PyFloat_Check(obj_ptr)) {
+            v = Tempus::Variant::from_float(PyFloat_AsDouble(obj_ptr));
+        } else {
+            return;
+        }
+
+        void* storage = (
+            (bp::converter::rvalue_from_python_storage<Tempus::Variant>*)
+            data)->storage.bytes;
+
+        new (storage) Tempus::Variant(v);
+        data->convertible = storage;
+    }
+};
+
+
+
+struct VariantMap_from_python {
+    VariantMap_from_python() {
       bp::converter::registry::push_back(
         &convertible,
         &construct,
@@ -201,8 +309,23 @@ struct Variant_from_python {
     }
 };
 
+struct VariantMap_to_python{
+    static PyObject* convert(const Tempus::VariantMap& v){
+        bp::dict ret;
+        for (auto it= v.begin(); it!=v.end(); ++it) {
+            ret[it->first] = it->second;
+        }
+        return bp::incref(ret.ptr());
+    }
+};
+
+
 void export_Variant() {
     Variant_from_python();
+    bp::to_python_converter<Tempus::Variant, Variant_to_python>();
+
+    VariantMap_from_python();
+    bp::to_python_converter<Tempus::VariantMap, VariantMap_to_python>();
 }
 
 void export_Request() {
@@ -250,13 +373,36 @@ void export_Request() {
     }
 }
 
+class PluginWrapper : public Tempus::Plugin, public bp::wrapper<Tempus::Plugin> {
+    public:
+        PluginWrapper(const std::string& name /*, const Tempus::VariantMap& opt= Tempus::VariantMap()*/) : Tempus::Plugin(name /*, opt*/) {}
+
+        virtual std::unique_ptr<Tempus::PluginRequest> request( const Tempus::VariantMap& options = Tempus::VariantMap() ) const {
+            std::cerr << "Do not call me" << std::endl;
+            return std::unique_ptr<Tempus::PluginRequest>(nullptr);
+        }
+
+        Tempus::PluginRequest* request2(const Tempus::VariantMap& options = Tempus::VariantMap() ) const {
+            // see return policy
+            return request(options).release();
+        }
+
+        const Tempus::RoutingData* routing_data() const {
+            return this->get_override("routing_data")();
+        }
+};
+
 void export_Plugin() {
     bp::class_<Tempus::PluginRequest>("PluginRequest", bp::init<const Tempus::Plugin*, const Tempus::VariantMap&>())
         .def("process", adapt_unique_by_value(&Tempus::PluginRequest::process))
     ;
 
-    bp::class_<Tempus::Plugin, boost::noncopyable>("Plugin", bp::no_init) // <const std::string&, const Tempus::VariantMap&>())
-        .def("request", adapt_unique_const(&Tempus::Plugin::request))
+    bp::class_<Tempus::RoutingData>("RoutingData", bp::no_init)
+    ;
+    bp::class_<PluginWrapper, boost::noncopyable>("Plugin", bp::init<const std::string& /*, const Tempus::VariantMap&*/>())
+        .def("request", &PluginWrapper::request2, bp::return_value_policy<bp::manage_new_object>())
+        .def("routing_data", bp::pure_virtual(&Tempus::Plugin::routing_data), bp::return_internal_reference<>())
+        .add_property("name", &Tempus::Plugin::name)
     ;
 }
 
@@ -314,6 +460,8 @@ void export_Roadmap() {
     ;
 }
 
+extern void export_Graph();
+
 BOOST_PYTHON_MODULE(tempus)
 {
     bp::object package = bp::scope();
@@ -335,4 +483,5 @@ BOOST_PYTHON_MODULE(tempus)
     export_Request();
     export_Plugin();
     export_Roadmap();
+    export_Graph();
 }

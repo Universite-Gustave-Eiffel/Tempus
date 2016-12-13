@@ -160,16 +160,34 @@ void PluginFactory::load_( const std::string& dll_name )
         THROW_DLERROR( "no function pluginName in " + complete_dll_name );
     }
 
-    const std::string name = ( *name_fct )();
+    const std::string name = name_fct();
     Dll dll;
     dll.handle = hRAII.release();
     dll.create_fct = createFct;
-    dll.option_descriptions.reset( (*option_description_fct)() );
-    dll.plugin_capabilities.reset( (*capabilities_fct)() );
+    dll.option_descriptions.reset( (option_description_fct)() );
+    dll.plugin_capabilities.reset( (capabilities_fct)() );
 
     dll_.insert( std::make_pair( name, std::move(dll) ) );
 
     COUT << "loaded " << name << " from " << dll_name << "\n";
+}
+
+void PluginFactory::register_plugin_fn(
+    PluginCreationFct create_fn,
+    PluginOptionDescriptionFct options_fn,
+    PluginCapabilitiesFct capa_fn,
+    PluginNameFct name_fn
+    )
+{
+    Dll dll;
+    dll.create_fct = create_fn;
+    COUT << "plouf" << "\n";
+    dll.option_descriptions.reset( new Plugin::OptionDescriptionList() ); // TODO: needs OptionDescriptionList binding (options_fn)() );
+    dll.plugin_capabilities.reset( new Plugin::Capabilities()); // TODO (capa_fn)() );
+
+    dll_.insert( std::make_pair( (name_fn)(), std::move(dll) ) );
+
+    COUT << "registered functions for plugin " << name_fn() << "\n";
 }
 
 const PluginFactory::Dll* PluginFactory::test_if_loaded_( const std::string& dll_name ) const
@@ -208,8 +226,9 @@ Plugin* PluginFactory::create_plugin( const std::string& dll_name, ProgressionCa
         it = dll_.find( dll_name );
     }
     if ( !it->second.plugin ) {
-        it->second.plugin.reset( (*it->second.create_fct)( progression, options ) );
+        it->second.plugin.reset( (it->second.create_fct)( progression, options ) );
     }
+    COUT << "NAME |" << it->second.plugin.get()->name() << "|\n";
     return it->second.plugin.get();
 }
 

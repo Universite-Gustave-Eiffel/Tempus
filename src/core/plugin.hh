@@ -229,6 +229,7 @@ public:
     ///
     /// Name accessor
     std::string name() const {
+        COUT << &name_ << '\n';
         return name_;
     }
 
@@ -241,7 +242,7 @@ public:
 
     ///
     /// Called when the plugin is unloaded from memory (uninstall)
-    virtual ~Plugin() {}
+    virtual ~Plugin() { COUT << "DELETE Plugin (oops)\n";}
 
     ///
     /// Create a PluginRequest object
