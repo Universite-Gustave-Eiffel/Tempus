@@ -2,7 +2,7 @@ tempus_build:
   stage: test
   script:
       - cmd /s /c "ci\windows\build_protobuf.bat"
-      - cmd /s /c "ci\windows\build_gitlab.bat"
+      #- cmd /s /c "ci\windows\build_gitlab.bat"
       #- createdb -U User tempus_test_db
       #- psql -U User -d tempus_test_db -c "create extension postgis"
       #- zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
