@@ -5,6 +5,7 @@ import importlib
 
 def load_plugin(name, progress, options):
     try:
+        print 'Trying to load C++ plugin...'
         plugin = tempus.PluginFactory.instance().create_plugin(
             name,
             progress,
@@ -12,17 +13,13 @@ def load_plugin(name, progress, options):
         print 'Created C++ plugin [{}]'.format(plugin.name)
         return plugin
     except RuntimeError as e:
+        print 'Failed... Now trying python...'
         pass # now try a python module
 
     try:
-        print 'TRY PYTHON'
         py_plugin = importlib.import_module(name)
 
         tempus.PluginFactory.instance().register_plugin_fn(py_plugin.create_plugin, py_plugin.options_description, py_plugin.capabilities, py_plugin.name)
-        print 'REGISTER PYTHON DONE'
-        print name
-        print progress
-        print options
 
         plugin = tempus.PluginFactory.instance().create_plugin(
             name,
@@ -32,6 +29,7 @@ def load_plugin(name, progress, options):
         return plugin
 
     except ImportError as e:
+        print 'Failed as well. Aborting.'
         raise RuntimeError('Failed to load plugin {}'.format(name))
 
 
@@ -91,8 +89,6 @@ def main(argv):
     plugin = load_plugin(options['plugin'], progression, plugin_options)
 
     req = tempus.Request()
-    print 'Req', req
-    sys.exit(0)
     req.origin = options['origin']
     dest = tempus.Request.Step()
     dest.location = options['destination']
@@ -106,13 +102,15 @@ def main(argv):
 
     for i in range(0, options['repeat']):
         p = plugin.request(options)
-        print req.origin
+
         result = p.process(req)
         for r in result:
-            r = r.roadmap()
-            for s in r:
-                print 'distance: {}, duration: {}'.format(s.cost(tempus.CostId.CostDistance), s.cost(tempus.CostId.CostDuration))
-
+            if r.is_roadmap():
+                r = r.roadmap()
+                for s in r:
+                    print 'distance: {}, duration: {}'.format(s.cost(tempus.CostId.CostDistance), s.cost(tempus.CostId.CostDuration))
+            else:
+                print 'ResultElement isnt a roadmap'
 
 if __name__ == "__main__":
 

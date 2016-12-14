@@ -118,8 +118,6 @@ void register_plugin_fn(
     bp::object caps,
     bp::object name)
 {
-    COUT << "plouf1" << "\n";
-
     auto
     create_fn = [create](Tempus::ProgressionCallback& p, const Tempus::VariantMap& opt) -> Tempus::Plugin* {
         bp::object do_not_delete_me_please (create(p, opt));
@@ -140,7 +138,6 @@ void register_plugin_fn(
 
 
     Tempus::PluginFactory::instance()->register_plugin_fn(create_fn, nullptr /*options_fn*/, nullptr /*caps_fn*/, name_fn);
-    COUT << "plouf3" << "\n";
 }
 
 void export_PluginFactory() {

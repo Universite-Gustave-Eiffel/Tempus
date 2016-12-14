@@ -229,7 +229,6 @@ public:
     ///
     /// Name accessor
     std::string name() const {
-        COUT << &name_ << '\n';
         return name_;
     }
 

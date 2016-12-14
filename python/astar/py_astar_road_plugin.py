@@ -1,17 +1,24 @@
 import tempus
 
+class PyAStarRequest(tempus.PluginRequest):
+	def __init__(self, plugin, options):
+		tempus.PluginRequest.__init__(self, plugin, options)
+
+	def process(self, request):
+		r = tempus.ResultElement()
+		return [r]
+
+
 class AStar(tempus.Plugin):
 	def __init__(self):
 		tempus.Plugin.__init__(self, 'py_astar_road_plugin')
 
 	def request(self, opts):
-		print ('python request!!!', opts)
-		return None
+		return PyAStarRequest(self, opts)
 
 
 def create_plugin(a, b):
 	plugin = AStar()
-	print ('CREATE PLUGIN FROM PYTHON')
 	return plugin
 
 def options_description():
@@ -23,5 +30,4 @@ def capabilities():
 	return {}
 
 def name():
-	print ('plugin::name...')
 	return 'py_astar_road_plugin'
