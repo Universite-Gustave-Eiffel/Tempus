@@ -28,7 +28,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <stdint.h>
-#include <netinet/in.h>
+
+#ifdef _MSC_VER
+#include <string.h>
+uint32_t ntohl(uint32_t const net) {
+    uint8_t data[4] = {};
+    memcpy(&data, &net, sizeof(data));
+    return ((uint32_t) data[3] << 0)
+         | ((uint32_t) data[2] << 8)
+         | ((uint32_t) data[1] << 16)
+         | ((uint32_t) data[0] << 24);
+}
+#else
+#include <netinet/in.h> // for ntohl
+#endif
+
 #include <zlib.h>
 #include <string>
 #include <fstream>
