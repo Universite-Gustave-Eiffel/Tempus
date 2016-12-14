@@ -8,4 +8,7 @@ tempus_build:
       #- zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
       #- for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
       #- TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
+  artifacts:
+      paths:
+        - /cygdrive/c/libs/*
 
