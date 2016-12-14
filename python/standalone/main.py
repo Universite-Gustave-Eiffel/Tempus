@@ -13,6 +13,7 @@ def load_plugin(name, progress, options):
         print 'Created C++ plugin [{}]'.format(plugin.name)
         return plugin
     except RuntimeError as e:
+        print e
         print 'Failed... Now trying python...'
         pass # now try a python module
 

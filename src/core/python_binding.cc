@@ -396,11 +396,145 @@ void export_Plugin() {
 
     bp::class_<Tempus::RoutingData>("RoutingData", bp::no_init)
     ;
+
     bp::class_<PluginWrapper, boost::noncopyable>("Plugin", bp::init<const std::string& /*, const Tempus::VariantMap&*/>())
-        .def("request", &PluginWrapper::request2, bp::return_value_policy<bp::manage_new_object>())
+        .def("request", &PluginWrapper::request2, bp::return_value_policy<bp::manage_new_object>()) // for python plugin
+        .def("request", adapt_unique_const(&Tempus::Plugin::request)) // for C++ plugin called from py
         .def("routing_data", bp::pure_virtual(&Tempus::Plugin::routing_data), bp::return_internal_reference<>())
         .add_property("name", &Tempus::Plugin::name)
     ;
+
+    bp::def("load_routing_data", &Tempus::load_routing_data, bp::return_internal_reference<>());
+}
+
+void export_RoadGraph() {
+    bp::object roadModule(bp::handle<>(bp::borrowed(PyImport_AddModule("tempus.Road"))));
+    bp::scope().attr("Road") = roadModule;
+    bp::scope roadScope = roadModule;
+
+    bp::class_<Tempus::Road::Graph>("Graph", bp::no_init)
+        .def("num_vertices", +[](Tempus::Road::Graph* g) { return num_vertices(*g); })
+    //                       ^
+    // boost python can't wrap lambda, but can wrap func pointers...
+    // (see http://stackoverflow.com/questions/18889028/a-positive-lambda-what-sorcery-is-this)
+        .def("vertex", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); })
+        .def("num_edges", +[](Tempus::Road::Graph* g) { return num_edges(*g); })
+        .def("edge_from_index", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); })
+        .def("edge", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];})
+
+        .def("source", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);})
+        .def("target", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);})
+    ;
+
+    bp::class_<Tempus::Road::Graph::edge_descriptor>("edge_descriptor", bp::no_init)
+    ;
+
+    bp::enum_<Tempus::Road::RoadType>("RoadType")
+        .value("RoadMotorway", Tempus::Road::RoadType::RoadMotorway)
+        .value("RoadPrimary", Tempus::Road::RoadType::RoadPrimary)
+        .value("RoadSecondary", Tempus::Road::RoadType::RoadSecondary)
+        .value("RoadStreet", Tempus::Road::RoadType::RoadStreet)
+        .value("RoadOther", Tempus::Road::RoadType::RoadOther)
+        .value("RoadCycleWay", Tempus::Road::RoadType::RoadCycleWay)
+        .value("RoadPedestrianOnly", Tempus::Road::RoadType::RoadPedestrianOnly)
+    ;
+
+    bp::class_<Tempus::Road::Node, bp::bases<Tempus::Base>>("Node")
+    ;
+    bp::class_<Tempus::Road::Section, bp::bases<Tempus::Base>>("Section")
+    ;
+    bp::class_<Tempus::Road::Restriction, bp::bases<Tempus::Base>>("Restriction", bp::no_init)
+    ;
+}
+
+void export_BoostGraph() {
+
+}
+
+/** http://stackoverflow.com/questions/26497922/how-to-wrap-a-c-function-that-returns-boostoptionalt */
+
+namespace detail {
+
+/// @brief Type trait that determines if the provided type is
+///        a boost::optional.
+template <typename T>
+struct is_optional : boost::false_type {};
+
+template <typename T>
+struct is_optional<boost::optional<T> > : boost::true_type {};
+
+/// @brief Type used to provide meaningful compiler errors.
+template <typename>
+struct return_optional_requires_a_optional_return_type {};
+
+/// @brief ResultConverter model that converts a boost::optional object to
+///        Python None if the object is empty (i.e. boost::none) or defers
+///        to Boost.Python to convert object to a Python object.
+template <typename T>
+struct to_python_optional
+{
+  /// @brief Only supports converting Boost.Optional types.
+  /// @note This is checked at runtime.
+  bool convertible() const { return detail::is_optional<T>::value; }
+
+  /// @brief Convert boost::optional object to Python None or a
+  ///        Boost.Python object.
+  PyObject* operator()(const T& obj) const
+  {
+    namespace python = boost::python;
+    python::object result =
+      obj                      // If boost::optional has a value, then
+        ? python::object(*obj) // defer to Boost.Python converter.
+        : python::object();    // Otherwise, return Python None.
+
+    // The python::object contains a handle which functions as
+    // smart-pointer to the underlying PyObject.  As it will go
+    // out of scope, explicitly increment the PyObject's reference
+    // count, as the caller expects a non-borrowed (i.e. owned) reference.
+    return python::incref(result.ptr());
+  }
+
+  /// @brief Used for documentation.
+  const PyTypeObject* get_pytype() const { return 0; }
+};
+
+} // namespace detail
+
+/// @brief Converts a boost::optional to Python None if the object is
+///        equal to boost::none.  Otherwise, defers to the registered
+///        type converter to returs a Boost.Python object.
+struct return_optional
+{
+  template <class T> struct apply
+  {
+    // The to_python_optional ResultConverter only checks if T is convertible
+    // at runtime.  However, the following MPL branch cause a compile time
+    // error if T is not a boost::optional by providing a type that is not a
+    // ResultConverter model.
+    typedef typename boost::mpl::if_<
+      detail::is_optional<T>,
+      detail::to_python_optional<T>,
+      detail::return_optional_requires_a_optional_return_type<T>
+    >::type type;
+  }; // apply
+};   // return_optional
+
+void export_Graph() {
+    using namespace boost::python;
+
+    {
+        object modalModule(handle<>(borrowed(PyImport_AddModule("tempus.MultiModal"))));
+        scope().attr("MultiModal") = modalModule;
+        scope modalScope = modalModule;
+
+        const Tempus::Road::Graph& (Tempus::Multimodal::Graph::*roadl_get)() const = &Tempus::Multimodal::Graph::road;
+        auto road_get = make_function(roadl_get, return_value_policy<copy_const_reference>());
+
+        class_<Tempus::Multimodal::Graph, bp::bases<Tempus::RoutingData>, boost::noncopyable>("MMGraph", no_init)
+            .def("road", road_get)
+            .def("road_vertex_from_id", &Tempus::Multimodal::Graph::road_vertex_from_id, bp::return_value_policy<return_optional>())
+        ;
+    }
 }
 
 void export_Roadmap() {
@@ -457,8 +591,6 @@ void export_Roadmap() {
     ;
 }
 
-extern void export_Graph();
-
 BOOST_PYTHON_MODULE(tempus)
 {
     bp::object package = bp::scope();
@@ -481,4 +613,6 @@ BOOST_PYTHON_MODULE(tempus)
     export_Plugin();
     export_Roadmap();
     export_Graph();
+    export_RoadGraph();
+    export_BoostGraph();
 }
