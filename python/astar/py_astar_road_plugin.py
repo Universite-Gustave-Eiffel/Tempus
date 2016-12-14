@@ -10,15 +10,15 @@ class PyAStarRequest(tempus.PluginRequest):
 
 
 class AStar(tempus.Plugin):
-	def __init__(self):
+	def __init__(self, progression, options):
 		tempus.Plugin.__init__(self, 'py_astar_road_plugin')
 
 	def request(self, opts):
 		return PyAStarRequest(self, opts)
 
 
-def create_plugin(a, b):
-	plugin = AStar()
+def create_plugin(progression, options):
+	plugin = AStar(progression, options)
 	return plugin
 
 def options_description():
