@@ -299,6 +299,7 @@ public:
         while ( current != origin ) {
             path.push_front( current );
 
+            std::cout << current << "->";
             if ( pred_map[current] == current ) {
                 path_found = false;
                 break;
@@ -307,6 +308,7 @@ public:
             current = pred_map[ current ];
         }
 
+        std::cout << origin << '\n';
         path.push_front( origin );
 
         metrics_[ "time_s" ] = Variant::from_float( timer.elapsed() );
