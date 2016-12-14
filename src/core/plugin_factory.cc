@@ -82,16 +82,6 @@ PluginFactory::~PluginFactory()
     }
 }
 
-void PluginFactory::load_( const std::string& dll_name )
-{
-    auto it = dll_.find( dll_name );
-    if ( it != dll_.end() ) {
-        return;    // already there
-    }
-
-    const std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
-
-    COUT << "Loading " << complete_dll_name << std::endl;
 
 #ifdef _WIN32
 #   define DLCLOSE FreeLibrary
@@ -102,24 +92,48 @@ void PluginFactory::load_( const std::string& dll_name )
 #   define DLSYM dlsym
 #   define THROW_DLERROR( msg ) throw std::runtime_error( std::string( msg ) + "(" + std::string( dlerror() ) + ")" );
 #endif
-    struct RAII {
-        RAII( HMODULE h ):h_( h ) {};
-        ~RAII() {
-            if ( h_ ) {
-                DLCLOSE( h_ );
-            }
+struct RAII {
+    RAII( HMODULE h ):h_( h ) {};
+    ~RAII() {
+        if ( h_ ) {
+            DLCLOSE( h_ );
         }
-        HMODULE get() {
-            return h_;
+    }
+    HMODULE get() {
+        return h_;
+    }
+    HMODULE release() {
+        HMODULE p = NULL;
+        std::swap( p,h_ );
+        return p;
+    }
+
+    template<class T>
+    std::function<T> function(const std::string& funcName) {
+        void* const result = DLSYM( this->get(), funcName.c_str() );
+
+        if ( !result ) {
+            THROW_DLERROR( "no function " + funcName );
         }
-        HMODULE release() {
-            HMODULE p = NULL;
-            std::swap( p,h_ );
-            return p;
-        }
-    private:
-        HMODULE h_;
-    };
+
+        return reinterpret_cast<T*>(result);
+    }
+
+private:
+    HMODULE h_;
+};
+
+
+void PluginFactory::load_( const std::string& dll_name )
+{
+    auto it = dll_.find( dll_name );
+    if ( it != dll_.end() ) {
+        return;    // already there
+    }
+
+    const std::string complete_dll_name = DLL_PREFIX + dll_name + DLL_SUFFIX;
+
+    COUT << "Loading " << complete_dll_name << std::endl;
 
     RAII hRAII(
 #ifdef _WIN32
@@ -133,32 +147,14 @@ void PluginFactory::load_( const std::string& dll_name )
         THROW_DLERROR( "cannot load " + complete_dll_name );
     }
 
-    PluginCreationFct createFct;
-    // this cryptic syntax is here to avoid a warning when converting
-    // a pointer-to-function to a pointer-to-object
-    *reinterpret_cast<void**>( &createFct ) = DLSYM( hRAII.get(), "createPlugin" );
-
-    if ( !createFct ) {
-        THROW_DLERROR( "no function createPlugin in " + complete_dll_name );
-    }
-
-    PluginOptionDescriptionFct option_description_fct;
-    *reinterpret_cast<void**>( &option_description_fct ) = DLSYM( hRAII.get(), "optionDescriptions" );
-    if ( !option_description_fct ) {
-        THROW_DLERROR( "no function optionDescriptions in " + complete_dll_name );
-    }
-
-    PluginCapabilitiesFct capabilities_fct;
-    *reinterpret_cast<void**>( &capabilities_fct ) = DLSYM( hRAII.get(), "pluginCapabilities" );
-    if ( !capabilities_fct ) {
-        THROW_DLERROR( "no function pluginCapabilities in " + complete_dll_name );
-    }
-
-    PluginNameFct name_fct;
-    *reinterpret_cast<void**>( &name_fct ) = DLSYM( hRAII.get(), "pluginName" );
-    if ( !name_fct ) {
-        THROW_DLERROR( "no function pluginName in " + complete_dll_name );
-    }
+    PluginCreationFct createFct =
+        hRAII.function<Plugin*(ProgressionCallback&, const VariantMap&)>("createPlugin");
+    PluginOptionDescriptionFct option_description_fct =
+        hRAII.function<const Plugin::OptionDescriptionList*()>("optionDescriptions");
+    PluginCapabilitiesFct capabilities_fct =
+        hRAII.function<const Plugin::Capabilities*()>("pluginCapabilities");
+    PluginNameFct name_fct =
+        hRAII.function<const char*()>("pluginName");
 
     const std::string name = name_fct();
     Dll dll;
