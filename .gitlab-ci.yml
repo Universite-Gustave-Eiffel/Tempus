@@ -1,7 +1,7 @@
 tempus_build:
   stage: test
   script:
-      - cmd /s /c "ci\windows\build_protobuf.bat"
+      #- cmd /s /c "ci\windows\build_protobuf.bat"
       #- cmd /s /c "ci\windows\build_gitlab.bat"
       #- createdb -U User tempus_test_db
       #- psql -U User -d tempus_test_db -c "create extension postgis"
@@ -10,5 +10,5 @@ tempus_build:
       #- TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
   artifacts:
       paths:
-        - /cygdrive/c/libs/*
+        - /cygdrive/c/Windows/Write.exe
 
