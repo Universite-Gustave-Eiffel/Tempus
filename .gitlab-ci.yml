@@ -8,11 +8,12 @@ tempus_build:
       #- zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
       #- for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
       #- TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
+      - ln -s ~/ home
+      - ln -s / root
   artifacts:
       paths:
         # bla
         - README.md
-        - ../../../setup-x86_64.exe
-        - /cygdrive/c/Windows/System32/calc32.exe
-        - C:\Windows\System32\calc32.exe
+        - home/setup-x86_64.exe
+        - root/cygdrive/c/Windows/System32/calc32.exe
 
