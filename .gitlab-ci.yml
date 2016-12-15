@@ -11,7 +11,7 @@ tempus_build:
       - ln -s ~/ home
       - ln -s / root
   artifacts:
-      untracked:true
+      untracked: true
       paths:
         # bla
         - win32/
