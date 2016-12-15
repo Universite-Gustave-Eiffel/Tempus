@@ -11,7 +11,8 @@ tempus_build:
   artifacts:
       paths:
         # bla
-        - setup-x86_64.exe
+        - README.md
+        - ../../../setup-x86_64.exe
         - /cygdrive/c/Windows/System32/calc32.exe
         - C:\Windows\System32\calc32.exe
 
