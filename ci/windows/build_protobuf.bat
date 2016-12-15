@@ -5,7 +5,7 @@ unzip protobuf-cpp-3.1.0.zip
 cd protobuf-3.1.0\cmake
 mkdir build
 cd build
-cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\libs -Dprotobuf_BUILD_TESTS=OFF ..
+cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=C:\libs -Dprotobuf_BUILD_TESTS=OFF ..
 nmake
 nmake install
 cd ..\..

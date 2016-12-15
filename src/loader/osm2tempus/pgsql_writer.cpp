@@ -17,6 +17,11 @@
 #include "pgsql_writer.h"
 #include "geom.h"
 
+#ifdef _MSC_VER
+#include <Winsock2.h> // htoxx()
+#define htobe64(x) htonll(x)
+#endif
+
 static std::string tags_to_binary( const osm_pbf::Tags& tags )
 {
     uint32_t size1, size2, wsize;
