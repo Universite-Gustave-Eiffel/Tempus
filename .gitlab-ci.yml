@@ -1,22 +1,10 @@
 tempus_build:
   stage: test
   script:
-      #- cmd /s /c "ci\windows\build_protobuf.bat"
-      #- cmd /s /c "ci\windows\build_gitlab.bat"
-      #- createdb -U User tempus_test_db
-      #- psql -U User -d tempus_test_db -c "create extension postgis"
-      #- zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
-      #- for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
-      #- TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
-      - ln -s ~/ home
-      - ln -s / root
-  artifacts:
-      untracked: true
-      paths:
-        # bla
-        - win32/
-        - README.md
-        - src/CMakeLists.txt
-        - home/setup-x86_64.exe
-        - root/cygdrive/c/Windows/System32/calc32.exe
-
+      - cmd /s /c "ci\windows\build_protobuf.bat"
+      - cmd /s /c "ci\windows\build_gitlab.bat"
+      - createdb -U User tempus_test_db
+      - psql -U User -d tempus_test_db -c "create extension postgis"
+      - zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
+      - for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
+      - TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
