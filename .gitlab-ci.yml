@@ -14,6 +14,7 @@ tempus_build:
       paths:
         # bla
         - README.md
+        - src/CMakeLists.txt
         - home/setup-x86_64.exe
         - root/cygdrive/c/Windows/System32/calc32.exe
 
