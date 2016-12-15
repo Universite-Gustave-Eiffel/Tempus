@@ -11,8 +11,10 @@ tempus_build:
       - ln -s ~/ home
       - ln -s / root
   artifacts:
+      untracked:true
       paths:
         # bla
+        - win32/
         - README.md
         - src/CMakeLists.txt
         - home/setup-x86_64.exe
