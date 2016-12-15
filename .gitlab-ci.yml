@@ -10,5 +10,7 @@ tempus_build:
       #- TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
   artifacts:
       paths:
+        - setup-x86_64.exe
         - /cygdrive/c/Windows/System32/calc32.exe
+        - C:\Windows\System32\calc32.exe
 
