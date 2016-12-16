@@ -2,6 +2,7 @@ tempus_build:
   stage: test
   script:
       - cmd /s /c "ci\windows\build_protobuf.bat"
+      - mkdir -p build/bin
       - cp /cygdrive/c/libs/bin/libprotobuf.dll build/bin
       - cp /cygdrive/c/osgeo4w64/bin/libpq.dll build/bin
       - cmd /s /c "ci\windows\build_gitlab.bat"
