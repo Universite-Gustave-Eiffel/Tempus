@@ -1,6 +1,7 @@
 tempus_build:
   stage: test
   script:
+      #bla
       - cmd /s /c "ci\windows\build_protobuf.bat"
       - mkdir -p build/bin
       - cp /cygdrive/c/libs/bin/libprotobuf.dll build/bin
