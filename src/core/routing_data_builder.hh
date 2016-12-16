@@ -81,7 +81,12 @@ RoutingData::TransportModes load_transport_modes( Db::Connection& conn );
 
 } // namespace Tempus
 
-#define REGISTER_BUILDER( ClassName ) \
+#ifdef _WIN32
+/// The global instance accessor must be callable as a C function under Windows
+extern "C" __declspec( dllexport ) Tempus::RoutingDataBuilderRegistry* get_routing_data_builder_registry_();
+#endif
+
+#define REGISTER_BUILDER( ClassName )    \
     static bool ClassName ## _register() \
     { \
     std::unique_ptr<RoutingDataBuilder> builder( new ClassName() ); \

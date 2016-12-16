@@ -29,8 +29,22 @@ std::vector<std::string> RoutingDataBuilderRegistry::builder_list() const
 
 RoutingDataBuilderRegistry& RoutingDataBuilderRegistry::instance()
 {
-    static RoutingDataBuilderRegistry b;
-    return b;
+    // On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
+    // DLL have still access to the main EXE memory ...
+    static RoutingDataBuilderRegistry* instance_ = 0;
+
+    if ( 0 == instance_ ) {
+#ifdef _WIN32
+        // We test if we are in the main module (EXE) or not. If it is the case, a new Application is allocated.
+        // It will also be returned by modules.
+        RoutingDataBuilderRegistry* ( *main_get_instance )() = ( RoutingDataBuilderRegistry* (* )() )GetProcAddress( GetModuleHandle( NULL ), "get_routing_data_builder_registry__" );
+        instance_ = ( main_get_instance == &get_routing_data_builder_registry_ )  ? new RoutingDataBuilderRegistry : main_get_instance();
+#else
+        instance_ = new RoutingDataBuilderRegistry();
+#endif
+    }
+
+    return *instance_;
 }
 
 const char TEMPUS_DUMP_FILE_MAGIC[] = "TDBF";
