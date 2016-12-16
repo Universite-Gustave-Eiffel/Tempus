@@ -12,6 +12,7 @@ tempus_build:
       - for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
       - TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
   artifacts:
+    paths:
       - build/lib/*
       - build/bin/*
       
