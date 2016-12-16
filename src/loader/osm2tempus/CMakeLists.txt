@@ -8,8 +8,10 @@ include_directories(${PROTOBUF_INCLUDE_DIR} ../../core ${CMAKE_CURRENT_BINARY_DI
 
 add_executable(osm2tempus main.cpp pgsql_writer.cpp single_pass_reader.cpp two_pass_reader.cpp data_profile.cpp tempus_profile.cpp geom.cpp ${ProtoSources} ${ProtoHeaders})
 
-target_link_libraries(osm2tempus ${ZLIB_LIBRARIES} tempus ws2_32.lib ${PROTOBUF_LIBRARY})
+target_link_libraries(osm2tempus ${ZLIB_LIBRARIES} tempus ${PROTOBUF_LIBRARY})
 if (MSVC)
+  # we use protobuf as a dll
+  add_definitions("/DPROTOBUF_USE_DLLS")
   target_link_libraries(osm2tempus ws2_32.lib)
 endif (MSVC)
 

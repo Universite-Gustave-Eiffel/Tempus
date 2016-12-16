@@ -26,7 +26,7 @@ const RoutingData* load_routing_data( const std::string& name, ProgressionCallba
 
     const RoutingDataBuilder* builder = RoutingDataBuilderRegistry::instance().builder( name );
     if ( !builder ) {
-        return nullptr;
+        throw std::runtime_error( "Can't find the routing data builder named " + name );
     }
 
     // load from the db or from a file
