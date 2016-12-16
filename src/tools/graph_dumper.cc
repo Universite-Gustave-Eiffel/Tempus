@@ -165,4 +165,5 @@ int main( int argc, char* argv[] )
         std::cout << "dumping to " << dump_file << " ... " << std::endl;
         dump_routing_data( rd, dump_file, progression );
     }
+    return 0;
 }
