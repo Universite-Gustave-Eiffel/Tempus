@@ -788,7 +788,4 @@ void MultimodalGraphBuilder::file_export( const RoutingData* rd, const std::stri
     const Multimodal::Graph* graph = static_cast<const Multimodal::Graph*>( rd );
     serialize( ofs, *graph, binary_serialization_t() );
 }
-
-REGISTER_BUILDER( MultimodalGraphBuilder )
-
 }

@@ -60,6 +60,7 @@ BOOST_AUTO_TEST_SUITE( tempus_core_Db )
 
 BOOST_AUTO_TEST_CASE( testConnection )
 {
+    tempus_init();
     std::cout << "DbTest::testConnection()" << std::endl;
 
     std::unique_ptr<Db::Connection> connection;
@@ -84,6 +85,7 @@ BOOST_AUTO_TEST_CASE( testConnection )
 
 BOOST_AUTO_TEST_CASE( testQueries )
 {
+    tempus_init();
     std::cout << "DbTest::testQueries()" << std::endl;
     std::unique_ptr<Db::Connection> connection( new Db::Connection( g_db_options + " dbname = " + g_db_name ) );
 
@@ -120,6 +122,7 @@ BOOST_AUTO_TEST_SUITE( tempus_core_PgImporter )
 
 void testConsistency_( const Multimodal::Graph* graph )
 {
+    tempus_init();
     Db::Connection connection( g_db_options + " dbname = " + g_db_name );
 
     // get the number of vertices in the graph
@@ -310,6 +313,7 @@ void testConsistency_( const Multimodal::Graph* graph )
 
 BOOST_AUTO_TEST_CASE( testConsistency )
 {
+    tempus_init();
     std::cout << "PgImporterTest::testConsistency()" << std::endl;
     TextProgression progression;
     VariantMap options;
@@ -334,6 +338,7 @@ BOOST_AUTO_TEST_SUITE( tempus_plugin_multimodal )
 
 BOOST_AUTO_TEST_CASE( testMultimodal )
 {
+    tempus_init();
     std::cout << "PgImporterTest::testMultimodal()" << std::endl;
     TextProgression progression;
     VariantMap options;
@@ -635,6 +640,7 @@ BOOST_AUTO_TEST_SUITE( tempus_core_reverse_road )
 
 BOOST_AUTO_TEST_CASE( testReverseRoad )
 {
+    tempus_init();
     std::cout << "PgImporterTest::testReverseRoad()" << std::endl;
     TextProgression progression;
     VariantMap options;
@@ -681,6 +687,7 @@ BOOST_AUTO_TEST_SUITE( tempus_core_reverse_multimodal )
 
 BOOST_AUTO_TEST_CASE( testReverseMultimodal )
 {
+    tempus_init();
     std::cout << "PgImporterTest::testReverseMultimodal()" << std::endl;
     TextProgression progression;
     VariantMap options;
@@ -781,6 +788,7 @@ BOOST_AUTO_TEST_SUITE( tempus_road_restrictions )
 
 BOOST_AUTO_TEST_CASE( testRestrictions )
 {
+    tempus_init();
     TextProgression progression;
     VariantMap options;
     options["db/options"] = Variant::from_string(g_db_options + " dbname = " + g_db_name);
@@ -822,6 +830,7 @@ BOOST_AUTO_TEST_SUITE( tempus_ch_query )
 
 void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_vertices, int* degrees, int* costs )
 {
+    tempus_init();
     std::vector<CHEdgeProperty> props;
     for ( size_t i = 0; i < edges_.size(); i++ ) {
         CHEdgeProperty p;
@@ -876,6 +885,7 @@ void test_ch( const std::vector<std::pair<uint32_t, uint32_t>>& edges_, int n_ve
 
 BOOST_AUTO_TEST_CASE( testCHQuery )
 {
+    tempus_init();
     {
         std::vector<std::pair<uint32_t, uint32_t>> edges;
         edges.push_back( std::make_pair( (uint32_t)0, (uint32_t)(1) ) );

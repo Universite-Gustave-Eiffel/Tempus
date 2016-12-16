@@ -93,13 +93,21 @@ int main( int argc, char* argv[] )
     ;
 
     po::variables_map vm;
-    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    try {
+        po::store( po::parse_command_line( argc, argv, desc ), vm );
+    }
+    catch ( po::unknown_option& e ) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
     po::notify( vm );
 
     if ( vm.count( "help" ) ) {
         std::cout << desc << std::endl;
         return 1;
     }
+
+    tempus_init();
 
     if ( vm.count( "list" ) ) {
         std::cout << "Available builders:" << std::endl;

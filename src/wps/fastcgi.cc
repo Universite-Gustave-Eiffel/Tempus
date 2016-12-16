@@ -349,6 +349,8 @@ int main( int argc, char* argv[] )
 
 #endif
 
+    tempus_init();
+    
     if ( !data_dir.empty() ) {
         Application::instance()->set_data_directory( data_dir );
     }
