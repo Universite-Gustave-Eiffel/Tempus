@@ -62,9 +62,13 @@ struct custom_list_from_seq{
 };
 
 /* Helpers to declare local variables from get/set functions */
-#define GET_SET(CLASS, TYPE, name) \
+#define GET(CLASS, TYPE, name) \
     const TYPE& (CLASS::*name ## l_get)() const = &CLASS::name; \
-    auto name ## _get = make_function(name ## l_get, bp::return_value_policy<bp::copy_const_reference>()); \
+    auto name ## _get = make_function(name ## l_get, bp::return_value_policy<bp::copy_const_reference>());
+
+
+#define GET_SET(CLASS, TYPE, name) \
+    GET(CLASS, TYPE, name) \
     void (CLASS::*name ## _set)(const TYPE&) = &CLASS::set_ ## name;
 
 /* Helpers to bind function returning std::unique_ptr */
@@ -107,6 +111,76 @@ bp::object adapt_unique_by_value(std::unique_ptr<T> (C::*fn)(Args...))
       boost::mpl::vector<T, C&, Args...>()
     );
 }
+
+
+/** http://stackoverflow.com/questions/26497922/how-to-wrap-a-c-function-that-returns-boostoptionalt */
+
+namespace detail {
+
+/// @brief Type trait that determines if the provided type is
+///        a boost::optional.
+template <typename T>
+struct is_optional : boost::false_type {};
+
+template <typename T>
+struct is_optional<boost::optional<T> > : boost::true_type {};
+
+/// @brief Type used to provide meaningful compiler errors.
+template <typename>
+struct return_optional_requires_a_optional_return_type {};
+
+/// @brief ResultConverter model that converts a boost::optional object to
+///        Python None if the object is empty (i.e. boost::none) or defers
+///        to Boost.Python to convert object to a Python object.
+template <typename T>
+struct to_python_optional
+{
+  /// @brief Only supports converting Boost.Optional types.
+  /// @note This is checked at runtime.
+  bool convertible() const { return detail::is_optional<T>::value; }
+
+  /// @brief Convert boost::optional object to Python None or a
+  ///        Boost.Python object.
+  PyObject* operator()(const T& obj) const
+  {
+    namespace python = boost::python;
+    python::object result =
+      obj                      // If boost::optional has a value, then
+        ? python::object(*obj) // defer to Boost.Python converter.
+        : python::object();    // Otherwise, return Python None.
+
+    // The python::object contains a handle which functions as
+    // smart-pointer to the underlying PyObject.  As it will go
+    // out of scope, explicitly increment the PyObject's reference
+    // count, as the caller expects a non-borrowed (i.e. owned) reference.
+    return python::incref(result.ptr());
+  }
+
+  /// @brief Used for documentation.
+  const PyTypeObject* get_pytype() const { return 0; }
+};
+
+} // namespace detail
+
+/// @brief Converts a boost::optional to Python None if the object is
+///        equal to boost::none.  Otherwise, defers to the registered
+///        type converter to returs a Boost.Python object.
+struct return_optional
+{
+  template <class T> struct apply
+  {
+    // The to_python_optional ResultConverter only checks if T is convertible
+    // at runtime.  However, the following MPL branch cause a compile time
+    // error if T is not a boost::optional by providing a type that is not a
+    // ResultConverter model.
+    typedef typename boost::mpl::if_<
+      detail::is_optional<T>,
+      detail::to_python_optional<T>,
+      detail::return_optional_requires_a_optional_return_type<T>
+    >::type type;
+  }; // apply
+};   // return_optional
+
 
 /* actual binding code */
 #include "plugin_factory.hh"
@@ -317,22 +391,94 @@ struct VariantMap_to_python{
 };
 
 
+
+template<typename K, typename V, typename T>
+struct map_from_python {
+    map_from_python() {
+        bp::converter::registry::push_back(
+            &convertible,
+            &construct,
+            bp::type_id<T>());
+    }
+
+    static void* convertible(PyObject* obj_ptr) {
+        if (!PyMapping_Check(obj_ptr) || !PyMapping_Keys(obj_ptr)) {
+            return nullptr;
+        } else {
+            return obj_ptr;
+        }
+    }
+
+    static void construct(
+        PyObject* obj_ptr,
+        bp::converter::rvalue_from_python_stage1_data* data) {
+
+        PyObject* keys = PyMapping_Keys(obj_ptr);
+        PyObject* it = PyObject_GetIter(keys);
+        if (!it) {
+            std::cerr << "Invalid iterator" << std::endl;
+            return;
+        }
+
+        void* storage = (
+            (bp::converter::rvalue_from_python_storage<T>*)
+            data)->storage.bytes;
+
+        new (storage) T();
+        data->convertible = storage;
+
+        T* result = static_cast<std::map<K,V>*>(storage);
+        PyObject* key;
+        while ((key = PyIter_Next(it))) {
+            PyObject* value = PyObject_GetItem(obj_ptr, key);
+            if (!value) {
+                    // error
+                std::cerr << "Error: invalid value for key " << PyString_AsString(key) << std::endl;
+                return;
+            }
+
+            K k = bp::extract<K>(key);
+            V v = bp::extract<V>(value);
+            result->insert(std::make_pair(k, v));
+        }
+    }
+};
+
+
+template<typename K, typename V>
+struct map_to_python{
+    static PyObject* convert(const std::map<K, V>& v){
+        bp::dict ret;
+        for (auto it= v.begin(); it!=v.end(); ++it) {
+            ret[it->first] = it->second;
+        }
+        return bp::incref(ret.ptr());
+    }
+};
+
+
 void export_Variant() {
     Variant_from_python();
     bp::to_python_converter<Tempus::Variant, Variant_to_python>();
-
-    VariantMap_from_python();
-    bp::to_python_converter<Tempus::VariantMap, VariantMap_to_python>();
 }
 
 void export_Request() {
     GET_SET(Tempus::Request, Tempus::db_id_t, origin)
     GET_SET(Tempus::Request, Tempus::db_id_t, destination)
+    GET(Tempus::Request, Tempus::Request::StepList, steps)
+    GET(Tempus::Request, std::vector<Tempus::db_id_t>, allowed_modes)
+    GET(Tempus::Request, std::vector<Tempus::CostId>, optimizing_criteria)
 
     bp::scope request = bp::class_<Tempus::Request>("Request")
         .add_property("origin", origin_get, origin_set)
         .add_property("destination", destination_get, destination_set)
+        .add_property("steps", steps_get)
+        .add_property("allowed_modes", allowed_modes_get)
         .def("add_allowed_mode", &Tempus::Request::add_allowed_mode)
+        .def("optimizing_criteria", &Tempus::Request::optimizing_criteria, bp::return_value_policy<bp::copy_const_reference>())
+        .def("add_intermediary_step", &Tempus::Request::add_intermediary_step)
+        .def("set_optimizing_criterion", static_cast<void(Tempus::Request::*)(unsigned, const Tempus::CostId&)>(&Tempus::Request::set_optimizing_criterion))
+        .def("add_criterion", &Tempus::Request::add_criterion)
     ;
 
     {
@@ -389,13 +535,124 @@ class PluginWrapper : public Tempus::Plugin, public bp::wrapper<Tempus::Plugin> 
         }
 };
 
+void export_TransportMode() {
+    bp::enum_<Tempus::TransportModeEngine>("TransportModeEngine")
+        .value("EnginePetrol", Tempus::TransportModeEngine::EnginePetrol)
+        .value("EngineGasoil", Tempus::TransportModeEngine::EngineGasoil)
+        .value("EngineLPG", Tempus::TransportModeEngine::EngineLPG)
+        .value("EngineElectricCar", Tempus::TransportModeEngine::EngineElectricCar)
+        .value("EngineElectricCycle", Tempus::TransportModeEngine::EngineElectricCycle)
+    ;
+
+    bp::enum_<Tempus::TransportModeId>("TransportModeId")
+        .value("TransportModeWalking", Tempus::TransportModeId::TransportModeWalking)
+        .value("TransportModePrivateBicycle", Tempus::TransportModeId::TransportModePrivateBicycle)
+        .value("TransportModePrivateCar", Tempus::TransportModeId::TransportModePrivateCar)
+        .value("TransportModeTaxi", Tempus::TransportModeId::TransportModeTaxi)
+    ;
+
+    bp::enum_<Tempus::TransportModeTrafficRule>("TransportModeTrafficRule")
+        .value("TrafficRulePedestrian", Tempus::TransportModeTrafficRule::TrafficRulePedestrian)
+        .value("TrafficRuleBicycle", Tempus::TransportModeTrafficRule::TrafficRuleBicycle)
+        .value("TrafficRuleCar", Tempus::TransportModeTrafficRule::TrafficRuleCar)
+        .value("TrafficRuleTaxi", Tempus::TransportModeTrafficRule::TrafficRuleTaxi)
+        .value("TrafficRuleCarPool", Tempus::TransportModeTrafficRule::TrafficRuleCarPool)
+        .value("TrafficRuleTruck", Tempus::TransportModeTrafficRule::TrafficRuleTruck)
+        .value("TrafficRuleCoach", Tempus::TransportModeTrafficRule::TrafficRuleCoach)
+        .value("TrafficRulePublicTransport", Tempus::TransportModeTrafficRule::TrafficRulePublicTransport)
+    ;
+
+    bp::enum_<Tempus::TransportModeSpeedRule>("TransportModeSpeedRule")
+        .value("SpeedRulePedestrian", Tempus::TransportModeSpeedRule::SpeedRulePedestrian)
+        .value("SpeedRuleBicycle", Tempus::TransportModeSpeedRule::SpeedRuleBicycle)
+        .value("SpeedRuleElectricCycle", Tempus::TransportModeSpeedRule::SpeedRuleElectricCycle)
+        .value("SpeedRuleRollerSkate", Tempus::TransportModeSpeedRule::SpeedRuleRollerSkate)
+        .value("SpeedRuleCar", Tempus::TransportModeSpeedRule::SpeedRuleCar)
+        .value("SpeedRuleTruck", Tempus::TransportModeSpeedRule::SpeedRuleTruck)
+    ;
+
+    bp::enum_<Tempus::TransportModeTollRule>("TransportModeTollRule")
+        .value("TollRuleLightVehicule", Tempus::TransportModeTollRule::TollRuleLightVehicule)
+        .value("TollRuleIntermediateVehicule", Tempus::TransportModeTollRule::TollRuleIntermediateVehicule)
+        .value("TollRule2Axles", Tempus::TransportModeTollRule::TollRule2Axles)
+        .value("TollRule3Axles", Tempus::TransportModeTollRule::TollRule3Axles)
+        .value("TollRuleMotorcycles", Tempus::TransportModeTollRule::TollRuleMotorcycles)
+    ;
+
+    bp::enum_<Tempus::TransportModeRouteType>("TransportModeRouteType")
+        .value("RouteTypeTram", Tempus::TransportModeRouteType::RouteTypeTram)
+        .value("RouteTypeSubway", Tempus::TransportModeRouteType::RouteTypeSubway)
+        .value("RouteTypeRail", Tempus::TransportModeRouteType::RouteTypeRail)
+        .value("RouteTypeBus", Tempus::TransportModeRouteType::RouteTypeBus)
+        .value("RouteTypeFerry", Tempus::TransportModeRouteType::RouteTypeFerry)
+        .value("RouteTypeCableCar", Tempus::TransportModeRouteType::RouteTypeCableCar)
+        .value("RouteTypeSuspendedCar", Tempus::TransportModeRouteType::RouteTypeSuspendedCar)
+        .value("RouteTypeFunicular", Tempus::TransportModeRouteType::RouteTypeFunicular)
+    ;
+
+    GET_SET(Tempus::TransportMode, std::string, name)
+    GET_SET(Tempus::TransportMode, bool, is_public_transport)
+    GET_SET(Tempus::TransportMode, Tempus::TransportModeSpeedRule, speed_rule);
+    GET_SET(Tempus::TransportMode, unsigned, toll_rules);
+    GET_SET(Tempus::TransportMode, Tempus::TransportModeEngine, engine_type);
+    GET_SET(Tempus::TransportMode, Tempus::TransportModeRouteType, route_type);
+    bp::class_<Tempus::TransportMode, bp::bases<Tempus::Base>>("TransportMode")
+        .add_property("name", name_get, name_set)
+        .add_property("is_public_transport", is_public_transport_get, is_public_transport_set)
+        .add_property("speed_rule", speed_rule_get, speed_rule_set)
+        .add_property("toll_rules", toll_rules_get, toll_rules_set)
+        .add_property("engine_type", engine_type_get, engine_type_set)
+        .add_property("route_type", route_type_get, route_type_set)
+        .add_property("need_parking", &Tempus::TransportMode::need_parking, static_cast<void (Tempus::TransportMode::*)(const bool&)>(&Tempus::TransportMode::set_need_parking))
+        .add_property("is_shared", &Tempus::TransportMode::is_shared, static_cast<void (Tempus::TransportMode::*)(const bool&)>(&Tempus::TransportMode::set_is_shared))
+        .add_property("must_be_returned", &Tempus::TransportMode::must_be_returned, static_cast<void (Tempus::TransportMode::*)(const bool&)>(&Tempus::TransportMode::set_must_be_returned))
+        .add_property("traffic_rules", &Tempus::TransportMode::traffic_rules, &Tempus::TransportMode::set_traffic_rules)
+    ;
+}
+
+void export_RoutingData() {
+    {
+        GET(Tempus::MMVertex, Tempus::MMVertex::Type, type)
+        GET(Tempus::MMVertex, Tempus::db_id_t, id)
+
+        bp::scope s = bp::class_<Tempus::MMVertex>("MMVertex", bp::init<Tempus::MMVertex::Type, Tempus::db_id_t>())
+            .def(bp::init<Tempus::db_id_t, Tempus::db_id_t>())
+            .add_property("type", type_get)
+            .add_property("id", id_get)
+            .def("network_id", &Tempus::MMVertex::network_id, bp::return_value_policy<return_optional>())
+        ;
+
+        bp::enum_<Tempus::MMVertex::Type>("Type")
+            .value("Road", Tempus::MMVertex::Road)
+            .value("Transport", Tempus::MMVertex::Transport)
+            .value("Poi", Tempus::MMVertex::Poi)
+        ;
+    }
+
+    {
+        GET(Tempus::MMEdge, Tempus::MMVertex, source)
+        GET(Tempus::MMEdge, Tempus::MMVertex, target)
+        bp::class_<Tempus::MMEdge>("MMEdge", bp::init<const Tempus::MMVertex&, const Tempus::MMVertex&>())
+            .add_property("source", source_get)
+            .add_property("target", target_get)
+        ;
+    }
+
+    bp::class_<Tempus::RoutingData>("RoutingData", bp::init<const std::string&>())
+        .def("name", &Tempus::RoutingData::name)
+        .def("transport_mode", static_cast<boost::optional<Tempus::TransportMode> (Tempus::RoutingData::*)(Tempus::db_id_t) const>(&Tempus::RoutingData::transport_mode), bp::return_value_policy<return_optional>())
+        .def("transport_mode", static_cast<boost::optional<Tempus::TransportMode> (Tempus::RoutingData::*)(const std::string&) const>(&Tempus::RoutingData::transport_mode), bp::return_value_policy<return_optional>())
+        .def("metadata", static_cast<std::string (Tempus::RoutingData::*)(const std::string&) const>(&Tempus::RoutingData::metadata))
+        .def("set_metadata", &Tempus::RoutingData::set_metadata)
+
+    ;
+}
+
 void export_Plugin() {
     bp::class_<Tempus::PluginRequest>("PluginRequest", bp::init<const Tempus::Plugin*, const Tempus::VariantMap&>())
         .def("process", adapt_unique_by_value(&Tempus::PluginRequest::process))
     ;
 
-    bp::class_<Tempus::RoutingData>("RoutingData", bp::no_init)
-    ;
 
     bp::class_<PluginWrapper, boost::noncopyable>("Plugin", bp::init<const std::string& /*, const Tempus::VariantMap&*/>())
         .def("request", &PluginWrapper::request2, bp::return_value_policy<bp::manage_new_object>()) // for python plugin
@@ -439,85 +696,75 @@ void export_RoadGraph() {
         .value("RoadPedestrianOnly", Tempus::Road::RoadType::RoadPedestrianOnly)
     ;
 
+    GET_SET(Tempus::Road::Node, bool, is_bifurcation)
+    GET_SET(Tempus::Road::Node, Tempus::Point3D, coordinates)
     bp::class_<Tempus::Road::Node, bp::bases<Tempus::Base>>("Node")
+        .add_property("is_bifurcation", is_bifurcation_get, is_bifurcation_set)
+        .add_property("coordinates", coordinates_get, coordinates_set)
     ;
+
+    GET_SET(Tempus::Road::Section, float, length)
+    GET_SET(Tempus::Road::Section, float, car_speed_limit)
+    GET_SET(Tempus::Road::Section, uint16_t, traffic_rules)
+    GET_SET(Tempus::Road::Section, uint16_t, parking_traffic_rules)
+    GET_SET(Tempus::Road::Section, uint8_t, lane)
+    GET_SET(Tempus::Road::Section, Tempus::Road::RoadType, road_type)
     bp::class_<Tempus::Road::Section, bp::bases<Tempus::Base>>("Section")
+        .add_property("length", length_get, length_set)
+        .add_property("car_speed_limit", car_speed_limit_get, car_speed_limit_set)
+        .add_property("traffic_rules", traffic_rules_get, traffic_rules_set)
+        .add_property("parking_traffic_rules", parking_traffic_rules_get, parking_traffic_rules_set)
+        .add_property("lane", lane_get, lane_set)
+        .add_property("road_type", road_type_get, road_type_set)
+        .add_property("is_roundabout", &Tempus::Road::Section::is_roundabout, &Tempus::Road::Section::set_is_roundabout)
+        .add_property("is_bridge", &Tempus::Road::Section::is_bridge, &Tempus::Road::Section::set_is_bridge)
+        .add_property("is_tunnel", &Tempus::Road::Section::is_tunnel, &Tempus::Road::Section::set_is_tunnel)
+        .add_property("is_ramp", &Tempus::Road::Section::is_ramp, &Tempus::Road::Section::set_is_ramp)
+        .add_property("is_tollway", &Tempus::Road::Section::is_tollway, &Tempus::Road::Section::set_is_tollway)
     ;
+
+    GET(Tempus::Road::Restriction, Tempus::Road::Restriction::EdgeSequence, road_edges)
+    GET_SET(Tempus::Road::Restriction, Tempus::Road::Restriction::CostPerTransport, cost_per_transport)
     bp::class_<Tempus::Road::Restriction, bp::bases<Tempus::Base>>("Restriction", bp::no_init)
+        .add_property("road_edges", road_edges_get)
+        .add_property("cost_per_transport", cost_per_transport_get, cost_per_transport_set)
     ;
+}
+
+void export_Point() {
+    {
+        GET_SET(Tempus::Point2D, float, x)
+        GET_SET(Tempus::Point2D, float, y)
+        bp::class_<Tempus::Point2D>("Point2D")
+            .add_property("x",x_get, x_set)
+            .add_property("y",y_get, y_set)
+        ;
+    }
+    {
+        GET_SET(Tempus::Point3D, float, x)
+        GET_SET(Tempus::Point3D, float, y)
+        GET_SET(Tempus::Point3D, float, z)
+        bp::class_<Tempus::Point3D>("Point3D")
+            .add_property("x",x_get, x_set)
+            .add_property("y",y_get, y_set)
+            .add_property("z",z_get, z_set)
+        ;
+    }
+
+    float (*dist_2d)(const Tempus::Point2D&, const Tempus::Point2D&) = &Tempus::distance;
+    float (*dist_3d)(const Tempus::Point3D&, const Tempus::Point3D&) = &Tempus::distance;
+    float (*dist2_2d)(const Tempus::Point2D&, const Tempus::Point2D&) = &Tempus::distance2;
+    float (*dist2_3d)(const Tempus::Point3D&, const Tempus::Point3D&) = &Tempus::distance2;
+
+    bp::def("distance", dist_2d);
+    bp::def("distance", dist_3d);
+    bp::def("distance2", dist2_2d);
+    bp::def("distance2", dist2_3d);
 }
 
 void export_BoostGraph() {
 
 }
-
-/** http://stackoverflow.com/questions/26497922/how-to-wrap-a-c-function-that-returns-boostoptionalt */
-
-namespace detail {
-
-/// @brief Type trait that determines if the provided type is
-///        a boost::optional.
-template <typename T>
-struct is_optional : boost::false_type {};
-
-template <typename T>
-struct is_optional<boost::optional<T> > : boost::true_type {};
-
-/// @brief Type used to provide meaningful compiler errors.
-template <typename>
-struct return_optional_requires_a_optional_return_type {};
-
-/// @brief ResultConverter model that converts a boost::optional object to
-///        Python None if the object is empty (i.e. boost::none) or defers
-///        to Boost.Python to convert object to a Python object.
-template <typename T>
-struct to_python_optional
-{
-  /// @brief Only supports converting Boost.Optional types.
-  /// @note This is checked at runtime.
-  bool convertible() const { return detail::is_optional<T>::value; }
-
-  /// @brief Convert boost::optional object to Python None or a
-  ///        Boost.Python object.
-  PyObject* operator()(const T& obj) const
-  {
-    namespace python = boost::python;
-    python::object result =
-      obj                      // If boost::optional has a value, then
-        ? python::object(*obj) // defer to Boost.Python converter.
-        : python::object();    // Otherwise, return Python None.
-
-    // The python::object contains a handle which functions as
-    // smart-pointer to the underlying PyObject.  As it will go
-    // out of scope, explicitly increment the PyObject's reference
-    // count, as the caller expects a non-borrowed (i.e. owned) reference.
-    return python::incref(result.ptr());
-  }
-
-  /// @brief Used for documentation.
-  const PyTypeObject* get_pytype() const { return 0; }
-};
-
-} // namespace detail
-
-/// @brief Converts a boost::optional to Python None if the object is
-///        equal to boost::none.  Otherwise, defers to the registered
-///        type converter to returs a Boost.Python object.
-struct return_optional
-{
-  template <class T> struct apply
-  {
-    // The to_python_optional ResultConverter only checks if T is convertible
-    // at runtime.  However, the following MPL branch cause a compile time
-    // error if T is not a boost::optional by providing a type that is not a
-    // ResultConverter model.
-    typedef typename boost::mpl::if_<
-      detail::is_optional<T>,
-      detail::to_python_optional<T>,
-      detail::return_optional_requires_a_optional_return_type<T>
-    >::type type;
-  }; // apply
-};   // return_optional
 
 void export_Graph() {
     using namespace boost::python;
@@ -543,6 +790,7 @@ void export_Roadmap() {
         Tempus::Roadmap::StepConstIterator (Tempus::Roadmap::*lEnd)() const = &Tempus::Roadmap::end;
         bp::scope s = bp::class_<Tempus::Roadmap>("Roadmap")
             .def("__iter__", bp::range(lBegin, lEnd))
+            .def("add_step", &Tempus::Roadmap::add_step)
         ;
 
         {
@@ -565,17 +813,90 @@ void export_Roadmap() {
             ;
 
         }
+
+
+        {
+            GET_SET(Tempus::Roadmap::RoadStep, Tempus::db_id_t, road_edge_id)
+            GET_SET(Tempus::Roadmap::RoadStep, std::string, road_name)
+            GET_SET(Tempus::Roadmap::RoadStep, double, distance_km)
+            GET_SET(Tempus::Roadmap::RoadStep, Tempus::Roadmap::RoadStep::EndMovement, end_movement)
+
+            bp::scope t = bp::class_<Tempus::Roadmap::RoadStep, bp::bases<Tempus::Roadmap::Step>>("RoadStep")
+                .add_property("road_edge_id", road_edge_id_get, road_edge_id_set)
+                .add_property("road_name", road_name_get, road_name_set)
+                .add_property("distance_km", distance_km_get, distance_km_set)
+                .add_property("end_movement", end_movement_get, end_movement_set)
+            ;
+
+            bp::enum_<Tempus::Roadmap::RoadStep::EndMovement>("EndMovement")
+                .value("GoAhead", Tempus::Roadmap::RoadStep::GoAhead)
+                .value("TurnLeft", Tempus::Roadmap::RoadStep::TurnLeft)
+                .value("TurnRight", Tempus::Roadmap::RoadStep::TurnRight)
+                .value("UTurn", Tempus::Roadmap::RoadStep::UTurn)
+                .value("RoundAboutEnter", Tempus::Roadmap::RoadStep::RoundAboutEnter)
+                .value("FirstExit", Tempus::Roadmap::RoadStep::FirstExit)
+                .value("SecondExit", Tempus::Roadmap::RoadStep::SecondExit)
+                .value("ThirdExit", Tempus::Roadmap::RoadStep::ThirdExit)
+                .value("FourthExit", Tempus::Roadmap::RoadStep::FourthExit)
+                .value("FifthExit", Tempus::Roadmap::RoadStep::FifthExit)
+                .value("SixthExit", Tempus::Roadmap::RoadStep::SixthExit)
+                .value("YouAreArrived", Tempus::Roadmap::RoadStep::YouAreArrived)
+            ;
+        }
+
+        {
+            GET_SET(Tempus::Roadmap::PublicTransportStep, Tempus::db_id_t, network_id)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, double, wait)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, double, departure_time)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, double, arrival_time)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, Tempus::db_id_t, trip_id)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, Tempus::db_id_t, departure_stop)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, std::string, departure_name)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, Tempus::db_id_t, arrival_stop)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, std::string, arrival_name)
+            GET_SET(Tempus::Roadmap::PublicTransportStep, std::string, route)
+
+            bp::class_<Tempus::Roadmap::PublicTransportStep, bp::bases<Tempus::Roadmap::Step>>("PublicTransportStep")
+                .add_property("network_id", network_id_get, network_id_set)
+                .add_property("wait", wait_get, wait_set)
+                .add_property("departure_time", departure_time_get, departure_time_set)
+                .add_property("arrival_time", arrival_time_get, arrival_time_set)
+                .add_property("trip_id", trip_id_get, trip_id_set)
+                .add_property("departure_stop", departure_stop_get, departure_stop_set)
+                .add_property("departure_name", departure_name_get, departure_name_set)
+                .add_property("arrival_stop", arrival_stop_get, arrival_stop_set)
+                .add_property("arrival_name", arrival_name_get, arrival_name_set)
+                .add_property("route", route_get, route_set)
+            ;
+        }
+
+        {
+            GET_SET(Tempus::Roadmap::TransferStep, Tempus::db_id_t, final_mode)
+            GET_SET(Tempus::Roadmap::TransferStep, std::string, initial_name)
+            GET_SET(Tempus::Roadmap::TransferStep, std::string, final_name)
+            bp::class_<Tempus::Roadmap::TransferStep, bp::bases<Tempus::Roadmap::Step, Tempus::MMEdge>>("TransferStep", bp::init<const Tempus::MMVertex&, const Tempus::MMVertex&>())
+                .add_property("final_mode", final_mode_get, final_mode_set)
+                .add_property("initial_name", initial_name_get, initial_name_set)
+                .add_property("final_name", final_name_get, final_name_set)
+            ;
+        }
     }
 
-    const Tempus::Roadmap& (Tempus::ResultElement::*roadmapl_get)() const = &Tempus::ResultElement::roadmap;
-    auto roadmap_get = bp::make_function(roadmapl_get, bp::return_value_policy<bp::copy_const_reference>());
+
+    GET(Tempus::ResultElement, Tempus::Roadmap, roadmap)
 
     bp::class_<Tempus::ResultElement>("ResultElement")
+        .def(bp::init<const Tempus::Isochrone&>())
+        .def(bp::init<const Tempus::Roadmap&>())
         .def("is_roadmap", &Tempus::ResultElement::is_roadmap)
         .def("is_isochrone", &Tempus::ResultElement::is_isochrone)
-        .def("roadmap", roadmap_get) //&Tempus::ResultElement::roadmap, return_value_policy<copy_const_reference>())
+        .def("roadmap", roadmap_get)
     ;
 
+    bp::def("get_total_costs", &Tempus::get_total_costs);
+}
+
+void export_Cost() {
     bp::enum_<Tempus::CostId>("CostId")
         .value("CostDistance", Tempus::CostId::CostDistance)
         .value("CostDuration", Tempus::CostId::CostDuration)
@@ -588,7 +909,15 @@ void export_Roadmap() {
         .value("CostElevation", Tempus::CostId::CostElevation)
         .value("CostSecurity", Tempus::CostId::CostSecurity)
         .value("CostLandmark", Tempus::CostId::CostLandmark)
+        .value("FirstValue", Tempus::CostId::FirstValue)
+        .value("LastValue", Tempus::CostId::LastValue)
     ;
+
+    bp::def("cost_name", &Tempus::cost_name);
+    bp::def("cost_unit", &Tempus::cost_unit);
+
+    map_from_python<Tempus::CostId, double, Tempus::Costs>();
+    bp::to_python_converter<Tempus::Costs, map_to_python<Tempus::CostId, double>>();
 }
 
 BOOST_PYTHON_MODULE(tempus)
@@ -600,6 +929,10 @@ BOOST_PYTHON_MODULE(tempus)
     #define LIST_SEQ_CONV(Type) custom_list_from_seq<Type>();  bp::to_python_converter<std::list<Type>, custom_list_to_list<Type> >();
 
     VECTOR_SEQ_CONV(std::string)
+    VECTOR_SEQ_CONV(Tempus::Road::Edge)
+    VECTOR_SEQ_CONV(Tempus::Request::Step)
+    VECTOR_SEQ_CONV(Tempus::db_id_t)
+    VECTOR_SEQ_CONV(Tempus::CostId)
     LIST_SEQ_CONV(Tempus::ResultElement)
 
     bp::class_<Tempus::Base>("Base")
@@ -611,8 +944,12 @@ BOOST_PYTHON_MODULE(tempus)
     export_Variant();
     export_Request();
     export_Plugin();
+    export_TransportMode();
+    export_RoutingData();
     export_Roadmap();
     export_Graph();
     export_RoadGraph();
     export_BoostGraph();
+    export_Point();
+    export_Cost();
 }
