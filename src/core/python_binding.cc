@@ -774,13 +774,78 @@ void export_Graph() {
         scope().attr("MultiModal") = modalModule;
         scope modalScope = modalModule;
 
-        const Tempus::Road::Graph& (Tempus::Multimodal::Graph::*roadl_get)() const = &Tempus::Multimodal::Graph::road;
-        auto road_get = make_function(roadl_get, return_value_policy<copy_const_reference>());
+        {
+            bp::scope s = bp::class_<Tempus::Multimodal::Vertex>("Vertex")
+                .def(bp::init<const Tempus::Multimodal::Graph&, Tempus::Road::Vertex, Tempus::Multimodal::Vertex::road_t>())
+                .def(bp::init<const Tempus::Multimodal::Graph&, Tempus::PublicTransportGraphIndex, Tempus::PublicTransport::Vertex, Tempus::Multimodal::Vertex::pt_t>())
+                .def(bp::init<const Tempus::Multimodal::Graph&, const Tempus::POIIndex, Tempus::Multimodal::Vertex::poi_t>())
+                .add_property("type", &Tempus::Multimodal::Vertex::type)
+                .def("is_null", &Tempus::Multimodal::Vertex::is_null)
+                .add_property("road_vertex", &Tempus::Multimodal::Vertex::road_vertex)
+                .add_property("pt_graph_idx", &Tempus::Multimodal::Vertex::pt_graph_idx)
+                .add_property("pt_vertex", &Tempus::Multimodal::Vertex::pt_vertex)
+                .add_property("poi_idx", &Tempus::Multimodal::Vertex::poi_idx)
+                .add_property("hash", &Tempus::Multimodal::Vertex::hash)
+                // .add_property("graph", &Tempus::Multimodal::Vertex::graph)
+                // .add_property("road_graph", &Tempus::Multimodal::Vertex::road_graph)
+            ;
 
-        class_<Tempus::Multimodal::Graph, bp::bases<Tempus::RoutingData>, boost::noncopyable>("MMGraph", no_init)
-            .def("road", road_get)
-            .def("road_vertex_from_id", &Tempus::Multimodal::Graph::road_vertex_from_id, bp::return_value_policy<return_optional>())
-        ;
+            bp::enum_<Tempus::Multimodal::Vertex::VertexType>("VertexType")
+                .value("Null", Tempus::Multimodal::Vertex::VertexType::Null)
+                .value("Road", Tempus::Multimodal::Vertex::VertexType::Road)
+                .value("PublicTransport", Tempus::Multimodal::Vertex::VertexType::PublicTransport)
+                .value("Poi", Tempus::Multimodal::Vertex::VertexType::Poi)
+            ;
+        }
+
+        def("get_road_node", &Tempus::Multimodal::get_road_node);
+        def("get_pt_stop", &Tempus::Multimodal::get_pt_stop);
+        def("get_mm_vertex", &Tempus::Multimodal::get_mm_vertex);
+
+
+        {
+            GET(Tempus::Multimodal::Edge, Tempus::Multimodal::Vertex, source)
+            GET(Tempus::Multimodal::Edge, Tempus::Multimodal::Vertex, target)
+            GET(Tempus::Multimodal::Edge, Tempus::Road::Edge, road_edge)
+            bp::scope s = bp::class_<Tempus::Multimodal::Edge>("Edge")
+                .add_property("source", source_get)
+                .add_property("target", target_get)
+                .add_property("road_edge", road_edge_get)
+                .add_property("connection_type", &Tempus::Multimodal::Edge::connection_type)
+                .add_property("traffic_rules", &Tempus::Multimodal::Edge::traffic_rules)
+            ;
+
+            bp::enum_<Tempus::Multimodal::Edge::ConnectionType>("ConnectionType")
+                .value("UnknownConnection", Tempus::Multimodal::Edge::ConnectionType::UnknownConnection)
+                .value("Road2Road", Tempus::Multimodal::Edge::ConnectionType::Road2Road)
+                .value("Road2Transport", Tempus::Multimodal::Edge::ConnectionType::Road2Transport)
+                .value("Transport2Road", Tempus::Multimodal::Edge::ConnectionType::Transport2Road)
+                .value("Transport2Transport", Tempus::Multimodal::Edge::ConnectionType::Transport2Transport)
+                .value("Road2Poi", Tempus::Multimodal::Edge::ConnectionType::Road2Poi)
+                .value("Poi2Road", Tempus::Multimodal::Edge::ConnectionType::Poi2Road)
+            ;
+        }
+
+
+        {
+            const Tempus::Road::Graph& (Tempus::Multimodal::Graph::*roadl_get)() const = &Tempus::Multimodal::Graph::road;
+            auto road_get = make_function(roadl_get, return_value_policy<copy_const_reference>());
+
+            bp::scope s = class_<Tempus::Multimodal::Graph, bp::bases<Tempus::RoutingData>, boost::noncopyable>("Graph", no_init)
+                .def("road", road_get)
+                .def("road_vertex_from_id", &Tempus::Multimodal::Graph::road_vertex_from_id, bp::return_value_policy<return_optional>())
+                .def("road_edge_from_id", &Tempus::Multimodal::Graph::road_edge_from_id, bp::return_value_policy<return_optional>())
+            ;
+
+            bp::def("num_vertices", &Tempus::Multimodal::num_vertices);
+            bp::def("num_edges", &Tempus::Multimodal::num_edges);
+            bp::def("source", &Tempus::Multimodal::source);
+            bp::def("target", &Tempus::Multimodal::target);
+
+            bp::def("out_degree", &Tempus::Multimodal::out_degree);
+            bp::def("in_degree", &Tempus::Multimodal::in_degree);
+            bp::def("degree", &Tempus::Multimodal::degree);
+        }
     }
 }
 
@@ -883,17 +948,34 @@ void export_Roadmap() {
     }
 
 
-    GET(Tempus::ResultElement, Tempus::Roadmap, roadmap)
+    {
+        GET(Tempus::ResultElement, Tempus::Roadmap, roadmap)
+        GET(Tempus::ResultElement, Tempus::Isochrone, isochrone)
 
-    bp::class_<Tempus::ResultElement>("ResultElement")
-        .def(bp::init<const Tempus::Isochrone&>())
-        .def(bp::init<const Tempus::Roadmap&>())
-        .def("is_roadmap", &Tempus::ResultElement::is_roadmap)
-        .def("is_isochrone", &Tempus::ResultElement::is_isochrone)
-        .def("roadmap", roadmap_get)
-    ;
+        bp::class_<Tempus::ResultElement>("ResultElement")
+            .def(bp::init<const Tempus::Isochrone&>())
+            .def(bp::init<const Tempus::Roadmap&>())
+            .def("is_roadmap", &Tempus::ResultElement::is_roadmap)
+            .def("is_isochrone", &Tempus::ResultElement::is_isochrone)
+            .def("roadmap", roadmap_get)
+            .def("isochrone", isochrone_get)
+        ;
+    }
 
     bp::def("get_total_costs", &Tempus::get_total_costs);
+
+    {
+        GET_SET(Tempus::IsochroneValue, float, x)
+        GET_SET(Tempus::IsochroneValue, float, y)
+        GET_SET(Tempus::IsochroneValue, int, mode)
+        GET_SET(Tempus::IsochroneValue, float, cost)
+        bp::class_<Tempus::IsochroneValue>("IsochroneValue", bp::init<float, float, int, float>())
+            .add_property("x", x_get, x_set)
+            .add_property("y", y_get, y_set)
+            .add_property("mode", mode_get, mode_set)
+            .add_property("cost", cost_get, cost_set)
+        ;
+    }
 }
 
 void export_Cost() {
@@ -933,6 +1015,7 @@ BOOST_PYTHON_MODULE(tempus)
     VECTOR_SEQ_CONV(Tempus::Request::Step)
     VECTOR_SEQ_CONV(Tempus::db_id_t)
     VECTOR_SEQ_CONV(Tempus::CostId)
+    VECTOR_SEQ_CONV(Tempus::IsochroneValue)
     LIST_SEQ_CONV(Tempus::ResultElement)
 
     bp::class_<Tempus::Base>("Base")
