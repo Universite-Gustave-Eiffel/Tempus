@@ -268,9 +268,9 @@ struct Variant_from_python {
     }
 
     static void* convertible(PyObject* obj_ptr) {
-        if (!PyString_Check(obj_ptr) ||
-            !PyBool_Check(obj_ptr) ||
-            !PyInt_Check(obj_ptr) ||
+        if (!PyString_Check(obj_ptr) &&
+            !PyBool_Check(obj_ptr) &&
+            !PyInt_Check(obj_ptr) &&
             !PyFloat_Check(obj_ptr)) {
             return nullptr;
         } else {
@@ -303,93 +303,6 @@ struct Variant_from_python {
         data->convertible = storage;
     }
 };
-
-
-
-struct VariantMap_from_python {
-    VariantMap_from_python() {
-      bp::converter::registry::push_back(
-        &convertible,
-        &construct,
-        bp::type_id<Tempus::VariantMap>());
-    }
-
-    static void* convertible(PyObject* obj_ptr) {
-        if (!PyMapping_Check(obj_ptr) || !PyMapping_Keys(obj_ptr)) {
-            return nullptr;
-        } else {
-            return obj_ptr;
-        }
-    }
-
-    static void construct(
-        PyObject* obj_ptr,
-        bp::converter::rvalue_from_python_stage1_data* data) {
-
-        PyObject* keys = PyMapping_Keys(obj_ptr);
-        PyObject* it = PyObject_GetIter(keys);
-        if (!it) {
-                // error
-            std::cerr << "Invalid iterator" << std::endl;
-            return;
-        }
-
-        void* storage = (
-            (bp::converter::rvalue_from_python_storage<Tempus::VariantMap>*)
-            data)->storage.bytes;
-
-        new (storage) Tempus::VariantMap();
-        data->convertible = storage;
-
-        Tempus::VariantMap* result = static_cast<Tempus::VariantMap*>(storage);
-        PyObject* key;
-        while ((key = PyIter_Next(it))) {
-            PyObject* value = PyObject_GetItem(obj_ptr, key);
-            if (!value) {
-                    // error
-                std::cerr << "Error: invalid value for key " << PyString_AsString(key) << std::endl;
-                return;
-            }
-
-            if (PyString_Check(value)) {
-                result->insert(
-                    std::make_pair(
-                        PyString_AsString(key),
-                        Tempus::Variant::from_string(std::string(PyString_AsString(value)))));
-            } else if (PyBool_Check(value)) {
-                result->insert(
-                    std::make_pair(
-                        PyString_AsString(key),
-                        Tempus::Variant::from_bool(value == Py_True)));
-            } else if (PyInt_Check(value)) {
-                result->insert(
-                    std::make_pair(
-                        PyString_AsString(key),
-                        Tempus::Variant::from_int(PyInt_AsLong(value))));
-            } else if (PyFloat_Check(value)) {
-                result->insert(
-                    std::make_pair(
-                        PyString_AsString(key),
-                        Tempus::Variant::from_float(PyFloat_AsDouble(value))));
-            } else {
-                    // error
-                std::cerr << "Error: invalid type for key " << PyString_AsString(key) << std::endl;
-                return;
-            }
-        }
-    }
-};
-
-struct VariantMap_to_python{
-    static PyObject* convert(const Tempus::VariantMap& v){
-        bp::dict ret;
-        for (auto it= v.begin(); it!=v.end(); ++it) {
-            ret[it->first] = it->second;
-        }
-        return bp::incref(ret.ptr());
-    }
-};
-
 
 
 template<typename K, typename V, typename T>
@@ -460,6 +373,10 @@ struct map_to_python{
 void export_Variant() {
     Variant_from_python();
     bp::to_python_converter<Tempus::Variant, Variant_to_python>();
+
+    map_from_python<std::string, Tempus::Variant, Tempus::VariantMap>();
+    bp::to_python_converter<Tempus::VariantMap, map_to_python<std::string, Tempus::Variant>>();
+
 }
 
 void export_Request() {
@@ -674,6 +591,8 @@ void export_RoadGraph() {
     //                       ^
     // boost python can't wrap lambda, but can wrap func pointers...
     // (see http://stackoverflow.com/questions/18889028/a-positive-lambda-what-sorcery-is-this)
+        .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; })
+        .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; })
         .def("vertex", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); })
         .def("num_edges", +[](Tempus::Road::Graph* g) { return num_edges(*g); })
         .def("edge_from_index", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); })
@@ -736,6 +655,7 @@ void export_Point() {
         GET_SET(Tempus::Point2D, float, x)
         GET_SET(Tempus::Point2D, float, y)
         bp::class_<Tempus::Point2D>("Point2D")
+            .def(bp::init<float, float>())
             .add_property("x",x_get, x_set)
             .add_property("y",y_get, y_set)
         ;
@@ -745,6 +665,7 @@ void export_Point() {
         GET_SET(Tempus::Point3D, float, y)
         GET_SET(Tempus::Point3D, float, z)
         bp::class_<Tempus::Point3D>("Point3D")
+            .def(bp::init<float, float, float>())
             .add_property("x",x_get, x_set)
             .add_property("y",y_get, y_set)
             .add_property("z",z_get, z_set)
@@ -786,6 +707,8 @@ void export_Graph() {
                 .add_property("pt_vertex", &Tempus::Multimodal::Vertex::pt_vertex)
                 .add_property("poi_idx", &Tempus::Multimodal::Vertex::poi_idx)
                 .add_property("hash", &Tempus::Multimodal::Vertex::hash)
+                // .def("vertex", +[](Tempus::Multimodal::Graph* g, Tempus::Multimodal::Graph::vertices_size_type i) { return vertex(i, *g); })
+
                 // .add_property("graph", &Tempus::Multimodal::Vertex::graph)
                 // .add_property("road_graph", &Tempus::Multimodal::Vertex::road_graph)
             ;
@@ -849,13 +772,19 @@ void export_Graph() {
     }
 }
 
+void add_step_wrapper(Tempus::Roadmap* roadmap, Tempus::Roadmap::RoadStep obj)
+{
+    std::auto_ptr<Tempus::Roadmap::Step> s(obj.clone());
+    roadmap->add_step(s);
+}
+
 void export_Roadmap() {
     {
         Tempus::Roadmap::StepConstIterator (Tempus::Roadmap::*lBegin)() const = &Tempus::Roadmap::begin;
         Tempus::Roadmap::StepConstIterator (Tempus::Roadmap::*lEnd)() const = &Tempus::Roadmap::end;
         bp::scope s = bp::class_<Tempus::Roadmap>("Roadmap")
             .def("__iter__", bp::range(lBegin, lEnd))
-            .def("add_step", &Tempus::Roadmap::add_step)
+            .def("add_step", &add_step_wrapper) // Tempus::Roadmap::add_step)
         ;
 
         {
@@ -869,6 +798,7 @@ void export_Roadmap() {
                 .add_property("transport_mode", transport_mode_get, transport_mode_set)
                 .add_property("geometry_wkb", geometry_wkb_get, geometry_wkb_set)
                 .def("cost", &Tempus::Roadmap::Step::cost)
+                .def("set_cost", &Tempus::Roadmap::Step::set_cost)
             ;
 
             bp::enum_<Tempus::Roadmap::Step::StepType>("StepType")
@@ -886,7 +816,7 @@ void export_Roadmap() {
             GET_SET(Tempus::Roadmap::RoadStep, double, distance_km)
             GET_SET(Tempus::Roadmap::RoadStep, Tempus::Roadmap::RoadStep::EndMovement, end_movement)
 
-            bp::scope t = bp::class_<Tempus::Roadmap::RoadStep, bp::bases<Tempus::Roadmap::Step>>("RoadStep")
+            bp::scope t = bp::class_<Tempus::Roadmap::RoadStep, bp::bases<Tempus::Roadmap::Step>, std::auto_ptr<Tempus::Roadmap::RoadStep>>("RoadStep")
                 .add_property("road_edge_id", road_edge_id_get, road_edge_id_set)
                 .add_property("road_name", road_name_get, road_name_set)
                 .add_property("distance_km", distance_km_get, distance_km_set)
@@ -1002,6 +932,17 @@ void export_Cost() {
     bp::to_python_converter<Tempus::Costs, map_to_python<Tempus::CostId, double>>();
 }
 
+boost::optional<Tempus::Road::Edge> edge_wrapper(Tempus::Road::Vertex v1, Tempus::Road::Vertex v2, const Tempus::Road::Graph& road_graph) {
+    Tempus::Road::Edge e;
+    bool found = false;
+    boost::tie( e, found ) = boost::edge( v1, v2, road_graph );
+    if (found) {
+        return e;
+    } else {
+        return boost::optional<Tempus::Road::Edge>();
+    }
+}
+
 BOOST_PYTHON_MODULE(tempus)
 {
     bp::object package = bp::scope();
@@ -1021,6 +962,8 @@ BOOST_PYTHON_MODULE(tempus)
     bp::class_<Tempus::Base>("Base")
         .add_property("db_id", &Tempus::Base::db_id, &Tempus::Base::set_db_id)
     ;
+
+    bp::def("edge", &edge_wrapper, bp::return_value_policy<return_optional>());
 
     export_PluginFactory();
     export_ProgressionCallback();

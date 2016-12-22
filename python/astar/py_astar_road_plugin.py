@@ -3,12 +3,16 @@ import tempus
 from graph_tool.all import *
 
 class EuclidianHeuristic():
-    def __init__(self, graph, target):
-        self.graph = graph
-        # TODO self.target = graph.vertex(target).coordinates()
+    def __init__(self, road_graph, road_vertex_target):
+        self.road_graph = road_graph
+        print ('{} - {}'.format(road_graph, road_vertex_target))
+        # vertex = road_graph.road_vertex_from_id(target)
+        p3d = road_graph[road_vertex_target].coordinates
+        self.destination = tempus.Point2D(p3d.x, p3d.y)
 
-    def __call__(self, v):
-        return 1.0
+    def __call__(self, road_vertex):
+        p3d = self.road_graph[road_vertex].coordinates
+        return tempus.distance2(self.destination, tempus.Point2D(p3d.x, p3d.y))
 
 
 class GoalVisitor(AStarVisitor):
@@ -26,23 +30,18 @@ class PyAStarRequest(tempus.PluginRequest):
 
     def process(self, request):
         print 'process!'
-        r = tempus.ResultElement()
 
         g = self.plugin.graph_
+        road_graph = self.plugin.g.road()
+
         source = self.plugin.g.road_vertex_from_id(request.origin)
         target = self.plugin.g.road_vertex_from_id(request.destination)
 
-        print source
-        print target
-
-        h = EuclidianHeuristic(g, target)
+        h = EuclidianHeuristic(road_graph, target)
 
         v = GoalVisitor(target)
 
-        dist, pred = astar_search(g, source, self.plugin.cost, visitor=v, heuristic=h)
-
-        print dist
-        print pred
+        dist, pred = astar_search(g, source, self.plugin.const_tt, visitor=v, heuristic=h)
 
         path = []
 
@@ -54,8 +53,29 @@ class PyAStarRequest(tempus.PluginRequest):
             v = pred[v]
 
         path += [source]
+
+        print '->'.join(str(i) for i in path)
+
         path.reverse()
-        print path
+
+        prev = path[0]
+        roadmap = tempus.Roadmap()
+        for v in path[1:]:
+            step = roadmap.RoadStep()
+            edge = tempus.edge(prev, v, road_graph)
+            if edge is None:
+                print("Couldnt find edge {}->{}".format(prev, v))
+                prev = v
+                continue
+
+            prev = v
+            step.road_edge_id = road_graph[edge].db_id;
+            step.set_cost(tempus.CostId.CostDistance, road_graph[edge].length)
+            # step.set_cost(tempus.CostId.CostDuration, self.plugin.const_tt[ed])
+            step.set_cost(tempus.CostId.CostDuration, road_graph[edge].length / (3.6 * 1000 / 60.0))
+            roadmap.add_step(step)
+
+        r = tempus.ResultElement(roadmap)
         return [r]
 
 
@@ -64,6 +84,7 @@ class AStar(tempus.Plugin):
         tempus.Plugin.__init__(self, 'py_astar_road_plugin')
         # load data
         self.g = tempus.load_routing_data("multimodal_graph", progression, options)
+        self.traffic_rule = tempus.TransportModeTrafficRule.TrafficRulePedestrian
 
         road_graph = self.g.road()
         print road_graph
@@ -75,16 +96,15 @@ class AStar(tempus.Plugin):
         self.graph_ = Graph()
         self.graph_.add_vertex(nv)
         self.distance = self.graph_.new_edge_property("double")
-        self.cost = self.graph_.new_edge_property("double")
+        self.const_tt = self.graph_.new_edge_property("double")
 
         print 'Creating {} edges'.format(ne)
         for i in range(0, ne):
             edge = road_graph.edge_from_index(i)
             e = self.graph_.add_edge(road_graph.source(edge), road_graph.target(edge))
 
-        #   # todo
-        #   self.distance[e] = 1.0
-            self.cost[e] = 1.0
+            ed = road_graph[edge]
+            self.const_tt[e] = ed.length / (3.6 * 1000 / 60) if ed.traffic_rules & self.traffic_rule else float('inf')
 
         print 'Done'
 
