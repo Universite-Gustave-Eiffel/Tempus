@@ -230,6 +230,9 @@ void export_ProgressionCallback() {
     bp::class_<Tempus::ProgressionCallback>("ProgressionCallback")
         .def("__call__", &Tempus::ProgressionCallback::operator())
     ;
+
+    bp::class_<Tempus::TextProgression, bp::bases<Tempus::ProgressionCallback>>("TextProgression", bp::init<int>())
+    ;
 }
 
 #include "variant.hh"
@@ -586,21 +589,28 @@ void export_RoadGraph() {
     bp::scope().attr("Road") = roadModule;
     bp::scope roadScope = roadModule;
 
-    bp::class_<Tempus::Road::Graph>("Graph", bp::no_init)
-        .def("num_vertices", +[](Tempus::Road::Graph* g) { return num_vertices(*g); })
-    //                       ^
-    // boost python can't wrap lambda, but can wrap func pointers...
-    // (see http://stackoverflow.com/questions/18889028/a-positive-lambda-what-sorcery-is-this)
-        .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; })
-        .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; })
-        .def("vertex", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); })
-        .def("num_edges", +[](Tempus::Road::Graph* g) { return num_edges(*g); })
-        .def("edge_from_index", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); })
-        .def("edge", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];})
+    {
+        bp::scope s = bp::class_<Tempus::Road::Graph>("Graph", bp::no_init)
+        //                       ^
+        // boost python can't wrap lambda, but can wrap func pointers...
+        // (see http://stackoverflow.com/questions/18889028/a-positive-lambda-what-sorcery-is-this)
+            .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; })
+            .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; })
+            .def("vertex", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); })
+            .def("num_edges", +[](Tempus::Road::Graph* g) { return num_edges(*g); })
+            .def("edge_from_index", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); })
+            .def("edge", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];})
 
-        .def("source", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);})
-        .def("target", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);})
-    ;
+            .def("source", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);})
+            .def("target", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);})
+        ;
+
+
+        bp::def("num_vertices", +[](Tempus::Road::Graph* g) { return num_vertices(*g); });
+        // size_t (*nv)(const Tempus::Road::Graph&) = &boost::graph::num_vertices;
+        // bp::def("num_vertices", nv);
+    }
+
 
     bp::class_<Tempus::Road::Graph::edge_descriptor>("edge_descriptor", bp::no_init)
     ;
@@ -683,17 +693,35 @@ void export_Point() {
     bp::def("distance2", dist2_3d);
 }
 
-void export_BoostGraph() {
+void export_POI() {
+    GET_SET(Tempus::POI, Tempus::POI::PoiType, poi_type)
+    GET_SET(Tempus::POI, std::string, name)
+    GET_SET(Tempus::POI, std::vector<Tempus::db_id_t>, parking_transport_modes)
+    GET_SET(Tempus::POI, Tempus::Road::Edge, road_edge)
+    GET_SET(Tempus::POI, Tempus::Point3D, coordinates)
 
+    bp::scope s = bp::class_<Tempus::POI, bp::bases<Tempus::Base>>("POI")
+        .add_property("poi_type", poi_type_get, poi_type_set)
+        .add_property("name", name_get, name_set)
+        .add_property("parking_transport_modes", parking_transport_modes_get, parking_transport_modes_set)
+        .add_property("road_edge", road_edge_get, road_edge_set)
+        .add_property("coordinates", coordinates_get, coordinates_set)
+    ;
+
+    bp::enum_<Tempus::POI::PoiType>("PoiType")
+        .value("TypeCarPark", Tempus::POI::PoiType::TypeCarPark)
+        .value("TypeSharedCarPoint", Tempus::POI::PoiType::TypeSharedCarPoint)
+        .value("TypeCyclePark", Tempus::POI::PoiType::TypeCyclePark)
+        .value("TypeSharedCyclePoint", Tempus::POI::PoiType::TypeSharedCyclePoint)
+        .value("TypeUserPOI", Tempus::POI::PoiType::TypeUserPOI)
+    ;
 }
 
 void export_Graph() {
-    using namespace boost::python;
-
     {
-        object modalModule(handle<>(borrowed(PyImport_AddModule("tempus.MultiModal"))));
-        scope().attr("MultiModal") = modalModule;
-        scope modalScope = modalModule;
+        bp::object modalModule(bp::handle<>(bp::borrowed(PyImport_AddModule("tempus.Multimodal"))));
+        bp::scope().attr("Multimodal") = modalModule;
+        bp::scope modalScope = modalModule;
 
         {
             bp::scope s = bp::class_<Tempus::Multimodal::Vertex>("Vertex")
@@ -721,9 +749,21 @@ void export_Graph() {
             ;
         }
 
-        def("get_road_node", &Tempus::Multimodal::get_road_node);
-        def("get_pt_stop", &Tempus::Multimodal::get_pt_stop);
-        def("get_mm_vertex", &Tempus::Multimodal::get_mm_vertex);
+        bp::def("get_road_node", &Tempus::Multimodal::get_road_node);
+        bp::def("get_pt_stop", &Tempus::Multimodal::get_pt_stop);
+        bp::def("get_mm_vertex", &Tempus::Multimodal::get_mm_vertex);
+        bp::def("num_vertices", &Tempus::Multimodal::num_vertices);
+        bp::def("num_edges", &Tempus::Multimodal::num_edges);
+        bp::def("source", &Tempus::Multimodal::source);
+        bp::def("target", &Tempus::Multimodal::target);
+        bp::def("vertices", &Tempus::Multimodal::vertices);
+        bp::def("edges", &Tempus::Multimodal::edges);
+        bp::def("out_edges", &Tempus::Multimodal::out_edges);
+        bp::def("in_edges", &Tempus::Multimodal::in_edges);
+        bp::def("out_degree", &Tempus::Multimodal::out_degree);
+        bp::def("in_degree", &Tempus::Multimodal::in_degree);
+        bp::def("degree", &Tempus::Multimodal::degree);
+        bp::def("edge", &Tempus::Multimodal::edge);
 
 
         {
@@ -752,24 +792,25 @@ void export_Graph() {
 
         {
             const Tempus::Road::Graph& (Tempus::Multimodal::Graph::*roadl_get)() const = &Tempus::Multimodal::Graph::road;
-            auto road_get = make_function(roadl_get, return_value_policy<copy_const_reference>());
+            auto road_get = bp::make_function(roadl_get, bp::return_value_policy<bp::copy_const_reference>());
 
-            bp::scope s = class_<Tempus::Multimodal::Graph, bp::bases<Tempus::RoutingData>, boost::noncopyable>("Graph", no_init)
+            bp::scope s = bp::class_<Tempus::Multimodal::Graph, bp::bases<Tempus::RoutingData>, boost::noncopyable>("Graph", bp::no_init)
                 .def("road", road_get)
+                .def("pois", &Tempus::Multimodal::Graph::pois)
                 .def("road_vertex_from_id", &Tempus::Multimodal::Graph::road_vertex_from_id, bp::return_value_policy<return_optional>())
                 .def("road_edge_from_id", &Tempus::Multimodal::Graph::road_edge_from_id, bp::return_value_policy<return_optional>())
             ;
-
-            bp::def("num_vertices", &Tempus::Multimodal::num_vertices);
-            bp::def("num_edges", &Tempus::Multimodal::num_edges);
-            bp::def("source", &Tempus::Multimodal::source);
-            bp::def("target", &Tempus::Multimodal::target);
-
-            bp::def("out_degree", &Tempus::Multimodal::out_degree);
-            bp::def("in_degree", &Tempus::Multimodal::in_degree);
-            bp::def("degree", &Tempus::Multimodal::degree);
         }
     }
+
+    #define BIND_ITERATOR(TYPE, NAME) \
+        bp::class_<std::pair<TYPE, TYPE>>(NAME, bp::no_init) \
+            .def("__iter__", bp::range(&std::pair<TYPE, TYPE>::first, &std::pair<TYPE,TYPE>::second));
+
+    BIND_ITERATOR(Tempus::Multimodal::VertexIterator, "t_m_vi")
+    BIND_ITERATOR(Tempus::Multimodal::OutEdgeIterator, "t_m_oei")
+    BIND_ITERATOR(Tempus::Multimodal::InEdgeIterator, "t_m_iei")
+    BIND_ITERATOR(Tempus::Multimodal::EdgeIterator, "t_m_ei")
 }
 
 void add_step_wrapper(Tempus::Roadmap* roadmap, Tempus::Roadmap::RoadStep obj)
@@ -957,6 +998,7 @@ BOOST_PYTHON_MODULE(tempus)
     VECTOR_SEQ_CONV(Tempus::db_id_t)
     VECTOR_SEQ_CONV(Tempus::CostId)
     VECTOR_SEQ_CONV(Tempus::IsochroneValue)
+    VECTOR_SEQ_CONV(Tempus::POI)
     LIST_SEQ_CONV(Tempus::ResultElement)
 
     bp::class_<Tempus::Base>("Base")
@@ -975,7 +1017,7 @@ BOOST_PYTHON_MODULE(tempus)
     export_Roadmap();
     export_Graph();
     export_RoadGraph();
-    export_BoostGraph();
+    export_POI();
     export_Point();
     export_Cost();
 }
