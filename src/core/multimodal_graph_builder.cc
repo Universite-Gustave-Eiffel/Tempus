@@ -49,6 +49,14 @@ private:
 // mapping between road section ID and road edges
 using RoadSectionMap = std::map<Tempus::db_id_t, RoadEdgePair>;
 
+// function used in transform_iterator below
+// we would have liked to use a lambda, but boost 1.53 does not support lambdas with transform_iterator
+static std::pair<Road::Vertex, Road::Vertex> get_section_key_( const std::pair<std::pair<Road::Vertex, Road::Vertex>, Road::Section> & p )
+{
+    return p.first;
+}
+
+
 std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, ProgressionCallback& /*progression*/, bool consistency_check, const std::string& schema_name, RoadSectionMap& road_sections_map )
 {
    if ( consistency_check ) {
@@ -323,9 +331,8 @@ std::unique_ptr<Road::Graph> import_road_graph_( Db::Connection& connection, Pro
     }
 
     std::cout << "CSR ..." << std::endl;
-    auto l = [](decltype(sections)::value_type& p) { return p.first; };
-    auto s_it_begin = boost::make_transform_iterator( sections.begin(), l );
-    auto s_it_end = boost::make_transform_iterator( sections.end(), l );
+    auto s_it_begin = boost::make_transform_iterator( sections.begin(), get_section_key_ );
+    auto s_it_end = boost::make_transform_iterator( sections.end(), get_section_key_ );
     std::unique_ptr<Road::Graph> road_graph( new Road::Graph(boost::edges_are_unsorted_multi_pass,
                                                            s_it_begin, s_it_end,
                                                            nodes.size()) );
