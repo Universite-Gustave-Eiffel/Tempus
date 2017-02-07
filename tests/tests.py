@@ -5,9 +5,64 @@ import os
 g_db_options = os.getenv('TEMPUS_DB_OPTIONS', '')
 g_db_name = os.getenv('TEMPUS_DB_NAME', 'tempus_test_db')
 
+class CreatePlugin(unittest.TestCase):
+	def test(self):
+		class PyPlugin(tempus.Plugin):
+			def __init__(self, progress, options):
+				tempus.Plugin.__init__(self, PyPlugin.name())
+				self.progress = progress
+				self.options = options
+
+			@staticmethod
+			def create_plugin(progression, options):
+			    return PyPlugin(progression, options)
+
+			@staticmethod
+			def options_description():
+				o1 = tempus.Plugin.OptionDescription()
+				o1.description = 'option1 is the first option'
+				o1.default_value = 42
+				o1.visible = True
+
+				o2 = tempus.Plugin.OptionDescription()
+				o2.description = 'option2 is the second option'
+				o2.default_value = 'text'
+				o2.visible = False
+
+				return { 'option1': o1, 'option2': o2 }
+
+			@staticmethod
+			def capabilities():
+				capa = tempus.Plugin.Capabilities()
+				capa.depart_after = True
+				return capa
+
+			@staticmethod
+			def name():
+			    return 'py_test_plugin'
+
+		tempus.PluginFactory.instance().register_plugin_fn(PyPlugin.create_plugin, PyPlugin.options_description, PyPlugin.capabilities, PyPlugin.name)
+
+		options = { 'i': 12, 's': 'text', 'f': 1.2 }
+
+		plugin = tempus.PluginFactory.instance().create_plugin(
+			'py_test_plugin',
+			tempus.TextProgression(50),
+			options)
+
+		self.assertEqual(plugin.name(), PyPlugin.name())
+		self.assertEqual(True, tempus.PluginFactory.instance().plugin_capabilities(PyPlugin.name()).depart_after)
+
+		self.assertEqual(True, tempus.PluginFactory.instance().option_descriptions(PyPlugin.name())['option1'].visible)
+		self.assertEqual(42, tempus.PluginFactory.instance().option_descriptions(PyPlugin.name())['option1'].default_value)
+		self.assertEqual('text', tempus.PluginFactory.instance().option_descriptions(PyPlugin.name())['option2'].default_value)
+		self.assertEqual('option2 is the second option', tempus.PluginFactory.instance().option_descriptions(PyPlugin.name())['option2'].description)
+		self.assertEqual(False, tempus.PluginFactory.instance().option_descriptions(PyPlugin.name())['option2'].visible)
+		self.assertEqual(1.2, plugin.options['f'])
+
+
 class TestMultimodal(unittest.TestCase):
 	def test(self):
-		# testMultimodal
 		progression = tempus.TextProgression(50)
 		options = {'db/options': '{} dbname = {}'.format(g_db_options, g_db_name)}
 		graph = tempus.load_routing_data("multimodal_graph", progression, options)
