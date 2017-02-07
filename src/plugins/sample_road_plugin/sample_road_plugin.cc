@@ -93,8 +93,8 @@ class RoadPlugin : public Plugin {
 public:
     static const OptionDescriptionList option_descriptions() {
         OptionDescriptionList odl;
-        odl.declare_option( "trace_vertex", "Trace vertex traversal", Variant::from_bool(false) );
-        odl.declare_option( "prepare_result", "Prepare result", Variant::from_bool(true) );
+        declare_option( odl, "trace_vertex", "Trace vertex traversal", Variant::from_bool(false) );
+        declare_option( odl, "prepare_result", "Prepare result", Variant::from_bool(true) );
         return odl;
     }
 

@@ -79,10 +79,10 @@ class AStarRoadPlugin : public Plugin {
 public:
     static const OptionDescriptionList option_descriptions() {
         OptionDescriptionList odl;
-        odl.declare_option( "prepare_result", "Prepare result", Variant::from_bool(true) );
-        odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in A* heuristic", Variant::from_float( 90.0 ) );
-        odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float( 3.6 ));
-        odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int( 12.0 ));
+        declare_option( odl, "prepare_result", "Prepare result", Variant::from_bool(true) );
+        declare_option( odl, "AStar/speed_heuristic", "Max speed (km/h) to use in A* heuristic", Variant::from_float( 90.0 ) );
+        declare_option( odl, "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float( 3.6 ));
+        declare_option( odl, "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int( 12.0 ));
         return odl;
     }
 

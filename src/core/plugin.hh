@@ -186,16 +186,15 @@ public:
         bool visible;
     };
 
-    struct OptionDescriptionList : public std::map<std::string, OptionDescription>
-    {
-        ///
-        /// Method used by a plugin to declare an option
-        void declare_option( const std::string& nname, const std::string& description, const Variant& default_value, bool visible = true ) {
-            ( *this )[nname].description = description;
-            ( *this )[nname].default_value = default_value;
-            ( *this )[nname].visible = visible;
-        }
-    };
+    typedef std::map<std::string, OptionDescription> OptionDescriptionList;
+
+    ///
+    /// Method used by a plugin to declare an option
+    static void declare_option( OptionDescriptionList& option_list, const std::string& nname, const std::string& description, const Variant& default_value, bool visible = true ) {
+        option_list[nname].description = description;
+        option_list[nname].default_value = default_value;
+        option_list[nname].visible = visible;
+    }
 
     ///
     /// Get plugin option descriptions available for all plugins
