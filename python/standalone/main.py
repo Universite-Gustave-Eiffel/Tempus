@@ -5,16 +5,16 @@ import importlib
 
 def load_plugin(name, progress, options):
     try:
-        print 'Trying to load C++ plugin...'
+        print('Trying to load C++ plugin...')
         plugin = tempus.PluginFactory.instance().create_plugin(
             name,
             progress,
             options)
-        print 'Created C++ plugin [{}]'.format(plugin.name)
+        print('Created C++ plugin [{}]'.format(plugin.name))
         return plugin
     except RuntimeError as e:
-        print e
-        print 'Failed... Now trying python...'
+        print(e)
+        print('Failed... Now trying python...')
         pass # now try a python module
 
     try:
@@ -26,11 +26,11 @@ def load_plugin(name, progress, options):
             name,
             progress,
             options)
-        print 'Created python plugin [{}]'.format(plugin.name)
+        print('Created python plugin [{}]'.format(plugin.name))
         return plugin
 
     except ImportError as e:
-        print 'Failed as well. Aborting.'
+        print('Failed as well. Aborting.')
         raise RuntimeError('Failed to load plugin {}'.format(name))
 
 
@@ -109,9 +109,9 @@ def main(argv):
             if r.is_roadmap():
                 r = r.roadmap()
                 for s in r:
-                    print 'distance: {}, duration: {}'.format(s.cost(tempus.CostId.CostDistance), s.cost(tempus.CostId.CostDuration))
+                    print('distance: {}, duration: {}'.format(s.cost(tempus.CostId.CostDistance), s.cost(tempus.CostId.CostDuration)))
             else:
-                print 'ResultElement isnt a roadmap'
+                print('ResultElement isnt a roadmap')
 
 if __name__ == "__main__":
 

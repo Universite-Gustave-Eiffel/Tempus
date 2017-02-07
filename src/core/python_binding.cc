@@ -169,8 +169,7 @@ struct map_from_python {
         while ((key = PyIter_Next(it))) {
             PyObject* value = PyObject_GetItem(obj_ptr, key);
             if (!value) {
-                std::cerr << "Error: invalid value for key " << PyString_AsString(key) << std::endl;
-                continue;
+                throw std::runtime_error("Error: invalid value");
             }
 
             K k = bp::extract<K>(key);
@@ -314,7 +313,7 @@ void register_plugin_fn(
      name_fn = [name]() { return bp::extract<const char*>(name()); };
 
 
-    Tempus::PluginFactory::instance()->register_plugin_fn(create_fn, options_fn, caps_fn, name_fn);
+    plugin_factory->register_plugin_fn(create_fn, options_fn, caps_fn, name_fn);
 }
 
 void export_PluginFactory() {
@@ -376,9 +375,16 @@ struct Variant_from_python {
     }
 
     static void* convertible(PyObject* obj_ptr) {
-        if (!PyString_Check(obj_ptr) &&
-            !PyBool_Check(obj_ptr) &&
+        if (
+            #if PY_MAJOR_VERSION >= 3
+            !PyUnicode_Check(obj_ptr) &&
+            !PyLong_Check(obj_ptr) &&
+            #else
+            !PyBytes_Check(obj_ptr) &&
             !PyInt_Check(obj_ptr) &&
+            #endif
+            !PyBytes_Check(obj_ptr) &&
+            !PyBool_Check(obj_ptr) &&
             !PyFloat_Check(obj_ptr)) {
             return nullptr;
         } else {
@@ -400,12 +406,21 @@ struct Variant_from_python {
     }
 
     static Tempus::Variant construct(PyObject* obj_ptr) {
-        if (PyString_Check(obj_ptr)) {
+        #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(obj_ptr)) {
+            return Tempus::Variant::from_string(std::string(PyUnicode_AsUTF8(obj_ptr)));
+        #else
+        if (PyBytes_Check(obj_ptr)) {
             return Tempus::Variant::from_string(std::string(PyString_AsString(obj_ptr)));
+        #endif
         } else if (PyBool_Check(obj_ptr)) {
             return Tempus::Variant::from_bool(obj_ptr == Py_True);
+        #if PY_MAJOR_VERSION >= 3
+        } else if (PyLong_Check(obj_ptr)) {
+        #else
         } else if (PyInt_Check(obj_ptr)) {
-            return Tempus::Variant::from_int(PyInt_AsLong(obj_ptr));
+        #endif
+            return Tempus::Variant::from_int(PyLong_AsLong(obj_ptr));
         } else if (PyFloat_Check(obj_ptr)) {
             return Tempus::Variant::from_float(PyFloat_AsDouble(obj_ptr));
         } else {
@@ -483,7 +498,7 @@ class PluginWrapper : public Tempus::Plugin, public bp::wrapper<Tempus::Plugin> 
     public:
         PluginWrapper(const std::string& name /*, const Tempus::VariantMap& opt= Tempus::VariantMap()*/) : Tempus::Plugin(name /*, opt*/) {}
 
-        virtual std::unique_ptr<Tempus::PluginRequest> request( const Tempus::VariantMap& options = Tempus::VariantMap() ) const {
+        virtual std::unique_ptr<Tempus::PluginRequest> request( const Tempus::VariantMap&) const {
             std::cerr << "Do not call me" << std::endl;
             return std::unique_ptr<Tempus::PluginRequest>(nullptr);
         }

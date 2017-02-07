@@ -33,7 +33,7 @@ if (WIN32)
     set (Boost_USE_STATIC_LIBS ON)
 endif()
 
-set(TEMPUS_PYTHON_VERSION "2.7" CACHE STRING "Select python version (note: 3.X are not supported yet)")
+set(TEMPUS_PYTHON_VERSION "2.7" CACHE STRING "Select python version")
 find_package(PythonLibs ${TEMPUS_PYTHON_VERSION} REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 link_directories(${PYTHON_LIBRARIES})

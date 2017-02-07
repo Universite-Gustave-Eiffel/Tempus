@@ -81,11 +81,11 @@ class TestMultimodal(unittest.TestCase):
 			else:
 				n_pois += 1
 
-		print 'nv = {}'.format(nv)
-		print 'n_road_vertices = {} num_vertices(road) = {}'.format(n_road_vertices, tempus.Road.Graph.num_vertices(graph.road()))
-		print 'n_pt_vertices = {} num_vertices(pt) = {}'.format(n_pt_vertices, -1) #tempus.Road.num_vertices(graph.road))
-		print 'n_pois = {} pois.size() = {}'.format(n_pois, len(graph.pois()))
-		print 'num_vertices = {}'.format(tempus.Multimodal.num_vertices(graph))
+		print('nv = {}'.format(nv))
+		print('n_road_vertices = {} num_vertices(road) = {}'.format(n_road_vertices, tempus.Road.Graph.num_vertices(graph.road())))
+		print('n_pt_vertices = {} num_vertices(pt) = {}'.format(n_pt_vertices, -1)) #tempus.Road.num_vertices(graph.road))
+		print('n_pois = {} pois.size() = {}'.format(n_pois, len(graph.pois())))
+		print('num_vertices = {}'.format(tempus.Multimodal.num_vertices(graph)))
 		self.assertEqual(n_road_vertices, tempus.Road.Graph.num_vertices(graph.road()))
 		self.assertEqual(n_pois, len(graph.pois()))
 		self.assertEqual(nv, tempus.Multimodal.num_vertices(graph))
