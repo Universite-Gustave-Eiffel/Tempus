@@ -177,8 +177,8 @@ void PluginFactory::register_plugin_fn(
 {
     Dll dll;
     dll.create_fct = create_fn;
-    dll.option_descriptions.reset( new Plugin::OptionDescriptionList() ); // TODO: needs OptionDescriptionList binding (options_fn)() );
-    dll.plugin_capabilities.reset( new Plugin::Capabilities()); // TODO (capa_fn)() );
+    dll.option_descriptions.reset( (options_fn)() );
+    dll.plugin_capabilities.reset( (capa_fn)() );
 
     dll_.insert( std::make_pair( (name_fn)(), std::move(dll) ) );
     COUT << "registered functions for plugin " << name_fn() << "\n";

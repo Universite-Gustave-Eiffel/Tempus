@@ -121,6 +121,78 @@ bp::object adapt_unique_by_value(std::unique_ptr<T> (C::*fn)(Args...))
 }
 
 
+template<typename K, typename V, typename T>
+struct map_from_python {
+    map_from_python() {
+        bp::converter::registry::push_back(
+            &convertible,
+            &construct,
+            bp::type_id<T>());
+    }
+
+    static void* convertible(PyObject* obj_ptr) {
+        if (!PyMapping_Check(obj_ptr) || !PyMapping_Keys(obj_ptr)) {
+            return nullptr;
+        } else {
+            return obj_ptr;
+        }
+    }
+
+    static void construct(
+        PyObject* obj_ptr,
+        bp::converter::rvalue_from_python_stage1_data* data) {
+
+        PyObject* keys = PyMapping_Keys(obj_ptr);
+        PyObject* it = PyObject_GetIter(keys);
+        if (!it) {
+            std::cerr << "Invalid iterator" << std::endl;
+            return;
+        }
+
+        void* storage = (
+            (bp::converter::rvalue_from_python_storage<T>*)
+            data)->storage.bytes;
+
+        new (storage) T();
+        data->convertible = storage;
+
+        T* result = static_cast<std::map<K,V>*>(storage);
+
+        construct_in_object(obj_ptr, result);
+    }
+
+    static void construct_in_object(PyObject* obj_ptr, T* result) {
+        PyObject* keys = PyMapping_Keys(obj_ptr);
+        PyObject* it = PyObject_GetIter(keys);
+
+        PyObject* key;
+        while ((key = PyIter_Next(it))) {
+            PyObject* value = PyObject_GetItem(obj_ptr, key);
+            if (!value) {
+                std::cerr << "Error: invalid value for key " << PyString_AsString(key) << std::endl;
+                continue;
+            }
+
+            K k = bp::extract<K>(key);
+            V v = bp::extract<V>(value);
+            result->insert(std::make_pair(k, v));
+        }
+    }
+};
+
+
+template<typename K, typename V>
+struct map_to_python{
+    static PyObject* convert(const std::map<K, V>& v){
+        bp::dict ret;
+        for (auto it= v.begin(); it!=v.end(); ++it) {
+            ret[it->first] = it->second;
+        }
+        return bp::incref(ret.ptr());
+    }
+};
+
+
 /** http://stackoverflow.com/questions/26497922/how-to-wrap-a-c-function-that-returns-boostoptionalt */
 
 namespace detail {
@@ -207,19 +279,42 @@ void register_plugin_fn(
         return bp::extract<Tempus::Plugin*>(do_not_delete_me_please);
     };
 
-    #if 0
     auto
-     options_fn = [options]() { return bp::extract<const Tempus::Plugin::OptionDescriptionList*>(options()); };
+     options_fn = [options]() {
+        bp::object do_not_delete_me_please (options());
+        bp::incref(do_not_delete_me_please.ptr());
+
+        // Aha, nice try. We can't use this ...
+        // return bp::extract<Tempus::Plugin::Capabilities*>(do_not_delete_me_please);
+
+        // because there's a of a subtle difference: extract<> needs a bp::class_<> declaration
+        // to be able to use python->c++ converters we registered.
+        // As OptionDescriptionList is a simple typedef to std::map<> + specific converters we need to
+        // hack a bit to get boost|python to play nice with us...
+
+        // So let's try to explicitely use the converter
+        typedef map_from_python<std::string, Tempus::Plugin::OptionDescription, Tempus::Plugin::OptionDescriptionList> Conv;
+        if (Conv::convertible(do_not_delete_me_please.ptr())) {
+            Tempus::Plugin::OptionDescriptionList* result = new Tempus::Plugin::OptionDescriptionList();
+            Conv::construct_in_object(do_not_delete_me_please.ptr(), result);
+            return result;
+        } else {
+            throw std::runtime_error( "Cannot convert to C++ OptionDescriptionList" );
+        }
+    };
 
     auto
-     caps_fn = [caps]() { return bp::extract<const Tempus::Plugin::Capabilities*>(caps()); };
-    #endif
+     caps_fn = [caps]() {
+        bp::object do_not_delete_me_please (caps());
+        bp::incref(do_not_delete_me_please.ptr());
+        return bp::extract<Tempus::Plugin::Capabilities*>(do_not_delete_me_please);
+    };
 
     auto
      name_fn = [name]() { return bp::extract<const char*>(name()); };
 
 
-    Tempus::PluginFactory::instance()->register_plugin_fn(create_fn, nullptr /*options_fn*/, nullptr /*caps_fn*/, name_fn);
+    Tempus::PluginFactory::instance()->register_plugin_fn(create_fn, options_fn, caps_fn, name_fn);
 }
 
 void export_PluginFactory() {
@@ -227,6 +322,8 @@ void export_PluginFactory() {
         .def("plugin_list", &Tempus::PluginFactory::plugin_list)
         .def("create_plugin", &Tempus::PluginFactory::create_plugin, bp::return_value_policy<bp::reference_existing_object>())
         .def("register_plugin_fn", &register_plugin_fn)
+        .def("plugin_capabilities", &Tempus::PluginFactory::plugin_capabilities)
+        .def("option_descriptions", &Tempus::PluginFactory::option_descriptions)
         .def("instance", &Tempus::PluginFactory::instance, bp::return_value_policy<bp::reference_existing_object>()).staticmethod("instance")
     ;
     // .def("create_plugin_from_fn", &Tempus::PluginFactory::create_plugin_from_fn, bp::return_value_policy<bp::reference_existing_object>())
@@ -292,19 +389,7 @@ struct Variant_from_python {
     static void construct(
         PyObject* obj_ptr,
         bp::converter::rvalue_from_python_stage1_data* data) {
-
-        Tempus::Variant v;
-        if (PyString_Check(obj_ptr)) {
-            v = Tempus::Variant::from_string(std::string(PyString_AsString(obj_ptr)));
-        } else if (PyBool_Check(obj_ptr)) {
-            v = Tempus::Variant::from_bool(obj_ptr == Py_True);
-        } else if (PyInt_Check(obj_ptr)) {
-            v = Tempus::Variant::from_int(PyInt_AsLong(obj_ptr));
-        } else if (PyFloat_Check(obj_ptr)) {
-            v = Tempus::Variant::from_float(PyFloat_AsDouble(obj_ptr));
-        } else {
-            return;
-        }
+        Tempus::Variant v = construct(obj_ptr);
 
         void* storage = (
             (bp::converter::rvalue_from_python_storage<Tempus::Variant>*)
@@ -313,75 +398,25 @@ struct Variant_from_python {
         new (storage) Tempus::Variant(v);
         data->convertible = storage;
     }
-};
 
-
-template<typename K, typename V, typename T>
-struct map_from_python {
-    map_from_python() {
-        bp::converter::registry::push_back(
-            &convertible,
-            &construct,
-            bp::type_id<T>());
-    }
-
-    static void* convertible(PyObject* obj_ptr) {
-        if (!PyMapping_Check(obj_ptr) || !PyMapping_Keys(obj_ptr)) {
-            return nullptr;
+    static Tempus::Variant construct(PyObject* obj_ptr) {
+        if (PyString_Check(obj_ptr)) {
+            return Tempus::Variant::from_string(std::string(PyString_AsString(obj_ptr)));
+        } else if (PyBool_Check(obj_ptr)) {
+            return Tempus::Variant::from_bool(obj_ptr == Py_True);
+        } else if (PyInt_Check(obj_ptr)) {
+            return Tempus::Variant::from_int(PyInt_AsLong(obj_ptr));
+        } else if (PyFloat_Check(obj_ptr)) {
+            return Tempus::Variant::from_float(PyFloat_AsDouble(obj_ptr));
         } else {
-            return obj_ptr;
-        }
-    }
-
-    static void construct(
-        PyObject* obj_ptr,
-        bp::converter::rvalue_from_python_stage1_data* data) {
-
-        PyObject* keys = PyMapping_Keys(obj_ptr);
-        PyObject* it = PyObject_GetIter(keys);
-        if (!it) {
-            std::cerr << "Invalid iterator" << std::endl;
-            return;
-        }
-
-        void* storage = (
-            (bp::converter::rvalue_from_python_storage<T>*)
-            data)->storage.bytes;
-
-        new (storage) T();
-        data->convertible = storage;
-
-        T* result = static_cast<std::map<K,V>*>(storage);
-        PyObject* key;
-        while ((key = PyIter_Next(it))) {
-            PyObject* value = PyObject_GetItem(obj_ptr, key);
-            if (!value) {
-                    // error
-                std::cerr << "Error: invalid value for key " << PyString_AsString(key) << std::endl;
-                return;
-            }
-
-            K k = bp::extract<K>(key);
-            V v = bp::extract<V>(value);
-            result->insert(std::make_pair(k, v));
+            throw std::runtime_error("Cannot create Variant from obj");
         }
     }
 };
-
-
-template<typename K, typename V>
-struct map_to_python{
-    static PyObject* convert(const std::map<K, V>& v){
-        bp::dict ret;
-        for (auto it= v.begin(); it!=v.end(); ++it) {
-            ret[it->first] = it->second;
-        }
-        return bp::incref(ret.ptr());
-    }
-};
-
 
 void export_Variant() {
+    // We don't expose a Variant python class: instead we transparently handle conversions
+    // from python-types to C++ variant
     Variant_from_python();
     bp::to_python_converter<Tempus::Variant, Variant_to_python>();
 
@@ -582,12 +617,40 @@ void export_Plugin() {
     ;
 
 
-    bp::class_<PluginWrapper, boost::noncopyable>("Plugin", bp::init<const std::string& /*, const Tempus::VariantMap&*/>())
-        .def("request", &PluginWrapper::request2, bp::return_value_policy<bp::manage_new_object>()) // for python plugin
-        .def("request", adapt_unique_const(&Tempus::Plugin::request)) // for C++ plugin called from py
-        .def("routing_data", bp::pure_virtual(&Tempus::Plugin::routing_data), bp::return_internal_reference<>())
-        .add_property("name", &Tempus::Plugin::name)
-    ;
+    {
+        bp::scope s = bp::class_<PluginWrapper, boost::noncopyable>("Plugin", bp::init<const std::string& /*, const Tempus::VariantMap&*/>())
+            .def("request", &PluginWrapper::request2, bp::return_value_policy<bp::manage_new_object>()) // for python plugin
+            .def("request", adapt_unique_const(&Tempus::Plugin::request)) // for C++ plugin called from py
+            .def("routing_data", bp::pure_virtual(&Tempus::Plugin::routing_data), bp::return_internal_reference<>())
+            .add_property("name", &Tempus::Plugin::name)
+            .def("declare_option", &Tempus::Plugin::declare_option).staticmethod("declare_option")
+        ;
+
+        GET_SET(Tempus::Plugin::Capabilities, bool, intermediate_steps)
+        GET_SET(Tempus::Plugin::Capabilities, bool, depart_after)
+        GET_SET(Tempus::Plugin::Capabilities, bool, arrive_before)
+        GET(Tempus::Plugin::Capabilities, std::vector<Tempus::CostId>, optimization_criteria)
+        bp::class_<Tempus::Plugin::Capabilities>("Capabilities")
+            .add_property("intermediate_steps", intermediate_steps_get, intermediate_steps_set)
+            .add_property("depart_after", depart_after_get, depart_after_set)
+            .add_property("arrive_before", arrive_before_get, arrive_before_set)
+            .add_property("optimization_criteria", optimization_criteria_get)
+        ;
+
+        bp::class_<Tempus::Plugin::OptionDescription>("OptionDescription")
+            .def_readwrite("description", &Tempus::Plugin::OptionDescription::description)
+            .add_property("default_value",
+                // We don't want to expose Variant to python, so we instead use convertors here.
+                // This allows to keep implicit conversion between VariantMap and dict.
+                +[](Tempus::Plugin::OptionDescription* o) { return Variant_to_python::convert(o->default_value); },
+                +[](Tempus::Plugin::OptionDescription* o, bp::object a) { o->default_value = Variant_from_python::construct(a.ptr()); })
+            .def_readwrite("visible", &Tempus::Plugin::OptionDescription::visible)
+        ;
+
+
+    }
+    map_from_python<std::string, Tempus::Plugin::OptionDescription, Tempus::Plugin::OptionDescriptionList>();
+    bp::to_python_converter<Tempus::Plugin::OptionDescriptionList, map_to_python<std::string, Tempus::Plugin::OptionDescription> >();
 
     bp::def("load_routing_data", &Tempus::load_routing_data, bp::return_internal_reference<>());
 }
