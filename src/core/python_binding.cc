@@ -6,6 +6,7 @@
 
 
 #include "plugin.hh"
+// #include "reverse_multimodal_graph.hh"
 namespace bp = boost::python;
 
 /* Helper to register std::vector<T> <-> python list[T] */
@@ -66,9 +67,16 @@ struct custom_list_from_seq{
     const TYPE& (CLASS::*name ## l_get)() const = &CLASS::name; \
     auto name ## _get = make_function(name ## l_get, bp::return_value_policy<bp::copy_const_reference>());
 
+#define GET_NON_CONST(CLASS, TYPE, name) \
+    TYPE (CLASS::*name ## l_get)() const = &CLASS::name; \
+    auto name ## _get = make_function(name ## l_get, bp::return_value_policy<bp::return_by_value>());
 
 #define GET_SET(CLASS, TYPE, name) \
     GET(CLASS, TYPE, name) \
+    void (CLASS::*name ## _set)(const TYPE&) = &CLASS::set_ ## name;
+
+#define GET_NON_CONST_SET(CLASS, TYPE, name) \
+    GET_NON_CONST(CLASS, TYPE, name) \
     void (CLASS::*name ## _set)(const TYPE&) = &CLASS::set_ ## name;
 
 /* Helpers to bind function returning std::unique_ptr */
@@ -383,8 +391,8 @@ void export_Variant() {
 }
 
 void export_Request() {
-    GET_SET(Tempus::Request, Tempus::db_id_t, origin)
-    GET_SET(Tempus::Request, Tempus::db_id_t, destination)
+    GET_NON_CONST_SET(Tempus::Request, Tempus::db_id_t, origin)
+    GET_NON_CONST_SET(Tempus::Request, Tempus::db_id_t, destination)
     GET(Tempus::Request, Tempus::Request::StepList, steps)
     GET(Tempus::Request, std::vector<Tempus::db_id_t>, allowed_modes)
     GET(Tempus::Request, std::vector<Tempus::CostId>, optimizing_criteria)
