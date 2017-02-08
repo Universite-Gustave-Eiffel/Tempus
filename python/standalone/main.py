@@ -1,4 +1,4 @@
-import tempus
+import pytempus as tempus
 import sys
 import argparse
 import importlib

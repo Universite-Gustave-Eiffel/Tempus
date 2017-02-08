@@ -1,4 +1,4 @@
-import tempus
+import pytempus as tempus
 import unittest
 import os
 

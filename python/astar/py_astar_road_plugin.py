@@ -1,4 +1,4 @@
-import tempus
+import pytempus as tempus
 
 from graph_tool.all import *
 
