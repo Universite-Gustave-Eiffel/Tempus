@@ -125,7 +125,7 @@ def options_description():
 
 def capabilities():
     print ('capabilities')
-    return {}
+    return tempus.Plugin.Capabilities()
 
 def name():
     return 'py_astar_road_plugin'
