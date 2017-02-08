@@ -121,7 +121,6 @@ struct Parser
                 int32_t sz = this->read_blob(header);
                 if(header.type() == "OSMData") {
                     int b = enum_primitiveblock( sz );
-                    //std::cout << b << " " << std::hex << tellp << " current_block " << current_block << std::endl;
                     if ( (current_block == NodeBlock) && (b & WayBlock) ) {
                         ways_offset = tellp;
                         current_block = WayBlock;
@@ -319,6 +318,31 @@ protected:
         return -1;
     }
 
+    off_t linear_search_pattern_( off_t start, off_t end, BlockType block_type )
+    {
+        file.seekg( start );
+        OSMPBF::BlobHeader header;
+        off_t nxt = next_block();
+        if ( nxt > end )
+            return -1;
+
+        off_t found_off = 0;
+        int b = 0;
+        while ( b < block_type ) {
+            found_off = file.tellg();
+            if ( found_off > end )
+                return -1;
+            header = this->read_header();
+            if(!this->finished){
+                int32_t sz = this->read_blob(header);
+                if(header.type() == "OSMData") {
+                    b = enum_primitiveblock( sz );
+                }
+            }
+        }
+        return found_off;
+    }
+
     off_t binary_search_pattern_( off_t start, off_t end, BlockType block_type )
     {
         int iblock_type = static_cast<int>( block_type );
@@ -326,9 +350,18 @@ protected:
         if ( file.eof() )
             file.clear();
         file.seekg( half );
-        if ( next_block() == -1 )
+        off_t nxt = next_block();
+        if ( nxt == -1 )
             return -1;
+        if ( nxt > end ) {
+            // the next block is past the end,
+            // this means we need a linear search between start and end
+            return linear_search_pattern_( start, end, block_type );
+        }
 
+        // read two headers so that
+        // header 1 is not of type block_type
+        // and header 2 is of type block_type
         int b1 = 0, b2 = 0;
         OSMPBF::BlobHeader header = this->read_header();
         if(!this->finished){
