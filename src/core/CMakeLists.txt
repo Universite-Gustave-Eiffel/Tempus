@@ -9,6 +9,7 @@ set( HEADER_FILES
   db.hh
   io.hh
   multimodal_graph.hh
+  optional.hh
   path_trace.hh
   plugin.hh
   plugin_factory.hh
@@ -16,6 +17,7 @@ set( HEADER_FILES
   point.hh
   progression.hh
   property.hh
+  public_transport.hh
   public_transport_graph.hh
   request.hh
   reverse_multimodal_graph.hh
