@@ -4,7 +4,7 @@ from setuptools import setup, Extension
 
 setup(
     name='pytempus',
-    version='2.1.0',
+    version='1.0.0',
     description="Tempus Python API",
     long_description="Tempus Python API module",
     classifiers=[
