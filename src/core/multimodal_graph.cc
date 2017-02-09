@@ -24,9 +24,6 @@
 #include "multimodal_graph.hh"
 #include "db.hh"
 
-#include <boost/python.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-
 using namespace std;
 
 namespace Tempus {

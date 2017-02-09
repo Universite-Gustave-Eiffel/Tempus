@@ -68,8 +68,6 @@ set( SOURCE_FILES
     ch_routing_data.cc
 )
 
-set (PYTHON_SOURCE_FILES python_binding.cc )
-
 if (ENABLE_SEGMENT_ALLOCATOR)
   set( SOURCE_FILES ${SOURCE_FILES} utils/segment_allocator.cc )
   set( UTILS_HEADER_FILES ${UTILS_HEADER_FILES} utils/segment_allocator.hh )
@@ -82,13 +80,7 @@ else ()
 endif ()
 
 
-target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
-
-add_library( pytempus SHARED ${PYTHON_SOURCE_FILES} )
-set_target_properties( pytempus PROPERTIES PREFIX "" )
-set_target_properties( pytempus PROPERTIES OUTPUT_NAME "tempus")
-target_link_libraries( pytempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} tempus)
-
+target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS tempus DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include/tempus)
