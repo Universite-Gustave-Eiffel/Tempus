@@ -38,12 +38,12 @@ public:
     static Plugin::OptionDescriptionList option_descriptions()
     {
         Plugin::OptionDescriptionList odl = Plugin::common_option_descriptions();
-        odl.declare_option( "Isochrone/limit", "Limit value of the optimized cost", Variant::from_float(10.0));
-        odl.declare_option( "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", Variant::from_int(2));
-        odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float(3.6));
-        odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int(12));
-        odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", Variant::from_int(5));
-	odl.declare_option( "Debug/verbose", "Verbose general processing", Variant::from_bool(false));
+        declare_option( odl, "Isochrone/limit", "Limit value of the optimized cost", Variant::from_float(10.0));
+        declare_option( odl, "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", Variant::from_int(2));
+        declare_option( odl, "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float(3.6));
+        declare_option( odl, "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int(12));
+        declare_option( odl, "Time/car_parking_search_time", "Car parking search time (min)", Variant::from_int(5));
+        declare_option( odl, "Debug/verbose", "Verbose general processing", Variant::from_bool(false));
         return odl;
     }
 

@@ -1,6 +1,38 @@
-import tempus
+import pytempus as tempus
 import sys
 import argparse
+import importlib
+
+def load_plugin(name, progress, options):
+    try:
+        print('Trying to load C++ plugin...')
+        plugin = tempus.PluginFactory.instance().create_plugin(
+            name,
+            progress,
+            options)
+        print('Created C++ plugin [{}]'.format(plugin.name))
+        return plugin
+    except RuntimeError as e:
+        print(e)
+        print('Failed... Now trying python...')
+        pass # now try a python module
+
+    try:
+        py_plugin = importlib.import_module(name)
+
+        tempus.PluginFactory.instance().register_plugin_fn(py_plugin.create_plugin, py_plugin.options_description, py_plugin.capabilities, py_plugin.name)
+
+        plugin = tempus.PluginFactory.instance().create_plugin(
+            name,
+            progress,
+            options)
+        print('Created python plugin [{}]'.format(plugin.name))
+        return plugin
+
+    except ImportError as e:
+        print('Failed as well. Aborting.')
+        raise RuntimeError('Failed to load plugin {}'.format(name))
+
 
 def main(argv):
     parser = argparse.ArgumentParser(description='Tempus test program')
@@ -55,10 +87,7 @@ def main(argv):
 
     progression = Progress()
 
-    plugin = tempus.PluginFactory.instance().create_plugin(
-        options['plugin'],
-        progression,
-        plugin_options)
+    plugin = load_plugin(options['plugin'], progression, plugin_options)
 
     req = tempus.Request()
     req.origin = options['origin']
@@ -74,13 +103,15 @@ def main(argv):
 
     for i in range(0, options['repeat']):
         p = plugin.request(options)
-        print req.origin
+
         result = p.process(req)
         for r in result:
-            r = r.roadmap()
-            for s in r:
-                print 'distance: {}, duration: {}'.format(s.cost(tempus.CostId.CostDistance), s.cost(tempus.CostId.CostDuration))
-
+            if r.is_roadmap():
+                r = r.roadmap()
+                for s in r:
+                    print('distance: {}, duration: {}'.format(s.cost(tempus.CostId.CostDistance), s.cost(tempus.CostId.CostDuration)))
+            else:
+                print('ResultElement isnt a roadmap')
 
 if __name__ == "__main__":
 

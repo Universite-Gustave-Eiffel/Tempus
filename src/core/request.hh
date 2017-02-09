@@ -84,7 +84,7 @@ public:
 
     ///
     /// Get access to the origin vertex
-    const db_id_t& origin() const;
+    db_id_t origin() const;
 
     /// Get write access to the origin vertex
     void set_origin( const db_id_t& );
@@ -93,7 +93,7 @@ public:
 
     ///
     /// Get access to the destination vertex
-    const db_id_t& destination() const;
+    db_id_t destination() const;
 
     /// Get write access to the destination vertex
     void set_destination( const db_id_t& );

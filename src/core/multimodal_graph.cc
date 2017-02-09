@@ -215,7 +215,7 @@ bool Edge::operator<( const Multimodal::Edge& e ) const
     }
     return c < 0;
 #else
-    return source_ == e.source_ ? 
+    return source_ == e.source_ ?
         ( target_ == e.target_ ?
           road_edge_ < e.road_edge_
           : target_ < e.target_ )
@@ -1020,7 +1020,7 @@ size_t out_degree( const Vertex& v, const Graph& graph )
     else if ( v.type() == Vertex::PublicTransport ) {
         //
         // For a PublicTransport::Vertex, we have access to 1 or 2 additional node (the road node)
-        return out_degree( v.pt_vertex(), *v.pt_graph() ) + 
+        return out_degree( v.pt_vertex(), *v.pt_graph() ) +
             ( (*v.pt_graph())[v.pt_vertex()].opposite_road_edge() ? 2 : 1);
     }
 
@@ -1048,7 +1048,7 @@ size_t in_degree( const Vertex& v, const Graph& graph )
     else if ( v.type() == Vertex::PublicTransport ) {
         //
         // For a PublicTransport::Vertex, we have access to 1 or 2 additional node (the road node)
-        return in_degree( v.pt_vertex(), *v.pt_graph() ) + 
+        return in_degree( v.pt_vertex(), *v.pt_graph() ) +
             ( (*v.pt_graph())[v.pt_vertex()].opposite_road_edge() ? 2 : 1);
     }
 
