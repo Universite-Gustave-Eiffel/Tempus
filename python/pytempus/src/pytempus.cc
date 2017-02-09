@@ -5,7 +5,7 @@
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 
-#include "plugin.hh"
+#include <tempus/plugin.hh>
 // #include "reverse_multimodal_graph.hh"
 namespace bp = boost::python;
 
@@ -262,7 +262,7 @@ struct return_optional
 
 
 /* actual binding code */
-#include "plugin_factory.hh"
+#include <tempus/plugin_factory.hh>
 
 void register_plugin_fn(
     Tempus::PluginFactory* plugin_factory,
@@ -329,7 +329,7 @@ void export_PluginFactory() {
     // bp::
 }
 
-#include "progression.hh"
+#include <tempus/progression.hh>
 void export_ProgressionCallback() {
     bp::class_<Tempus::ProgressionCallback>("ProgressionCallback")
         .def("__call__", &Tempus::ProgressionCallback::operator())
@@ -339,7 +339,7 @@ void export_ProgressionCallback() {
     ;
 }
 
-#include "variant.hh"
+#include <tempus/variant.hh>
 
 
 struct Variant_to_python{

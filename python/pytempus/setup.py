@@ -23,10 +23,8 @@ setup(
 
     license='LGPL',
     ext_modules=[Extension('pytempus',
-                           include_dirs = ['/usr/local/include/tempus', '/usr/include/tempus'],
                            extra_compile_args=['-std=c++11'],
                            libraries = ['tempus', 'boost_python'],
-                           library_dirs = ['/usr/local/lib', '/usr/lib'],
                            sources = ['src/pytempus.cc'])],
     include_package_data=True,
     zip_safe=False,
