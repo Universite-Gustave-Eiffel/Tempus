@@ -25,12 +25,8 @@ import subprocess
 import re
 import unittest
 
-script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-wps_path = os.path.abspath( script_path + '/../../python' )
-sys.path.insert(0, wps_path)
-
-from pytempus.wps_client import *
-from pytempus.tempus_request import *
+from wpstempus.wps_client import *
+from wpstempus.tempus_request import *
 
 WPS_HOST = '127.0.0.1'
 WPS_PATH = '/wps'

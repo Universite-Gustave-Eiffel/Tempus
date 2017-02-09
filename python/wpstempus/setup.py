@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='wpstempus',
-    version='2.0.0',
+    version='1.0.0',
     description="Tempus Python API",
     long_description="Tempus Python API module",
     classifiers=[

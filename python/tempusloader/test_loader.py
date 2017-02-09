@@ -26,11 +26,11 @@ import argparse
 import subprocess
 
 script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-loader_path = os.path.abspath(script_path + '/../python/')
-data_path = os.path.abspath( script_path + '/../test_data' )
+loader_path = os.path.abspath(script_path)
+data_path = os.path.abspath(script_path + '/../../test_data')
 sys.path.insert(0, loader_path)
 
-from tempusloader.config import PSQL
+from tempusloader.provider.config import PSQL
 
 loader = loader_path + "/tempusloader/load_tempus.py"
 dbstring = os.environ.get('DBSTRING') or "dbname=tempus_unit_test"

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tempusloader',
-    version='0.9.2',
+    version='1.0.0',
     description="Tempus data loader",
     long_description="Tempus data loader",
     classifiers=[

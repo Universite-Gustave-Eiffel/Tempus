@@ -10,7 +10,7 @@ create schema tempus_wps;
 --
 create function tempus_wps.plugin_list(wps text ='http://localhost/wps') returns setof text
 as $$
-from pytempus import TempusRequest
+from wpstempus import TempusRequest
 r = TempusRequest(wps)
 return [p.name for p in r.plugin_list()]
 $$ language plpythonu;
@@ -25,7 +25,7 @@ create function tempus_wps.isochrone(x double precision, y double precision, lim
 		verbose boolean = FALSE)
 returns table(x double precision, y double precision, mode smallint, cost real)
 as $$
-from pytempus import TempusRequest, Point, RequestStep, Cost, Constraint, DateTime
+from wpstempus import TempusRequest, Point, RequestStep, Cost, Constraint, DateTime
 import datetime
 if '.' in dt:
    ddt = DateTime.from_dt(datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S.%f'))
