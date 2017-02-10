@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 enable_testing()
 
 set( TEMPUS_VERSION_MAJOR 2 )
-set( TEMPUS_VERSION_MINOR 1 )
+set( TEMPUS_VERSION_MINOR 2 )
 set( TEMPUS_VERSION_PATCH 0 )
 
 # don't rebuild everything when rules are changed
