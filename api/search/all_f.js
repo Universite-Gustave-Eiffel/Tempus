@@ -2,8 +2,8 @@ var searchData=
 [
   ['schema',['Schema',['../class_x_m_l_1_1_schema.html',1,'XML']]],
   ['scoped_5fptr',['scoped_ptr',['../classscoped__ptr.html',1,'']]],
-  ['section',['Section',['../struct_tempus_1_1_public_transport_1_1_section.html',1,'Tempus::PublicTransport']]],
   ['section',['Section',['../struct_tempus_1_1_road_1_1_section.html',1,'Tempus::Road']]],
+  ['section',['Section',['../struct_tempus_1_1_public_transport_1_1_section.html',1,'Tempus::PublicTransport']]],
   ['section_5fadditional_5fvalues',['section_additional_values',['../class_data_profile.html#a70126f2b8f8c2235f77a402727dbc0bf',1,'DataProfile::section_additional_values()'],['../class_tempus_data_profile.html#a9b49491dda4862ad8e0542b03b232cd9',1,'TempusDataProfile::section_additional_values()']]],
   ['sectionsplitter',['SectionSplitter',['../class_section_splitter.html',1,'']]],
   ['segmentallocator',['SegmentAllocator',['../namespace_segment_allocator.html',1,'']]],

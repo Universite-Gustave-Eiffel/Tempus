@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -229,6 +229,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_pt_plugin.html">PtPlugin</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_pt_plugin_request.html">PtPluginRequest</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_r_a_i_i.html">RAII</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1remove__const.html">remove_const</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -556,6 +558,9 @@ template&lt;class G &gt; </td></tr>
 <tr class="memitem:a20a34073c19deb1963aa84fbd8fcba9d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20a34073c19deb1963aa84fbd8fcba9d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>import_constants</b> (<a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;connection, <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a> &amp;graph)</td></tr>
 <tr class="separator:a20a34073c19deb1963aa84fbd8fcba9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a159358b8cafee76b7a51ab0bd4bc0394"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a159358b8cafee76b7a51ab0bd4bc0394"></a>
+static std::pair&lt; Road::Vertex, Road::Vertex &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_section_key_</b> (const std::pair&lt; std::pair&lt; Road::Vertex, Road::Vertex &gt;, <a class="el" href="struct_tempus_1_1_road_1_1_section.html">Road::Section</a> &gt; &amp;p)</td></tr>
+<tr class="separator:a159358b8cafee76b7a51ab0bd4bc0394"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a146ccb5ad8112593e46d984f3548c307"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a146ccb5ad8112593e46d984f3548c307"></a>
 std::unique_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f360f20ca940df189832da915d">Road::Graph</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>import_road_graph_</b> (<a class="el" href="class_db_1_1_connection.html">Db::Connection</a> &amp;connection, <a class="el" href="class_tempus_1_1_progression_callback.html">ProgressionCallback</a> &amp;, bool consistency_check, const std::string &amp;schema_name, RoadSectionMap &amp;road_sections_map)</td></tr>
 <tr class="separator:a146ccb5ad8112593e46d984f3548c307"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -567,7 +572,7 @@ std::unique_ptr&lt; <a class="el" href="namespace_tempus_1_1_road.html#ab8b311f3
 <tr class="memdesc:abb9db46681c4c291d1a23393ddf70ee2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Import turn restrictions. <br /></td></tr>
 <tr class="separator:abb9db46681c4c291d1a23393ddf70ee2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8453f5f3c8b9469dd53cf454ebe6ad87"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8453f5f3c8b9469dd53cf454ebe6ad87"></a>
-<a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Plugin::OptionDescriptionList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus.html#a8453f5f3c8b9469dd53cf454ebe6ad87">option_descriptions</a> (const <a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> *plugin)</td></tr>
+Plugin::OptionDescriptionList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_tempus.html#a8453f5f3c8b9469dd53cf454ebe6ad87">option_descriptions</a> (const <a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> *plugin)</td></tr>
 <tr class="memdesc:a8453f5f3c8b9469dd53cf454ebe6ad87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience method to get plugin options. <br /></td></tr>
 <tr class="separator:a8453f5f3c8b9469dd53cf454ebe6ad87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c42f2644498284248d0e155fd25c776"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c42f2644498284248d0e155fd25c776"></a>
@@ -1401,7 +1406,7 @@ template&lt;class G &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 4 2016 17:08:28 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

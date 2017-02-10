@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -90,6 +90,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="class_tempus_1_1_plugin-members.html">List of all members</a>  </div>
@@ -115,8 +116,9 @@ Inheritance diagram for Tempus::Plugin:</div>
 <area href="class_tempus_1_1_isochrone_plugin_1_1_isochrone_plugin.html" title="Plugin that computes a (multimodal) isochrone. " alt="Tempus::IsochronePlugin::IsochronePlugin" shape="rect" coords="299,448,588,472"/>
 <area href="class_tempus_1_1_multi_plugin.html" alt="Tempus::MultiPlugin" shape="rect" coords="299,504,588,528"/>
 <area href="class_tempus_1_1_pt_plugin.html" alt="Tempus::PtPlugin" shape="rect" coords="299,560,588,584"/>
-<area href="class_tempus_1_1_road_plugin.html" alt="Tempus::RoadPlugin" shape="rect" coords="299,616,588,640"/>
-<area href="class_tempus_1_1_timetable_pt_plugin.html" alt="Tempus::TimetablePtPlugin" shape="rect" coords="299,672,588,696"/>
+<area href="class_tempus_1_1_python_plugin_1_1_python_plugin.html" title="Plugin that allows to load Python modules as Tempus plugins. " alt="Tempus::PythonPlugin::PythonPlugin" shape="rect" coords="299,616,588,640"/>
+<area href="class_tempus_1_1_road_plugin.html" alt="Tempus::RoadPlugin" shape="rect" coords="299,672,588,696"/>
+<area href="class_tempus_1_1_timetable_pt_plugin.html" alt="Tempus::TimetablePtPlugin" shape="rect" coords="299,728,588,752"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -128,8 +130,12 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_1_1_option_description.html">OptionDescription</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> option description.  <a href="struct_tempus_1_1_plugin_1_1_option_description.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">OptionDescriptionList</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a262fa0f34d35762d9c710152c8dceef9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a262fa0f34d35762d9c710152c8dceef9"></a>
+typedef std::map&lt; std::string, <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description.html">OptionDescription</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>OptionDescriptionList</b></td></tr>
+<tr class="separator:a262fa0f34d35762d9c710152c8dceef9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -165,8 +171,12 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>schema_name</b
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a163e55306bb030219e0336a32979ae33"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a163e55306bb030219e0336a32979ae33"></a>
+static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a163e55306bb030219e0336a32979ae33">declare_option</a> (OptionDescriptionList &amp;option_list, const std::string &amp;nname, const std::string &amp;description, const <a class="el" href="class_tempus_1_1_variant.html">Variant</a> &amp;default_value, bool visible=true)</td></tr>
+<tr class="memdesc:a163e55306bb030219e0336a32979ae33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used by a plugin to declare an option. <br /></td></tr>
+<tr class="separator:a163e55306bb030219e0336a32979ae33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18b1ea583025bd8a549cc4e86be60a1c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18b1ea583025bd8a549cc4e86be60a1c"></a>
-static <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">OptionDescriptionList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a18b1ea583025bd8a549cc4e86be60a1c">common_option_descriptions</a> ()</td></tr>
+static OptionDescriptionList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a18b1ea583025bd8a549cc4e86be60a1c">common_option_descriptions</a> ()</td></tr>
 <tr class="memdesc:a18b1ea583025bd8a549cc4e86be60a1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get plugin option descriptions available for all plugins. <br /></td></tr>
 <tr class="separator:a18b1ea583025bd8a549cc4e86be60a1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -214,7 +224,7 @@ static <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 4 2016 17:08:28 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

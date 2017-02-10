@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -151,7 +151,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>schema_name</b
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a63e314d258f80cd2cea67427f71fb590"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63e314d258f80cd2cea67427f71fb590"></a>
-static <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Plugin::OptionDescriptionList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_isochrone_plugin_1_1_isochrone_plugin.html#a63e314d258f80cd2cea67427f71fb590">option_descriptions</a> ()</td></tr>
+static Plugin::OptionDescriptionList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_isochrone_plugin_1_1_isochrone_plugin.html#a63e314d258f80cd2cea67427f71fb590">option_descriptions</a> ()</td></tr>
 <tr class="memdesc:a63e314d258f80cd2cea67427f71fb590"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options of the plugin. <br /></td></tr>
 <tr class="separator:a63e314d258f80cd2cea67427f71fb590"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d57755ac23f0370c74f1ae15b82f19b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6d57755ac23f0370c74f1ae15b82f19b"></a>
@@ -159,10 +159,21 @@ static <a class="el" href="struct_tempus_1_1_plugin_1_1_capabilities.html">Plugi
 <tr class="memdesc:a6d57755ac23f0370c74f1ae15b82f19b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Capabilities of the plugin. <br /></td></tr>
 <tr class="separator:a6d57755ac23f0370c74f1ae15b82f19b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_class_tempus_1_1_plugin"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_class_tempus_1_1_plugin')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="class_tempus_1_1_plugin.html">Tempus::Plugin</a></td></tr>
+<tr class="memitem:a163e55306bb030219e0336a32979ae33 inherit pub_static_methods_class_tempus_1_1_plugin"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a163e55306bb030219e0336a32979ae33"></a>
+static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a163e55306bb030219e0336a32979ae33">declare_option</a> (OptionDescriptionList &amp;option_list, const std::string &amp;nname, const std::string &amp;description, const <a class="el" href="class_tempus_1_1_variant.html">Variant</a> &amp;default_value, bool visible=true)</td></tr>
+<tr class="memdesc:a163e55306bb030219e0336a32979ae33 inherit pub_static_methods_class_tempus_1_1_plugin"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method used by a plugin to declare an option. <br /></td></tr>
+<tr class="separator:a163e55306bb030219e0336a32979ae33 inherit pub_static_methods_class_tempus_1_1_plugin"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18b1ea583025bd8a549cc4e86be60a1c inherit pub_static_methods_class_tempus_1_1_plugin"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18b1ea583025bd8a549cc4e86be60a1c"></a>
-static <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">OptionDescriptionList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a18b1ea583025bd8a549cc4e86be60a1c">common_option_descriptions</a> ()</td></tr>
+static OptionDescriptionList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_plugin.html#a18b1ea583025bd8a549cc4e86be60a1c">common_option_descriptions</a> ()</td></tr>
 <tr class="memdesc:a18b1ea583025bd8a549cc4e86be60a1c inherit pub_static_methods_class_tempus_1_1_plugin"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get plugin option descriptions available for all plugins. <br /></td></tr>
 <tr class="separator:a18b1ea583025bd8a549cc4e86be60a1c inherit pub_static_methods_class_tempus_1_1_plugin"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_types_class_tempus_1_1_plugin"><td colspan="2" onclick="javascript:toggleInherit('pub_types_class_tempus_1_1_plugin')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="class_tempus_1_1_plugin.html">Tempus::Plugin</a></td></tr>
+<tr class="memitem:a262fa0f34d35762d9c710152c8dceef9 inherit pub_types_class_tempus_1_1_plugin"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a262fa0f34d35762d9c710152c8dceef9"></a>
+typedef std::map&lt; std::string, <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description.html">OptionDescription</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>OptionDescriptionList</b></td></tr>
+<tr class="separator:a262fa0f34d35762d9c710152c8dceef9 inherit pub_types_class_tempus_1_1_plugin"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> that computes a (multimodal) isochrone. </p>
@@ -173,7 +184,7 @@ static <a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 4 2016 17:08:28 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

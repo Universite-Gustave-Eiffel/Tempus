@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -90,6 +90,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="struct_tempus_1_1_plugin_factory-members.html">List of all members</a>  </div>
@@ -108,11 +109,26 @@ Inheritance diagram for Tempus::PluginFactory:</div>
 </map>
  </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a7d592a316cccef1fde4a36f0fad286b4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d592a316cccef1fde4a36f0fad286b4"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>PluginCreationFct</b> = std::function&lt; <a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> *(<a class="el" href="class_tempus_1_1_progression_callback.html">ProgressionCallback</a> &amp;, const VariantMap &amp;)&gt;</td></tr>
+<tr class="separator:a7d592a316cccef1fde4a36f0fad286b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18e58d1075c17f0002debdc27281f91a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18e58d1075c17f0002debdc27281f91a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>PluginOptionDescriptionFct</b> = std::function&lt; const Plugin::OptionDescriptionList *()&gt;</td></tr>
+<tr class="separator:a18e58d1075c17f0002debdc27281f91a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc2905e9d4187b72137c6aa40cd9c226"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc2905e9d4187b72137c6aa40cd9c226"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>PluginCapabilitiesFct</b> = std::function&lt; const <a class="el" href="struct_tempus_1_1_plugin_1_1_capabilities.html">Plugin::Capabilities</a> *()&gt;</td></tr>
+<tr class="separator:acc2905e9d4187b72137c6aa40cd9c226"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af10ee5bacdd4e90e314fde8be2824cd5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af10ee5bacdd4e90e314fde8be2824cd5"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>PluginNameFct</b> = std::function&lt; const char *()&gt;</td></tr>
+<tr class="separator:af10ee5bacdd4e90e314fde8be2824cd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ad83187ec002c8a95dfde1b11eb416f95"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_factory.html#ad83187ec002c8a95dfde1b11eb416f95">plugin_list</a> () const </td></tr>
 <tr class="separator:ad83187ec002c8a95dfde1b11eb416f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d207075a53a45986a20873e91842de1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Plugin::OptionDescriptionList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_factory.html#a5d207075a53a45986a20873e91842de1">option_descriptions</a> (const std::string &amp;dll_name) const </td></tr>
+<tr class="memitem:a5d207075a53a45986a20873e91842de1"><td class="memItemLeft" align="right" valign="top">Plugin::OptionDescriptionList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_factory.html#a5d207075a53a45986a20873e91842de1">option_descriptions</a> (const std::string &amp;dll_name) const </td></tr>
 <tr class="separator:a5d207075a53a45986a20873e91842de1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9dfe4c18f54fe121624bb8819fe8384"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_tempus_1_1_plugin_1_1_capabilities.html">Plugin::Capabilities</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_factory.html#ad9dfe4c18f54fe121624bb8819fe8384">plugin_capabilities</a> (const std::string &amp;dll_name) const </td></tr>
 <tr class="separator:ad9dfe4c18f54fe121624bb8819fe8384"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -120,6 +136,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:af869c1079a091761fe49d5f63143591d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afbfb36f6ab2ce7a1427f0330cf748f8e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_tempus_1_1_plugin.html">Plugin</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_tempus_1_1_plugin_factory.html#afbfb36f6ab2ce7a1427f0330cf748f8e">plugin</a> (const std::string &amp;dll_name) const </td></tr>
 <tr class="separator:afbfb36f6ab2ce7a1427f0330cf748f8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c393441b3d0804bcad34ef22d0fbe3f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2c393441b3d0804bcad34ef22d0fbe3f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>register_plugin_fn</b> (PluginCreationFct create_fn, PluginOptionDescriptionFct options_fn, PluginCapabilitiesFct capa_fn, PluginNameFct name_fn)</td></tr>
+<tr class="separator:a2c393441b3d0804bcad34ef22d0fbe3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -168,7 +187,7 @@ static <a class="el" href="struct_tempus_1_1_plugin_factory.html">PluginFactory<
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="struct_tempus_1_1_plugin_1_1_option_description_list.html">Plugin::OptionDescriptionList</a> Tempus::PluginFactory::option_descriptions </td>
+          <td class="memname">Plugin::OptionDescriptionList Tempus::PluginFactory::option_descriptions </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>dll_name</em></td><td>)</td>
@@ -237,7 +256,7 @@ static <a class="el" href="struct_tempus_1_1_plugin_factory.html">PluginFactory<
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 4 2016 17:08:28 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

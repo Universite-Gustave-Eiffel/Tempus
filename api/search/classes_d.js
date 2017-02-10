@@ -35,5 +35,6 @@ var searchData=
   ['ptpluginrequest',['PtPluginRequest',['../class_tempus_1_1_pt_plugin_request.html',1,'Tempus']]],
   ['publictransportgraphlist',['PublicTransportGraphList',['../class_tempus_1_1_multimodal_1_1_graph_1_1_public_transport_graph_list.html',1,'Tempus::Multimodal::Graph']]],
   ['publictransportiterator',['PublicTransportIterator',['../class_tempus_1_1_multimodal_1_1_graph_1_1_public_transport_iterator.html',1,'Tempus::Multimodal::Graph']]],
-  ['publictransportstep',['PublicTransportStep',['../struct_tempus_1_1_roadmap_1_1_public_transport_step.html',1,'Tempus::Roadmap']]]
+  ['publictransportstep',['PublicTransportStep',['../struct_tempus_1_1_roadmap_1_1_public_transport_step.html',1,'Tempus::Roadmap']]],
+  ['pythonplugin',['PythonPlugin',['../class_tempus_1_1_python_plugin_1_1_python_plugin.html',1,'Tempus::PythonPlugin']]]
 ];

@@ -11,6 +11,6 @@ var searchData=
   ['vertexiterator',['VertexIterator',['../class_tempus_1_1_multimodal_1_1_vertex_iterator.html',1,'Tempus::Multimodal']]],
   ['vertexlabel',['VertexLabel',['../struct_tempus_1_1_isochrone_plugin_1_1_vertex_label.html',1,'Tempus::IsochronePlugin']]],
   ['vertexproperty',['VertexProperty',['../struct_tempus_1_1_vertex_property.html',1,'Tempus']]],
-  ['vertexroutingdata',['VertexRoutingData',['../struct_tempus_1_1_a_star_road_plugin_1_1_vertex_routing_data.html',1,'Tempus::AStarRoadPlugin']]],
-  ['vertexroutingdata',['VertexRoutingData',['../struct_tempus_1_1_a_star_road_plugin3_1_1_vertex_routing_data.html',1,'Tempus::AStarRoadPlugin3']]]
+  ['vertexroutingdata',['VertexRoutingData',['../struct_tempus_1_1_a_star_road_plugin3_1_1_vertex_routing_data.html',1,'Tempus::AStarRoadPlugin3']]],
+  ['vertexroutingdata',['VertexRoutingData',['../struct_tempus_1_1_a_star_road_plugin_1_1_vertex_routing_data.html',1,'Tempus::AStarRoadPlugin']]]
 ];

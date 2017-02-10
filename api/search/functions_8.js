@@ -11,5 +11,5 @@ var searchData=
   ['is_5favailable_5fon',['is_available_on',['../class_tempus_1_1_public_transport_1_1_service_map.html#a2bce53e9d29ebe37eb010358c515f833',1,'Tempus::PublicTransport::ServiceMap']]],
   ['is_5fnull',['is_null',['../class_db_1_1_value.html#a18c7c038ab535e513b47065515da3150',1,'Db::Value']]],
   ['isochroneplugin',['IsochronePlugin',['../class_tempus_1_1_isochrone_plugin_1_1_isochrone_plugin.html#af7060c7318322d0bbb94ccb0d30ba640',1,'Tempus::IsochronePlugin::IsochronePlugin']]],
-  ['isochronepluginrequest',['IsochronePluginRequest',['../class_tempus_1_1_isochrone_plugin_1_1_isochrone_plugin_request.html#adc5710e8cf4ae49cd8aa551f7e2faba9',1,'Tempus::IsochronePlugin::IsochronePluginRequest']]]
+  ['isochronepluginrequest',['IsochronePluginRequest',['../class_tempus_1_1_isochrone_plugin_1_1_isochrone_plugin_request.html#adc5710e8cf4ae49cd8aa551f7e2faba9',1,'Tempus::IsochronePlugin::IsochronePluginRequest::IsochronePluginRequest()'],['../class_tempus_1_1_python_plugin_1_1_isochrone_plugin_request.html#a8c7d49a13d65873e512208e8016acf6a',1,'Tempus::PythonPlugin::IsochronePluginRequest::IsochronePluginRequest()']]]
 ];

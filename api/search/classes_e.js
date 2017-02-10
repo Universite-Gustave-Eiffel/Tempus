@@ -1,13 +1,14 @@
 var searchData=
 [
+  ['raii',['RAII',['../struct_tempus_1_1_r_a_i_i.html',1,'Tempus']]],
   ['rebind',['rebind',['../structlibc__allocator__with__realloc_3_01void_01_4_1_1rebind.html',1,'libc_allocator_with_realloc&lt; void &gt;']]],
   ['rebind',['rebind',['../structlibc__allocator__with__realloc_1_1rebind.html',1,'libc_allocator_with_realloc']]],
   ['redirectontextedit',['RedirectOnTextEdit',['../classhmi__qgis_1_1consolelauncher_1_1_redirect_on_text_edit.html',1,'hmi_qgis::consolelauncher']]],
   ['reference',['Reference',['../struct_canal_t_p_1_1_reference.html',1,'CanalTP']]],
   ['remove_5fconst',['remove_const',['../struct_tempus_1_1remove__const.html',1,'Tempus']]],
   ['remove_5fconst',['remove_const',['../structremove__const.html',1,'']]],
-  ['remove_5fconst_3c_20t_20const_20_20_3e',['remove_const&lt; T const  &gt;',['../structremove__const_3_01_t_01const_01_01_4.html',1,'']]],
   ['remove_5fconst_3c_20t_20const_20_20_3e',['remove_const&lt; T const  &gt;',['../struct_tempus_1_1remove__const_3_01_t_01const_01_01_4.html',1,'Tempus']]],
+  ['remove_5fconst_3c_20t_20const_20_20_3e',['remove_const&lt; T const  &gt;',['../structremove__const_3_01_t_01const_01_01_4.html',1,'']]],
   ['remove_5fcv',['remove_cv',['../structremove__cv.html',1,'']]],
   ['remove_5fvolatile',['remove_volatile',['../structremove__volatile.html',1,'']]],
   ['remove_5fvolatile_3c_20t_20volatile_20_3e',['remove_volatile&lt; T volatile &gt;',['../structremove__volatile_3_01_t_01volatile_01_4.html',1,'']]],

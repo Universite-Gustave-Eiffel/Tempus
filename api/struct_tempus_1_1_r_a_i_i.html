@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>Tempus: Tempus::path_found_exception Struct Reference</title>
+<title>Tempus: Tempus::RAII Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -84,38 +84,41 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespace_tempus.html">Tempus</a></li><li class="navelem"><a class="el" href="struct_tempus_1_1path__found__exception.html">path_found_exception</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespace_tempus.html">Tempus</a></li><li class="navelem"><a class="el" href="struct_tempus_1_1_r_a_i_i.html">RAII</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="struct_tempus_1_1path__found__exception-members.html">List of all members</a>  </div>
+<a href="struct_tempus_1_1_r_a_i_i-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">Tempus::path_found_exception Struct Reference</div>  </div>
+<div class="title">Tempus::RAII Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a24d38e110a7dc55f3bbacbfd3f036b55"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a24d38e110a7dc55f3bbacbfd3f036b55"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>path_found_exception</b> (const <a class="el" href="struct_tempus_1_1_triple.html">Triple</a> &amp;t)</td></tr>
-<tr class="separator:a24d38e110a7dc55f3bbacbfd3f036b55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:aadbe83f4d7d4eff86cfb3e83b354d3e1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aadbe83f4d7d4eff86cfb3e83b354d3e1"></a>
-<a class="el" href="struct_tempus_1_1_triple.html">Triple</a>&#160;</td><td class="memItemRight" valign="bottom"><b>destination</b></td></tr>
-<tr class="separator:aadbe83f4d7d4eff86cfb3e83b354d3e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a540ad1f1e171d25c9694feb3ee76ab19"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a540ad1f1e171d25c9694feb3ee76ab19"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>RAII</b> (HMODULE h)</td></tr>
+<tr class="separator:a540ad1f1e171d25c9694feb3ee76ab19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe8b0c62fc057bc6056627c03ce322bf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe8b0c62fc057bc6056627c03ce322bf"></a>
+HMODULE&#160;</td><td class="memItemRight" valign="bottom"><b>get</b> ()</td></tr>
+<tr class="separator:afe8b0c62fc057bc6056627c03ce322bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ca864ef37eff8b7ccb88a441c4c9f3d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0ca864ef37eff8b7ccb88a441c4c9f3d"></a>
+HMODULE&#160;</td><td class="memItemRight" valign="bottom"><b>release</b> ()</td></tr>
+<tr class="separator:a0ca864ef37eff8b7ccb88a441c4c9f3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3840c07b9a7ea4a036daf6525d9532f0"><td class="memTemplParams" colspan="2"><a class="anchor" id="a3840c07b9a7ea4a036daf6525d9532f0"></a>
+template&lt;class T &gt; </td></tr>
+<tr class="memitem:a3840c07b9a7ea4a036daf6525d9532f0"><td class="memTemplItemLeft" align="right" valign="top">std::function&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>function</b> (const std::string &amp;funcName)</td></tr>
+<tr class="separator:a3840c07b9a7ea4a036daf6525d9532f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li>/home/hme/src/tempus/src/plugins/dynamic_multi_plugin/dynamic_multi_plugin.cc</li>
+<li>/home/hme/src/tempus/src/core/plugin_factory.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 2 2016 14:23:07 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
