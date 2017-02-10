@@ -52,10 +52,10 @@ class TestTempusLoader(unittest.TestCase):
         self.assertEqual(r, 0)
 
         n_road_nodes = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_node"))
-        self.assertEqual(3521, n_road_nodes)
+        self.assertEqual(3567, n_road_nodes)
 
         n_road_sections = int(get_sql_output(dbstring, "SELECT count(*) FROM tempus.road_section"))
-        self.assertEqual(4865, n_road_sections)
+        self.assertEqual(4911, n_road_sections)
 
     def test_gtfs_loading( self ):
         # GTFS loading without road
