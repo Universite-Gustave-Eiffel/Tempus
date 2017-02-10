@@ -31,7 +31,7 @@ PostGIS 2.x is not yet packaged for Ubuntu, so you would have to download, compi
 Compilation
 -----------
 
-n the root directory, create a build directory and enter it. Then use a CMake configuration interface (ccmake for instance or cmake-gui on Windows)
+In the root directory, create a build directory and enter it. Then use a CMake configuration interface (ccmake for instance or cmake-gui on Windows)
 
 ```
 ccmake ..
