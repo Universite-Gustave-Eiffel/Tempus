@@ -33,14 +33,7 @@ if (WIN32)
     set (Boost_USE_STATIC_LIBS ON)
 endif()
 
-set(TEMPUS_PYTHON_VERSION "2.7" CACHE STRING "Select python version")
-find_package(PythonLibs ${TEMPUS_PYTHON_VERSION} REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-link_directories(${PYTHON_LIBRARIES})
-
-string (REPLACE "." "" TEMPUS_PYTHON_VERSION_NO_DOT ${TEMPUS_PYTHON_VERSION})
-
-find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time python-py${TEMPUS_PYTHON_VERSION_NO_DOT})
+find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time)
 find_package(PostgreSQL REQUIRED)
 include_directories( ${PostgreSQL_INCLUDE_DIRS} )
 include_directories( SYSTEM ${Boost_INCLUDE_DIR} )
