@@ -1,5 +1,5 @@
 # compile
-mkdir build && cd build && CXX=g++-4.8 cmake -DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql ..
+mkdir build && cd build && CXX=g++-4.8 cmake ..
 make
 
 # prepare the test db
