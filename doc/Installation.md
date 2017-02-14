@@ -12,6 +12,7 @@ Tempus depends on the following third party libraries:
 * [LibXML2](http://www.xmlsoft.org/) for the WPS server
 * [iconv](http://www.gnu.org/software/libiconv/)
 * [shapelib](http://shapelib.maptools.org/) for osm2shp
+* [protobuf](https://developers.google.com/protocol-buffers/) for osm2tempus
 * [FastCGI](http://www.fastcgi.com/) for the WPS server
 * [QGIS](http://www.qgis.org/) 2.x
 * [PyQT](http://www.riverbankcomputing.co.uk/software/pyqt/intro) for QGIS plugins
@@ -24,6 +25,7 @@ On an Ubuntu system, dependencies correspond to the following packages :
 ```
 nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev
 libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
+libprotobuf-dev
 ```
 
 PostGIS 2.x is not yet packaged for Ubuntu, so you would have to download, compile and install it.
