@@ -3,9 +3,12 @@ find_package(ZLIB REQUIRED)
 
 include_directories(../../core)
 
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS osmpbf/osmformat.proto osmpbf/fileformat.proto)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(osm2tempus
-  osmpbf/osmformat.pb.cc
-  osmpbf/fileformat.pb.cc
+  ${PROTO_SRCS}
   
   main.cpp
   pgsql_writer.cpp
