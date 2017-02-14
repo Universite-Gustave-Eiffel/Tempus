@@ -79,8 +79,7 @@ else ()
     add_library( tempus SHARED ${SOURCE_FILES} )
 endif ()
 
-
-target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries( tempus ${POSTGRESQL_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS tempus DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include/tempus)

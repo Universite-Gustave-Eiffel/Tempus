@@ -22,11 +22,20 @@ if (WIN32)
     set (Boost_USE_STATIC_LIBS ON)
 endif()
 
+set( BUILD_TESTS ON CACHE BOOL "Build unit tests ?" )
+set( BUILD_DOC ON CACHE BOOL "Build documentation ?" )
+set( INSTALL_SQL ON CACHE BOOL "Install SQL extension ?" )
+
 find_package(Boost REQUIRED COMPONENTS timer system unit_test_framework thread program_options date_time)
+
 find_package(PostgreSQL REQUIRED)
-include_directories( ${PostgreSQL_INCLUDE_DIRS} )
+if(NOT POSTGRESQL_FOUND)
+    message(FATAL_ERROR " Please check your PostgreSQL installation.") 
+endif(NOT POSTGRESQL_FOUND)
+
+include_directories( ${POSTGRESQL_INCLUDE_DIRS} )
 include_directories( SYSTEM ${Boost_INCLUDE_DIR} )
-link_directories( ${PostgreSQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
+link_directories( ${POSTGRESQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
 
 set (CMAKE_C_FLAGS "-fPIC")
 set (CMAKE_CXX_FLAGS "-fPIC")
@@ -82,16 +91,16 @@ install(DIRECTORY data DESTINATION ${TEMPUS_INSTALL_DATA_DIRECTORY})
 
 add_subdirectory(src)
 
-set( BUILD_TESTS ON CACHE BOOL "Build unit tests ?" )
-
 if (BUILD_TESTS)
   add_subdirectory( tests )
 endif()
 
-set( BUILD_DOC ON CACHE BOOL "Build documentation ?" )
-
 if(BUILD_DOC)
   add_subdirectory( doc )
+endif()
+
+if (INSTALL_SQL)
+  add_subdirectory( sql )
 endif()
 
 if (WIN32)
