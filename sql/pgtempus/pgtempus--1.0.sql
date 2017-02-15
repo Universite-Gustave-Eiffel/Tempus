@@ -10,7 +10,7 @@ create schema tempus_wps;
 --
 create function tempus_wps.plugin_list(wps text ='http://localhost/wps') returns setof text
 as $$
-from pytempus import TempusRequest
+from wpstempus import TempusRequest
 r = TempusRequest(wps)
 return [p.name for p in r.plugin_list()]
 $$ language plpythonu;
@@ -21,10 +21,11 @@ $$ language plpythonu;
 create function tempus_wps.isochrone(x double precision, y double precision, limit_value real,
                 dt timestamp = now(), transport_modes int[] = '{1}', wps text ='http://localhost/wps',
                 walking_speed_km_h real = 3.6,
-                cycling_speed_km_h real = 12.0)
+                cycling_speed_km_h real = 12.0,
+		verbose boolean = FALSE)
 returns table(x double precision, y double precision, mode smallint, cost real)
 as $$
-from pytempus import TempusRequest, Point, RequestStep, Cost, Constraint, DateTime
+from wpstempus import TempusRequest, Point, RequestStep, Cost, Constraint, DateTime
 import datetime
 if '.' in dt:
    ddt = DateTime.from_dt(datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S.%f'))
@@ -32,7 +33,8 @@ else:
    ddt = DateTime.from_dt(datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S'))
 r = TempusRequest(wps)
 r.request(plugin_name='isochrone_plugin', \
-          plugin_options={'Isochrone/limit': limit_value, \
+          plugin_options={'Debug/verbose' : 'true' if verbose else 'false', \
+	                  'Isochrone/limit': limit_value, \
                           'Time/walking_speed': walking_speed_km_h, \
                           'Time/cycling_speed': cycling_speed_km_h}, \
           origin = Point(x,y), \

@@ -38,3 +38,5 @@ $$;
 
 select _drop_index('tempus', 'road_node', 'geom');
 select _drop_index('tempus', 'road_section', 'geom');
+select _drop_index('tempus', 'road_section', 'node_from');
+select _drop_index('tempus', 'road_section', 'node_to');

@@ -180,6 +180,10 @@ def main():
     shape_options['g'] = 'geom'
     shape_options['S'] = True
 
+    if args.type is None:
+        parser.print_help()
+        sys.exit(1)
+
     # first reset if needed
     if args.doreset:
         reset_db(args)

@@ -250,19 +250,19 @@ Road::Restrictions import_turn_restrictions( const Road::Graph& graph, const std
 Plugin::OptionDescriptionList DynamicMultiPlugin::option_descriptions()
 {
     Plugin::OptionDescriptionList odl = Plugin::common_option_descriptions();
-    odl.declare_option( "Features/with_forbidden_turning_movements", "With forbidden turning movements", Variant::from_bool(true));
-    odl.declare_option( "Features/timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", Variant::from_int(0));
-    odl.declare_option( "Debug/verbose_algo", "Verbose algorithm: vertices and edges traversal", Variant::from_bool(false));
-    odl.declare_option( "Debug/verbose", "Verbose general processing", Variant::from_bool(true));
-    odl.declare_option( "Debug/enable_trace", "Produce a trace (warning: cpu and time consuming)", Variant::from_bool(false) );
-    odl.declare_option( "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", Variant::from_int(2));
-    odl.declare_option( "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float(3.6));
-    odl.declare_option( "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int(12));
-    odl.declare_option( "Time/car_parking_search_time", "Car parking search time (min)", Variant::from_int(5));
-    odl.declare_option( "AStar/heuristic", "Use an heuristic based on euclidian distance", Variant::from_bool(false) );
-    odl.declare_option( "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", Variant::from_float(90.0) );
-    odl.declare_option( "Time/use_speed_profiles", "Use road speed profiles", Variant::from_bool(false) );
-    odl.declare_option( "multi_destinations", "Destination list (road vertex id, comma separated)", Variant::from_string("") );
+    declare_option( odl, "Features/with_forbidden_turning_movements", "With forbidden turning movements", Variant::from_bool(true));
+    declare_option( odl, "Features/timetable_frequency", "From timetables (0), frequencies (1) travel time estimation", Variant::from_int(0));
+    declare_option( odl, "Debug/verbose_algo", "Verbose algorithm: vertices and edges traversal", Variant::from_bool(false));
+    declare_option( odl, "Debug/verbose", "Verbose general processing", Variant::from_bool(true));
+    declare_option( odl, "Debug/enable_trace", "Produce a trace (warning: cpu and time consuming)", Variant::from_bool(false) );
+    declare_option( odl, "Time/min_transfer_time", "Minimum time necessary for a transfer to be done (in min)", Variant::from_int(2));
+    declare_option( odl, "Time/walking_speed", "Average walking speed (km/h)", Variant::from_float(3.6));
+    declare_option( odl, "Time/cycling_speed", "Average cycling speed (km/h)", Variant::from_int(12));
+    declare_option( odl, "Time/car_parking_search_time", "Car parking search time (min)", Variant::from_int(5));
+    declare_option( odl, "AStar/heuristic", "Use an heuristic based on euclidian distance", Variant::from_bool(false) );
+    declare_option( odl, "AStar/speed_heuristic", "Max speed (km/h) to use in the heuristic", Variant::from_float(90.0) );
+    declare_option( odl, "Time/use_speed_profiles", "Use road speed profiles", Variant::from_bool(false) );
+    declare_option( odl, "multi_destinations", "Destination list (road vertex id, comma separated)", Variant::from_string("") );
     return odl;
 }
 

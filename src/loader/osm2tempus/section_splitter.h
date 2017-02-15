@@ -41,8 +41,12 @@ public:
                      const osm_pbf::Tags& tags,
                      SectionFoo emit_section )
     {
-        node_pair p ( node_from, node_to );
-        if ( way_node_pairs_.find( p ) != way_node_pairs_.end() ) {
+        node_pair p( node_from, node_to );
+        node_pair rev_p( node_to, node_from );
+        // we split the section if there is already a section with the same (node_from, node_to) pair
+        // or a (node_to, node_from) pair
+        if ( ( way_node_pairs_.find( p ) != way_node_pairs_.end() ) ||
+             ( way_node_pairs_.find( rev_p ) != way_node_pairs_.end() ) ) {
             // split the way
             // if there are more than two nodes, just split on a node
             std::vector<Point> before_pts, after_pts;
@@ -73,8 +77,6 @@ public:
                 points_.inc_uses( center_node );
                 points_.inc_uses( center_node );
             }
-            //writer_.write_section( way_id, ++section_id_, node_from, center_node, before_pts, tags );
-            //writer_.write_section( way_id, ++section_id_, center_node, node_to, after_pts, tags );
             emit_section( way_id, ++section_id_, node_from, center_node, before_pts, tags );
             emit_section( way_id, ++section_id_, center_node, node_to, after_pts, tags );
         }
@@ -84,7 +86,6 @@ public:
             for ( uint64_t node: nodes ) {
                 section_pts.push_back( points_.at( node ) );
             }
-            //writer_.write_section( way_id, ++section_id_, node_from, node_to, section_pts, tags );
             emit_section( way_id, ++section_id_, node_from, node_to, section_pts, tags );
         }
     }

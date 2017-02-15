@@ -56,8 +56,8 @@ public:
 
     static const OptionDescriptionList option_descriptions() {
         OptionDescriptionList odl;
-        odl.declare_option( "origin_pt_stop", "Origin stop node", Variant::from_int(0) );
-        odl.declare_option( "destination_pt_stop", "Destination stop node", Variant::from_int(0) );
+        declare_option( odl, "origin_pt_stop", "Origin stop node", Variant::from_int(0) );
+        declare_option( odl, "destination_pt_stop", "Destination stop node", Variant::from_int(0) );
         return odl;
     }
 

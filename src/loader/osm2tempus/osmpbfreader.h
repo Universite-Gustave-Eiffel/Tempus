@@ -42,16 +42,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ios>
 
 // this describes the low-level blob storage
-#include <fileformat.pb.h>
+#include "fileformat.pb.h"
 // this describes the high-level OSM objects
-#include <osmformat.pb.h>
+#include "osmformat.pb.h"
 // the maximum size of a blob header in bytes
 const int max_blob_header_size = 64 * 1024; // 64 kB
 // the maximum size of an uncompressed blob in bytes
 const int max_uncompressed_blob_size = 32 * 1024 * 1024; // 32 MB
 // resolution for longitude/latitude used for conversion
 // between representation as double and as int
-const int lonlat_resolution = 1000 * 1000 * 1000; 
+const int lonlat_resolution = 1000 * 1000 * 1000;
 
 namespace CanalTP {
 
@@ -127,7 +127,6 @@ struct Parser
                 int32_t sz = this->read_blob(header);
                 if(header.type() == "OSMData") {
                     int b = enum_primitiveblock( sz );
-                    //std::cout << b << " " << std::hex << tellp << " current_block " << current_block << std::endl;
                     if ( (current_block == NodeBlock) && (b & WayBlock) ) {
                         ways_offset = tellp;
                         current_block = WayBlock;
@@ -196,7 +195,7 @@ struct Parser
     virtual ~Parser(){
         delete[] buffer;
         delete[] unpack_buffer;
-        google::protobuf::ShutdownProtobufLibrary();
+        // google::protobuf::ShutdownProtobufLibrary();
     }
 protected:
     std::ifstream file;
@@ -307,7 +306,7 @@ protected:
         }
         return block_types;
     }
-    
+
     off_t next_block()
     {
         const char pattern[] = "\0\0\0\x0d\x0a\x07OSMData";
@@ -325,16 +324,55 @@ protected:
         return -1;
     }
 
+    off_t linear_search_pattern_( off_t start, off_t end, BlockType block_type )
+    {
+        file.seekg( start );
+        OSMPBF::BlobHeader header;
+        off_t nxt = next_block();
+        if ( nxt > end )
+            return -1;
+
+        off_t found_off = 0;
+        int b = 0;
+        while ( b < block_type ) {
+            found_off = file.tellg();
+            if ( found_off > end )
+                return -1;
+            header = this->read_header();
+            if(!this->finished){
+                int32_t sz = this->read_blob(header);
+                if(header.type() == "OSMData") {
+                    b = enum_primitiveblock( sz );
+                }
+            }
+        }
+        return found_off;
+    }
+
     off_t binary_search_pattern_( off_t start, off_t end, BlockType block_type )
     {
         int iblock_type = static_cast<int>( block_type );
         off_t half = (start + end) / 2;
         if ( file.eof() )
             file.clear();
+<<<<<<< HEAD
         file.seekg( half, file.beg );
         if ( next_block() == -1 )
+=======
+        file.seekg( half );
+        off_t nxt = next_block();
+        if ( nxt == -1 )
+>>>>>>> master
             return -1;
+        if ( nxt > end ) {
+            // the next block is past the end,
+            // this means we need a linear search between start and end
+            return linear_search_pattern_( start, end, block_type );
+        }
 
+        // read two headers so that
+        // header 1 is not of type block_type
+        // and header 2 is of type block_type
         int b1 = 0, b2 = 0;
         OSMPBF::BlobHeader header = this->read_header();
         if(!this->finished){

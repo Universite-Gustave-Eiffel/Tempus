@@ -93,10 +93,18 @@ public:
     // exception thrown when the isochrone limit is reached
     struct StopException {};
     
-    IsochroneVisitor( const MMVertexDataMap& v_map, double limit, size_t& iterations ) : v_map_( v_map ), iterations_( iterations ), limit_( limit ) {}
+    IsochroneVisitor( const MMVertexDataMap& v_map, double limit, size_t& iterations, bool verbose = false )
+      : v_map_( v_map )
+      , iterations_( iterations )
+      , limit_( limit )
+      , verbose_( verbose )
+    {}
 
     void examine_vertex( const VertexLabel& l, const Multimodal::Graph& )
     {
+        if ( verbose_ ) {
+            std::cout << "Vertex " << l.vertex << std::endl;
+        }
         auto it = v_map_.find( l );
         if ( it != v_map_.end() ) {
             if ( it->second.potential() >= limit_ )
@@ -107,13 +115,20 @@ public:
 
     void finish_vertex( const VertexLabel&, const Multimodal::Graph& ) {}
     void discover_vertex( const VertexLabel&, const Multimodal::Graph& ) {}
-    void examine_edge( const Multimodal::Edge&, const Multimodal::Graph& ) {}
+    void examine_edge( const Multimodal::Edge& e, const Multimodal::Graph& )
+    {
+        if ( verbose_ ) {
+            std::cout << "Edge " << e << std::endl;
+        }
+    }
+        
     void edge_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& ) {}
     void edge_not_relaxed( const Multimodal::Edge&, unsigned int /*mode*/, const Multimodal::Graph& ) {}
 private:
     const MMVertexDataMap& v_map_;
     size_t& iterations_;
     double limit_;
+    bool verbose_;
 };
 
 std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request )
@@ -154,7 +169,7 @@ std::unique_ptr<Result> IsochronePluginRequest::process( const Request& request 
 
     Timer t;
     size_t iterations = 0;
-    IsochroneVisitor vis( vertex_data_map, isochrone_limit, iterations );
+    IsochroneVisitor vis( vertex_data_map, isochrone_limit, iterations, get_bool_option( "Debug/verbose" ) );
     try {
         combined_ls_algorithm_no_init( *graph_, sources, vertex_data_pmap, cost_calculator, request.allowed_modes(), vis );
     }

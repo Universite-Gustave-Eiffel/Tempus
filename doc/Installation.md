@@ -12,6 +12,7 @@ Tempus depends on the following third party libraries:
 * [LibXML2](http://www.xmlsoft.org/) for the WPS server
 * [iconv](http://www.gnu.org/software/libiconv/)
 * [shapelib](http://shapelib.maptools.org/) for osm2shp
+* [protobuf](https://developers.google.com/protocol-buffers/) for osm2tempus
 * [FastCGI](http://www.fastcgi.com/) for the WPS server
 * [QGIS](http://www.qgis.org/) 2.x
 * [PyQT](http://www.riverbankcomputing.co.uk/software/pyqt/intro) for QGIS plugins
@@ -24,6 +25,7 @@ On an Ubuntu system, dependencies correspond to the following packages :
 ```
 nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev
 libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
+libprotobuf-dev
 ```
 
 PostGIS 2.x is not yet packaged for Ubuntu, so you would have to download, compile and install it.
@@ -31,7 +33,7 @@ PostGIS 2.x is not yet packaged for Ubuntu, so you would have to download, compi
 Compilation
 -----------
 
-n the root directory, create a build directory and enter it. Then use a CMake configuration interface (ccmake for instance or cmake-gui on Windows)
+In the root directory, create a build directory and enter it. Then use a CMake configuration interface (ccmake for instance or cmake-gui on Windows)
 
 ```
 ccmake ..
@@ -61,8 +63,8 @@ Build options (CMake options)
 Note: Tempus uses a lot of C++ templates. It means a 'Debug' build will turn off any optimization (`-O0` for gcc) and will run very slowly compared to a version compiled in 'Release' or
 'RelWithDebInfo' mode, where optimizations (`-O2` or `-O3`) occur. Optimized versions can be something like *20x faster* than the debug versions !
 
-On Windows
-----------
+On Windows (osbolete)
+---------------------
 
 A [Windows installer](https://github.com/Ifsttar/Tempus/releases/download/v1.2.1/tempus-1.2.1-win32-vc9.exe) is provided. It will handle the installation of every Tempus components, including PostgreSQL/PostGIS and QGIS if needed.
 
@@ -80,16 +82,30 @@ You can test the installation by running some unit tests. They need a test datab
 * Install PostGIS on it (`CREATE EXTENSION postgis;`)
 * Populate it with the Tempus schema and test data: `psql tempus_test_db < data/tempus_test_db.sql`
 
+Installation of Python modules
+------------------------------
+
+There are three Python modules for Tempus:
+
+* The Tempus data loader
+* A WPS Python module that is used to communicate with a Tempus server (needed by the QGIS plugin)
+* A Python API
+
+Go to the `python` folder and in each subfolder (tempusloader, wpstempus and pytempus), type:
+`python setup.py install`.
+
+You will need administrator privileges (or you could also install these modules in your Python virtualenv).
+
 QGIS plugin installation
 ------------------------
 
 Just type `nmake install` on Windows.
 
-On Linux, type `make install` and you will also need to launch `sh /usr/local/share/tempus/install-qgis-plugins.sh` after the installation
+On Linux, type `make install` as root and you will also need to launch `sh /usr/local/share/tempus/install-qgis-plugins.sh` after the installation as user.
 
 It should install the plugin and all required dependencies to your local qgis plugin directory.
 
-When QGIS is launched, go to the "Extension management" dialog, look for "ifsttar routing plugin" and enable it.
+When QGIS is launched, go to the "Extension management" dialog, look for "IFSTTAR Routing plugin" and enable it.
 
 Server installation
 -------------------
@@ -99,7 +115,7 @@ The idea is to use the standalone mode of the WPS server and an httpd server (li
 You have to launch the "tempus_wps" executable from a command line, for example like this:
 
 ```
-hme@socompa:~/build$ ./bin/tempus_wps --data ../data -c ./lib -p 9000 -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4
+hme@socompa:~/build$ tempus_wps --data ../data -c ./lib -p 9000 -l sample_multi_plugin -l sample_pt_plugin -l sample_road_plugin -t 4
 ```
 
 Options used:
@@ -151,17 +167,15 @@ You can test your installation by running some unit tests. Within the build dire
 
 ```
 ~/src/Tempus/build$ ctest
-Test project /home/hme/src/Tempus/build
+Test project /home/hme/src/tempus/build
     Start 1: test_core
-1/3 Test #1: test_core ........................   Passed    8.00 sec
-    Start 2: test_osm2shp
-2/3 Test #2: test_osm2shp .....................   Passed    0.06 sec
-    Start 3: test_osm2shp++
-3/3 Test #3: test_osm2shp++ ...................   Passed    0.08 sec
+1/2 Test #1: test_core ........................   Passed    9.82 sec
+    Start 2: test_pt
+2/2 Test #2: test_pt ..........................   Passed    0.01 sec
 
-100% tests passed, 0 tests failed out of 3
+100% tests passed, 0 tests failed out of 2
 
-Total Test time (real) =   8.15 sec
+Total Test time (real) =   9.83 sec
 ```
 
 Other unit tests are provided. They are used to test the WPS and Python parts, the loader and plugins.
@@ -171,7 +185,7 @@ In order to test the WPS and Python parts, you can run the Python script `test_w
 Provided tests are :
 
 * `test_wps.py` : tests communication with a WPS server
-* `test_loader.py` : tests the loader script. *Note:* must have access to a database named `tempus_unit_test`
+* `test_loader.py` (in python/tempusloader) : tests the loader script. *Note:* must have access to a database named `tempus_unit_test`
 * `test_plugins.py` : launch unit tests for plugins that have such tests.
 * `test_perfs.py` : outputs some computation timing, in order to test performances.
 

@@ -43,8 +43,9 @@ public:
                 { "primary_link", 90.0 },
                 { "secondary", 90.0 },
                 { "secondary_link", 90.0 },
-                { "tertiary", 90.0 },
-                { "tertiary_link", 90.0 },
+		// 50 in city or 90 in rural areas in France, but how to detect these areas ?
+		{ "tertiary", 70.0 },
+                { "tertiary_link", 70.0 },
                 { "residential", 50.0 },
                 { "residential_link", 50.0 },
                 { "services", 50.0 },
@@ -115,16 +116,30 @@ public:
         }
 
         // max car speed
-        double max_car_speed = 0.0;
-        auto max_car_speed_it = max_car_speed_.find( highway_type );
-        if ( max_car_speed_it != max_car_speed_.end() ) {
-            max_car_speed = max_car_speed_it->second;
-        }
-        else {
-            // enable only non-car modes
-            traffic_rules_ft &= Tempus::TrafficRulePedestrian | Tempus::TrafficRuleBicycle;
-            traffic_rules_tf &= Tempus::TrafficRulePedestrian | Tempus::TrafficRuleBicycle;
-        }
+	double max_car_speed = 0.0;
+	        // if we have a maxspeed tag, take it
+	auto maxspeed_tag = tags.find( "maxspeed" );
+	if ( maxspeed_tag != tags.end() ) {
+	  try {
+	    int ms = std::stoi( maxspeed_tag->second );
+	    max_car_speed = ms;
+	  }
+	  catch ( std::invalid_argument& ) {
+	    // no numeric value found
+	  }
+	}
+	if ( max_car_speed == 0.0 ) {
+	              // no maxspeed, use the highway type
+	  auto max_car_speed_it = max_car_speed_.find( highway_type );
+	  if ( max_car_speed_it != max_car_speed_.end() ) {
+	    max_car_speed = max_car_speed_it->second;
+	  }
+	  else {
+	                    // enable only non-car modes
+	    traffic_rules_ft &= Tempus::TrafficRulePedestrian | Tempus::TrafficRuleBicycle;
+	    traffic_rules_tf &= Tempus::TrafficRulePedestrian | Tempus::TrafficRuleBicycle;
+	  }
+	}
 
         // road name
         std::string road_name;

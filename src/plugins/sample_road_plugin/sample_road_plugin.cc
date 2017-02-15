@@ -83,7 +83,7 @@ public:
         if ( (graph_[e].traffic_rules() & TrafficRuleCar) == 0 ) {
             return std::numeric_limits<float>::infinity();
         }
-        return graph_[e].length() / (graph_[e].car_speed_limit() * 1000.0) * 60.0;
+        return graph_[e].length() / (graph_[e].car_speed_limit() * 1000.0 * 0.60) * 60.0;
     }
 private:
     const Road::Graph& graph_;
@@ -93,8 +93,8 @@ class RoadPlugin : public Plugin {
 public:
     static const OptionDescriptionList option_descriptions() {
         OptionDescriptionList odl;
-        odl.declare_option( "trace_vertex", "Trace vertex traversal", Variant::from_bool(false) );
-        odl.declare_option( "prepare_result", "Prepare result", Variant::from_bool(true) );
+        declare_option( odl, "trace_vertex", "Trace vertex traversal", Variant::from_bool(false) );
+        declare_option( odl, "prepare_result", "Prepare result", Variant::from_bool(true) );
         return odl;
     }
 

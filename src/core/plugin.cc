@@ -42,8 +42,8 @@ Plugin::Plugin( const std::string& nname, const VariantMap& options ) :
 Plugin::OptionDescriptionList Plugin::common_option_descriptions()
 {
     Plugin::OptionDescriptionList opt;
-    opt.declare_option( "db/options", "DB connection options", Variant::from_string(""));
-    opt.declare_option( "db/schema", "DB schema name", Variant::from_string("tempus"));
+    declare_option(opt, "db/options", "DB connection options", Variant::from_string(""));
+    declare_option(opt, "db/schema", "DB schema name", Variant::from_string("tempus"));
     return opt;
 }
 
@@ -404,4 +404,3 @@ void simple_multimodal_roadmap( Result& result, Db::Connection& db, const Multim
 }
 
 }
-

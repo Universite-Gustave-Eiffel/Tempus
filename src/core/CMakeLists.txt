@@ -9,6 +9,7 @@ set( HEADER_FILES
   db.hh
   io.hh
   multimodal_graph.hh
+  optional.hh
   path_trace.hh
   plugin.hh
   plugin_factory.hh
@@ -16,6 +17,7 @@ set( HEADER_FILES
   point.hh
   progression.hh
   property.hh
+  public_transport.hh
   public_transport_graph.hh
   request.hh
   reverse_multimodal_graph.hh
@@ -39,7 +41,7 @@ set( UTILS_HEADER_FILES
   utils/timer.hh
 )
 
-set( SOURCE_FILES 
+set( SOURCE_FILES
     io.cc
     progression.cc
     common.cc
@@ -47,7 +49,7 @@ set( SOURCE_FILES
     abscissa.cc
     road_graph.cc
     public_transport_graph.cc
-    multimodal_graph.cc 
+    multimodal_graph.cc
     reverse_multimodal_graph.cc
     poi.cc
     point.cc
@@ -57,8 +59,8 @@ set( SOURCE_FILES
     application.cc
     plugin.cc
     plugin_factory.cc
-    db.cc 
-    utils/graph_db_link.cc 
+    db.cc
+    utils/graph_db_link.cc
     variant.cc
     serializers.cc
     routing_data.cc
@@ -78,7 +80,7 @@ else ()
     add_library( tempus SHARED ${SOURCE_FILES} )
 endif ()
 
-target_link_libraries( tempus ${PostgreSQL_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( tempus ${POSTGRESQL_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS tempus DESTINATION lib)
 install(FILES ${HEADER_FILES} DESTINATION include/tempus)

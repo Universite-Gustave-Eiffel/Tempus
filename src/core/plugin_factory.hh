@@ -62,6 +62,7 @@ struct PluginFactory: boost::noncopyable {
      */
     Plugin* plugin( const std::string& dll_name ) const;
 
+
     static PluginFactory* instance();
 
 private:
@@ -69,10 +70,20 @@ private:
 
     PluginFactory() {}
 
-    typedef Plugin*                              ( *PluginCreationFct )( ProgressionCallback&, const VariantMap& );
-    typedef const Plugin::OptionDescriptionList* ( *PluginOptionDescriptionFct )();
-    typedef const Plugin::Capabilities*          ( *PluginCapabilitiesFct )();
-    typedef const char*                          ( *PluginNameFct )();
+public:
+    using PluginCreationFct = std::function<Plugin*(ProgressionCallback&, const VariantMap&)>;
+    using PluginOptionDescriptionFct = std::function<const Plugin::OptionDescriptionList*()>;
+    using PluginCapabilitiesFct = std::function<const Plugin::Capabilities*()>;
+    using PluginNameFct = std::function<const char*()>;
+
+    void register_plugin_fn(
+        PluginCreationFct create_fn,
+        PluginOptionDescriptionFct options_fn,
+        PluginCapabilitiesFct capa_fn,
+        PluginNameFct name_fn
+        );
+
+private:
     struct Dll {
         HMODULE handle;
         PluginCreationFct create_fct;
