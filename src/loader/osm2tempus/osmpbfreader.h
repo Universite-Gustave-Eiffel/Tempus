@@ -355,14 +355,9 @@ protected:
         off_t half = (start + end) / 2;
         if ( file.eof() )
             file.clear();
-<<<<<<< HEAD
-        file.seekg( half, file.beg );
-        if ( next_block() == -1 )
-=======
         file.seekg( half );
         off_t nxt = next_block();
         if ( nxt == -1 )
->>>>>>> master
             return -1;
         if ( nxt > end ) {
             // the next block is past the end,
