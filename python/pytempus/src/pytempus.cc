@@ -641,6 +641,12 @@ void export_RoutingData() {
     ;
 }
 
+static auto f_option_description_default_value_get(Tempus::Plugin::OptionDescription* o)
+		{ return Variant_to_python::convert(o->default_value); }
+		
+static auto f_option_description_default_value_set(Tempus::Plugin::OptionDescription* o, bp::object a)
+{ o->default_value = Variant_from_python::construct(a.ptr()); }
+
 void export_Plugin() {
     bp::class_<Tempus::PluginRequest>("PluginRequest", bp::init<const Tempus::Plugin*, const Tempus::VariantMap&>())
         .def("process", adapt_unique_by_value(&Tempus::PluginRequest::process))
@@ -666,14 +672,15 @@ void export_Plugin() {
             .add_property("arrive_before", arrive_before_get, arrive_before_set)
             .add_property("optimization_criteria", optimization_criteria_get)
         ;
+		
 
         bp::class_<Tempus::Plugin::OptionDescription>("OptionDescription")
             .def_readwrite("description", &Tempus::Plugin::OptionDescription::description)
             .add_property("default_value",
                 // We don't want to expose Variant to python, so we instead use convertors here.
                 // This allows to keep implicit conversion between VariantMap and dict.
-                +[](Tempus::Plugin::OptionDescription* o) { return Variant_to_python::convert(o->default_value); },
-                +[](Tempus::Plugin::OptionDescription* o, bp::object a) { o->default_value = Variant_from_python::construct(a.ptr()); })
+                f_option_description_default_value_get,
+				f_option_description_default_value_set)
             .def_readwrite("visible", &Tempus::Plugin::OptionDescription::visible)
         ;
 
@@ -685,6 +692,16 @@ void export_Plugin() {
     bp::def("load_routing_data", &Tempus::load_routing_data, bp::return_internal_reference<>());
 }
 
+static auto f_road_graph_get_item_vertex_(Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; }
+static auto f_road_graph_get_item_edge_(Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; }
+static auto f_road_graph_vertex(Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); }
+static auto f_road_graph_num_egdes(Tempus::Road::Graph* g) { return num_edges(*g); }
+static auto f_road_graph_edge_from_index(Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); }
+static auto f_road_graph_edge(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];}
+static auto f_road_graph_source(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);}
+static auto f_road_graph_target(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);}
+static auto f_road_graph_num_vertices(Tempus::Road::Graph* g) { return num_vertices(*g); }
+
 void export_RoadGraph() {
     bp::object roadModule(bp::handle<>(bp::borrowed(PyImport_AddModule("tempus.Road"))));
     bp::scope().attr("Road") = roadModule;
@@ -695,19 +712,19 @@ void export_RoadGraph() {
         //                       ^
         // boost python can't wrap lambda, but can wrap func pointers...
         // (see http://stackoverflow.com/questions/18889028/a-positive-lambda-what-sorcery-is-this)
-            .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; })
-            .def("__getitem__", +[](Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; })
-            .def("vertex", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); })
-            .def("num_edges", +[](Tempus::Road::Graph* g) { return num_edges(*g); })
-            .def("edge_from_index", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); })
-            .def("edge", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];})
+            .def("__getitem__", f_road_graph_get_item_vertex_)
+            .def("__getitem__", f_road_graph_get_item_edge_)
+            .def("vertex", f_road_graph_vertex)
+            .def("num_edges", f_road_graph_num_egdes)
+            .def("edge_from_index", f_road_graph_edge_from_index)
+            .def("edge", f_road_graph_edge)
 
-            .def("source", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);})
-            .def("target", +[](Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);})
+            .def("source", f_road_graph_source)
+            .def("target", f_road_graph_target)
         ;
 
 
-        bp::def("num_vertices", +[](Tempus::Road::Graph* g) { return num_vertices(*g); });
+        bp::def("num_vertices", f_road_graph_num_vertices);
         // size_t (*nv)(const Tempus::Road::Graph&) = &boost::graph::num_vertices;
         // bp::def("num_vertices", nv);
     }
@@ -1121,4 +1138,38 @@ BOOST_PYTHON_MODULE(pytempus)
     export_POI();
     export_Point();
     export_Cost();
+}
+
+//pytempus.obj : error LNK2001: unresolved external symbol "__declspec(dllimport) struct _object * __cdecl boost::python::detail::init_module(struct PyModuleDef &,void (__cdecl*)(void))" (__imp_?init_module@detail@python@boost@@YAPEAU_object@@AEAUPyModuleDef@@P6AXXZ@Z)
+//pytempus.obj : error LNK2001: unresolved external symbol "class Tempus::RoutingData const volatile * __cdecl boost::get_pointer<class Tempus::RoutingData const volatile >(class Tempus::RoutingData const volatile *)" (??$get_pointer@$$CDVRoutingData@Tempus@@@boost@@YAPEDVRoutingData@Tempus@@PEDV12@@Z)
+//pytempus.obj : error LNK2001: unresolved external symbol "class Tempus::Plugin const volatile * __cdecl boost::get_pointer<class Tempus::Plugin const volatile >(class Tempus::Plugin const volatile *)" (??$get_pointer@$$CDVPlugin@Tempus@@@boost@@YAPEDVPlugin@Tempus@@PEDV12@@Z)
+//pytempus.obj : error LNK2001: unresolved external symbol "class Tempus::PluginRequest const volatile * __cdecl boost::get_pointer<class Tempus::PluginRequest const volatile >(class Tempus::PluginRequest const volatile *)" (??$get_pointer@$$CDVPluginRequest@Tempus@@@boost@@YAPEDVPluginRequest@Tempus@@PEDV12@@Z)
+//pytempus.obj : error LNK2001: unresolved external symbol "struct Tempus::Roadmap::RoadStep const volatile * __cdecl boost::get_pointer<struct Tempus::Roadmap::RoadStep const volatile >(struct Tempus::Roadmap::RoadStep const volatile *)" (??$get_pointer@$$CDURoadStep@Roadmap@Tempus@@@boost@@YAPEDURoadStep@Roadmap@Tempus@@PEDU123@@Z)
+
+namespace boost
+{
+    template <>
+    Tempus::RoutingData const volatile * get_pointer<class Tempus::RoutingData const volatile >(
+      class Tempus::RoutingData const volatile *c)
+    {
+        return c;
+    }
+    template <>
+    Tempus::Plugin const volatile * get_pointer<class Tempus::Plugin const volatile >(
+      class Tempus::Plugin const volatile *c)
+    {
+        return c;
+    }
+    template <>
+    Tempus::PluginRequest const volatile * get_pointer<class Tempus::PluginRequest const volatile >(
+      class Tempus::PluginRequest const volatile *c)
+    {
+        return c;
+    }
+    template <>
+    Tempus::Roadmap::RoadStep const volatile * get_pointer<class Tempus::Roadmap::RoadStep const volatile >(
+      class Tempus::Roadmap::RoadStep const volatile *c)
+    {
+        return c;
+    }
 }
