@@ -2,10 +2,8 @@ tempus_build:
   stage: test
   script:
       #bla
-      - cmd /s /c "ci\windows\build_protobuf.bat"
+      - ~/osgeo4w-setup-x86_64.exe -s http://hekla.oslandia.net/osgeo4w -k -q -P protobuf
       - mkdir -p build/bin
-      - cp /cygdrive/c/libs/bin/libprotobuf.dll build/bin
-      - cp /cygdrive/c/osgeo4w64/bin/libpq.dll build/bin
       - cmd /s /c "ci\windows\build_gitlab.bat"
       #- createdb -U User tempus_test_db
       #- psql -U User -d tempus_test_db -c "create extension postgis"
