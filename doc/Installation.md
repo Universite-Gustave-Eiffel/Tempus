@@ -77,7 +77,9 @@ You can test the installation by running some unit tests. They need a test datab
 
 * Create a postgreSQL database `tempus_test_db`
 * Install PostGIS on it (`CREATE EXTENSION postgis;`)
-* Populate it with the Tempus schema and test data: `psql tempus_test_db < data/tempus_test_db.sql`
+* Unzip `data/tempus_test_db/tempus_test_db.sql.zip`
+* Populate it with the Tempus schema and test data: `psql tempus_test_db < data/tempus_test_db/tempus_test_db.sql`
+* execute each `patch.n.sql` from `data/tempus_test_db` folders.
 
 Installation of Python modules
 ------------------------------
