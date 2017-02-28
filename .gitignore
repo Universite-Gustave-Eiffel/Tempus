@@ -7,3 +7,4 @@
 ui_*.py
 resources_rc.py
 build
+venv

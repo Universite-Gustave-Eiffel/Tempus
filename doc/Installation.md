@@ -20,15 +20,12 @@ Tempus depends on the following third party libraries:
 On Ubuntu
 ---------
 
-On an Ubuntu system, dependencies correspond to the following packages :
+On Ubuntu 16.04, dependencies correspond to the following packages:
 
 ```
-nginx postgresql postgresql-server-dev-9.1 libpq-dev libgeos-dev g++ libboost-all-dev
-libfcgi-dev libshp-dev libxml2-dev cmake cmake-curses-gui pyqt4-dev-tools libtool libproj-dev libgdal-dev
-libprotobuf-dev
+nginx postgresql postgresql-server-dev-9.5 postgis libpq-dev libgeos-dev g++ libboost-all-dev
+libfcgi-dev libshp-dev libxml2-dev cmake pyqt4-dev-tools libtool libproj-dev libgdal-dev libprotobuf-dev
 ```
-
-PostGIS 2.x is not yet packaged for Ubuntu, so you would have to download, compile and install it.
 
 Compilation
 -----------
@@ -80,7 +77,9 @@ You can test the installation by running some unit tests. They need a test datab
 
 * Create a postgreSQL database `tempus_test_db`
 * Install PostGIS on it (`CREATE EXTENSION postgis;`)
-* Populate it with the Tempus schema and test data: `psql tempus_test_db < data/tempus_test_db.sql`
+* Unzip `data/tempus_test_db/tempus_test_db.sql.zip`
+* Populate it with the Tempus schema and test data: `psql tempus_test_db < data/tempus_test_db/tempus_test_db.sql`
+* execute each `patch.n.sql` from `data/tempus_test_db` folders.
 
 Installation of Python modules
 ------------------------------
