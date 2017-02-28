@@ -4,10 +4,10 @@ mkdir build
 cd build
 cmake -G "NMake Makefiles" ^
   -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
-  -DCMAKE_INSTALL_PREFIX=c:\cygwin64\home\ci ^
+  -DCMAKE_INSTALL_PREFIX=c:\install ^
   "-DPOSTGRESQL_PG_CONFIG=C:\Program Files\Postgresql\9.6\bin\pg_config.exe" ^
-  -DBOOST_LIBRARYDIR=C:\local\boost_1_62_0\lib64-msvc-14.0 ^
-  -DBOOST_INCLUDEDIR=C:\local\boost_1_62_0 ^
+  -DBOOST_LIBRARYDIR=C:\osgeo4w64\lib ^
+  -DBOOST_INCLUDEDIR=C:\osgeo4w64\include\boost_1_63_0 ^
   -DBoost_COMPILER=-vc140 ^
   -DLIBXML2_INCLUDE_DIR=C:\osgeo4w64\include ^
   -DLIBXML2_LIBRARIES=C:\osgeo4w64\lib ^
@@ -21,3 +21,4 @@ cmake -G "NMake Makefiles" ^
   -DPROTOBUF_PROTOC_EXECUTABLE=c:\osgeo4w64\bin\protoc.exe ^
   ..
 nmake
+nmake install

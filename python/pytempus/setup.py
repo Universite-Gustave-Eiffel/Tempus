@@ -27,7 +27,7 @@ sys.argv=args
 
 copt =  {'msvc': ['/EHsc'],
          'gcc' : ['-std=c++11'] }
-libs_opt =  {'msvc' : ['tempus', 'boost_python-vc140-mt-gd-1_62', 'libpq'],
+libs_opt =  {'msvc' : ['tempus', 'boost_python-vc140-mt-1_63', 'libpq'],
              'gcc' : ['tempus', 'boost_python'] }
 
 
