@@ -1140,37 +1140,40 @@ BOOST_PYTHON_MODULE(pytempus)
     export_Cost();
 }
 
-//pytempus.obj : error LNK2001: unresolved external symbol "__declspec(dllimport) struct _object * __cdecl boost::python::detail::init_module(struct PyModuleDef &,void (__cdecl*)(void))" (__imp_?init_module@detail@python@boost@@YAPEAU_object@@AEAUPyModuleDef@@P6AXXZ@Z)
-//pytempus.obj : error LNK2001: unresolved external symbol "class Tempus::RoutingData const volatile * __cdecl boost::get_pointer<class Tempus::RoutingData const volatile >(class Tempus::RoutingData const volatile *)" (??$get_pointer@$$CDVRoutingData@Tempus@@@boost@@YAPEDVRoutingData@Tempus@@PEDV12@@Z)
-//pytempus.obj : error LNK2001: unresolved external symbol "class Tempus::Plugin const volatile * __cdecl boost::get_pointer<class Tempus::Plugin const volatile >(class Tempus::Plugin const volatile *)" (??$get_pointer@$$CDVPlugin@Tempus@@@boost@@YAPEDVPlugin@Tempus@@PEDV12@@Z)
-//pytempus.obj : error LNK2001: unresolved external symbol "class Tempus::PluginRequest const volatile * __cdecl boost::get_pointer<class Tempus::PluginRequest const volatile >(class Tempus::PluginRequest const volatile *)" (??$get_pointer@$$CDVPluginRequest@Tempus@@@boost@@YAPEDVPluginRequest@Tempus@@PEDV12@@Z)
-//pytempus.obj : error LNK2001: unresolved external symbol "struct Tempus::Roadmap::RoadStep const volatile * __cdecl boost::get_pointer<struct Tempus::Roadmap::RoadStep const volatile >(struct Tempus::Roadmap::RoadStep const volatile *)" (??$get_pointer@$$CDURoadStep@Roadmap@Tempus@@@boost@@YAPEDURoadStep@Roadmap@Tempus@@PEDU123@@Z)
-
+// Apparently we hit here a strange bug in Visual Studio 2015 Update 3
+// http://stackoverflow.com/questions/38261530/unresolved-external-symbols-since-visual-studio-2015-update-3-boost-python-link
+// that requires to explicitly instanciate get_pointer on "const volatile" pointers
+    
 namespace boost
 {
-    template <>
-    Tempus::RoutingData const volatile * get_pointer<class Tempus::RoutingData const volatile >(
-      class Tempus::RoutingData const volatile *c)
-    {
-        return c;
-    }
-/*    template <>
-    Tempus::Plugin const volatile * get_pointer<class Tempus::Plugin const volatile >(
-      class Tempus::Plugin const volatile *c)
-    {
-        return c;
-    }
-*/
-    template <>
-    Tempus::PluginRequest const volatile * get_pointer<class Tempus::PluginRequest const volatile >(
-      class Tempus::PluginRequest const volatile *c)
-    {
-        return c;
-    }
-    template <>
-    Tempus::Roadmap::RoadStep const volatile * get_pointer<class Tempus::Roadmap::RoadStep const volatile >(
-      class Tempus::Roadmap::RoadStep const volatile *c)
-    {
-        return c;
-    }
+template <>
+Tempus::RoutingData const volatile * get_pointer<class Tempus::RoutingData const volatile >
+(class Tempus::RoutingData const volatile *c)
+{
+    return c;
+}
+// this is needed too ...
+template <>
+class optional<Tempus::Plugin const volatile>
+{
+    using pointer_type = Tempus::Plugin const volatile *;
+};
+template <>
+Tempus::Plugin const volatile * get_pointer<class Tempus::Plugin const volatile >
+(class Tempus::Plugin const volatile *c)
+{
+    return c;
+}
+template <>
+Tempus::PluginRequest const volatile * get_pointer<class Tempus::PluginRequest const volatile >
+(class Tempus::PluginRequest const volatile *c)
+{
+    return c;
+}
+template <>
+Tempus::Roadmap::RoadStep const volatile * get_pointer<class Tempus::Roadmap::RoadStep const volatile >
+(class Tempus::Roadmap::RoadStep const volatile *c)
+{
+    return c;
+}
 }
