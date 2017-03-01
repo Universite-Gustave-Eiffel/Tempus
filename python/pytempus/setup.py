@@ -26,18 +26,18 @@ while i < len(sys.argv):
 sys.argv=args
 
 copt =  {'msvc': ['/EHsc'],
-         'gcc' : ['-std=c++11'] }
+         'unix' : ['-std=c++11'] }
 libs_opt =  {'msvc' : ['tempus', 'boost_python-vc140-mt-1_63', 'libpq'],
-             'gcc' : ['tempus', 'boost_python'] }
+             'unix' : ['tempus', 'boost_python'] }
 
 
 class build_ext_subclass( build_ext ):
     def build_extensions(self):
         c = self.compiler.compiler_type
-        if copt.has_key(c):
+        if c in copt:
            for e in self.extensions:
                e.extra_compile_args = copt[ c ]
-        if lopt.has_key(c):
+        if c in libs_opt:
             for e in self.extensions:
                 e.libraries = libs_opt[ c ]
         build_ext.build_extensions(self)
