@@ -641,11 +641,11 @@ void export_RoutingData() {
     ;
 }
 
-static auto f_option_description_default_value_get(Tempus::Plugin::OptionDescription* o)
-		{ return Variant_to_python::convert(o->default_value); }
+static auto f_option_description_default_value_get(Tempus::Plugin::OptionDescription* o) -> decltype(Variant_to_python::convert(o->default_value))
+    { return Variant_to_python::convert(o->default_value); }
 		
-static auto f_option_description_default_value_set(Tempus::Plugin::OptionDescription* o, bp::object a)
-{ o->default_value = Variant_from_python::construct(a.ptr()); }
+static void f_option_description_default_value_set(Tempus::Plugin::OptionDescription* o, bp::object a)
+    { o->default_value = Variant_from_python::construct(a.ptr()); }
 
 void export_Plugin() {
     bp::class_<Tempus::PluginRequest>("PluginRequest", bp::init<const Tempus::Plugin*, const Tempus::VariantMap&>())
@@ -692,15 +692,15 @@ void export_Plugin() {
     bp::def("load_routing_data", &Tempus::load_routing_data, bp::return_internal_reference<>());
 }
 
-static auto f_road_graph_get_item_vertex_(Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; }
-static auto f_road_graph_get_item_edge_(Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; }
-static auto f_road_graph_vertex(Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); }
-static auto f_road_graph_num_egdes(Tempus::Road::Graph* g) { return num_edges(*g); }
-static auto f_road_graph_edge_from_index(Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); }
-static auto f_road_graph_edge(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];}
-static auto f_road_graph_source(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);}
-static auto f_road_graph_target(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);}
-static auto f_road_graph_num_vertices(Tempus::Road::Graph* g) { return num_vertices(*g); }
+    static Tempus::Road::Node f_road_graph_get_item_vertex_(Tempus::Road::Graph* g, Tempus::Road::Vertex v) { return (*g)[v]; }
+    static Tempus::Road::Section f_road_graph_get_item_edge_(Tempus::Road::Graph* g, Tempus::Road::Edge e) { return (*g)[e]; }
+    static Tempus::Road::Vertex f_road_graph_vertex(Tempus::Road::Graph* g, Tempus::Road::Graph::vertices_size_type i) { return vertex(i, *g); }
+    static size_t f_road_graph_num_egdes(Tempus::Road::Graph* g) { return num_edges(*g); }
+    static Tempus::Road::Edge f_road_graph_edge_from_index(Tempus::Road::Graph* g, Tempus::Road::Graph::edges_size_type i) { return edge_from_index(i, *g); }
+    static Tempus::Road::Section f_road_graph_edge(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return (*g)[e];}
+    static Tempus::Road::Vertex f_road_graph_source(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return source(e, *g);}
+    static Tempus::Road::Vertex f_road_graph_target(Tempus::Road::Graph* g, Tempus::Road::Graph::edge_descriptor e) { return target(e, *g);}
+    static size_t f_road_graph_num_vertices(Tempus::Road::Graph* g) { return num_vertices(*g); }
 
 void export_RoadGraph() {
     bp::object roadModule(bp::handle<>(bp::borrowed(PyImport_AddModule("tempus.Road"))));
@@ -1154,12 +1154,13 @@ namespace boost
     {
         return c;
     }
-    template <>
+/*    template <>
     Tempus::Plugin const volatile * get_pointer<class Tempus::Plugin const volatile >(
       class Tempus::Plugin const volatile *c)
     {
         return c;
     }
+*/
     template <>
     Tempus::PluginRequest const volatile * get_pointer<class Tempus::PluginRequest const volatile >(
       class Tempus::PluginRequest const volatile *c)
