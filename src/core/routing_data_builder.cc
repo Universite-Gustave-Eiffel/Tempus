@@ -1,8 +1,41 @@
 #include "routing_data_builder.hh"
+#ifdef _WIN32
+#   define NOMINMAX
+#   include <windows.h>
+#endif
 
-namespace Tempus
+#ifdef _WIN32
+extern "C" __declspec( dllexport ) Tempus::RoutingDataBuilderRegistry* get_routing_data_builder_registry_instance_();
+Tempus::RoutingDataBuilderRegistry* get_routing_data_builder_registry_instance_()
 {
+    return &Tempus::RoutingDataBuilderRegistry::instance();
+}
+#endif
 
+
+namespace Tempus {
+
+
+RoutingDataBuilderRegistry& RoutingDataBuilderRegistry::instance()
+{
+    // On Windows, static and global variables are COPIED from the main module (EXE) to the other (DLL).
+    // DLL have still access to the main EXE memory ...
+    static RoutingDataBuilderRegistry* instance_ = 0;
+
+    if ( 0 == instance_ ) {
+#ifdef _WIN32
+        // We test if we are in the main module (EXE) or not. If it is the case, a new Application is allocated.
+        // It will also be returned by modules.
+        RoutingDataBuilderRegistry * ( *main_get_instance )() = ( RoutingDataBuilderRegistry* (* )() )GetProcAddress( GetModuleHandle( NULL ), "get_routing_data_builder_registry_instance_" );
+		std::cout << main_get_instance << std::endl;
+        instance_ = ( main_get_instance == &get_routing_data_builder_registry_instance_ )  ? new RoutingDataBuilderRegistry : main_get_instance();
+#else
+        instance_ = new RoutingDataBuilderRegistry();
+#endif
+    }
+
+    return *instance_;
+}
 
 void RoutingDataBuilderRegistry::addBuilder( std::unique_ptr<RoutingDataBuilder> a_builder )
 {
@@ -25,12 +58,6 @@ std::vector<std::string> RoutingDataBuilderRegistry::builder_list() const
         names.push_back( p.first );
     }
     return names;
-}
-
-RoutingDataBuilderRegistry& RoutingDataBuilderRegistry::instance()
-{
-    static RoutingDataBuilderRegistry instance_;
-    return instance_;
 }
 
 const char TEMPUS_DUMP_FILE_MAGIC[] = "TDBF";
