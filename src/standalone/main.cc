@@ -50,7 +50,7 @@ DateTime to_date_time( const std::string& s )
     return dt;
 }
 
-int main( int argc, char* argv[] )
+int main_( int argc, char* argv[] )
 {
     // default db options
     string db_options = "dbname=tempus_test_db";
@@ -77,6 +77,7 @@ int main( int argc, char* argv[] )
         ( "options", po::value<std::vector<string>>()->multitoken(), "set the plugin options option:type=value (space separated)" )
         ( "repeat,n", po::value<int>(), "set the repeat count (for profiling)" )
         ( "load-from,L", po::value<string>(), "set the dump file to load")
+        ( "no-catch", "Debug mode, don't catch exceptions" )
         ;
 
     po::variables_map vm;
@@ -222,3 +223,25 @@ int main( int argc, char* argv[] )
 
     return 0;
 }
+
+int main(int argc, char* argv[])
+{
+    const std::vector<std::string> args{ argv, argv + argc };
+    bool debug_mode = find( begin(args), end(args), "--no-catch" ) != end(args);
+
+    if ( debug_mode ) {
+        return main_( argc, argv );
+    }
+    else {
+	try
+	{
+            return main_(argc, argv);
+	}
+	catch (std::exception& e)
+	{
+            std::cerr << "Exception: " << e.what() << std::endl;
+	}
+    }
+    return 1;
+}
+
