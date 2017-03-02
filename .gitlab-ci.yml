@@ -5,12 +5,12 @@ tempus_build:
       - ~/osgeo4w-setup-x86_64.exe -s http://hekla.oslandia.net/osgeo4w -k -q -P protobuf -P boost-devel
       - mkdir -p build/bin
       - cmd /s /c "ci\windows\build_gitlab.bat"
-      #- createdb -U User tempus_test_db
-      #- psql -U User -d tempus_test_db -c "create extension postgis"
-      #- zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U User -d tempus_test_db
-      #- for f in data/tempus_test_db/patch.*; do psql -U User -d tempus_test_db < $f; done
-      #- TEMPUS_DB_OPTIONS="user=User" ./build/bin/test_core.exe
-      - cmd /s /c "ci\window\build_pytempus.bat"
+      - cmd /s /c "ci\windows\build_pytempus.bat"
+      - createdb -U ci -h localhost tempus_test_db
+      - psql -U ci -h localhost -d tempus_test_db -c "create extension postgis"
+      - zcat data/tempus_test_db/tempus_test_db.sql.zip | psql -U ci -h localhost -d tempus_test_db
+      - for f in data/tempus_test_db/patch.*; do psql -U ci -h localhost -d tempus_test_db < $f; done
+      - TEMPUS_DB_OPTIONS="user=ci host=localhost" ./build/bin/test_core.exe
   artifacts:
     paths:
       - build/lib/*
