@@ -81,14 +81,4 @@ RoutingData::TransportModes load_transport_modes( Db::Connection& conn );
 
 } // namespace Tempus
 
-#define REGISTER_BUILDER( ClassName ) \
-    static bool ClassName ## _register() \
-    { \
-    std::unique_ptr<RoutingDataBuilder> builder( new ClassName() ); \
-    RoutingDataBuilderRegistry::instance().addBuilder( std::move(builder) ); \
-    return true; \
-    }\
-    bool ClassName ## _init_ = ClassName ## _register();
-
-
 #endif

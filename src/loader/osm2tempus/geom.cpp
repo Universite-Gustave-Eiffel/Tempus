@@ -17,6 +17,9 @@
 #include "geom.h"
 
 #include <cmath>
+#ifdef _MSC_VER
+#define M_PI 3.14159265358979323846
+#endif
 
 std::string linestring_to_ewkb( const std::vector<Point>& points )
 {

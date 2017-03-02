@@ -269,7 +269,4 @@ void CHRoutingDataBuilder::file_export( const RoutingData* rd, const std::string
     serialize( ofs, mrd->middle_node_, binary_serialization_t() );
     serialize( ofs, mrd->node_id_, binary_serialization_t() );
 }
-
-REGISTER_BUILDER( CHRoutingDataBuilder )
-
 } // namespace Tempus

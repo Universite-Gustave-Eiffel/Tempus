@@ -37,9 +37,6 @@ include_directories( ${POSTGRESQL_INCLUDE_DIRS} )
 include_directories( SYSTEM ${Boost_INCLUDE_DIR} )
 link_directories( ${POSTGRESQL_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} )
 
-set (CMAKE_C_FLAGS "-fPIC")
-set (CMAKE_CXX_FLAGS "-fPIC")
-
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -57,12 +54,18 @@ if(MSVC)
 
 
 	# Disable verbose warnings
-	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290 /wd4267 /wd4267" )
+	add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4290 /wd4267 /wd4267 /wd4913" )
+
+        # Exception model
+        add_definitions( "/EHsc" )
 
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
-  # Update if necessary
-  # FIXME add Weffc++ to detect uninitialized members
+    set (CMAKE_C_FLAGS "-fPIC")
+    set (CMAKE_CXX_FLAGS "-fPIC")
+
+    # Update if necessary
+    # FIXME add Weffc++ to detect uninitialized members
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long -pedantic -Wpointer-arith -Wcast-align -Wcast-qual -Woverloaded-virtual -Wformat=2 -Winit-self -Wmissing-include-dirs -Wwrite-strings -Wno-error=undef -Wshadow -Wno-error=format" CACHE STRING "compile flags" FORCE)#-Wfloat-equal -Wconversion
 	# auto_ptr is deprecated in C++11
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated" CACHE STRING "compile flags" FORCE)

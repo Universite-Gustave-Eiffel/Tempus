@@ -53,6 +53,10 @@
 #include "datetime.hh"
 #include "progression.hh"
 
+///
+/// Initialization of the library
+void tempus_init();
+
 namespace Tempus {
 
 #ifndef NDEBUG
@@ -72,6 +76,5 @@ boost::iterator_range<It> pair_range(std::pair<It, It> const& p)
 {
     return boost::make_iterator_range(p.first, p.second);
 }
-
 
 #endif

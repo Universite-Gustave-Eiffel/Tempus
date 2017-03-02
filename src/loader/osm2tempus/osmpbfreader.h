@@ -28,7 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <stdint.h>
-#include <netinet/in.h>
+
+#ifdef _MSC_VER
+#include <Winsock2.h> // ntohl
+#else
+#include <netinet/in.h> // for ntohl
+#endif
+
 #include <zlib.h>
 #include <string>
 #include <fstream>
@@ -305,13 +311,13 @@ protected:
     {
         const char pattern[] = "\0\0\0\x0d\x0a\x07OSMData";
         const size_t bsize = 13;
-        char buffer[bsize+1] = {0};
+        char buf[bsize+1] = {0};
         char c;
         while (file.get(c)) {
-            memmove( &buffer[0], &buffer[1], bsize - 1 );
-            buffer[bsize-1] = c;
-            if ( memcmp( buffer, pattern, bsize ) == 0 ) {
-                file.seekg( file.tellg() - static_cast<off_t>( bsize ) );
+            memmove( &buf[0], &buf[1], bsize - 1 );
+            buf[bsize-1] = c;
+            if ( memcmp( buf, pattern, bsize ) == 0 ) {
+                file.seekg( static_cast<off_t>( file.tellg() ) - static_cast<off_t>( bsize ), file.beg );
                 return file.tellg();
             }
         }
@@ -446,7 +452,7 @@ struct ParserWithVisitor : public Parser<Progressor> {
 
         Progressor progressor;
         while(!this->file.eof() && !this->finished && ( !end_offset || this->file.tellg() <= end_offset ) ) {
-            progressor( this->file.tellg() - start_offset, fsize );
+            progressor( static_cast<off_t>( this->file.tellg() ) - start_offset, fsize );
             //std::cout << std::hex << this->file.tellg() << std::endl;
             OSMPBF::BlobHeader header = this->read_header();
             if(!this->finished){

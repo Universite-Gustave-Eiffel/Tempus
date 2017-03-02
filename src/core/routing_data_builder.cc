@@ -29,8 +29,8 @@ std::vector<std::string> RoutingDataBuilderRegistry::builder_list() const
 
 RoutingDataBuilderRegistry& RoutingDataBuilderRegistry::instance()
 {
-    static RoutingDataBuilderRegistry b;
-    return b;
+    static RoutingDataBuilderRegistry instance_;
+    return instance_;
 }
 
 const char TEMPUS_DUMP_FILE_MAGIC[] = "TDBF";

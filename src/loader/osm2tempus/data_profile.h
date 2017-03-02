@@ -89,8 +89,13 @@ using DataProfileRegistry = std::map<std::string, DataProfile*>;
 /// The global data profile registry
 extern DataProfileRegistry g_data_profile_registry;
 
+#ifdef _MSC_VER
+#define UNUSED_ATTR
+#else // GCC
+#define UNUSED_ATTR __attribute__((unused))
+#endif
 #define DECLARE_DATA_PROFILE(name, className) \
     static bool __initf_() { g_data_profile_registry[#name] = new className(); return true; } \
-    static bool __init_ __attribute__((unused)) = __initf_()
+    static bool __init_ UNUSED_ATTR = __initf_()
 
 #endif

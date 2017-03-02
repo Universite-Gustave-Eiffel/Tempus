@@ -44,6 +44,7 @@ set( UTILS_HEADER_FILES
 set( SOURCE_FILES
     io.cc
     progression.cc
+    common.cc
     cost.cc
     abscissa.cc
     road_graph.cc
