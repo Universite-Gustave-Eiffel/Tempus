@@ -9,8 +9,8 @@ requirements = (
 setup(
     name='webtempus',
     version='1.0.0',
-    description="Tempus Web API",
-    long_description="Flask application that exposes a web API to use Tempus",
+    description="Web API for Tempus, multimodal path planning request",
+    long_description="Flask application that exposes a web API to configure and use tempus, a C++ framework to develop multimodal path planning requests: https://github.com/Ifsttar/Tempus/",
     classifiers=[
         "Programming Language :: Python",
         "Operating System :: OS Independent",

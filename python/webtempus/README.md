@@ -9,5 +9,5 @@ Create a virtualenv, then run `pip install .`
 ## How to run
 
 ```bash
-FLASK_APP=app.py flask run
+FLASK_APP=webtempus/app.py flask run
 ```
