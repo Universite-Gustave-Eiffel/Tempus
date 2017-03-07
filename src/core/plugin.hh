@@ -47,7 +47,7 @@
 #   include <dlfcn.h>
 #   define EXPORT
 #   define DLL_SUFFIX ".so"
-#   define DLL_PREFIX "./lib"
+#   define DLL_PREFIX "lib"
 #endif
 
 // this is the type of pointer to dll
