@@ -101,6 +101,7 @@ def main(argv):
     plugin_options = {'db/options': options['db/options']}
     # todo parse --options
 
+    tempus.init()
 
     class Progress(tempus.ProgressionCallback):
         def __call__(self, percent, finished ):

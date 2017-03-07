@@ -1138,6 +1138,9 @@ BOOST_PYTHON_MODULE(pytempus)
     export_POI();
     export_Point();
     export_Cost();
+
+    // tempus_init()
+    bp::def("init", &tempus_init);
 }
 
 // Apparently we hit here a strange bug in Visual Studio 2015 Update 3
