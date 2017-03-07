@@ -7,4 +7,8 @@
 ui_*.py
 resources_rc.py
 build
+
+# python packaging
 venv
+*.egg-info/
+*.egg
