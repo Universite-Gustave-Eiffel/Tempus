@@ -4,6 +4,7 @@ from setuptools import setup
 
 requirements = (
     'flask==0.12',
+    'pytempus'
 )
 
 setup(
