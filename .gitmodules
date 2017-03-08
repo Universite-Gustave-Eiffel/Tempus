@@ -1,0 +1,12 @@
+[submodule "tempus_core"]
+	path = tempus_core
+	url = git@gitlab.com:Oslandia/tempus_core.git
+[submodule "pytempus"]
+	path = pytempus
+	url = git@gitlab.com:Oslandia/pytempus.git
+[submodule "tempus_loader"]
+	path = tempus_loader
+	url = git@gitlab.com:Oslandia/tempus_loader.git
+[submodule "osm2tempus"]
+	path = osm2tempus
+	url = git@gitlab.com:Oslandia/osm2tempus.git
