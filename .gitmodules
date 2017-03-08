@@ -10,3 +10,9 @@
 [submodule "osm2tempus"]
 	path = osm2tempus
 	url = git@gitlab.com:Oslandia/osm2tempus.git
+[submodule "tempus_wps_server"]
+	path = tempus_wps_server
+	url = git@gitlab.com:Oslandia/tempus_wps_server.git
+[submodule "tempus_qgis"]
+	path = tempus_qgis
+	url = git@gitlab.com:Oslandia/tempus_qgis.git
