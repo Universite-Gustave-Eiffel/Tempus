@@ -3,7 +3,9 @@
 from setuptools import setup
 
 requirements = (
+    'geomet==0.1.1',
     'flask==0.12',
+    'psycopg2==2.7',
     'pytempus'
 )
 
