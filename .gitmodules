@@ -19,3 +19,6 @@
 [submodule "tempus_pywps"]
 	path = tempus_pywps
 	url = https://gitlab.com/Oslandia/tempus_pywps.git
+[submodule "tempus_geojson_server"]
+	path = tempus_geojson_server
+	url = https://gitlab.com/Oslandia/tempus_geojson_server.git
