@@ -16,3 +16,6 @@
 [submodule "tempus_qgis"]
 	path = tempus_qgis
 	url = https://gitlab.com/Oslandia/tempus_qgis.git
+[submodule "tempus_pywps"]
+	path = tempus_pywps
+	url = https://gitlab.com/Oslandia/tempus_pywps.git
