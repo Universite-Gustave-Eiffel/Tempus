@@ -22,3 +22,6 @@
 [submodule "tempus_geojson_server"]
 	path = tempus_geojson_server
 	url = https://gitlab.com/Oslandia/tempus_geojson_server.git
+[submodule "tempus_demos"]
+	path = tempus_demos
+	url = https://gitlab.com/Oslandia/tempus_demos.git
