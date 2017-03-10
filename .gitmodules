@@ -25,3 +25,6 @@
 [submodule "tempus_demos"]
 	path = tempus_demos
 	url = https://gitlab.com/Oslandia/tempus_demos.git
+[submodule "pgtempus"]
+	path = pgtempus
+	url = https://gitlab.com/Oslandia/pgtempus.git
