@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -145,10 +145,10 @@ StepIterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 const <a class="el" href="class_tempus_1_1_roadmap_1_1_step.html">Step</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_roadmap.html#a9d762decf82bfbff6453cb9983446f3e">step</a> (size_t idx) const </td></tr>
 <tr class="memdesc:a9d762decf82bfbff6453cb9983446f3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Random access to a given step, with bound checking. <br /></td></tr>
 <tr class="separator:a9d762decf82bfbff6453cb9983446f3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a00be8526c73ba4abd2ca1aedcd943d0b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a00be8526c73ba4abd2ca1aedcd943d0b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_roadmap.html#a00be8526c73ba4abd2ca1aedcd943d0b">add_step</a> (std::auto_ptr&lt; <a class="el" href="class_tempus_1_1_roadmap_1_1_step.html">Step</a> &gt; <a class="el" href="class_tempus_1_1_roadmap.html#a9d762decf82bfbff6453cb9983446f3e">step</a>)</td></tr>
-<tr class="memdesc:a00be8526c73ba4abd2ca1aedcd943d0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a step. <br /></td></tr>
-<tr class="separator:a00be8526c73ba4abd2ca1aedcd943d0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacad70e844cb5f318c381624a6a9e30c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aacad70e844cb5f318c381624a6a9e30c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_roadmap.html#aacad70e844cb5f318c381624a6a9e30c">add_step</a> (std::unique_ptr&lt; <a class="el" href="class_tempus_1_1_roadmap_1_1_step.html">Step</a> &gt; <a class="el" href="class_tempus_1_1_roadmap.html#a9d762decf82bfbff6453cb9983446f3e">step</a>)</td></tr>
+<tr class="memdesc:aacad70e844cb5f318c381624a6a9e30c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a step. <br /></td></tr>
+<tr class="separator:aacad70e844cb5f318c381624a6a9e30c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9d288a2bd2144d66eb5e8c83851ddf9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa9d288a2bd2144d66eb5e8c83851ddf9"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_roadmap.html#aa9d288a2bd2144d66eb5e8c83851ddf9">DECLARE_RW_PROPERTY</a> (starting_date_time, <a class="el" href="namespace_tempus.html#ad9b22211963ad6bc4d1a3f67501a4e72">DateTime</a>)</td></tr>
 <tr class="memdesc:aa9d288a2bd2144d66eb5e8c83851ddf9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starting date time. <br /></td></tr>
@@ -162,13 +162,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <div class="textblock"><p>A <a class="el" href="class_tempus_1_1_roadmap.html">Roadmap</a> is an object used to model steps involved in a multimodal route. It is a base for result values of a request.</p>
 <p>Some of the fields may stay empty and will be filled by a request on the auxiliary storage (db), since there is no need for them to be always present in memory (geometries, names, etc.). They are marked as "retrieved from db" </p>
 </div><hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/hme/src/tempus/src/core/<a class="el" href="roadmap_8hh_source.html">roadmap.hh</a></li>
-<li>/home/hme/src/tempus/src/core/roadmap.cc</li>
+<li>/home/hme/src/tempus/tempus_core/src/core/<a class="el" href="roadmap_8hh_source.html">roadmap.hh</a></li>
+<li>/home/hme/src/tempus/tempus_core/src/core/roadmap.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jun 6 2017 16:36:37 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

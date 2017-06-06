@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -103,18 +103,11 @@ Inheritance diagram for Tempus::AStarRoadPluginRequest:</div>
   <img src="class_tempus_1_1_a_star_road_plugin_request.png" usemap="#Tempus::AStarRoadPluginRequest_map" alt=""/>
   <map id="Tempus::AStarRoadPluginRequest_map" name="Tempus::AStarRoadPluginRequest_map">
 <area href="class_tempus_1_1_plugin_request.html" alt="Tempus::PluginRequest" shape="rect" coords="0,0,201,24"/>
-<area href="class_tempus_1_1_plugin_request.html" alt="Tempus::PluginRequest" shape="rect" coords="211,0,412,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a45d61a52b3752fed9523eb8b9b7ee782"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45d61a52b3752fed9523eb8b9b7ee782"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>AStarRoadPluginRequest</b> (const <a class="el" href="class_tempus_1_1_a_star_road_plugin.html">AStarRoadPlugin</a> *parent, const VariantMap &amp;options, const <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a> *graph)</td></tr>
-<tr class="separator:a45d61a52b3752fed9523eb8b9b7ee782"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae44cfa990dc2b44f5b6510e7ab77100a"><td class="memItemLeft" align="right" valign="top">virtual std::unique_ptr&lt; <a class="el" href="namespace_tempus.html#a369f7c24f369c5a83424291b278bcfc5">Result</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_a_star_road_plugin_request.html#ae44cfa990dc2b44f5b6510e7ab77100a">process</a> (const <a class="el" href="class_tempus_1_1_request.html">Request</a> &amp;request)</td></tr>
-<tr class="memdesc:ae44cfa990dc2b44f5b6510e7ab77100a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process the user request.  <a href="#ae44cfa990dc2b44f5b6510e7ab77100a">More...</a><br /></td></tr>
-<tr class="separator:ae44cfa990dc2b44f5b6510e7ab77100a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45d61a52b3752fed9523eb8b9b7ee782"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45d61a52b3752fed9523eb8b9b7ee782"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AStarRoadPluginRequest</b> (const <a class="el" href="class_tempus_1_1_a_star_road_plugin.html">AStarRoadPlugin</a> *parent, const VariantMap &amp;options, const <a class="el" href="struct_tempus_1_1_multimodal_1_1_graph.html">Multimodal::Graph</a> *graph)</td></tr>
 <tr class="separator:a45d61a52b3752fed9523eb8b9b7ee782"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -261,55 +254,13 @@ VariantMap&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href
 
 </div>
 </div>
-<a class="anchor" id="ae44cfa990dc2b44f5b6510e7ab77100a"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual std::unique_ptr&lt;<a class="el" href="namespace_tempus.html#a369f7c24f369c5a83424291b278bcfc5">Result</a>&gt; Tempus::AStarRoadPluginRequest::process </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="class_tempus_1_1_request.html">Request</a> &amp;&#160;</td>
-          <td class="paramname"><em>request</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Process the user request. </p>
-<p>Pre-process the user request. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">request</td><td>The request to preprocess. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>Throws an instance of std::invalid_argument if the request cannot be processed by the current plugin. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>a result, set of paths </dd></dl>
-
-<p>Reimplemented from <a class="el" href="class_tempus_1_1_plugin_request.html#ae205dfabffc8ee6cdf11a47f9db0cc03">Tempus::PluginRequest</a>.</p>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/hme/src/tempus/src/plugins/astar_road_plugin/astar_road_plugin.cc</li>
-<li>/home/hme/src/tempus/src/plugins/astar_road_plugin/manual_astar.cc</li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>/home/hme/src/tempus/tempus_core/src/plugins/astar_road_plugin/astar_road_plugin.cc</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jun 6 2017 16:36:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

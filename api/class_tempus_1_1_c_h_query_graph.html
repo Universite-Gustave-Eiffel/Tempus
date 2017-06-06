@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>Tempus: Tempus::CHQueryGraph&lt; EdgeType &gt; Class Template Reference</title>
+<title>Tempus: Tempus::CHQueryGraph&lt; EP, VI, EI &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -94,7 +94,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="class_tempus_1_1_c_h_query_graph-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">Tempus::CHQueryGraph&lt; EdgeType &gt; Class Template Reference</div>  </div>
+<div class="title">Tempus::CHQueryGraph&lt; EP, VI, EI &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
@@ -113,61 +113,61 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ab8ea079a24ce5a84c0face75b7d49aaa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8ea079a24ce5a84c0face75b7d49aaa"></a>
+<tr class="memitem:aa0f20fc348a4ddd4d2007067b70e96c0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa0f20fc348a4ddd4d2007067b70e96c0"></a>
 typedef VI&#160;</td><td class="memItemRight" valign="bottom"><b>VertexIndex</b></td></tr>
-<tr class="separator:ab8ea079a24ce5a84c0face75b7d49aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc5c5cb7a9d266108c7fde69f4984b7c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abc5c5cb7a9d266108c7fde69f4984b7c"></a>
+<tr class="separator:aa0f20fc348a4ddd4d2007067b70e96c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45512fd232def85c8867b919be3b2935"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45512fd232def85c8867b919be3b2935"></a>
 typedef EI&#160;</td><td class="memItemRight" valign="bottom"><b>EdgeIndex</b></td></tr>
-<tr class="separator:abc5c5cb7a9d266108c7fde69f4984b7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a08acadea6b36a72ee1f2dcf05c172369"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a08acadea6b36a72ee1f2dcf05c172369"></a>
+<tr class="separator:a45512fd232def85c8867b919be3b2935"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52c5bc87913fd2db505a190b7f8b273d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52c5bc87913fd2db505a190b7f8b273d"></a>
 typedef EP&#160;</td><td class="memItemRight" valign="bottom"><b>EdgeProperty</b></td></tr>
-<tr class="separator:a08acadea6b36a72ee1f2dcf05c172369"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a716ac4248c98f0b1ff34f5feb69e4aee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a716ac4248c98f0b1ff34f5feb69e4aee"></a>
+<tr class="separator:a52c5bc87913fd2db505a190b7f8b273d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57b98fd06871e3c4b7835db9ed3c97ba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57b98fd06871e3c4b7835db9ed3c97ba"></a>
 typedef <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_edge_descriptor.html">EdgeDescriptor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>edge_descriptor</b></td></tr>
-<tr class="separator:a716ac4248c98f0b1ff34f5feb69e4aee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a57b98fd06871e3c4b7835db9ed3c97ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9e2bf4ed0b3a8a3603ee144ffdced81d"><td class="memTemplParams" colspan="2">template&lt;typename VertexPairIterator , typename DegreeIterator , typename EdgePropertyIterator &gt; </td></tr>
-<tr class="memitem:a9e2bf4ed0b3a8a3603ee144ffdced81d"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_c_h_query_graph.html#a9e2bf4ed0b3a8a3603ee144ffdced81d">CHQueryGraph</a> (VertexPairIterator vp, VertexPairIterator vp_end, size_t n_vertices, DegreeIterator up_it, EdgePropertyIterator ep)</td></tr>
-<tr class="separator:a9e2bf4ed0b3a8a3603ee144ffdced81d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2eb76635291ee8ec0d0797b3714e8720"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2eb76635291ee8ec0d0797b3714e8720"></a>
+<tr class="memitem:aae1e90e4e88625f081484f90d015d6f3"><td class="memTemplParams" colspan="2">template&lt;typename VertexPairIterator , typename DegreeIterator , typename EdgePropertyIterator &gt; </td></tr>
+<tr class="memitem:aae1e90e4e88625f081484f90d015d6f3"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_tempus_1_1_c_h_query_graph.html#aae1e90e4e88625f081484f90d015d6f3">CHQueryGraph</a> (VertexPairIterator vp, VertexPairIterator vp_end, size_t n_vertices, DegreeIterator up_it, EdgePropertyIterator ep)</td></tr>
+<tr class="separator:aae1e90e4e88625f081484f90d015d6f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a85983b78455ba1e1a902f67e3eb904d8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a85983b78455ba1e1a902f67e3eb904d8"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>debug_print</b> (std::ostream &amp;ostr)</td></tr>
-<tr class="separator:a2eb76635291ee8ec0d0797b3714e8720"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ed59594c4e630b4b919f97c65154d48"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4ed59594c4e630b4b919f97c65154d48"></a>
+<tr class="separator:a85983b78455ba1e1a902f67e3eb904d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7514769a76869196b47b844dabf1af8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7514769a76869196b47b844dabf1af8"></a>
 std::pair&lt; <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_out_edge_iterator.html">OutEdgeIterator</a>, <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_out_edge_iterator.html">OutEdgeIterator</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>out_edges</b> (VertexIndex v) const </td></tr>
-<tr class="separator:a4ed59594c4e630b4b919f97c65154d48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4eeccbf4e41ee203d06f2298aeb5e37"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac4eeccbf4e41ee203d06f2298aeb5e37"></a>
+<tr class="separator:ad7514769a76869196b47b844dabf1af8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8034c593b4a0a35412f578a53c733177"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8034c593b4a0a35412f578a53c733177"></a>
 size_t&#160;</td><td class="memItemRight" valign="bottom"><b>out_degree</b> (VertexIndex v) const </td></tr>
-<tr class="separator:ac4eeccbf4e41ee203d06f2298aeb5e37"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae84149252021441002f63e5f85d65e15"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae84149252021441002f63e5f85d65e15"></a>
+<tr class="separator:a8034c593b4a0a35412f578a53c733177"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13d9a376fc169c249fcd4e16ba671171"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13d9a376fc169c249fcd4e16ba671171"></a>
 std::pair&lt; <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_in_edge_iterator.html">InEdgeIterator</a>, <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_in_edge_iterator.html">InEdgeIterator</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>in_edges</b> (VertexIndex v) const </td></tr>
-<tr class="separator:ae84149252021441002f63e5f85d65e15"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a305e8350670eaa8bbc3eb4aa3684a5c9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a305e8350670eaa8bbc3eb4aa3684a5c9"></a>
+<tr class="separator:a13d9a376fc169c249fcd4e16ba671171"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0192a023fd152a28d11ce5335512bf61"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0192a023fd152a28d11ce5335512bf61"></a>
 size_t&#160;</td><td class="memItemRight" valign="bottom"><b>in_degree</b> (VertexIndex v) const </td></tr>
-<tr class="separator:a305e8350670eaa8bbc3eb4aa3684a5c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee1c07ce1a85b50e3432c383e1236bff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aee1c07ce1a85b50e3432c383e1236bff"></a>
+<tr class="separator:a0192a023fd152a28d11ce5335512bf61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ed2af5ab8b36ce170b436501b15f72b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ed2af5ab8b36ce170b436501b15f72b"></a>
 size_t&#160;</td><td class="memItemRight" valign="bottom"><b>num_vertices</b> () const </td></tr>
-<tr class="separator:aee1c07ce1a85b50e3432c383e1236bff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8088f1a591bbae3760e822809f2dfc4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8088f1a591bbae3760e822809f2dfc4"></a>
+<tr class="separator:a5ed2af5ab8b36ce170b436501b15f72b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a006a7c0e1269d9259bb96bc79cc1765c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a006a7c0e1269d9259bb96bc79cc1765c"></a>
 std::pair&lt; <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_edge_iterator.html">EdgeIterator</a>, <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_edge_iterator.html">EdgeIterator</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>edges</b> ()</td></tr>
-<tr class="separator:ac8088f1a591bbae3760e822809f2dfc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a613599a85ef1987ebd447ca8ac61595d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a613599a85ef1987ebd447ca8ac61595d"></a>
+<tr class="separator:a006a7c0e1269d9259bb96bc79cc1765c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b65a3c6f88e3c0d730757a94c79a9a4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b65a3c6f88e3c0d730757a94c79a9a4"></a>
 std::pair&lt; <a class="el" href="class_tempus_1_1_c_h_query_graph_1_1_edge_descriptor.html">EdgeDescriptor</a>, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>edge</b> (VertexIndex u, VertexIndex v) const </td></tr>
-<tr class="separator:a613599a85ef1987ebd447ca8ac61595d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed5a66739f93927a5d39d5c6c7649722"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed5a66739f93927a5d39d5c6c7649722"></a>
+<tr class="separator:a1b65a3c6f88e3c0d730757a94c79a9a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fa4c7595b9ba4a02992b305f8cbbb48"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0fa4c7595b9ba4a02992b305f8cbbb48"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>serialize</b> (std::ostream &amp;ostr, <a class="el" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a> t) const </td></tr>
-<tr class="separator:aed5a66739f93927a5d39d5c6c7649722"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4fe783787a185346b1ac482d785a02c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab4fe783787a185346b1ac482d785a02c"></a>
+<tr class="separator:a0fa4c7595b9ba4a02992b305f8cbbb48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ce6f702ef5b76748b428b7fdaab4ad6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0ce6f702ef5b76748b428b7fdaab4ad6"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>unserialize</b> (std::istream &amp;istr, <a class="el" href="struct_tempus_1_1binary__serialization__t.html">binary_serialization_t</a> t)</td></tr>
-<tr class="separator:ab4fe783787a185346b1ac482d785a02c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a0ce6f702ef5b76748b428b7fdaab4ad6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a9e2bf4ed0b3a8a3603ee144ffdced81d"></a>
+<a class="anchor" id="aae1e90e4e88625f081484f90d015d6f3"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename EdgeType&gt; </div>
+template&lt;typename EP, typename VI = uint32_t, typename EI = uint32_t&gt; </div>
 <div class="memtemplate">
 template&lt;typename VertexPairIterator , typename DegreeIterator , typename EdgePropertyIterator &gt; </div>
 <table class="mlabels">
@@ -175,7 +175,7 @@ template&lt;typename VertexPairIterator , typename DegreeIterator , typename Edg
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_tempus_1_1_c_h_query_graph.html">Tempus::CHQueryGraph</a>&lt; EdgeType &gt;::<a class="el" href="class_tempus_1_1_c_h_query_graph.html">CHQueryGraph</a> </td>
+          <td class="memname"><a class="el" href="class_tempus_1_1_c_h_query_graph.html">Tempus::CHQueryGraph</a>&lt; EP, VI, EI &gt;::<a class="el" href="class_tempus_1_1_c_h_query_graph.html">CHQueryGraph</a> </td>
           <td>(</td>
           <td class="paramtype">VertexPairIterator&#160;</td>
           <td class="paramname"><em>vp</em>, </td>
@@ -231,14 +231,13 @@ template&lt;typename VertexPairIterator , typename DegreeIterator , typename Edg
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/hme/src/tempus/src/core/<a class="el" href="adjacency__array_8hh_source.html">adjacency_array.hh</a></li>
-<li>/home/hme/src/tempus/src/core/<a class="el" href="ch__query__graph_8hh_source.html">ch_query_graph.hh</a></li>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>/home/hme/src/tempus/tempus_core/src/core/<a class="el" href="ch__query__graph_8hh_source.html">ch_query_graph.hh</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jun 6 2017 16:36:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

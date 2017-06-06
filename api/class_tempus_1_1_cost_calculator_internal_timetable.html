@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Tempus
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -90,78 +90,62 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_tempus_1_1_cost_calculator_internal_timetable-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">Tempus::CostCalculatorInternalTimetable&lt; Graph &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for Tempus::CostCalculatorInternalTimetable&lt; Graph &gt;:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="class_tempus_1_1_cost_calculator_internal_timetable.png" usemap="#Tempus::CostCalculatorInternalTimetable_3C_20Graph_20_3E_map" alt=""/>
-  <map id="Tempus::CostCalculatorInternalTimetable_3C_20Graph_20_3E_map" name="Tempus::CostCalculatorInternalTimetable&lt; Graph &gt;_map">
-<area href="class_tempus_1_1_cost_calculator_t.html" alt="Tempus::CostCalculatorT&lt; Graph, pt2pt_time_internal_timetable_t&lt; Graph &gt; &gt;" shape="rect" coords="0,0,449,24"/>
-</map>
- </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a824317104b2d2e2c5a105dcd8111ee03"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a824317104b2d2e2c5a105dcd8111ee03"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>CostCalculatorInternalTimetable</b> (const Graph &amp;graph, const <a class="el" href="namespace_tempus.html#ae22c39843671fdd8bc5c59d705a14557">Date</a> &amp;start_day, const std::vector&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt; &amp;allowed_transport_modes, double walking_speed, double cycling_speed, double min_transfer_time, double car_parking_search_time, boost::optional&lt; Road::Vertex &gt; private_parking, const <a class="el" href="class_tempus_1_1_road_edge_speed_profile.html">RoadEdgeSpeedProfile</a> *profile=0)</td></tr>
 <tr class="separator:a824317104b2d2e2c5a105dcd8111ee03"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_tempus_1_1_cost_calculator_t"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_tempus_1_1_cost_calculator_t')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_tempus_1_1_cost_calculator_t.html">Tempus::CostCalculatorT&lt; Graph, pt2pt_time_internal_timetable_t&lt; Graph &gt; &gt;</a></td></tr>
-<tr class="memitem:ae146b0164bf46f6111cf5bfd79ec1e17 inherit pub_methods_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae146b0164bf46f6111cf5bfd79ec1e17"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>CostCalculatorT</b> (const Graph &amp;graph, const <a class="el" href="namespace_tempus.html#ae22c39843671fdd8bc5c59d705a14557">Date</a> &amp;start_day, const std::vector&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt; &amp;allowed_transport_modes, double walking_speed, double cycling_speed, double min_transfer_time, double car_parking_search_time, boost::optional&lt; Road::Vertex &gt; private_parking, const <a class="el" href="class_tempus_1_1_road_edge_speed_profile.html">RoadEdgeSpeedProfile</a> *profile, <a class="el" href="struct_tempus_1_1pt2pt__time__internal__timetable__t.html">pt2pt_time_internal_timetable_t</a>&lt; Graph &gt;pt2pt_foo)</td></tr>
-<tr class="separator:ae146b0164bf46f6111cf5bfd79ec1e17 inherit pub_methods_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d68cd027d97966ba495245069329d0f inherit pub_methods_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d68cd027d97966ba495245069329d0f"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>travel_time</b> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_edge.html">Multimodal::Edge</a> &amp;e, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> mode_id, double initial_time, double initial_shift_time, double &amp;final_shift_time, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> initial_trip_id, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &amp;final_trip_id, double &amp;wait_time) const</td></tr>
-<tr class="separator:a8d68cd027d97966ba495245069329d0f inherit pub_methods_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae425f57365d289edbf3e3530f93cd590 inherit pub_methods_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae425f57365d289edbf3e3530f93cd590"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>transfer_time</b> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_edge.html">Multimodal::Edge</a> &amp;edge, const <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &amp;initial_mode, const <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &amp;final_mode) const</td></tr>
-<tr class="separator:ae425f57365d289edbf3e3530f93cd590 inherit pub_methods_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a808bafcc824820b516c75649fd5a8b35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a808bafcc824820b516c75649fd5a8b35"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>travel_time</b> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_edge.html">Multimodal::Edge</a> &amp;e, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> mode_id, double initial_time, double initial_shift_time, double &amp;final_shift_time, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> initial_trip_id, <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &amp;final_trip_id, double &amp;wait_time) const </td></tr>
+<tr class="separator:a808bafcc824820b516c75649fd5a8b35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a875cc261ea932c4f2be0c0c6f61d9e1c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a875cc261ea932c4f2be0c0c6f61d9e1c"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>transfer_time</b> (const <a class="el" href="struct_tempus_1_1_multimodal_1_1_edge.html">Multimodal::Edge</a> &amp;edge, const <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &amp;initial_mode, const <a class="el" href="class_tempus_1_1_transport_mode.html">TransportMode</a> &amp;final_mode) const </td></tr>
+<tr class="separator:a875cc261ea932c4f2be0c0c6f61d9e1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_attribs_class_tempus_1_1_cost_calculator_t"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_tempus_1_1_cost_calculator_t')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_tempus_1_1_cost_calculator_t.html">Tempus::CostCalculatorT&lt; Graph, pt2pt_time_internal_timetable_t&lt; Graph &gt; &gt;</a></td></tr>
-<tr class="memitem:a4f027a8f90a9dbc7ed9e6791b9d9c27a inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f027a8f90a9dbc7ed9e6791b9d9c27a"></a>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:aea8e6718d2d992c4dcda9ac3a1d7b0a0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aea8e6718d2d992c4dcda9ac3a1d7b0a0"></a>
 const Graph &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>graph_</b></td></tr>
-<tr class="separator:a4f027a8f90a9dbc7ed9e6791b9d9c27a inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e6e390b980454220b6b6f19d08616f2 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e6e390b980454220b6b6f19d08616f2"></a>
+<tr class="separator:aea8e6718d2d992c4dcda9ac3a1d7b0a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06311a6ecd365dcd7bce2b48e4209207"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a06311a6ecd365dcd7bce2b48e4209207"></a>
 const <a class="el" href="namespace_tempus.html#ae22c39843671fdd8bc5c59d705a14557">Date</a>&#160;</td><td class="memItemRight" valign="bottom"><b>start_day_</b></td></tr>
-<tr class="separator:a7e6e390b980454220b6b6f19d08616f2 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a401fd7fca9bde3f33c3d3e04e4ecb7d4 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a401fd7fca9bde3f33c3d3e04e4ecb7d4"></a>
+<tr class="separator:a06311a6ecd365dcd7bce2b48e4209207"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35c1ab293dac0ccbea3071012bb9894e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a35c1ab293dac0ccbea3071012bb9894e"></a>
 const std::vector&lt; <a class="el" href="namespace_tempus.html#a04e36446d6db638eb8b0de649ba35fe5">db_id_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>allowed_transport_modes_</b></td></tr>
-<tr class="separator:a401fd7fca9bde3f33c3d3e04e4ecb7d4 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa455d7545a9621e9b675815ed59b0c9b inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa455d7545a9621e9b675815ed59b0c9b"></a>
+<tr class="separator:a35c1ab293dac0ccbea3071012bb9894e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11a01eb5bf09d30265268f84a8868d99"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11a01eb5bf09d30265268f84a8868d99"></a>
 const double&#160;</td><td class="memItemRight" valign="bottom"><b>walking_speed_</b></td></tr>
-<tr class="separator:aa455d7545a9621e9b675815ed59b0c9b inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac69fea7a80fb8561b12fbcf3b1e9427d inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac69fea7a80fb8561b12fbcf3b1e9427d"></a>
+<tr class="separator:a11a01eb5bf09d30265268f84a8868d99"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e97fdeb60a017b2d237e10a4e33d1e1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e97fdeb60a017b2d237e10a4e33d1e1"></a>
 const double&#160;</td><td class="memItemRight" valign="bottom"><b>cycling_speed_</b></td></tr>
-<tr class="separator:ac69fea7a80fb8561b12fbcf3b1e9427d inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fd919725070dd6724b1affda837c9e9 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4fd919725070dd6724b1affda837c9e9"></a>
+<tr class="separator:a4e97fdeb60a017b2d237e10a4e33d1e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e821cd150249394f433102379672b86"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3e821cd150249394f433102379672b86"></a>
 const double&#160;</td><td class="memItemRight" valign="bottom"><b>min_transfer_time_</b></td></tr>
-<tr class="separator:a4fd919725070dd6724b1affda837c9e9 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73187b660c2d492a38c4ea562f64e32c inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73187b660c2d492a38c4ea562f64e32c"></a>
+<tr class="separator:a3e821cd150249394f433102379672b86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d759e9ee5c598a595bfc6d8f4b1e1c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d759e9ee5c598a595bfc6d8f4b1e1c3"></a>
 const double&#160;</td><td class="memItemRight" valign="bottom"><b>car_parking_search_time_</b></td></tr>
-<tr class="separator:a73187b660c2d492a38c4ea562f64e32c inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a64f6b755992a3ca15a4a04178ade069b inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a64f6b755992a3ca15a4a04178ade069b"></a>
+<tr class="separator:a1d759e9ee5c598a595bfc6d8f4b1e1c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a229c5fd652015192a8f3fae012b1d49f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a229c5fd652015192a8f3fae012b1d49f"></a>
 boost::optional&lt; Road::Vertex &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>private_parking_</b></td></tr>
-<tr class="separator:a64f6b755992a3ca15a4a04178ade069b inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a431b9f9ae76524323ae62a3e9cdd77d8 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a431b9f9ae76524323ae62a3e9cdd77d8"></a>
+<tr class="separator:a229c5fd652015192a8f3fae012b1d49f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17e5bbc0ef90702332120ad3497d6a85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17e5bbc0ef90702332120ad3497d6a85"></a>
 const <a class="el" href="class_tempus_1_1_road_edge_speed_profile.html">RoadEdgeSpeedProfile</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>speed_profile_</b></td></tr>
-<tr class="separator:a431b9f9ae76524323ae62a3e9cdd77d8 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a50ac42ace2c1a78f3d7bab7972b212 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a50ac42ace2c1a78f3d7bab7972b212"></a>
-<a class="el" href="struct_tempus_1_1pt2pt__time__internal__timetable__t.html">pt2pt_time_internal_timetable_t</a>&lt; Graph &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>pt2pt_foo_</b></td></tr>
-<tr class="separator:a0a50ac42ace2c1a78f3d7bab7972b212 inherit pro_attribs_class_tempus_1_1_cost_calculator_t"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a17e5bbc0ef90702332120ad3497d6a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/hme/src/tempus/src/plugins/mm_lib/<a class="el" href="cost__calculator_8hh_source.html">cost_calculator.hh</a></li>
+<li>/home/hme/src/tempus/tempus_core/src/plugins/mm_lib/<a class="el" href="cost__calculator_8hh_source.html">cost_calculator.hh</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 10 2017 11:45:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jun 6 2017 16:36:36 for Tempus by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

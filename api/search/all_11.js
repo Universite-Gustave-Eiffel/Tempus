@@ -17,7 +17,6 @@ var searchData=
   ['vertexlabel',['VertexLabel',['../struct_tempus_1_1_isochrone_plugin_1_1_vertex_label.html',1,'Tempus::IsochronePlugin']]],
   ['vertexlisttype',['VertexListType',['../namespace_tempus_1_1_public_transport.html#ae63dd79920d1a48a837ea5f089c06832',1,'Tempus::PublicTransport']]],
   ['vertexproperty',['VertexProperty',['../struct_tempus_1_1_vertex_property.html',1,'Tempus']]],
-  ['vertexroutingdata',['VertexRoutingData',['../struct_tempus_1_1_a_star_road_plugin3_1_1_vertex_routing_data.html',1,'Tempus::AStarRoadPlugin3']]],
   ['vertexroutingdata',['VertexRoutingData',['../struct_tempus_1_1_a_star_road_plugin_1_1_vertex_routing_data.html',1,'Tempus::AStarRoadPlugin']]],
   ['vertextype',['VertexType',['../struct_tempus_1_1_multimodal_1_1_vertex.html#a5bd233a74424a6424c8526eefd8ecbc7',1,'Tempus::Multimodal::Vertex']]],
   ['vertices',['vertices',['../namespace_tempus_1_1_multimodal.html#a80a709c90176352e5b98492867aa7ef9',1,'Tempus::Multimodal::vertices(const Graph &amp;graph)'],['../namespace_tempus_1_1_multimodal.html#a139542d5b0359f4c41097628f98be922',1,'Tempus::Multimodal::vertices(const ReverseGraph &amp;graph)']]],

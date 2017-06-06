@@ -1,26 +1,16 @@
 var searchData=
 [
-  ['table_5felement_5fadaptor',['table_element_adaptor',['../classtable__element__adaptor.html',1,'']]],
-  ['table_5fiterator',['table_iterator',['../classtable__iterator.html',1,'']]],
   ['tedge',['TEdge',['../struct_t_edge.html',1,'']]],
-  ['tempusdataprofile',['TempusDataProfile',['../class_tempus_data_profile.html',1,'']]],
   ['test',['Test',['../classtest__plugin_1_1_test.html',1,'test_plugin']]],
   ['testwps',['TestWPS',['../classtest__toy__graph_1_1_test_w_p_s.html',1,'test_toy_graph']]],
-  ['textoutputthread',['TextOutputThread',['../classhmi__qgis_1_1consolelauncher_1_1_text_output_thread.html',1,'hmi_qgis::consolelauncher']]],
   ['textprogression',['TextProgression',['../struct_tempus_1_1_text_progression.html',1,'Tempus']]],
   ['time',['Time',['../struct_tempus_1_1_time.html',1,'Tempus']]],
   ['timeconstraint',['TimeConstraint',['../struct_tempus_1_1_request_1_1_time_constraint.html',1,'Tempus::Request']]],
   ['timer',['Timer',['../class_timer.html',1,'']]],
   ['timetable',['Timetable',['../class_tempus_1_1_public_transport_1_1_timetable.html',1,'Tempus::PublicTransport']]],
   ['timetabledata',['TimetableData',['../struct_tempus_1_1_timetable_data.html',1,'Tempus']]],
-  ['timetableptplugin',['TimetablePtPlugin',['../class_tempus_1_1_timetable_pt_plugin.html',1,'Tempus']]],
   ['transferstep',['TransferStep',['../struct_tempus_1_1_roadmap_1_1_transfer_step.html',1,'Tempus::Roadmap']]],
   ['transportmode',['TransportMode',['../class_tempus_1_1_transport_mode.html',1,'Tempus']]],
   ['triple',['Triple',['../struct_tempus_1_1_dynamic_multi_plugin_1_1_triple.html',1,'Tempus::DynamicMultiPlugin']]],
-  ['triptime',['TripTime',['../class_tempus_1_1_public_transport_1_1_timetable_1_1_trip_time.html',1,'Tempus::PublicTransport::Timetable']]],
-  ['ttcalculatorfromfrequency',['TTCalculatorFromFrequency',['../class_tempus_1_1_t_t_calculator_from_frequency.html',1,'Tempus']]],
-  ['ttcalculatorfromtimetable',['TTCalculatorFromTimetable',['../class_tempus_1_1_t_t_calculator_from_timetable.html',1,'Tempus']]],
-  ['turnrestriction',['TurnRestriction',['../struct_turn_restriction.html',1,'']]],
-  ['two_5fd_5fdestructive_5fiterator',['Two_d_destructive_iterator',['../class_two__d__destructive__iterator.html',1,'']]],
-  ['two_5fd_5fiterator',['Two_d_iterator',['../class_two__d__iterator.html',1,'']]]
+  ['triptime',['TripTime',['../class_tempus_1_1_public_transport_1_1_timetable_1_1_trip_time.html',1,'Tempus::PublicTransport::Timetable']]]
 ];
