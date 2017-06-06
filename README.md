@@ -28,7 +28,7 @@ Latest tags
 | pywps      | [v1.0.0](https://gitlab.com/Oslandia/tempus_pywps/tags/v1.0.0) |
 | qgis plugin| [v1.0.1](https://gitlab.com/Oslandia/tempus_qgis/tags/v1.0.1) |
 | pg tempus  | [v1.0.1](https://gitlab.com/Oslandia/pgtempus/tags/v1.0.1) |
-| json server| [v1.0.1](https://gitlab.com/Oslandia/tempus_geojson_server/tags/v1.0.1) |
+| json server| [v1.0.2](https://gitlab.com/Oslandia/tempus_geojson_server/tags/v1.0.2) |
 
 Getting Started
 ---------------
