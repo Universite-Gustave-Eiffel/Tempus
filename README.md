@@ -20,14 +20,14 @@ Latest tags
 
 | Component  | Tag    |
 |------------|--------|
-| core       | [v2.4.1](https://gitlab.com/Oslandia/tempus_core/tags/v2.4.1) |
-| wps server | [v1.1.0](https://gitlab.com/Oslandia/tempus_wps_server/tags/v1.1.0) |
-| pytempus   | [v1.1.0](https://gitlab.com/Oslandia/pytempus/tags/v1.1.0) |
+| core       | [v2.6.2](https://gitlab.com/Oslandia/tempus_core/tags/v2.6.2) |
+| wps server | [v1.2.1](https://gitlab.com/Oslandia/tempus_wps_server/tags/v1.2.1) |
+| pytempus   | [v1.2.3](https://gitlab.com/Oslandia/pytempus/tags/v1.2.3) |
 | osm2tempus | [v1.1.0](https://gitlab.com/Oslandia/osm2tempus/tags/v1.1.0) |
-| loader     | [v1.1.1](https://gitlab.com/Oslandia/tempus_loader/tags/v1.1.1) |
+| loader     | [v1.2.2](https://gitlab.com/Oslandia/tempus_loader/tags/v1.2.2) |
 | pywps      | [v1.0.0](https://gitlab.com/Oslandia/tempus_pywps/tags/v1.0.0) |
-| qgis plugin| [v1.0.1](https://gitlab.com/Oslandia/tempus_qgis/tags/v1.0.1) |
-| pg tempus  | [v1.0.1](https://gitlab.com/Oslandia/pgtempus/tags/v1.0.1) |
+| qgis plugin| [v1.1.0](https://gitlab.com/Oslandia/tempus_qgis/tags/v1.1.0) |
+| pg tempus  | [v1.2.1](https://gitlab.com/Oslandia/pgtempus/tags/v1.2.1) |
 | json server| [v1.0.2](https://gitlab.com/Oslandia/tempus_geojson_server/tags/v1.0.2) |
 
 Getting Started
