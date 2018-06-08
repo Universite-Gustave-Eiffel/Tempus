@@ -36,3 +36,13 @@ Getting Started
 Clone this repo with the `--recursive` option (or use `git submodule init &&
 git submodule update` after cloning it), then head over to the README of each
 submodule for instructions.
+
+Windows installation
+--------------------
+
+Tempus packages are available for the [OSGeo4W distribution](https://trac.osgeo.org/osgeo4w/).
+
+Options:
+- Download the [network installer](https://github.com/Ifsttar/Tempus/releases/download/v2.6.2/setup-tempus-2.6.2.exe) that will download all the required packages
+- Download the [bundled installer](https://github.com/Ifsttar/Tempus/releases/download/v2.6.2/setup-tempus-2.6.2-local.exe) that contains all the required packages in one archive.
+- Use the regular [OSGeo4W network installer](http://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe) and add `http://osgeo4w-oslandia.com/extra` when asked for mirrors, you should then be able to select new packages like `tempus-core` or `python3-pytempus`
